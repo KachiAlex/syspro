@@ -7,12 +7,14 @@ import express from 'express';
 const server = express();
 let app: any;
 
-async function createApp() {
+async function bootstrap() {
   if (!app) {
+    console.log('🚀 Initializing NestJS application...');
+    
     app = await NestFactory.create(
       AppModule,
       new ExpressAdapter(server),
-      { logger: ['error', 'warn', 'log'] }
+      { logger: ['error', 'warn', 'log', 'debug'] }
     );
 
     // Global prefix
@@ -34,12 +36,20 @@ async function createApp() {
     );
 
     await app.init();
+    
+    console.log('✅ NestJS application initialized');
+    console.log('📊 Database connection status:', app.get('DataSource')?.isInitialized ? 'Connected' : 'Disconnected');
   }
   return app;
 }
 
 export default async (req: any, res: any) => {
-  await createApp();
-  server(req, res);
+  try {
+    await bootstrap();
+    server(req, res);
+  } catch (error) {
+    console.error('❌ Error initializing app:', error);
+    res.status(500).json({ error: 'Internal server error', message: error.message });
+  }
 };
 
