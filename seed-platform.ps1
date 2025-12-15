@@ -28,7 +28,7 @@ try {
         Write-Host "⚠️  WARNING: CHANGE THIS PASSWORD IMMEDIATELY!" -ForegroundColor Red
         Write-Host ""
         Write-Host "Created:" -ForegroundColor Cyan
-        Write-Host "   - 4 Subscription Plans (Free, Starter, Professional, Enterprise)" -ForegroundColor Gray
+        Write-Host "   - 4 Subscription Plans" -ForegroundColor Gray
         Write-Host "   - Platform Organization and Tenant" -ForegroundColor Gray
         Write-Host "   - Super Admin User" -ForegroundColor Gray
         Write-Host "   - Demo Organization and Tenant" -ForegroundColor Gray
