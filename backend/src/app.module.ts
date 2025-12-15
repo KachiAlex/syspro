@@ -18,6 +18,7 @@ import { ModuleRegistryModule } from './core/module-registry/module-registry.mod
 import { ConfigModule as ConfigServiceModule } from './core/config-service/config.module';
 import { BillingModule } from './core/billing-service/billing.module';
 import { SharedModule } from './shared/shared.module';
+import { PlatformSetupController } from './scripts/seed-admin.controller';
 
 @Module({
   imports: [
@@ -60,7 +61,7 @@ import { SharedModule } from './shared/shared.module';
     ConfigServiceModule,
     BillingModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, PlatformSetupController],
   providers: [AppService],
 })
 export class AppModule {}

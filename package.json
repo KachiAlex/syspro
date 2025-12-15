@@ -6,7 +6,9 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "scripts": {},
+  "scripts": {
+    "seed": "cd backend && npx ts-node src/scripts/seed-platform.ts"
+  },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",
