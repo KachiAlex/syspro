@@ -1,0 +1,65 @@
+[
+  {
+    "slug": "free",
+    "name": "Free Plan",
+    "description": "Basic features for small teams",
+    "billingCycle": "MONTHLY",
+    "priceCents": 0,
+    "currency": "USD",
+    "features": {
+      "users": 5,
+      "storage": "1GB",
+      "modules": ["BASIC"]
+    },
+    "isActive": true,
+    "isSystemPlan": true
+  },
+  {
+    "slug": "starter",
+    "name": "Starter Plan",
+    "description": "Perfect for growing businesses",
+    "billingCycle": "MONTHLY",
+    "priceCents": 10000,
+    "currency": "USD",
+    "features": {
+      "users": 25,
+      "storage": "10GB",
+      "modules": ["HR", "FINANCE", "BASIC"]
+    },
+    "isActive": true,
+    "isSystemPlan": true
+  },
+  {
+    "slug": "pro",
+    "name": "Professional Plan",
+    "description": "Advanced features for established companies",
+    "billingCycle": "MONTHLY",
+    "priceCents": 35000,
+    "currency": "USD",
+    "features": {
+      "users": 100,
+      "storage": "100GB",
+      "modules": ["*"]
+    },
+    "isActive": true,
+    "isSystemPlan": true
+  },
+  {
+    "slug": "enterprise",
+    "name": "Enterprise Plan",
+    "description": "Custom solutions for large organizations",
+    "billingCycle": "YEARLY",
+    "priceCents": 120000,
+    "currency": "USD",
+    "features": {
+      "users": -1,
+      "storage": "1TB",
+      "modules": ["*"],
+      "support": "priority",
+      "customIntegration": true
+    },
+    "isActive": true,
+    "isSystemPlan": true
+  }
+]
+

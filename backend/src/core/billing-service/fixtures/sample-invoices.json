@@ -1,0 +1,107 @@
+[
+  {
+    "invoiceNumber": "INV-2025-0001",
+    "tenantId": "tenant_acme",
+    "amountDueCents": 10000,
+    "amountPaidCents": 10000,
+    "currency": "USD",
+    "status": "paid",
+    "issuedAt": "2025-11-01T00:00:00Z",
+    "dueAt": "2025-11-15T00:00:00Z",
+    "paidAt": "2025-11-02T00:00:00Z",
+    "lineItems": [
+      {
+        "description": "Starter Plan - November 2025",
+        "quantity": 1,
+        "unitPriceCents": 10000,
+        "totalCents": 10000
+      }
+    ]
+  },
+  {
+    "invoiceNumber": "INV-2025-0002",
+    "tenantId": "tenant_soltech",
+    "amountDueCents": 35000,
+    "amountPaidCents": 35000,
+    "currency": "USD",
+    "status": "paid",
+    "issuedAt": "2025-11-01T00:00:00Z",
+    "dueAt": "2025-11-15T00:00:00Z",
+    "paidAt": "2025-11-03T00:00:00Z",
+    "lineItems": [
+      {
+        "description": "Pro Plan - November 2025",
+        "quantity": 1,
+        "unitPriceCents": 35000,
+        "totalCents": 35000
+      }
+    ]
+  },
+  {
+    "invoiceNumber": "INV-2025-0003",
+    "tenantId": "tenant_democorp",
+    "amountDueCents": 10000,
+    "amountPaidCents": 0,
+    "currency": "USD",
+    "status": "open",
+    "issuedAt": "2025-11-01T00:00:00Z",
+    "dueAt": "2025-11-15T00:00:00Z",
+    "lineItems": [
+      {
+        "description": "Starter Plan - November 2025",
+        "quantity": 1,
+        "unitPriceCents": 10000,
+        "totalCents": 10000
+      }
+    ]
+  },
+  {
+    "invoiceNumber": "INV-2025-0004",
+    "tenantId": "tenant_acme",
+    "amountDueCents": 13333,
+    "amountPaidCents": 0,
+    "currency": "USD",
+    "status": "open",
+    "issuedAt": "2025-06-11T10:00:00Z",
+    "dueAt": "2025-06-25T23:59:59Z",
+    "lineItems": [
+      {
+        "description": "Prorated upgrade to Pro (Jun 11 - Jun 30)",
+        "quantity": 1,
+        "unitPriceCents": 13333,
+        "totalCents": 13333
+      },
+      {
+        "description": "SMS usage (Jun 1 - Jun 30) - 18,732 messages",
+        "quantity": 18732,
+        "unitPriceCents": 1,
+        "totalCents": 18732
+      }
+    ]
+  },
+  {
+    "invoiceNumber": "INV-2025-0005",
+    "tenantId": "tenant_soltech",
+    "amountDueCents": 50000,
+    "amountPaidCents": 0,
+    "currency": "USD",
+    "status": "open",
+    "issuedAt": "2025-10-15T00:00:00Z",
+    "dueAt": "2025-10-30T00:00:00Z",
+    "lineItems": [
+      {
+        "description": "Pro Plan - October 2025",
+        "quantity": 1,
+        "unitPriceCents": 35000,
+        "totalCents": 35000
+      },
+      {
+        "description": "API usage overage - 15,000 calls",
+        "quantity": 15000,
+        "unitPriceCents": 1,
+        "totalCents": 15000
+      }
+    ]
+  }
+]
+

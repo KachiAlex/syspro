@@ -1,0 +1,30 @@
+[
+  {
+    "id": "tenant_acme",
+    "name": "Acme Telecom",
+    "code": "ACME",
+    "plan": "starter",
+    "status": "active",
+    "nextBillingDate": "2025-12-01T00:00:00Z",
+    "arBalance": 0
+  },
+  {
+    "id": "tenant_soltech",
+    "name": "SolTech Solutions",
+    "code": "SOLTECH",
+    "plan": "pro",
+    "status": "active",
+    "nextBillingDate": "2025-12-01T00:00:00Z",
+    "arBalance": 50000
+  },
+  {
+    "id": "tenant_democorp",
+    "name": "DemoCorp Inc",
+    "code": "DEMOCORP",
+    "plan": "starter",
+    "status": "trialing",
+    "nextBillingDate": "2025-11-20T00:00:00Z",
+    "arBalance": 10000
+  }
+]
+
