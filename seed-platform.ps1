@@ -27,11 +27,11 @@ try {
         Write-Host ""
         Write-Host "⚠️  WARNING: CHANGE THIS PASSWORD IMMEDIATELY!" -ForegroundColor Red
         Write-Host ""
-        Write-Host "📦 Created:" -ForegroundColor Cyan
-        Write-Host "   ✓ 4 Subscription Plans (Free, Starter, Professional, Enterprise)" -ForegroundColor Gray
-        Write-Host "   ✓ Platform Organization & Tenant" -ForegroundColor Gray
-        Write-Host "   ✓ Super Admin User" -ForegroundColor Gray
-        Write-Host "   ✓ Demo Organization & Tenant" -ForegroundColor Gray
+        Write-Host "Created:" -ForegroundColor Cyan
+        Write-Host "   - 4 Subscription Plans (Free, Starter, Professional, Enterprise)" -ForegroundColor Gray
+        Write-Host "   - Platform Organization and Tenant" -ForegroundColor Gray
+        Write-Host "   - Super Admin User" -ForegroundColor Gray
+        Write-Host "   - Demo Organization and Tenant" -ForegroundColor Gray
         Write-Host ""
         Write-Host "🎯 NEXT STEPS:" -ForegroundColor Cyan
         Write-Host "   1. Login at: https://syspro-8anuk5s0u-onyedikachi-akomas-projects.vercel.app/login" -ForegroundColor Gray
@@ -65,7 +65,8 @@ try {
         Write-Host "Option 2: Get Vercel Bypass Token" -ForegroundColor White
         Write-Host "   1. Go to: https://vercel.com/onyedikachi-akomas-projects/syspro/settings/deployment-protection" -ForegroundColor Gray
         Write-Host "   2. Copy 'Protection Bypass for Automation' token" -ForegroundColor Gray
-        Write-Host "   3. Visit: ${url}?x-vercel-set-bypass-cookie=true&x-vercel-protection-bypass=YOUR_TOKEN" -ForegroundColor Gray
+        $bypassUrl = "${url}?x-vercel-set-bypass-cookie=true`&x-vercel-protection-bypass=YOUR_TOKEN"
+        Write-Host "   3. Visit: $bypassUrl" -ForegroundColor Gray
         Write-Host ""
         Write-Host "Option 3: Temporarily Disable Protection" -ForegroundColor White
         Write-Host "   1. Go to Vercel project settings → Deployment Protection" -ForegroundColor Gray
@@ -84,7 +85,7 @@ try {
         Write-Host "   - Check if the database is accessible" -ForegroundColor Gray
         Write-Host "   - Verify POSTGRES_URL is set in Vercel environment" -ForegroundColor Gray
         Write-Host "   - Check Vercel function logs for details" -ForegroundColor Gray
-        Write-Host "   - The seed may have already been run (it's idempotent)" -ForegroundColor Gray
+        Write-Host "   - The seed may have already been run (it is idempotent)" -ForegroundColor Gray
     }
 }
 
