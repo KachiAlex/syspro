@@ -1,0 +1,12 @@
+{
+  "extends": "./backend/tsconfig.build.json",
+  "include": ["api/**/*.ts", "backend/src/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "backend/dist",
+    "backend/test",
+    "backend/src/scripts/**",
+    "**/*spec.ts",
+    "**/*.test.ts"
+  ]
+}

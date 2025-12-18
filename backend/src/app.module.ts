@@ -21,7 +21,8 @@ import { SharedModule } from './shared/shared.module';
 const controllers: any[] = [AppController];
 
 if (process.env.ENABLE_PLATFORM_SETUP === 'true') {
-  const { PlatformSetupController } = require('./scripts/seed-admin.controller');
+  const seedControllerPath = './scripts/' + 'seed-admin.controller';
+  const { PlatformSetupController } = require(seedControllerPath);
   controllers.push(PlatformSetupController);
 }
 
