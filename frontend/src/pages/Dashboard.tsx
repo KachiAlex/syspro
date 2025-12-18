@@ -3,14 +3,19 @@ import { useAuthStore } from '../store/authStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import api from '../lib/api';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } finally {
+      logout();
+      navigate('/login');
+    }
   };
 
   return (

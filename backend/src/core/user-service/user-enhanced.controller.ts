@@ -16,7 +16,7 @@ import { User } from '../../entities/user.entity';
 import { ChangePasswordDto } from './dto/password-reset.dto';
 import { Enable2FADto, Verify2FADto } from './dto/enable-2fa.dto';
 import { Pagination } from '../../shared/decorators/pagination.decorator';
-import { PaginationQuery } from '../../shared/decorators/pagination.decorator';
+import type { PaginationQuery } from '../../shared/decorators/pagination.decorator';
 
 @ApiTags('User Enhanced')
 @ApiBearerAuth()

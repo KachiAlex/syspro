@@ -2,16 +2,35 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.use(cookieParser());
 
   // Global prefix
   app.setGlobalPrefix('api');
 
   // CORS
+  const corsOrigins = (process.env.CORS_ORIGIN || '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: (origin, callback) => {
+      if (!origin) {
+        return callback(null, true);
+      }
+      if (corsOrigins.length === 0) {
+        return callback(new Error('CORS origin not allowed'), false);
+      }
+      if (corsOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('CORS origin not allowed'), false);
+    },
     credentials: true,
   });
 
@@ -47,11 +66,7 @@ async function bootstrap() {
 }
 
 // For Vercel serverless
-if (process.env.VERCEL) {
-  bootstrap();
-} else {
-  bootstrap();
-}
+bootstrap();
 
 export default bootstrap;
 

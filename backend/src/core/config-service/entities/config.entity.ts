@@ -49,16 +49,16 @@ export class Configuration {
   scope: ConfigScope;
 
   @Column({ nullable: true })
-  tenantId: string;
+  tenantId: string | null;
 
   @Column({ nullable: true })
-  moduleId: string;
+  moduleId: string | null;
 
   @Column({ nullable: true })
-  userId: string;
+  userId: string | null;
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  description: string | null;
 
   @Column({ default: false })
   isEncrypted: boolean;

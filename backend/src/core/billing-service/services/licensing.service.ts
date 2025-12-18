@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { License } from '../entities/license.entity';
-import { Subscription } from '../entities/subscription.entity';
+import { Subscription, SubscriptionStatus } from '../entities/subscription.entity';
 import { TenantContextService } from '../../../modules/tenant/tenant-context.service';
 import { EventPublisherService } from '../../../shared/events/event-publisher.service';
 import { EventType } from '../../../shared/events/event.types';
@@ -31,7 +31,7 @@ export class LicensingService {
 
     // Check if subscription allows this module
     const subscription = await this.subscriptionRepository.findOne({
-      where: { tenantId, status: 'active' },
+      where: { tenantId, status: SubscriptionStatus.ACTIVE },
       relations: ['plan'],
     });
 

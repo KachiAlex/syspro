@@ -27,13 +27,13 @@ export class FeatureFlag {
   conditions: Record<string, any>; // For conditional feature flags
 
   @Column({ nullable: true })
-  tenantId: string; // null for global flags
+  tenantId: string | null; // null for global flags
 
   @Column({ type: 'timestamp', nullable: true })
-  enabledAt: Date;
+  enabledAt: Date | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  disabledAt: Date;
+  disabledAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;

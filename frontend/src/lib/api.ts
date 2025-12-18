@@ -4,6 +4,7 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
 
 const api = axios.create({
   baseURL: API_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -13,14 +14,9 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
-    const tenantId = localStorage.getItem('tenantId');
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-    }
-    
-    if (tenantId) {
-      config.headers['x-tenant-id'] = tenantId;
     }
     
     return config;
@@ -40,23 +36,18 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (refreshToken) {
-          const response = await axios.post(`${API_URL}/auth/refresh`, {
-            refreshToken,
-          });
+        const response = await axios.post(`${API_URL}/auth/refresh`, undefined, {
+          withCredentials: true,
+        });
 
-          const { accessToken } = response.data;
-          localStorage.setItem('accessToken', accessToken);
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        const { accessToken } = response.data;
+        localStorage.setItem('accessToken', accessToken);
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
 
-          return api(originalRequest);
-        }
+        return api(originalRequest);
       } catch (refreshError) {
         localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
-        localStorage.removeItem('tenantId');
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }

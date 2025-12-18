@@ -12,7 +12,6 @@ import { PaymentGatewayFactory } from '../factories/payment-gateway.factory';
 import { EventPublisherService } from '../../../shared/events/event-publisher.service';
 import { EventType } from '../../../shared/events/event.types';
 import { ProrationService } from './proration.service';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Invoice } from '../entities/invoice.entity';
 
 @Injectable()

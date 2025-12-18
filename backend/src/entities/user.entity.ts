@@ -101,7 +101,7 @@ export class User {
   mfaEnabled: boolean;
 
   @Column({ nullable: true })
-  mfaSecret: string;
+  mfaSecret: string | null;
 
   @Column({ type: 'timestamp', nullable: true })
   lastLoginAt: Date;

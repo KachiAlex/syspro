@@ -18,7 +18,7 @@ export class StripeWebhookHandler {
       'sk_test_placeholder';
 
     this.stripe = new Stripe(apiKey, {
-      apiVersion: '2024-11-20.acacia',
+      apiVersion: '2023-10-16',
     });
 
     this.webhookSecret =
@@ -96,7 +96,7 @@ export class StripeWebhookHandler {
             currency: (event.data.object as Stripe.Invoice).currency,
             customerId: (event.data.object as Stripe.Invoice).customer,
             gateway: 'STRIPE',
-            failureReason: (event.data.object as Stripe.Invoice).last_payment_error?.message,
+            failureReason: (event.data.object as any)?.last_payment_error?.message,
           },
         };
 

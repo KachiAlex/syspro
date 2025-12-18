@@ -4,6 +4,7 @@ const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 const client = axios.create({
   baseURL: API_BASE,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -11,12 +12,42 @@ const client = axios.create({
 
 // Add auth token interceptor
 client.interceptors.request.use((config) => {
+  localStorage.removeItem('refreshToken')
   const token = localStorage.getItem('accessToken')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
 })
+
+// Response interceptor to handle token refresh via HttpOnly cookie
+client.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config
+
+    if (error.response?.status === 401 && !originalRequest?._retry) {
+      originalRequest._retry = true
+
+      try {
+        const refreshResponse = await axios.post(`${API_BASE}/auth/refresh`, undefined, {
+          withCredentials: true,
+        })
+
+        const { accessToken } = refreshResponse.data
+        localStorage.setItem('accessToken', accessToken)
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`
+
+        return client(originalRequest)
+      } catch (refreshError) {
+        localStorage.removeItem('accessToken')
+        return Promise.reject(refreshError)
+      }
+    }
+
+    return Promise.reject(error)
+  }
+)
 
 // Plans API
 export const plansApi = {

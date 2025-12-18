@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { Configuration, ConfigScope, ConfigType } from './entities/config.entity';
 import { FeatureFlag } from './entities/feature-flag.entity';
 import { TenantContextService } from '../../modules/tenant/tenant-context.service';
@@ -37,11 +37,21 @@ export class ConfigService {
     description?: string,
   ): Promise<Configuration> {
     const tenantId = this.tenantContext.getTenant();
+    const whereTenantId =
+      scope === ConfigScope.TENANT
+        ? this.tenantContext.requireTenant()
+        : (IsNull() as any);
+    const whereModuleId = moduleId ? moduleId : (IsNull() as any);
     const type = this.detectType(value);
     const stringValue = this.serializeValue(value, type);
 
     let config = await this.configRepository.findOne({
-      where: { key, scope, tenantId, moduleId },
+      where: {
+        key,
+        scope,
+        tenantId: whereTenantId,
+        moduleId: whereModuleId,
+      },
     });
 
     if (config) {
@@ -55,8 +65,8 @@ export class ConfigService {
         type,
         scope,
         tenantId: scope === ConfigScope.TENANT ? tenantId : null,
-        moduleId,
-        description,
+        moduleId: moduleId ?? null,
+        description: description ?? null,
       });
     }
 
@@ -159,7 +169,7 @@ export class ConfigService {
   async toggleFeatureFlag(key: string, enabled: boolean): Promise<FeatureFlag> {
     const tenantId = this.tenantContext.getTenant();
     const flag = await this.featureFlagRepository.findOne({
-      where: { key, tenantId: tenantId || null },
+      where: { key, tenantId: tenantId ? tenantId : IsNull() },
     });
 
     if (!flag) {
@@ -184,7 +194,7 @@ export class ConfigService {
   async isFeatureEnabled(key: string): Promise<boolean> {
     const tenantId = this.tenantContext.getTenant();
     const flag = await this.featureFlagRepository.findOne({
-      where: { key, tenantId: tenantId || null },
+      where: { key, tenantId: tenantId ? tenantId : IsNull() },
     });
 
     return flag?.isEnabled || false;

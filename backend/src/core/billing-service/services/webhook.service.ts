@@ -4,6 +4,7 @@ import { BillingService } from './billing.service';
 import { SubscriptionService } from './subscription.service';
 import { EventPublisherService } from '../../../shared/events/event-publisher.service';
 import { PaymentGateway } from '../entities/payment.entity';
+import { EventType } from '../../../shared/events/event.types';
 import { IdempotencyService } from '../utils/idempotency';
 import { StripeWebhookHandler } from '../adapters/stripe/stripe.webhook';
 
@@ -35,16 +36,16 @@ export class WebhookService {
 
     switch (event.type) {
       case 'INVOICE.PAID':
-        await this.handlePaymentSucceeded('STRIPE', event.data);
+        await this.handlePaymentSucceeded(PaymentGateway.STRIPE, event.data);
         break;
       case 'INVOICE.FAILED':
-        await this.handlePaymentFailed('STRIPE', event.data);
+        await this.handlePaymentFailed(PaymentGateway.STRIPE, event.data);
         break;
       case 'SUBSCRIPTION.UPDATED':
-        await this.handleSubscriptionUpdated('STRIPE', event.data);
+        await this.handleSubscriptionUpdated(PaymentGateway.STRIPE, event.data);
         break;
       case 'SUBSCRIPTION.CANCELED':
-        await this.handleSubscriptionDeleted('STRIPE', event.data);
+        await this.handleSubscriptionDeleted(PaymentGateway.STRIPE, event.data);
         break;
       default:
         this.logger.log(`Unhandled event: ${event.type}`);
@@ -64,10 +65,10 @@ export class WebhookService {
 
     switch (event) {
       case 'charge.completed':
-        await this.handlePaymentSucceeded('FLUTTERWAVE', payload.data);
+        await this.handlePaymentSucceeded(PaymentGateway.FLUTTERWAVE, payload.data);
         break;
       case 'charge.failed':
-        await this.handlePaymentFailed('FLUTTERWAVE', payload.data);
+        await this.handlePaymentFailed(PaymentGateway.FLUTTERWAVE, payload.data);
         break;
       default:
         this.logger.log(`Unhandled Flutterwave event: ${event}`);
@@ -87,10 +88,10 @@ export class WebhookService {
 
     switch (event) {
       case 'charge.success':
-        await this.handlePaymentSucceeded('PAYSTACK', payload.data);
+        await this.handlePaymentSucceeded(PaymentGateway.PAYSTACK, payload.data);
         break;
       case 'charge.failed':
-        await this.handlePaymentFailed('PAYSTACK', payload.data);
+        await this.handlePaymentFailed(PaymentGateway.PAYSTACK, payload.data);
         break;
       default:
         this.logger.log(`Unhandled Paystack event: ${event}`);

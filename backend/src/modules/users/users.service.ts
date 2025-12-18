@@ -40,8 +40,9 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<User> {
+    const tenantId = this.tenantContext.getTenant();
     const user = await this.usersRepository.findOne({
-      where: { id },
+      where: tenantId ? { id, tenantId } : { id },
       relations: ['organization', 'subsidiary', 'department'],
     });
 
@@ -53,8 +54,9 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<User | null> {
+    const tenantId = this.tenantContext.getTenant();
     return this.usersRepository.findOne({
-      where: { email },
+      where: tenantId ? { email, tenantId } : { email },
       relations: ['organization', 'subsidiary', 'department'],
     });
   }

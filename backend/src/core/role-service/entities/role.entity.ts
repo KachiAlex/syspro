@@ -40,10 +40,10 @@ export class Role {
   scope: RoleScope;
 
   @Column({ nullable: true })
-  tenantId: string; // null for SYSTEM scope
+  tenantId: string | null; // null for SYSTEM scope
 
   @Column({ nullable: true })
-  moduleId: string; // null for non-module roles
+  moduleId: string | null; // null for non-module roles
 
   @Column({ default: true })
   isActive: boolean;

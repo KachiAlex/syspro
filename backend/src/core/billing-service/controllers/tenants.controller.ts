@@ -11,8 +11,8 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Tenant } from '../../../entities/tenant.entity';
-import { Subscription } from '../entities/subscription.entity';
-import { Invoice } from '../entities/invoice.entity';
+import { Subscription, SubscriptionStatus } from '../entities/subscription.entity';
+import { Invoice, InvoiceStatus } from '../entities/invoice.entity';
 import { JwtAuthGuard } from '../../../modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../modules/auth/guards/roles.guard';
 import { Roles } from '../../../modules/auth/decorators/roles.decorator';
@@ -55,12 +55,12 @@ export class TenantsController {
     const enriched = await Promise.all(
       tenants.map(async (tenant) => {
         const subscription = await this.subscriptionRepository.findOne({
-          where: { tenantId: tenant.id, status: 'active' },
+          where: { tenantId: tenant.id, status: SubscriptionStatus.ACTIVE },
           relations: ['plan'],
         });
 
         const openInvoices = await this.invoiceRepository.find({
-          where: { tenantId: tenant.id, status: 'open' },
+          where: { tenantId: tenant.id, status: InvoiceStatus.OPEN },
         });
 
         const arBalance = openInvoices.reduce(

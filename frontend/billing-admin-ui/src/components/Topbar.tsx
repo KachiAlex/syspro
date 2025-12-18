@@ -1,6 +1,17 @@
 import { Bell, Search, User } from 'lucide-react'
+import client from '../api/billingClient'
 
 export function Topbar() {
+  const handleLogout = async () => {
+    try {
+      await client.post('/auth/logout')
+    } finally {
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      window.location.href = '/'
+    }
+  }
+
   return (
     <div className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -21,6 +32,12 @@ export function Topbar() {
           <button className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md">
             <User className="h-5 w-5" />
             <span className="text-sm font-medium">Admin</span>
+          </button>
+          <button
+            onClick={handleLogout}
+            className="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
+          >
+            Logout
           </button>
         </div>
       </div>

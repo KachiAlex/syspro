@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
@@ -55,7 +56,17 @@ export class UsersController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get user by ID' })
-  async findOne(@Param('id') id: string) {
+  async findOne(@CurrentUser() user: User, @Param('id') id: string) {
+    const canReadOtherUsers = [
+      UserRole.SUPER_ADMIN,
+      UserRole.ADMIN,
+      UserRole.HR,
+    ].includes(user.role);
+
+    if (!canReadOtherUsers && id !== user.id) {
+      throw new ForbiddenException('You are not allowed to access this user');
+    }
+
     return this.usersService.findOne(id);
   }
 

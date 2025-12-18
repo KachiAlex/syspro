@@ -3,8 +3,10 @@ import { ValidationPipe } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { AppModule } from '../backend/src/app.module';
 import express from 'express';
+import cookieParser from 'cookie-parser';
 
 const server = express();
+server.use(cookieParser());
 let app: any;
 
 async function bootstrap() {
@@ -21,8 +23,24 @@ async function bootstrap() {
     app.setGlobalPrefix('api');
 
     // CORS
+    const corsOrigins = (process.env.CORS_ORIGIN || '')
+      .split(',')
+      .map((o) => o.trim())
+      .filter(Boolean);
+
     app.enableCors({
-      origin: process.env.CORS_ORIGIN || '*',
+      origin: (origin, callback) => {
+        if (!origin) {
+          return callback(null, true);
+        }
+        if (corsOrigins.length === 0) {
+          return callback(new Error('CORS origin not allowed'), false);
+        }
+        if (corsOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+        return callback(new Error('CORS origin not allowed'), false);
+      },
       credentials: true,
     });
 

@@ -11,14 +11,19 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { TenantModule } from './modules/tenant/tenant.module';
-import { MultiTenantModule } from './modules/multi-tenant/multi-tenant.module';
 import { UserEnhancedModule } from './core/user-service/user-enhanced.module';
 import { RoleModule } from './core/role-service/role.module';
 import { ModuleRegistryModule } from './core/module-registry/module-registry.module';
 import { ConfigModule as ConfigServiceModule } from './core/config-service/config.module';
 import { BillingModule } from './core/billing-service/billing.module';
 import { SharedModule } from './shared/shared.module';
-import { PlatformSetupController } from './scripts/seed-admin.controller';
+
+const controllers: any[] = [AppController];
+
+if (process.env.ENABLE_PLATFORM_SETUP === 'true') {
+  const { PlatformSetupController } = require('./scripts/seed-admin.controller');
+  controllers.push(PlatformSetupController);
+}
 
 @Module({
   imports: [
@@ -48,7 +53,6 @@ import { PlatformSetupController } from './scripts/seed-admin.controller';
       },
     ]),
     // Application Modules
-    MultiTenantModule,
     TenantModule,
     SharedModule,
     AuthModule,
@@ -61,7 +65,7 @@ import { PlatformSetupController } from './scripts/seed-admin.controller';
     ConfigServiceModule,
     BillingModule,
   ],
-  controllers: [AppController, PlatformSetupController],
+  controllers,
   providers: [AppService],
 })
 export class AppModule {}

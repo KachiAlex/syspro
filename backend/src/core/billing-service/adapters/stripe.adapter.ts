@@ -20,7 +20,7 @@ export class StripeAdapter implements PaymentGateway {
       'sk_test_placeholder';
 
     this.stripe = new Stripe(apiKey, {
-      apiVersion: '2024-11-20.acacia',
+      apiVersion: '2023-10-16',
     });
   }
 
@@ -175,7 +175,7 @@ export class StripeAdapter implements PaymentGateway {
 
     return {
       id: refund.id,
-      status: refund.status,
+      status: refund.status ?? 'unknown',
       amount: refund.amount,
     };
   }

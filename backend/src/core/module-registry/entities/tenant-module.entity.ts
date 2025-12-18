@@ -28,16 +28,16 @@ export class TenantModule {
   isEnabled: boolean;
 
   @Column({ type: 'timestamp', nullable: true })
-  enabledAt: Date;
+  enabledAt: Date | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  disabledAt: Date;
+  disabledAt: Date | null;
 
   @Column({ type: 'jsonb', nullable: true })
-  settings: Record<string, any>;
+  settings: Record<string, any> | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  licenseExpiresAt: Date;
+  licenseExpiresAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;

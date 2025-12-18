@@ -3,7 +3,6 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { TenantContextService } from '../tenant-context.service';
@@ -21,15 +20,10 @@ export class TenantInterceptor implements NestInterceptor {
 
     let tenantId: string | null = null;
 
-    // Priority 1: Check x-tenant-id header (for tenant switching)
-    if (request.headers['x-tenant-id']) {
-      tenantId = request.headers['x-tenant-id'];
-    }
-    // Priority 2: Check JWT payload for tenantId
-    else if (user?.tenantId) {
+    // Tenant is derived strictly from authenticated user context
+    if (user?.tenantId) {
       tenantId = user.tenantId;
     }
-    // Priority 3: Check user's default tenant from organization
     else if (user?.organizationId) {
       tenantId = user.organizationId; // Using organizationId as tenantId for now
     }
