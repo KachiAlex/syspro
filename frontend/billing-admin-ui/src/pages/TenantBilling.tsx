@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { tenantsApi, subscriptionsApi } from '../api/billingClient'
+import { tenantsApi } from '../api/billingClient'
 import { formatCurrency, formatDate } from '../lib/utils'
 
 export function TenantBilling() {

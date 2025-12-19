@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useMeteringUsage, useRecordMeterEvent } from '../hooks/useMetering'
-import { formatCurrency } from '../lib/utils'
 
 export function MeteringConsole() {
   const { data: usage, isLoading } = useMeteringUsage()

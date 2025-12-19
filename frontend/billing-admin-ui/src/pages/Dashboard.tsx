@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { KPICard } from '../components/KPIcard'
-import { DollarSign, TrendingUp, AlertCircle, Users, FileText, XCircle } from 'lucide-react'
+import { DollarSign, TrendingUp, AlertCircle, Users, XCircle } from 'lucide-react'
 import { reportsApi, invoicesApi } from '../api/billingClient'
 import { formatCurrency, formatDate } from '../lib/utils'
 

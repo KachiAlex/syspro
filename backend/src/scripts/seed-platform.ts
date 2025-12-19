@@ -160,11 +160,12 @@ async function seedPlatform(dataSource: DataSource) {
   console.log('\n👤 Creating super admin user...');
   const userRepository = dataSource.getRepository(User);
   
-  const adminEmail = 'admin@syspro.com';
+  const adminEmail = process.env.SUPERADMIN_EMAIL || 'admin@syspro.com';
+  const adminPassword = process.env.SUPERADMIN_PASSWORD || 'Admin@123';
   let adminUser = await userRepository.findOne({ where: { email: adminEmail } });
   
   if (!adminUser) {
-    const hashedPassword = await bcrypt.hash('Admin@123', 10);
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
     
     adminUser = userRepository.create({
       firstName: 'Super',
@@ -173,14 +174,13 @@ async function seedPlatform(dataSource: DataSource) {
       password: hashedPassword,
       role: UserRole.SUPER_ADMIN,
       status: UserStatus.ACTIVE,
-      isEmailVerified: true,
-      currentTenantId: platformTenant.id,
-      isActive: true,
+      organizationId: platformOrg.id,
+      tenantId: platformTenant.id,
     });
     await userRepository.save(adminUser);
     console.log('  ✓ Created super admin user');
     console.log(`     Email: ${adminEmail}`);
-    console.log('     Password: Admin@123');
+    console.log(`     Password: ${adminPassword}`);
     console.log('     ⚠️  PLEASE CHANGE THIS PASSWORD IMMEDIATELY AFTER FIRST LOGIN!');
   } else {
     console.log('  ⊙ Super admin user already exists');
@@ -202,7 +202,6 @@ async function seedPlatform(dataSource: DataSource) {
     adminAccess = accessRepository.create({
       userId: adminUser.id,
       tenantId: platformTenant.id,
-      role: UserRole.SUPER_ADMIN,
     });
     await accessRepository.save(adminAccess);
     console.log('  ✓ Granted super admin access to platform tenant');

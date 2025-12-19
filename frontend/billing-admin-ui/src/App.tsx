@@ -13,8 +13,10 @@ import { Reports } from './pages/Reports'
 import { Settings } from './pages/Settings'
 
 function App() {
+  const basePath = import.meta.env.VITE_BASE_PATH ?? '/superadmin'
+
   return (
-    <Router>
+    <Router basename={basePath}>
       <div className="min-h-screen bg-gray-50">
         <Topbar />
         <div className="flex">
