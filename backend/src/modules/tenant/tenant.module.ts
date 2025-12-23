@@ -1,4 +1,4 @@
-import { Module, Global } from '@nestjs/common';
+import { Module, Global, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TenantController } from './tenant.controller';
@@ -13,7 +13,7 @@ import { UsersModule } from '../users/users.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Tenant, UserTenantAccess]),
-    UsersModule,
+    forwardRef(() => UsersModule),
   ],
   controllers: [TenantController],
   providers: [
