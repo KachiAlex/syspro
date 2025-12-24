@@ -28,7 +28,7 @@ export class RolePermission {
   @Column()
   permissionId: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   tenantId: string | null;
 
   @CreateDateColumn()
