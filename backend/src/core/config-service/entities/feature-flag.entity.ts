@@ -26,7 +26,7 @@ export class FeatureFlag {
   @Column({ type: 'jsonb', nullable: true })
   conditions: Record<string, any>; // For conditional feature flags
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   tenantId: string | null; // null for global flags
 
   @Column({ type: 'timestamp', nullable: true })

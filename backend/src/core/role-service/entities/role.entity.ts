@@ -39,10 +39,10 @@ export class Role {
   })
   scope: RoleScope;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   tenantId: string | null; // null for SYSTEM scope
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   moduleId: string | null; // null for non-module roles
 
   @Column({ default: true })
