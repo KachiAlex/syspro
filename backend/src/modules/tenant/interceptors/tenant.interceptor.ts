@@ -3,11 +3,12 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
+  Scope,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { TenantContextService } from '../tenant-context.service';
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class TenantInterceptor implements NestInterceptor {
   constructor(private readonly tenantContext: TenantContextService) {}
 
