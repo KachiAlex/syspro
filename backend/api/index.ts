@@ -1,13 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createApp } from '../src/main';
 import type { INestApplication } from '@nestjs/common';
-import type { Express } from 'express';
+import { createApp } from '../src/main';
 
-let server: Express | null = null;
+let server: ReturnType<INestApplication['getHttpAdapter']>['getInstance'] | null = null;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!server) {
-    const app: INestApplication = await createApp();
+    const app = await createApp();
     await app.init();
     server = app.getHttpAdapter().getInstance();
   }

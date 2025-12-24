@@ -12,20 +12,42 @@ export class InvoicePdfService {
   private readonly storagePath: string;
 
   constructor(private configService: ConfigService) {
-    // Use local storage directory (default: ./storage/invoices)
-    this.storagePath = this.configService.get<string>(
-      'INVOICE_STORAGE_PATH',
-      path.join(process.cwd(), 'storage', 'invoices'),
-    );
-
-    // Ensure storage directory exists
-    this.ensureStorageDirectory();
+    this.storagePath = this.ensureWritableDirectory(this.resolveStoragePath());
   }
 
-  private ensureStorageDirectory(): void {
-    if (!fs.existsSync(this.storagePath)) {
-      fs.mkdirSync(this.storagePath, { recursive: true });
-      this.logger.log(`Created invoice storage directory: ${this.storagePath}`);
+  private resolveStoragePath(): string {
+    const configured = this.configService.get<string>('INVOICE_STORAGE_PATH');
+    if (configured) {
+      return configured;
+    }
+
+    const isServerless = !!process.env.VERCEL || !!process.env.AWS_REGION;
+    if (isServerless) {
+      return path.join('/tmp', 'invoices');
+    }
+
+    return path.join(process.cwd(), 'storage', 'invoices');
+  }
+
+  private ensureWritableDirectory(targetPath: string): string {
+    try {
+      if (!fs.existsSync(targetPath)) {
+        fs.mkdirSync(targetPath, { recursive: true });
+        this.logger.log(`Created invoice storage directory: ${targetPath}`);
+      }
+      return targetPath;
+    } catch (error) {
+      const fallback = path.join('/tmp', 'invoices');
+      if (fallback !== targetPath) {
+        if (!fs.existsSync(fallback)) {
+          fs.mkdirSync(fallback, { recursive: true });
+          this.logger.warn(
+            `Fell back to writable invoice storage: ${fallback}. Reason: ${(error as Error).message}`,
+          );
+        }
+        return fallback;
+      }
+      throw error;
     }
   }
 
