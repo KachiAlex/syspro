@@ -31,9 +31,12 @@ export class EventPublisherService implements OnModuleInit {
 
       this.logger.log('Connected to RabbitMQ');
     } catch (error) {
+      const shouldRequireRabbit =
+        this.configService.get<string>('NODE_ENV') === 'production' &&
+        this.configService.get<string>('REQUIRE_RABBITMQ') === 'true';
+
       this.logger.error('Failed to connect to RabbitMQ', error);
-      // In development, continue without RabbitMQ
-      if (this.configService.get<string>('NODE_ENV') === 'production') {
+      if (shouldRequireRabbit) {
         throw error;
       }
     }
