@@ -100,7 +100,7 @@ export class User {
   @Column({ default: false })
   mfaEnabled: boolean;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   mfaSecret: string | null;
 
   @Column({ type: 'timestamp', nullable: true })
