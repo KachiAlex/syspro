@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Global, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -8,7 +8,9 @@ import { UsersModule } from '../users/users.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { getJwtConfig } from '../../config/jwt.config';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
+@Global()
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -17,11 +19,11 @@ import { getJwtConfig } from '../../config/jwt.config';
       useFactory: getJwtConfig,
       inject: [ConfigService],
     }),
-    UsersModule,
+    forwardRef(() => UsersModule),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, JwtRefreshStrategy],
-  exports: [AuthService, PassportModule],
+  providers: [AuthService, JwtStrategy, JwtRefreshStrategy, JwtAuthGuard],
+  exports: [AuthService, PassportModule, JwtAuthGuard],
 })
 export class AuthModule {}
 

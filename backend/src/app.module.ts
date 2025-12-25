@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -18,6 +19,7 @@ import { ModuleRegistryModule } from './core/module-registry/module-registry.mod
 import { ConfigModule as ConfigServiceModule } from './core/config-service/config.module';
 import { BillingModule } from './core/billing-service/billing.module';
 import { SharedModule } from './shared/shared.module';
+import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 
 const controllers: any[] = [AppController];
 
@@ -69,6 +71,12 @@ if (process.env.ENABLE_PLATFORM_SETUP === 'true') {
     BillingModule,
   ],
   controllers,
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
 export class AppModule {}
