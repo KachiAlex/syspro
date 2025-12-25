@@ -1,21 +1,11 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import type { Request } from 'express';
+import { verify } from 'jsonwebtoken';
 import { UsersService } from '../../users/users.service';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
-    private readonly usersService: UsersService,
-  ) {}
+  constructor(private readonly usersService: UsersService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
@@ -25,11 +15,13 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing access token');
     }
 
-    try {
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get<string>('JWT_SECRET'),
-      });
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new UnauthorizedException('JWT secret not configured');
+    }
 
+    try {
+      const payload = verify(token, secret) as { sub: string };
       const user = await this.usersService.findOne(payload.sub);
       if (!user || user.status !== 'ACTIVE') {
         throw new UnauthorizedException();
@@ -37,7 +29,7 @@ export class JwtAuthGuard implements CanActivate {
 
       (request as any).user = user;
       return true;
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Invalid access token');
     }
   }
