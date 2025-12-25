@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { PassportModule } from '@nestjs/passport';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { getDatabaseConfig } from './config/database.config';
@@ -53,6 +54,7 @@ if (process.env.ENABLE_PLATFORM_SETUP === 'true') {
         limit: 100,
       },
     ]),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     // Application Modules
     TenantModule,
     SharedModule,
