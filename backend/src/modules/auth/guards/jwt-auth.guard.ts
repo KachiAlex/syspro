@@ -6,16 +6,12 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { verify } from 'jsonwebtoken';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { User, UserStatus } from '../../../entities/user.entity';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(
-    @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
-  ) {}
+  constructor(private readonly dataSource: DataSource) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
@@ -32,7 +28,7 @@ export class JwtAuthGuard implements CanActivate {
 
     try {
       const payload = verify(token, secret) as { sub: string };
-      const user = await this.usersRepository.findOne({
+      const user = await this.dataSource.getRepository(User).findOne({
         where: { id: payload.sub },
       });
 
