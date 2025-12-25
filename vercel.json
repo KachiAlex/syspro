@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/index.ts",
+      "src": "backend/api/index.ts",
       "use": "@vercel/node",
       "config": {
         "tsconfig": "backend/tsconfig.build.json"
@@ -21,7 +21,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/index.ts"
+      "dest": "/backend/api/index.ts"
     },
     {
       "src": "/(.*\\.(js|css|ico|png|jpg|jpeg|svg|gif|woff|woff2|ttf|eot|json|xml|txt))",
@@ -36,4 +36,3 @@
     "NODE_ENV": "production"
   }
 }
-
