@@ -12,27 +12,12 @@ export async function createApp() {
   // Global prefix
   app.setGlobalPrefix('api');
 
-  // CORS
-  const corsOrigins = (process.env.CORS_ORIGIN || '')
-    .split(',')
-    .map((o) => o.trim())
-    .filter(Boolean);
-
-  const allowAllOrigins = corsOrigins.length === 0;
-
+  // CORS - Allow all origins for now
   app.enableCors({
-    origin: (origin, callback) => {
-      if (!origin || allowAllOrigins) {
-        return callback(null, true);
-      }
-
-      if (corsOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      return callback(new Error('CORS origin not allowed'), false);
-    },
+    origin: true, // Allow all origins
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
 
   // Validation

@@ -1,14 +1,20 @@
 // Comprehensive seed script to initialize the multi-tenant platform
 // Creates: Super Admin user, default plans, and sample tenant
 
-import { DataSource } from 'typeorm';
+import 'dotenv/config';
+import { DataSource, DataSourceOptions } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { ConfigService } from '@nestjs/config';
 import { User, UserRole, UserStatus } from '../entities/user.entity';
 import { Tenant } from '../entities/tenant.entity';
 import { Organization } from '../entities/organization.entity';
 import { UserTenantAccess } from '../entities/user-tenant-access.entity';
 import { Plan, BillingCycle } from '../core/billing-service/entities/plan.entity';
-import { Subscription } from '../core/billing-service/entities/subscription.entity';
+import {
+  Subscription,
+  SubscriptionStatus,
+} from '../core/billing-service/entities/subscription.entity';
+import { getDatabaseConfig } from '../config/database.config';
 
 async function seedPlatform(dataSource: DataSource) {
   console.log('🌱 Starting platform seed...\n');
@@ -105,44 +111,39 @@ async function seedPlatform(dataSource: DataSource) {
     createdPlans.push(plan);
   }
 
-  // 2. Create Super Admin Organization
+  // 2. Create Platform Tenant
+  console.log('\n🏗️  Creating platform tenant...');
+  const tenantRepository = dataSource.getRepository(Tenant);
+
+  let platformTenant = await tenantRepository.findOne({
+    where: { code: 'PLATFORM' },
+  });
+
+  if (!platformTenant) {
+    platformTenant = tenantRepository.create({
+      name: 'Platform Tenant',
+      code: 'PLATFORM',
+      isActive: true,
+    });
+    platformTenant = await tenantRepository.save(platformTenant);
+    console.log('  ✓ Created platform tenant');
+  } else {
+    console.log('  ⊙ Platform tenant already exists');
+  }
+
+  // 3. Create Super Admin Organization (attached to platform tenant)
   console.log('\n🏢 Creating platform organization...');
   const orgRepository = dataSource.getRepository(Organization);
-  
-  let platformOrg = await orgRepository.findOne({ 
-    where: { code: 'PLATFORM' } 
+
+  let platformOrg = await orgRepository.findOne({
+    where: { tenantId: platformTenant.id },
   });
-  
+
   if (!platformOrg) {
     platformOrg = orgRepository.create({
       name: 'Syspro Platform',
-      code: 'PLATFORM',
-      email: 'admin@syspro.com',
-      phone: '+1234567890',
-      address: '123 Platform Street',
-      city: 'Tech City',
-      country: 'USA',
-      isActive: true,
-    });
-    await orgRepository.save(platformOrg);
-    console.log('  ✓ Created platform organization');
-  } else {
-    console.log('  ⊙ Platform organization already exists');
-  }
-
-  // 3. Create Platform Tenant
-  console.log('\n🏗️  Creating platform tenant...');
-  const tenantRepository = dataSource.getRepository(Tenant);
-  
-  let platformTenant = await tenantRepository.findOne({ 
-    where: { code: 'PLATFORM' } 
-  });
-  
-  if (!platformTenant) {
-    platformTenant = tenantRepository.create({
-      name: 'Platform Administration',
-      code: 'PLATFORM',
-      organizationId: platformOrg.id,
+      domain: 'syspro-platform.com',
+      tenantId: platformTenant.id,
       settings: {
         timezone: 'UTC',
         currency: 'USD',
@@ -150,10 +151,10 @@ async function seedPlatform(dataSource: DataSource) {
       },
       isActive: true,
     });
-    await tenantRepository.save(platformTenant);
-    console.log('  ✓ Created platform tenant');
+    platformOrg = await orgRepository.save(platformOrg);
+    console.log('  ✓ Created platform organization');
   } else {
-    console.log('  ⊙ Platform tenant already exists');
+    console.log('  ⊙ Platform organization already exists');
   }
 
   // 4. Create Super Admin User
@@ -218,7 +219,7 @@ async function seedPlatform(dataSource: DataSource) {
   let platformSubscription = await subscriptionRepository.findOne({
     where: { 
       tenantId: platformTenant.id,
-      status: 'active'
+      status: SubscriptionStatus.ACTIVE,
     }
   });
   
@@ -230,7 +231,7 @@ async function seedPlatform(dataSource: DataSource) {
     platformSubscription = subscriptionRepository.create({
       tenantId: platformTenant.id,
       planId: enterprisePlan.id,
-      status: 'active',
+      status: SubscriptionStatus.ACTIVE,
       currentPeriodStart: now,
       currentPeriodEnd: nextYear,
       cancelAtPeriodEnd: false,
@@ -245,19 +246,35 @@ async function seedPlatform(dataSource: DataSource) {
     console.log('  ⊙ Platform subscription already exists');
   }
 
-  // 7. Create Sample Demo Tenant
+  // 7. Create Sample Demo Tenant + Organization
   console.log('\n🎯 Creating demo tenant...');
   
-  let demoOrg = await orgRepository.findOne({ where: { code: 'DEMO' } });
+  let demoTenant = await tenantRepository.findOne({ where: { code: 'DEMO' } });
+  if (!demoTenant) {
+    demoTenant = tenantRepository.create({
+      name: 'Demo Company Tenant',
+      code: 'DEMO',
+      isActive: true,
+    });
+    demoTenant = await tenantRepository.save(demoTenant);
+    console.log('  ✓ Created demo tenant');
+  } else {
+    console.log('  ⊙ Demo tenant already exists');
+  }
+
+  let demoOrg = await orgRepository.findOne({
+    where: { tenantId: demoTenant.id },
+  });
   if (!demoOrg) {
     demoOrg = orgRepository.create({
       name: 'Demo Company',
-      code: 'DEMO',
-      email: 'demo@company.com',
-      phone: '+1234567891',
-      address: '456 Demo Avenue',
-      city: 'Demo City',
-      country: 'USA',
+      domain: 'demo-company.com',
+      tenantId: demoTenant.id,
+      settings: {
+        timezone: 'America/New_York',
+        currency: 'USD',
+        dateFormat: 'MM/DD/YYYY',
+      },
       isActive: true,
     });
     await orgRepository.save(demoOrg);
@@ -266,33 +283,26 @@ async function seedPlatform(dataSource: DataSource) {
     console.log('  ⊙ Demo organization already exists');
   }
 
-  let demoTenant = await tenantRepository.findOne({ where: { code: 'DEMO' } });
-  if (!demoTenant) {
-    demoTenant = tenantRepository.create({
-      name: 'Demo Company Tenant',
-      code: 'DEMO',
-      organizationId: demoOrg.id,
-      settings: {
-        timezone: 'America/New_York',
-        currency: 'USD',
-        dateFormat: 'MM/DD/YYYY',
+  const starterPlan = createdPlans.find((p) => p.slug === 'starter');
+  if (!starterPlan) {
+    console.warn('⚠️ Starter plan missing, skipping demo subscription creation');
+  } else {
+    const existingDemoSubscription = await subscriptionRepository.findOne({
+      where: {
+        tenantId: demoTenant.id,
+        planId: starterPlan.id,
       },
-      isActive: true,
     });
-    await tenantRepository.save(demoTenant);
-    console.log('  ✓ Created demo tenant');
 
-    // Subscribe demo to starter plan
-    const starterPlan = createdPlans.find(p => p.slug === 'starter');
-    if (starterPlan) {
+    if (!existingDemoSubscription) {
       const now = new Date();
       const nextMonth = new Date();
       nextMonth.setMonth(nextMonth.getMonth() + 1);
-      
+
       const demoSubscription = subscriptionRepository.create({
         tenantId: demoTenant.id,
         planId: starterPlan.id,
-        status: 'trialing',
+        status: SubscriptionStatus.TRIALING,
         currentPeriodStart: now,
         currentPeriodEnd: nextMonth,
         cancelAtPeriodEnd: false,
@@ -303,9 +313,9 @@ async function seedPlatform(dataSource: DataSource) {
       });
       await subscriptionRepository.save(demoSubscription);
       console.log('  ✓ Created trial subscription for demo tenant');
+    } else {
+      console.log('  ⊙ Demo tenant already has starter subscription');
     }
-  } else {
-    console.log('  ⊙ Demo tenant already exists');
   }
 
   console.log('\n✅ Platform seed completed successfully!\n');
@@ -338,9 +348,21 @@ async function seedPlatform(dataSource: DataSource) {
 }
 
 // Main execution
-import dataSource from '../config/data-source';
-
 async function main() {
+  const configService = new ConfigService();
+  const dataSourceOptions = getDatabaseConfig(
+    configService,
+  ) as DataSourceOptions;
+
+  if ('url' in dataSourceOptions && dataSourceOptions.url) {
+    const sanitizedUrl = (dataSourceOptions.url as string).replace(
+      /:[^:@]+@/,
+      ':[REDACTED]@',
+    );
+    console.log('🗄️  Using DB URL:', sanitizedUrl);
+  }
+  const dataSource = new DataSource(dataSourceOptions);
+
   try {
     console.log('🚀 Connecting to database...');
     await dataSource.initialize();

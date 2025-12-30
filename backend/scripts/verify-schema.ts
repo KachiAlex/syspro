@@ -40,6 +40,8 @@ const expectedTables = [
 async function verifySchema() {
   const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
 
+  console.log('Using connection string:', connectionString?.replace(/:[^:@]+@/, ':[REDACTED]@'));
+
   if (!connectionString) {
     console.error('❌ Error: POSTGRES_URL or DATABASE_URL environment variable is required');
     process.exit(1);
