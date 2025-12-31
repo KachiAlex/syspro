@@ -1,28 +1,12 @@
 {
   "version": 2,
   "name": "syspro-erp",
-  "builds": [
-    {
-      "src": "apps/web/package.json",
-      "use": "@vercel/next"
-    },
-    {
-      "src": "apps/api/src/serverless.ts",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "apps/api/src/serverless.ts"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "apps/web/$1"
-    }
-  ],
+  "buildCommand": "cd apps/web && npm run build",
+  "outputDirectory": "apps/web/.next",
+  "installCommand": "npm install",
+  "framework": "nextjs",
   "functions": {
-    "apps/api/src/serverless.ts": {
+    "apps/web/src/app/api/**/*.ts": {
       "runtime": "nodejs18.x",
       "maxDuration": 30
     }
