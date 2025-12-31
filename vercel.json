@@ -4,10 +4,6 @@
     {
       "src": "backend/api/hello.ts",
       "use": "@vercel/node"
-    },
-    {
-      "src": "backend/api/pure.ts",
-      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -16,20 +12,8 @@
       "dest": "/backend/api/hello.ts"
     },
     {
-      "src": "/api/(.*)",
-      "dest": "/backend/api/pure.ts"
-    },
-    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ],
-  "functions": {
-    "backend/api/hello.ts": {
-      "maxDuration": 5
-    },
-    "backend/api/pure.ts": {
-      "maxDuration": 10
-    }
-  }
+  ]
 }

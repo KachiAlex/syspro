@@ -1,10 +1,6 @@
 {
   "name": "syspro-backend",
   "version": "1.0.0",
-  "scripts": {
-    "build": "echo 'No build needed'",
-    "start": "echo 'Use Vercel functions'"
-  },
   "dependencies": {
     "@vercel/node": "^3.0.0"
   },
