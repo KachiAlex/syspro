@@ -19,18 +19,18 @@
                 const helloData = await helloResponse.json();
                 results.innerHTML += '<p>✅ Hello API: ' + JSON.stringify(helloData) + '</p>';
                 
-                // Test 2: Main API
-                const apiResponse = await fetch('/api/');
-                const apiData = await apiResponse.json();
-                results.innerHTML += '<p>✅ Main API: ' + JSON.stringify(apiData) + '</p>';
-                
-                // Test 3: Health check
-                const healthResponse = await fetch('/api/health');
-                const healthData = await healthResponse.json();
-                results.innerHTML += '<p>✅ Health API: ' + JSON.stringify(healthData) + '</p>';
+                // Test 2: Login endpoint
+                const loginResponse = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'admin@syspro.com', password: 'Admin@123' })
+                });
+                const loginData = await loginResponse.json();
+                results.innerHTML += '<p>✅ Login API: ' + JSON.stringify(loginData) + '</p>';
                 
             } catch (error) {
                 results.innerHTML += '<p>❌ Error: ' + error.message + '</p>';
+                console.error('API Test Error:', error);
             }
         }
         
