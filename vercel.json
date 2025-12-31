@@ -3,29 +3,28 @@
   "name": "syspro-erp",
   "builds": [
     {
-      "src": "apps/api/src/main.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "apps/api/dist/**",
-          "libs/shared/dist/**",
-          "libs/database/dist/**"
-        ]
-      }
+      "src": "apps/web/package.json",
+      "use": "@vercel/next"
+    },
+    {
+      "src": "apps/api/src/serverless.ts",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "apps/api/src/main.ts"
+      "dest": "apps/api/src/serverless.ts"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "apps/web/$1"
     }
   ],
   "functions": {
-    "apps/api/src/main.ts": {
+    "apps/api/src/serverless.ts": {
       "runtime": "nodejs18.x",
       "maxDuration": 30
     }
-  },
-  "framework": null,
-  "outputDirectory": "apps/web/.next"
+  }
 }
