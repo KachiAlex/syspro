@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "backend/api/simple.ts",
+      "src": "backend/api/pure.ts",
       "use": "@vercel/node"
     },
     {
@@ -18,7 +18,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/backend/api/simple.ts"
+      "dest": "/backend/api/pure.ts"
     },
     {
       "src": "/(.*\\.(js|css|ico|png|jpg|jpeg|svg|gif|woff|woff2|ttf|eot|json|xml|txt))",
@@ -35,8 +35,8 @@
     "REACT_APP_ENV": "production"
   },
   "functions": {
-    "backend/api/simple.ts": {
-      "maxDuration": 30
+    "backend/api/pure.ts": {
+      "maxDuration": 10
     }
   }
 }
