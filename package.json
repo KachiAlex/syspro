@@ -1,0 +1,63 @@
+{
+  "name": "syspro-erp-monorepo",
+  "version": "1.0.0",
+  "description": "Production-grade multi-tenant ERP system",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "libs/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "build:api": "npm run build --workspace=@syspro/shared && npm run build --workspace=@syspro/database && npm run build --workspace=@syspro/api",
+    "build:web": "npm run build --workspace=@syspro/shared && npm run build --workspace=@syspro/web",
+    "build:vercel": "npm run build:api",
+    "dev": "turbo run dev --parallel",
+    "dev:api": "npm run dev --workspace=@syspro/api",
+    "dev:web": "npm run dev --workspace=@syspro/web",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "type-check": "turbo run type-check",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "docker:dev": "docker-compose -f docker/docker-compose.dev.yml up",
+    "docker:prod": "docker-compose -f docker/docker-compose.prod.yml up",
+    "db:migrate": "cd apps/api && npm run migration:run",
+    "db:seed": "cd apps/api && npm run seed:run",
+    "prepare": "husky install",
+    "vercel-build": "npm run build:vercel",
+    "deploy:setup": "node scripts/deploy-setup.js",
+    "deploy:check": "curl $VERCEL_URL/api/v1/health || echo 'API not responding'",
+    "pre-deploy": "node scripts/pre-deploy-check.js"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^18.4.3",
+    "@commitlint/config-conventional": "^18.4.3",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
+    "eslint": "^8.54.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-import": "^2.29.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.1.0",
+    "prettier": "^3.1.0",
+    "turbo": "^1.11.2",
+    "typescript": "^5.3.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  }
+}

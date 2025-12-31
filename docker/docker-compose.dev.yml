@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: syspro-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: syspro_erp_dev
+      POSTGRES_USER: syspro_user
+      POSTGRES_PASSWORD: syspro_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - syspro-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U syspro_user -d syspro_erp_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: syspro-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - syspro-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Backend
+  api:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.api.dev
+    container_name: syspro-api-dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://syspro_user:syspro_password@postgres:5432/syspro_erp_dev
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-jwt-secret-change-in-production
+      JWT_EXPIRES_IN: 24h
+      API_PORT: 3001
+    ports:
+      - "3001:3001"
+    volumes:
+      - ../apps/api:/app/apps/api
+      - ../libs:/app/libs
+      - /app/node_modules
+      - /app/apps/api/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - syspro-network
+    command: npm run dev
+
+  # Web Frontend
+  web:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.web.dev
+    container_name: syspro-web-dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXTAUTH_SECRET: dev-nextauth-secret-change-in-production
+      NEXTAUTH_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../apps/web:/app/apps/web
+      - ../libs:/app/libs
+      - /app/node_modules
+      - /app/apps/web/node_modules
+      - /app/apps/web/.next
+    depends_on:
+      - api
+    networks:
+      - syspro-network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  syspro-network:
+    driver: bridge

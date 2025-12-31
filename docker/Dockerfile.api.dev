@@ -1,0 +1,30 @@
+FROM node:18-alpine
+
+# Install dependencies for native modules
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY turbo.json ./
+COPY apps/api/package*.json ./apps/api/
+COPY libs/shared/package*.json ./libs/shared/
+COPY libs/database/package*.json ./libs/database/
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
+COPY apps/api ./apps/api
+COPY libs ./libs
+
+# Build shared libraries
+RUN npm run build --workspace=@syspro/shared
+RUN npm run build --workspace=@syspro/database
+
+WORKDIR /app/apps/api
+
+EXPOSE 3001
+
+CMD ["npm", "run", "dev"]
