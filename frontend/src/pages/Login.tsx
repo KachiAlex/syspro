@@ -21,7 +21,7 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      const response = await api.post('/test-login', { email, password });
+      const response = await api.post('/login', { email, password });
       
       if (response.data.success) {
         const { user } = response.data;
