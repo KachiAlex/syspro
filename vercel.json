@@ -2,15 +2,8 @@
   "version": 2,
   "builds": [
     {
-      "src": "backend/api/test.ts",
+      "src": "backend/api/simple.ts",
       "use": "@vercel/node"
-    },
-    {
-      "src": "backend/api/index.ts",
-      "use": "@vercel/node",
-      "config": {
-        "tsconfig": "backend/tsconfig.build.json"
-      }
     },
     {
       "src": "frontend/package.json",
@@ -24,12 +17,8 @@
   ],
   "routes": [
     {
-      "src": "/api/test",
-      "dest": "/backend/api/test.ts"
-    },
-    {
       "src": "/api/(.*)",
-      "dest": "/backend/api/index.ts"
+      "dest": "/backend/api/simple.ts"
     },
     {
       "src": "/(.*\\.(js|css|ico|png|jpg|jpeg|svg|gif|woff|woff2|ttf|eot|json|xml|txt))",
@@ -42,16 +31,12 @@
   ],
   "env": {
     "NODE_ENV": "production",
-    "ENABLE_SYNC": "false",
     "REACT_APP_API_URL": "https://syspro-8anuk5s0u-onyedikachi-akomas-projects.vercel.app/api",
     "REACT_APP_ENV": "production"
   },
   "functions": {
-    "backend/api/index.ts": {
+    "backend/api/simple.ts": {
       "maxDuration": 30
-    },
-    "backend/api/test.ts": {
-      "maxDuration": 10
     }
   }
 }

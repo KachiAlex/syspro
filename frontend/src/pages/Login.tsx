@@ -21,11 +21,16 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      const response = await api.post('/auth/login', { email, password });
-      const { user, accessToken } = response.data;
+      const response = await api.post('/test-login', { email, password });
       
-      setAuth(user, accessToken);
-      navigate('/dashboard');
+      if (response.data.success) {
+        const { user } = response.data;
+        // Simple auth without JWT for now
+        setAuth(user, 'simple-token');
+        navigate('/dashboard');
+      } else {
+        setError(response.data.message || 'Login failed');
+      }
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Login failed. Please try again.';
       setError(errorMessage);

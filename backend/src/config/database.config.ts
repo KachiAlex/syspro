@@ -17,23 +17,12 @@ export const getDatabaseConfig = (
       connectionString.includes('neon.tech') ||
       connectionString.includes('amazonaws.com');
 
-    const entitiesPath = [__dirname + '/../**/*.entity{.ts,.js}'];
-
-    const shouldDropSchema =
-      configService.get<string>('DROP_SCHEMA_ON_SYNC') === 'true';
-
-    // In production, disable sync and use migrations instead
-    const shouldSync = isProduction 
-      ? false 
-      : configService.get<string>('ENABLE_SYNC') === 'true';
-
     return {
       type: 'postgres',
       url: connectionString,
-      entities: entitiesPath,
-      synchronize: shouldSync,
-      dropSchema: shouldDropSchema,
-      logging: configService.get<string>('NODE_ENV') === 'development',
+      entities: [__dirname + '/../entities/*.entity{.ts,.js}'],
+      synchronize: true, // Enable for now to auto-create tables
+      logging: !isProduction,
       ssl: shouldEnableSsl ? { rejectUnauthorized: false } : false,
       extra: shouldEnableSsl
         ? {
@@ -42,17 +31,10 @@ export const getDatabaseConfig = (
             },
           }
         : undefined,
-      migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-      migrationsRun: isProduction, // Auto-run migrations in production
     };
   }
 
   // Fallback to individual environment variables
-  const entitiesPath = [__dirname + '/../**/*.entity{.ts,.js}'];
-
-  const shouldDropSchema =
-    configService.get<string>('DROP_SCHEMA_ON_SYNC') === 'true';
-
   return {
     type: 'postgres',
     host: configService.get<string>('DB_HOST', 'localhost'),
@@ -60,11 +42,10 @@ export const getDatabaseConfig = (
     username: configService.get<string>('DB_USERNAME', 'syspro'),
     password: configService.get<string>('DB_PASSWORD', 'syspro_password'),
     database: configService.get<string>('DB_NAME', 'syspro_db'),
-    entities: entitiesPath,
-    synchronize: configService.get<string>('ENABLE_SYNC') === 'true',
-    logging: configService.get<string>('NODE_ENV') === 'development',
+    entities: [__dirname + '/../entities/*.entity{.ts,.js}'],
+    synchronize: true,
+    logging: !isProduction,
     ssl: false,
-    migrations: [__dirname + '/../migrations/*{.ts,.js}'],
   };
 };
 
