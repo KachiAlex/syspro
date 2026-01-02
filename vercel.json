@@ -4,19 +4,12 @@
   "builds": [
     {
       "src": "apps/web/package.json",
-      "use": "@vercel/next",
-      "config": {
-        "distDir": ".next"
-      }
+      "use": "@vercel/next"
     }
   ],
   "routes": [
     {
       "handle": "filesystem"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "apps/web/api/$1"
     },
     {
       "src": "/(.*)",

@@ -186,7 +186,7 @@ function getEnvironmentConfig(): EnvironmentConfig {
       console.error('Environment configuration error, using fallbacks:', error);
       
       return {
-        apiBaseUrl: '/api', // Fallback to relative API path
+        apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://syspro-api.vercel.app', // Fallback to production API
         nodeEnv: 'production',
         isDevelopment: false,
         isProduction: true,
