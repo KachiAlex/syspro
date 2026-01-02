@@ -9,6 +9,8 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: false,
   },
+  // Vercel deployment settings
+  trailingSlash: false,
 }
 
 module.exports = nextConfig
