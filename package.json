@@ -37,6 +37,9 @@
     "validate:packages": "node scripts/validate-packages.js",
     "validate:build": "node scripts/build-check.js"
   },
+  "dependencies": {
+    "axios": "^1.6.2"
+  },
   "devDependencies": {
     "@commitlint/cli": "^18.4.3",
     "@commitlint/config-conventional": "^18.4.3",
