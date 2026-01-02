@@ -1,19 +1,7 @@
 {
   "version": 2,
   "name": "syspro-erp",
-  "builds": [
-    {
-      "src": "apps/web/package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "apps/web/$1"
-    }
-  ]
+  "buildCommand": "npm run build:web",
+  "installCommand": "npm install",
+  "outputDirectory": "apps/web/.next"
 }

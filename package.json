@@ -11,7 +11,7 @@
   "scripts": {
     "build": "turbo run build",
     "build:api": "npm run build --workspace=@syspro/shared && npm run build --workspace=@syspro/database && npm run build --workspace=@syspro/api",
-    "build:web": "npm run build --workspace=@syspro/shared && npm run build --workspace=@syspro/web",
+    "build:web": "cd apps/web && npm install && npm run build",
     "build:vercel": "npm run build:api",
     "dev": "turbo run dev --parallel",
     "dev:api": "npm run dev --workspace=@syspro/api",
@@ -28,7 +28,7 @@
     "db:migrate": "cd apps/api && npm run migration:run",
     "db:seed": "cd apps/api && npm run seed:run",
     "prepare": "husky install",
-    "vercel-build": "npm run build:vercel",
+    "vercel-build": "npm run build:web",
     "deploy:setup": "node scripts/deploy-setup.js",
     "deploy:check": "curl $VERCEL_URL/api/v1/health || echo 'API not responding'",
     "pre-deploy": "node scripts/pre-deploy-check.js",
