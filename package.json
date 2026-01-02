@@ -37,7 +37,16 @@
     "validate:packages": "node scripts/validate-packages.js",
     "validate:build": "node scripts/build-check.js",
     "test:deployment": "node scripts/deployment-test.js",
-    "check:deployment": "node scripts/check-deployment.js"
+    "check:deployment": "node scripts/check-deployment.js",
+    "build:validate": "npx ts-node scripts/build-validator.ts",
+    "build:validate:routes": "npx ts-node scripts/build-validator.ts --test-routes",
+    "deploy:strategy1": "npx ts-node scripts/vercel-config-manager.ts dashboard",
+    "deploy:strategy2": "npx ts-node scripts/vercel-config-manager.ts vercel-json",
+    "deploy:strategy3": "npx ts-node scripts/vercel-config-manager.ts cli",
+    "deploy:strategy4": "npx ts-node scripts/vercel-config-manager.ts separate",
+    "test:routes": "npx ts-node scripts/route-testing-engine.ts",
+    "test:vercel": "npx ts-node scripts/vercel-config-manager.ts test",
+    "status:check": "npx ts-node scripts/deployment-status-check.ts"
   },
   "dependencies": {
     "axios": "^1.6.2"
@@ -53,9 +62,12 @@
     "eslint": "^8.54.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "^2.29.0",
+    "fast-check": "^3.15.0",
     "husky": "^8.0.3",
+    "jest": "^29.7.0",
     "lint-staged": "^15.1.0",
     "prettier": "^3.1.0",
+    "ts-node": "^10.9.1",
     "turbo": "^1.11.2",
     "typescript": "^5.3.2"
   },
