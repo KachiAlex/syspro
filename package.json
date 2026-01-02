@@ -35,7 +35,9 @@
     "deploy:validate": "node scripts/pre-deployment-checker.js",
     "deploy:check-final": "node scripts/final-validation.js",
     "validate:packages": "node scripts/validate-packages.js",
-    "validate:build": "node scripts/build-check.js"
+    "validate:build": "node scripts/build-check.js",
+    "test:deployment": "node scripts/deployment-test.js",
+    "check:deployment": "node scripts/check-deployment.js"
   },
   "dependencies": {
     "axios": "^1.6.2"
