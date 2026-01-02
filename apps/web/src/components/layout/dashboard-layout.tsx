@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/auth-context';
-import { AuthUser } from '@syspro/shared';
+import { AuthUser } from '../../lib/types/shared';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

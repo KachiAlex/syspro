@@ -1,3 +1,4 @@
+import React from 'react';
 import './globals.css';
 import { AuthProvider } from '../contexts/auth-context';
 import { EnvironmentCheck, EnvironmentStatus } from '../components/setup/environment-check';

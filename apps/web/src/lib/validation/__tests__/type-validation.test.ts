@@ -5,7 +5,7 @@
 
 import { jest } from '@jest/globals';
 import { TypeValidator, ValidationError } from '../type-validator';
-import { AuthUser, LoginResponse, UserProfile } from '@syspro/shared';
+import { AuthUser, LoginResponse, UserProfile } from '../../../types/shared';
 
 describe('Type Validation - Property Tests', () => {
   let validator: TypeValidator;

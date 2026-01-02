@@ -11,7 +11,7 @@ import {
   User,
   Organization,
   Tenant
-} from '@syspro/shared';
+} from '../types/shared';
 
 // Request/Response types for API endpoints
 export interface LoginRequest {

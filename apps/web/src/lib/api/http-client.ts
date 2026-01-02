@@ -5,7 +5,7 @@
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { env } from '../config/env';
-import { ApiResponse, ValidationError } from '@syspro/shared';
+import { ApiResponse, ValidationError } from '../types/shared';
 
 // Types for the HTTP client
 export interface HttpClientConfig {

@@ -7,7 +7,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { authService, AuthState, AuthResult } from '../lib/auth/auth-service';
-import { AuthUser } from '@syspro/shared';
+import { AuthUser } from '../lib/types/shared';
 import { LoginRequest, RegisterRequest } from '../lib/api/client';
 
 // Context value interface

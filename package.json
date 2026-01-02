@@ -31,7 +31,11 @@
     "vercel-build": "npm run build:vercel",
     "deploy:setup": "node scripts/deploy-setup.js",
     "deploy:check": "curl $VERCEL_URL/api/v1/health || echo 'API not responding'",
-    "pre-deploy": "node scripts/pre-deploy-check.js"
+    "pre-deploy": "node scripts/pre-deploy-check.js",
+    "deploy:validate": "node scripts/pre-deployment-checker.js",
+    "deploy:check-final": "node scripts/final-validation.js",
+    "validate:packages": "node scripts/validate-packages.js",
+    "validate:build": "node scripts/build-check.js"
   },
   "devDependencies": {
     "@commitlint/cli": "^18.4.3",

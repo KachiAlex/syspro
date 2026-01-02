@@ -5,7 +5,7 @@
 
 import { apiClient } from '../api/client';
 import { tokenStorage } from './token-storage';
-import { AuthUser, AuthTokens, ApiResponse } from '@syspro/shared';
+import { AuthUser, AuthTokens, ApiResponse } from '../types/shared';
 import { LoginRequest, RegisterRequest } from '../api/client';
 
 // Authentication state

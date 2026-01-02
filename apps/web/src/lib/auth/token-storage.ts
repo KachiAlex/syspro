@@ -3,7 +3,7 @@
  * Handles storage and retrieval of authentication tokens
  */
 
-import { AuthTokens } from '@syspro/shared';
+import { AuthTokens } from '../types/shared';
 
 // Storage keys
 const ACCESS_TOKEN_KEY = 'syspro_access_token';
