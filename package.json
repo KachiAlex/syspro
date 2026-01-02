@@ -27,7 +27,7 @@
     "docker:prod": "docker-compose -f docker/docker-compose.prod.yml up",
     "db:migrate": "cd apps/api && npm run migration:run",
     "db:seed": "cd apps/api && npm run seed:run",
-    "prepare": "husky install",
+    "postinstall": "node -e \"if (!process.env.CI && !process.env.VERCEL && !process.env.GITHUB_ACTIONS) { try { require('child_process').execSync('husky install', { stdio: 'inherit' }); } catch (e) { console.log('Husky setup skipped'); } }\"",
     "vercel-build": "npm run build:web",
     "deploy:setup": "node scripts/deploy-setup.js",
     "deploy:check": "curl $VERCEL_URL/api/v1/health || echo 'API not responding'",
