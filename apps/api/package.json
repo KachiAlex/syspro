@@ -38,8 +38,6 @@
     "@nestjs/typeorm": "^10.0.1",
     "@nestjs/throttler": "^5.0.1",
     "@nestjs/cache-manager": "^2.1.1",
-    "@syspro/shared": "workspace:*",
-    "@syspro/database": "workspace:*",
     "axios": "^1.6.2",
     "bcrypt": "^5.1.1",
     "cache-manager": "^5.2.4",

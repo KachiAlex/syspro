@@ -7,7 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { ApiResponse, ValidationError } from '@syspro/shared';
+import { ApiResponse, ValidationError } from '../types';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {

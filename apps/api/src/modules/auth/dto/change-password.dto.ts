@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, MinLength, Matches } from 'class-validator';
-import { VALIDATION } from '@syspro/shared';
+import { VALIDATION } from '../../shared/constants';
 
 export class ChangePasswordDto {
   @ApiProperty({

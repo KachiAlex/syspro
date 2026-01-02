@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsString, MinLength, MaxLength, Matches } from 'class-validator';
-import { VALIDATION } from '@syspro/shared';
+import { VALIDATION } from '../../shared/constants';
 
 export class RegisterDto {
   @ApiProperty({

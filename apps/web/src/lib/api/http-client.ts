@@ -3,7 +3,7 @@
  * Provides a centralized axios instance with interceptors and error handling
  */
 
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { env } from '../config/env';
 import { ApiResponse, ValidationError } from '../types/shared';
 
@@ -15,7 +15,7 @@ export interface HttpClientConfig {
 }
 
 export interface RequestInterceptor {
-  onFulfilled?: (config: AxiosRequestConfig) => AxiosRequestConfig | Promise<AxiosRequestConfig>;
+  onFulfilled?: (config: InternalAxiosRequestConfig) => InternalAxiosRequestConfig | Promise<InternalAxiosRequestConfig>;
   onRejected?: (error: any) => any;
 }
 
@@ -70,7 +70,7 @@ export class HttpClient {
   private setupInterceptors(): void {
     // Request interceptor - automatically add auth and tenant headers
     this.axiosInstance.interceptors.request.use(
-      (config) => {
+      (config: InternalAxiosRequestConfig) => {
         // Add authorization header if token is available
         if (this.authToken) {
           config.headers.Authorization = `Bearer ${this.authToken}`;
@@ -91,7 +91,7 @@ export class HttpClient {
 
         return config;
       },
-      (error) => {
+      (error: any) => {
         console.error('[HTTP] Request error:', error);
         return Promise.reject(error);
       }
@@ -99,7 +99,7 @@ export class HttpClient {
 
     // Response interceptor - handle errors consistently
     this.axiosInstance.interceptors.response.use(
-      (response) => {
+      (response: AxiosResponse) => {
         // Log response in development
         if (env.isDevelopment) {
           console.log(`[HTTP] Response ${response.status}:`, response.data);
