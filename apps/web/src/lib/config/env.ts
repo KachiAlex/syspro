@@ -86,8 +86,12 @@ function createEnvironmentConfig(): EnvironmentConfig {
     'NEXT_PUBLIC_API_BASE_URL',
     process.env.NEXT_PUBLIC_API_BASE_URL,
     {
-      required: true,
-      defaultValue: 'http://localhost:3001',
+      required: false, // Make it optional for production
+      defaultValue: typeof window !== 'undefined' 
+        ? window.location.origin 
+        : process.env.VERCEL_URL 
+          ? `https://${process.env.VERCEL_URL}` 
+          : 'http://localhost:3001',
       validator: isValidUrl,
       errorMessage: 'NEXT_PUBLIC_API_BASE_URL must be a valid URL (e.g., http://localhost:3001)',
     }
@@ -185,8 +189,15 @@ function getEnvironmentConfig(): EnvironmentConfig {
     if (process.env.NODE_ENV === 'production') {
       console.error('Environment configuration error, using fallbacks:', error);
       
+      // Use the same domain for API calls (Next.js API routes)
+      const currentDomain = typeof window !== 'undefined' 
+        ? window.location.origin 
+        : process.env.VERCEL_URL 
+          ? `https://${process.env.VERCEL_URL}` 
+          : 'https://syspro-erp.vercel.app';
+      
       return {
-        apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://syspro-api.vercel.app', // Fallback to production API
+        apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || currentDomain,
         nodeEnv: 'production',
         isDevelopment: false,
         isProduction: true,
