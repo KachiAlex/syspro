@@ -77,11 +77,16 @@ export class TenantModuleService {
 
     // Emit event for billing integration
     this.eventEmitter.emit('module.enabled', {
+      type: 'module_enabled',
       tenantId,
       moduleName: enableModuleDto.moduleName,
-      module,
+      moduleId: module.id,
       userId,
       timestamp: new Date(),
+      metadata: {
+        version: module.version,
+        configuration: enableModuleDto.configuration,
+      },
     });
 
     this.logger.log(`Module ${enableModuleDto.moduleName} enabled successfully for tenant ${tenantId}`);
@@ -125,10 +130,15 @@ export class TenantModuleService {
 
     // Emit event
     this.eventEmitter.emit('module.disabled', {
+      type: 'module_disabled',
       tenantId,
       moduleName,
+      moduleId: module?.id || 'unknown',
       userId,
       timestamp: new Date(),
+      metadata: {
+        reason: 'user_requested',
+      },
     });
 
     this.logger.log(`Module ${moduleName} disabled successfully for tenant ${tenantId}`);

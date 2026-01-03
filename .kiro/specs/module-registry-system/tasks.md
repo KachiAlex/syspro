@@ -143,7 +143,7 @@ This implementation plan provides a systematic approach to building the Module R
   - Test template application
   - _Requirements: 5.1, 5.2, 5.3, 5.4_
 
-- [ ] 7. Checkpoint - Core Module Registry Functionality
+- [x] 7. Checkpoint - Core Module Registry Functionality
   - Ensure all core services are working correctly
   - Test module registration and tenant enablement flow
   - Validate middleware access control
@@ -184,11 +184,13 @@ This implementation plan provides a systematic approach to building the Module R
   - Test privacy preservation
   - _Requirements: 7.1, 7.2, 7.3, 7.5_
 
-- [ ] 10. Implement Billing System Integration
+- [x] 10. Implement Billing System Integration
   - Create billing event handlers for module operations
   - Implement proration calculation logic
   - Add support for different pricing models
   - Create billing line item generation
+  - Integrate BillingIntegrationService and BillingIntegrationController with ModuleRegistryModule
+  - Update TenantModuleService to emit proper billing events
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
 
 - [ ]* 10.1 Write property test for billing integration consistency

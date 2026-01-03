@@ -3,14 +3,16 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ModuleRegistryController } from './module-registry.controller';
 import { TenantModuleController } from './tenant-module.controller';
+import { BillingIntegrationController } from './billing-integration.controller';
 import { ModuleRegistryService } from './module-registry.service';
 import { TenantModuleService } from './tenant-module.service';
 import { VersionManagerService } from './version-manager.service';
 import { ConfigurationManagerService } from './configuration-manager.service';
 import { DependencyManagerService } from './dependency-manager.service';
 import { ModuleUsageAnalyticsService } from './module-usage-analytics.service';
+import { BillingIntegrationService } from './billing-integration.service';
 import { UsageTrackingMiddleware } from './middleware/usage-tracking.middleware';
-import { ModuleRegistry, TenantModule, ModuleUsageAnalytics } from '@syspro/database';
+import { ModuleRegistry, TenantModule, ModuleUsageAnalytics, Subscription } from '@syspro/database';
 import { CacheService } from '../../shared/services/cache.service';
 
 @Module({
@@ -19,10 +21,15 @@ import { CacheService } from '../../shared/services/cache.service';
       ModuleRegistry,
       TenantModule,
       ModuleUsageAnalytics,
+      Subscription,
     ]),
     EventEmitterModule,
   ],
-  controllers: [ModuleRegistryController, TenantModuleController],
+  controllers: [
+    ModuleRegistryController, 
+    TenantModuleController,
+    BillingIntegrationController,
+  ],
   providers: [
     ModuleRegistryService,
     TenantModuleService,
@@ -30,6 +37,7 @@ import { CacheService } from '../../shared/services/cache.service';
     ConfigurationManagerService,
     DependencyManagerService,
     ModuleUsageAnalyticsService,
+    BillingIntegrationService,
     UsageTrackingMiddleware,
     CacheService,
   ],
@@ -40,6 +48,7 @@ import { CacheService } from '../../shared/services/cache.service';
     ConfigurationManagerService,
     DependencyManagerService,
     ModuleUsageAnalyticsService,
+    BillingIntegrationService,
     UsageTrackingMiddleware,
     CacheService,
   ],
