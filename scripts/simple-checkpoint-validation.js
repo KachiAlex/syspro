@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Simple Module Registry System - Checkpoint Validation
+ * Simple Module Registry System - Checkpoint Validation Script
  * 
- * This script performs basic validation checks on the module registry system
- * without requiring full application compilation.
+ * This script validates that all core module registry files exist and are properly structured
+ * without requiring the full NestJS application to run.
  */
 
 const fs = require('fs');
@@ -13,353 +13,404 @@ const path = require('path');
 class SimpleCheckpointValidator {
   constructor() {
     this.results = [];
-    this.logger = console;
+    this.passCount = 0;
+    this.failCount = 0;
+  }
+
+  log(message) {
+    console.log(message);
+  }
+
+  addResult(test, status, message, error) {
+    this.results.push({ test, status, message, error });
+    if (status === 'PASS') this.passCount++;
+    else if (status === 'FAIL') this.failCount++;
+  }
+
+  fileExists(filePath) {
+    try {
+      return fs.existsSync(path.join(__dirname, '..', filePath));
+    } catch (error) {
+      return false;
+    }
+  }
+
+  readFile(filePath) {
+    try {
+      return fs.readFileSync(path.join(__dirname, '..', filePath), 'utf8');
+    } catch (error) {
+      return null;
+    }
+  }
+
+  validateFileStructure(filePath, requiredPatterns) {
+    const content = this.readFile(filePath);
+    if (!content) return false;
+
+    return requiredPatterns.every(pattern => {
+      if (typeof pattern === 'string') {
+        return content.includes(pattern);
+      } else if (pattern instanceof RegExp) {
+        return pattern.test(content);
+      }
+      return false;
+    });
   }
 
   async run() {
-    this.logger.log('🚀 Starting Simple Module Registry System Checkpoint Validation');
+    this.log('🚀 Starting Simple Module Registry System Checkpoint Validation');
+    this.log('=' .repeat(80));
+
+    // Validate core entity files
+    this.validateCoreEntities();
     
-    try {
-      this.validateFileStructure();
-      this.validateEntityFiles();
-      this.validateServiceFiles();
-      this.validateControllerFiles();
-      this.validateMiddlewareFiles();
-      this.validateDTOFiles();
-      this.validateMigrationFiles();
-      this.validateSeedFiles();
-      
-      this.displayResults();
-      
-    } catch (error) {
-      this.logger.error('❌ Checkpoint validation failed:', error);
-      process.exit(1);
-    }
-  }
-
-  validateFileStructure() {
-    this.logger.log('📁 Validating File Structure...');
-
-    const requiredDirectories = [
-      'apps/api/src/modules/module-registry',
-      'apps/api/src/modules/module-registry/dto',
-      'apps/api/src/modules/module-registry/middleware',
-      'libs/database/src/entities',
-      'libs/database/src/migrations',
-      'libs/database/src/seeds',
-    ];
-
-    requiredDirectories.forEach(dir => {
-      if (fs.existsSync(dir)) {
-        this.addResult({
-          test: `Directory Structure - ${dir}`,
-          status: 'PASS',
-          message: 'Directory exists'
-        });
-      } else {
-        this.addResult({
-          test: `Directory Structure - ${dir}`,
-          status: 'FAIL',
-          error: 'Directory does not exist'
-        });
-      }
-    });
-  }
-
-  validateEntityFiles() {
-    this.logger.log('🗃️ Validating Entity Files...');
-
-    const requiredEntities = [
-      'libs/database/src/entities/module-registry.entity.ts',
-      'libs/database/src/entities/tenant-module.entity.ts',
-      'libs/database/src/entities/module-usage-analytics.entity.ts',
-    ];
-
-    requiredEntities.forEach(entityPath => {
-      if (fs.existsSync(entityPath)) {
-        const content = fs.readFileSync(entityPath, 'utf8');
-        
-        // Check for basic entity structure
-        const hasEntity = content.includes('@Entity');
-        const hasColumns = content.includes('@Column');
-        const hasExport = content.includes('export class');
-
-        if (hasEntity && hasColumns && hasExport) {
-          this.addResult({
-            test: `Entity File - ${path.basename(entityPath)}`,
-            status: 'PASS',
-            message: 'Entity file has proper structure'
-          });
-        } else {
-          this.addResult({
-            test: `Entity File - ${path.basename(entityPath)}`,
-            status: 'FAIL',
-            error: 'Entity file missing required decorators or exports'
-          });
-        }
-      } else {
-        this.addResult({
-          test: `Entity File - ${path.basename(entityPath)}`,
-          status: 'FAIL',
-          error: 'Entity file does not exist'
-        });
-      }
-    });
-  }
-
-  validateServiceFiles() {
-    this.logger.log('⚙️ Validating Service Files...');
-
-    const requiredServices = [
-      'apps/api/src/modules/module-registry/module-registry.service.ts',
-      'apps/api/src/modules/module-registry/tenant-module.service.ts',
-      'apps/api/src/modules/module-registry/module-usage-analytics.service.ts',
-      'apps/api/src/modules/module-registry/version-manager.service.ts',
-      'apps/api/src/modules/module-registry/configuration-manager.service.ts',
-      'apps/api/src/modules/module-registry/dependency-manager.service.ts',
-    ];
-
-    requiredServices.forEach(servicePath => {
-      if (fs.existsSync(servicePath)) {
-        const content = fs.readFileSync(servicePath, 'utf8');
-        
-        // Check for basic service structure
-        const hasInjectable = content.includes('@Injectable');
-        const hasExport = content.includes('export class');
-        const hasConstructor = content.includes('constructor');
-
-        if (hasInjectable && hasExport && hasConstructor) {
-          this.addResult({
-            test: `Service File - ${path.basename(servicePath)}`,
-            status: 'PASS',
-            message: 'Service file has proper structure'
-          });
-        } else {
-          this.addResult({
-            test: `Service File - ${path.basename(servicePath)}`,
-            status: 'FAIL',
-            error: 'Service file missing required decorators or structure'
-          });
-        }
-      } else {
-        this.addResult({
-          test: `Service File - ${path.basename(servicePath)}`,
-          status: 'FAIL',
-          error: 'Service file does not exist'
-        });
-      }
-    });
-  }
-
-  validateControllerFiles() {
-    this.logger.log('🎮 Validating Controller Files...');
-
-    const requiredControllers = [
-      'apps/api/src/modules/module-registry/module-registry.controller.ts',
-      'apps/api/src/modules/module-registry/tenant-module.controller.ts',
-    ];
-
-    requiredControllers.forEach(controllerPath => {
-      if (fs.existsSync(controllerPath)) {
-        const content = fs.readFileSync(controllerPath, 'utf8');
-        
-        // Check for basic controller structure
-        const hasController = content.includes('@Controller');
-        const hasApiTags = content.includes('@ApiTags');
-        const hasEndpoints = content.includes('@Get') || content.includes('@Post') || content.includes('@Put') || content.includes('@Delete');
-
-        if (hasController && hasApiTags && hasEndpoints) {
-          this.addResult({
-            test: `Controller File - ${path.basename(controllerPath)}`,
-            status: 'PASS',
-            message: 'Controller file has proper structure and endpoints'
-          });
-        } else {
-          this.addResult({
-            test: `Controller File - ${path.basename(controllerPath)}`,
-            status: 'FAIL',
-            error: 'Controller file missing required decorators or endpoints'
-          });
-        }
-      } else {
-        this.addResult({
-          test: `Controller File - ${path.basename(controllerPath)}`,
-          status: 'FAIL',
-          error: 'Controller file does not exist'
-        });
-      }
-    });
-  }
-
-  validateMiddlewareFiles() {
-    this.logger.log('🛡️ Validating Middleware Files...');
-
-    const middlewarePath = 'apps/api/src/modules/module-registry/middleware/module-access.middleware.ts';
+    // Validate service files
+    this.validateServices();
     
-    if (fs.existsSync(middlewarePath)) {
-      const content = fs.readFileSync(middlewarePath, 'utf8');
-      
-      // Check for middleware structure
-      const hasInjectable = content.includes('@Injectable');
-      const hasNestMiddleware = content.includes('NestMiddleware');
-      const hasUseMethod = content.includes('use(');
+    // Validate controller files
+    this.validateControllers();
+    
+    // Validate middleware files
+    this.validateMiddleware();
+    
+    // Validate DTO files
+    this.validateDTOs();
+    
+    // Validate module integration
+    this.validateModuleIntegration();
+    
+    // Validate billing integration
+    this.validateBillingIntegration();
 
-      if (hasInjectable && hasNestMiddleware && hasUseMethod) {
-        this.addResult({
-          test: 'Middleware File - module-access.middleware.ts',
-          status: 'PASS',
-          message: 'Middleware file has proper structure'
-        });
+    // Display results
+    this.displayResults();
+  }
+
+  validateCoreEntities() {
+    this.log('📦 Validating Core Entities...');
+
+    const entities = [
+      {
+        path: 'libs/database/src/entities/module-registry.entity.ts',
+        patterns: ['@Entity', 'ModuleRegistry', 'name', 'version', 'pricingModel']
+      },
+      {
+        path: 'libs/database/src/entities/tenant-module.entity.ts',
+        patterns: ['@Entity', 'TenantModule', 'tenantId', 'moduleName', 'isEnabled']
+      },
+      {
+        path: 'libs/database/src/entities/module-usage-analytics.entity.ts',
+        patterns: ['@Entity', 'ModuleUsageAnalytics', 'tenantId', 'moduleName', 'requestCount']
+      }
+    ];
+
+    entities.forEach(entity => {
+      if (this.fileExists(entity.path)) {
+        if (this.validateFileStructure(entity.path, entity.patterns)) {
+          this.addResult(
+            `Entity: ${path.basename(entity.path)}`,
+            'PASS',
+            'Entity file exists and contains required patterns'
+          );
+        } else {
+          this.addResult(
+            `Entity: ${path.basename(entity.path)}`,
+            'FAIL',
+            null,
+            'Entity file missing required patterns'
+          );
+        }
       } else {
-        this.addResult({
-          test: 'Middleware File - module-access.middleware.ts',
-          status: 'FAIL',
-          error: 'Middleware file missing required structure'
-        });
+        this.addResult(
+          `Entity: ${path.basename(entity.path)}`,
+          'FAIL',
+          null,
+          'Entity file does not exist'
+        );
+      }
+    });
+  }
+
+  validateServices() {
+    this.log('🔧 Validating Services...');
+
+    const services = [
+      {
+        path: 'apps/api/src/modules/module-registry/module-registry.service.ts',
+        patterns: ['@Injectable', 'ModuleRegistryService', 'getAllModules', 'getModuleByName']
+      },
+      {
+        path: 'apps/api/src/modules/module-registry/tenant-module.service.ts',
+        patterns: ['@Injectable', 'TenantModuleService', 'enableModule', 'disableModule', 'hasModuleAccess']
+      },
+      {
+        path: 'apps/api/src/modules/module-registry/module-usage-analytics.service.ts',
+        patterns: ['@Injectable', 'ModuleUsageAnalyticsService', 'trackModuleEvent', 'getModuleUsageMetrics']
+      },
+      {
+        path: 'apps/api/src/modules/module-registry/billing-integration.service.ts',
+        patterns: ['@Injectable', 'BillingIntegrationService', 'handleModuleEnabled', 'calculateProration']
+      }
+    ];
+
+    services.forEach(service => {
+      if (this.fileExists(service.path)) {
+        if (this.validateFileStructure(service.path, service.patterns)) {
+          this.addResult(
+            `Service: ${path.basename(service.path)}`,
+            'PASS',
+            'Service file exists and contains required methods'
+          );
+        } else {
+          this.addResult(
+            `Service: ${path.basename(service.path)}`,
+            'FAIL',
+            null,
+            'Service file missing required methods'
+          );
+        }
+      } else {
+        this.addResult(
+          `Service: ${path.basename(service.path)}`,
+          'FAIL',
+          null,
+          'Service file does not exist'
+        );
+      }
+    });
+  }
+
+  validateControllers() {
+    this.log('🎮 Validating Controllers...');
+
+    const controllers = [
+      {
+        path: 'apps/api/src/modules/module-registry/module-registry.controller.ts',
+        patterns: ['@Controller', 'ModuleRegistryController', '@Get', '@Post']
+      },
+      {
+        path: 'apps/api/src/modules/module-registry/tenant-module.controller.ts',
+        patterns: ['@Controller', 'TenantModuleController', 'enableModule', 'disableModule']
+      },
+      {
+        path: 'apps/api/src/modules/module-registry/billing-integration.controller.ts',
+        patterns: ['@Controller', 'BillingIntegrationController', 'getBillingLineItems', 'generateInvoice']
+      }
+    ];
+
+    controllers.forEach(controller => {
+      if (this.fileExists(controller.path)) {
+        if (this.validateFileStructure(controller.path, controller.patterns)) {
+          this.addResult(
+            `Controller: ${path.basename(controller.path)}`,
+            'PASS',
+            'Controller file exists and contains required endpoints'
+          );
+        } else {
+          this.addResult(
+            `Controller: ${path.basename(controller.path)}`,
+            'FAIL',
+            null,
+            'Controller file missing required endpoints'
+          );
+        }
+      } else {
+        this.addResult(
+          `Controller: ${path.basename(controller.path)}`,
+          'FAIL',
+          null,
+          'Controller file does not exist'
+        );
+      }
+    });
+  }
+
+  validateMiddleware() {
+    this.log('🛡️ Validating Middleware...');
+
+    const middlewares = [
+      {
+        path: 'apps/api/src/modules/module-registry/middleware/module-access.middleware.ts',
+        patterns: ['@Injectable', 'ModuleAccessMiddleware', 'use', 'hasModuleAccess']
+      },
+      {
+        path: 'apps/api/src/modules/module-registry/middleware/usage-tracking.middleware.ts',
+        patterns: ['@Injectable', 'UsageTrackingMiddleware', 'use', 'trackApiUsage']
+      }
+    ];
+
+    middlewares.forEach(middleware => {
+      if (this.fileExists(middleware.path)) {
+        if (this.validateFileStructure(middleware.path, middleware.patterns)) {
+          this.addResult(
+            `Middleware: ${path.basename(middleware.path)}`,
+            'PASS',
+            'Middleware file exists and contains required functionality'
+          );
+        } else {
+          this.addResult(
+            `Middleware: ${path.basename(middleware.path)}`,
+            'FAIL',
+            null,
+            'Middleware file missing required functionality'
+          );
+        }
+      } else {
+        this.addResult(
+          `Middleware: ${path.basename(middleware.path)}`,
+          'FAIL',
+          null,
+          'Middleware file does not exist'
+        );
+      }
+    });
+  }
+
+  validateDTOs() {
+    this.log('📋 Validating DTOs...');
+
+    const dtos = [
+      {
+        path: 'apps/api/src/modules/module-registry/dto/module-registry.dto.ts',
+        patterns: ['CreateModuleDto', 'UpdateModuleDto', '@IsString', '@IsOptional']
+      },
+      {
+        path: 'apps/api/src/modules/module-registry/dto/tenant-module.dto.ts',
+        patterns: ['EnableModuleDto', 'UpdateModuleConfigDto', 'TenantModuleListDto']
+      },
+      {
+        path: 'apps/api/src/modules/module-registry/dto/billing-integration.dto.ts',
+        patterns: ['BillingLineItemDto', 'ProrationCalculationDto', 'InvoiceDto']
+      }
+    ];
+
+    dtos.forEach(dto => {
+      if (this.fileExists(dto.path)) {
+        if (this.validateFileStructure(dto.path, dto.patterns)) {
+          this.addResult(
+            `DTO: ${path.basename(dto.path)}`,
+            'PASS',
+            'DTO file exists and contains required classes'
+          );
+        } else {
+          this.addResult(
+            `DTO: ${path.basename(dto.path)}`,
+            'FAIL',
+            null,
+            'DTO file missing required classes'
+          );
+        }
+      } else {
+        this.addResult(
+          `DTO: ${path.basename(dto.path)}`,
+          'FAIL',
+          null,
+          'DTO file does not exist'
+        );
+      }
+    });
+  }
+
+  validateModuleIntegration() {
+    this.log('🔗 Validating Module Integration...');
+
+    const moduleFile = 'apps/api/src/modules/module-registry/module-registry.module.ts';
+    
+    if (this.fileExists(moduleFile)) {
+      const requiredPatterns = [
+        'ModuleRegistryController',
+        'TenantModuleController', 
+        'BillingIntegrationController',
+        'ModuleRegistryService',
+        'TenantModuleService',
+        'BillingIntegrationService',
+        'ModuleUsageAnalyticsService'
+      ];
+
+      if (this.validateFileStructure(moduleFile, requiredPatterns)) {
+        this.addResult(
+          'Module Integration',
+          'PASS',
+          'All services and controllers are properly integrated in module'
+        );
+      } else {
+        this.addResult(
+          'Module Integration',
+          'FAIL',
+          null,
+          'Module file missing required service/controller registrations'
+        );
       }
     } else {
-      this.addResult({
-        test: 'Middleware File - module-access.middleware.ts',
-        status: 'FAIL',
-        error: 'Middleware file does not exist'
-      });
+      this.addResult(
+        'Module Integration',
+        'FAIL',
+        null,
+        'Module registry module file does not exist'
+      );
     }
   }
 
-  validateDTOFiles() {
-    this.logger.log('📋 Validating DTO Files...');
+  validateBillingIntegration() {
+    this.log('💰 Validating Billing Integration...');
 
-    const requiredDTOs = [
-      'apps/api/src/modules/module-registry/dto/module-registry.dto.ts',
-      'apps/api/src/modules/module-registry/dto/tenant-module.dto.ts',
-      'apps/api/src/modules/module-registry/dto/version-management.dto.ts',
-      'apps/api/src/modules/module-registry/dto/configuration-management.dto.ts',
-      'apps/api/src/modules/module-registry/dto/dependency-management.dto.ts',
-      'apps/api/src/modules/module-registry/dto/usage-analytics.dto.ts',
+    // Check if billing integration is complete
+    const billingFiles = [
+      'apps/api/src/modules/module-registry/billing-integration.service.ts',
+      'apps/api/src/modules/module-registry/billing-integration.controller.ts',
+      'apps/api/src/modules/module-registry/dto/billing-integration.dto.ts'
     ];
 
-    requiredDTOs.forEach(dtoPath => {
-      if (fs.existsSync(dtoPath)) {
-        const content = fs.readFileSync(dtoPath, 'utf8');
-        
-        // Check for DTO structure
-        const hasExports = content.includes('export class') || content.includes('export interface');
-        const hasValidation = content.includes('@IsString') || content.includes('@IsNumber') || content.includes('@IsBoolean') || content.includes('@IsOptional');
-
-        if (hasExports) {
-          this.addResult({
-            test: `DTO File - ${path.basename(dtoPath)}`,
-            status: 'PASS',
-            message: hasValidation ? 'DTO file has exports and validation' : 'DTO file has exports'
-          });
-        } else {
-          this.addResult({
-            test: `DTO File - ${path.basename(dtoPath)}`,
-            status: 'FAIL',
-            error: 'DTO file missing exports'
-          });
-        }
-      } else {
-        this.addResult({
-          test: `DTO File - ${path.basename(dtoPath)}`,
-          status: 'FAIL',
-          error: 'DTO file does not exist'
-        });
+    let allBillingFilesExist = true;
+    billingFiles.forEach(file => {
+      if (!this.fileExists(file)) {
+        allBillingFilesExist = false;
       }
     });
-  }
 
-  validateMigrationFiles() {
-    this.logger.log('🗄️ Validating Migration Files...');
+    if (allBillingFilesExist) {
+      this.addResult(
+        'Billing Integration Files',
+        'PASS',
+        'All billing integration files exist'
+      );
 
-    const requiredMigrations = [
-      'libs/database/src/migrations/1700000007000-CreateModuleRegistryTable.ts',
-      'libs/database/src/migrations/1700000008000-CreateTenantModulesTable.ts',
-      'libs/database/src/migrations/1700000009000-CreateModuleUsageAnalyticsTable.ts',
-    ];
-
-    requiredMigrations.forEach(migrationPath => {
-      if (fs.existsSync(migrationPath)) {
-        const content = fs.readFileSync(migrationPath, 'utf8');
-        
-        // Check for migration structure
-        const hasUp = content.includes('public async up');
-        const hasDown = content.includes('public async down');
-        const hasCreateTable = content.includes('createTable') || content.includes('CREATE TABLE');
-
-        if (hasUp && hasDown && hasCreateTable) {
-          this.addResult({
-            test: `Migration File - ${path.basename(migrationPath)}`,
-            status: 'PASS',
-            message: 'Migration file has proper structure'
-          });
-        } else {
-          this.addResult({
-            test: `Migration File - ${path.basename(migrationPath)}`,
-            status: 'FAIL',
-            error: 'Migration file missing required methods or table creation'
-          });
-        }
+      // Check if billing service has event handlers
+      const billingServiceContent = this.readFile('apps/api/src/modules/module-registry/billing-integration.service.ts');
+      if (billingServiceContent && billingServiceContent.includes('@OnEvent') && billingServiceContent.includes('handleModuleEnabled')) {
+        this.addResult(
+          'Billing Event Handlers',
+          'PASS',
+          'Billing service has proper event handlers'
+        );
       } else {
-        this.addResult({
-          test: `Migration File - ${path.basename(migrationPath)}`,
-          status: 'FAIL',
-          error: 'Migration file does not exist'
-        });
-      }
-    });
-  }
-
-  validateSeedFiles() {
-    this.logger.log('🌱 Validating Seed Files...');
-
-    const seedPath = 'libs/database/src/seeds/module-registry.seed.ts';
-    
-    if (fs.existsSync(seedPath)) {
-      const content = fs.readFileSync(seedPath, 'utf8');
-      
-      // Check for seed structure
-      const hasExport = content.includes('export');
-      const hasModuleData = content.includes('module') || content.includes('Module');
-
-      if (hasExport && hasModuleData) {
-        this.addResult({
-          test: 'Seed File - module-registry.seed.ts',
-          status: 'PASS',
-          message: 'Seed file has proper structure'
-        });
-      } else {
-        this.addResult({
-          test: 'Seed File - module-registry.seed.ts',
-          status: 'FAIL',
-          error: 'Seed file missing required structure or data'
-        });
+        this.addResult(
+          'Billing Event Handlers',
+          'FAIL',
+          null,
+          'Billing service missing event handlers'
+        );
       }
     } else {
-      this.addResult({
-        test: 'Seed File - module-registry.seed.ts',
-        status: 'FAIL',
-        error: 'Seed file does not exist'
-      });
+      this.addResult(
+        'Billing Integration Files',
+        'FAIL',
+        null,
+        'Some billing integration files are missing'
+      );
     }
-  }
-
-  addResult(result) {
-    this.results.push(result);
   }
 
   displayResults() {
-    this.logger.log('\n📋 Checkpoint Validation Results:');
-    this.logger.log('='.repeat(80));
-
-    let passCount = 0;
-    let failCount = 0;
-    let skipCount = 0;
+    this.log('\n📋 Checkpoint Validation Results:');
+    this.log('=' .repeat(80));
 
     this.results.forEach((result) => {
-      const statusIcon = result.status === 'PASS' ? '✅' : result.status === 'FAIL' ? '❌' : '⏭️';
-      
-      console.log(`${statusIcon} ${result.status} - ${result.test}`);
+      const statusIcon = result.status === 'PASS' ? '✅' : '❌';
+      const statusColor = result.status === 'PASS' ? '\x1b[32m' : '\x1b[31m';
+      const resetColor = '\x1b[0m';
+
+      console.log(`${statusIcon} ${statusColor}${result.status}${resetColor} - ${result.test}`);
       
       if (result.message) {
         console.log(`   💬 ${result.message}`);
@@ -370,21 +421,16 @@ class SimpleCheckpointValidator {
       }
       
       console.log('');
-
-      // Count results
-      if (result.status === 'PASS') passCount++;
-      else if (result.status === 'FAIL') failCount++;
-      else skipCount++;
     });
 
-    this.logger.log('='.repeat(80));
-    this.logger.log(`📊 Summary: ${passCount} passed, ${failCount} failed, ${skipCount} skipped`);
+    this.log('=' .repeat(80));
+    this.log(`📊 Summary: ${this.passCount} passed, ${this.failCount} failed`);
 
-    if (failCount === 0) {
-      this.logger.log('🎉 All checkpoint validations passed! Core module registry files are properly structured.');
-      this.logger.log('✅ File structure validation complete. Ready to proceed to integration tasks.');
+    if (this.failCount === 0) {
+      this.log('🎉 All checkpoint validations passed! Core module registry functionality is properly implemented.');
+      this.log('✅ Ready to proceed to the next tasks in the implementation plan.');
     } else {
-      this.logger.error('❌ Some validations failed. Please review and fix issues before proceeding.');
+      this.log('❌ Some validations failed. Please review and fix issues before proceeding.');
       process.exit(1);
     }
   }

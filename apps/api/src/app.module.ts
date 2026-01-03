@@ -1,8 +1,7 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
 import { JwtModule } from '@nestjs/jwt';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_GUARD } from '@nestjs/core';
@@ -55,16 +54,16 @@ import { UsageTrackingMiddleware } from './modules/module-registry/middleware/us
         
         if (redisUrl) {
           return {
-            store: redisStore,
+            store: redisStore as any,
             url: redisUrl,
             ttl: 300, // 5 minutes default
-          };
+          } as any;
         }
         
         // Fallback to in-memory cache
         return {
           ttl: 300,
-        };
+        } as any;
       },
       inject: [ConfigService],
     }),
@@ -72,9 +71,11 @@ import { UsageTrackingMiddleware } from './modules/module-registry/middleware/us
     // Rate limiting
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        ttl: configService.get<number>('THROTTLE_TTL', 60),
-        limit: configService.get<number>('THROTTLE_LIMIT', 100),
+      useFactory: (configService: ConfigService): ThrottlerModuleOptions => ({
+        throttlers: [{
+          ttl: configService.get<number>('THROTTLE_TTL', 60) * 1000, // Convert to milliseconds
+          limit: configService.get<number>('THROTTLE_LIMIT', 100),
+        }],
       }),
       inject: [ConfigService],
     }),
