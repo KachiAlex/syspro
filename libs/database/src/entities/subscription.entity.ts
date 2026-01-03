@@ -3,7 +3,14 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsBoolean, IsOptional } from 'class-validator';
 import { BaseEntity } from './base.entity';
 import { Tenant } from './tenant.entity';
-import { SubscriptionStatus } from '@syspro/shared';
+
+export enum SubscriptionStatus {
+  ACTIVE = 'active',
+  CANCELED = 'canceled',
+  PAST_DUE = 'past_due',
+  UNPAID = 'unpaid',
+  TRIALING = 'trialing'
+}
 
 @Entity('subscriptions')
 @Index(['tenantId'])

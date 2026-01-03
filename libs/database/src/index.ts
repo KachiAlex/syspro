@@ -8,6 +8,11 @@ export * from './entities/organization.entity';
 export * from './entities/subscription.entity';
 export * from './entities/audit-log.entity';
 
+// Module registry entities
+export * from './entities/module-registry.entity';
+export * from './entities/tenant-module.entity';
+export * from './entities/module-usage-analytics.entity';
+
 // Configuration (to be created)
 // export * from './config';
 

@@ -41,6 +41,13 @@ export interface User extends BaseEntity {
   roles: UserRole[];
 }
 
+export enum UserStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  SUSPENDED = 'suspended',
+  PENDING_VERIFICATION = 'pending_verification',
+}
+
 export interface UserRole extends BaseEntity {
   name: string;
   description?: string;

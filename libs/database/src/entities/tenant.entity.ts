@@ -5,7 +5,19 @@ import { BaseEntity } from './base.entity';
 import { User } from './user.entity';
 import { Organization } from './organization.entity';
 import { Subscription } from './subscription.entity';
-import { TenantSettings } from '@syspro/shared';
+
+export interface TenantSettings {
+  timezone: string;
+  currency: string;
+  dateFormat: string;
+  language: string;
+  features: string[];
+  branding?: {
+    logo?: string;
+    primaryColor?: string;
+    secondaryColor?: string;
+  };
+}
 
 @Entity('tenants')
 @Index(['code'], { unique: true })

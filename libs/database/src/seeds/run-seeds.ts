@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
 import { runInitialSeed } from './initial-seed';
+import { seedModuleRegistry } from './module-registry.seed';
 
 // Load environment variables
 config();
@@ -26,7 +27,11 @@ async function runSeeds() {
     await AppDataSource.initialize();
     console.log('✅ Database connected');
 
+    // Run initial seed (tenants, users, roles, etc.)
     await runInitialSeed(AppDataSource);
+    
+    // Run module registry seed
+    await seedModuleRegistry(AppDataSource);
 
     console.log('🏁 All seeds completed successfully!');
   } catch (error) {

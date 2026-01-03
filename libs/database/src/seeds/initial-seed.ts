@@ -1,7 +1,21 @@
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { Tenant, Organization, User, UserRole, Permission, Subscription } from '../entities';
-import { UserStatus, SubscriptionStatus } from '@syspro/shared';
+import { Tenant, Organization, User, UserRole, Permission, Subscription } from '../index';
+
+export enum UserStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  SUSPENDED = 'suspended',
+  PENDING_VERIFICATION = 'pending_verification',
+}
+
+export enum SubscriptionStatus {
+  ACTIVE = 'active',
+  CANCELED = 'canceled',
+  PAST_DUE = 'past_due',
+  UNPAID = 'unpaid',
+  TRIALING = 'trialing'
+}
 
 export async function runInitialSeed(dataSource: DataSource): Promise<void> {
   console.log('🌱 Running initial database seed...');
