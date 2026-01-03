@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { JwtModule } from '@nestjs/jwt';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_GUARD } from '@nestjs/core';
 import * as redisStore from 'cache-manager-redis-store';
 
@@ -20,6 +21,7 @@ import { UserModule } from './modules/user/user.module';
 import { OrganizationModule } from './modules/organization/organization.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { HealthModule } from './modules/health/health.module';
+import { ModuleRegistryModule } from './modules/module-registry/module-registry.module';
 
 // Shared
 import { DatabaseModule } from './shared/database/database.module';
@@ -27,6 +29,10 @@ import { DatabaseModule } from './shared/database/database.module';
 // Guards
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { TenantGuard } from './modules/auth/guards/tenant.guard';
+
+// Middleware
+import { ModuleAccessMiddleware } from './modules/module-registry/middleware/module-access.middleware';
+import { UsageTrackingMiddleware } from './modules/module-registry/middleware/usage-tracking.middleware';
 
 @Module({
   imports: [
@@ -86,6 +92,9 @@ import { TenantGuard } from './modules/auth/guards/tenant.guard';
       inject: [ConfigService],
     }),
 
+    // Event Emitter
+    EventEmitterModule.forRoot(),
+
     // Feature modules
     HealthModule,
     AuthModule,
@@ -93,6 +102,7 @@ import { TenantGuard } from './modules/auth/guards/tenant.guard';
     UserModule,
     OrganizationModule,
     AuditModule,
+    ModuleRegistryModule,
   ],
   providers: [
     // Global JWT authentication guard
@@ -107,4 +117,10 @@ import { TenantGuard } from './modules/auth/guards/tenant.guard';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(UsageTrackingMiddleware, ModuleAccessMiddleware)
+      .forRoutes('*'); // Apply to all routes, middleware will handle skipping
+  }
+}
