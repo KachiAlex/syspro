@@ -1,11 +1,11 @@
 'use client';
-
 /**
  * Login Form Component
  * Provides login interface with email, password, and tenant selection
  */
 
 import React, { useState } from 'react';
+
 import { useAuth } from '../../contexts/auth-context';
 import { LoginRequest } from '../../lib/api/client';
 
@@ -16,7 +16,8 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onSuccess, onError, className = '' }: LoginFormProps) {
-  const { login, isLoading, error, clearError } = useAuth();
+  const { login, loginPlatform, isLoading, error, clearError } = useAuth();
+  const [authMode, setAuthMode] = useState<'tenant' | 'platform'>('tenant');
   
   const [formData, setFormData] = useState<LoginRequest & { tenantId?: string }>({
     email: '',
@@ -58,8 +59,8 @@ export function LoginForm({ onSuccess, onError, className = '' }: LoginFormProps
       errors.password = 'Password must be at least 6 characters';
     }
     
-    if (!formData.tenantId?.trim()) {
-      errors.tenantId = 'Tenant ID is required';
+    if (authMode === 'tenant' && !formData.tenantId?.trim()) {
+      errors.tenantId = 'Tenant ID is required for tenant login';
     }
     
     setValidationErrors(errors);
@@ -75,13 +76,14 @@ export function LoginForm({ onSuccess, onError, className = '' }: LoginFormProps
     }
     
     try {
-      const result = await login(
-        {
-          email: formData.email.trim(),
-          password: formData.password,
-        },
-        formData.tenantId?.trim()
-      );
+      const credentials = {
+        email: formData.email.trim(),
+        password: formData.password,
+      };
+
+      const result = authMode === 'platform'
+        ? await loginPlatform(credentials)
+        : await login(credentials, formData.tenantId?.trim());
       
       if (result.success) {
         onSuccess?.();
@@ -96,11 +98,46 @@ export function LoginForm({ onSuccess, onError, className = '' }: LoginFormProps
 
   return (
     <div className={`w-full max-w-md mx-auto ${className}`}>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6 bg-white border border-gray-200 rounded-xl p-8 shadow-lg">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900">Sign In</h2>
           <p className="mt-2 text-gray-600">
             Access your Syspro ERP account
+          </p>
+        </div>
+
+        {/* Mode Toggle */}
+        <div className="space-y-2">
+          <div className="flex rounded-lg bg-gray-100 p-1">
+            <button
+              type="button"
+              onClick={() => setAuthMode('tenant')}
+              className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                authMode === 'tenant'
+                  ? 'bg-white text-blue-600 shadow'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              disabled={isLoading}
+            >
+              Organization Login
+            </button>
+            <button
+              type="button"
+              onClick={() => setAuthMode('platform')}
+              className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                authMode === 'platform'
+                  ? 'bg-white text-purple-600 shadow'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              disabled={isLoading}
+            >
+              Platform Super Admin
+            </button>
+          </div>
+          <p className="text-xs text-gray-500">
+            {authMode === 'tenant'
+              ? 'Use this mode to access your tenant-specific workspace.'
+              : 'Use this mode if you are a platform super admin managing all tenants.'}
           </p>
         </div>
 
@@ -169,30 +206,32 @@ export function LoginForm({ onSuccess, onError, className = '' }: LoginFormProps
         </div>
 
         {/* Tenant ID Field */}
-        <div>
-          <label htmlFor="tenantId" className="block text-sm font-medium text-gray-700 mb-2">
-            Tenant ID
-          </label>
-          <input
-            id="tenantId"
-            name="tenantId"
-            type="text"
-            required
-            value={formData.tenantId}
-            onChange={handleChange}
-            className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              validationErrors.tenantId ? 'border-red-300' : 'border-gray-300'
-            }`}
-            placeholder="Enter your tenant ID"
-            disabled={isLoading}
-          />
-          {validationErrors.tenantId && (
-            <p className="mt-1 text-sm text-red-600">{validationErrors.tenantId}</p>
-          )}
-          <p className="mt-1 text-xs text-gray-500">
-            Contact your administrator if you don't know your tenant ID
-          </p>
-        </div>
+        {authMode === 'tenant' && (
+          <div>
+            <label htmlFor="tenantId" className="block text-sm font-medium text-gray-700 mb-2">
+              Tenant ID
+            </label>
+            <input
+              id="tenantId"
+              name="tenantId"
+              type="text"
+              required
+              value={formData.tenantId}
+              onChange={handleChange}
+              className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                validationErrors.tenantId ? 'border-red-300' : 'border-gray-300'
+              }`}
+              placeholder="Enter your tenant ID"
+              disabled={isLoading}
+            />
+            {validationErrors.tenantId && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.tenantId}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-500">
+              Contact your administrator if you don't know your tenant ID
+            </p>
+          </div>
+        )}
 
         {/* Submit Button */}
         <div>
@@ -220,12 +259,22 @@ export function LoginForm({ onSuccess, onError, className = '' }: LoginFormProps
         </div>
 
         {/* Demo Credentials */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
-          <h4 className="text-sm font-medium text-blue-800 mb-2">Demo Credentials</h4>
-          <div className="text-xs text-blue-700 space-y-1">
-            <p><strong>Email:</strong> admin@syspro.com</p>
-            <p><strong>Password:</strong> Admin@123</p>
-            <p><strong>Tenant ID:</strong> Get from database after setup</p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+            <h4 className="text-sm font-semibold text-blue-800 mb-2">Tenant Demo</h4>
+            <div className="text-xs text-blue-700 space-y-1">
+              <p><strong>Email:</strong> admin@syspro.com</p>
+              <p><strong>Password:</strong> Admin@123</p>
+              <p><strong>Tenant ID:</strong> Use your seeded tenant UUID</p>
+            </div>
+          </div>
+          <div className="p-4 bg-purple-50 border border-purple-200 rounded-md">
+            <h4 className="text-sm font-semibold text-purple-800 mb-2">Platform Super Admin</h4>
+            <div className="text-xs text-purple-700 space-y-1">
+              <p><strong>Email:</strong> admin@syspro.com</p>
+              <p><strong>Password:</strong> Admin@123</p>
+              <p><strong>Tenant ID:</strong> Not required in this mode</p>
+            </div>
           </div>
         </div>
       </form>

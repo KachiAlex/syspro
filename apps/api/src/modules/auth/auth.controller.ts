@@ -74,6 +74,41 @@ export class AuthController {
   }
 
   @Public()
+  @Post('platform-login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Platform super admin login' })
+  @ApiResponse({
+    status: 200,
+    description: 'Platform login successful',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        data: {
+          type: 'object',
+          properties: {
+            accessToken: { type: 'string' },
+            refreshToken: { type: 'string' },
+            expiresIn: { type: 'number' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Invalid credentials or platform tenant not configured' })
+  async platformLogin(
+    @Body() loginDto: LoginDto,
+  ): Promise<ApiResponseType<AuthTokens>> {
+    const tokens = await this.authService.platformLogin(loginDto);
+
+    return {
+      success: true,
+      data: tokens,
+      message: 'Login successful',
+    };
+  }
+
+  @Public()
   @Post('register')
   @ApiOperation({ summary: 'User registration' })
   @ApiResponse({

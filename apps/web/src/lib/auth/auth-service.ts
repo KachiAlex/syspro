@@ -187,6 +187,57 @@ export class AuthService {
   }
 
   /**
+   * Platform (super admin) login without tenant ID
+   */
+  async loginPlatform(credentials: LoginRequest): Promise<AuthResult> {
+    try {
+      this.updateState({ isLoading: true, error: null });
+
+      const response = await apiClient.platformLogin(credentials);
+
+      if (response.success && response.data) {
+        // Store tokens
+        tokenStorage.setTokens(response.data);
+
+        // Get user profile
+        const profileResponse = await apiClient.getProfile();
+
+        if (profileResponse.success && profileResponse.data) {
+          this.updateState({
+            isAuthenticated: true,
+            isLoading: false,
+            user: profileResponse.data,
+            error: null,
+          });
+
+          this.setupTokenRefresh();
+
+          return { success: true, user: profileResponse.data };
+        }
+      }
+
+      const errorMessage = response.message || 'Login failed';
+      this.updateState({
+        isAuthenticated: false,
+        isLoading: false,
+        error: errorMessage,
+      });
+
+      return { success: false, error: errorMessage };
+    } catch (error: any) {
+      const errorMessage = error.message || 'Login failed';
+
+      this.updateState({
+        isAuthenticated: false,
+        isLoading: false,
+        error: errorMessage,
+      });
+
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  /**
    * Login with email and password
    */
   async login(credentials: LoginRequest, tenantId?: string): Promise<AuthResult> {

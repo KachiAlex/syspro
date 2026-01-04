@@ -72,6 +72,19 @@ export class ApiClient {
     return response;
   }
 
+  async platformLogin(credentials: LoginRequest): Promise<ApiResponse<AuthTokens>> {
+    // Ensure no tenant header is sent for platform login
+    httpClient.setTenantId(null);
+
+    const response = await httpClient.post<ApiResponse<AuthTokens>>('/auth/platform-login', credentials);
+
+    if (response.success && response.data?.accessToken) {
+      httpClient.setAuthToken(response.data.accessToken);
+    }
+
+    return response;
+  }
+
   async register(data: RegisterRequest, tenantId?: string): Promise<ApiResponse<AuthTokens>> {
     // Set tenant ID if provided
     if (tenantId) {

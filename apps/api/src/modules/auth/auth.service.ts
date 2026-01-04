@@ -72,6 +72,20 @@ export class AuthService {
     return this.generateTokens(user);
   }
 
+  async platformLogin(loginDto: LoginDto): Promise<AuthTokens> {
+    const platformTenantCode = this.configService.get<string>('app.platformTenantCode') || 'PLATFORM';
+
+    const platformTenant = await this.tenantRepository.findOne({
+      where: { code: platformTenantCode, isActive: true },
+    });
+
+    if (!platformTenant) {
+      throw new UnauthorizedException('Platform tenant not configured');
+    }
+
+    return this.login(loginDto, platformTenant.id);
+  }
+
   async register(registerDto: RegisterDto, tenantId: string): Promise<AuthTokens> {
     // Check if tenant exists and is active
     const tenant = await this.tenantRepository.findOne({

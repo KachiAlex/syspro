@@ -26,4 +26,7 @@ export const appConfig = registerAs('app', () => ({
   enableSwagger: process.env.ENABLE_SWAGGER !== 'false',
   enableMetrics: process.env.ENABLE_METRICS === 'true',
   maintenanceMode: process.env.MAINTENANCE_MODE === 'true',
+
+  // Platform / Superadmin access
+  platformTenantCode: process.env.PLATFORM_TENANT_CODE || 'PLATFORM',
 }));

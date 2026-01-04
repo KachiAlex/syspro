@@ -20,6 +20,7 @@ export interface AuthContextValue {
   
   // Authentication actions
   login: (credentials: LoginRequest, tenantId?: string) => Promise<AuthResult>;
+  loginPlatform: (credentials: LoginRequest) => Promise<AuthResult>;
   register: (data: RegisterRequest, tenantId?: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
@@ -67,6 +68,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (credentials: LoginRequest, tenantId?: string): Promise<AuthResult> => {
     try {
       const result = await authService.login(credentials, tenantId);
+      return result;
+    } catch (error: any) {
+      const errorMessage = error.message || 'Login failed';
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  const loginPlatform = async (credentials: LoginRequest): Promise<AuthResult> => {
+    try {
+      const result = await authService.loginPlatform(credentials);
       return result;
     } catch (error: any) {
       const errorMessage = error.message || 'Login failed';
@@ -125,6 +136,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     // Actions
     login,
+    loginPlatform,
     register,
     logout,
     refreshToken,

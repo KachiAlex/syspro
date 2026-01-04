@@ -139,3 +139,5 @@ storybook-static/
 
 # Sentry
 .sentryclirc
+.vercel
+.env*.local
