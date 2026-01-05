@@ -1,6 +1,5 @@
 node_modules
 .turbo
-apps/api
 libs
 packages
 *.log

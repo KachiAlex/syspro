@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "syspro-erp-api",
   "builds": [
     {
       "src": "dist/main.js",
@@ -12,11 +11,5 @@
       "src": "/(.*)",
       "dest": "dist/main.js"
     }
-  ],
-  "functions": {
-    "dist/main.js": {
-      "runtime": "nodejs18.x",
-      "maxDuration": 30
-    }
-  }
+  ]
 }
