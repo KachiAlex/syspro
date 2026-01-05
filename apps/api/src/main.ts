@@ -35,13 +35,29 @@ async function bootstrap() {
   const corsOrigins = nodeEnv === 'production' 
     ? [
         configService.get<string>('FRONTEND_URL'),
-        'https://*.vercel.app',
-        'https://syspro-erp.vercel.app'
+        'https://syspro-erp.vercel.app',
+        /https:\/\/.*\.vercel\.app$/,
       ].filter(Boolean)
     : ['http://localhost:3000', 'http://localhost:3001'];
 
   app.enableCors({
-    origin: corsOrigins,
+    origin: (origin, callback) => {
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      const isAllowed = corsOrigins.some((allowedOrigin) => {
+        if (allowedOrigin instanceof RegExp) {
+          return allowedOrigin.test(origin);
+        }
+
+        return allowedOrigin === origin;
+      });
+
+      return isAllowed
+        ? callback(null, true)
+        : callback(new Error('Not allowed by CORS'), false);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-ID'],
