@@ -1,7 +1,5 @@
 node_modules
 .turbo
-libs
-packages
 *.log
 .env.local
 .env.development.local
