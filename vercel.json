@@ -10,7 +10,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://api.syspro-web.vercel.app/api/:path*"
+      "destination": "https://syspro-erp-api.vercel.app/api/:path*"
     }
   ]
 }
