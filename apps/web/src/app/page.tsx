@@ -50,6 +50,7 @@ export default function HomePage() {
         <header className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400"></div>
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
             {/* Navigation */}
             <nav className="flex items-center justify-between py-6">
               <div className="flex items-center">
@@ -65,18 +66,18 @@ export default function HomePage() {
             </nav>
 
             {/* Hero Section */}
-            <div className="py-20 lg:py-32">
-              <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="py-14 lg:py-20">
+              <div className="grid lg:grid-cols-2 gap-10 items-center">
                 <div>
-                  <h2 className="text-5xl lg:text-6xl font-bold text-white leading-tight">
+                  <h2 className="text-4xl lg:text-5xl font-bold text-white leading-tight">
                     Tech doesn't have to feel like a different language
                   </h2>
-                  <p className="mt-6 text-xl text-white/90 leading-relaxed">
+                  <p className="mt-5 text-lg text-white/90 leading-relaxed">
                     One of the best business management systems that helps you manage your business with ease and efficiency.
                   </p>
                   <button
                     onClick={() => router.push('/login')}
-                    className="mt-8 bg-white text-purple-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-50 transition-all duration-200 inline-flex items-center gap-2 shadow-lg"
+                    className="mt-6 bg-white text-purple-600 px-7 py-3 rounded-full font-semibold hover:bg-gray-50 transition-all duration-200 inline-flex items-center gap-2 shadow-lg"
                   >
                     Get Started
                     <ArrowRight className="w-5 h-5" />
@@ -84,15 +85,16 @@ export default function HomePage() {
                 </div>
                 <div className="relative">
                   {/* Illustration placeholder - you can replace with actual illustration */}
-                  <div className="relative w-full h-96 bg-white/10 backdrop-blur-sm rounded-3xl border border-white/20 flex items-center justify-center">
+                  <div className="relative w-full h-72 lg:h-80 bg-white/10 backdrop-blur-sm rounded-3xl border border-white/20 flex items-center justify-center">
                     <div className="text-center text-white/60">
-                      <BarChart3 className="w-24 h-24 mx-auto mb-4" />
-                      <p className="text-lg">Modern Business Illustration</p>
+                      <BarChart3 className="w-20 h-20 mx-auto mb-3" />
+                      <p className="text-base lg:text-lg">Modern Business Illustration</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+
           </div>
         </header>
 

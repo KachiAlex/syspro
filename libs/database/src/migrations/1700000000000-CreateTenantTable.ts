@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, Index } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
 
 export class CreateTenantTable1700000000000 implements MigrationInterface {
   name = 'CreateTenantTable1700000000000';
@@ -72,12 +72,18 @@ export class CreateTenantTable1700000000000 implements MigrationInterface {
     // Create indexes
     await queryRunner.createIndex(
       'tenants',
-      new Index('IDX_tenants_code', ['code'], { isUnique: true }),
+      new TableIndex({
+        name: 'IDX_tenants_code',
+        columnNames: ['code'],
+        isUnique: true,
+      }),
     );
 
     await queryRunner.createIndex(
       'tenants',
-      new Index('IDX_tenants_domain', ['domain'], { 
+      new TableIndex({
+        name: 'IDX_tenants_domain',
+        columnNames: ['domain'],
         isUnique: true,
         where: 'domain IS NOT NULL',
       }),
@@ -85,7 +91,10 @@ export class CreateTenantTable1700000000000 implements MigrationInterface {
 
     await queryRunner.createIndex(
       'tenants',
-      new Index('IDX_tenants_isActive', ['isActive']),
+      new TableIndex({
+        name: 'IDX_tenants_isActive',
+        columnNames: ['isActive'],
+      }),
     );
   }
 

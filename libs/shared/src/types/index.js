@@ -1,6 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ContactType = exports.SubscriptionStatus = void 0;
+exports.ContactType = exports.SubscriptionStatus = exports.UserStatus = void 0;
+var UserStatus;
+(function (UserStatus) {
+    UserStatus["ACTIVE"] = "active";
+    UserStatus["INACTIVE"] = "inactive";
+    UserStatus["SUSPENDED"] = "suspended";
+    UserStatus["PENDING_VERIFICATION"] = "pending_verification";
+})(UserStatus || (exports.UserStatus = UserStatus = {}));
 var SubscriptionStatus;
 (function (SubscriptionStatus) {
     SubscriptionStatus["ACTIVE"] = "active";

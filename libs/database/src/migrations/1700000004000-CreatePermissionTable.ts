@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, Index, ForeignKey } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table, TableIndex, TableForeignKey } from 'typeorm';
 
 export class CreatePermissionTable1700000004000 implements MigrationInterface {
   name = 'CreatePermissionTable1700000004000';
@@ -58,7 +58,7 @@ export class CreatePermissionTable1700000004000 implements MigrationInterface {
     // Create foreign key constraints
     await queryRunner.createForeignKey(
       'permissions',
-      new ForeignKey({
+      new TableForeignKey({
         columnNames: ['roleId'],
         referencedTableName: 'user_roles',
         referencedColumnNames: ['id'],
@@ -69,12 +69,18 @@ export class CreatePermissionTable1700000004000 implements MigrationInterface {
     // Create indexes
     await queryRunner.createIndex(
       'permissions',
-      new Index('IDX_permissions_roleId', ['roleId']),
+      new TableIndex({
+        name: 'IDX_permissions_roleId',
+        columnNames: ['roleId'],
+      }),
     );
 
     await queryRunner.createIndex(
       'permissions',
-      new Index('IDX_permissions_resource_action', ['resource', 'action']),
+      new TableIndex({
+        name: 'IDX_permissions_resource_action',
+        columnNames: ['resource', 'action'],
+      }),
     );
   }
 

@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, Index, ForeignKey } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table, TableIndex, TableForeignKey } from 'typeorm';
 
 export class CreateAuditLogTable1700000006000 implements MigrationInterface {
   name = 'CreateAuditLogTable1700000006000';
@@ -83,7 +83,7 @@ export class CreateAuditLogTable1700000006000 implements MigrationInterface {
     // Create foreign key constraints
     await queryRunner.createForeignKey(
       'audit_logs',
-      new ForeignKey({
+      new TableForeignKey({
         columnNames: ['tenantId'],
         referencedTableName: 'tenants',
         referencedColumnNames: ['id'],
@@ -93,7 +93,7 @@ export class CreateAuditLogTable1700000006000 implements MigrationInterface {
 
     await queryRunner.createForeignKey(
       'audit_logs',
-      new ForeignKey({
+      new TableForeignKey({
         columnNames: ['userId'],
         referencedTableName: 'users',
         referencedColumnNames: ['id'],
@@ -104,32 +104,50 @@ export class CreateAuditLogTable1700000006000 implements MigrationInterface {
     // Create indexes for efficient querying
     await queryRunner.createIndex(
       'audit_logs',
-      new Index('IDX_audit_logs_tenantId', ['tenantId']),
+      new TableIndex({
+        name: 'IDX_audit_logs_tenantId',
+        columnNames: ['tenantId'],
+      }),
     );
 
     await queryRunner.createIndex(
       'audit_logs',
-      new Index('IDX_audit_logs_userId', ['userId']),
+      new TableIndex({
+        name: 'IDX_audit_logs_userId',
+        columnNames: ['userId'],
+      }),
     );
 
     await queryRunner.createIndex(
       'audit_logs',
-      new Index('IDX_audit_logs_resource', ['resource']),
+      new TableIndex({
+        name: 'IDX_audit_logs_resource',
+        columnNames: ['resource'],
+      }),
     );
 
     await queryRunner.createIndex(
       'audit_logs',
-      new Index('IDX_audit_logs_action', ['action']),
+      new TableIndex({
+        name: 'IDX_audit_logs_action',
+        columnNames: ['action'],
+      }),
     );
 
     await queryRunner.createIndex(
       'audit_logs',
-      new Index('IDX_audit_logs_createdAt', ['createdAt']),
+      new TableIndex({
+        name: 'IDX_audit_logs_createdAt',
+        columnNames: ['createdAt'],
+      }),
     );
 
     await queryRunner.createIndex(
       'audit_logs',
-      new Index('IDX_audit_logs_resource_resourceId', ['resource', 'resourceId']),
+      new TableIndex({
+        name: 'IDX_audit_logs_resource_resourceId',
+        columnNames: ['resource', 'resourceId'],
+      }),
     );
   }
 

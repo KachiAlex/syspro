@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, Index, ForeignKey } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table, TableIndex, TableForeignKey } from 'typeorm';
 
 export class CreateUserTable1700000003000 implements MigrationInterface {
   name = 'CreateUserTable1700000003000';
@@ -136,7 +136,7 @@ export class CreateUserTable1700000003000 implements MigrationInterface {
     // Create foreign key constraints
     await queryRunner.createForeignKey(
       'users',
-      new ForeignKey({
+      new TableForeignKey({
         columnNames: ['tenantId'],
         referencedTableName: 'tenants',
         referencedColumnNames: ['id'],
@@ -146,7 +146,7 @@ export class CreateUserTable1700000003000 implements MigrationInterface {
 
     await queryRunner.createForeignKey(
       'users',
-      new ForeignKey({
+      new TableForeignKey({
         columnNames: ['organizationId'],
         referencedTableName: 'organizations',
         referencedColumnNames: ['id'],
@@ -157,22 +157,35 @@ export class CreateUserTable1700000003000 implements MigrationInterface {
     // Create indexes
     await queryRunner.createIndex(
       'users',
-      new Index('IDX_users_email_tenant', ['email', 'tenantId'], { isUnique: true }),
+      new TableIndex({
+        name: 'IDX_users_email_tenant',
+        columnNames: ['email', 'tenantId'],
+        isUnique: true,
+      }),
     );
 
     await queryRunner.createIndex(
       'users',
-      new Index('IDX_users_tenantId', ['tenantId']),
+      new TableIndex({
+        name: 'IDX_users_tenantId',
+        columnNames: ['tenantId'],
+      }),
     );
 
     await queryRunner.createIndex(
       'users',
-      new Index('IDX_users_organizationId', ['organizationId']),
+      new TableIndex({
+        name: 'IDX_users_organizationId',
+        columnNames: ['organizationId'],
+      }),
     );
 
     await queryRunner.createIndex(
       'users',
-      new Index('IDX_users_status', ['status']),
+      new TableIndex({
+        name: 'IDX_users_status',
+        columnNames: ['status'],
+      }),
     );
 
     // Create user-role junction table
@@ -197,7 +210,7 @@ export class CreateUserTable1700000003000 implements MigrationInterface {
 
     await queryRunner.createForeignKey(
       'user_roles_junction',
-      new ForeignKey({
+      new TableForeignKey({
         columnNames: ['userId'],
         referencedTableName: 'users',
         referencedColumnNames: ['id'],
@@ -207,7 +220,7 @@ export class CreateUserTable1700000003000 implements MigrationInterface {
 
     await queryRunner.createForeignKey(
       'user_roles_junction',
-      new ForeignKey({
+      new TableForeignKey({
         columnNames: ['roleId'],
         referencedTableName: 'user_roles',
         referencedColumnNames: ['id'],

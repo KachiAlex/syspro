@@ -1,0 +1,31 @@
+import { BaseEntity } from './base.entity';
+import { Tenant } from './tenant.entity';
+import { User } from './user.entity';
+import { ModuleRegistry } from './module-registry.entity';
+export declare class TenantModule extends BaseEntity {
+    tenantId: string;
+    moduleName: string;
+    isEnabled: boolean;
+    version: string;
+    configuration: Record<string, any>;
+    featureFlags: Record<string, boolean>;
+    enabledAt: Date;
+    enabledBy?: string;
+    disabledAt?: Date;
+    disabledBy?: string;
+    auditTrail?: Array<Record<string, any>>;
+    tenant: Tenant;
+    moduleRegistry: ModuleRegistry;
+    enabledByUser?: User;
+    disabledByUser?: User;
+    get isCurrentlyEnabled(): boolean;
+    get enablementDuration(): number | null;
+    get hasCustomConfiguration(): boolean;
+    get enabledFeatureFlags(): string[];
+    enable(userId?: string): void;
+    disable(userId?: string): void;
+    updateConfiguration(config: Record<string, any>): void;
+    toggleFeatureFlag(flagName: string, enabled: boolean): void;
+    isFeatureEnabled(flagName: string): boolean;
+    getConfigurationValue<T = any>(key: string, defaultValue?: T): T;
+}

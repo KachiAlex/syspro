@@ -6,6 +6,7 @@ export const VALIDATION = {
     REQUIRE_LOWERCASE: true,
     REQUIRE_NUMBERS: true,
     REQUIRE_SPECIAL_CHARS: true,
+    REGEX: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,128}$/,
   },
   EMAIL: {
     MAX_LENGTH: 254,

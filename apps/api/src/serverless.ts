@@ -35,10 +35,10 @@ async function createApp() {
     // CORS configuration for Vercel
     app.enableCors({
       origin: [
-        'https://syspro-erp.vercel.app',
-        'https://*.vercel.app',
+        process.env.FRONTEND_URL || 'https://syspro-erp.vercel.app',
+        /https:\/\/.*\.vercel\.app$/,
         'http://localhost:3000',
-        'http://localhost:3001'
+        'http://localhost:3001',
       ],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

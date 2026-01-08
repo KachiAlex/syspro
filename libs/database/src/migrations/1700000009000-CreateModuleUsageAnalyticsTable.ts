@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, Index, ForeignKey } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table, TableIndex, TableForeignKey } from 'typeorm';
 
 export class CreateModuleUsageAnalyticsTable1700000009000 implements MigrationInterface {
   name = 'CreateModuleUsageAnalyticsTable1700000009000';
@@ -78,7 +78,7 @@ export class CreateModuleUsageAnalyticsTable1700000009000 implements MigrationIn
     // Create unique constraint on tenant_id + module_name + endpoint + date + hour
     await queryRunner.createIndex(
       'module_usage_analytics',
-      new Index({
+      new TableIndex({
         name: 'IDX_module_usage_analytics_unique',
         columnNames: ['tenantId', 'moduleName', 'endpoint', 'date', 'hour'],
         isUnique: true,
@@ -88,7 +88,7 @@ export class CreateModuleUsageAnalyticsTable1700000009000 implements MigrationIn
     // Create index for tenant + date queries
     await queryRunner.createIndex(
       'module_usage_analytics',
-      new Index({
+      new TableIndex({
         name: 'IDX_module_usage_analytics_tenant_date',
         columnNames: ['tenantId', 'date'],
       }),
@@ -97,7 +97,7 @@ export class CreateModuleUsageAnalyticsTable1700000009000 implements MigrationIn
     // Create index for module + date queries
     await queryRunner.createIndex(
       'module_usage_analytics',
-      new Index({
+      new TableIndex({
         name: 'IDX_module_usage_analytics_module_date',
         columnNames: ['moduleName', 'date'],
       }),
@@ -106,7 +106,7 @@ export class CreateModuleUsageAnalyticsTable1700000009000 implements MigrationIn
     // Create index for hour-based queries
     await queryRunner.createIndex(
       'module_usage_analytics',
-      new Index({
+      new TableIndex({
         name: 'IDX_module_usage_analytics_hour',
         columnNames: ['date', 'hour'],
       }),
@@ -115,7 +115,7 @@ export class CreateModuleUsageAnalyticsTable1700000009000 implements MigrationIn
     // Create foreign key constraint
     await queryRunner.createForeignKey(
       'module_usage_analytics',
-      new ForeignKey({
+      new TableForeignKey({
         name: 'FK_module_usage_analytics_tenant',
         columnNames: ['tenantId'],
         referencedTableName: 'tenants',

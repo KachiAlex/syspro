@@ -8,14 +8,15 @@ import { ConfigurationManagerService } from '../configuration-manager.service';
 import { DependencyManagerService } from '../dependency-manager.service';
 import { ModuleUsageAnalyticsService } from '../module-usage-analytics.service';
 import { ModuleAccessMiddleware } from '../middleware/module-access.middleware';
-import { CacheService } from '../../shared/services/cache.service';
+import { CacheService } from '../../../shared/services/cache.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { 
   ModuleRegistry, 
   TenantModule, 
   ModuleUsageAnalytics,
   Tenant,
-  User 
+  User,
+  ModuleCategory,
 } from '@syspro/database';
 
 describe('Module Registry System - Checkpoint Validation', () => {
@@ -56,7 +57,7 @@ describe('Module Registry System - Checkpoint Validation', () => {
     displayName: 'Test Module',
     description: 'A test module for validation',
     version: '1.0.0',
-    category: 'core',
+    category: ModuleCategory.CORE,
     isCore: false,
     isActive: true,
     dependencies: [],
@@ -65,13 +66,11 @@ describe('Module Registry System - Checkpoint Validation', () => {
       type: 'object',
       properties: {
         enabled: { type: 'boolean', default: true },
-        maxUsers: { type: 'number', default: 100 }
-      }
+        maxUsers: { type: 'number', default: 100 },
+        newProperty: { type: 'string', default: 'defaultValue' },
+      },
     },
-    defaultConfiguration: {
-      enabled: true,
-      maxUsers: 100
-    },
+    defaultConfiguration: { enabled: true, maxUsers: 100, newProperty: 'defaultValue' },
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -193,6 +192,7 @@ describe('Module Registry System - Checkpoint Validation', () => {
       jest.spyOn(moduleRegistryRepository, 'findOne').mockResolvedValue(null);
       jest.spyOn(moduleRegistryRepository, 'create').mockReturnValue(mockModule as any);
       jest.spyOn(moduleRegistryRepository, 'save').mockResolvedValue(mockModule as any);
+
       jest.spyOn(cacheService, 'del').mockResolvedValue(undefined);
       jest.spyOn(eventEmitter, 'emit').mockReturnValue(true);
 
@@ -203,7 +203,6 @@ describe('Module Registry System - Checkpoint Validation', () => {
         version: mockModule.version,
         category: mockModule.category,
         configurationSchema: mockModule.configurationSchema,
-        defaultConfiguration: mockModule.defaultConfiguration,
       });
 
       expect(result).toBeDefined();
@@ -225,14 +224,13 @@ describe('Module Registry System - Checkpoint Validation', () => {
     });
 
     it('should validate module compatibility', async () => {
-      jest.spyOn(moduleRegistryRepository, 'findOne').mockResolvedValue(mockModule as any);
+      jest.spyOn(moduleRegistryRepository, 'find').mockResolvedValue([mockModule as any]);
 
-      const isCompatible = await moduleRegistryService.validateModuleCompatibility(
-        mockModule.name,
-        '1.0.0'
+      const compatibility = await moduleRegistryService.validateModuleCompatibility(
+        [mockModule.name]
       );
 
-      expect(typeof isCompatible).toBe('boolean');
+      expect(typeof compatibility.isCompatible).toBe('boolean');
     });
   });
 
@@ -244,7 +242,7 @@ describe('Module Registry System - Checkpoint Validation', () => {
         moduleName: mockModule.name,
         version: mockModule.version,
         isEnabled: true,
-        configuration: mockModule.defaultConfiguration,
+        configuration: { enabled: true, maxUsers: 100 },
         featureFlags: {},
         enabledAt: new Date(),
         enabledBy: mockUser.id,
@@ -260,11 +258,7 @@ describe('Module Registry System - Checkpoint Validation', () => {
 
       const result = await tenantModuleService.enableModule(
         mockTenant.id,
-        {
-          moduleName: mockModule.name,
-          version: mockModule.version,
-          configuration: mockModule.defaultConfiguration,
-        },
+        { moduleName: mockModule.name, configuration: { enabled: true, maxUsers: 100 } },
         mockUser.id
       );
 
@@ -404,7 +398,7 @@ describe('Module Registry System - Checkpoint Validation', () => {
         id: 'tenant-module-id',
         tenantId: mockTenant.id,
         moduleName: mockModule.name,
-        configuration: mockModule.defaultConfiguration,
+        configuration: { enabled: true, maxUsers: 100 },
         save: jest.fn().mockResolvedValue(true),
       };
 
@@ -465,7 +459,7 @@ describe('Module Registry System - Checkpoint Validation', () => {
       );
 
       expect(analysis).toBeDefined();
-      expect(analysis.canEnable).toBeDefined();
+      expect(analysis.canProceed).toBeDefined();
       expect(analysis.requiredActions).toBeDefined();
     });
 
@@ -475,7 +469,7 @@ describe('Module Registry System - Checkpoint Validation', () => {
       const dependencyChain = await dependencyManagerService.getDependencyChain(mockModule.name);
 
       expect(dependencyChain).toBeDefined();
-      expect(dependencyChain.name).toBe(mockModule.name);
+      expect(dependencyChain.moduleName).toBe(mockModule.name);
     });
   });
 
@@ -541,7 +535,6 @@ describe('Module Registry System - Checkpoint Validation', () => {
         version: mockModule.version,
         category: mockModule.category,
         configurationSchema: mockModule.configurationSchema,
-        defaultConfiguration: mockModule.defaultConfiguration,
       });
 
       expect(registeredModule).toBeDefined();
@@ -552,7 +545,7 @@ describe('Module Registry System - Checkpoint Validation', () => {
         tenantId: mockTenant.id,
         moduleName: mockModule.name,
         isEnabled: true,
-        configuration: mockModule.defaultConfiguration,
+        configuration: { enabled: true, maxUsers: 100 },
       };
 
       jest.spyOn(moduleRegistryRepository, 'findOne').mockResolvedValue(mockModule as any);
@@ -564,11 +557,7 @@ describe('Module Registry System - Checkpoint Validation', () => {
 
       const enabledModule = await tenantModuleService.enableModule(
         mockTenant.id,
-        {
-          moduleName: mockModule.name,
-          version: mockModule.version,
-          configuration: mockModule.defaultConfiguration,
-        },
+        { moduleName: mockModule.name, configuration: { enabled: true, maxUsers: 100 } },
         mockUser.id
       );
 
@@ -607,10 +596,7 @@ describe('Module Registry System - Checkpoint Validation', () => {
       await expect(
         tenantModuleService.enableModule(
           mockTenant.id,
-          {
-            moduleName: 'non-existent-module',
-            version: '1.0.0',
-          },
+          { moduleName: 'non-existent-module' },
           mockUser.id
         )
       ).rejects.toThrow();

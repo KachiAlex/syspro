@@ -34,6 +34,12 @@ export interface User extends BaseEntity {
     tenantId: string;
     roles: UserRole[];
 }
+export declare enum UserStatus {
+    ACTIVE = "active",
+    INACTIVE = "inactive",
+    SUSPENDED = "suspended",
+    PENDING_VERIFICATION = "pending_verification"
+}
 export interface UserRole extends BaseEntity {
     name: string;
     description?: string;
@@ -144,4 +150,3 @@ export interface SystemConfig {
     supportedCurrencies: string[];
     supportedTimezones: string[];
 }
-//# sourceMappingURL=index.d.ts.map

@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, Index, ForeignKey } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table, TableIndex, TableForeignKey } from 'typeorm';
 
 export class CreateUserRoleTable1700000002000 implements MigrationInterface {
   name = 'CreateUserRoleTable1700000002000';
@@ -59,7 +59,7 @@ export class CreateUserRoleTable1700000002000 implements MigrationInterface {
     // Create foreign key constraints
     await queryRunner.createForeignKey(
       'user_roles',
-      new ForeignKey({
+      new TableForeignKey({
         columnNames: ['tenantId'],
         referencedTableName: 'tenants',
         referencedColumnNames: ['id'],
@@ -70,12 +70,19 @@ export class CreateUserRoleTable1700000002000 implements MigrationInterface {
     // Create indexes
     await queryRunner.createIndex(
       'user_roles',
-      new Index('IDX_user_roles_tenantId', ['tenantId']),
+      new TableIndex({
+        name: 'IDX_user_roles_tenantId',
+        columnNames: ['tenantId'],
+      }),
     );
 
     await queryRunner.createIndex(
       'user_roles',
-      new Index('IDX_user_roles_tenant_name', ['tenantId', 'name'], { isUnique: true }),
+      new TableIndex({
+        name: 'IDX_user_roles_tenant_name',
+        columnNames: ['tenantId', 'name'],
+        isUnique: true,
+      }),
     );
   }
 

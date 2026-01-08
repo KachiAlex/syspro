@@ -32,15 +32,19 @@ export class UsageTrackingMiddleware implements NestMiddleware {
     req.startTime = Date.now();
 
     // Override res.end to capture response details
-    const originalEnd = res.end;
-    res.end = function(chunk?: any, encoding?: any) {
+    const originalEnd = res.end.bind(res);
+    const analyticsService = this.analyticsService;
+    const logger = this.logger;
+
+    res.end = ((chunk?: any, encoding?: any, callback?: () => void) => {
       // Call original end method
-      originalEnd.call(this, chunk, encoding);
+      originalEnd(chunk, encoding, callback);
 
       // Track the API usage after response is sent
       setImmediate(() => {
         try {
           const responseTime = Date.now() - (req.startTime || Date.now());
+
           const moduleName = req.moduleContext?.moduleName || 
                            extractModuleFromPath(req.path);
           
@@ -65,7 +69,7 @@ export class UsageTrackingMiddleware implements NestMiddleware {
           logger.error('Error in usage tracking middleware', error.stack);
         }
       });
-    };
+    }) as typeof res.end;
 
     next();
   }

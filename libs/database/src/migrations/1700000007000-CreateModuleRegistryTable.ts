@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, Index } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
 
 export class CreateModuleRegistryTable1700000007000 implements MigrationInterface {
   name = 'CreateModuleRegistryTable1700000007000';
@@ -124,7 +124,7 @@ export class CreateModuleRegistryTable1700000007000 implements MigrationInterfac
     // Create indexes
     await queryRunner.createIndex(
       'module_registry',
-      new Index({
+      new TableIndex({
         name: 'IDX_module_registry_category',
         columnNames: ['category'],
       }),
@@ -132,7 +132,7 @@ export class CreateModuleRegistryTable1700000007000 implements MigrationInterfac
 
     await queryRunner.createIndex(
       'module_registry',
-      new Index({
+      new TableIndex({
         name: 'IDX_module_registry_active',
         columnNames: ['isActive'],
       }),
@@ -140,7 +140,7 @@ export class CreateModuleRegistryTable1700000007000 implements MigrationInterfac
 
     await queryRunner.createIndex(
       'module_registry',
-      new Index({
+      new TableIndex({
         name: 'IDX_module_registry_name',
         columnNames: ['name'],
         isUnique: true,

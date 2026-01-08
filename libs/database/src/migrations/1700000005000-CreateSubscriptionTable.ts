@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, Index, ForeignKey } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table, TableIndex, TableForeignKey } from 'typeorm';
 
 export class CreateSubscriptionTable1700000005000 implements MigrationInterface {
   name = 'CreateSubscriptionTable1700000005000';
@@ -85,7 +85,7 @@ export class CreateSubscriptionTable1700000005000 implements MigrationInterface 
     // Create foreign key constraints
     await queryRunner.createForeignKey(
       'subscriptions',
-      new ForeignKey({
+      new TableForeignKey({
         columnNames: ['tenantId'],
         referencedTableName: 'tenants',
         referencedColumnNames: ['id'],
@@ -96,12 +96,18 @@ export class CreateSubscriptionTable1700000005000 implements MigrationInterface 
     // Create indexes
     await queryRunner.createIndex(
       'subscriptions',
-      new Index('IDX_subscriptions_tenantId', ['tenantId']),
+      new TableIndex({
+        name: 'IDX_subscriptions_tenantId',
+        columnNames: ['tenantId'],
+      }),
     );
 
     await queryRunner.createIndex(
       'subscriptions',
-      new Index('IDX_subscriptions_status', ['status']),
+      new TableIndex({
+        name: 'IDX_subscriptions_status',
+        columnNames: ['status'],
+      }),
     );
   }
 

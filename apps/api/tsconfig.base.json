@@ -11,7 +11,12 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
+    "rootDir": "../../",
+    "baseUrl": "../../",
+    "paths": {
+      "@syspro/shared": ["libs/shared/src"],
+      "@syspro/database": ["libs/database/src"]
+    },
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,
@@ -21,7 +26,9 @@
     "noFallthroughCasesInSwitch": false
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "../../libs/database/src/**/*",
+    "../../libs/shared/src/**/*"
   ],
   "exclude": [
     "node_modules",

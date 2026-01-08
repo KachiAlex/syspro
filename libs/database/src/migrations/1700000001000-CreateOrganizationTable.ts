@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, Index, ForeignKey } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table, TableIndex, TableForeignKey } from 'typeorm';
 
 export class CreateOrganizationTable1700000001000 implements MigrationInterface {
   name = 'CreateOrganizationTable1700000001000';
@@ -94,7 +94,7 @@ export class CreateOrganizationTable1700000001000 implements MigrationInterface 
     // Create foreign key constraints
     await queryRunner.createForeignKey(
       'organizations',
-      new ForeignKey({
+      new TableForeignKey({
         columnNames: ['tenantId'],
         referencedTableName: 'tenants',
         referencedColumnNames: ['id'],
@@ -104,7 +104,7 @@ export class CreateOrganizationTable1700000001000 implements MigrationInterface 
 
     await queryRunner.createForeignKey(
       'organizations',
-      new ForeignKey({
+      new TableForeignKey({
         columnNames: ['parentId'],
         referencedTableName: 'organizations',
         referencedColumnNames: ['id'],
@@ -115,22 +115,34 @@ export class CreateOrganizationTable1700000001000 implements MigrationInterface 
     // Create indexes
     await queryRunner.createIndex(
       'organizations',
-      new Index('IDX_organizations_tenantId', ['tenantId']),
+      new TableIndex({
+        name: 'IDX_organizations_tenantId',
+        columnNames: ['tenantId'],
+      }),
     );
 
     await queryRunner.createIndex(
       'organizations',
-      new Index('IDX_organizations_tenant_name', ['tenantId', 'name']),
+      new TableIndex({
+        name: 'IDX_organizations_tenant_name',
+        columnNames: ['tenantId', 'name'],
+      }),
     );
 
     await queryRunner.createIndex(
       'organizations',
-      new Index('IDX_organizations_parentId', ['parentId']),
+      new TableIndex({
+        name: 'IDX_organizations_parentId',
+        columnNames: ['parentId'],
+      }),
     );
 
     await queryRunner.createIndex(
       'organizations',
-      new Index('IDX_organizations_mpath', ['mpath']),
+      new TableIndex({
+        name: 'IDX_organizations_mpath',
+        columnNames: ['mpath'],
+      }),
     );
   }
 

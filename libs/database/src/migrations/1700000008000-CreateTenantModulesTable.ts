@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, Index, ForeignKey } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table, TableIndex, TableForeignKey } from 'typeorm';
 
 export class CreateTenantModulesTable1700000008000 implements MigrationInterface {
   name = 'CreateTenantModulesTable1700000008000';
@@ -83,7 +83,7 @@ export class CreateTenantModulesTable1700000008000 implements MigrationInterface
     // Create unique constraint on tenant_id + module_name
     await queryRunner.createIndex(
       'tenant_modules',
-      new Index({
+      new TableIndex({
         name: 'IDX_tenant_modules_tenant_module',
         columnNames: ['tenantId', 'moduleName'],
         isUnique: true,
@@ -93,7 +93,7 @@ export class CreateTenantModulesTable1700000008000 implements MigrationInterface
     // Create index for enabled modules lookup
     await queryRunner.createIndex(
       'tenant_modules',
-      new Index({
+      new TableIndex({
         name: 'IDX_tenant_modules_tenant_enabled',
         columnNames: ['tenantId', 'isEnabled'],
       }),
@@ -102,7 +102,7 @@ export class CreateTenantModulesTable1700000008000 implements MigrationInterface
     // Create index for module lookup
     await queryRunner.createIndex(
       'tenant_modules',
-      new Index({
+      new TableIndex({
         name: 'IDX_tenant_modules_module',
         columnNames: ['moduleName'],
       }),
@@ -111,7 +111,7 @@ export class CreateTenantModulesTable1700000008000 implements MigrationInterface
     // Create foreign key constraints
     await queryRunner.createForeignKey(
       'tenant_modules',
-      new ForeignKey({
+      new TableForeignKey({
         name: 'FK_tenant_modules_tenant',
         columnNames: ['tenantId'],
         referencedTableName: 'tenants',
@@ -122,7 +122,7 @@ export class CreateTenantModulesTable1700000008000 implements MigrationInterface
 
     await queryRunner.createForeignKey(
       'tenant_modules',
-      new ForeignKey({
+      new TableForeignKey({
         name: 'FK_tenant_modules_module_registry',
         columnNames: ['moduleName'],
         referencedTableName: 'module_registry',
@@ -133,7 +133,7 @@ export class CreateTenantModulesTable1700000008000 implements MigrationInterface
 
     await queryRunner.createForeignKey(
       'tenant_modules',
-      new ForeignKey({
+      new TableForeignKey({
         name: 'FK_tenant_modules_enabled_by',
         columnNames: ['enabledBy'],
         referencedTableName: 'users',
@@ -144,7 +144,7 @@ export class CreateTenantModulesTable1700000008000 implements MigrationInterface
 
     await queryRunner.createForeignKey(
       'tenant_modules',
-      new ForeignKey({
+      new TableForeignKey({
         name: 'FK_tenant_modules_disabled_by',
         columnNames: ['disabledBy'],
         referencedTableName: 'users',

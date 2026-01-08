@@ -31,6 +31,10 @@ interface ConfigurationAuditEntry {
   reason?: string;
 }
 
+type TenantModuleWithAuditTrail = Omit<TenantModule, 'auditTrail'> & {
+  auditTrail?: ConfigurationAuditEntry[];
+};
+
 @Injectable()
 export class ConfigurationManagerService {
   private readonly logger = new Logger(ConfigurationManagerService.name);
@@ -182,6 +186,10 @@ export class ConfigurationManagerService {
       `Applied template: ${templateName}`,
     );
 
+    // Store audit trail
+    const allAuditEntries = [...auditEntries];
+    this.appendAuditTrail(tenantModule, allAuditEntries);
+
     // Update configuration
     const oldConfiguration = tenantModule.configuration;
     tenantModule.configuration = newConfiguration;
@@ -199,12 +207,7 @@ export class ConfigurationManagerService {
       `Applied template: ${templateName}`,
     );
 
-    // Store audit trail
-    const allAuditEntries = [...auditEntries, ...flagAuditEntries];
-    tenantModule.auditTrail = [
-      ...(tenantModule.auditTrail || []),
-      ...allAuditEntries,
-    ];
+    this.appendAuditTrail(tenantModule, flagAuditEntries);
 
     await this.tenantModuleRepository.save(tenantModule);
 
@@ -256,10 +259,7 @@ export class ConfigurationManagerService {
 
     // Update configuration
     tenantModule.configuration = newConfiguration;
-    tenantModule.auditTrail = [
-      ...(tenantModule.auditTrail || []),
-      ...auditEntries,
-    ];
+    this.appendAuditTrail(tenantModule, auditEntries);
 
     await this.tenantModuleRepository.save(tenantModule);
 
@@ -323,11 +323,7 @@ export class ConfigurationManagerService {
     // Reset to defaults
     tenantModule.configuration = defaultConfiguration;
     tenantModule.featureFlags = defaultFeatureFlags;
-    tenantModule.auditTrail = [
-      ...(tenantModule.auditTrail || []),
-      ...configAuditEntries,
-      ...flagAuditEntries,
-    ];
+    this.appendAuditTrail(tenantModule, [...configAuditEntries, ...flagAuditEntries]);
 
     await this.tenantModuleRepository.save(tenantModule);
 
@@ -350,12 +346,17 @@ export class ConfigurationManagerService {
       where: { tenantId, moduleName, isEnabled: true }
     });
 
-    if (!tenantModule || !tenantModule.auditTrail) {
+    if (!tenantModule) {
+      return [];
+    }
+
+    const moduleWithAudit = tenantModule as TenantModuleWithAuditTrail;
+    if (!moduleWithAudit.auditTrail) {
       return [];
     }
 
     // Return most recent entries first
-    return tenantModule.auditTrail
+    return moduleWithAudit.auditTrail
       .slice(-limit)
       .reverse();
   }
@@ -554,6 +555,26 @@ export class ConfigurationManagerService {
     }
 
     return entries;
+  }
+
+  private appendAuditTrail(
+    tenantModule: TenantModule,
+    entries: ConfigurationAuditEntry[],
+    maxEntries = 200,
+  ): void {
+    if (!entries?.length) {
+      return;
+    }
+
+    const moduleWithAudit = tenantModule as TenantModuleWithAuditTrail;
+    const existingEntries = Array.isArray(moduleWithAudit.auditTrail)
+      ? moduleWithAudit.auditTrail.map((entry) => ({
+          ...entry,
+          timestamp: entry.timestamp instanceof Date ? entry.timestamp : new Date(entry.timestamp),
+        }))
+      : [];
+
+    moduleWithAudit.auditTrail = [...existingEntries, ...entries].slice(-maxEntries);
   }
 
   private async clearConfigurationCache(tenantId: string, moduleName: string): Promise<void> {

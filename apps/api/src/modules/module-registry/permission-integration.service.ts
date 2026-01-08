@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
+
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository, QueryDeepPartialEntity } from 'typeorm';
+
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { ModuleRegistry, TenantModule, Permission, UserRole, AuditLog } from '@syspro/database';
 import { CacheService } from '../../shared/services/cache.service';
@@ -20,6 +22,10 @@ export interface ModulePermissionTemplate {
     permissions: string[];
     isDefault: boolean;
   }[];
+}
+
+interface PermissionAuditDetails {
+  [key: string]: any;
 }
 
 export interface PermissionFilterResult {
@@ -250,8 +256,19 @@ export class PermissionIntegrationService {
       throw new Error(`Cannot apply role template: module '${moduleName}' is not enabled for tenant`);
     }
 
-    // Apply role permissions
-    await this.assignRolePermissions(tenantId, userId, roleTemplate.permissions);
+    const moduleRole = await this.userRoleRepository.findOne({
+      where: {
+        tenantId,
+        code: `${moduleName}_${roleName}`.toUpperCase(),
+      },
+    });
+
+    if (!moduleRole) {
+      throw new Error(`Module role '${roleName}' not provisioned for tenant ${tenantId}`);
+    }
+
+    // Assign permissions to the module role (ensures PK consistency)
+    await this.assignPermissionsToRole(tenantId, moduleRole.id, roleTemplate.permissions);
 
     // Create audit trail
     await this.createPermissionAuditTrail({
@@ -292,7 +309,7 @@ export class PermissionIntegrationService {
       .andWhere('audit.resource = :resource', { resource: 'permission' });
 
     if (options.moduleName) {
-      query.andWhere("audit.details->>'moduleName' = :moduleName", { moduleName: options.moduleName });
+      query.andWhere("audit.newValues->>'moduleName' = :moduleName", { moduleName: options.moduleName });
     }
 
     if (options.userId) {
@@ -400,28 +417,27 @@ export class PermissionIntegrationService {
   private async createModulePermissions(tenantId: string, template: ModulePermissionTemplate): Promise<void> {
     for (const permissionDef of template.permissions) {
       // Check if permission already exists
-      const existingPermission = await this.permissionRepository.findOne({
-        where: {
-          tenantId,
-          name: permissionDef.name,
-        },
-      });
+      const existingPermission = await this.permissionRepository
+        .createQueryBuilder('permission')
+        .where('permission.tenantId = :tenantId', { tenantId })
+        .andWhere('permission.name = :name', { name: permissionDef.name })
+        .getOne();
 
       if (!existingPermission) {
-        const permission = this.permissionRepository.create({
-          tenantId,
-          name: permissionDef.name,
-          description: permissionDef.description,
-          resource: permissionDef.resource,
-          action: permissionDef.action,
-          isActive: true,
-          metadata: {
-            moduleName: template.moduleName,
-            isCore: permissionDef.isCore,
-          },
-        });
-
-        await this.permissionRepository.save(permission);
+        await this.permissionRepository.save(
+          this.permissionRepository.create({
+            tenantId,
+            name: permissionDef.name,
+            description: permissionDef.description,
+            resource: permissionDef.resource,
+            action: permissionDef.action,
+            isActive: true,
+            metadata: {
+              moduleName: template.moduleName,
+              isCore: permissionDef.isCore,
+            },
+          }),
+        );
       }
     }
   }
@@ -443,15 +459,13 @@ export class PermissionIntegrationService {
           tenantId,
           name: `${template.moduleName}_${roleTemplate.name}`,
           description: roleTemplate.description,
-          permissions: roleTemplate.permissions,
-          isActive: true,
-          metadata: {
-            moduleName: template.moduleName,
-            isDefault: true,
-          },
+          code: `${template.moduleName}_${roleTemplate.name}`.toUpperCase(),
         });
 
-        await this.userRoleRepository.save(role);
+        const savedRole = await this.userRoleRepository.save(role);
+        await this.assignPermissionsToRole(tenantId, savedRole.id, roleTemplate.permissions);
+      } else {
+        await this.assignPermissionsToRole(tenantId, existingRole.id, roleTemplate.permissions);
       }
     }
   }
@@ -460,24 +474,20 @@ export class PermissionIntegrationService {
     await this.permissionRepository
       .createQueryBuilder()
       .update()
-      .set({ isActive: false })
+      .set({ isActive: false } as QueryDeepPartialEntity<Permission>)
       .where('tenantId = :tenantId', { tenantId })
       .andWhere("metadata->>'moduleName' = :moduleName", { moduleName })
       .execute();
   }
 
   private async removeModulePermissionsFromRoles(tenantId: string, moduleName: string): Promise<void> {
-    const roles = await this.userRoleRepository.find({
-      where: { tenantId, isActive: true },
-    });
-
-    for (const role of roles) {
-      const modulePermissions = role.permissions.filter(p => p.startsWith(`${moduleName}:`));
-      if (modulePermissions.length > 0) {
-        role.permissions = role.permissions.filter(p => !p.startsWith(`${moduleName}:`));
-        await this.userRoleRepository.save(role);
-      }
-    }
+    await this.permissionRepository
+      .createQueryBuilder()
+      .update()
+      .set({ roleId: null })
+      .where('tenantId = :tenantId', { tenantId })
+      .andWhere("metadata->>'moduleName' = :moduleName", { moduleName })
+      .execute();
   }
 
   private async getEnabledModulesForTenant(tenantId: string): Promise<TenantModule[]> {
@@ -520,21 +530,12 @@ export class PermissionIntegrationService {
     return !!tenantModule;
   }
 
-  private async assignRolePermissions(tenantId: string, userId: string, permissions: string[]): Promise<void> {
-    // In a real implementation, this would assign permissions to user roles
-    // For now, we'll just log the operation
-    this.logger.log(`Assigning permissions to user ${userId} in tenant ${tenantId}: ${permissions.join(', ')}`);
-  }
-
   private async getModulePermissions(tenantId: string, moduleName: string): Promise<Permission[]> {
-    return this.permissionRepository.find({
-      where: {
-        tenantId,
-        metadata: {
-          moduleName,
-        } as any,
-      },
-    });
+    return this.permissionRepository
+      .createQueryBuilder('permission')
+      .where('permission.tenantId = :tenantId', { tenantId })
+      .andWhere("permission.metadata->>'moduleName' = :moduleName", { moduleName })
+      .getMany();
   }
 
   private async createPermissionAuditTrail(params: {
@@ -542,16 +543,19 @@ export class PermissionIntegrationService {
     userId: string;
     action: string;
     moduleName: string;
-    details: Record<string, any>;
+    details: PermissionAuditDetails;
+    previousState?: Record<string, any>;
   }): Promise<void> {
     const auditLog = this.auditLogRepository.create({
       tenantId: params.tenantId,
       userId: params.userId,
       resource: 'permission',
+      resourceId: params.moduleName,
       action: params.action,
-      details: {
-        ...params.details,
+      oldValues: params.previousState,
+      newValues: {
         moduleName: params.moduleName,
+        ...params.details,
       },
       ipAddress: 'system',
       userAgent: 'module-registry-service',
@@ -574,5 +578,34 @@ export class PermissionIntegrationService {
     for (const pattern of patterns) {
       await this.cacheService.delPattern(pattern);
     }
+  }
+
+  private async assignPermissionsToRole(
+    tenantId: string,
+    roleId: string,
+    permissionNames: string[],
+  ): Promise<void> {
+    if (!permissionNames || permissionNames.length === 0) {
+      return;
+    }
+
+    const permissions = await this.permissionRepository
+      .createQueryBuilder('permission')
+      .where('permission.tenantId = :tenantId', { tenantId })
+      .andWhere('permission.name IN (:...permissionNames)', { permissionNames })
+      .getMany();
+
+    if (!permissions.length) {
+      this.logger.warn(
+        `No permissions found to assign for role ${roleId} in tenant ${tenantId}`,
+      );
+      return;
+    }
+
+    for (const permission of permissions) {
+      permission.roleId = roleId;
+    }
+
+    await this.permissionRepository.save(permissions);
   }
 }

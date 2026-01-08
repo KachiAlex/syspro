@@ -109,6 +109,24 @@ export class TenantModule extends BaseEntity {
   @IsUUID()
   disabledBy?: string;
 
+  @ApiProperty({
+    description: 'Configuration and feature flag change history',
+    example: [
+      {
+        timestamp: '2024-01-01T12:00:00.000Z',
+        userId: 'user-id',
+        action: 'update',
+        field: 'featureFlags.advancedReporting',
+        oldValue: false,
+        newValue: true,
+      },
+    ],
+    required: false,
+  })
+  @Column({ type: 'jsonb', nullable: true })
+  @IsOptional()
+  auditTrail?: Array<Record<string, any>>;
+
   // Relationships
   @ManyToOne(() => Tenant, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'tenantId' })

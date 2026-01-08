@@ -38,6 +38,13 @@ interface FeatureFlagUsage {
   usageCount: number;
 }
 
+interface RealTimeStats {
+  activeRequests: number;
+  requestsPerMinute: number;
+  errorRate: number;
+  averageResponseTime: number;
+}
+
 interface UsageReport {
   period: { start: Date; end: Date };
   totalMetrics: UsageMetrics;
@@ -474,14 +481,9 @@ export class ModuleUsageAnalyticsService {
   /**
    * Get real-time usage statistics
    */
-  async getRealTimeStats(): Promise<{
-    activeRequests: number;
-    requestsPerMinute: number;
-    errorRate: number;
-    averageResponseTime: number;
-  }> {
+  async getRealTimeStats(): Promise<RealTimeStats> {
     const cacheKey = 'realtime:stats';
-    let stats = await this.cacheService.get(cacheKey);
+    let stats = await this.cacheService.get<RealTimeStats>(cacheKey);
 
     if (!stats) {
       const now = new Date();
