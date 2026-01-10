@@ -4,7 +4,9 @@ import {
   BadRequestException,
   ConflictException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -18,8 +20,15 @@ import { RegisterDto } from './dto/register.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 @Injectable()
 export class AuthService {
+  private static isUuid(value: string): boolean {
+    return UUID_REGEX.test(value);
+  }
+
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -31,24 +40,32 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
+  private readonly logger = new Logger(AuthService.name);
+
   async validateUser(email: string, password: string, tenantId: string): Promise<User | null> {
+    this.logger.debug(`Validating user ${email} for tenant ${tenantId}`);
     const user = await this.userRepository.findOne({
       where: { email, tenantId },
       relations: ['tenant', 'roles', 'roles.permissions'],
     });
 
     if (!user) {
+      this.logger.warn(`User ${email} not found for tenant ${tenantId}`);
       return null;
     }
 
     // Check if user can login
     if (!user.canLogin) {
+      this.logger.warn(
+        `User ${email} for tenant ${tenantId} cannot login (status=${user.status}, isActive=${user.isActive}, emailVerified=${user.emailVerified}, locked=${user.isLocked})`,
+      );
       throw new UnauthorizedException('Account is not active or verified');
     }
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
+      this.logger.warn(`Invalid password for user ${email} (tenant ${tenantId})`);
       // Increment failed login attempts
       user.incrementFailedLoginAttempts();
       await this.userRepository.save(user);
@@ -73,17 +90,43 @@ export class AuthService {
   }
 
   async platformLogin(loginDto: LoginDto): Promise<AuthTokens> {
-    const platformTenantCode = this.configService.get<string>('app.platformTenantCode') || 'PLATFORM';
+    try {
+      const platformTenantCode = this.configService.get<string>('app.platformTenantCode') || 'PLATFORM';
 
-    const platformTenant = await this.tenantRepository.findOne({
-      where: { code: platformTenantCode, isActive: true },
-    });
+      this.logger.log(`Platform login attempt for ${loginDto.email}`);
+      let platformTenant = await this.tenantRepository.findOne({
+        where: { code: platformTenantCode, isActive: true },
+      });
 
-    if (!platformTenant) {
-      throw new UnauthorizedException('Platform tenant not configured');
+      if (
+        !platformTenant &&
+        AuthService.isUuid(platformTenantCode)
+      ) {
+        platformTenant = await this.tenantRepository.findOne({
+          where: { id: platformTenantCode, isActive: true },
+        });
+      }
+
+      if (!platformTenant) {
+        platformTenant = await this.tenantRepository.findOne({
+          where: { name: platformTenantCode, isActive: true },
+        });
+      }
+
+      if (!platformTenant) {
+        this.logger.error(`Platform tenant "${platformTenantCode}" not found or inactive`);
+        throw new UnauthorizedException('Platform tenant not configured');
+      }
+
+      this.logger.debug(`Using platform tenant ${platformTenant.id} (${platformTenant.code})`);
+      return this.login(loginDto, platformTenant.id);
+    } catch (error) {
+      this.logger.error(
+        `Platform login failed for ${loginDto.email}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
     }
-
-    return this.login(loginDto, platformTenant.id);
   }
 
   async register(registerDto: RegisterDto, tenantId: string): Promise<AuthTokens> {

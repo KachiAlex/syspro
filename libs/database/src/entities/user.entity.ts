@@ -153,7 +153,7 @@ export class User extends BaseEntity {
 
   @ManyToMany(() => UserRole, (role) => role.users)
   @JoinTable({
-    name: 'user_roles',
+    name: 'user_roles_junction',
     joinColumn: { name: 'userId', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'roleId', referencedColumnName: 'id' },
   })

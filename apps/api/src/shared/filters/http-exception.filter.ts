@@ -21,6 +21,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let status: number;
     let message: string;
     let errors: ValidationError[] | undefined;
+    let debugData: Record<string, any> | undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
@@ -51,12 +52,33 @@ export class HttpExceptionFilter implements ExceptionFilter {
         `Unexpected error: ${exception}`,
         exception instanceof Error ? exception.stack : undefined,
       );
+
+      if (exception instanceof Error) {
+        debugData = {
+          name: exception.name,
+          message: exception.message,
+          stack: exception.stack,
+        };
+      } else {
+        debugData = {
+          value: exception,
+        };
+      }
     }
 
-    const errorResponse: ApiResponse = {
+    if (!debugData && exception instanceof Error) {
+      debugData = {
+        name: exception.name,
+        message: exception.message,
+        stack: exception.stack,
+      };
+    }
+
+    const errorResponse: ApiResponse & { error?: Record<string, any> } = {
       success: false,
       message,
       errors,
+      error: debugData,
     };
 
     // Log error details

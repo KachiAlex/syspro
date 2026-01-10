@@ -21,6 +21,7 @@ import { OrganizationModule } from './modules/organization/organization.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { HealthModule } from './modules/health/health.module';
 import { ModuleRegistryModule } from './modules/module-registry/module-registry.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 // Shared
 import { DatabaseModule } from './shared/database/database.module';
@@ -104,6 +105,7 @@ import { UsageTrackingMiddleware } from './modules/module-registry/middleware/us
     OrganizationModule,
     AuditModule,
     ModuleRegistryModule,
+    DashboardModule,
   ],
   providers: [
     // Global JWT authentication guard

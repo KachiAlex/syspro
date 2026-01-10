@@ -224,7 +224,26 @@ export class HttpClient {
    * Make a POST request
    */
   async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.axiosInstance.post<T>(url, data, config);
+    const contentType = (config?.headers as any)?.['Content-Type'] ?? (config?.headers as any)?.['content-type'];
+    const isJson = (typeof contentType === 'string' && contentType.includes('application/json')) || !contentType;
+
+    const shouldStringify =
+      isJson &&
+      data !== undefined &&
+      data !== null &&
+      typeof data === 'object' &&
+      !(data instanceof FormData) &&
+      !(data instanceof URLSearchParams);
+
+    const requestData = shouldStringify ? JSON.stringify(data) : data;
+
+    const response = await this.axiosInstance.post<T>(url, requestData, {
+      ...config,
+      headers: {
+        ...(config?.headers ?? {}),
+        ...(isJson ? { 'Content-Type': 'application/json' } : {}),
+      },
+    });
     return response.data;
   }
 
@@ -232,7 +251,26 @@ export class HttpClient {
    * Make a PUT request
    */
   async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.axiosInstance.put<T>(url, data, config);
+    const contentType = (config?.headers as any)?.['Content-Type'] ?? (config?.headers as any)?.['content-type'];
+    const isJson = (typeof contentType === 'string' && contentType.includes('application/json')) || !contentType;
+
+    const shouldStringify =
+      isJson &&
+      data !== undefined &&
+      data !== null &&
+      typeof data === 'object' &&
+      !(data instanceof FormData) &&
+      !(data instanceof URLSearchParams);
+
+    const requestData = shouldStringify ? JSON.stringify(data) : data;
+
+    const response = await this.axiosInstance.put<T>(url, requestData, {
+      ...config,
+      headers: {
+        ...(config?.headers ?? {}),
+        ...(isJson ? { 'Content-Type': 'application/json' } : {}),
+      },
+    });
     return response.data;
   }
 
@@ -240,7 +278,26 @@ export class HttpClient {
    * Make a PATCH request
    */
   async patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.axiosInstance.patch<T>(url, data, config);
+    const contentType = (config?.headers as any)?.['Content-Type'] ?? (config?.headers as any)?.['content-type'];
+    const isJson = (typeof contentType === 'string' && contentType.includes('application/json')) || !contentType;
+
+    const shouldStringify =
+      isJson &&
+      data !== undefined &&
+      data !== null &&
+      typeof data === 'object' &&
+      !(data instanceof FormData) &&
+      !(data instanceof URLSearchParams);
+
+    const requestData = shouldStringify ? JSON.stringify(data) : data;
+
+    const response = await this.axiosInstance.patch<T>(url, requestData, {
+      ...config,
+      headers: {
+        ...(config?.headers ?? {}),
+        ...(isJson ? { 'Content-Type': 'application/json' } : {}),
+      },
+    });
     return response.data;
   }
 

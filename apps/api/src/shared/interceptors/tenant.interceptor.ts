@@ -21,6 +21,7 @@ export class TenantInterceptor implements NestInterceptor {
     // Skip tenant validation for certain routes
     const skipTenantRoutes = [
       '/api/v1/health',
+      '/api/v1/health/simple',
       '/api/v1/auth/register',
       '/api/v1/auth/platform-login',
       '/api/docs',

@@ -7,6 +7,7 @@ import {
   HealthCheckResult,
 } from '@nestjs/terminus';
 import { HealthService } from './health.service';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('Health')
 @Controller({ path: 'health', version: '1' })
@@ -17,6 +18,7 @@ export class HealthController {
     private readonly healthService: HealthService,
   ) {}
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'Get application health status' })
   @ApiResponse({
@@ -41,6 +43,7 @@ export class HealthController {
     ]);
   }
 
+  @Public()
   @Get('simple')
   @ApiOperation({ summary: 'Simple health check' })
   @ApiResponse({

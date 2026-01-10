@@ -1,6 +1,7 @@
 import React from 'react';
 import './globals.css';
 import { AuthProvider } from '../contexts/auth-context';
+import { QueryProvider } from '../providers/query-provider';
 import { EnvironmentCheck, EnvironmentStatus } from '../components/setup/environment-check';
 
 export const metadata = {
@@ -17,10 +18,12 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <EnvironmentCheck>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-          <EnvironmentStatus />
+          <QueryProvider>
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+            <EnvironmentStatus />
+          </QueryProvider>
         </EnvironmentCheck>
       </body>
     </html>

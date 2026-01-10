@@ -10,7 +10,8 @@ import {
   AuthUser,
   User,
   Organization,
-  Tenant
+  Tenant,
+  DashboardSummary,
 } from '../types/shared';
 
 // Request/Response types for API endpoints
@@ -192,6 +193,11 @@ export class ApiClient {
 
   async updateTenant(tenantId: string, tenantData: Partial<Tenant>): Promise<ApiResponse<Tenant>> {
     return httpClient.patch<ApiResponse<Tenant>>(`/tenants/${tenantId}`, tenantData);
+  }
+
+  // Dashboard endpoints
+  async getDashboardSummary(): Promise<ApiResponse<DashboardSummary>> {
+    return httpClient.get<ApiResponse<DashboardSummary>>('/dashboard/summary');
   }
 
   // Health check endpoints

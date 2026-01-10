@@ -176,6 +176,54 @@ export interface SystemConfig {
   supportedTimezones: string[];
 }
 
+export interface DashboardModuleSummary {
+  totalModules: number;
+  enabledModules: number;
+  coreModules: number;
+  businessModules: number;
+  modulesByPricing: Record<string, number>;
+}
+
+export interface DashboardSummary {
+  stats: DashboardStat[];
+  recentActivity: DashboardActivity[];
+  quickActions: DashboardQuickAction[];
+  systemStatus: DashboardSystemStatus[];
+  moduleSummary: DashboardModuleSummary;
+}
+
+export interface DashboardStat {
+  id: string;
+  label: string;
+  value: number;
+  change: number;
+  trend: 'up' | 'down' | 'flat';
+  period: string;
+}
+
+export interface DashboardActivity {
+  type: string;
+  reference: string;
+  subject: string;
+  occurredAt: string;
+  status: string;
+  amount?: number;
+}
+
+export interface DashboardSystemStatus {
+  name: string;
+  status: string;
+  message: string;
+}
+
+export interface DashboardQuickAction {
+  id: string;
+  label: string;
+  description: string;
+  href: string;
+  icon: string;
+}
+
 // Additional types that might be needed
 export interface LoginRequest {
   email: string;

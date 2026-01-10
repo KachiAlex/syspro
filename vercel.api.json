@@ -1,15 +1,21 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "apps/api/dist/apps/api/src/serverless.js",
-      "use": "@vercel/node"
+  "buildCommand": "npm run build:api",
+  "outputDirectory": "apps/api/dist",
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "apps/api/dist/apps/api/src/**"
     }
-  ],
+  },
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "apps/api/dist/apps/api/src/serverless.js"
+      "methods": ["OPTIONS"],
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/index.js"
     }
   ]
 }

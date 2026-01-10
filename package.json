@@ -28,7 +28,7 @@
     "db:migrate": "cd apps/api && npm run migration:run",
     "db:seed": "cd apps/api && npm run seed:run",
     "postinstall": "node -e \"if (!process.env.CI && !process.env.VERCEL && !process.env.GITHUB_ACTIONS) { try { require('child_process').execSync('husky install', { stdio: 'inherit' }); } catch (e) { console.log('Husky setup skipped'); } }\"",
-    "vercel-build": "npm run build:web",
+    "vercel-build": "npm run vercel-build --workspace=@syspro/api",
     "deploy:setup": "node scripts/deploy-setup.js",
     "deploy:check": "curl $VERCEL_URL/api/v1/health || echo 'API not responding'",
     "pre-deploy": "node scripts/pre-deploy-check.js",
@@ -51,7 +51,8 @@
   "dependencies": {
     "@nestjs/event-emitter": "^3.0.1",
     "axios": "^1.6.2",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "typeorm": "^0.3.17"
   },
   "devDependencies": {
     "@commitlint/cli": "^18.4.3",
