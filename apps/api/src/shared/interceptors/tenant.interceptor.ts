@@ -32,8 +32,14 @@ export class TenantInterceptor implements NestInterceptor {
     
     if (!shouldSkip) {
       // Extract tenant ID from header
-      const tenantId = request.headers['x-tenant-id'] as string;
-      
+      let tenantId = request.headers['x-tenant-id'] as string;
+
+      // If no tenant header was provided, fall back to the authenticated user's tenant.
+      // This enables endpoints like /auth/profile to work after platform-login.
+      if (!tenantId && (request as any).user?.tenantId) {
+        tenantId = (request as any).user.tenantId;
+      }
+
       if (!tenantId) {
         throw new BadRequestException('Tenant ID is required');
       }
