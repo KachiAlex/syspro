@@ -15,7 +15,7 @@ export class TenantGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const user: User = request.user;
-    const tenantId: string = request.tenantId;
+    let tenantId: string = request.tenantId;
 
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
@@ -26,8 +26,15 @@ export class TenantGuard implements CanActivate {
       return true;
     }
 
-    if (!user || !tenantId) {
+    if (!user) {
       return false;
+    }
+
+    // If the request did not provide a tenantId (e.g. no X-Tenant-ID header),
+    // fall back to the authenticated user's tenant.
+    if (!tenantId) {
+      tenantId = user.tenantId;
+      request.tenantId = tenantId;
     }
 
     // Check if user belongs to the requested tenant
