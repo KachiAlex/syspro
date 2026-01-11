@@ -18,7 +18,15 @@ import { DataSource } from 'typeorm';
         // Idempotent and safe to run on every cold start.
         await dataSource.query(`
           ALTER TABLE "permissions"
+          ADD COLUMN IF NOT EXISTS "tenantId" uuid,
           ADD COLUMN IF NOT EXISTS "name" character varying(150)
+        `);
+
+        await dataSource.query(`
+          ALTER TABLE "permissions"
+          ADD COLUMN IF NOT EXISTS "description" text,
+          ADD COLUMN IF NOT EXISTS "isActive" boolean DEFAULT true,
+          ADD COLUMN IF NOT EXISTS "metadata" jsonb
         `);
 
         await dataSource.query(`
