@@ -33,13 +33,35 @@ async function createApp() {
     }));
 
     // CORS configuration for Vercel
+    const corsOrigins = [
+      process.env.FRONTEND_URL,
+      'https://syspro-erp.vercel.app',
+      /https:\/\/.*\.vercel\.app$/,
+      'http://localhost:3000',
+      'http://localhost:3001',
+    ].filter(Boolean);
+
     app.enableCors({
-      origin: [
-        process.env.FRONTEND_URL || 'https://syspro-erp.vercel.app',
-        /https:\/\/.*\.vercel\.app$/,
-        'http://localhost:3000',
-        'http://localhost:3001',
-      ],
+      origin: (
+        origin: string | undefined,
+        callback: (err: Error | null, allow?: boolean) => void,
+      ) => {
+        if (!origin) {
+          return callback(null, true);
+        }
+
+        const isAllowed = corsOrigins.some((allowedOrigin) => {
+          if (allowedOrigin instanceof RegExp) {
+            return allowedOrigin.test(origin);
+          }
+
+          return allowedOrigin === origin;
+        });
+
+        return isAllowed
+          ? callback(null, true)
+          : callback(new Error('Not allowed by CORS'), false);
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-ID'],
