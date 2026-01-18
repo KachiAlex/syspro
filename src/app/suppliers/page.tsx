@@ -1,60 +1,6 @@
 import { ArrowRight, MessageSquare, PackageCheck, ShieldCheck } from "lucide-react";
 import { MetricStat, Panel, PillButton, SectionHeading, Tag } from "@/components/ui/primitives";
-
-const worklist = [
-  {
-    id: "SR-1042",
-    title: "Confirm Lagos ABS pellets",
-    due: "Due in 6h",
-    priority: "High",
-    action: "Issue ASN + docs",
-  },
-  {
-    id: "SR-1038",
-    title: "Respond to variance on cobalt batch",
-    due: "Due tomorrow",
-    priority: "Medium",
-    action: "Attach assay + reconciliation",
-  },
-  {
-    id: "SR-1034",
-    title: "Dispute resolved credit memo",
-    due: "Closed 4h ago",
-    priority: "Low",
-    action: "Archive in shared ledger",
-  },
-];
-
-const collaborationBursts = [
-  {
-    title: "Smart Quality Brief",
-    detail: "SYS Copilot condensed 32-page spec into 4 bulletproof checkpoints",
-    status: "Ready",
-  },
-  {
-    title: "Greener Lane Initiative",
-    detail: "Multi-tenant carbon ledger suggests rail lane swap saves 3.1 tons/week",
-    status: "Draft",
-  },
-];
-
-const partnerSignals = [
-  {
-    partner: "Camber Motors",
-    metric: "+11% demand pull",
-    note: "Expect rush PO for instrument panels",
-  },
-  {
-    partner: "Verdant FMCG",
-    metric: "On-time score 98%",
-    note: "Maintaining platinum tier",
-  },
-  {
-    partner: "Helix Grid",
-    metric: "Pending safety audit",
-    note: "Upload revised SDS",
-  },
-];
+import { collaborationBursts, partnerSignals, worklist } from "@/lib/mock-data";
 
 export default function SupplierPortalPage() {
   return (

@@ -1,254 +1,243 @@
-"use client";
-
 import {
-  Activity,
-  AlertTriangle,
   ArrowRight,
-  BarChart3,
+  BadgeCheck,
   CircuitBoard,
-  LineChart,
-  Wifi,
+  Cpu,
+  GaugeCircle,
+  ShieldCheck,
+  Sparkles,
+  Waves,
 } from "lucide-react";
 
-const productionNodes = [
+const logos = ["Tembea Steel", "NovaFoods", "TransAfrica", "Skyline Energy"];
+
+const featurePillars = [
   {
-    plant: "Lagos Assembly",
-    uptime: "92%",
-    status: "Stable",
-    signal: "+1.2%",
+    label: "Finance Ops",
+    title: "AI balanced ledgers",
+    copy: "Close books daily, simulate FX exposure, and sync carbon budgets across every tenant.",
   },
   {
-    plant: "Nairobi Plastics",
-    uptime: "88%",
-    status: "Watch",
-    signal: "-3.4%",
+    label: "Manufacturing",
+    title: "Digital twin execution",
+    copy: "Blend production telemetry with demand signals to reroute capacity before turbulence hits.",
   },
   {
-    plant: "Accra Metals",
-    uptime: "95%",
-    status: "Optimal",
-    signal: "+0.8%",
+    label: "Supply Mesh",
+    title: "Trusted partner mesh",
+    copy: "Share autonomous playbooks with suppliers through consented, tenant-aware data rooms.",
   },
 ];
 
-const aiInsights = [
+const stats = [
+  { label: "Forecast precision", value: "97.2%", detail: "+3.4 pt YoY" },
+  { label: "Working capital", value: "+₦1.8B", detail: "Freed in 60 days" },
+  { label: "Carbon certainty", value: "92%", detail: "Scope 3 traced" },
+];
+
+const meshHighlights = [
   {
-    title: "Order Spike",
-    detail: "Tier-1 automotive client pulled Q2 demand forward by 11%.",
-    impact: "Adjust Camber plant shifts",
-    severity: "high",
+    title: "Neural constraint solver",
+    body: "Model entire BOM hierarchies and instantly recompute viable scenarios as outages emerge.",
+    icon: GaugeCircle,
   },
   {
-    title: "Supplier Delay",
-    detail: "Copper cathode shipments at Tema port delayed 36 hours.",
-    impact: "Trigger alternate rail route",
-    severity: "medium",
+    title: "Trusted data mesh",
+    body: "Tenant isolation with lineage, policy controls, and audit friendly encryption at edge.",
+    icon: ShieldCheck,
   },
   {
-    title: "Cash Flow",
-    detail: "Multi-tenant ledger sees +6% collections efficiency this week.",
-    impact: "Release CapEx batch",
-    severity: "low",
+    title: "Event-driven autopilot",
+    body: "Kafka-native blueprints orchestrate procurement, logistics, and treasury actions in sync",
+    icon: Waves,
   },
+];
+
+const copilotMoments = [
+  "Summarize supply risk posture per tenant",
+  "Draft cash + carbon mitigation orders",
+  "Interrogate real-time digital twins via natural language",
+  "Launch scenario drills that notify partner war-rooms",
 ];
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#03030a] pb-16 text-white">
-      <div className="absolute inset-0 -z-10 opacity-60">
-        <div className="absolute left-1/2 top-0 h-[400px] w-[600px] -translate-x-1/2 blur-[120px]" style={{ background: "radial-gradient(circle, #28fde0 0%, transparent 70%)" }} />
-        <div className="absolute right-10 bottom-0 h-[320px] w-[420px] blur-[120px]" style={{ background: "radial-gradient(circle, #7f5bff 0%, transparent 65%)" }} />
+    <div className="relative overflow-hidden bg-[#03030a] text-white">
+      <div className="pointer-events-none absolute inset-0">
+        <div
+          className="absolute left-[-10%] top-[-10%] h-[420px] w-[420px] rounded-full blur-[160px]"
+          style={{ background: "rgba(75, 255, 230, 0.2)" }}
+        />
+        <div
+          className="absolute right-[-15%] top-1/2 h-[520px] w-[520px] -translate-y-1/2 rounded-full blur-[180px]"
+          style={{ background: "rgba(115, 80, 255, 0.25)" }}
+        />
       </div>
 
-      <main className="mx-auto flex max-w-7xl flex-col gap-8 px-6 pt-10 lg:px-10">
-        <header className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-teal-200/80">
-              SYS Neural Supply Mesh
-            </p>
-            <h1 className="mt-2 text-4xl font-semibold tracking-tight lg:text-5xl">
-              Planner Command Center
-            </h1>
-            <p className="mt-3 max-w-2xl text-base text-white/70">
-              Cross-plant visibility, AI-prescribed moves, and tenant-aware ledgers in one canvas.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <button className="group flex items-center gap-2 rounded-full border border-white/20 px-5 py-2 text-sm font-medium text-white/80 hover:border-white">
-              Recalibrate Forecast
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </button>
-            <button className="rounded-full bg-white px-5 py-2 text-sm font-medium text-[#05060a]">
-              Launch Scenario Lab
-            </button>
-          </div>
-        </header>
-
-        <section className="grid gap-4 md:grid-cols-3">
-          {["Forecast Accuracy", "Supply Risk", "Cash Position"].map((label, idx) => (
-            <div
-              key={label}
-              className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur"
-            >
-              <p className="text-sm uppercase tracking-[0.35em] text-white/50">{label}</p>
-              <p className="mt-3 text-4xl font-semibold">
-                {idx === 0 && "97.2%"}
-                {idx === 1 && "4 nodes"}
-                {idx === 2 && "+₦1.8B"}
-              </p>
-              <p className="mt-1 text-sm text-white/60">
-                {idx === 0 && "+2.4% vs last week"}
-                {idx === 1 && "requiring mitigation"}
-                {idx === 2 && "available working capital"}
+      <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-24 px-6 pb-24 pt-12 lg:px-10">
+        <section className="relative grid gap-10 lg:grid-cols-[1.1fr_0.9fr]" id="hero">
+          <div className="space-y-8">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.5em] text-teal-200/80">
+              <Sparkles className="h-4 w-4" />
+              Neural ERP
+            </div>
+            <div>
+              <h1 className="text-4xl font-semibold leading-tight tracking-tight text-white/95 lg:text-6xl">
+                A command marketing surface for multi-tenant supply chains.
+              </h1>
+              <p className="mt-4 max-w-2xl text-base text-white/70 lg:text-lg">
+                Syspro threads finance, production, and partner ecosystems into one cinematic experience. AI copilots choreograph cash, carbon, and capacity decisions—before disruption arrives.
               </p>
             </div>
-          ))}
-        </section>
-
-        <section className="grid gap-6 lg:grid-cols-3">
-          <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 to-white/5 p-6 backdrop-blur lg:col-span-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.4em] text-white/50">
-                  AI timeline
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold">Signal Stream</h2>
+            <div className="flex flex-wrap items-center gap-4">
+              <a
+                href="/access"
+                className="group inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#05060a]"
+              >
+                Launch Access Portal
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </a>
+              <button className="inline-flex items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-sm text-white/80 hover:text-white">
+                Download deck
+              </button>
+            </div>
+            <div className="space-y-3">
+              <p className="text-xs uppercase tracking-[0.35em] text-white/50">Trusted by adaptive manufacturers</p>
+              <div className="flex flex-wrap gap-6 text-white/60">
+                {logos.map((logo) => (
+                  <span key={logo} className="text-sm tracking-[0.3em]">
+                    {logo}
+                  </span>
+                ))}
               </div>
-              <LineChart className="h-6 w-6 text-teal-200" />
             </div>
+          </div>
 
-            <div className="mt-6 grid gap-3">
-              {aiInsights.map((insight) => (
-                <div
-                  key={insight.title}
-                  className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4"
-                >
-                  <div className="mt-1 h-2 w-2 rounded-full" style={{
-                    background:
-                      insight.severity === "high"
-                        ? "#ff8a9a"
-                        : insight.severity === "medium"
-                          ? "#ffd16b"
-                          : "#7df7b0",
-                  }} />
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold leading-tight">{insight.title}</p>
-                    <p className="text-sm text-white/70">{insight.detail}</p>
-                    <p className="text-xs text-white/50">Action: {insight.impact}</p>
-                  </div>
+          <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 backdrop-blur">
+            <div className="space-y-2 text-xs uppercase tracking-[0.35em] text-white/50">
+              <span>Live mesh signal</span>
+              <div className="h-px w-full bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+            </div>
+            <div className="mt-6 grid gap-6">
+              {stats.map((stat) => (
+                <div key={stat.label} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                  <p className="text-xs text-white/50">{stat.label}</p>
+                  <p className="text-3xl font-semibold">{stat.value}</p>
+                  <p className="text-xs text-emerald-300">{stat.detail}</p>
                 </div>
               ))}
             </div>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
-            <p className="text-xs uppercase tracking-[0.4em] text-white/50">Neural twin</p>
-            <h2 className="mt-2 text-2xl font-semibold">Mesh Health</h2>
-
-            <div className="mt-6 space-y-4">
-              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div>
-                  <p className="text-sm text-white/60">Telemetry</p>
-                  <p className="text-lg font-semibold">118 streams live</p>
-                </div>
-                <Wifi className="h-5 w-5 text-teal-200" />
-              </div>
-              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div>
-                  <p className="text-sm text-white/60">Digital twin fidelity</p>
-                  <p className="text-lg font-semibold">98.4%</p>
-                </div>
-                <CircuitBoard className="h-5 w-5 text-sky-200" />
-              </div>
-              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div>
-                  <p className="text-sm text-white/60">Alerts awaiting</p>
-                  <p className="text-lg font-semibold">3 critical</p>
-                </div>
-                <AlertTriangle className="h-5 w-5 text-rose-300" />
-              </div>
+            <div className="mt-8 rounded-2xl border border-white/15 bg-gradient-to-br from-white/10 to-white/0 p-5 text-sm text-white/70">
+              “Syspro rebuilt our operating rhythm—we forecast in hours, not quarters, while tracing every scope 3 gram.” — Chief Supply Officer, Tembea Steel
             </div>
           </div>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-3">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.35em] text-white/50">
-                  Production nodes
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold">Network Pulse</h2>
-              </div>
-              <Activity className="h-5 w-5 text-purple-200" />
+        <section id="platform" className="space-y-10">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-white/50">Platform</p>
+              <h2 className="mt-2 text-3xl font-semibold">An opinionated surface for tenants, copilots, and superadmins.</h2>
             </div>
-
-            <div className="mt-6 space-y-4">
-              {productionNodes.map((node) => (
-                <div key={node.plant} className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <div>
-                    <p className="text-sm font-medium">{node.plant}</p>
-                    <p className="text-xs text-white/50">{node.status}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-white/60">Uptime</p>
-                    <p className="text-lg font-semibold">{node.uptime}</p>
-                    <p className={`text-xs ${node.signal.startsWith("-") ? "text-rose-300" : "text-emerald-300"}`}>
-                      {node.signal}
-                    </p>
-                  </div>
-                </div>
-              ))}
+            <div className="rounded-full border border-white/10 px-4 py-2 text-xs uppercase tracking-[0.35em] text-white/60">
+              Persona-aware navigation
             </div>
           </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.35em] text-white/50">
-                  Forecast theatre
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold">Demand Horizon</h2>
-              </div>
-              <BarChart3 className="h-5 w-5 text-amber-200" />
-            </div>
-
-            <div className="mt-6 space-y-6">
-              {["AUTOMOTIVE", "FMCG", "ENERGY"].map((sector, idx) => (
-                <div key={sector}>
-                  <div className="flex items-center justify-between text-xs text-white/50">
-                    <span>{sector}</span>
-                    <span>{idx === 0 ? "+14%" : idx === 1 ? "+7%" : "-3%"} next 6 weeks</span>
-                  </div>
-                  <div className="mt-2 h-2 rounded-full bg-white/10">
-                    <div
-                      className={`h-full rounded-full ${idx === 0 ? "bg-teal-300" : idx === 1 ? "bg-indigo-300" : "bg-rose-300"}`}
-                      style={{ width: idx === 0 ? "80%" : idx === 1 ? "55%" : "30%" }}
-                    />
-                  </div>
+          <div className="grid gap-6 lg:grid-cols-3">
+            {featurePillars.map((pillar) => (
+              <div key={pillar.title} className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+                <p className="text-xs uppercase tracking-[0.45em] text-white/50">{pillar.label}</p>
+                <h3 className="mt-3 text-2xl font-semibold">{pillar.title}</h3>
+                <p className="mt-3 text-sm text-white/70">{pillar.copy}</p>
+                <div className="mt-6 inline-flex items-center gap-2 text-xs text-white/70">
+                  <BadgeCheck className="h-4 w-4 text-emerald-300" />
+                  Multi-tenant ready
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
+        </section>
 
-          <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/15 to-white/5 p-6 backdrop-blur">
-            <p className="text-xs uppercase tracking-[0.35em] text-white/50">Ledger stream</p>
-            <h2 className="mt-2 text-2xl font-semibold">Cash + Carbon</h2>
-
+        <section id="mesh" className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="rounded-[32px] border border-white/10 bg-gradient-to-br from-white/10 to-white/0 p-8 backdrop-blur">
+            <p className="text-xs uppercase tracking-[0.4em] text-white/50">Neural mesh</p>
+            <h2 className="mt-4 text-3xl font-semibold">Digital twins breathing in telemetry + finance.</h2>
+            <p className="mt-4 text-sm text-white/70">
+              Bring together planner canvases, supplier bursts, and treasury instructions over an event mesh powered by Kafka + Pulsar. Every signal is versioned and replayable for audits.
+            </p>
             <div className="mt-8 space-y-5">
+              {meshHighlights.map(({ title, body, icon: Icon }) => (
+                <div key={title} className="flex gap-4 rounded-2xl border border-white/10 bg-black/30 p-5">
+                  <Icon className="h-6 w-6 text-teal-200" />
+                  <div>
+                    <p className="text-base font-semibold">{title}</p>
+                    <p className="text-sm text-white/70">{body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 backdrop-blur">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-white/60">Collections</p>
-                <p className="text-3xl font-semibold">₦4.2B</p>
-                <p className="text-xs text-emerald-300">+6% week / week</p>
+                <p className="text-xs uppercase tracking-[0.4em] text-white/50">Mesh console</p>
+                <h3 className="mt-2 text-xl font-semibold">Live telemetry fabric</h3>
               </div>
-              <div>
-                <p className="text-xs text-white/60">Emission budget</p>
-                <p className="text-3xl font-semibold">72%</p>
-                <p className="text-xs text-white/60">aligned to ESG targets</p>
+              <CircuitBoard className="h-6 w-6 text-sky-200" />
+            </div>
+            <div className="mt-8 grid gap-6 text-sm">
+              {["13 telemetry clusters synced", "118 partner nodes live", "4 alerts muted via autopilot", "98.4% twin fidelity"].map((item) => (
+                <div key={item} className="rounded-2xl border border-white/10 bg-black/25 p-5">
+                  {item}
+                </div>
+              ))}
+            </div>
+            <div className="mt-8 rounded-2xl border border-white/10 bg-black/40 p-5 text-xs text-white/60">
+              All actions notarized to tenant-ledgers with cryptographic proofs. Superadmins gain oversight without touching proprietary tenant data.
+            </div>
+          </div>
+        </section>
+
+        <section id="copilot" className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 backdrop-blur">
+            <p className="text-xs uppercase tracking-[0.4em] text-white/50">AI Copilot</p>
+            <h2 className="mt-3 text-3xl font-semibold">Conversational command mesh.</h2>
+            <p className="mt-4 text-sm text-white/70">
+              Copilot fuses GPT-class reasoning with your policies, orchestrating playbooks across finance, supply, and ESG teams.
+            </p>
+            <div className="mt-8 space-y-4">
+              {copilotMoments.map((moment) => (
+                <div key={moment} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-black/30 p-5">
+                  <Cpu className="mt-1 h-5 w-5 text-emerald-200" />
+                  <p className="text-sm text-white/80">{moment}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-[32px] border border-white/10 bg-gradient-to-br from-white/10 to-white/0 p-8 backdrop-blur">
+            <div className="space-y-4">
+              <p className="text-xs uppercase tracking-[0.4em] text-white/50">Superadmin view</p>
+              <h3 className="text-2xl font-semibold">Provision tenants, ship copilots, audit impact.</h3>
+              <p className="text-sm text-white/70">
+                Build once, configure per tenant. The superadmin dashboard lets you mint environments, curate partner-level policies, and publish copilot skills with rollback safety.
+              </p>
+            </div>
+            <div className="mt-8 grid gap-4 text-sm text-white/80">
+              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/25 p-4">
+                <span>Tenants deployed</span>
+                <span className="text-2xl font-semibold">37</span>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/70">
-                Copilot suggests reallocating ₦420M idle cash toward copper buffering to outpace supplier delays.
+              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/25 p-4">
+                <span>Copilot skills live</span>
+                <span className="text-2xl font-semibold">82</span>
               </div>
+              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/25 p-4">
+                <span>Policy updates this week</span>
+                <span className="text-2xl font-semibold">14</span>
+              </div>
+            </div>
+            <div className="mt-8 rounded-2xl border border-white/10 bg-black/40 p-5 text-xs text-white/60">
+              Ready to activate a tenant? Hop into the access portal to launch superadmin tooling and begin orchestrating the mesh.
             </div>
           </div>
         </section>
