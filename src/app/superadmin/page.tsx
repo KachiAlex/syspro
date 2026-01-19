@@ -1,17 +1,130 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { ArrowRight, CheckCircle2, CircleDashed, PlusCircle, X } from "lucide-react";
+import { ChangeEvent, FormEvent, useState } from "react";
+import { ArrowRight, CheckCircle2, CircleDashed, Loader2, PlusCircle, X } from "lucide-react";
 import { Panel, SectionHeading, Tag } from "@/components/ui/primitives";
 import { provisioningBacklog, tenantSummaries } from "@/lib/mock-data";
 
+const REGION_OPTIONS = [
+  "North America",
+  "South America",
+  "Europe",
+  "Middle East",
+  "Africa",
+  "Asia-Pacific",
+  "Australia & New Zealand",
+] as const;
+
+type TenantSummary = {
+  name: string;
+  region: string;
+  status: string;
+  ledger: string;
+  seats: number;
+};
+
+interface TenantFormState {
+  companyName: string;
+  companySlug: string;
+  region: string;
+  industry: string;
+  seats: string;
+  adminName: string;
+  adminEmail: string;
+  adminPassword: string;
+  confirmPassword: string;
+  adminNotes: string;
+}
+
+const INITIAL_TENANT_FORM: TenantFormState = {
+  companyName: "",
+  companySlug: "",
+  region: "",
+  industry: "",
+  seats: "",
+  adminName: "",
+  adminEmail: "",
+  adminPassword: "",
+  confirmPassword: "",
+  adminNotes: "",
+};
+
 export default function SuperadminPage() {
   const [showTenantModal, setShowTenantModal] = useState(false);
+  const [tenants, setTenants] = useState<TenantSummary[]>(() => [...tenantSummaries]);
+  const [formState, setFormState] = useState<TenantFormState>(INITIAL_TENANT_FORM);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
-  function handleTenantSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    // Placeholder for backend call. Close modal for now.
+  function handleOpenTenantModal() {
+    setFormError(null);
+    setFormSuccess(null);
+    setShowTenantModal(true);
+  }
+
+  function handleCloseTenantModal() {
     setShowTenantModal(false);
+    setIsSubmitting(false);
+  }
+
+  function handleFieldChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+    const { name, value } = event.target;
+    setFormState((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+
+  async function handleTenantSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFormError(null);
+
+    if (formState.adminPassword !== formState.confirmPassword) {
+      setFormError("Admin passwords do not match.");
+      return;
+    }
+
+    if (!formState.companyName || !formState.companySlug) {
+      setFormError("Company name and tenant slug are required.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/tenants", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyName: formState.companyName,
+          companySlug: formState.companySlug,
+          region: formState.region,
+          industry: formState.industry,
+          seats: formState.seats ? Number(formState.seats) : null,
+          adminName: formState.adminName,
+          adminEmail: formState.adminEmail,
+          adminPassword: formState.adminPassword,
+          adminNotes: formState.adminNotes,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error ?? "Unable to create tenant");
+      }
+
+      setTenants((prev) => [data.tenantSummary, ...prev]);
+      setFormState(INITIAL_TENANT_FORM);
+      setShowTenantModal(false);
+      setFormSuccess(`Tenant ${data.tenantSummary.name} created successfully.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to create tenant";
+      setFormError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -46,6 +159,12 @@ export default function SuperadminPage() {
           </div>
         </header>
 
+        {formSuccess && (
+          <div className="rounded-3xl border border-emerald-300/30 bg-emerald-300/10 px-6 py-4 text-sm text-emerald-200">
+            {formSuccess}
+          </div>
+        )}
+
         <section className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
           <Panel className="space-y-6" variant="glass">
             <div className="flex items-center justify-between">
@@ -63,7 +182,7 @@ export default function SuperadminPage() {
                 <span>Ledger delta</span>
                 <span>Seats</span>
               </div>
-              {tenantSummaries.map((tenant) => (
+              {tenants.map((tenant) => (
                 <div key={tenant.name} className="grid grid-cols-5 gap-4 px-6 py-4 text-sm">
                   <span className="font-semibold">{tenant.name}</span>
                   <span className="text-white/70">{tenant.region}</span>
@@ -104,8 +223,8 @@ export default function SuperadminPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setShowTenantModal(true)}
-                className="group flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#05060a]"
+                onClick={handleOpenTenantModal}
+                className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#05060a] sm:w-auto"
               >
                 <PlusCircle className="h-4 w-4" />
                 Create tenant
@@ -210,43 +329,48 @@ export default function SuperadminPage() {
       </main>
 
       {showTenantModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#01020a]/80 px-4 py-10 backdrop-blur-md">
-          <div className="relative w-full max-w-4xl rounded-[32px] border border-white/10 bg-[#04050f] p-8 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#01020a]/80 px-4 py-8 backdrop-blur-md">
+          <div className="relative w-full max-w-4xl rounded-[32px] border border-white/10 bg-[#04050f] p-6 shadow-2xl sm:p-8">
             <button
               type="button"
-              onClick={() => setShowTenantModal(false)}
-              className="absolute right-6 top-6 rounded-full border border-white/20 p-2 text-white/70 hover:text-white"
+              onClick={handleCloseTenantModal}
+              className="absolute right-4 top-4 rounded-full border border-white/20 p-2 text-white/70 hover:text-white sm:right-6 sm:top-6"
               aria-label="Close modal"
             >
               <X className="h-4 w-4" />
             </button>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 pr-6">
               <Tag tone="teal">Create tenant</Tag>
               <h2 className="text-3xl font-semibold">Onboard a new company</h2>
               <p className="text-sm text-white/70">Collect core company details and designate the founding admin. We’ll provision infra + credentials in one pass.</p>
+              {formError && <p className="rounded-2xl border border-rose-300/40 bg-rose-300/10 px-4 py-2 text-sm text-rose-200">{formError}</p>}
             </div>
-            <form onSubmit={handleTenantSubmit} className="mt-8 grid gap-8 lg:grid-cols-2">
+            <form onSubmit={handleTenantSubmit} className="mt-8 grid max-h-[70vh] gap-8 overflow-y-auto pr-4 lg:grid-cols-2">
               <div className="space-y-5">
                 <SectionHeading eyebrow="Company" title="Tenant blueprint" description="Name, sector, and routing metadata" />
                 <div className="space-y-4 text-sm">
                   <div>
-                    <label htmlFor="company-name" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                    <label htmlFor="companyName" className="text-xs uppercase tracking-[0.35em] text-white/50">
                       Company name
                     </label>
                     <input
-                      id="company-name"
-                      name="company-name"
+                      id="companyName"
+                      name="companyName"
+                      value={formState.companyName}
+                      onChange={handleFieldChange}
                       placeholder="Aurora Plastics"
                       className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label htmlFor="company-slug" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                    <label htmlFor="companySlug" className="text-xs uppercase tracking-[0.35em] text-white/50">
                       Tenant slug
                     </label>
                     <input
-                      id="company-slug"
-                      name="company-slug"
+                      id="companySlug"
+                      name="companySlug"
+                      value={formState.companySlug}
+                      onChange={handleFieldChange}
                       placeholder="aurora-plastics"
                       className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
                     />
@@ -259,13 +383,16 @@ export default function SuperadminPage() {
                       <select
                         id="region"
                         name="region"
+                        value={formState.region}
+                        onChange={handleFieldChange}
                         className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white focus:border-white/40 focus:outline-none"
                       >
                         <option value="">Select region</option>
-                        <option value="emea">EMEA</option>
-                        <option value="na">North America</option>
-                        <option value="latam">LATAM</option>
-                        <option value="apac">APAC</option>
+                        {REGION_OPTIONS.map((region) => (
+                          <option key={region} value={region}>
+                            {region}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div>
@@ -275,18 +402,22 @@ export default function SuperadminPage() {
                       <input
                         id="industry"
                         name="industry"
+                        value={formState.industry}
+                        onChange={handleFieldChange}
                         placeholder="Advanced manufacturing"
                         className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
                       />
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="headcount" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                    <label htmlFor="seats" className="text-xs uppercase tracking-[0.35em] text-white/50">
                       Approx. seats
                     </label>
                     <input
-                      id="headcount"
-                      name="headcount"
+                      id="seats"
+                      name="seats"
+                      value={formState.seats}
+                      onChange={handleFieldChange}
                       placeholder="> 250 employees"
                       className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
                     />
@@ -297,62 +428,72 @@ export default function SuperadminPage() {
                 <SectionHeading eyebrow="Admin" title="Founding admin" description="Primary contact credentials" />
                 <div className="space-y-4 text-sm">
                   <div>
-                    <label htmlFor="admin-name" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                    <label htmlFor="adminName" className="text-xs uppercase tracking-[0.35em] text-white/50">
                       Admin name
                     </label>
                     <input
-                      id="admin-name"
-                      name="admin-name"
+                      id="adminName"
+                      name="adminName"
+                      value={formState.adminName}
+                      onChange={handleFieldChange}
                       placeholder="Adaora Umeh"
                       className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label htmlFor="admin-email" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                    <label htmlFor="adminEmail" className="text-xs uppercase tracking-[0.35em] text-white/50">
                       Admin email
                     </label>
                     <input
-                      id="admin-email"
-                      name="admin-email"
+                      id="adminEmail"
+                      name="adminEmail"
                       type="email"
+                      value={formState.adminEmail}
+                      onChange={handleFieldChange}
                       placeholder="admin@aurora.com"
                       className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
                     />
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label htmlFor="admin-password" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                      <label htmlFor="adminPassword" className="text-xs uppercase tracking-[0.35em] text-white/50">
                         Password
                       </label>
                       <input
-                        id="admin-password"
-                        name="admin-password"
+                        id="adminPassword"
+                        name="adminPassword"
                         type="password"
+                        value={formState.adminPassword}
+                        onChange={handleFieldChange}
                         placeholder="••••••••"
                         className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label htmlFor="confirm-password" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                      <label htmlFor="confirmPassword" className="text-xs uppercase tracking-[0.35em] text-white/50">
                         Confirm
                       </label>
                       <input
-                        id="confirm-password"
-                        name="confirm-password"
+                        id="confirmPassword"
+                        name="confirmPassword"
                         type="password"
+                        value={formState.confirmPassword}
+                        onChange={handleFieldChange}
                         placeholder="••••••••"
                         className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
                       />
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="admin-notes" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                    <label htmlFor="adminNotes" className="text-xs uppercase tracking-[0.35em] text-white/50">
                       Notes for ops
                     </label>
                     <textarea
-                      id="admin-notes"
-                      name="admin-notes"
+                      id="adminNotes"
+                      name="adminNotes"
                       rows={3}
+                      value={formState.adminNotes}
+                      onChange={handleFieldChange}
                       placeholder="Kickoff call scheduled, requires ESG copilot."
                       className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
                     />
@@ -361,13 +502,21 @@ export default function SuperadminPage() {
               </div>
               <div className="lg:col-span-2 flex flex-wrap items-center justify-between gap-4 text-sm">
                 <p className="text-white/60">We hash admin credentials, ship the invite email, and mirror the blueprint to the provisioning backlog.</p>
-                <div className="flex gap-3">
-                  <button type="button" onClick={() => setShowTenantModal(false)} className="rounded-2xl border border-white/20 px-5 py-3 text-white/70 hover:text-white">
+                <div className="flex flex-wrap gap-3">
+                  <button type="button" onClick={handleCloseTenantModal} className="rounded-2xl border border-white/20 px-5 py-3 text-white/70 hover:text-white">
                     Cancel
                   </button>
-                  <button type="submit" className="group inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 font-semibold text-[#05060a]">
-                    Deploy tenant
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="group inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 font-semibold text-[#05060a] disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    )}
+                    {isSubmitting ? 'Creating…' : 'Deploy tenant'}
                   </button>
                 </div>
               </div>
