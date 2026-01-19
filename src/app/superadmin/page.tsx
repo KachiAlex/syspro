@@ -1,8 +1,19 @@
-import { ArrowRight, CheckCircle2, CircleDashed, PlusCircle } from "lucide-react";
+"use client";
+
+import { FormEvent, useState } from "react";
+import { ArrowRight, CheckCircle2, CircleDashed, PlusCircle, X } from "lucide-react";
 import { Panel, SectionHeading, Tag } from "@/components/ui/primitives";
 import { provisioningBacklog, tenantSummaries } from "@/lib/mock-data";
 
 export default function SuperadminPage() {
+  const [showTenantModal, setShowTenantModal] = useState(false);
+
+  function handleTenantSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    // Placeholder for backend call. Close modal for now.
+    setShowTenantModal(false);
+  }
+
   return (
     <div className="min-h-screen bg-[#04050f] text-white">
       <div className="absolute inset-0 -z-10">
@@ -64,59 +75,43 @@ export default function SuperadminPage() {
             </div>
           </Panel>
 
-          <Panel variant="glass">
+          <Panel variant="glass" className="space-y-6">
             <SectionHeading eyebrow="Tenant creation" title="Mint a new tenant" description="Spin infra, seed datasets, and assign copilots" />
-            <form className="mt-6 space-y-4 text-sm">
-              <div>
-                <label htmlFor="tenantName" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                  Tenant name
-                </label>
-                <input
-                  id="tenantName"
-                  name="tenantName"
-                  placeholder="e.g. Aurora Plastics"
-                  className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
-                />
+            <p className="text-sm text-white/70">
+              Draft a multi-tenant blueprint, load compliance templates, then hand the admin keys to the customer champion. We notarize every provisioning step.
+            </p>
+            <div className="grid gap-4 text-sm text-white/70 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                <p className="text-xs uppercase tracking-[0.35em] text-white/40">Blueprint runtime</p>
+                <p className="mt-2 text-2xl font-semibold text-white">~4 min</p>
+                <p className="text-xs text-white/50">Includes ledger sync + copilot seeding</p>
               </div>
-              <div>
-                <label htmlFor="region" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                  Region
-                </label>
-                <select
-                  id="region"
-                  name="region"
-                  className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-white focus:border-white/40 focus:outline-none"
-                >
-                  <option value="">Select region</option>
-                  <option value="emea">EMEA</option>
-                  <option value="na">North America</option>
-                  <option value="latam">LATAM</option>
-                  <option value="apac">APAC</option>
-                </select>
+              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                <p className="text-xs uppercase tracking-[0.35em] text-white/40">Latest tenants</p>
+                <p className="mt-2 text-2xl font-semibold text-white">Tembea • NovaFoods</p>
+                <p className="text-xs text-white/50">Next up · Skyline Energy</p>
               </div>
-              <div>
-                <label htmlFor="copilots" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                  Copilot bundle
-                </label>
-                <input
-                  id="copilots"
-                  name="copilots"
-                  placeholder="Planner + Supplier + Treasury"
-                  className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
-                />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <button type="button" className="flex items-center justify-center gap-2 rounded-2xl border border-white/20 px-4 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white/70 hover:text-white">
-                  <CircleDashed className="h-4 w-4" />
-                  Draft
-                </button>
-                <button type="button" className="group flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#05060a]">
-                  <PlusCircle className="h-4 w-4" />
-                  Launch tenant
-                </button>
-              </div>
-              <p className="text-xs text-white/60">Provisioning takes ~4 minutes. We notify onsite teams when ledgers sync.</p>
-            </form>
+            </div>
+            <div className="flex flex-wrap gap-3 text-xs text-white/60">
+              <span className="rounded-full border border-white/15 px-4 py-1.5">ISO playbook attached</span>
+              <span className="rounded-full border border-white/15 px-4 py-1.5">KYC warm start</span>
+              <span className="rounded-full border border-white/15 px-4 py-1.5">Copilot catalog synced</span>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <button type="button" className="flex items-center justify-center gap-2 rounded-2xl border border-white/20 px-4 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white/70 hover:text-white">
+                <CircleDashed className="h-4 w-4" />
+                Draft deck
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowTenantModal(true)}
+                className="group flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#05060a]"
+              >
+                <PlusCircle className="h-4 w-4" />
+                Create tenant
+              </button>
+            </div>
+            <p className="text-xs text-white/60">Provisioning tasks auto-sync to the backlog once you publish.</p>
           </Panel>
         </section>
 
@@ -158,7 +153,228 @@ export default function SuperadminPage() {
             </div>
           </Panel>
         </section>
+
+        <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+          <Panel variant="glass" className="space-y-6">
+            <SectionHeading eyebrow="Licensing" title="Recommended commercial model" description="Blend governance fees with usage-based expansion" />
+            <div className="grid gap-4 text-sm text-white/80 lg:grid-cols-3">
+              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                <p className="text-xs uppercase tracking-[0.35em] text-white/50">Platform retainer</p>
+                <p className="mt-2 text-2xl font-semibold text-white">$12k / tenant / mo</p>
+                <p className="text-xs text-white/60">Covers multi-tenant hosting, policy layer, and support SLAs.</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                <p className="text-xs uppercase tracking-[0.35em] text-white/50">Seat bundles</p>
+                <p className="mt-2 text-2xl font-semibold text-white">$120 / persona</p>
+                <p className="text-xs text-white/60">Planner, supplier, finance, treasury seats pooled & auto true-up.</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                <p className="text-xs uppercase tracking-[0.35em] text-white/50">Data-plane add-ons</p>
+                <p className="mt-2 text-2xl font-semibold text-white">$0.45 / tx</p>
+                <p className="text-xs text-white/60">Sovereign storage, ESG copilots, and supplier mesh usage.</p>
+              </div>
+            </div>
+            <p className="text-sm text-white/70">
+              Tenants commit to an annual platform retainer, then flex seats by persona tier. Data-plane add-ons meter heavy workloads (ledger sync, AI copilots, supplier mesh calls) so operations teams can forecast spend per business unit.
+            </p>
+            <div className="space-y-3 text-sm text-white/70">
+              <div className="flex items-center gap-3">
+                <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-xs uppercase tracking-[0.3em] text-emerald-200">Why</span>
+                <p>Aligns with multi-tenant ERP economics: predictable governance fee + transparent growth lever for adoption.</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="rounded-full border border-sky-300/30 bg-sky-300/10 px-3 py-1 text-xs uppercase tracking-[0.3em] text-sky-200">Next</span>
+                <p>Expose sliders in this console so superadmins can model invoices, then sync outputs to billing + CRM.</p>
+              </div>
+            </div>
+          </Panel>
+          <Panel variant="card" className="space-y-4">
+            <SectionHeading eyebrow="Packaging" title="Bundle recommendations" description="Mix personas + copilots for each industry" />
+            <ul className="space-y-3 text-sm text-white/75">
+              <li className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                <p className="text-white font-semibold">Industrial Core</p>
+                <p className="text-xs text-white/60">Planner + Supplier copilots · 200 seats · ESG add-on for regulators.</p>
+              </li>
+              <li className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                <p className="text-white font-semibold">Finance Command</p>
+                <p className="text-xs text-white/60">Treasury + ledger copilots · 80 seats · Data-plane priority channel.</p>
+              </li>
+              <li className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                <p className="text-white font-semibold">Supplier Mesh Pro</p>
+                <p className="text-xs text-white/60">Shared supplier workspace · pay-per-transaction mesh calls.</p>
+              </li>
+            </ul>
+            <p className="text-xs text-white/60">Document these bundles in RevOps to auto-generate licensing schedules during tenant onboarding.</p>
+          </Panel>
+        </section>
       </main>
+
+      {showTenantModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#01020a]/80 px-4 py-10 backdrop-blur-md">
+          <div className="relative w-full max-w-4xl rounded-[32px] border border-white/10 bg-[#04050f] p-8 shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setShowTenantModal(false)}
+              className="absolute right-6 top-6 rounded-full border border-white/20 p-2 text-white/70 hover:text-white"
+              aria-label="Close modal"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="flex flex-col gap-3">
+              <Tag tone="teal">Create tenant</Tag>
+              <h2 className="text-3xl font-semibold">Onboard a new company</h2>
+              <p className="text-sm text-white/70">Collect core company details and designate the founding admin. We’ll provision infra + credentials in one pass.</p>
+            </div>
+            <form onSubmit={handleTenantSubmit} className="mt-8 grid gap-8 lg:grid-cols-2">
+              <div className="space-y-5">
+                <SectionHeading eyebrow="Company" title="Tenant blueprint" description="Name, sector, and routing metadata" />
+                <div className="space-y-4 text-sm">
+                  <div>
+                    <label htmlFor="company-name" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                      Company name
+                    </label>
+                    <input
+                      id="company-name"
+                      name="company-name"
+                      placeholder="Aurora Plastics"
+                      className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="company-slug" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                      Tenant slug
+                    </label>
+                    <input
+                      id="company-slug"
+                      name="company-slug"
+                      placeholder="aurora-plastics"
+                      className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="region" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                        Region
+                      </label>
+                      <select
+                        id="region"
+                        name="region"
+                        className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white focus:border-white/40 focus:outline-none"
+                      >
+                        <option value="">Select region</option>
+                        <option value="emea">EMEA</option>
+                        <option value="na">North America</option>
+                        <option value="latam">LATAM</option>
+                        <option value="apac">APAC</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="industry" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                        Industry
+                      </label>
+                      <input
+                        id="industry"
+                        name="industry"
+                        placeholder="Advanced manufacturing"
+                        className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="headcount" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                      Approx. seats
+                    </label>
+                    <input
+                      id="headcount"
+                      name="headcount"
+                      placeholder="> 250 employees"
+                      className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-5">
+                <SectionHeading eyebrow="Admin" title="Founding admin" description="Primary contact credentials" />
+                <div className="space-y-4 text-sm">
+                  <div>
+                    <label htmlFor="admin-name" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                      Admin name
+                    </label>
+                    <input
+                      id="admin-name"
+                      name="admin-name"
+                      placeholder="Adaora Umeh"
+                      className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="admin-email" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                      Admin email
+                    </label>
+                    <input
+                      id="admin-email"
+                      name="admin-email"
+                      type="email"
+                      placeholder="admin@aurora.com"
+                      className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="admin-password" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                        Password
+                      </label>
+                      <input
+                        id="admin-password"
+                        name="admin-password"
+                        type="password"
+                        placeholder="••••••••"
+                        className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="confirm-password" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                        Confirm
+                      </label>
+                      <input
+                        id="confirm-password"
+                        name="confirm-password"
+                        type="password"
+                        placeholder="••••••••"
+                        className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="admin-notes" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                      Notes for ops
+                    </label>
+                    <textarea
+                      id="admin-notes"
+                      name="admin-notes"
+                      rows={3}
+                      placeholder="Kickoff call scheduled, requires ESG copilot."
+                      className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="lg:col-span-2 flex flex-wrap items-center justify-between gap-4 text-sm">
+                <p className="text-white/60">We hash admin credentials, ship the invite email, and mirror the blueprint to the provisioning backlog.</p>
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => setShowTenantModal(false)} className="rounded-2xl border border-white/20 px-5 py-3 text-white/70 hover:text-white">
+                    Cancel
+                  </button>
+                  <button type="submit" className="group inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 font-semibold text-[#05060a]">
+                    Deploy tenant
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
