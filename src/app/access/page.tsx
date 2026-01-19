@@ -107,38 +107,35 @@ export default function AccessPage() {
             </div>
             <h2 className="mt-3 text-2xl font-semibold">Superadmin login</h2>
             <p className="mt-2 text-sm text-white/70">
-              Mint tenants, seed copilots, and audit policies. Hardware security keys + rotating passcodes required.
+              Mint tenants, seed copilots, and audit policies. Use your Syspro-issued email + password to enter the command mesh.
             </p>
             <form className="mt-6 space-y-4">
               <div>
-                <label htmlFor="super-user" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                  Superadmin handle
+                <label htmlFor="super-email" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                  Superadmin email
                 </label>
                 <input
-                  id="super-user"
-                  name="super-user"
-                  placeholder="syspro-root"
+                  id="super-email"
+                  name="super-email"
+                  type="email"
+                  placeholder="root@syspro.com"
                   className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/40 focus:outline-none"
                 />
               </div>
               <div>
-                <label htmlFor="otp" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                  One-time passcode
+                <label htmlFor="super-password" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                  Password
                 </label>
-                <div className="mt-2 flex gap-3">
-                  <input
-                    id="otp"
-                    name="otp"
-                    placeholder="000000"
-                    className="w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/40 focus:outline-none"
-                  />
-                  <button type="button" className="rounded-2xl border border-white/20 px-4 py-3 text-xs uppercase tracking-[0.3em] text-white/70 hover:text-white">
-                    Resend
-                  </button>
-                </div>
+                <input
+                  id="super-password"
+                  name="super-password"
+                  type="password"
+                  placeholder="••••••••"
+                  className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/40 focus:outline-none"
+                />
               </div>
               <div className="rounded-2xl border border-white/15 bg-black/30 p-4 text-xs text-white/60">
-                Insert hardware key when prompted. We notarize every superadmin action to the tenant trust ledger.
+                Passwords must be 12+ characters with entropy enforced. Hardware keys are prompted post-auth for sensitive actions.
               </div>
               <button type="button" className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-[#05060a]">
                 Launch superadmin mesh
