@@ -4,6 +4,14 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { getSql } from "@/lib/db";
 
+type TenantRow = {
+  name: string;
+  region: string;
+  status: string;
+  ledger_delta: string;
+  seats: number | null;
+};
+
 const payloadSchema = z.object({
   companyName: z.string().min(2, "Company name must be at least 2 characters"),
   companySlug: z
@@ -55,31 +63,36 @@ export async function POST(request: Request) {
     const tenantId = randomUUID();
     const passwordHash = await bcrypt.hash(payload.adminPassword, 12);
 
-    const [tenant] = await sql`
-      insert into tenants (id, name, slug, region, industry, seats, admin_name, admin_email, admin_password_hash, admin_notes)
-      values (
-        ${tenantId},
-        ${payload.companyName},
-        ${payload.companySlug},
-        ${payload.region},
-        ${payload.industry},
-        ${payload.seats ?? null},
-        ${payload.adminName},
-        ${payload.adminEmail.toLowerCase()},
-        ${passwordHash},
-        ${payload.adminNotes ?? ""}
-      )
-      on conflict (slug) do update set
-        name = excluded.name,
-        region = excluded.region,
-        industry = excluded.industry,
-        seats = excluded.seats,
-        admin_name = excluded.admin_name,
-        admin_email = excluded.admin_email,
-        admin_password_hash = excluded.admin_password_hash,
-        admin_notes = excluded.admin_notes
-      returning name, region, status, ledger_delta, seats
-    `;
+    const tenantRows = (await sql(
+      `
+        insert into tenants (id, name, slug, region, industry, seats, admin_name, admin_email, admin_password_hash, admin_notes)
+        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        on conflict (slug) do update set
+          name = excluded.name,
+          region = excluded.region,
+          industry = excluded.industry,
+          seats = excluded.seats,
+          admin_name = excluded.admin_name,
+          admin_email = excluded.admin_email,
+          admin_password_hash = excluded.admin_password_hash,
+          admin_notes = excluded.admin_notes
+        returning name, region, status, ledger_delta, seats
+      `,
+      [
+        tenantId,
+        payload.companyName,
+        payload.companySlug,
+        payload.region,
+        payload.industry,
+        payload.seats ?? null,
+        payload.adminName,
+        payload.adminEmail.toLowerCase(),
+        passwordHash,
+        payload.adminNotes ?? "",
+      ]
+    )) as TenantRow[];
+
+    const tenant = tenantRows[0];
 
     return NextResponse.json(
       {
