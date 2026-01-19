@@ -22,21 +22,23 @@ export function Panel({ children, className, variant = "card" }: PanelProps) {
   return <div className={cn(baseStyles[variant], className)}>{children}</div>;
 }
 
+const TAG_TONES = {
+  teal: "text-[#64ffd6] bg-[#64ffd6]/10",
+  amber: "text-[#ffd36b] bg-[#ffd36b]/10",
+  rose: "text-[#ff8aa1] bg-[#ff8aa1]/10",
+  indigo: "text-[#8fb0ff] bg-[#8fb0ff]/10",
+} as const;
+
+type TagTone = keyof typeof TAG_TONES;
+
 interface TagProps {
   children: ReactNode;
-  tone?: "teal" | "amber" | "rose" | "indigo";
+  tone?: TagTone;
 }
 
 export function Tag({ children, tone = "teal" }: TagProps) {
-  const tones: Record<TagProps["tone"], string> = {
-    teal: "text-[#64ffd6] bg-[#64ffd6]/10",
-    amber: "text-[#ffd36b] bg-[#ffd36b]/10",
-    rose: "text-[#ff8aa1] bg-[#ff8aa1]/10",
-    indigo: "text-[#8fb0ff] bg-[#8fb0ff]/10",
-  };
-
   return (
-    <span className={cn("inline-flex items-center rounded-full px-3 py-1 text-xs uppercase tracking-[0.35em]", tones[tone])}>
+    <span className={cn("inline-flex items-center rounded-full px-3 py-1 text-xs uppercase tracking-[0.35em]", TAG_TONES[tone])}>
       {children}
     </span>
   );
@@ -58,13 +60,15 @@ export function SectionHeading({ eyebrow, title, description }: SectionHeadingPr
   );
 }
 
+type PillButtonVariant = "primary" | "secondary";
+
 interface PillButtonProps {
   children: ReactNode;
-  variant?: "primary" | "secondary";
+  variant?: PillButtonVariant;
 }
 
 export function PillButton({ children, variant = "secondary" }: PillButtonProps) {
-  const variants: Record<PillButtonProps["variant"], string> = {
+  const variants: Record<PillButtonVariant, string> = {
     primary: "bg-white text-[#05060a] hover:bg-white/90",
     secondary: "border border-white/20 text-white/80 hover:border-white hover:text-white",
   };
