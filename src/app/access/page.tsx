@@ -1,4 +1,8 @@
+"use client";
+
+import { FormEvent, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Building2, KeySquare, Shield, UserCircle } from "lucide-react";
 
 const steps = [
@@ -16,7 +20,31 @@ const steps = [
   },
 ];
 
+const personas = {
+  tenant: {
+    title: "Tenant workspace",
+    description: "Plant, finance, ESG, and supplier personas land in their tenant-scoped mesh.",
+    cta: "Continue to tenant workspace",
+    helper: "We mint tenant tokens, enforce ledger isolation, and drop you inside /tenant in one step.",
+  },
+  superadmin: {
+    title: "Superadmin command",
+    description: "Mint tenants, seed copilots, and audit policies from the oversight console.",
+    cta: "Launch superadmin mesh",
+    helper: "Email + password unlock /superadmin. Hardware keys prompt post-auth for sensitive ops.",
+  },
+} as const;
+
 export default function AccessPage() {
+  const [persona, setPersona] = useState<"tenant" | "superadmin">("tenant");
+  const router = useRouter();
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const destination = persona === "tenant" ? "/tenant" : "/superadmin";
+    router.push(destination);
+  }
+
   return (
     <div className="relative min-h-screen bg-[#05060a] text-white">
       <div className="pointer-events-none absolute inset-0 opacity-70">
@@ -54,17 +82,34 @@ export default function AccessPage() {
           </div>
         </header>
 
-        <section className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 backdrop-blur">
+        <section className="rounded-[32px] border border-white/10 bg-white/5 p-8 backdrop-blur">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3 text-xs uppercase tracking-[0.4em] text-white/60">
               <Building2 className="h-4 w-4 text-teal-200" />
-              Tenant workspace
+              Unified access
             </div>
-            <h2 className="mt-3 text-2xl font-semibold">Tenant &amp; partner login</h2>
-            <p className="mt-2 text-sm text-white/70">
-              Secure SSO for plant, finance, and supplier personas. We mint tenant-scoped tokens and enforce ledger isolation per click.
-            </p>
-            <form className="mt-6 space-y-4">
+            <div className="flex rounded-full border border-white/15 bg-black/30 p-1 text-xs font-semibold">
+              {([
+                { key: "tenant", label: "Tenant" },
+                { key: "superadmin", label: "Superadmin" },
+              ] as const).map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => setPersona(option.key)}
+                  className={`rounded-full px-4 py-1.5 transition ${
+                    persona === option.key ? "bg-white text-[#05060a]" : "text-white/60 hover:text-white"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <h2 className="mt-4 text-2xl font-semibold">{personas[persona].title}</h2>
+          <p className="mt-2 text-sm text-white/70">{personas[persona].description}</p>
+          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+            {persona === "tenant" && (
               <div>
                 <label htmlFor="tenant" className="text-xs uppercase tracking-[0.35em] text-white/50">
                   Tenant slug
@@ -76,73 +121,45 @@ export default function AccessPage() {
                   className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/40 focus:outline-none"
                 />
               </div>
-              <div>
-                <label htmlFor="email" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                  Work email
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="you@company.com"
-                  className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/40 focus:outline-none"
-                />
-              </div>
+            )}
+            <div>
+              <label htmlFor="email" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                Work email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                placeholder={persona === "tenant" ? "you@company.com" : "root@syspro.com"}
+                className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/40 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="text-xs uppercase tracking-[0.35em] text-white/50">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="••••••••"
+                className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/40 focus:outline-none"
+              />
+            </div>
+            {persona === "tenant" && (
               <div className="flex items-center gap-3 text-xs text-white/60">
                 <input type="checkbox" id="remember" className="h-4 w-4 rounded border-white/30 bg-transparent" />
                 <label htmlFor="remember">Remember device for 30 days</label>
               </div>
-              <button type="button" className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-[#05060a]">
-                Continue to tenant console
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </button>
-              <p className="text-xs text-white/50">Need supplier access? Ask your tenant admin to issue a burst invite.</p>
-            </form>
-          </div>
-
-          <div className="rounded-[32px] border border-white/10 bg-gradient-to-br from-[#1ff0d8]/10 via-white/0 to-white/5 p-8 backdrop-blur">
-            <div className="flex items-center gap-3 text-xs uppercase tracking-[0.4em] text-white/60">
-              <Shield className="h-4 w-4 text-emerald-200" />
-              Superadmin command
+            )}
+            <div className="rounded-2xl border border-white/15 bg-black/30 p-4 text-xs text-white/60">
+              {personas[persona].helper}
             </div>
-            <h2 className="mt-3 text-2xl font-semibold">Superadmin login</h2>
-            <p className="mt-2 text-sm text-white/70">
-              Mint tenants, seed copilots, and audit policies. Use your Syspro-issued email + password to enter the command mesh.
-            </p>
-            <form className="mt-6 space-y-4">
-              <div>
-                <label htmlFor="super-email" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                  Superadmin email
-                </label>
-                <input
-                  id="super-email"
-                  name="super-email"
-                  type="email"
-                  placeholder="root@syspro.com"
-                  className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/40 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label htmlFor="super-password" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                  Password
-                </label>
-                <input
-                  id="super-password"
-                  name="super-password"
-                  type="password"
-                  placeholder="••••••••"
-                  className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/40 focus:outline-none"
-                />
-              </div>
-              <div className="rounded-2xl border border-white/15 bg-black/30 p-4 text-xs text-white/60">
-                Passwords must be 12+ characters with entropy enforced. Hardware keys are prompted post-auth for sensitive actions.
-              </div>
-              <button type="button" className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-[#05060a]">
-                Launch superadmin mesh
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </button>
-            </form>
-          </div>
+            <button type="submit" className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-[#05060a]">
+              {personas[persona].cta}
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </button>
+          </form>
         </section>
 
         <section className="rounded-[32px] border border-white/10 bg-white/5 p-8 backdrop-blur">
