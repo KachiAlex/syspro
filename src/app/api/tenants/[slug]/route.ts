@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSql } from "@/lib/db";
 import { ensureTenantTable, mapTenantRow, TenantRow } from "../route";
@@ -7,24 +7,10 @@ const actionSchema = z.object({
   action: z.enum(["suspend", "activate"]),
 });
 
-type RouteContext = {
-  params?: {
-    slug?: string;
-  };
-};
+type RouteContext = { params: Promise<{ slug: string }> };
 
-function resolveSlug(request: Request, context: RouteContext) {
-  if (context?.params?.slug) {
-    return context.params.slug;
-  }
-
-  const url = new URL(request.url);
-  const segments = url.pathname.split("/").filter(Boolean);
-  return segments.pop();
-}
-
-export async function PATCH(request: Request, context: RouteContext) {
-  const slug = resolveSlug(request, context);
+export async function PATCH(request: NextRequest, context: RouteContext) {
+  const { slug } = await context.params;
 
   if (!slug) {
     return NextResponse.json({ error: "Tenant slug is required" }, { status: 400 });
@@ -64,8 +50,8 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
-  const slug = resolveSlug(_request, context);
+export async function DELETE(_request: NextRequest, context: RouteContext) {
+  const { slug } = await context.params;
 
   if (!slug) {
     return NextResponse.json({ error: "Tenant slug is required" }, { status: 400 });
