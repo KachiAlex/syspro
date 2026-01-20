@@ -4,8 +4,9 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { getSql } from "@/lib/db";
 
-type TenantRow = {
+export type TenantRow = {
   name: string;
+  slug: string;
   region: string;
   status: string;
   ledger_delta: string;
@@ -27,7 +28,7 @@ const payloadSchema = z.object({
   adminNotes: z.string().optional().default(""),
 });
 
-async function ensureTenantTable(sql: ReturnType<typeof getSql>) {
+export async function ensureTenantTable(sql: ReturnType<typeof getSql>) {
   await sql`
     create table if not exists tenants (
       id uuid primary key,
@@ -56,6 +57,52 @@ async function ensureTenantTable(sql: ReturnType<typeof getSql>) {
   await sql`create unique index if not exists tenants_slug_key on tenants(slug)`;
 }
 
+export async function GET() {
+  try {
+    const sql = getSql();
+    await ensureTenantTable(sql);
+
+    const rows = (await sql`
+      select name, slug, region, status, ledger_delta, seats from tenants order by created_at desc nulls last
+    `) as TenantRow[];
+
+    return NextResponse.json({ tenants: rows.map(mapTenantRow) });
+  } catch (error) {
+    console.error("Failed to fetch tenants", error);
+    return NextResponse.json({ error: "Unable to fetch tenants" }, { status: 500 });
+  }
+}
+
+export function mapTenantRow(row: TenantRow) {
+  return {
+    name: row.name as string,
+    slug: row.slug as string,
+    region: row.region as string,
+    status: row.status as string,
+    ledger: row.ledger_delta ?? "₦0",
+    seats: typeof row.seats === "number" ? row.seats : 0,
+  };
+}
+
+async function generateUniqueTenantCode(sql: ReturnType<typeof getSql>, slug: string) {
+  const base = slug.toUpperCase();
+  let candidate = base;
+  let counter = 1;
+
+  // Try a bounded number of attempts to avoid infinite loops in pathological cases
+  while (counter < 1000) {
+    const existing = await sql`select 1 from tenants where code = ${candidate} limit 1`;
+    if (Array.isArray(existing) && existing.length === 0) {
+      return candidate;
+    }
+
+    candidate = `${base}-${counter}`;
+    counter += 1;
+  }
+
+  throw new Error("Unable to generate unique tenant code after multiple attempts");
+}
+
 export async function POST(request: Request) {
   try {
     const rawBody = await request.text();
@@ -80,11 +127,11 @@ export async function POST(request: Request) {
     }
 
     const payload = parsed.data;
-    const computedCode = payload.companySlug.toUpperCase();
     const computedDomain = `${payload.companySlug}.syspro.local`;
     const computedSchema = `${payload.companySlug.replace(/-/g, "_")}_schema`;
     const sql = getSql();
     await ensureTenantTable(sql);
+    const computedCode = await generateUniqueTenantCode(sql, payload.companySlug);
 
     const tenantId = randomUUID();
     const passwordHash = await bcrypt.hash(payload.adminPassword, 12);
@@ -94,12 +141,12 @@ export async function POST(request: Request) {
         insert into tenants (
           id,
           name,
+          slug,
           code,
           domain,
           "isActive",
           settings,
           "schemaName",
-          slug,
           region,
           industry,
           seats,
@@ -123,17 +170,17 @@ export async function POST(request: Request) {
           admin_email = excluded.admin_email,
           admin_password_hash = excluded.admin_password_hash,
           admin_notes = excluded.admin_notes
-        returning name, region, status, ledger_delta, seats
+        returning name, slug, region, status, ledger_delta, seats
       `,
       [
         tenantId,
         payload.companyName,
+        payload.companySlug,
         computedCode,
         computedDomain,
         false,
         JSON.stringify({}),
         computedSchema,
-        payload.companySlug,
         payload.region,
         payload.industry,
         payload.seats ?? null,
@@ -144,18 +191,12 @@ export async function POST(request: Request) {
       ]
     )) as TenantRow[];
 
-    const tenant = tenantRows[0];
+    const tenantSummary = mapTenantRow(tenantRows[0]);
 
     return NextResponse.json(
       {
         tenantId,
-        tenantSummary: {
-          name: tenant.name as string,
-          region: tenant.region as string,
-          status: tenant.status as string,
-          ledger: tenant.ledger_delta as string,
-          seats: typeof tenant.seats === "number" ? tenant.seats : 0,
-        },
+        tenantSummary,
       },
       { status: 201 }
     );

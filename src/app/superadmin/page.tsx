@@ -1,9 +1,9 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { ArrowRight, CheckCircle2, CircleDashed, Loader2, PlusCircle, X } from "lucide-react";
 import { Panel, SectionHeading, Tag } from "@/components/ui/primitives";
-import { provisioningBacklog, tenantSummaries } from "@/lib/mock-data";
+import { provisioningBacklog } from "@/lib/mock-data";
 
 const REGION_OPTIONS = [
   "North America",
@@ -16,12 +16,16 @@ const REGION_OPTIONS = [
 ] as const;
 
 type TenantSummary = {
+  slug: string;
   name: string;
   region: string;
   status: string;
   ledger: string;
   seats: number;
+  persisted: boolean;
 };
+
+type ApiTenantSummary = Omit<TenantSummary, "persisted">;
 
 interface TenantFormState {
   companyName: string;
@@ -51,11 +55,45 @@ const INITIAL_TENANT_FORM: TenantFormState = {
 
 export default function SuperadminPage() {
   const [showTenantModal, setShowTenantModal] = useState(false);
-  const [tenants, setTenants] = useState<TenantSummary[]>(() => [...tenantSummaries]);
+  const [tenants, setTenants] = useState<TenantSummary[]>([]);
   const [formState, setFormState] = useState<TenantFormState>(INITIAL_TENANT_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadTenants() {
+      try {
+        const response = await fetch("/api/tenants", { cache: "no-store" });
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        if (isCancelled || !Array.isArray(data?.tenants)) {
+          return;
+        }
+
+        const normalized = (data.tenants as ApiTenantSummary[]).map((tenant) => ({
+          ...tenant,
+          persisted: true,
+        }));
+
+        setTenants(normalized);
+      } catch (error) {
+        console.error("Failed to load tenants", error);
+      }
+    }
+
+    loadTenants();
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   function handleOpenTenantModal() {
     setFormError(null);
@@ -66,6 +104,61 @@ export default function SuperadminPage() {
   function handleCloseTenantModal() {
     setShowTenantModal(false);
     setIsSubmitting(false);
+  }
+
+  async function handleTenantAction(targetTenant: TenantSummary, action: "suspend" | "activate" | "delete") {
+    setActionError(null);
+
+    const slug = targetTenant.slug;
+    const loadingKey = `${slug}:${action}`;
+    setActionLoading(loadingKey);
+
+    try {
+      if (action === "delete") {
+        const response = await fetch(`/api/tenants/${slug}`, {
+          method: "DELETE",
+        });
+
+        if (response.status === 404) {
+          setTenants((prev) => prev.filter((tenant) => tenant.slug !== slug));
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => null);
+          throw new Error(data?.error ?? "Unable to delete tenant");
+        }
+
+        setTenants((prev) => prev.filter((tenant) => tenant.slug !== slug));
+        return;
+      }
+
+      const response = await fetch(`/api/tenants/${slug}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          setActionError("Tenant not found. Please refresh and try again.");
+          return;
+        }
+        throw new Error(data?.error ?? "Unable to update tenant status");
+      }
+
+      setTenants((prev) =>
+        prev.map((tenant) =>
+          tenant.slug === slug ? { ...data.tenantSummary, persisted: true } : tenant
+        )
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to process action";
+      setActionError(message);
+    } finally {
+      setActionLoading(null);
+    }
   }
 
   function handleFieldChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
@@ -87,6 +180,20 @@ export default function SuperadminPage() {
 
     if (!formState.companyName || !formState.companySlug) {
       setFormError("Company name and tenant slug are required.");
+      return;
+    }
+
+    const missingFields: string[] = [];
+    if (!formState.region) missingFields.push("region");
+    if (!formState.industry) missingFields.push("industry");
+    if (!formState.adminName) missingFields.push("admin name");
+    if (!formState.adminEmail) missingFields.push("admin email");
+    if (!formState.adminPassword) missingFields.push("admin password");
+
+    if (missingFields.length > 0) {
+      const lastField = missingFields.pop();
+      const fieldList = missingFields.length ? `${missingFields.join(", ")} and ${lastField}` : lastField;
+      setFormError(`Please provide ${fieldList}.`);
       return;
     }
 
@@ -115,7 +222,8 @@ export default function SuperadminPage() {
         throw new Error(data?.error ?? "Unable to create tenant");
       }
 
-      setTenants((prev) => [data.tenantSummary, ...prev]);
+      const createdTenant: TenantSummary = { ...data.tenantSummary, persisted: true };
+      setTenants((prev) => [createdTenant, ...prev.filter((tenant) => tenant.slug !== createdTenant.slug)]);
       setFormState(INITIAL_TENANT_FORM);
       setShowTenantModal(false);
       setFormSuccess(`Tenant ${data.tenantSummary.name} created successfully.`);
@@ -164,36 +272,13 @@ export default function SuperadminPage() {
             {formSuccess}
           </div>
         )}
+        {actionError && (
+          <div className="rounded-3xl border border-rose-300/30 bg-rose-300/10 px-6 py-3 text-sm text-rose-200">
+            {actionError}
+          </div>
+        )}
 
         <section className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-          <Panel className="space-y-6" variant="glass">
-            <div className="flex items-center justify-between">
-              <SectionHeading eyebrow="Tenant ledger" title="Live tenants" description="Every action mirrored to compliance twin" />
-              <button className="inline-flex items-center gap-2 text-xs font-semibold text-white/70 hover:text-white">
-                Export CSV
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="divide-y divide-white/10 rounded-3xl border border-white/10">
-              <div className="grid grid-cols-5 gap-4 px-6 py-3 text-xs uppercase tracking-[0.35em] text-white/40">
-                <span>Name</span>
-                <span>Region</span>
-                <span>Status</span>
-                <span>Ledger delta</span>
-                <span>Seats</span>
-              </div>
-              {tenants.map((tenant) => (
-                <div key={tenant.name} className="grid grid-cols-5 gap-4 px-6 py-4 text-sm">
-                  <span className="font-semibold">{tenant.name}</span>
-                  <span className="text-white/70">{tenant.region}</span>
-                  <span className={`text-sm ${tenant.status === "Live" ? "text-emerald-300" : "text-amber-300"}`}>{tenant.status}</span>
-                  <span className="text-white/80">{tenant.ledger}</span>
-                  <span className="text-white/60">{tenant.seats}</span>
-                </div>
-              ))}
-            </div>
-          </Panel>
-
           <Panel variant="glass" className="space-y-6">
             <SectionHeading eyebrow="Tenant creation" title="Mint a new tenant" description="Spin infra, seed datasets, and assign copilots" />
             <p className="text-sm text-white/70">
@@ -231,6 +316,61 @@ export default function SuperadminPage() {
               </button>
             </div>
             <p className="text-xs text-white/60">Provisioning tasks auto-sync to the backlog once you publish.</p>
+          </Panel>
+
+          <Panel className="space-y-6" variant="glass">
+            <div className="flex items-center justify-between">
+              <SectionHeading eyebrow="Tenant ledger" title="Live tenants" description="Every action mirrored to compliance twin" />
+              <button className="inline-flex items-center gap-2 text-xs font-semibold text-white/70 hover:text-white">
+                Export CSV
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="divide-y divide-white/10 rounded-3xl border border-white/10">
+              <div className="grid grid-cols-6 gap-4 px-6 py-3 text-xs uppercase tracking-[0.35em] text-white/40">
+                <span>Name</span>
+                <span>Region</span>
+                <span>Status</span>
+                <span>Ledger delta</span>
+                <span>Seats</span>
+                <span className="text-right">Actions</span>
+              </div>
+              {tenants.map((tenant) => (
+                <div key={tenant.slug} className="grid grid-cols-6 gap-4 px-6 py-4 text-sm">
+                  <span className="font-semibold">{tenant.name}</span>
+                  <span className="text-white/70">{tenant.region}</span>
+                  <span className={`text-sm ${tenant.status === "Live" ? "text-emerald-300" : tenant.status === "Suspended" ? "text-rose-300" : "text-amber-300"}`}>
+                    {tenant.status}
+                  </span>
+                  <span className="text-white/80">{tenant.ledger}</span>
+                  <span className="text-white/60">{tenant.seats}</span>
+                  <div className="flex flex-wrap justify-end gap-2 text-xs">
+                    {(() => {
+                      const isLive = tenant.status === "Live";
+                      const toggleAction: "suspend" | "activate" = isLive ? "suspend" : "activate";
+                      return (
+                        <button
+                          type="button"
+                          disabled={actionLoading === `${tenant.slug}:${toggleAction}`}
+                          onClick={() => handleTenantAction(tenant, toggleAction)}
+                          className="rounded-full border border-white/20 px-3 py-1 text-white/70 hover:text-white disabled:opacity-60"
+                        >
+                          {isLive ? "Suspend" : "Activate"}
+                        </button>
+                      );
+                    })()}
+                    <button
+                      type="button"
+                      disabled={actionLoading === `${tenant.slug}:delete`}
+                      onClick={() => handleTenantAction(tenant, "delete")}
+                      className="rounded-full border border-rose-400/40 px-3 py-1 text-rose-200 hover:text-rose-100 disabled:opacity-60"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </Panel>
         </section>
 
@@ -486,7 +626,7 @@ export default function SuperadminPage() {
                   </div>
                   <div>
                     <label htmlFor="adminNotes" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                      Notes for ops
+                      Notes for ops (optional)
                     </label>
                     <textarea
                       id="adminNotes"

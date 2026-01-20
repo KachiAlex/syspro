@@ -88,6 +88,7 @@ export const partnerSignals = [
 
 export const tenantSummaries = [
   {
+    slug: "tembea-steel",
     name: "Tembea Steel",
     region: "EMEA",
     status: "Live",
@@ -95,6 +96,7 @@ export const tenantSummaries = [
     seats: 184,
   },
   {
+    slug: "novafoods",
     name: "NovaFoods",
     region: "NA",
     status: "Live",
@@ -102,6 +104,7 @@ export const tenantSummaries = [
     seats: 96,
   },
   {
+    slug: "skyline-energy",
     name: "Skyline Energy",
     region: "APAC",
     status: "Pilot",
