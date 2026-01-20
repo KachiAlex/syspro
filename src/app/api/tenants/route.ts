@@ -32,24 +32,47 @@ async function ensureTenantTable(sql: ReturnType<typeof getSql>) {
     create table if not exists tenants (
       id uuid primary key,
       name text not null,
-      slug text not null unique,
-      region text not null,
-      industry text,
-      seats integer,
-      status text not null default 'Pending',
-      ledger_delta text not null default '₦0',
-      admin_name text not null,
-      admin_email text not null,
-      admin_password_hash text not null,
-      admin_notes text,
-      created_at timestamptz not null default now()
+      code text,
+      domain text,
+      "isActive" boolean default false,
+      settings jsonb,
+      "schemaName" text,
+      "createdAt" timestamptz default now(),
+      "updatedAt" timestamptz default now(),
+      "deletedAt" timestamptz
     )
   `;
+
+  await sql`alter table tenants add column if not exists slug text`;
+  await sql`alter table tenants add column if not exists region text`;
+  await sql`alter table tenants add column if not exists industry text`;
+  await sql`alter table tenants add column if not exists seats integer`;
+  await sql`alter table tenants add column if not exists status text default 'Pending'`;
+  await sql`alter table tenants add column if not exists ledger_delta text default '₦0'`;
+  await sql`alter table tenants add column if not exists admin_name text`;
+  await sql`alter table tenants add column if not exists admin_email text`;
+  await sql`alter table tenants add column if not exists admin_password_hash text`;
+  await sql`alter table tenants add column if not exists admin_notes text`;
+  await sql`create unique index if not exists tenants_slug_key on tenants(slug)`;
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const rawBody = await request.text();
+    if (!rawBody) {
+      return NextResponse.json({ error: "Request body cannot be empty" }, { status: 400 });
+    }
+
+    let body: unknown;
+    try {
+      console.log("Tenant payload content-type", request.headers.get("content-type"));
+      console.log("Tenant payload raw body", rawBody);
+      body = JSON.parse(rawBody);
+    } catch (parseError) {
+      console.error("Tenant payload JSON parse failed", parseError, rawBody);
+      return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+    }
+
     const parsed = payloadSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -57,6 +80,9 @@ export async function POST(request: Request) {
     }
 
     const payload = parsed.data;
+    const computedCode = payload.companySlug.toUpperCase();
+    const computedDomain = `${payload.companySlug}.syspro.local`;
+    const computedSchema = `${payload.companySlug.replace(/-/g, "_")}_schema`;
     const sql = getSql();
     await ensureTenantTable(sql);
 
@@ -65,10 +91,31 @@ export async function POST(request: Request) {
 
     const tenantRows = (await sql(
       `
-        insert into tenants (id, name, slug, region, industry, seats, admin_name, admin_email, admin_password_hash, admin_notes)
-        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        insert into tenants (
+          id,
+          name,
+          code,
+          domain,
+          "isActive",
+          settings,
+          "schemaName",
+          slug,
+          region,
+          industry,
+          seats,
+          admin_name,
+          admin_email,
+          admin_password_hash,
+          admin_notes
+        )
+        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         on conflict (slug) do update set
           name = excluded.name,
+          code = excluded.code,
+          domain = excluded.domain,
+          "isActive" = excluded."isActive",
+          settings = excluded.settings,
+          "schemaName" = excluded."schemaName",
           region = excluded.region,
           industry = excluded.industry,
           seats = excluded.seats,
@@ -81,6 +128,11 @@ export async function POST(request: Request) {
       [
         tenantId,
         payload.companyName,
+        computedCode,
+        computedDomain,
+        false,
+        JSON.stringify({}),
+        computedSchema,
         payload.companySlug,
         payload.region,
         payload.industry,
