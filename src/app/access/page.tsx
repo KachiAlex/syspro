@@ -41,7 +41,7 @@ export default function AccessPage() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const destination = persona === "tenant" ? "/tenant" : "/superadmin";
+    const destination = persona === "tenant" ? "/tenant-admin" : "/superadmin";
     router.push(destination);
   }
 

@@ -7,7 +7,7 @@ const cn = (...classes: ClassValue[]) => classes.filter(Boolean).join(" ");
 interface PanelProps {
   children: ReactNode;
   className?: string;
-  variant?: "frost" | "glass" | "card";
+  variant?: "frost" | "glass" | "card" | "daylight";
 }
 
 export function Panel({ children, className, variant = "card" }: PanelProps) {
@@ -17,6 +17,7 @@ export function Panel({ children, className, variant = "card" }: PanelProps) {
       "rounded-[32px] border border-white/15 bg-gradient-to-br from-white/10 to-white/5 p-6 backdrop-blur-xl",
     frost:
       "rounded-[28px] border border-white/5 bg-black/20 p-6 shadow-[0_30px_60px_rgba(0,0,0,0.35)]",
+    daylight: "rounded-3xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-900/5",
   };
 
   return <div className={cn(baseStyles[variant], className)}>{children}</div>;
@@ -48,14 +49,28 @@ interface SectionHeadingProps {
   eyebrow: string;
   title: string;
   description?: string;
+  tone?: "light" | "dark";
 }
 
-export function SectionHeading({ eyebrow, title, description }: SectionHeadingProps) {
+export function SectionHeading({ eyebrow, title, description, tone = "light" }: SectionHeadingProps) {
+  const toneClasses =
+    tone === "dark"
+      ? {
+          eyebrow: "text-slate-400",
+          title: "text-slate-900",
+          description: "text-slate-500",
+        }
+      : {
+          eyebrow: "text-white/50",
+          title: "text-white",
+          description: "text-white/60",
+        };
+
   return (
     <div>
-      <p className="text-xs uppercase tracking-[0.4em] text-white/50">{eyebrow}</p>
-      <h2 className="mt-2 text-2xl font-semibold text-white">{title}</h2>
-      {description ? <p className="mt-2 text-sm text-white/60">{description}</p> : null}
+      <p className={cn("text-xs uppercase tracking-[0.4em]", toneClasses.eyebrow)}>{eyebrow}</p>
+      <h2 className={cn("mt-2 text-2xl font-semibold", toneClasses.title)}>{title}</h2>
+      {description ? <p className={cn("mt-1 text-sm", toneClasses.description)}>{description}</p> : null}
     </div>
   );
 }
