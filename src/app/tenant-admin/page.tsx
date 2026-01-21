@@ -25,7 +25,7 @@ import {
   Users2,
   Zap,
 } from "lucide-react";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import type { ComponentType } from "react";
 
 type NavigationLink = {
@@ -247,6 +247,9 @@ export default function TenantAdminPage() {
   const [selectedEntity, setSelectedEntity] = useState("Axiom Labs");
   const [selectedRegion, setSelectedRegion] = useState("Global HQ");
   const [selectedTimeframe, setSelectedTimeframe] = useState(TIMEFRAME_OPTIONS[1]);
+  const [tenantSlug, setTenantSlug] = useState<string | null>(null);
+  const [loadingTenant, setLoadingTenant] = useState(false);
+  const [tenantError, setTenantError] = useState<string | null>(null);
 
   const entityOptions = ["Axiom Labs", "Nova Holdings", "Helix Metals"];
   const regionOptions = ["Global HQ", "Americas", "EMEA", "APAC"];
@@ -263,6 +266,36 @@ export default function TenantAdminPage() {
         return "Tenant admin";
     }
   }, [activeNav]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("tenantSlug")?.trim();
+    if (!slug) {
+      setTenantSlug(null);
+      return;
+    }
+
+    async function fetchTenantContext(value: string) {
+      setLoadingTenant(true);
+      setTenantError(null);
+      try {
+        const response = await fetch(`/api/tenant/org-structure?tenantSlug=${encodeURIComponent(value)}`);
+        if (!response.ok) {
+          throw new Error(`Failed to load tenant context (${response.status})`);
+        }
+        const payload = await response.json();
+        setTenantSlug(payload.tenantSlug ?? value);
+      } catch (error) {
+        console.error("Tenant context fetch failed", error);
+        setTenantSlug(value);
+        setTenantError(error instanceof Error ? error.message : "Unable to load tenant context");
+      } finally {
+        setLoadingTenant(false);
+      }
+    }
+
+    fetchTenantContext(slug);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#e9eef5] text-slate-900">

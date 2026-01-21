@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Building2, KeySquare, Shield, UserCircle } from "lucide-react";
@@ -35,14 +35,31 @@ const personas = {
   },
 } as const;
 
+function normalizeTenantSlug(value: string) {
+  const trimmed = value.trim().toLowerCase();
+  return trimmed.replace(/[^a-z0-9-]+/g, "-").replace(/-{2,}/g, "-").replace(/^-|-$/g, "");
+}
+
 export default function AccessPage() {
   const [persona, setPersona] = useState<"tenant" | "superadmin">("tenant");
+  const [tenantSlug, setTenantSlug] = useState("kreatix-default");
+  const [slugError, setSlugError] = useState<string | null>(null);
   const router = useRouter();
+
+  const normalizedSlug = useMemo(() => normalizeTenantSlug(tenantSlug) || "", [tenantSlug]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const destination = persona === "tenant" ? "/tenant-admin" : "/superadmin";
-    router.push(destination);
+    setSlugError(null);
+    if (persona === "tenant") {
+      if (!normalizedSlug) {
+        setSlugError("Enter a tenant slug to continue");
+        return;
+      }
+      router.push(`/tenant-admin?tenantSlug=${encodeURIComponent(normalizedSlug)}`);
+      return;
+    }
+    router.push("/superadmin");
   }
 
   return (
@@ -117,9 +134,12 @@ export default function AccessPage() {
                 <input
                   id="tenant"
                   name="tenant"
+                  value={tenantSlug}
+                  onChange={(event) => setTenantSlug(event.target.value)}
                   placeholder="e.g. tembea-steel"
                   className="mt-2 w-full rounded-2xl border border-white/15 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/40 focus:outline-none"
                 />
+                {slugError && <p className="mt-2 text-xs text-rose-300">{slugError}</p>}
               </div>
             )}
             <div>
@@ -153,7 +173,9 @@ export default function AccessPage() {
               </div>
             )}
             <div className="rounded-2xl border border-white/15 bg-black/30 p-4 text-xs text-white/60">
-              {personas[persona].helper}
+              {persona === "tenant"
+                ? `We’ll route you to /tenant-admin with ?tenantSlug=${normalizedSlug || "<required>"}.`
+                : personas[persona].helper}
             </div>
             <button type="submit" className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-[#05060a]">
               {personas[persona].cta}
