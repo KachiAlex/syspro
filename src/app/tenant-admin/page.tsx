@@ -4,25 +4,36 @@ import {
   Activity,
   AlertTriangle,
   ArrowUpRight,
+  BarChart3,
   Bell,
+  Bot,
+  ClipboardList,
   CalendarClock,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
-  ClipboardList,
   Command,
-  FileText,
-  Globe2,
+  CreditCard,
+  Gauge,
+  GitBranch,
+  Handshake,
+  Headphones,
   Layers3,
+  KanbanSquare,
   LayoutDashboard,
+  Megaphone,
   Menu,
-  MessageSquare,
+  PlugZap,
+  ScrollText,
   Search,
   Settings,
   ShieldCheck,
   TrendingDown,
   TrendingUp,
+  Users,
   Users2,
+  Wallet,
+  Workflow,
   Zap,
 } from "lucide-react";
 import { Fragment, useEffect, useMemo, useState } from "react";
@@ -56,46 +67,257 @@ type LiveOperationPanel = {
   items: { title: string; meta: string; supporting: string; statusColor: string }[];
 };
 
+type InvoiceRow = {
+  id: string;
+  vendor: string;
+  amount: string;
+  channel: string;
+  eta: string;
+  status: "ready" | "hold" | "variance";
+  notes: string;
+};
+
+type DealOpportunity = {
+  name: string;
+  stage: string;
+  value: string;
+  owner: string;
+  probability: number;
+  region: string;
+};
+
+type ApprovalRoute = {
+  name: string;
+  pending: number;
+  owners: string[];
+  updated: string;
+  eta: string;
+  critical?: boolean;
+};
+
+type AlertItem = {
+  label: string;
+  detail: string;
+  severity: "critical" | "warning" | "info";
+  timestamp: string;
+};
+
 const NAVIGATION: NavigationSection[] = [
   {
-    label: "Operations",
+    label: "",
     links: [
-      { label: "Command Center", key: "command-center", icon: LayoutDashboard },
-      { label: "Live Runs", key: "live-runs", icon: Zap, badge: "42" },
-      { label: "Approvals", key: "approvals", icon: CheckCircle2 },
-      { label: "Case Queue", key: "case-queue", icon: MessageSquare },
+      { label: "Overview", key: "overview", icon: LayoutDashboard },
+      { label: "CRM", key: "crm", icon: Handshake },
+      { label: "Finance", key: "finance", icon: Wallet },
+      { label: "HR & Operations", key: "hr-ops", icon: Users },
+      { label: "Projects", key: "projects", icon: KanbanSquare },
+      { label: "IT & Support", key: "it-support", icon: Headphones },
+      { label: "Marketing & Sales", key: "marketing-sales", icon: Megaphone },
     ],
   },
   {
     label: "Automation",
     links: [
-      { label: "Journeys", key: "journeys", icon: Layers3 },
-      { label: "Workflows", key: "workflows", icon: ClipboardList },
-      { label: "Runbooks", key: "runbooks", icon: FileText },
-    ],
-  },
-  {
-    label: "Analytics",
-    links: [
-      { label: "Insights", key: "insights", icon: Activity },
-      { label: "Dashboards", key: "dashboards", icon: Globe2 },
+      { label: "Workflows", key: "workflows", icon: Workflow },
+      { label: "Approvals", key: "approvals", icon: CheckCircle2 },
+      { label: "Automation Rules", key: "automation-rules", icon: Bot },
+      { label: "Policies", key: "policies", icon: ScrollText },
+      { label: "Reports", key: "reports", icon: BarChart3 },
+      { label: "Dashboards", key: "dashboards", icon: Gauge },
     ],
   },
   {
     label: "Admin",
     links: [
-      { label: "Directory", key: "directory", icon: Users2 },
-      { label: "Integrations", key: "integrations", icon: ShieldCheck },
-      { label: "Settings", key: "settings", icon: Settings },
+      { label: "People & Access", key: "people-access", icon: Users2 },
+      { label: "Structure", key: "structure", icon: GitBranch },
+      { label: "Billing", key: "billing", icon: CreditCard },
+      { label: "Integrations", key: "integrations", icon: PlugZap },
     ],
   },
 ];
+
+const INVOICE_QUEUE: InvoiceRow[] = [
+  {
+    id: "INV-98231",
+    vendor: "Apex Suppliers",
+    amount: "$184,200",
+    channel: "NetSuite",
+    eta: "12m",
+    status: "ready",
+    notes: "3-way match complete",
+  },
+  {
+    id: "INV-98244",
+    vendor: "Forge Parts",
+    amount: "$96,440",
+    channel: "Coupa",
+    eta: "45m",
+    status: "variance",
+    notes: "Tax variance flagged",
+  },
+  {
+    id: "INV-98257",
+    vendor: "Atlas Metals",
+    amount: "$62,010",
+    channel: "SAP",
+    eta: "1h 12m",
+    status: "hold",
+    notes: "Awaiting compliance",
+  },
+  {
+    id: "INV-98273",
+    vendor: "Helix Freight",
+    amount: "$48,870",
+    channel: "QuickBooks",
+    eta: "28m",
+    status: "ready",
+    notes: "Payment run S-14",
+  },
+];
+
+const DEAL_PIPELINE: DealOpportunity[] = [
+  {
+    name: "Kreatix Metals",
+    stage: "Diligence",
+    value: "$18.2M",
+    owner: "D. Ibarra",
+    probability: 68,
+    region: "EMEA",
+  },
+  {
+    name: "Nova Retail",
+    stage: "Contracting",
+    value: "$11.4M",
+    owner: "S. Patel",
+    probability: 54,
+    region: "APAC",
+  },
+  {
+    name: "Axiom Mobility",
+    stage: "Sourcing",
+    value: "$6.8M",
+    owner: "L. Gomez",
+    probability: 41,
+    region: "AMER",
+  },
+  {
+    name: "Helios Parts",
+    stage: "Negotiation",
+    value: "$22.6M",
+    owner: "M. Byrne",
+    probability: 73,
+    region: "Global",
+  },
+];
+
+const APPROVAL_ROUTES: ApprovalRoute[] = [
+  {
+    name: "Finance · CapEx ladder",
+    pending: 6,
+    owners: ["Aria S.", "Myra L."],
+    updated: "8m ago",
+    eta: "2h SLA",
+  },
+  {
+    name: "Legal · Vendor onboarding",
+    pending: 4,
+    owners: ["Khalid P.", "Nita R."],
+    updated: "22m ago",
+    eta: "45m",
+    critical: true,
+  },
+  {
+    name: "HR · Global policy",
+    pending: 8,
+    owners: ["D. Ibarra"],
+    updated: "1h ago",
+    eta: "6h",
+  },
+];
+
+const ALERT_FEED: AlertItem[] = [
+  {
+    label: "Payroll queue saturation",
+    detail: "NA payroll connector retrying",
+    severity: "critical",
+    timestamp: "Active now",
+  },
+  {
+    label: "Webhook latency",
+    detail: "Billing events lagging by 2.8m",
+    severity: "warning",
+    timestamp: "12 min ago",
+  },
+  {
+    label: "Policy evidence expiring",
+    detail: "SOC Type II package needs refresh",
+    severity: "info",
+    timestamp: "56 min ago",
+  },
+  {
+    label: "Regional approval reroutes",
+    detail: "EMEA policy toggled to OPS",
+    severity: "warning",
+    timestamp: "1 hr ago",
+  },
+];
+
+const INVOICE_STATUS_STYLES: Record<InvoiceRow["status"], string> = {
+  ready: "bg-emerald-50 text-emerald-600",
+  variance: "bg-amber-50 text-amber-600",
+  hold: "bg-rose-50 text-rose-600",
+};
+
+const INVOICE_STATUS_LABELS: Record<InvoiceRow["status"], string> = {
+  ready: "Ready",
+  variance: "Variance",
+  hold: "On hold",
+};
+
+const ALERT_SEVERITY_STYLES: Record<AlertItem["severity"], { chip: string; icon: string; label: string }> = {
+  critical: {
+    chip: "bg-rose-50 text-rose-600",
+    icon: "bg-rose-100 text-rose-600",
+    label: "Critical",
+  },
+  warning: {
+    chip: "bg-amber-50 text-amber-600",
+    icon: "bg-amber-100 text-amber-600",
+    label: "Warning",
+  },
+  info: {
+    chip: "bg-slate-100 text-slate-500",
+    icon: "bg-slate-200 text-slate-500",
+    label: "Informational",
+  },
+};
 
 const ACTIVITY_TONE_CLASSES: Record<(typeof ACTIVITY_LOG)[number]["tone"], string> = {
   emerald: "bg-emerald-400",
   sky: "bg-sky-400",
   rose: "bg-rose-400",
   slate: "bg-slate-400",
+};
+
+const HEADLINE_MAP: Record<string, string> = {
+  overview: "Overview",
+  crm: "CRM",
+  finance: "Finance",
+  "hr-ops": "HR & Operations",
+  projects: "Projects",
+  "it-support": "IT & Support",
+  "marketing-sales": "Marketing & Sales",
+  workflows: "Workflows",
+  approvals: "Approvals",
+  "automation-rules": "Automation Rules",
+  policies: "Policies",
+  reports: "Reports",
+  dashboards: "Dashboards",
+  "people-access": "People & Access",
+  structure: "Structure",
+  billing: "Billing",
+  integrations: "Integrations",
 };
 
 const KPI_METRICS: KpiMetric[] = [
@@ -237,12 +459,10 @@ const ACTIVITY_LOG = [
   },
 ];
 
-const MODULE_TABS = ["Overview", "Policies", "Automation", "Audit"];
-
 const TIMEFRAME_OPTIONS = ["Last 24 hours", "Last 7 days", "Last 30 days"];
 
 export default function TenantAdminPage() {
-  const [activeNav, setActiveNav] = useState("command-center");
+  const [activeNav, setActiveNav] = useState("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState("Axiom Labs");
   const [selectedRegion, setSelectedRegion] = useState("Global HQ");
@@ -254,18 +474,7 @@ export default function TenantAdminPage() {
   const entityOptions = ["Axiom Labs", "Nova Holdings", "Helix Metals"];
   const regionOptions = ["Global HQ", "Americas", "EMEA", "APAC"];
 
-  const headline = useMemo(() => {
-    switch (activeNav) {
-      case "command-center":
-        return "Operations Command Center";
-      case "live-runs":
-        return "Live automation runs";
-      case "approvals":
-        return "Approval orchestration";
-      default:
-        return "Tenant admin";
-    }
-  }, [activeNav]);
+  const headline = useMemo(() => HEADLINE_MAP[activeNav] ?? "Tenant admin", [activeNav]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -328,6 +537,17 @@ export default function TenantAdminPage() {
                   <p className="text-sm uppercase tracking-[0.2em] text-slate-400">{selectedRegion}</p>
                   <h1 className="text-2xl font-semibold text-slate-900">{headline}</h1>
                   <p className="text-sm text-slate-500">Holistic view into finance + ops health</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                    {loadingTenant && (
+                      <span className="rounded-full bg-slate-900/5 px-3 py-1">Syncing tenant context…</span>
+                    )}
+                    {tenantSlug && !loadingTenant && (
+                      <span className="rounded-full bg-slate-900/5 px-3 py-1">Tenant: {tenantSlug}</span>
+                    )}
+                    {tenantError && (
+                      <span className="rounded-full bg-rose-50 px-3 py-1 text-rose-600">{tenantError}</span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2 text-sm">
                   <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-600 shadow-sm hover:border-slate-300">
@@ -347,12 +567,15 @@ export default function TenantAdminPage() {
               <div className="space-y-10">
                 <KpiGrid metrics={KPI_METRICS} />
 
-                <div className="flex flex-col gap-8 xl:flex-row">
-                  <div className="flex-1 space-y-8">
+                <div className="grid gap-8 xl:grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)]">
+                  <div className="space-y-8">
+                    <InvoiceReviewBoard invoices={INVOICE_QUEUE} />
+                    <DealPipelineBoard deals={DEAL_PIPELINE} />
                     <LiveOperations panels={LIVE_PANELS} />
-                    <ModuleScaffold />
                   </div>
-                  <div className="w-full xl:w-[28rem]">
+                  <div className="space-y-8">
+                    <ApprovalsPanel routes={APPROVAL_ROUTES} />
+                    <AlertStack alerts={ALERT_FEED} />
                     <ActivityStream />
                   </div>
                 </div>
@@ -360,6 +583,190 @@ export default function TenantAdminPage() {
             </section>
           </main>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function InvoiceReviewBoard({ invoices }: { invoices: InvoiceRow[] }) {
+  return (
+    <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm shadow-slate-200/60">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Invoice queue</p>
+          <h2 className="text-xl font-semibold text-slate-900">Ready for sync</h2>
+        </div>
+        <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">
+          <ArrowUpRight className="h-4 w-4" /> Export batch
+        </button>
+      </div>
+      <div className="mt-6 overflow-hidden rounded-2xl border border-slate-100">
+        <div className="grid grid-cols-[1.1fr_1.2fr_0.8fr_0.7fr_0.6fr_1.4fr] bg-slate-50/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <span>Invoice</span>
+          <span>Vendor</span>
+          <span>Amount</span>
+          <span>Channel</span>
+          <span>ETA</span>
+          <span>Status</span>
+        </div>
+        <div>
+          {invoices.map((invoice, index) => (
+            <div
+              key={invoice.id}
+              className={`grid grid-cols-[1.1fr_1.2fr_0.8fr_0.7fr_0.6fr_1.4fr] items-center px-4 py-3 text-sm text-slate-700 ${
+                index !== invoices.length - 1 ? "border-b border-slate-100" : ""
+              }`}
+            >
+              <div className="font-semibold text-slate-900">{invoice.id}</div>
+              <div>{invoice.vendor}</div>
+              <div>{invoice.amount}</div>
+              <div className="text-slate-500">{invoice.channel}</div>
+              <div className="text-slate-500">{invoice.eta}</div>
+              <div className="flex items-center gap-2">
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${INVOICE_STATUS_STYLES[invoice.status]}`}>
+                  {INVOICE_STATUS_LABELS[invoice.status]}
+                </span>
+                <span className="text-xs text-slate-400">{invoice.notes}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DealPipelineBoard({ deals }: { deals: DealOpportunity[] }) {
+  return (
+    <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm shadow-slate-200/60">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Strategic deals</p>
+          <h2 className="text-xl font-semibold text-slate-900">Diligence + sourcing</h2>
+        </div>
+        <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">
+          <Layers3 className="h-4 w-4" /> Configure views
+        </button>
+      </div>
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        {deals.map((deal) => (
+          <div key={deal.name} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{deal.region}</p>
+                <p className="text-lg font-semibold text-slate-900">{deal.name}</p>
+              </div>
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-500">{deal.stage}</span>
+            </div>
+            <div className="mt-3 flex items-center gap-4 text-sm text-slate-600">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Value</p>
+                <p className="text-base font-semibold text-slate-900">{deal.value}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Owner</p>
+                <p>{deal.owner}</p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Probability</p>
+              <div className="mt-2 flex items-center gap-3">
+                <div className="h-2 flex-1 rounded-full bg-slate-200">
+                  <div
+                    className="h-full rounded-full bg-slate-900"
+                    style={{ width: `${deal.probability}%` }}
+                  />
+                </div>
+                <span className="text-sm font-semibold text-slate-900">{deal.probability}%</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ApprovalsPanel({ routes }: { routes: ApprovalRoute[] }) {
+  return (
+    <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm shadow-slate-200/60">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Routing lanes</p>
+          <h2 className="text-xl font-semibold text-slate-900">Approval orchestration</h2>
+        </div>
+        <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">
+          <ClipboardList className="h-4 w-4" /> View runbook
+        </button>
+      </div>
+      <div className="mt-6 space-y-3">
+        {routes.map((route) => (
+          <div
+            key={route.name}
+            className={`rounded-2xl border border-slate-100 px-4 py-3 ${route.critical ? "bg-rose-50/70" : "bg-slate-50/60"}`}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">{route.name}</p>
+                <p className="text-xs text-slate-500">Updated {route.updated}</p>
+              </div>
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+                {route.pending} pending
+              </span>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 font-semibold text-slate-700">
+                {route.owners.join(" · ")}
+              </div>
+              <span className="rounded-full bg-slate-900/5 px-3 py-1">ETA {route.eta}</span>
+              {route.critical && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-1 text-rose-600">
+                  <AlertTriangle className="h-3.5 w-3.5" /> Critical
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AlertStack({ alerts }: { alerts: AlertItem[] }) {
+  return (
+    <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm shadow-slate-200/60">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">System alerts</p>
+          <h2 className="text-xl font-semibold text-slate-900">Risk + compliance</h2>
+        </div>
+        <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">
+          <ShieldCheck className="h-4 w-4" /> Auto-mitigations
+        </button>
+      </div>
+      <div className="mt-6 space-y-3">
+        {alerts.map((alert) => {
+          const severity = ALERT_SEVERITY_STYLES[alert.severity];
+          return (
+            <div key={alert.label} className="rounded-2xl border border-slate-100 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${severity.icon}`}>
+                  <AlertTriangle className="h-4 w-4" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-semibold text-slate-900">{alert.label}</p>
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${severity.chip}`}>
+                      {severity.label}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-500">{alert.detail}</p>
+                  <p className="text-xs text-slate-400">{alert.timestamp}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -686,77 +1093,6 @@ function ActivityStream() {
             </div>
           </Fragment>
         ))}
-      </div>
-    </div>
-  );
-}
-
-function ModuleScaffold() {
-  return (
-    <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm shadow-slate-200/60">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Reusable module shell</p>
-          <h2 className="text-xl font-semibold text-slate-900">Policies · Automation · Audits</h2>
-        </div>
-        <div className="flex gap-2">
-          {MODULE_TABS.map((tab) => (
-            <button
-              key={tab}
-              className={`rounded-full px-4 py-2 text-sm font-semibold ${
-                tab === "Overview"
-                  ? "bg-slate-900 text-white"
-                  : "border border-slate-200 text-slate-600"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Filters</p>
-          <div className="mt-3 space-y-2 text-sm text-slate-600">
-            <p className="flex items-center justify-between">
-              Geography <span className="rounded-full bg-white px-3 py-1">EMEA</span>
-            </p>
-            <p className="flex items-center justify-between">
-              Module <span className="rounded-full bg-white px-3 py-1">Finance</span>
-            </p>
-            <p className="flex items-center justify-between">
-              Persona <span className="rounded-full bg-white px-3 py-1">Ops</span>
-            </p>
-          </div>
-        </div>
-        <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Primary view</p>
-          <div className="mt-3 space-y-2 text-sm text-slate-600">
-            <p className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-500" /> SLA exceptions
-            </p>
-            <p className="flex items-center gap-2">
-              <Users2 className="h-4 w-4 text-slate-500" /> Stakeholders
-            </p>
-            <p className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-emerald-500" /> Automation health
-            </p>
-          </div>
-        </div>
-        <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Actions</p>
-          <div className="mt-3 flex flex-col gap-2">
-            <button className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-600">
-              Launch workflow <ChevronRight className="h-4 w-4" />
-            </button>
-            <button className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-600">
-              Export bundle <ArrowUpRight className="h-4 w-4" />
-            </button>
-            <button className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-600">
-              Share context <Users2 className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
