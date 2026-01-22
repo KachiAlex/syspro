@@ -22,6 +22,8 @@ type CrmCustomerRecordNormalized = {
   tenantSlug: string;
   regionId: string;
   branchId: string;
+  regionName?: string;
+  branchName?: string;
   name: string;
   primaryContact?: {
     name?: string;
@@ -29,6 +31,7 @@ type CrmCustomerRecordNormalized = {
     lastName?: string;
     email?: string;
     phone?: string;
+    owner?: string;
   } | null;
   status?: string | null;
 };
@@ -244,6 +247,24 @@ function formatCurrency(value: number, currency = "₦"): string {
   return `${currency}${value.toLocaleString("en-NG", { maximumFractionDigits: 0 })}`;
 }
 
+function mapCustomerRecordToView(record: CrmCustomerRecordNormalized): CrmCustomerView {
+  const contactName = [record.primaryContact?.firstName, record.primaryContact?.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  return {
+    id: record.id,
+    name: record.name,
+    region: record.regionName ?? "Global",
+    branch: record.branchName ?? "Horizon HQ",
+    owner: record.primaryContact?.owner ?? record.primaryContact?.name ?? "Unassigned",
+    status: record.status ?? "Active",
+    contactName: contactName || record.primaryContact?.name,
+    contactEmail: record.primaryContact?.email,
+    contactPhone: record.primaryContact?.phone,
+  };
+}
+
 function getNextLeadStage(stage: string): string {
   const index = CRM_STAGE_OPTIONS.findIndex((value) => value.toLowerCase() === stage.toLowerCase());
   if (index === -1 || index === CRM_STAGE_OPTIONS.length - 1) {
@@ -294,72 +315,6 @@ function CrmReportsView({ snapshot }: { snapshot: CrmSnapshot }) {
             </div>
           ))}
         </div>
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 shadow-inner">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Opportunities roster</p>
-          <div className="mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm text-slate-600">
-                <thead>
-                  <tr className="bg-slate-50 text-xs uppercase tracking-[0.3em] text-slate-400">
-                    <th className="px-4 py-3">Company</th>
-                    <th className="px-4 py-3">Primary contact</th>
-                    <th className="px-4 py-3">Stage</th>
-                    <th className="px-4 py-3">Owner</th>
-                    <th className="px-4 py-3">Value</th>
-                    <th className="px-4 py-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedLeads.map((deal) => (
-                    <tr key={deal.id} className="border-t border-slate-100">
-                      <td className="px-4 py-3 font-semibold text-slate-900">{deal.company}</td>
-                      <td className="px-4 py-3 text-slate-600">{deal.contact}</td>
-                      <td className="px-4 py-3">
-                        <span className="rounded-full bg-slate-900/5 px-3 py-1 text-xs font-semibold capitalize text-slate-700">
-                          {deal.stage}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">{deal.owner}</td>
-                      <td className="px-4 py-3 font-semibold text-slate-900">{deal.value}</td>
-                      <td className="px-4 py-3">
-                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${CRM_STATUS_META[deal.status].chip}`}>
-                          {CRM_STATUS_META[deal.status].label}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
-              <span>
-                Showing {paginatedLeads.length ? safePage * PAGE_SIZE + 1 : 0} –
-                {Math.min(leads.length, (safePage + 1) * PAGE_SIZE)} of {leads.length} opportunities
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handlePageChange("prev")}
-                  disabled={safePage === 0}
-                  className="rounded-full border border-slate-200 px-3 py-1 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Prev
-                </button>
-                <span className="text-sm font-semibold">
-                  Page {safePage + 1} / {totalPages}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handlePageChange("next")}
-                  disabled={safePage >= totalPages - 1}
-                  className="rounded-full border border-slate-200 px-3 py-1 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]">
@@ -401,54 +356,6 @@ function CrmReportsView({ snapshot }: { snapshot: CrmSnapshot }) {
     </div>
   );
 
-  const handleLeadAdvance = useCallback(
-    async (leadId: string) => {
-      const targetLead = crmSnapshot.leads.find((lead) => lead.id === leadId);
-      if (!targetLead) {
-        return;
-      }
-      const nextStage = getNextLeadStage(targetLead.stage);
-      if (nextStage === targetLead.stage) {
-        setCrmActionToast("Lead already at final stage");
-        return;
-      }
-
-      setCrmSnapshot((previous) => {
-        if (!previous) {
-          return previous;
-        }
-        return {
-          ...previous,
-          leads: previous.leads.map((lead) => (lead.id === leadId ? { ...lead, stage: nextStage } : lead)),
-        };
-      });
-
-      try {
-        const response = await fetch(`/api/crm/leads/${leadId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stage: nextStage }),
-        });
-        if (!response.ok) {
-          throw new Error("Stage update failed");
-        }
-        setCrmActionToast(`Lead advanced to ${nextStage}`);
-      } catch (error) {
-        console.error("Lead stage advance failed", error);
-        setCrmActionToast("Unable to update lead stage");
-        setCrmSnapshot((previous) => {
-          if (!previous) {
-            return previous;
-          }
-          return {
-            ...previous,
-            leads: previous.leads.map((lead) => (lead.id === leadId ? { ...lead, stage: targetLead.stage } : lead)),
-          };
-        });
-      }
-    },
-    [crmSnapshot.leads]
-  );
 }
 
 function CrmCustomersView({
@@ -2292,7 +2199,7 @@ export default function TenantAdminPage() {
             branchId: `${regionId}-branch`,
             companyName: submission.payload.company || "Untitled Co",
             contactName: submission.payload.contact || "Primary contact",
-            stage: (submission.payload.stage || "Qualification") as CrmLeadStage,
+            stage: submission.payload.stage || "Qualification",
             source: submission.type === "contact" ? "website" : "referral",
             owner: submission.payload.owner,
             expectedValue: parseCurrencyValue(submission.payload.value),

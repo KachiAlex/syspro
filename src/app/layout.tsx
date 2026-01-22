@@ -1,17 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { AppShell } from "@/components/layout/app-shell";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const BODY_FONT_STACK = "font-sans antialiased";
 
 export const metadata: Metadata = {
   title: "SYS: Neural Supply Planner",
@@ -26,9 +17,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#05060a] text-white`}
-      >
+      <body className={`${BODY_FONT_STACK} bg-[#05060a] text-white`}>
         <AppShell>{children}</AppShell>
       </body>
     </html>
