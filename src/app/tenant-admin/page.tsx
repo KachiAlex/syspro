@@ -1,5 +1,38 @@
 "use client";
 
+type CrmLeadRecord = {
+  id: string;
+  tenantSlug: string;
+  regionId: string;
+  branchId: string;
+  companyName: string;
+  contactName: string;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  source: string;
+  stage: string;
+  assignedOfficerId?: string | null;
+  expectedValue?: number | null;
+  currency?: string | null;
+  notes?: string | null;
+};
+
+type CrmCustomerRecordNormalized = {
+  id: string;
+  tenantSlug: string;
+  regionId: string;
+  branchId: string;
+  name: string;
+  primaryContact?: {
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+  } | null;
+  status?: string | null;
+};
+
 import {
   Activity,
   AlertTriangle,
@@ -13,16 +46,20 @@ import {
   ChevronDown,
   ChevronRight,
   Command,
+  Download,
   CreditCard,
   Gauge,
+  Loader2,
   GitBranch,
   Handshake,
   Headphones,
-  Layers3,
   KanbanSquare,
+  Layers3,
   LayoutDashboard,
+  Mail,
   Megaphone,
   Menu,
+  PhoneCall,
   PlugZap,
   ScrollText,
   Search,
@@ -35,9 +72,10 @@ import {
   Wallet,
   Workflow,
   Zap,
+  X,
 } from "lucide-react";
-import { Fragment, useEffect, useMemo, useState } from "react";
-import type { ComponentType } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ChangeEvent, ComponentType, FormEvent } from "react";
 
 type NavigationLink = {
   label: string;
@@ -45,6 +83,1313 @@ type NavigationLink = {
   icon: ComponentType<{ className?: string }>;
   badge?: string;
 };
+
+const CRM_METRICS: KpiMetric[] = [
+  { label: "Leads created", value: "42", delta: "+8.2%", trend: "up", description: "vs yesterday" },
+  { label: "Open pipeline", value: "₦18.4M", delta: "+3.1%", trend: "up", description: "17 opps" },
+  { label: "Conversion rate", value: "26%", delta: "-1.2%", trend: "down", description: "Last 30d" },
+  { label: "Follow-ups due", value: "12", delta: "+4", trend: "down", description: "Need touch today" },
+];
+
+const CRM_LEADS: CrmLead[] = [
+  {
+    id: "PIPE-982",
+    company: "Nova Retail",
+    contact: "Sara Bello",
+    stage: "Contracting",
+    owner: "S. Patel",
+    value: "₦4.2M",
+    status: "overdue",
+  },
+  {
+    id: "PIPE-977",
+    company: "Helios Parts",
+    contact: "Marcus Lee",
+    stage: "Diligence",
+    owner: "D. Ibarra",
+    value: "₦2.8M",
+    status: "pending",
+  },
+  {
+    id: "PIPE-971",
+    company: "Bright Innovations",
+    contact: "Joan Adu",
+    stage: "Proposal",
+    owner: "M. Byrne",
+    value: "₦3.1M",
+    status: "pending",
+  },
+  {
+    id: "PIPE-965",
+    company: "Axiom Mobility",
+    contact: "Hassan Okoro",
+    stage: "Won",
+    owner: "L. Gomez",
+    value: "₦6.5M",
+    status: "won",
+  },
+];
+
+const CRM_TASKS: CrmTask[] = [
+  { id: "TASK-01", title: "Send pricing deck to Nova Retail", due: "Today · 2 PM", assignee: "S. Patel", status: "due" },
+  { id: "TASK-02", title: "Schedule EMEA compliance call", due: "Today · 4 PM", assignee: "D. Ibarra", status: "upcoming" },
+  { id: "TASK-03", title: "Log APAC rollout notes", due: "Tomorrow", assignee: "M. Byrne", status: "upcoming" },
+];
+
+const CRM_ENGAGEMENTS: CrmEngagement[] = [
+  {
+    id: "ENG-01",
+    title: "Discovery call completed",
+    detail: "Helios Parts · 45 min",
+    timestamp: "1h ago",
+    channel: "call",
+  },
+  {
+    id: "ENG-02",
+    title: "Proposal emailed",
+    detail: "Nova Retail · Contracting",
+    timestamp: "3h ago",
+    channel: "email",
+  },
+  {
+    id: "ENG-03",
+    title: "Demo scheduled",
+    detail: "Bright Innovations · Tomorrow 10a",
+    timestamp: "Yesterday",
+    channel: "meeting",
+  },
+];
+
+const CRM_STATUS_META: Record<CrmLead["status"], { label: string; chip: string; dot: string }> = {
+  overdue: { label: "Overdue", chip: "bg-rose-50 text-rose-600", dot: "bg-rose-500" },
+  pending: { label: "Pending", chip: "bg-amber-50 text-amber-600", dot: "bg-amber-500" },
+  won: { label: "Won", chip: "bg-emerald-50 text-emerald-600", dot: "bg-emerald-500" },
+};
+
+const CRM_REMINDERS: CrmReminder[] = [
+  { id: "REM-01", label: "Follow up Nova Retail", dueAt: new Date().toISOString(), slaSeconds: 7200 },
+  { id: "REM-02", label: "SLA risk · Tembea Steel", dueAt: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(), slaSeconds: 3600 },
+];
+
+const CRM_CUSTOMERS: CrmCustomerView[] = [
+  {
+    id: "CUST-001",
+    name: "Nova Retail",
+    region: "emea",
+    branch: "lagos",
+    owner: "Sara Bello",
+    status: "Active",
+    contactName: "Sara Bello",
+    contactEmail: "sara@nova.io",
+    contactPhone: "+234 801 555 9988",
+  },
+  {
+    id: "CUST-002",
+    name: "Helios Grid",
+    region: "apac",
+    branch: "nairobi",
+    owner: "Marcus Lee",
+    status: "Onboarding",
+    contactName: "Marcus Lee",
+    contactEmail: "marcus@heliosgrid.com",
+    contactPhone: "+254 701 222 445",
+  },
+  {
+    id: "CUST-003",
+    name: "Tembea Steel",
+    region: "americas",
+    branch: "houston",
+    owner: "Joan Adu",
+    status: "Churn risk",
+    contactName: "Joan Adu",
+    contactEmail: "joan@tembea.steel",
+    contactPhone: "+1 713 555 9000",
+  },
+];
+
+const CRM_CHARTS_BASELINE: CrmChartSnapshot = {
+  funnel: [
+    { stage: "New", value: 120 },
+    { stage: "Qualified", value: 80 },
+    { stage: "Proposal", value: 48 },
+    { stage: "Negotiation", value: 30 },
+    { stage: "Converted", value: 18 },
+  ],
+  revenueByOfficer: [
+    { officer: "Officer 1", value: 120000 },
+    { officer: "Officer 2", value: 86000 },
+    { officer: "Officer 3", value: 54000 },
+  ],
+  lostReasons: [
+    { reason: "Budget", count: 12 },
+    { reason: "Timeline", count: 6 },
+    { reason: "No decision", count: 4 },
+  ],
+};
+
+const CRM_BASELINE_SNAPSHOT: CrmSnapshot = {
+  metrics: CRM_METRICS,
+  leads: CRM_LEADS,
+  tasks: CRM_TASKS,
+  engagements: CRM_ENGAGEMENTS,
+  reminders: CRM_REMINDERS,
+  charts: CRM_CHARTS_BASELINE,
+  customers: CRM_CUSTOMERS,
+};
+
+function formatCurrency(value: number, currency = "₦"): string {
+  if (Number.isNaN(value)) {
+    return `${currency}0`;
+  }
+  return `${currency}${value.toLocaleString("en-NG", { maximumFractionDigits: 0 })}`;
+}
+
+function getNextLeadStage(stage: string): string {
+  const index = CRM_STAGE_OPTIONS.findIndex((value) => value.toLowerCase() === stage.toLowerCase());
+  if (index === -1 || index === CRM_STAGE_OPTIONS.length - 1) {
+    return stage;
+  }
+  return CRM_STAGE_OPTIONS[index + 1];
+}
+
+function mapDealRecordToView(record: CrmDealRecord): CrmLead {
+  return {
+    id: record.id,
+    company: `Deal ${record.id.slice(0, 4)}`,
+    contact: record.assignedOfficerId ?? "Unassigned",
+    stage: record.stage,
+    owner: record.assignedOfficerId ?? "Unassigned",
+    value: formatCurrency(record.value, record.currency ?? "₦"),
+    status: record.status === "closed_won" ? "won" : record.status === "closed_lost" ? "overdue" : "pending",
+  };
+}
+
+function CrmReportsView({ snapshot }: { snapshot: CrmSnapshot }) {
+  return (
+    <div className="space-y-6">
+      <CrmSubViewHero
+        title="Reports & analytics"
+        description="Export-ready CRM analytics covering funnels, revenue, and lost reasons per channel."
+        actionLabel="Export PDF"
+      />
+
+      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Sales funnel</p>
+            <h2 className="text-xl font-semibold text-slate-900">Conversion rate by stage</h2>
+          </div>
+          <button className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">Download CSV</button>
+        </div>
+        <div className="mt-4 space-y-4">
+          {snapshot.charts.funnel.map((stage) => (
+            <div key={stage.stage} className="space-y-1">
+              <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-slate-400">
+                <span>{stage.stage}</span>
+                <span>{stage.value}</span>
+              </div>
+              <div className="h-2 rounded-full bg-slate-100">
+                <div className="h-full rounded-full bg-slate-900" style={{ width: `${Math.min(stage.value, 100)}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 shadow-inner">
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Opportunities roster</p>
+          <div className="mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-sm text-slate-600">
+                <thead>
+                  <tr className="bg-slate-50 text-xs uppercase tracking-[0.3em] text-slate-400">
+                    <th className="px-4 py-3">Company</th>
+                    <th className="px-4 py-3">Primary contact</th>
+                    <th className="px-4 py-3">Stage</th>
+                    <th className="px-4 py-3">Owner</th>
+                    <th className="px-4 py-3">Value</th>
+                    <th className="px-4 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedLeads.map((deal) => (
+                    <tr key={deal.id} className="border-t border-slate-100">
+                      <td className="px-4 py-3 font-semibold text-slate-900">{deal.company}</td>
+                      <td className="px-4 py-3 text-slate-600">{deal.contact}</td>
+                      <td className="px-4 py-3">
+                        <span className="rounded-full bg-slate-900/5 px-3 py-1 text-xs font-semibold capitalize text-slate-700">
+                          {deal.stage}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">{deal.owner}</td>
+                      <td className="px-4 py-3 font-semibold text-slate-900">{deal.value}</td>
+                      <td className="px-4 py-3">
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${CRM_STATUS_META[deal.status].chip}`}>
+                          {CRM_STATUS_META[deal.status].label}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
+              <span>
+                Showing {paginatedLeads.length ? safePage * PAGE_SIZE + 1 : 0} –
+                {Math.min(leads.length, (safePage + 1) * PAGE_SIZE)} of {leads.length} opportunities
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handlePageChange("prev")}
+                  disabled={safePage === 0}
+                  className="rounded-full border border-slate-200 px-3 py-1 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Prev
+                </button>
+                <span className="text-sm font-semibold">
+                  Page {safePage + 1} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handlePageChange("next")}
+                  disabled={safePage >= totalPages - 1}
+                  className="rounded-full border border-slate-200 px-3 py-1 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]">
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Revenue by officer</p>
+              <h2 className="text-xl font-semibold text-slate-900">Contributor breakdown</h2>
+            </div>
+            <button className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">Share dashboard</button>
+          </div>
+          <div className="mt-4 space-y-3">
+            {snapshot.charts.revenueByOfficer.map((row) => (
+              <div key={row.officer} className="flex items-center justify-between text-sm text-slate-600">
+                <span className="font-semibold text-slate-900">{row.officer}</span>
+                <span>{formatCurrency(row.value)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Lost reasons</p>
+              <h2 className="text-xl font-semibold text-slate-900">Churn analysis</h2>
+            </div>
+            <button className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600">Export chart</button>
+          </div>
+          <div className="mt-4 space-y-2">
+            {snapshot.charts.lostReasons.map((reason) => (
+              <div key={reason.reason} className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-400">
+                <span>{reason.reason}</span>
+                <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[0.65rem] text-white">{reason.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const handleLeadAdvance = useCallback(
+    async (leadId: string) => {
+      const targetLead = crmSnapshot.leads.find((lead) => lead.id === leadId);
+      if (!targetLead) {
+        return;
+      }
+      const nextStage = getNextLeadStage(targetLead.stage);
+      if (nextStage === targetLead.stage) {
+        setCrmActionToast("Lead already at final stage");
+        return;
+      }
+
+      setCrmSnapshot((previous) => {
+        if (!previous) {
+          return previous;
+        }
+        return {
+          ...previous,
+          leads: previous.leads.map((lead) => (lead.id === leadId ? { ...lead, stage: nextStage } : lead)),
+        };
+      });
+
+      try {
+        const response = await fetch(`/api/crm/leads/${leadId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stage: nextStage }),
+        });
+        if (!response.ok) {
+          throw new Error("Stage update failed");
+        }
+        setCrmActionToast(`Lead advanced to ${nextStage}`);
+      } catch (error) {
+        console.error("Lead stage advance failed", error);
+        setCrmActionToast("Unable to update lead stage");
+        setCrmSnapshot((previous) => {
+          if (!previous) {
+            return previous;
+          }
+          return {
+            ...previous,
+            leads: previous.leads.map((lead) => (lead.id === leadId ? { ...lead, stage: targetLead.stage } : lead)),
+          };
+        });
+      }
+    },
+    [crmSnapshot.leads]
+  );
+}
+
+function CrmCustomersView({
+  customers,
+  reminders,
+  onAddCustomer,
+  onImportContacts,
+  importing,
+  onExportContacts,
+}: {
+  customers: CrmCustomerView[];
+  reminders: CrmReminder[];
+  onAddCustomer: () => void;
+  onImportContacts: () => void;
+  importing: boolean;
+  onExportContacts: () => void;
+}) {
+  const highlightedCustomers = customers.slice(0, 4);
+
+  return (
+    <div className="space-y-6">
+      <CrmSubViewHero
+        title="Customers & accounts"
+        description="Convert leads into telecom accounts with linked contracts, invoices, and support tickets."
+        actionLabel="Add customer"
+        onAction={onAddCustomer}
+      />
+
+      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Customer roster</p>
+            <h2 className="text-xl font-semibold text-slate-900">Multi-branch coverage</h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">Filter</button>
+            <button
+              type="button"
+              onClick={onImportContacts}
+              disabled={importing}
+              className="inline-flex items-center gap-2 rounded-full border border-dashed border-slate-300 px-4 py-2 text-sm text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Users2 className="h-4 w-4" /> {importing ? "Importing…" : "Import contacts"}
+            </button>
+            <button
+              type="button"
+              onClick={onExportContacts}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700"
+            >
+              <Download className="h-4 w-4" /> Export contacts
+            </button>
+          </div>
+        </div>
+        {customers.length === 0 ? (
+          <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-6 text-sm text-slate-500">
+            No customers yet. Use the "Add customer" action to create your first account profile.
+          </div>
+        ) : (
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            {highlightedCustomers.map((customer) => (
+              <div key={customer.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">{customer.name}</p>
+                    <p className="text-xs text-slate-500">
+                      {customer.region} · {customer.branch}
+                    </p>
+                  </div>
+                  <button className="text-xs font-semibold text-slate-500">Profile →</button>
+                </div>
+                <div className="mt-3 grid gap-2 text-xs text-slate-500">
+                  <span>Account owner · {customer.owner}</span>
+                  {customer.contactName && <span>Primary contact · {customer.contactName}</span>}
+                  {customer.contactPhone && <span>Phone · {customer.contactPhone}</span>}
+                  {customer.contactEmail && <span>Email · {customer.contactEmail}</span>}
+                  <span className="inline-flex items-center gap-2">
+                    Status ·
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-600">
+                      {customer.status}
+                    </span>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.6fr)]">
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Account health</p>
+              <h2 className="text-xl font-semibold text-slate-900">Engagement timeline</h2>
+            </div>
+            <button className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">Sync CRM</button>
+          </div>
+          {customers.length === 0 ? (
+            <div className="mt-4 rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">Customer engagement insights will appear once accounts are created.</div>
+          ) : (
+            <div className="mt-4 space-y-3 text-sm text-slate-600">
+              {customers.slice(0, 3).map((customer) => (
+                <p key={customer.id}>
+                  {customer.name} · Owner {customer.owner} · {customer.status}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-6">
+          <CrmReminderList reminders={reminders} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CrmContactsView({
+  contacts,
+  importing,
+  onImportContacts,
+  onExportContacts,
+  sample,
+  onSampleChange,
+  onSampleSubmit,
+  onSamplePrefill,
+  tagOptions,
+  activeTagFilter,
+  onTagFilterChange,
+  onTagToggle,
+}: {
+  contacts: CrmImportedContact[];
+  importing: boolean;
+  onImportContacts: () => void;
+  onExportContacts: () => void;
+  sample: CrmContactImportSampleState;
+  onSampleChange: (field: keyof CrmContactImportSampleState, value: string) => void;
+  onSampleSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSamplePrefill: () => void;
+  tagOptions: readonly string[];
+  activeTagFilter: string | null;
+  onTagFilterChange: (tag: string | null) => void;
+  onTagToggle: (contactId: string, tag: string) => void;
+}) {
+  const CONTACTS_PER_PAGE = 6;
+  const [pageIndex, setPageIndex] = useState(0);
+  const filteredContacts = activeTagFilter
+    ? contacts.filter((contact) => Array.isArray(contact.tags) && contact.tags.includes(activeTagFilter))
+    : contacts;
+  const hasContacts = filteredContacts.length > 0;
+  const totalPages = Math.max(1, Math.ceil(Math.max(filteredContacts.length, 1) / CONTACTS_PER_PAGE));
+  const safePage = Math.min(pageIndex, totalPages - 1);
+  const displayedContacts = filteredContacts.slice(
+    safePage * CONTACTS_PER_PAGE,
+    safePage * CONTACTS_PER_PAGE + CONTACTS_PER_PAGE
+  );
+
+  useEffect(() => {
+    setPageIndex(0);
+  }, [activeTagFilter, contacts]);
+
+  const handlePageChange = (direction: "prev" | "next") => {
+    setPageIndex((previous) => {
+      if (direction === "prev") {
+        return Math.max(0, previous - 1);
+      }
+      return Math.min(totalPages - 1, previous + 1);
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <CrmSubViewHero
+        title="Contacts"
+        description="Centralize telecom stakeholder contacts with import/export workflows and quick filters."
+        actionLabel="Import contacts"
+        onAction={onImportContacts}
+      />
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,0.55fr)]">
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Imported roster</p>
+              <h2 className="text-xl font-semibold text-slate-900">Contact directory</h2>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={onImportContacts}
+                disabled={importing}
+                className="inline-flex items-center gap-2 rounded-full border border-dashed border-slate-300 px-4 py-2 text-sm text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Users2 className="h-4 w-4" /> {importing ? "Importing…" : "Import CSV"}
+              </button>
+              <button
+                type="button"
+                onClick={onExportContacts}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700"
+              >
+                <Download className="h-4 w-4" /> Export contacts
+              </button>
+            </div>
+          </div>
+
+          {contacts.length > 0 && (
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+              <span className="uppercase tracking-[0.3em] text-slate-400">Filter by tag</span>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => onTagFilterChange(null)}
+                  className={`rounded-full border px-3 py-1 text-[0.7rem] font-semibold ${
+                    activeTagFilter === null ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 text-slate-600"
+                  }`}
+                >
+                  All contacts
+                </button>
+                {tagOptions.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => onTagFilterChange(activeTagFilter === tag ? null : tag)}
+                    className={`rounded-full border px-3 py-1 text-[0.7rem] font-semibold ${
+                      activeTagFilter === tag ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 text-slate-600"
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!hasContacts ? (
+            <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 p-6 text-sm text-slate-500">
+              {activeTagFilter
+                ? "No contacts match the selected tag yet. Try a different filter or import more contacts."
+                : "Upload a CSV to populate the contact roster. Use the sample builder to generate the correct format."}
+            </div>
+          ) : (
+            <div className="mt-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-left text-sm text-slate-600">
+                  <thead>
+                    <tr className="bg-slate-50 text-xs uppercase tracking-[0.3em] text-slate-400">
+                      <th className="px-4 py-3">Company</th>
+                      <th className="px-4 py-3">Contact</th>
+                      <th className="px-4 py-3">Email</th>
+                      <th className="px-4 py-3">Phone</th>
+                      <th className="px-4 py-3">Source</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Imported</th>
+                      <th className="px-4 py-3">Tags</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {displayedContacts.map((contact) => (
+                      <tr key={contact.id} className="border-t border-slate-100">
+                        <td className="px-4 py-3 font-semibold text-slate-900">{contact.company}</td>
+                        <td className="px-4 py-3">{contact.contact}</td>
+                        <td className="px-4 py-3 text-slate-500">{contact.email || "—"}</td>
+                        <td className="px-4 py-3 text-slate-500">{contact.phone || "—"}</td>
+                        <td className="px-4 py-3">{contact.source}</td>
+                        <td className="px-4 py-3">
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            {contact.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-400">{formatRelativeTimestamp(contact.importedAt)}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1.5">
+                            {tagOptions.map((tag) => {
+                              const active = Array.isArray(contact.tags) && contact.tags.includes(tag);
+                              return (
+                                <button
+                                  key={`${contact.id}-${tag}`}
+                                  type="button"
+                                  onClick={() => onTagToggle(contact.id, tag)}
+                                  className={`rounded-full border px-2.5 py-0.5 text-[0.65rem] font-semibold transition ${
+                                    active
+                                      ? "border-slate-900 bg-slate-900 text-white"
+                                      : "border-slate-200 bg-white text-slate-500 hover:border-slate-300"
+                                  }`}
+                                >
+                                  {tag}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
+                <span>
+                  Showing {displayedContacts.length ? safePage * CONTACTS_PER_PAGE + 1 : 0} –
+                  {Math.min(filteredContacts.length, (safePage + 1) * CONTACTS_PER_PAGE)} of {filteredContacts.length} contacts
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange("prev")}
+                    disabled={safePage === 0}
+                    className="rounded-full border border-slate-200 px-3 py-1 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Prev
+                  </button>
+                  <span className="text-sm font-semibold">
+                    Page {safePage + 1} / {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange("next")}
+                    disabled={safePage >= totalPages - 1}
+                    className="rounded-full border border-slate-200 px-3 py-1 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Import template</p>
+              <h2 className="text-lg font-semibold text-slate-900">Sample row builder</h2>
+            </div>
+            <button
+              type="button"
+              className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600"
+              onClick={onSamplePrefill}
+            >
+              Use example values
+            </button>
+          </div>
+          <p className="mt-2 text-sm text-slate-500">Fill this mini-form to generate a CSV row that matches the import format.</p>
+          <form className="mt-4 space-y-3" onSubmit={onSampleSubmit}>
+            <label className="space-y-2 text-sm font-medium text-slate-700">
+              Company
+              <input
+                className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                value={sample.company}
+                onChange={(event) => onSampleChange("company", event.target.value)}
+                placeholder="Nova Retail"
+                required
+              />
+            </label>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                First name
+                <input
+                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                  value={sample.firstName}
+                  onChange={(event) => onSampleChange("firstName", event.target.value)}
+                  placeholder="Sara"
+                  required
+                />
+              </label>
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                Last name
+                <input
+                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                  value={sample.lastName}
+                  onChange={(event) => onSampleChange("lastName", event.target.value)}
+                  placeholder="Bello"
+                  required
+                />
+              </label>
+            </div>
+            <label className="space-y-2 text-sm font-medium text-slate-700">
+              Email
+              <input
+                type="email"
+                className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                value={sample.email}
+                onChange={(event) => onSampleChange("email", event.target.value)}
+                placeholder="sara@nova.io"
+                required
+              />
+            </label>
+            <label className="space-y-2 text-sm font-medium text-slate-700">
+              Phone number
+              <input
+                className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                value={sample.phone}
+                onChange={(event) => onSampleChange("phone", event.target.value)}
+                placeholder="+234 801 555 9988"
+                required
+              />
+            </label>
+            <label className="space-y-2 text-sm font-medium text-slate-700">
+              Tags (comma separated)
+              <input
+                className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                value={sample.tags}
+                onChange={(event) => onSampleChange("tags", event.target.value)}
+                placeholder="Key Account, High Priority"
+              />
+              <span className="text-xs font-normal text-slate-500">
+                Supported tags: {tagOptions.join(", ")}
+              </span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm"
+              >
+                <Download className="h-4 w-4" /> Download sample CSV
+              </button>
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600"
+                onClick={onSamplePrefill}
+              >
+                Prefill fields
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CrmOpportunitiesView({
+  leads,
+  reminders,
+}: {
+  leads: CrmLead[];
+  reminders: CrmReminder[];
+}) {
+  const columns = ["Prospecting", "Qualification", "Proposal", "Negotiation", "Closed"];
+  const PAGE_SIZE = 6;
+  const [pageIndex, setPageIndex] = useState(0);
+  const totalPages = Math.max(1, Math.ceil(Math.max(leads.length, 1) / PAGE_SIZE));
+  const safePage = Math.min(pageIndex, totalPages - 1);
+  const paginatedLeads = leads.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
+
+  useEffect(() => {
+    setPageIndex(0);
+  }, [leads]);
+
+  const handlePageChange = (direction: "prev" | "next") => {
+    setPageIndex((previous) => {
+      if (direction === "prev") {
+        return Math.max(0, previous - 1);
+      }
+      return Math.min(totalPages - 1, previous + 1);
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <CrmSubViewHero
+        title="Deals & opportunities"
+        description="Track telecom programs from sourcing through onboarding with probability weighting."
+        actionLabel="New deal"
+      />
+
+      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Pipeline overview</p>
+            <h2 className="text-xl font-semibold text-slate-900">Multi-stage flow</h2>
+          </div>
+          <button className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">Configure board</button>
+        </div>
+        <div className="mt-6 grid gap-4 lg:grid-cols-5">
+          {columns.map((column, index) => (
+            <div key={column} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+              <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-slate-400">
+                <span>{column}</span>
+                <span>{(index + 1) * 2}</span>
+              </div>
+              <div className="mt-3 space-y-3">
+                {leads.slice(index, index + 2).map((deal) => (
+                  <div key={deal.id} className="rounded-2xl border border-white bg-white p-3 text-sm shadow-sm">
+                    <p className="font-semibold text-slate-900">{deal.company}</p>
+                    <p className="text-xs text-slate-500">Owner · {deal.owner}</p>
+                    <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                      <span>{deal.value}</span>
+                      <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[0.65rem] text-white">{Math.min(90, 40 + index * 10)}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]">
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Forecast</p>
+              <h2 className="text-xl font-semibold text-slate-900">Weighted revenue</h2>
+            </div>
+            <button className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">Export plan</button>
+          </div>
+          <div className="mt-4 space-y-2 text-sm text-slate-600">
+            <div className="flex items-center justify-between">
+              <span>Next 30 days</span>
+              <span>{formatCurrency(420000)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Quarter</span>
+              <span>{formatCurrency(1180000)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Year</span>
+              <span>{formatCurrency(4820000)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <CrmReminderList reminders={reminders} />
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Next actions</p>
+                <h2 className="text-lg font-semibold text-slate-900">Deal motions</h2>
+              </div>
+              <button className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600">View all</button>
+            </div>
+            <div className="mt-4 space-y-3 text-sm text-slate-600">
+              <p>Prep RFP addendum · Nova Retail</p>
+              <p>Schedule on-site review · Helios Parts</p>
+              <p>Align finance guardrails · Tembea Steel</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CrmLeadsView({
+  leads,
+  reminders,
+  onAddContact,
+  onAdvanceStage,
+}: {
+  leads: CrmLead[];
+  reminders: CrmReminder[];
+  onAddContact: () => void;
+  onAdvanceStage: (leadId: string) => void;
+}) {
+  const total = leads.length;
+  const overdue = leads.filter((lead) => lead.status === "overdue").length;
+  const won = leads.filter((lead) => lead.status === "won").length;
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Lead controls</p>
+            <h2 className="text-xl font-semibold text-slate-900">Signal-based routing</h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:border-slate-300" onClick={onAddContact}>
+              <Users className="h-4 w-4" />
+              New lead
+            </button>
+            <button className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:border-slate-300">Assign owner</button>
+            <button className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:border-slate-300">Export CSV</button>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total leads</p>
+            <p className="mt-1 text-2xl font-semibold text-slate-900">{total}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 bg-amber-50/80 p-4">
+            <p className="text-xs uppercase tracking-[0.3em] text-amber-600">SLA risk</p>
+            <p className="mt-1 text-2xl font-semibold text-amber-700">{overdue}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-100 bg-emerald-50/80 p-4">
+            <p className="text-xs uppercase tracking-[0.3em] text-emerald-600">Won this cycle</p>
+            <p className="mt-1 text-2xl font-semibold text-emerald-700">{won}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Lead list</p>
+              <h2 className="text-xl font-semibold text-slate-900">Regional pipeline</h2>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs text-slate-500">
+              <span className="rounded-full bg-slate-100 px-3 py-1">All regions</span>
+              <span className="rounded-full bg-slate-100 px-3 py-1">Any owner</span>
+              <span className="rounded-full bg-slate-100 px-3 py-1">Last 30d</span>
+            </div>
+          </div>
+          <div className="mt-6 overflow-auto">
+            <table className="w-full text-left text-sm text-slate-600">
+              <thead>
+                <tr className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                  <th className="pb-2">Lead</th>
+                  <th className="pb-2">Contact</th>
+                  <th className="pb-2">Stage</th>
+                  <th className="pb-2">Owner</th>
+                  <th className="pb-2">Value</th>
+                  <th className="pb-2">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leads.map((lead) => (
+                  <tr key={lead.id} className="border-t border-slate-100">
+                    <td className="py-3">
+                      <p className="font-semibold text-slate-900">{lead.company}</p>
+                      <p className="text-xs text-slate-400">{lead.id}</p>
+                    </td>
+                    <td>{lead.contact}</td>
+                    <td>{lead.stage}</td>
+                    <td>{lead.owner}</td>
+                    <td>{lead.value}</td>
+                    <td className="space-x-2">
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${CRM_STATUS_META[lead.status].chip}`}>
+                        {CRM_STATUS_META[lead.status].label}
+                      </span>
+                      <button
+                        className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:border-slate-300"
+                        onClick={() => onAdvanceStage(lead.id)}
+                      >
+                        Advance
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <CrmReminderList reminders={reminders} />
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Signals</p>
+                <h2 className="text-lg font-semibold text-slate-900">Lead notes</h2>
+              </div>
+              <button className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600">Add note</button>
+            </div>
+            <div className="mt-4 space-y-3 text-sm text-slate-600">
+              <p>CopperNet · awaiting CFO review.</p>
+              <p>Nova Retail · asked for SLA evidence pack.</p>
+              <p>Helix Grid · flagged for multi-region support.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const CRM_CUSTOMER_STATUS_OPTIONS = ["Active", "Onboarding", "Churn risk", "Dormant"] as const;
+
+function CrmSubViewHero({ title, description, actionLabel, onAction }: { title: string; description: string; actionLabel: string; onAction?: () => void }) {
+  return (
+    <div className="rounded-3xl border border-slate-100 bg-gradient-to-r from-slate-900 to-slate-700 p-6 text-white shadow-lg">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-white/60">CRM workspace</p>
+          <h2 className="text-2xl font-semibold">{title}</h2>
+          <p className="mt-2 text-sm text-white/80">{description}</p>
+        </div>
+        <button
+          className="rounded-full bg-white/10 px-5 py-2 text-sm font-semibold text-white backdrop-blur hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={onAction}
+          disabled={!onAction}
+          type="button"
+        >
+          {actionLabel}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CrmPlaceholderCard({ title, detail }: { title: string; detail: string }) {
+  return (
+    <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+      <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{title}</p>
+      <p className="mt-2 text-sm text-slate-600">{detail}</p>
+    </div>
+  );
+}
+
+function CrmChartCard({
+  title,
+  subtitle,
+  children,
+  currentView,
+  onViewChange,
+}: {
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  currentView?: CrmView;
+  onViewChange?: (view: CrmView) => void;
+}) {
+  return (
+    <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{subtitle}</p>
+          <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
+        </div>
+      </div>
+
+      {onViewChange && currentView ? (
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="rounded-full bg-white/70 p-1 shadow-sm">
+            {CRM_VIEWS.map((view) => (
+              <button
+                key={view}
+                type="button"
+                onClick={() => onViewChange(view)}
+                className={`px-4 py-2 text-sm font-semibold capitalize ${
+                  currentView === view ? "rounded-full bg-slate-900 text-white" : "text-slate-600"
+                }`}
+              >
+                {view}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Multi-region telecom CRM</p>
+        </div>
+      ) : (
+        <div className="mt-4 text-xs uppercase tracking-[0.2em] text-slate-400">Multi-region telecom CRM</div>
+      )}
+      <div className="mt-4">{children}</div>
+    </div>
+  );
+}
+
+function CrmReminderList({ reminders }: { reminders: CrmReminder[] }) {
+  if (reminders.length === 0) {
+    return null;
+  }
+  return (
+    <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Follow-ups</p>
+          <h2 className="text-xl font-semibold text-slate-900">Reminders</h2>
+        </div>
+        <span className="text-xs font-semibold text-slate-500">{reminders.length} open</span>
+      </div>
+      <div className="mt-4 space-y-3">
+        {reminders.map((reminder) => (
+          <div key={reminder.id} className="flex items-center justify-between rounded-2xl border border-slate-100 px-4 py-3">
+            <div>
+              <p className="font-semibold text-slate-900">{reminder.label}</p>
+              <p className="text-xs text-slate-500">Due {reminder.dueAt}</p>
+            </div>
+            {reminder.slaSeconds && (
+              <span className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600">
+                SLA {Math.round(reminder.slaSeconds / 3600)}h
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function formatTimestamp(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function formatRelativeTimestamp(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  const diffMs = Date.now() - date.getTime();
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  if (diffMs < minute) {
+    return "Just now";
+  }
+  if (diffMs < hour) {
+    const minutes = Math.floor(diffMs / minute);
+    return `${minutes} min${minutes === 1 ? "" : "s"} ago`;
+  }
+  if (diffMs < day) {
+    const hours = Math.floor(diffMs / hour);
+    return `${hours} hr${hours === 1 ? "" : "s"} ago`;
+  }
+  const days = Math.floor(diffMs / day);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+function parseCurrencyValue(input?: string): number | undefined {
+  if (!input) {
+    return undefined;
+  }
+  const numeric = Number(input.replace(/[^0-9.]/g, ""));
+  return Number.isFinite(numeric) ? numeric : undefined;
+}
+
+function downloadCsvFile(rows: Array<Array<string | number | null | undefined>>, filename: string): void {
+  const csvContent = rows
+    .map((row) => row.map((cell) => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(","))
+    .join("\r\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function regionToId(region?: string): string {
+  return region ? region.toLowerCase().replace(/\s+/g, "-") : "global-hq";
+}
+
+function mapLeadRecordToView(record: CrmLeadRecord): CrmLead {
+  return {
+    id: record.id,
+    company: record.companyName,
+    contact: record.contactName,
+    stage: record.stage,
+    owner: record.assignedOfficerId ?? "Unassigned",
+    value: formatCurrency(record.expectedValue ?? 0, record.currency ?? "₦"),
+    status: "pending",
+  };
+}
+
+async function fetchCrmSnapshot(tenantSlug: string | null, timeframe: string, region?: string): Promise<CrmSnapshot> {
+  const params = new URLSearchParams({ tenantSlug: tenantSlug ?? "kreatix-default" });
+  if (region && region !== "Global HQ") {
+    params.set("regionId", region.toLowerCase().replace(/\s+/g, "-"));
+  }
+  params.set("timeframe", timeframe);
+
+  const response = await fetch(`/api/crm/dashboard?${params.toString()}`, { cache: "no-store" });
+  if (!response.ok) {
+    const errorPayload = await response.json().catch(() => ({}));
+    throw new Error(errorPayload?.error ?? "CRM dashboard request failed");
+  }
+  const data = await response.json();
+  const payload = data.payload as {
+    metrics: Array<{ label: string; value: number; delta?: number; deltaDirection?: "up" | "down"; description?: string }>;
+    totals: { totalLeads: number; qualifiedLeads: number; opportunities: number; dealsWon: number; dealsLost: number; revenue: number; conversionRate: number };
+    charts: { salesFunnel: Array<{ stage: string; value: number }>; lostReasons: Array<{ reason: string; count: number }>; revenueByOfficer: Array<{ officerId: string; officerName: string; value: number }> };
+    leads: Array<{ id: string; companyName: string; contactName: string; stage: string; ownerName: string; value: number; currency: string; status: "overdue" | "pending" | "won" }>;
+    reminders: Array<{ id: string; label: string; dueAt: string; slaSeconds?: number }>;
+    tasks: Array<{ id: string; title: string; due: string; assignee: string; status: "due" | "upcoming" }>;
+    engagements: Array<{ id: string; title: string; detail: string; timestamp: string; channel: "email" | "sms" | "call" | "meeting" | "whatsapp" }>;
+    customers: Array<{ id: string; name: string; regionId: string; branchId: string; status: string; primaryContact: { name: string; email: string; phone: string } }>;
+  };
+
+  let customersFromApi: CrmCustomerView[] = [];
+  let customersLoaded = false;
+  try {
+    const customerParams = new URLSearchParams({ tenantSlug: tenantSlug ?? "kreatix-default", limit: "20" });
+    if (region && region !== "Global HQ") {
+      customerParams.set("regionId", region.toLowerCase().replace(/\s+/g, "-"));
+    }
+    const customersResponse = await fetch(`/api/crm/customers?${customerParams.toString()}`, { cache: "no-store" });
+    if (customersResponse.ok) {
+      const customersPayload = await customersResponse.json().catch(() => null);
+      if (customersPayload?.customers) {
+        customersFromApi = (customersPayload.customers as CrmCustomerRecordNormalized[]).map((customer) => mapCustomerRecordToView(customer));
+        customersLoaded = true;
+      }
+    }
+  } catch (error) {
+    console.error("CRM customers fetch failed", error);
+  }
+
+  return {
+    metrics: payload.metrics.map((metric) => ({
+      label: metric.label,
+      value: metric.value.toLocaleString(),
+      delta: metric.delta !== undefined ? `${metric.delta.toFixed(1)}%` : "0%",
+      trend: metric.deltaDirection ?? "up",
+      description: metric.description ?? timeframe,
+    })),
+    leads: payload.leads.map((lead) => ({
+      id: lead.id,
+      company: lead.companyName,
+      contact: lead.contactName,
+      stage: lead.stage,
+      owner: lead.ownerName,
+      value: formatCurrency(lead.value, lead.currency ?? "₦"),
+      status: lead.status,
+    })),
+    tasks: payload.tasks.map((task) => ({
+      id: task.id,
+      title: task.title,
+      due: formatTimestamp(task.due),
+      assignee: task.assignee,
+      status: task.status,
+    })),
+    engagements: payload.engagements.map((engagement) => ({
+      id: engagement.id,
+      title: engagement.title,
+      detail: engagement.detail,
+      timestamp: formatTimestamp(engagement.timestamp),
+      channel: engagement.channel === "sms" ? "call" : engagement.channel === "whatsapp" ? "call" : (engagement.channel as CrmEngagement["channel"]),
+    })),
+    reminders: payload.reminders.map((reminder) => ({
+      id: reminder.id,
+      label: reminder.label,
+      dueAt: formatTimestamp(reminder.dueAt),
+      slaSeconds: reminder.slaSeconds,
+    })),
+    charts: {
+      funnel: payload.charts.salesFunnel,
+      revenueByOfficer: payload.charts.revenueByOfficer.map((row) => ({ officer: row.officerName, value: row.value })),
+      lostReasons: payload.charts.lostReasons,
+    },
+    customers: customersLoaded ? customersFromApi : CRM_BASELINE_SNAPSHOT.customers,
+  };
+}
 
 type NavigationSection = {
   label: string;
@@ -101,6 +1446,251 @@ type AlertItem = {
   severity: "critical" | "warning" | "info";
   timestamp: string;
 };
+
+type CrmLead = {
+  id: string;
+  company: string;
+  contact: string;
+  stage: string;
+  owner: string;
+  value: string;
+  status: "overdue" | "pending" | "won";
+};
+
+type CrmEngagement = {
+  id: string;
+  title: string;
+  detail: string;
+  timestamp: string;
+  channel: "email" | "call" | "meeting";
+};
+
+type CrmTask = {
+  id: string;
+  title: string;
+  due: string;
+  assignee: string;
+  status: "due" | "upcoming";
+};
+
+type CrmReminder = {
+  id: string;
+  label: string;
+  dueAt: string;
+  slaSeconds?: number;
+};
+
+type CrmChartSnapshot = {
+  funnel: Array<{ stage: string; value: number }>;
+  revenueByOfficer: Array<{ officer: string; value: number }>;
+  lostReasons: Array<{ reason: string; count: number }>;
+};
+
+type CrmCustomerView = {
+  id: string;
+  name: string;
+  region: string;
+  branch: string;
+  owner: string;
+  status: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+};
+
+type CrmSnapshot = {
+  metrics: KpiMetric[];
+  leads: CrmLead[];
+  tasks: CrmTask[];
+  engagements: CrmEngagement[];
+  reminders: CrmReminder[];
+  charts: CrmChartSnapshot;
+  customers: CrmCustomerView[];
+};
+
+type CrmActionType = "contact" | "opportunity" | "engagement" | "customer";
+
+type CrmDealFormState = {
+  company: string;
+  contact: string;
+  owner: string;
+  stage: string;
+  value: string;
+  linkedContactId: string | null;
+  description: string;
+};
+
+type CrmEngagementFormState = {
+  title: string;
+  detail: string;
+  channel: CrmEngagement["channel"];
+};
+
+type CrmCustomerFormState = {
+  name: string;
+  contactFirstName: string;
+  contactLastName: string;
+  contactEmail: string;
+  contactPhone: string;
+  status: string;
+};
+
+type CrmContactImportSampleState = {
+  company: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  tags: string;
+};
+
+type CrmImportedContact = {
+  id: string;
+  company: string;
+  contact: string;
+  email: string;
+  phone: string;
+  source: string;
+  status: string;
+  importedAt: string;
+  tags: string[];
+};
+
+type CrmDealRecord = {
+  id: string;
+  tenantSlug: string;
+  customerId?: string | null;
+  leadId?: string | null;
+  stage: string;
+  value: number;
+  currency: string;
+  probability?: number | null;
+  assignedOfficerId?: string | null;
+  status: string;
+};
+
+type CrmActionSubmission =
+  | {
+      type: "contact";
+      payload: CrmDealFormState;
+    }
+  | {
+      type: "opportunity";
+      payload: CrmDealFormState;
+    }
+  | {
+      type: "engagement";
+      payload: CrmEngagementFormState;
+    }
+  | {
+      type: "customer";
+      payload: CrmCustomerFormState;
+    };
+
+const CRM_STAGE_OPTIONS = ["Qualification", "Proposal", "Negotiation", "Contracting", "Won"];
+const CRM_PIPELINE_OPTIONS = ["prospecting", "qualification", "proposal", "negotiation", "closed_won", "closed_lost"] as const;
+const CRM_CHANNEL_OPTIONS: CrmEngagement["channel"][] = ["email", "call", "meeting"];
+const CRM_CONTACT_TAG_OPTIONS = ["Key Account", "Prospect", "Partner", "Support", "Renewal", "High Priority"] as const;
+const CRM_VIEWS = ["contacts", "opportunities", "customers", "reports", "dashboard"] as const;
+const CRM_VIEW_LABELS: Record<CrmView, string> = {
+  contacts: "Contacts",
+  opportunities: "Opportunities",
+  customers: "Customers",
+  reports: "Reports",
+  dashboard: "Insights",
+};
+type CrmView = (typeof CRM_VIEWS)[number];
+
+function generateLeadId() {
+  return `PIPE-${Math.floor(100 + Math.random() * 900)}`;
+}
+
+function generateEngagementId() {
+  return `ENG-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+}
+
+function generateImportedContactId() {
+  return `IMPCON-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+}
+
+function parseImportedContactsCsv(text: string): CrmImportedContact[] {
+  const rows = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const headerCells = rows[0]
+    .split(",")
+    .map((cell) => cell.replace(/^"|"$/g, "").trim().toLowerCase());
+  const hasHeader = headerCells.some((cell) => cell.includes("company") || cell.includes("first") || cell.includes("email"));
+  const dataRows = hasHeader ? rows.slice(1) : rows;
+
+  return dataRows
+    .map((row) => {
+      const cells = row.split(",").map((cell) => cell.replace(/^"|"$/g, "").trim());
+      if (cells.length === 0) {
+        return null;
+      }
+
+      const [company, firstName, lastName, email, phone, source, status, rawTags] = cells;
+      const contactName = [firstName, lastName].filter(Boolean).join(" ").trim();
+      const tags = (rawTags ?? "")
+        .split(/[,;|]/)
+        .map((value) => value.replace(/^#/, "").trim())
+        .filter(Boolean);
+
+      return {
+        id: generateImportedContactId(),
+        company: company || "Unnamed company",
+        contact: contactName || email || phone || "Unnamed contact",
+        email: email || "",
+        phone: phone || "",
+        source: source || "CSV import",
+        status: status || "New",
+        importedAt: new Date().toISOString(),
+        tags,
+      } satisfies CrmImportedContact;
+    })
+    .filter((contact): contact is CrmImportedContact => Boolean(contact));
+}
+
+const defaultDealForm = (): CrmDealFormState => ({
+  company: "",
+  contact: "",
+  owner: "",
+  stage: CRM_STAGE_OPTIONS[0],
+  value: "₦0",
+  linkedContactId: null,
+  description: "",
+});
+
+const defaultEngagementForm = (): CrmEngagementFormState => ({
+  title: "",
+  detail: "",
+  channel: "email",
+});
+
+const defaultCustomerForm = (): CrmCustomerFormState => ({
+  name: "",
+  contactFirstName: "",
+  contactLastName: "",
+  contactEmail: "",
+  contactPhone: "",
+  status: "Active",
+});
+
+const defaultContactImportSample = (): CrmContactImportSampleState => ({
+  company: "",
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  tags: "",
+});
 
 const NAVIGATION: NavigationSection[] = [
   {
@@ -470,11 +2060,327 @@ export default function TenantAdminPage() {
   const [tenantSlug, setTenantSlug] = useState<string | null>(null);
   const [loadingTenant, setLoadingTenant] = useState(false);
   const [tenantError, setTenantError] = useState<string | null>(null);
+  const [crmSnapshot, setCrmSnapshot] = useState<CrmSnapshot>(CRM_BASELINE_SNAPSHOT);
+  const [crmLoading, setCrmLoading] = useState(false);
+  const [crmError, setCrmError] = useState<string | null>(null);
+  const [crmRequestVersion, setCrmRequestVersion] = useState(0);
+  const [crmActionType, setCrmActionType] = useState<CrmActionType | null>(null);
+  const [crmActionToast, setCrmActionToast] = useState<string | null>(null);
+  const [crmView, setCrmView] = useState<CrmView>("dashboard");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isImportingContacts, setIsImportingContacts] = useState(false);
+  const [contactImportSample, setContactImportSample] = useState<CrmContactImportSampleState>(defaultContactImportSample());
+  const [importedContacts, setImportedContacts] = useState<CrmImportedContact[]>([]);
+  const [contactTagFilter, setContactTagFilter] = useState<string | null>(null);
 
   const entityOptions = ["Axiom Labs", "Nova Holdings", "Helix Metals"];
   const regionOptions = ["Global HQ", "Americas", "EMEA", "APAC"];
 
   const headline = useMemo(() => HEADLINE_MAP[activeNav] ?? "Tenant admin", [activeNav]);
+  const kpiMetrics = useMemo(() => (activeNav === "crm" ? crmSnapshot.metrics : KPI_METRICS), [activeNav, crmSnapshot.metrics]);
+
+  const handleCrmRetry = useCallback(() => {
+    setCrmRequestVersion((prev) => prev + 1);
+  }, []);
+
+  const handleImportContacts = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleImportFileChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) {
+        return;
+      }
+      setIsImportingContacts(true);
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const text = reader.result as string;
+          const parsedContacts = parseImportedContactsCsv(text);
+          if (parsedContacts.length === 0) {
+            setCrmActionToast("Contact file empty");
+          } else {
+            const normalizedContacts = parsedContacts.map((contact) => ({
+              ...contact,
+              tags: Array.isArray(contact.tags) ? contact.tags : [],
+            }));
+            setImportedContacts((previous) => [
+              ...normalizedContacts,
+              ...previous.map((contact) => ({ ...contact, tags: Array.isArray(contact.tags) ? contact.tags : [] })),
+            ]);
+            setCrmActionToast(`Imported ${parsedContacts.length} contacts from ${file.name}`);
+            setCrmView("contacts");
+          }
+        } catch (error) {
+          console.error("Contact import failed", error);
+          setCrmActionToast("Import failed");
+        } finally {
+          setIsImportingContacts(false);
+          event.target.value = "";
+        }
+      };
+      reader.onerror = () => {
+        console.error("Contact import read error", reader.error);
+        setCrmActionToast("Import failed");
+        setIsImportingContacts(false);
+        event.target.value = "";
+      };
+      reader.readAsText(file);
+    },
+    [setCrmView]
+  );
+
+  const handleContactSampleChange = useCallback((field: keyof CrmContactImportSampleState, value: string) => {
+    setContactImportSample((previous) => ({ ...previous, [field]: value }));
+  }, []);
+
+  const handleContactSamplePrefill = useCallback(() => {
+    setContactImportSample({
+      company: "Nova Retail",
+      firstName: "Sara",
+      lastName: "Bello",
+      email: "sara@nova.io",
+      phone: "+234 801 555 9988",
+      tags: "Key Account, High Priority",
+    });
+  }, []);
+
+  const handleContactSampleSubmit = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const header = ["Company", "First Name", "Last Name", "Email", "Phone", "Tags"];
+      const row = [
+        contactImportSample.company,
+        contactImportSample.firstName,
+        contactImportSample.lastName,
+        contactImportSample.email,
+        contactImportSample.phone,
+        contactImportSample.tags,
+      ];
+      downloadCsvFile([header, row], `crm-contact-sample-${Date.now()}.csv`);
+      setCrmActionToast("Sample CSV downloaded");
+    },
+    [contactImportSample]
+  );
+
+  const handleExportContacts = useCallback(() => {
+    if (!crmSnapshot.customers?.length) {
+      setCrmActionToast("No contacts to export yet");
+      return;
+    }
+    const header = ["Customer", "Region", "Branch", "Contact", "Email", "Phone", "Status"];
+    const rows = crmSnapshot.customers.map((customer) => [
+      customer.name,
+      customer.region,
+      customer.branch,
+      customer.contactName ?? customer.owner,
+      customer.contactEmail ?? "",
+      customer.contactPhone ?? "",
+      customer.status,
+    ]);
+    downloadCsvFile([header, ...rows], `crm-contacts-${Date.now()}.csv`);
+    setCrmActionToast("Contacts exported");
+  }, [crmSnapshot.customers]);
+
+  const handleContactTagToggle = useCallback((contactId: string, tag: string) => {
+    setImportedContacts((previous) =>
+      previous.map((contact) => {
+        if (contact.id !== contactId) {
+          return { ...contact, tags: Array.isArray(contact.tags) ? contact.tags : [] };
+        }
+        const currentTags = Array.isArray(contact.tags) ? contact.tags : [];
+        const hasTag = currentTags.includes(tag);
+        const nextTags = hasTag ? currentTags.filter((value) => value !== tag) : [...currentTags, tag];
+        return { ...contact, tags: nextTags };
+      })
+    );
+  }, []);
+
+  const handleContactTagFilterChange = useCallback((tag: string | null) => {
+    setContactTagFilter(tag);
+  }, []);
+
+  const handleCrmActionSubmit = useCallback(
+    async (submission: CrmActionSubmission) => {
+      if (submission.type === "customer") {
+        const regionId = regionToId(selectedRegion);
+        const branchId = `${regionId}-branch`;
+        const optimisticId = `temp-${Date.now()}`;
+        const ownerName = `${submission.payload.contactFirstName} ${submission.payload.contactLastName}`.trim();
+        const optimisticCustomer: CrmCustomerView = {
+          id: optimisticId,
+          name: submission.payload.name,
+          region: regionId,
+          branch: branchId,
+          owner: ownerName,
+          status: submission.payload.status,
+          contactName: ownerName,
+          contactEmail: submission.payload.contactEmail,
+          contactPhone: submission.payload.contactPhone,
+        };
+        let rollbackCustomers: CrmCustomerView[] | null = null;
+        setCrmSnapshot((previous) => {
+          if (!previous) {
+            return previous;
+          }
+          rollbackCustomers = previous.customers;
+          return {
+            ...previous,
+            customers: [optimisticCustomer, ...previous.customers],
+          };
+        });
+        try {
+          const payload = {
+            tenantSlug: tenantSlug ?? "kreatix-default",
+            regionId,
+            branchId,
+            name: submission.payload.name,
+            contactFirstName: submission.payload.contactFirstName,
+            contactLastName: submission.payload.contactLastName,
+            contactEmail: submission.payload.contactEmail,
+            contactPhone: submission.payload.contactPhone,
+            status: submission.payload.status,
+          };
+          const response = await fetch("/api/crm/customers", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(data?.error ?? "Customer creation failed");
+          }
+          const createdCustomer = mapCustomerRecordToView(data.customer as CrmCustomerRecordNormalized);
+          setCrmSnapshot((previous) => {
+            if (!previous) {
+              return previous;
+            }
+            return {
+              ...previous,
+              customers: previous.customers.map((customer) => (customer.id === optimisticId ? createdCustomer : customer)),
+            };
+          });
+          setCrmActionToast("Customer added");
+        } catch (error) {
+          console.error("Customer create failed", error);
+          if (rollbackCustomers) {
+            setCrmSnapshot((previous) => {
+              if (!previous) {
+                return previous;
+              }
+              return {
+                ...previous,
+                customers: rollbackCustomers as CrmCustomerView[],
+              };
+            });
+          }
+          setCrmActionToast("Unable to save customer");
+        } finally {
+          setCrmActionType(null);
+        }
+        return;
+      }
+
+      if (submission.type === "contact" || submission.type === "opportunity") {
+        try {
+          const regionId = regionToId(selectedRegion);
+          const payload = {
+            tenantSlug: tenantSlug ?? "kreatix-default",
+            regionId,
+            branchId: `${regionId}-branch`,
+            companyName: submission.payload.company || "Untitled Co",
+            contactName: submission.payload.contact || "Primary contact",
+            stage: (submission.payload.stage || "Qualification") as CrmLeadStage,
+            source: submission.type === "contact" ? "website" : "referral",
+            owner: submission.payload.owner,
+            expectedValue: parseCurrencyValue(submission.payload.value),
+            currency: "₦",
+          };
+
+          const response = await fetch("/api/crm/leads", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(data?.error ?? "Lead creation failed");
+          }
+
+          const createdLead = mapLeadRecordToView(data.lead as CrmLeadRecord);
+          setCrmSnapshot((previous) => {
+            if (!previous) {
+              return previous;
+            }
+            return {
+              ...previous,
+              leads: [createdLead, ...previous.leads],
+            };
+          });
+
+          if (submission.type === "opportunity") {
+            const dealResponse = await fetch("/api/crm/deals", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                tenantSlug: payload.tenantSlug,
+                leadId: createdLead.id,
+                stage: "prospecting",
+                value: payload.expectedValue ?? 0,
+                currency: payload.currency,
+                probability: 40,
+                assignedOfficerId: submission.payload.owner,
+              }),
+            });
+            const dealData = await dealResponse.json().catch(() => ({}));
+            if (!dealResponse.ok) {
+              throw new Error(dealData?.error ?? "Deal creation failed");
+            }
+            const createdDeal = mapDealRecordToView(dealData.deal as CrmDealRecord);
+            setCrmSnapshot((previous) => {
+              if (!previous) {
+                return previous;
+              }
+              return {
+                ...previous,
+                leads: [createdDeal, ...previous.leads],
+              };
+            });
+          }
+
+          setCrmActionToast(submission.type === "contact" ? "Contact added" : "Opportunity registered");
+        } catch (error) {
+          console.error("Lead create failed", error);
+          setCrmActionToast("Unable to save lead");
+        } finally {
+          setCrmActionType(null);
+        }
+        return;
+      }
+
+      setCrmSnapshot((previous) => {
+        if (!previous) {
+          return previous;
+        }
+        const newEngagement: CrmEngagement = {
+          id: generateEngagementId(),
+          title: submission.payload.title || "Logged touchpoint",
+          detail: submission.payload.detail || "Details captured",
+          timestamp: "Just now",
+          channel: submission.payload.channel,
+        };
+        return {
+          ...previous,
+          engagements: [newEngagement, ...previous.engagements].slice(0, Math.max(previous.engagements.length, 5)),
+        };
+      });
+      setCrmActionType(null);
+      setCrmActionToast("Engagement logged");
+    },
+    [selectedRegion, tenantSlug]
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -505,6 +2411,46 @@ export default function TenantAdminPage() {
 
     fetchTenantContext(slug);
   }, []);
+
+  useEffect(() => {
+    if (activeNav !== "crm") {
+      return;
+    }
+
+    let cancelled = false;
+    setCrmLoading(true);
+    setCrmError(null);
+
+    fetchCrmSnapshot(tenantSlug, selectedTimeframe, selectedRegion)
+      .then((snapshot) => {
+        if (!cancelled) {
+          setCrmSnapshot(snapshot);
+        }
+      })
+      .catch((error) => {
+        console.error("CRM snapshot fetch failed", error);
+        if (!cancelled) {
+          setCrmError(error instanceof Error ? error.message : "Unable to load CRM data");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setCrmLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeNav, tenantSlug, selectedTimeframe, selectedRegion, crmRequestVersion]);
+
+  useEffect(() => {
+    if (!crmActionToast) {
+      return;
+    }
+    const timeout = window.setTimeout(() => setCrmActionToast(null), 2200);
+    return () => window.clearTimeout(timeout);
+  }, [crmActionToast]);
 
   return (
     <div className="min-h-screen bg-[#e9eef5] text-slate-900">
@@ -547,6 +2493,9 @@ export default function TenantAdminPage() {
                     {tenantError && (
                       <span className="rounded-full bg-rose-50 px-3 py-1 text-rose-600">{tenantError}</span>
                     )}
+                    {crmActionToast && (
+                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-600">{crmActionToast}</span>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 text-sm">
@@ -565,24 +2514,847 @@ export default function TenantAdminPage() {
 
             <section className="flex-1 overflow-y-auto px-8 py-10">
               <div className="space-y-10">
-                <KpiGrid metrics={KPI_METRICS} />
+                <KpiGrid metrics={kpiMetrics} />
 
-                <div className="grid gap-8 xl:grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)]">
-                  <div className="space-y-8">
-                    <InvoiceReviewBoard invoices={INVOICE_QUEUE} />
-                    <DealPipelineBoard deals={DEAL_PIPELINE} />
-                    <LiveOperations panels={LIVE_PANELS} />
+                {activeNav === "crm" ? (
+                  <CrmDashboard
+                    snapshot={crmSnapshot}
+                    loading={crmLoading}
+                    error={crmError}
+                    onRetry={handleCrmRetry}
+                    onAddContact={() => setCrmActionType("contact")}
+                    onRegisterOpportunity={() => setCrmActionType("opportunity")}
+                    onLogEngagement={() => setCrmActionType("engagement")}
+                    onAddCustomer={() => setCrmActionType("customer")}
+                    onImportContacts={handleImportContacts}
+                    onExportContacts={handleExportContacts}
+                    contactSample={contactImportSample}
+                    onSampleChange={handleContactSampleChange}
+                    onSampleSubmit={handleContactSampleSubmit}
+                    onSamplePrefill={handleContactSamplePrefill}
+                    importingContacts={isImportingContacts}
+                    currentView={crmView}
+                    onViewChange={setCrmView}
+                    contacts={importedContacts}
+                    tagOptions={CRM_CONTACT_TAG_OPTIONS}
+                    activeTagFilter={contactTagFilter}
+                    onTagFilterChange={handleContactTagFilterChange}
+                    onTagToggle={handleContactTagToggle}
+                  />
+                ) : (
+                  <div className="grid gap-8 xl:grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)]">
+                    <div className="space-y-8">
+                      <InvoiceReviewBoard invoices={INVOICE_QUEUE} />
+                      <DealPipelineBoard deals={DEAL_PIPELINE} />
+                      <LiveOperations panels={LIVE_PANELS} />
+                    </div>
+                    <div className="space-y-8">
+                      <ApprovalsPanel routes={APPROVAL_ROUTES} />
+                      <AlertStack alerts={ALERT_FEED} />
+                      <ActivityStream />
+                    </div>
                   </div>
-                  <div className="space-y-8">
-                    <ApprovalsPanel routes={APPROVAL_ROUTES} />
-                    <AlertStack alerts={ALERT_FEED} />
-                    <ActivityStream />
-                  </div>
-                </div>
+                )}
               </div>
             </section>
           </main>
         </div>
+      </div>
+      {crmActionType && (
+        <CrmActionModal
+          type={crmActionType}
+          onClose={() => setCrmActionType(null)}
+          onSubmit={handleCrmActionSubmit}
+          contacts={importedContacts}
+          tagOptions={CRM_CONTACT_TAG_OPTIONS}
+        />
+      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,.xlsx,.xls"
+        className="hidden"
+        onChange={handleImportFileChange}
+      />
+    </div>
+  );
+}
+
+function CrmDashboard({
+  snapshot,
+  loading,
+  error,
+  onRetry,
+  onAddContact,
+  onRegisterOpportunity,
+  onLogEngagement,
+  onAddCustomer,
+  onImportContacts,
+  onExportContacts,
+  contactSample,
+  onSampleChange,
+  onSampleSubmit,
+  onSamplePrefill,
+  importingContacts,
+  currentView,
+  onViewChange,
+  contacts,
+  tagOptions,
+  activeTagFilter,
+  onTagFilterChange,
+  onTagToggle,
+}: {
+  snapshot: CrmSnapshot;
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
+  onAddContact: () => void;
+  onRegisterOpportunity: () => void;
+  onLogEngagement: () => void;
+  onAddCustomer: () => void;
+  onImportContacts: () => void;
+  onExportContacts: () => void;
+  contactSample: CrmContactImportSampleState;
+  onSampleChange: (field: keyof CrmContactImportSampleState, value: string) => void;
+  onSampleSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSamplePrefill: () => void;
+  importingContacts: boolean;
+  currentView: CrmView;
+  onViewChange: (view: CrmView) => void;
+  contacts: CrmImportedContact[];
+  tagOptions: readonly string[];
+  activeTagFilter: string | null;
+  onTagFilterChange: (tag: string | null) => void;
+  onTagToggle: (contactId: string, tag: string) => void;
+}) {
+  const viewSwitcher = (
+    <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">CRM workspaces</p>
+          <p className="text-sm text-slate-500">Choose which customer motion to focus on</p>
+        </div>
+        <div className="rounded-full bg-white/70 p-1 shadow-sm">
+          {CRM_VIEWS.map((view) => (
+            <button
+              key={view}
+              type="button"
+              onClick={() => onViewChange(view)}
+              className={`px-4 py-2 text-sm font-semibold capitalize ${
+                currentView === view ? "rounded-full bg-slate-900 text-white" : "text-slate-600"
+              }`}
+            >
+              {CRM_VIEW_LABELS[view]}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (currentView === "contacts") {
+    return (
+      <div className="space-y-8">
+        {viewSwitcher}
+        <CrmContactsView
+          contacts={contacts}
+          importing={importingContacts}
+          onImportContacts={onImportContacts}
+          onExportContacts={onExportContacts}
+          sample={contactSample}
+          onSampleChange={onSampleChange}
+          onSampleSubmit={onSampleSubmit}
+          onSamplePrefill={onSamplePrefill}
+          tagOptions={tagOptions}
+          activeTagFilter={activeTagFilter}
+          onTagFilterChange={onTagFilterChange}
+          onTagToggle={onTagToggle}
+        />
+      </div>
+    );
+  }
+
+  if (currentView === "opportunities") {
+    return (
+      <div className="space-y-8">
+        {viewSwitcher}
+        <CrmOpportunitiesView leads={snapshot.leads} reminders={snapshot.reminders} />
+      </div>
+    );
+  }
+
+  if (currentView === "customers") {
+    return (
+      <div className="space-y-8">
+        {viewSwitcher}
+        <CrmCustomersView
+          customers={snapshot.customers}
+          reminders={snapshot.reminders}
+          onAddCustomer={onAddCustomer}
+          onImportContacts={onImportContacts}
+          importing={importingContacts}
+          onExportContacts={onExportContacts}
+        />
+      </div>
+    );
+  }
+
+  if (currentView === "reports") {
+    return (
+      <div className="space-y-8">
+        {viewSwitcher}
+        <CrmReportsView snapshot={snapshot} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      {viewSwitcher}
+
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Quick actions</p>
+          <p className="text-sm text-slate-500">Capture CRM updates without leaving the dashboard</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onAddContact}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:border-slate-300"
+          >
+            <Users className="h-4 w-4" />
+            Add contact
+          </button>
+          <button
+            type="button"
+            onClick={onRegisterOpportunity}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:border-slate-300"
+          >
+            <Handshake className="h-4 w-4" />
+            Register opportunity
+          </button>
+          <button
+            type="button"
+            onClick={onLogEngagement}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:border-slate-300"
+          >
+            <PhoneCall className="h-4 w-4" />
+            Log engagement
+          </button>
+          <button
+            type="button"
+            onClick={onImportContacts}
+            disabled={importingContacts}
+            className="inline-flex items-center gap-2 rounded-full border border-dashed border-slate-300 px-4 py-2 text-sm text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Users2 className="h-4 w-4" />
+            {importingContacts ? "Importing…" : "Import contacts"}
+          </button>
+        </div>
+      </div>
+
+      {(loading || error) && (
+        <div className="space-y-3">
+          {loading && (
+            <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+              <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+              Syncing CRM snapshot…
+            </div>
+          )}
+          {error && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              <span>{error}</span>
+              <button
+                type="button"
+                onClick={onRetry}
+                className="rounded-full border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700 hover:border-rose-300"
+              >
+                Retry sync
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+        <CrmChartCard title="Sales funnel" subtitle="Stage distribution">
+          <div className="space-y-3">
+            {snapshot.charts.funnel.map((stage) => (
+              <div key={stage.stage} className="space-y-1">
+                <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-400">
+                  <span>{stage.stage}</span>
+                  <span>{stage.value}</span>
+                </div>
+                <div className="h-2 rounded-full bg-slate-100">
+                  <div className="h-full rounded-full bg-slate-900" style={{ width: `${Math.min(stage.value, 100)}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CrmChartCard>
+
+        <div className="space-y-4">
+          <CrmChartCard title="Revenue by officer" subtitle="Top performers">
+            <div className="space-y-3">
+              {snapshot.charts.revenueByOfficer.map((row) => (
+                <div key={row.officer} className="flex items-center justify-between text-sm text-slate-600">
+                  <span className="font-semibold text-slate-900">{row.officer}</span>
+                  <span>{formatCurrency(row.value)}</span>
+                </div>
+              ))}
+            </div>
+          </CrmChartCard>
+
+          <CrmChartCard title="Lost reasons" subtitle="Last 30 days">
+            <div className="space-y-2">
+              {snapshot.charts.lostReasons.map((reason) => (
+                <div key={reason.reason} className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-400">
+                  <span>{reason.reason}</span>
+                  <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[0.65rem] text-white">{reason.count}</span>
+                </div>
+              ))}
+            </div>
+          </CrmChartCard>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-4">
+        {snapshot.metrics.map((metric) => (
+          <div key={metric.label} className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{metric.label}</p>
+            <div className="mt-2 flex items-end justify-between">
+              <p className="text-2xl font-semibold text-slate-900">{metric.value}</p>
+              <span
+                className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${
+                  metric.trend === "up" ? "text-emerald-600" : "text-rose-600"
+                }`}
+              >
+                {metric.delta}
+                {metric.trend === "up" ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500">{metric.description}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Pipeline</p>
+              <h2 className="text-xl font-semibold text-slate-900">Leads in motion</h2>
+            </div>
+            <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">
+              <ArrowUpRight className="h-4 w-4" /> Export leads
+            </button>
+          </div>
+          <div className="mt-6 overflow-hidden rounded-2xl border border-slate-100">
+            <div className="grid grid-cols-[0.9fr_1fr_1fr_0.8fr_0.8fr_0.8fr] bg-slate-50/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              <span>ID</span>
+              <span>Company</span>
+              <span>Contact</span>
+              <span>Stage</span>
+              <span>Owner</span>
+              <span>Status</span>
+            </div>
+            <div>
+              {snapshot.leads.map((lead, index) => (
+                <div
+                  key={lead.id}
+                  className={`grid grid-cols-[0.9fr_1fr_1fr_0.8fr_0.8fr_0.8fr] items-center px-4 py-3 text-sm text-slate-700 ${
+                    index !== snapshot.leads.length - 1 ? "border-b border-slate-100" : ""
+                  }`}
+                >
+                  <p className="font-semibold text-slate-900">{lead.id}</p>
+                  <p>{lead.company}</p>
+                  <p className="text-slate-500">{lead.contact}</p>
+                  <p>{lead.stage}</p>
+                  <p>{lead.owner}</p>
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full ${CRM_STATUS_META[lead.status].dot}`} aria-hidden />
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${CRM_STATUS_META[lead.status].chip}`}>
+                      {CRM_STATUS_META[lead.status].label}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <CrmReminderList reminders={snapshot.reminders} />
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Action queue</p>
+                <h2 className="text-xl font-semibold text-slate-900">Rep follow-ups</h2>
+              </div>
+              <button className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600">View all</button>
+            </div>
+            <div className="mt-4 space-y-3">
+              {snapshot.tasks.map((task) => (
+                <div key={task.id} className="rounded-2xl border border-slate-100 px-4 py-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <div>
+                      <p className="font-semibold text-slate-900">{task.title}</p>
+                      <p className="text-xs text-slate-500">{task.assignee}</p>
+                    </div>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                        task.status === "due" ? "bg-rose-50 text-rose-600" : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {task.due}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Engagements</p>
+                <h2 className="text-xl font-semibold text-slate-900">Latest touches</h2>
+              </div>
+              <button className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600">See log</button>
+            </div>
+            <div className="mt-4 space-y-3">
+              {snapshot.engagements.map((engagement) => (
+                <div key={engagement.id} className="flex items-center gap-3 rounded-2xl border border-slate-100 px-4 py-3">
+                  <div
+                    className={`flex h-9 w-9 items-center justify-center rounded-2xl ${
+                      engagement.channel === "call"
+                        ? "bg-sky-50 text-sky-600"
+                        : engagement.channel === "email"
+                          ? "bg-emerald-50 text-emerald-600"
+                          : "bg-amber-50 text-amber-600"
+                    }`}
+                  >
+                    {engagement.channel === "call" && <PhoneCall className="h-4 w-4" />}
+                    {engagement.channel === "email" && <Mail className="h-4 w-4" />}
+                    {engagement.channel === "meeting" && <Users className="h-4 w-4" />}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-slate-900">{engagement.title}</p>
+                    <p className="text-sm text-slate-500">{engagement.detail}</p>
+                    <p className="text-xs text-slate-400">{engagement.timestamp}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CrmActionModal({
+  type,
+  onClose,
+  onSubmit,
+  contacts,
+  tagOptions,
+}: {
+  type: CrmActionType;
+  onClose: () => void;
+  onSubmit: (submission: CrmActionSubmission) => void;
+  contacts: CrmImportedContact[];
+  tagOptions: readonly string[];
+}) {
+  const [dealForm, setDealForm] = useState<CrmDealFormState>(() => defaultDealForm());
+  const [engagementForm, setEngagementForm] = useState<CrmEngagementFormState>(() => defaultEngagementForm());
+  const [customerForm, setCustomerForm] = useState<CrmCustomerFormState>(() => defaultCustomerForm());
+  const [contactSearch, setContactSearch] = useState("");
+  const [contactTagFilter, setContactTagFilter] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (type === "engagement") {
+      setEngagementForm(defaultEngagementForm());
+    } else if (type === "customer") {
+      setCustomerForm(defaultCustomerForm());
+    } else {
+      setDealForm(defaultDealForm());
+    }
+    setContactSearch("");
+    setContactTagFilter(null);
+  }, [type]);
+
+  const linkedContact = dealForm.linkedContactId
+    ? contacts.find((contact) => contact.id === dealForm.linkedContactId) ?? null
+    : null;
+
+  const contactMatches = useMemo(() => {
+    const query = contactSearch.trim().toLowerCase();
+    return contacts
+      .filter((contact) => {
+        const tags = Array.isArray(contact.tags) ? contact.tags : [];
+        if (contactTagFilter && !tags.includes(contactTagFilter)) {
+          return false;
+        }
+        if (!query) {
+          return true;
+        }
+        const haystack = `${contact.company} ${contact.contact} ${contact.email} ${contact.phone} ${tags.join(" ")}`.toLowerCase();
+        return haystack.includes(query);
+      })
+      .slice(0, 5);
+  }, [contacts, contactSearch, contactTagFilter]);
+
+  const handleLinkContact = useCallback((contact: CrmImportedContact) => {
+    setDealForm((previous) => ({
+      ...previous,
+      company: contact.company || previous.company,
+      contact: contact.contact || previous.contact,
+      linkedContactId: contact.id,
+    }));
+  }, []);
+
+  const handleClearLinkedContact = useCallback(() => {
+    setDealForm((previous) => ({ ...previous, linkedContactId: null }));
+  }, []);
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (type === "engagement") {
+      onSubmit({ type, payload: engagementForm });
+      return;
+    }
+    if (type === "customer") {
+      onSubmit({ type, payload: customerForm });
+      return;
+    }
+    onSubmit({ type, payload: dealForm });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4" onClick={onClose}>
+      <div
+        className="w-full max-w-md rounded-3xl border border-slate-100 bg-white p-6 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">CRM action</p>
+            <h2 className="text-xl font-semibold text-slate-900">
+              {type === "contact" && "Add contact"}
+              {type === "opportunity" && "Register opportunity"}
+              {type === "engagement" && "Log engagement"}
+              {type === "customer" && "Add customer"}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-slate-200 p-2 text-slate-500 hover:text-slate-900"
+            aria-label="Close CRM action modal"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+          {type === "engagement" ? (
+            <>
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                Title
+                <input
+                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                  value={engagementForm.title}
+                  onChange={(event) => setEngagementForm((prev) => ({ ...prev, title: event.target.value }))}
+                  placeholder="Proposal emailed"
+                  required
+                />
+              </label>
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                Detail
+                <textarea
+                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                  value={engagementForm.detail}
+                  onChange={(event) => setEngagementForm((prev) => ({ ...prev, detail: event.target.value }))}
+                  placeholder="Nova Retail · Contracting phase"
+                  rows={4}
+                  required
+                />
+              </label>
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                Channel
+                <select
+                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                  value={engagementForm.channel}
+                  onChange={(event) =>
+                    setEngagementForm((prev) => ({ ...prev, channel: event.target.value as CrmEngagement["channel"] }))
+                  }
+                >
+                  {CRM_CHANNEL_OPTIONS.map((channel) => (
+                    <option key={channel}>{channel}</option>
+                  ))}
+                </select>
+              </label>
+            </>
+          ) : type === "customer" ? (
+            <>
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                Customer name
+                <input
+                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                  value={customerForm.name}
+                  onChange={(event) => setCustomerForm((prev) => ({ ...prev, name: event.target.value }))}
+                  placeholder="Ex: Nova Telecom"
+                  required
+                />
+              </label>
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="space-y-2 text-sm font-medium text-slate-700">
+                  Contact first name
+                  <input
+                    className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                    value={customerForm.contactFirstName}
+                    onChange={(event) => setCustomerForm((prev) => ({ ...prev, contactFirstName: event.target.value }))}
+                    placeholder="Sara"
+                    required
+                  />
+                </label>
+                <label className="space-y-2 text-sm font-medium text-slate-700">
+                  Contact last name
+                  <input
+                    className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                    value={customerForm.contactLastName}
+                    onChange={(event) => setCustomerForm((prev) => ({ ...prev, contactLastName: event.target.value }))}
+                    placeholder="Bello"
+                    required
+                  />
+                </label>
+              </div>
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                Contact email
+                <input
+                  type="email"
+                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                  value={customerForm.contactEmail}
+                  onChange={(event) => setCustomerForm((prev) => ({ ...prev, contactEmail: event.target.value }))}
+                  placeholder="sara@nova.io"
+                  required
+                />
+              </label>
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                Contact phone
+                <input
+                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                  value={customerForm.contactPhone}
+                  onChange={(event) => setCustomerForm((prev) => ({ ...prev, contactPhone: event.target.value }))}
+                  placeholder="+234 801 555 9988"
+                  required
+                />
+              </label>
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                Status
+                <select
+                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                  value={customerForm.status}
+                  onChange={(event) => setCustomerForm((prev) => ({ ...prev, status: event.target.value }))}
+                >
+                  {CRM_CUSTOMER_STATUS_OPTIONS.map((status) => (
+                    <option key={status}>{status}</option>
+                  ))}
+                </select>
+              </label>
+            </>
+          ) : (
+            <>
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                Company
+                <input
+                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                  value={dealForm.company}
+                  onChange={(event) => setDealForm((prev) => ({ ...prev, company: event.target.value }))}
+                  placeholder="Helios Parts"
+                  required
+                />
+              </label>
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                Primary contact
+                <input
+                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                  value={dealForm.contact}
+                  onChange={(event) => setDealForm((prev) => ({ ...prev, contact: event.target.value }))}
+                  placeholder="Sara Bello"
+                  required
+                />
+              </label>
+              {type === "opportunity" && (
+                <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Link existing contact</p>
+                      <p className="text-sm text-slate-500">Search by name, company, or tag</p>
+                    </div>
+                    {linkedContact && (
+                      <button
+                        type="button"
+                        onClick={handleClearLinkedContact}
+                        className="text-xs font-semibold text-rose-500"
+                      >
+                        Clear link
+                      </button>
+                    )}
+                  </div>
+                  {linkedContact ? (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+                      <p className="text-sm font-semibold text-slate-900">{linkedContact.contact}</p>
+                      <p>{linkedContact.company}</p>
+                      <p className="text-xs text-slate-500">{linkedContact.email || linkedContact.phone || "No contact info"}</p>
+                      {linkedContact.tags && linkedContact.tags.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {linkedContact.tags.map((tag) => (
+                            <span key={tag} className="rounded-full bg-slate-900/5 px-2 py-0.5 text-[0.65rem] font-semibold text-slate-600">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : contacts.length === 0 ? (
+                    <p className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-3 text-xs text-slate-500">
+                      Import contacts to enable quick linking.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      <input
+                        className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-slate-400 focus:outline-none"
+                        placeholder="Search contacts by name or company"
+                        value={contactSearch}
+                        onChange={(event) => setContactSearch(event.target.value)}
+                      />
+                      <div className="flex flex-wrap gap-1 text-[0.65rem]">
+                        <button
+                          type="button"
+                          onClick={() => setContactTagFilter(null)}
+                          className={`rounded-full border px-3 py-1 font-semibold ${
+                            contactTagFilter === null
+                              ? "border-slate-900 bg-slate-900 text-white"
+                              : "border-slate-200 text-slate-600"
+                          }`}
+                        >
+                          All tags
+                        </button>
+                        {tagOptions.map((tag) => (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => setContactTagFilter(contactTagFilter === tag ? null : tag)}
+                            className={`rounded-full border px-3 py-1 font-semibold ${
+                              contactTagFilter === tag
+                                ? "border-slate-900 bg-slate-900 text-white"
+                                : "border-slate-200 text-slate-600"
+                            }`}
+                          >
+                            {tag}
+                          </button>
+                        ))}
+                      </div>
+                      {contactMatches.length === 0 ? (
+                        <p className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-3 text-xs text-slate-500">
+                          No contacts match those filters yet.
+                        </p>
+                      ) : (
+                        <ul className="space-y-2 text-sm">
+                          {contactMatches.map((contact) => (
+                            <li key={contact.id}>
+                              <button
+                                type="button"
+                                onClick={() => handleLinkContact(contact)}
+                                className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-left text-slate-700 hover:border-slate-300"
+                              >
+                                <p className="font-semibold text-slate-900">{contact.contact}</p>
+                                <p className="text-xs text-slate-500">{contact.company}</p>
+                                {contact.tags && contact.tags.length > 0 && (
+                                  <div className="mt-1 flex flex-wrap gap-1">
+                                    {contact.tags.slice(0, 3).map((tag) => (
+                                      <span
+                                        key={`${contact.id}-${tag}`}
+                                        className="rounded-full bg-slate-900/5 px-2 py-0.5 text-[0.6rem] font-semibold text-slate-600"
+                                      >
+                                        {tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="space-y-2 text-sm font-medium text-slate-700">
+                  Owner
+                  <input
+                    className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                    value={dealForm.owner}
+                    onChange={(event) => setDealForm((prev) => ({ ...prev, owner: event.target.value }))}
+                    placeholder="D. Ibarra"
+                  />
+                </label>
+                <label className="space-y-2 text-sm font-medium text-slate-700">
+                  Stage
+                  <select
+                    className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                    value={dealForm.stage}
+                    onChange={(event) => setDealForm((prev) => ({ ...prev, stage: event.target.value }))}
+                  >
+                    {CRM_STAGE_OPTIONS.map((stage) => (
+                      <option key={stage}>{stage}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <label className="space-y-2 text-sm font-medium text-slate-700">
+                Deal value
+                <input
+                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                  value={dealForm.value}
+                  onChange={(event) => setDealForm((prev) => ({ ...prev, value: event.target.value }))}
+                  placeholder="₦2.4M"
+                />
+              </label>
+              {type === "opportunity" && (
+                <label className="space-y-2 text-sm font-medium text-slate-700">
+                  Deal description
+                  <textarea
+                    className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 focus:border-slate-400 focus:outline-none"
+                    value={dealForm.description}
+                    onChange={(event) => setDealForm((prev) => ({ ...prev, description: event.target.value }))}
+                    placeholder="Summarize the opportunity scope"
+                    rows={3}
+                  />
+                </label>
+              )}
+            </>
+          )}
+          <div className="flex flex-wrap justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:border-slate-300"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+            >
+              Save entry
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
