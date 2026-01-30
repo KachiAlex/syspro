@@ -13,6 +13,17 @@ const SQL = getSql();
 
 type SqlClient = ReturnType<typeof getSql>;
 
+function serializeTextArray(values?: string[] | null): string {
+  if (!values || values.length === 0) {
+    return "{}";
+  }
+  const escaped = values.map((value) => {
+    const safe = value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    return `"${safe}"`;
+  });
+  return `{${escaped.join(",")}}`;
+}
+
 export async function ensureCrmTables(sql: SqlClient = SQL) {
   await sql`
     create table if not exists crm_leads (
@@ -183,6 +194,7 @@ export async function insertContact(row: {
   const sql = SQL;
   await ensureCrmTables(sql);
   const id = randomUUID();
+  const tagsLiteral = serializeTextArray(row.tags);
   const inserted = (await sql`
     insert into crm_contacts (
       id,
@@ -204,7 +216,7 @@ export async function insertContact(row: {
       ${row.contactPhone ?? null},
       ${row.source ?? "CSV import"},
       ${row.status ?? "New"},
-      ${sql.array(row.tags ?? [], "text")},
+      ${tagsLiteral}::text[],
       ${row.importedAt ?? null}
     )
     returning *
@@ -223,15 +235,29 @@ export async function insertContacts(rows: Array<Parameters<typeof insertContact
 export async function listContacts(filters: { tenantSlug: string; tag?: string | null; limit?: number; offset?: number }) {
   const sql = SQL;
   await ensureCrmTables(sql);
-  const rows = (await sql`
+  const limit = Math.min(Math.max(filters.limit ?? 50, 1), 100);
+  const offset = Math.max(filters.offset ?? 0, 0);
+  const tagFilter = filters.tag?.trim() || null;
+
+  const params: Array<string | number> = [filters.tenantSlug];
+  let query = `
     select *
     from crm_contacts
-    where tenant_slug = ${filters.tenantSlug}
-    ${filters.tag ? sql`and ${filters.tag} = any(tags)` : sql``}
+    where tenant_slug = $1
+  `;
+
+  if (tagFilter) {
+    params.push(tagFilter);
+    query += ` and array_position(coalesce(tags, array[]::text[]), $${params.length}) is not null`;
+  }
+
+  query += `
     order by imported_at desc nulls last, created_at desc
-    ${filters.limit ? sql`limit ${filters.limit}` : sql`limit 50`}
-    ${filters.offset ? sql`offset ${filters.offset}` : sql``}
-  `) as CrmContactRecord[];
+    limit ${limit}
+    offset ${offset}
+  `;
+
+  const rows = (await sql(query, params)) as CrmContactRecord[];
   return rows.map(normalizeContactRow);
 }
 
@@ -241,6 +267,7 @@ export async function updateContact(
 ) {
   const sql = SQL;
   await ensureCrmTables(sql);
+  const tagsLiteral = updates.tags ? serializeTextArray(updates.tags) : null;
   if (
     updates.status === undefined &&
     updates.tags === undefined &&
@@ -255,7 +282,7 @@ export async function updateContact(
     update crm_contacts
     set
       status = coalesce(${updates.status ?? null}, status),
-      tags = coalesce(${updates.tags ? sql.array(updates.tags, "text") : null}, tags),
+      tags = coalesce(${tagsLiteral ? sql`${tagsLiteral}::text[]` : null}, tags),
       contact_email = coalesce(${updates.contactEmail ?? null}, contact_email),
       contact_phone = coalesce(${updates.contactPhone ?? null}, contact_phone),
       updated_at = now()
