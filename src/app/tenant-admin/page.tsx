@@ -39,30 +39,38 @@ type CrmCustomerRecordNormalized = {
 import {
   Activity,
   AlertTriangle,
+  Banknote,
   ArrowUpRight,
   BarChart3,
   Bell,
   Bot,
+  Building2,
   ClipboardList,
   CalendarClock,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
   Command,
+  DollarSign,
   Download,
   CreditCard,
+  FileSpreadsheet,
   Gauge,
   Loader2,
   GitBranch,
+  LineChart,
   Handshake,
   Headphones,
   KanbanSquare,
+  PieChart,
   Layers3,
   LayoutDashboard,
   Mail,
+  Receipt,
   Megaphone,
   Menu,
   PhoneCall,
+  PiggyBank,
   PlugZap,
   ScrollText,
   Search,
@@ -240,11 +248,161 @@ const CRM_BASELINE_SNAPSHOT: CrmSnapshot = {
   customers: CRM_CUSTOMERS,
 };
 
+const FINANCE_TREND_BASELINE: FinanceTrendSnapshot = {
+  labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  revenue: [42, 48, 51, 47, 55, 39, 36],
+  expenses: [31, 33, 36, 34, 37, 29, 28],
+};
+
+const FINANCE_RECEIVABLES_BASELINE: FinanceScheduleItem[] = [
+  { id: "RCV-2048", entity: "Nova Retail", amount: "₦48.2M", dueDate: "Due in 2d", status: "due_soon", branch: "EMEA" },
+  { id: "RCV-2052", entity: "Helix Grid", amount: "₦32.7M", dueDate: "Today", status: "current", branch: "APAC" },
+  { id: "RCV-2054", entity: "Tembea Steel", amount: "₦64.3M", dueDate: "3d overdue", status: "overdue", branch: "Americas" },
+  { id: "RCV-2058", entity: "Verdant FMCG", amount: "₦21.9M", dueDate: "Due in 5d", status: "current", branch: "EMEA" },
+];
+
+const FINANCE_PAYABLES_BASELINE: FinanceScheduleItem[] = [
+  { id: "PYB-8811", entity: "Apex Suppliers", amount: "₦38.6M", dueDate: "Runs tonight", status: "current", branch: "Global" },
+  { id: "PYB-8818", entity: "Atlas Metals", amount: "₦19.4M", dueDate: "Due in 1d", status: "due_soon", branch: "EMEA" },
+  { id: "PYB-8820", entity: "Lagos Assembly", amount: "₦54.8M", dueDate: "5d overdue", status: "overdue", branch: "Nigeria" },
+  { id: "PYB-8824", entity: "Carbon Freight", amount: "₦27.2M", dueDate: "Due in 4d", status: "current", branch: "APAC" },
+];
+
+const FINANCE_CASH_ACCOUNTS_BASELINE: FinanceCashAccount[] = [
+  {
+    id: "ACC-01",
+    name: "Zenith Treasury",
+    type: "bank",
+    balance: "₦312.4M",
+    currency: "₦",
+    trend: "up",
+    change: "+₦8.2M vs last week",
+    region: "Global",
+  },
+  {
+    id: "ACC-02",
+    name: "Ecobank Ops",
+    type: "bank",
+    balance: "₦148.0M",
+    currency: "₦",
+    trend: "down",
+    change: "-₦3.6M vs last week",
+    region: "EMEA",
+  },
+  {
+    id: "ACC-03",
+    name: "Cash-in-Transit",
+    type: "cash",
+    balance: "₦42.6M",
+    currency: "₦",
+    trend: "up",
+    change: "+₦1.4M vs last week",
+    region: "APAC",
+  },
+];
+
+const FINANCE_EXPENSE_BREAKDOWN_BASELINE: FinanceExpenseBreakdown[] = [
+  { label: "Cloud infrastructure", amount: "₦48.2M", delta: "+6.4%", direction: "up" },
+  { label: "Logistics + freight", amount: "₦34.6M", delta: "-2.1%", direction: "down" },
+  { label: "Payroll", amount: "₦128.9M", delta: "+1.2%", direction: "up" },
+  { label: "Vendors & services", amount: "₦26.4M", delta: "-3.8%", direction: "down" },
+];
+
+const FINANCE_BASELINE_SNAPSHOT: FinanceSnapshot = {
+  metrics: [
+    { label: "Monthly revenue", value: "₦812M", delta: "+4.2%", trend: "up", description: "vs prior period" },
+    { label: "OpEx burn", value: "₦534M", delta: "-1.9%", trend: "down", description: "track to budget" },
+    { label: "Days sales outstanding", value: "42 days", delta: "-3", trend: "up", description: "collections velocity" },
+    { label: "Cash runway", value: "13.4 mo", delta: "+0.3", trend: "up", description: "multi-entity" },
+  ],
+  trend: FINANCE_TREND_BASELINE,
+  receivables: FINANCE_RECEIVABLES_BASELINE,
+  payables: FINANCE_PAYABLES_BASELINE,
+  cashAccounts: FINANCE_CASH_ACCOUNTS_BASELINE,
+  expenseBreakdown: FINANCE_EXPENSE_BREAKDOWN_BASELINE,
+};
+
+const FINANCE_SCHEDULE_STATUS_META: Record<FinanceScheduleItem["status"], { label: string; chip: string }> = {
+  current: { label: "Current", chip: "bg-emerald-50 text-emerald-600" },
+  due_soon: { label: "Due soon", chip: "bg-amber-50 text-amber-600" },
+  overdue: { label: "Overdue", chip: "bg-rose-50 text-rose-600" },
+};
+
+function normalizeFinanceScheduleStatus(value: unknown): FinanceScheduleItem["status"] {
+  if (value === "due_soon" || value === "overdue" || value === "current") {
+    return value;
+  }
+  return "current";
+}
+
+function mapFinanceSnapshotPayload(payload: unknown): FinanceSnapshot {
+  const baseline = FINANCE_BASELINE_SNAPSHOT;
+  if (payload && typeof payload === "object") {
+    const snapshot = (payload as { snapshot?: FinanceSnapshot }).snapshot ?? (payload as FinanceSnapshot | undefined);
+    if (
+      snapshot &&
+      Array.isArray(snapshot.metrics) &&
+      snapshot.trend &&
+      Array.isArray(snapshot.receivables) &&
+      Array.isArray(snapshot.payables) &&
+      Array.isArray(snapshot.cashAccounts) &&
+      Array.isArray(snapshot.expenseBreakdown)
+    ) {
+      return {
+        metrics: snapshot.metrics.length ? snapshot.metrics : baseline.metrics,
+        trend: snapshot.trend,
+        receivables: snapshot.receivables.map((item) => ({ ...item, status: normalizeFinanceScheduleStatus(item.status) })),
+        payables: snapshot.payables.map((item) => ({ ...item, status: normalizeFinanceScheduleStatus(item.status) })),
+        cashAccounts: snapshot.cashAccounts.map((account) => ({
+          ...account,
+          trend: account.trend === "down" ? "down" : "up",
+          change: account.change ?? "Stable",
+        })),
+        expenseBreakdown: snapshot.expenseBreakdown,
+      } satisfies FinanceSnapshot;
+    }
+  }
+  return baseline;
+}
+
+async function fetchFinanceSnapshot(tenantSlug: string | null, timeframe: string, region?: string): Promise<FinanceSnapshot> {
+  const params = new URLSearchParams({ tenantSlug: tenantSlug ?? "kreatix-default", timeframe });
+  if (region && region !== "Global HQ") {
+    params.set("regionId", regionToId(region));
+  }
+
+  try {
+    const response = await fetch(`/api/finance/dashboard?${params.toString()}`, { cache: "no-store" });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error(payload?.error ?? "Finance dashboard request failed");
+    }
+    return mapFinanceSnapshotPayload(payload);
+  } catch (error) {
+    console.warn("Finance snapshot fetch failed, returning baseline", error);
+    return FINANCE_BASELINE_SNAPSHOT;
+  }
+}
+
 function formatCurrency(value: number, currency = "₦"): string {
   if (Number.isNaN(value)) {
     return `${currency}0`;
   }
   return `${currency}${value.toLocaleString("en-NG", { maximumFractionDigits: 0 })}`;
+}
+
+function mapContactApiToImportedContact(contact: CrmContactApiResponse): CrmImportedContact {
+  return {
+    id: contact.id,
+    company: contact.company,
+    contact: contact.contactName,
+    email: contact.contactEmail ?? "",
+    phone: contact.contactPhone ?? "",
+    source: contact.source ?? "CSV import",
+    status: contact.status ?? "New",
+    importedAt: contact.importedAt ?? contact.createdAt ?? new Date().toISOString(),
+    tags: Array.isArray(contact.tags) ? contact.tags : [],
+  };
 }
 
 function mapCustomerRecordToView(record: CrmCustomerRecordNormalized): CrmCustomerView {
@@ -464,6 +622,28 @@ function CrmCustomersView({
               ))}
             </div>
           )}
+
+          {(loading || error) && (
+            <div className="mt-4 space-y-2">
+              {loading && (
+                <div className="flex items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" /> Syncing contacts…
+                </div>
+              )}
+              {error && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-100 bg-rose-50 px-3 py-2 text-xs text-rose-600">
+                  <span>{error}</span>
+                  <button
+                    type="button"
+                    onClick={onRetry}
+                    className="rounded-full border border-rose-200 px-3 py-1 text-[0.65rem] font-semibold text-rose-600"
+                  >
+                    Retry sync
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -477,6 +657,9 @@ function CrmCustomersView({
 function CrmContactsView({
   contacts,
   importing,
+  loading,
+  error,
+  onRetry,
   onImportContacts,
   onExportContacts,
   sample,
@@ -490,6 +673,9 @@ function CrmContactsView({
 }: {
   contacts: CrmImportedContact[];
   importing: boolean;
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
   onImportContacts: () => void;
   onExportContacts: () => void;
   sample: CrmContactImportSampleState;
@@ -1463,6 +1649,21 @@ type CrmImportedContact = {
   tags: string[];
 };
 
+type CrmContactApiResponse = {
+  id: string;
+  tenantSlug: string;
+  company: string;
+  contactName: string;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  source: string | null;
+  status: string | null;
+  tags: string[];
+  importedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 type CrmDealRecord = {
   id: string;
   tenantSlug: string;
@@ -1474,6 +1675,48 @@ type CrmDealRecord = {
   probability?: number | null;
   assignedOfficerId?: string | null;
   status: string;
+};
+
+type FinanceTrendSnapshot = {
+  labels: string[];
+  revenue: number[];
+  expenses: number[];
+};
+
+type FinanceScheduleItem = {
+  id: string;
+  entity: string;
+  amount: string;
+  dueDate: string;
+  status: "current" | "overdue" | "due_soon";
+  branch: string;
+};
+
+type FinanceCashAccount = {
+  id: string;
+  name: string;
+  type: "bank" | "cash";
+  balance: string;
+  currency: string;
+  trend: "up" | "down";
+  change: string;
+  region: string;
+};
+
+type FinanceExpenseBreakdown = {
+  label: string;
+  amount: string;
+  delta: string;
+  direction: "up" | "down";
+};
+
+type FinanceSnapshot = {
+  metrics: KpiMetric[];
+  trend: FinanceTrendSnapshot;
+  receivables: FinanceScheduleItem[];
+  payables: FinanceScheduleItem[];
+  cashAccounts: FinanceCashAccount[];
+  expenseBreakdown: FinanceExpenseBreakdown[];
 };
 
 type CrmActionSubmission =
@@ -1971,6 +2214,10 @@ export default function TenantAdminPage() {
   const [crmLoading, setCrmLoading] = useState(false);
   const [crmError, setCrmError] = useState<string | null>(null);
   const [crmRequestVersion, setCrmRequestVersion] = useState(0);
+  const [financeSnapshot, setFinanceSnapshot] = useState<FinanceSnapshot>(FINANCE_BASELINE_SNAPSHOT);
+  const [financeLoading, setFinanceLoading] = useState(false);
+  const [financeError, setFinanceError] = useState<string | null>(null);
+  const [financeRequestVersion, setFinanceRequestVersion] = useState(0);
   const [crmActionType, setCrmActionType] = useState<CrmActionType | null>(null);
   const [crmActionToast, setCrmActionToast] = useState<string | null>(null);
   const [crmView, setCrmView] = useState<CrmView>("dashboard");
@@ -1979,16 +2226,50 @@ export default function TenantAdminPage() {
   const [contactImportSample, setContactImportSample] = useState<CrmContactImportSampleState>(defaultContactImportSample());
   const [importedContacts, setImportedContacts] = useState<CrmImportedContact[]>([]);
   const [contactTagFilter, setContactTagFilter] = useState<string | null>(null);
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [contactsError, setContactsError] = useState<string | null>(null);
 
   const entityOptions = ["Axiom Labs", "Nova Holdings", "Helix Metals"];
   const regionOptions = ["Global HQ", "Americas", "EMEA", "APAC"];
 
   const headline = useMemo(() => HEADLINE_MAP[activeNav] ?? "Tenant admin", [activeNav]);
-  const kpiMetrics = useMemo(() => (activeNav === "crm" ? crmSnapshot.metrics : KPI_METRICS), [activeNav, crmSnapshot.metrics]);
+  const kpiMetrics = useMemo(() => {
+    if (activeNav === "crm") {
+      return crmSnapshot.metrics;
+    }
+    if (activeNav === "finance") {
+      return financeSnapshot.metrics;
+    }
+    return KPI_METRICS;
+  }, [activeNav, crmSnapshot.metrics, financeSnapshot.metrics]);
 
   const handleCrmRetry = useCallback(() => {
     setCrmRequestVersion((prev) => prev + 1);
   }, []);
+
+  const handleFinanceRetry = useCallback(() => {
+    setFinanceRequestVersion((prev) => prev + 1);
+  }, []);
+
+  const refreshContacts = useCallback(async () => {
+    setContactsLoading(true);
+    setContactsError(null);
+    try {
+      const query = new URLSearchParams({ tenantSlug: tenantSlug ?? "kreatix-default" });
+      const response = await fetch(`/api/crm/contacts?${query.toString()}`, { cache: "no-store" });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(payload?.error ?? "Contacts sync failed");
+      }
+      const contactsFromApi = Array.isArray(payload?.contacts) ? (payload.contacts as CrmContactApiResponse[]) : [];
+      setImportedContacts(contactsFromApi.map((contact) => mapContactApiToImportedContact(contact)));
+    } catch (error) {
+      console.error("Contacts fetch failed", error);
+      setContactsError(error instanceof Error ? error.message : "Unable to load contacts");
+    } finally {
+      setContactsLoading(false);
+    }
+  }, [tenantSlug]);
 
   const handleImportContacts = useCallback(() => {
     fileInputRef.current?.click();
@@ -2013,20 +2294,49 @@ export default function TenantAdminPage() {
               ...contact,
               tags: Array.isArray(contact.tags) ? contact.tags : [],
             }));
-            setImportedContacts((previous) => [
-              ...normalizedContacts,
-              ...previous.map((contact) => ({ ...contact, tags: Array.isArray(contact.tags) ? contact.tags : [] })),
-            ]);
-            setCrmActionToast(`Imported ${parsedContacts.length} contacts from ${file.name}`);
-            setCrmView("contacts");
+            const payload = {
+              tenantSlug: tenantSlug ?? "kreatix-default",
+              contacts: normalizedContacts.map((contact) => ({
+                company: contact.company,
+                contactName: contact.contact,
+                contactEmail: contact.email || undefined,
+                contactPhone: contact.phone || undefined,
+                source: contact.source,
+                status: contact.status,
+                tags: contact.tags,
+                importedAt: contact.importedAt,
+              })),
+            };
+            fetch("/api/crm/contacts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            })
+              .then((response) => response.json().then((data) => ({ ok: response.ok, data })).catch(() => ({ ok: false, data: null })))
+              .then(async ({ ok, data }) => {
+                if (!ok) {
+                  throw new Error(data?.error ?? "Import failed");
+                }
+                await refreshContacts();
+                setCrmActionToast(`Imported ${(Array.isArray(data?.contacts) ? data.contacts.length : parsedContacts.length).toString()} contacts from ${file.name}`);
+                setCrmView("contacts");
+              })
+              .catch((error) => {
+                console.error("Contact import failed", error);
+                setCrmActionToast(error instanceof Error ? error.message : "Import failed");
+              })
+              .finally(() => {
+                setIsImportingContacts(false);
+                event.target.value = "";
+              });
+            return;
           }
         } catch (error) {
           console.error("Contact import failed", error);
           setCrmActionToast("Import failed");
-        } finally {
-          setIsImportingContacts(false);
-          event.target.value = "";
         }
+        setIsImportingContacts(false);
+        event.target.value = "";
       };
       reader.onerror = () => {
         console.error("Contact import read error", reader.error);
@@ -2036,7 +2346,7 @@ export default function TenantAdminPage() {
       };
       reader.readAsText(file);
     },
-    [setCrmView]
+    [refreshContacts, setCrmView, tenantSlug]
   );
 
   const handleContactSampleChange = useCallback((field: keyof CrmContactImportSampleState, value: string) => {
@@ -2073,37 +2383,65 @@ export default function TenantAdminPage() {
   );
 
   const handleExportContacts = useCallback(() => {
-    if (!crmSnapshot.customers?.length) {
+    if (!importedContacts.length) {
       setCrmActionToast("No contacts to export yet");
       return;
     }
-    const header = ["Customer", "Region", "Branch", "Contact", "Email", "Phone", "Status"];
-    const rows = crmSnapshot.customers.map((customer) => [
-      customer.name,
-      customer.region,
-      customer.branch,
-      customer.contactName ?? customer.owner,
-      customer.contactEmail ?? "",
-      customer.contactPhone ?? "",
-      customer.status,
+    const header = ["Company", "Contact", "Email", "Phone", "Source", "Status", "Tags"];
+    const rows = importedContacts.map((contact) => [
+      contact.company,
+      contact.contact,
+      contact.email,
+      contact.phone,
+      contact.source,
+      contact.status,
+      contact.tags.join("; "),
     ]);
     downloadCsvFile([header, ...rows], `crm-contacts-${Date.now()}.csv`);
     setCrmActionToast("Contacts exported");
-  }, [crmSnapshot.customers]);
+  }, [importedContacts]);
 
-  const handleContactTagToggle = useCallback((contactId: string, tag: string) => {
-    setImportedContacts((previous) =>
-      previous.map((contact) => {
-        if (contact.id !== contactId) {
-          return { ...contact, tags: Array.isArray(contact.tags) ? contact.tags : [] };
-        }
-        const currentTags = Array.isArray(contact.tags) ? contact.tags : [];
-        const hasTag = currentTags.includes(tag);
-        const nextTags = hasTag ? currentTags.filter((value) => value !== tag) : [...currentTags, tag];
-        return { ...contact, tags: nextTags };
+  const handleContactTagToggle = useCallback(
+    (contactId: string, tag: string) => {
+      const target = importedContacts.find((contact) => contact.id === contactId);
+      if (!target) {
+        return;
+      }
+      const currentTags = Array.isArray(target.tags) ? target.tags : [];
+      const hasTag = currentTags.includes(tag);
+      const nextTags = hasTag ? currentTags.filter((value) => value !== tag) : [...currentTags, tag];
+
+      setImportedContacts((previous) =>
+        previous.map((contact) => (contact.id === contactId ? { ...contact, tags: nextTags } : contact))
+      );
+
+      fetch(`/api/crm/contacts/${contactId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tags: nextTags }),
       })
-    );
-  }, []);
+        .then((response) => response.json().then((data) => ({ ok: response.ok, data })).catch(() => ({ ok: false, data: null })))
+        .then(({ ok, data }) => {
+          if (!ok) {
+            throw new Error(data?.error ?? "Tag update failed");
+          }
+          if (data?.contact) {
+            const normalized = mapContactApiToImportedContact(data.contact as CrmContactApiResponse);
+            setImportedContacts((previous) =>
+              previous.map((contact) => (contact.id === contactId ? normalized : contact))
+            );
+          }
+        })
+        .catch((error) => {
+          console.error("Contact tag update failed", error);
+          setImportedContacts((previous) =>
+            previous.map((contact) => (contact.id === contactId ? { ...contact, tags: currentTags } : contact))
+          );
+          setCrmActionToast(error instanceof Error ? error.message : "Unable to update tags");
+        });
+    },
+    [importedContacts]
+  );
 
   const handleContactTagFilterChange = useCallback((tag: string | null) => {
     setContactTagFilter(tag);
@@ -2352,6 +2690,43 @@ export default function TenantAdminPage() {
   }, [activeNav, tenantSlug, selectedTimeframe, selectedRegion, crmRequestVersion]);
 
   useEffect(() => {
+    if (activeNav !== "finance") {
+      return;
+    }
+
+    let cancelled = false;
+    setFinanceLoading(true);
+    setFinanceError(null);
+
+    fetchFinanceSnapshot(tenantSlug, selectedTimeframe, selectedRegion)
+      .then((snapshot) => {
+        if (!cancelled) {
+          setFinanceSnapshot(snapshot);
+        }
+      })
+      .catch((error) => {
+        console.error("Finance snapshot fetch failed", error);
+        if (!cancelled) {
+          setFinanceError(error instanceof Error ? error.message : "Unable to load finance data");
+          setFinanceSnapshot(FINANCE_BASELINE_SNAPSHOT);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setFinanceLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeNav, tenantSlug, selectedTimeframe, selectedRegion, financeRequestVersion]);
+
+  useEffect(() => {
+    refreshContacts();
+  }, [refreshContacts]);
+
+  useEffect(() => {
     if (!crmActionToast) {
       return;
     }
@@ -2443,10 +2818,20 @@ export default function TenantAdminPage() {
                     currentView={crmView}
                     onViewChange={setCrmView}
                     contacts={importedContacts}
+                    contactsLoading={contactsLoading}
+                    contactsError={contactsError}
+                    onContactsRetry={refreshContacts}
                     tagOptions={CRM_CONTACT_TAG_OPTIONS}
                     activeTagFilter={contactTagFilter}
                     onTagFilterChange={handleContactTagFilterChange}
                     onTagToggle={handleContactTagToggle}
+                  />
+                ) : activeNav === "finance" ? (
+                  <FinanceWorkspace
+                    snapshot={financeSnapshot}
+                    loading={financeLoading}
+                    error={financeError}
+                    onRetry={handleFinanceRetry}
                   />
                 ) : (
                   <div className="grid gap-8 xl:grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)]">
@@ -2506,6 +2891,9 @@ function CrmDashboard({
   currentView,
   onViewChange,
   contacts,
+  contactsLoading,
+  contactsError,
+  onContactsRetry,
   tagOptions,
   activeTagFilter,
   onTagFilterChange,
@@ -2529,6 +2917,9 @@ function CrmDashboard({
   currentView: CrmView;
   onViewChange: (view: CrmView) => void;
   contacts: CrmImportedContact[];
+  contactsLoading: boolean;
+  contactsError: string | null;
+  onContactsRetry: () => void;
   tagOptions: readonly string[];
   activeTagFilter: string | null;
   onTagFilterChange: (tag: string | null) => void;
@@ -2566,6 +2957,9 @@ function CrmDashboard({
         <CrmContactsView
           contacts={contacts}
           importing={importingContacts}
+          loading={contactsLoading}
+          error={contactsError}
+          onRetry={onContactsRetry}
           onImportContacts={onImportContacts}
           onExportContacts={onExportContacts}
           sample={contactSample}
@@ -2856,6 +3250,240 @@ function CrmDashboard({
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function FinanceWorkspace({
+  snapshot,
+  loading,
+  error,
+  onRetry,
+}: {
+  snapshot: FinanceSnapshot;
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
+}) {
+  const quickActions: Array<{ label: string; description: string; icon: ComponentType<{ className?: string }> }> = [
+    { label: "Log invoice", description: "Sync to ERP", icon: Receipt },
+    { label: "Schedule payment", description: "Route approval", icon: CalendarClock },
+    { label: "Record expense", description: "Attach memo", icon: FileSpreadsheet },
+    { label: "Trigger payout", description: "Treasury mesh", icon: PiggyBank },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Finance quick actions</p>
+          <p className="text-sm text-slate-500">Capture ledger updates without leaving command view</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <button
+                key={action.label}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:border-slate-300"
+                type="button"
+              >
+                <Icon className="h-4 w-4" />
+                <div className="text-left">
+                  <p className="font-semibold leading-none">{action.label}</p>
+                  <p className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">{action.description}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {(loading || error) && (
+        <div className="space-y-2">
+          {loading && (
+            <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+              <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+              Syncing finance snapshot…
+            </div>
+          )}
+          {error && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              <span>{error}</span>
+              <button
+                type="button"
+                onClick={onRetry}
+                className="rounded-full border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700 hover:border-rose-300"
+              >
+                Retry sync
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <FinanceScheduleCard title="Receivables radar" items={snapshot.receivables} accent="text-emerald-600" />
+        <FinanceScheduleCard title="Payables runway" items={snapshot.payables} accent="text-amber-600" />
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)]">
+        <FinanceTrendCard trend={snapshot.trend} />
+        <div className="space-y-6">
+          <FinanceCashAccounts accounts={snapshot.cashAccounts} />
+          <FinanceExpenseBreakdownCard expenses={snapshot.expenseBreakdown} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FinanceScheduleCard({
+  title,
+  items,
+  accent,
+}: {
+  title: string;
+  items: FinanceScheduleItem[];
+  accent: string;
+}) {
+  return (
+    <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{title}</p>
+          <p className="text-sm text-slate-500">Multi-entity status</p>
+        </div>
+        <div className={`rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold ${accent}`}>{items.length} entries</div>
+      </div>
+      <div className="mt-4 space-y-3">
+        {items.map((item) => {
+          const meta = FINANCE_SCHEDULE_STATUS_META[item.status];
+          return (
+            <div key={item.id} className="rounded-2xl border border-slate-100 px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+                <div>
+                  <p className="font-semibold text-slate-900">{item.entity}</p>
+                  <p className="text-xs text-slate-500">{item.branch}</p>
+                </div>
+                <div className="text-right text-sm text-slate-600">
+                  <p className="font-semibold text-slate-900">{item.amount}</p>
+                  <p className="text-xs text-slate-500">{item.dueDate}</p>
+                </div>
+              </div>
+              <div className="mt-2 flex items-center gap-2 text-xs">
+                <span className={`rounded-full px-3 py-1 font-semibold ${meta.chip}`}>{meta.label}</span>
+                <span className="rounded-full bg-slate-900/5 px-3 py-1 text-slate-600">{item.id}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function FinanceTrendCard({ trend }: { trend: FinanceTrendSnapshot }) {
+  const maxValue = Math.max(1, ...trend.revenue, ...trend.expenses);
+  return (
+    <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Revenue vs expense</p>
+          <h2 className="text-xl font-semibold text-slate-900">Weekly pacing</h2>
+        </div>
+        <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">
+          <Download className="h-4 w-4" />
+          Export CSV
+        </button>
+      </div>
+      <div className="mt-6 space-y-4">
+        {trend.labels.map((label, index) => {
+          const revenue = trend.revenue[index] ?? 0;
+          const expenses = trend.expenses[index] ?? 0;
+          const revenuePct = `${(revenue / maxValue) * 100}%`;
+          const expensePct = `${(expenses / maxValue) * 100}%`;
+          return (
+            <div key={label} className="space-y-1">
+              <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-slate-400">
+                <span>{label}</span>
+                <span>
+                  ₦{revenue.toLocaleString()} · ₦{expenses.toLocaleString()}
+                </span>
+              </div>
+              <div className="space-y-1">
+                <div className="h-2 rounded-full bg-slate-100">
+                  <div className="h-full rounded-full bg-slate-900" style={{ width: revenuePct }} />
+                </div>
+                <div className="h-2 rounded-full bg-slate-100">
+                  <div className="h-full rounded-full bg-slate-400" style={{ width: expensePct }} />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function FinanceCashAccounts({ accounts }: { accounts: FinanceCashAccount[] }) {
+  return (
+    <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Cash positions</p>
+          <h2 className="text-xl font-semibold text-slate-900">Bank + treasury</h2>
+        </div>
+        <button className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600">Manage accounts</button>
+      </div>
+      <div className="mt-4 space-y-3">
+        {accounts.map((account) => (
+          <div key={account.id} className="flex items-center justify-between rounded-2xl border border-slate-100 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">{account.name}</p>
+              <p className="text-xs text-slate-500">{account.region} · {account.type === "bank" ? "Bank" : "Cash"}</p>
+            </div>
+            <div className="text-right text-sm text-slate-600">
+              <p className="text-lg font-semibold text-slate-900">{account.balance}</p>
+              <p className={`text-xs font-semibold ${account.trend === "up" ? "text-emerald-600" : "text-rose-600"}`}>{account.change}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FinanceExpenseBreakdownCard({ expenses }: { expenses: FinanceExpenseBreakdown[] }) {
+  return (
+    <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Expense breakdown</p>
+          <h2 className="text-xl font-semibold text-slate-900">Operating layers</h2>
+        </div>
+        <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600">
+          <LineChart className="h-4 w-4" />
+          View report
+        </button>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {expenses.map((expense) => (
+          <div
+            key={expense.label}
+            className="rounded-2xl border border-slate-100 px-4 py-2 text-sm text-slate-700"
+          >
+            <p className="font-semibold text-slate-900">{expense.label}</p>
+            <div className="flex items-center gap-2 text-xs">
+              <span>{expense.amount}</span>
+              <span className={`font-semibold ${expense.direction === "up" ? "text-rose-600" : "text-emerald-600"}`}>
+                {expense.delta}
+              </span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

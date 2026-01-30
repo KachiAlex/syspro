@@ -1,6 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { getSql } from "@/lib/db";
-import type { CrmLeadStage, CrmLeadSource, CrmPipelineStage, CrmCustomerRecord } from "./types";
+import type {
+  CrmLeadStage,
+  CrmLeadSource,
+  CrmPipelineStage,
+  CrmCustomerRecord,
+  CrmContactRecord,
+  CrmContact,
+} from "./types";
 
 const SQL = getSql();
 
@@ -56,6 +63,23 @@ export async function ensureCrmTables(sql: SqlClient = SQL) {
       name text not null,
       primary_contact jsonb,
       status text,
+      created_at timestamptz default now(),
+      updated_at timestamptz default now()
+    )
+  `;
+
+  await sql`
+    create table if not exists crm_contacts (
+      id text primary key,
+      tenant_slug text not null,
+      company text not null,
+      contact_name text not null,
+      contact_email text,
+      contact_phone text,
+      source text,
+      status text default 'New',
+      tags text[] default array[]::text[],
+      imported_at timestamptz default now(),
       created_at timestamptz default now(),
       updated_at timestamptz default now()
     )
@@ -126,6 +150,119 @@ function normalizeCustomerRow(row: CrmCustomerRecord) {
     status: row.status,
     createdAt: row.created_at,
   };
+}
+
+function normalizeContactRow(row: CrmContactRecord): CrmContact {
+  return {
+    id: row.id,
+    tenantSlug: row.tenant_slug,
+    company: row.company,
+    contactName: row.contact_name,
+    contactEmail: row.contact_email,
+    contactPhone: row.contact_phone,
+    source: row.source,
+    status: row.status,
+    tags: Array.isArray(row.tags) ? row.tags : row.tags ? [row.tags].flat() : [],
+    importedAt: row.imported_at ?? row.created_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function insertContact(row: {
+  tenantSlug: string;
+  company: string;
+  contactName: string;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  source?: string | null;
+  status?: string | null;
+  tags?: string[];
+  importedAt?: string;
+}) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  const id = randomUUID();
+  const inserted = (await sql`
+    insert into crm_contacts (
+      id,
+      tenant_slug,
+      company,
+      contact_name,
+      contact_email,
+      contact_phone,
+      source,
+      status,
+      tags,
+      imported_at
+    ) values (
+      ${id},
+      ${row.tenantSlug},
+      ${row.company},
+      ${row.contactName},
+      ${row.contactEmail ?? null},
+      ${row.contactPhone ?? null},
+      ${row.source ?? "CSV import"},
+      ${row.status ?? "New"},
+      ${sql.array(row.tags ?? [], "text")},
+      ${row.importedAt ?? null}
+    )
+    returning *
+  `) as CrmContactRecord[];
+  return normalizeContactRow(inserted[0]);
+}
+
+export async function insertContacts(rows: Array<Parameters<typeof insertContact>[0]>) {
+  const inserted: CrmContact[] = [];
+  for (const row of rows) {
+    inserted.push(await insertContact(row));
+  }
+  return inserted;
+}
+
+export async function listContacts(filters: { tenantSlug: string; tag?: string | null; limit?: number; offset?: number }) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  const rows = (await sql`
+    select *
+    from crm_contacts
+    where tenant_slug = ${filters.tenantSlug}
+    ${filters.tag ? sql`and ${filters.tag} = any(tags)` : sql``}
+    order by imported_at desc nulls last, created_at desc
+    ${filters.limit ? sql`limit ${filters.limit}` : sql`limit 50`}
+    ${filters.offset ? sql`offset ${filters.offset}` : sql``}
+  `) as CrmContactRecord[];
+  return rows.map(normalizeContactRow);
+}
+
+export async function updateContact(
+  id: string,
+  updates: Partial<{ status: string | null; tags: string[]; contactEmail: string | null; contactPhone: string | null }>
+) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  if (
+    updates.status === undefined &&
+    updates.tags === undefined &&
+    updates.contactEmail === undefined &&
+    updates.contactPhone === undefined
+  ) {
+    const row = (await sql`select * from crm_contacts where id = ${id} limit 1`) as CrmContactRecord[];
+    return row.length ? normalizeContactRow(row[0]) : null;
+  }
+
+  const updated = (await sql`
+    update crm_contacts
+    set
+      status = coalesce(${updates.status ?? null}, status),
+      tags = coalesce(${updates.tags ? sql.array(updates.tags, "text") : null}, tags),
+      contact_email = coalesce(${updates.contactEmail ?? null}, contact_email),
+      contact_phone = coalesce(${updates.contactPhone ?? null}, contact_phone),
+      updated_at = now()
+    where id = ${id}
+    returning *
+  `) as CrmContactRecord[];
+  return updated.length ? normalizeContactRow(updated[0]) : null;
 }
 
 export async function insertDeal(row: {

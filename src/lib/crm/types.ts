@@ -112,6 +112,36 @@ export type CrmCustomerRecord = {
   created_at: string;
 };
 
+export type CrmContactRecord = {
+  id: string;
+  tenant_slug: string;
+  company: string;
+  contact_name: string;
+  contact_email: string | null;
+  contact_phone: string | null;
+  source: string | null;
+  status: string | null;
+  tags: string[] | null;
+  imported_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CrmContact = {
+  id: string;
+  tenantSlug: string;
+  company: string;
+  contactName: string;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  source: string | null;
+  status: string | null;
+  tags: string[];
+  importedAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type CrmDeal = {
   id: string;
   tenantId: string;
