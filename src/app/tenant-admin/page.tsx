@@ -268,6 +268,8 @@ const FINANCE_PAYABLES_BASELINE: FinanceScheduleItem[] = [
   { id: "PYB-8824", entity: "Carbon Freight", amount: "₦27.2M", dueDate: "Due in 4d", status: "current", branch: "APAC" },
 ];
 
+const DEFAULT_FINANCE_CURRENCY = "₦";
+
 const FINANCE_CASH_ACCOUNTS_BASELINE: FinanceCashAccount[] = [
   {
     id: "ACC-01",
@@ -384,11 +386,86 @@ async function fetchFinanceSnapshot(tenantSlug: string | null, timeframe: string
   }
 }
 
+async function fetchFinanceCashAccounts(tenantSlug: string | null, region?: string): Promise<FinanceCashAccount[]> {
+  const params = new URLSearchParams({ tenantSlug: tenantSlug ?? "kreatix-default", limit: "8" });
+  if (region && region !== "Global HQ") {
+    params.set("regionId", regionToId(region));
+  }
+
+  const response = await fetch(`/api/finance/accounts?${params.toString()}`, { cache: "no-store" });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(payload?.error ?? "Finance accounts request failed");
+  }
+
+  const accounts = Array.isArray(payload?.accounts) ? (payload.accounts as FinanceAccountApiResponse[]) : [];
+  const normalized = accounts
+    .map((account) => {
+      if (!account?.id || !account.name) {
+        return null;
+      }
+      return mapFinanceAccountFromApi(account);
+    })
+    .filter((value): value is FinanceCashAccount => Boolean(value));
+
+  return normalized.length ? normalized : FINANCE_BASELINE_SNAPSHOT.cashAccounts;
+}
+
+function mapFinanceAccountFromApi(account: FinanceAccountApiResponse): FinanceCashAccount {
+  const currency = account.currency ?? DEFAULT_FINANCE_CURRENCY;
+  return {
+    id: account.id,
+    name: account.name,
+    type: account.type === "cash" ? "cash" : "bank",
+    balance: formatCurrencyCompactClient(account.balance, currency),
+    currency,
+    trend: account.trend === "down" ? "down" : "up",
+    change: formatAccountChangeFromApi(account, currency),
+    region: humanizeOrgLabel(account.branchId) ?? humanizeOrgLabel(account.regionId) ?? "Global",
+  };
+}
+
+function formatAccountChangeFromApi(account: FinanceAccountApiResponse, currency: string): string {
+  if (account.changeValue === null || account.changeValue === undefined) {
+    return "Stable";
+  }
+  const value = Number(account.changeValue);
+  if (!Number.isFinite(value) || value === 0) {
+    return "Stable";
+  }
+  const prefix = value > 0 ? "+" : "-";
+  const formatted = formatCurrencyCompactClient(Math.abs(value), currency);
+  const period = account.changePeriod ? ` vs ${account.changePeriod}` : "";
+  return `${prefix}${formatted}${period ? ` ${period}` : ""}`;
+}
+
+function formatCurrencyCompactClient(value: number, currency = DEFAULT_FINANCE_CURRENCY): string {
+  if (!Number.isFinite(value)) {
+    return `${currency}0`;
+  }
+  const formatter = new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: Math.abs(value) >= 1_000_000 ? 1 : 0,
+  });
+  const formatted = formatter.format(Math.abs(value));
+  return `${value < 0 ? "-" : ""}${currency}${formatted}`;
+}
+
 function formatCurrency(value: number, currency = "₦"): string {
   if (Number.isNaN(value)) {
     return `${currency}0`;
   }
   return `${currency}${value.toLocaleString("en-NG", { maximumFractionDigits: 0 })}`;
+}
+
+function humanizeOrgLabel(value?: string | null): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+  return value
+    .split(/[-_]/g)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
 }
 
 function mapContactApiToImportedContact(contact: CrmContactApiResponse): CrmImportedContact {
@@ -1683,6 +1760,20 @@ type FinanceCashAccount = {
   region: string;
 };
 
+type FinanceAccountApiResponse = {
+  id: string;
+  tenantSlug: string;
+  regionId: string | null;
+  branchId: string | null;
+  name: string;
+  type: "bank" | "cash";
+  currency?: string | null;
+  balance: number;
+  changeValue: number | null;
+  changePeriod: string | null;
+  trend: "up" | "down";
+};
+
 type FinanceExpenseBreakdown = {
   label: string;
   amount: string;
@@ -2198,6 +2289,10 @@ export default function TenantAdminPage() {
   const [financeLoading, setFinanceLoading] = useState(false);
   const [financeError, setFinanceError] = useState<string | null>(null);
   const [financeRequestVersion, setFinanceRequestVersion] = useState(0);
+  const [financeAccounts, setFinanceAccounts] = useState<FinanceCashAccount[]>(FINANCE_BASELINE_SNAPSHOT.cashAccounts);
+  const [financeAccountsLoading, setFinanceAccountsLoading] = useState(false);
+  const [financeAccountsError, setFinanceAccountsError] = useState<string | null>(null);
+  const [financeAccountsVersion, setFinanceAccountsVersion] = useState(0);
   const [crmActionType, setCrmActionType] = useState<CrmActionType | null>(null);
   const [crmActionToast, setCrmActionToast] = useState<string | null>(null);
   const [crmView, setCrmView] = useState<CrmView>("dashboard");
@@ -2229,6 +2324,10 @@ export default function TenantAdminPage() {
 
   const handleFinanceRetry = useCallback(() => {
     setFinanceRequestVersion((prev) => prev + 1);
+  }, []);
+
+  const handleFinanceAccountsRefresh = useCallback(() => {
+    setFinanceAccountsVersion((prev) => prev + 1);
   }, []);
 
   const refreshContacts = useCallback(async () => {
@@ -2701,6 +2800,39 @@ export default function TenantAdminPage() {
       cancelled = true;
     };
   }, [activeNav, tenantSlug, selectedTimeframe, selectedRegion, financeRequestVersion]);
+
+  useEffect(() => {
+    if (activeNav !== "finance") {
+      return;
+    }
+
+    let cancelled = false;
+    setFinanceAccountsLoading(true);
+    setFinanceAccountsError(null);
+
+    fetchFinanceCashAccounts(tenantSlug, selectedRegion)
+      .then((accounts) => {
+        if (!cancelled) {
+          setFinanceAccounts(accounts);
+        }
+      })
+      .catch((error) => {
+        console.error("Finance accounts fetch failed", error);
+        if (!cancelled) {
+          setFinanceAccountsError(error instanceof Error ? error.message : "Unable to load finance accounts");
+          setFinanceAccounts(FINANCE_BASELINE_SNAPSHOT.cashAccounts);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setFinanceAccountsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeNav, tenantSlug, selectedRegion, financeAccountsVersion]);
 
   useEffect(() => {
     refreshContacts();
@@ -3240,11 +3372,19 @@ function FinanceWorkspace({
   loading,
   error,
   onRetry,
+  cashAccounts,
+  cashAccountsLoading,
+  cashAccountsError,
+  onRefreshAccounts,
 }: {
   snapshot: FinanceSnapshot;
   loading: boolean;
   error: string | null;
   onRetry: () => void;
+  cashAccounts: FinanceCashAccount[];
+  cashAccountsLoading: boolean;
+  cashAccountsError: string | null;
+  onRefreshAccounts: () => void;
 }) {
   const quickActions: Array<{ label: string; description: string; icon: ComponentType<{ className?: string }> }> = [
     { label: "Log invoice", description: "Sync to ERP", icon: Receipt },
@@ -3311,7 +3451,12 @@ function FinanceWorkspace({
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)]">
         <FinanceTrendCard trend={snapshot.trend} />
         <div className="space-y-6">
-          <FinanceCashAccounts accounts={snapshot.cashAccounts} />
+          <FinanceCashAccounts
+            accounts={cashAccounts}
+            loading={cashAccountsLoading}
+            error={cashAccountsError}
+            onRefresh={onRefreshAccounts}
+          />
           <FinanceExpenseBreakdownCard expenses={snapshot.expenseBreakdown} />
         </div>
       </div>
@@ -3408,7 +3553,17 @@ function FinanceTrendCard({ trend }: { trend: FinanceTrendSnapshot }) {
   );
 }
 
-function FinanceCashAccounts({ accounts }: { accounts: FinanceCashAccount[] }) {
+function FinanceCashAccounts({
+  accounts,
+  loading,
+  error,
+  onRefresh,
+}: {
+  accounts: FinanceCashAccount[];
+  loading: boolean;
+  error: string | null;
+  onRefresh: () => void;
+}) {
   return (
     <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between">
@@ -3416,21 +3571,51 @@ function FinanceCashAccounts({ accounts }: { accounts: FinanceCashAccount[] }) {
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Cash positions</p>
           <h2 className="text-xl font-semibold text-slate-900">Bank + treasury</h2>
         </div>
-        <button className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600">Manage accounts</button>
+        <div className="flex gap-2">
+          <button
+            className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600"
+            type="button"
+            onClick={onRefresh}
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />
+                Syncing
+              </span>
+            ) : (
+              "Refresh"
+            )}
+          </button>
+          <button className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600" type="button">
+            Manage accounts
+          </button>
+        </div>
       </div>
+      {error && (
+        <div className="mt-3 rounded-2xl border border-rose-100 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+          {error}
+        </div>
+      )}
       <div className="mt-4 space-y-3">
-        {accounts.map((account) => (
-          <div key={account.id} className="flex items-center justify-between rounded-2xl border border-slate-100 px-4 py-3">
-            <div>
-              <p className="text-sm font-semibold text-slate-900">{account.name}</p>
-              <p className="text-xs text-slate-500">{account.region} · {account.type === "bank" ? "Bank" : "Cash"}</p>
-            </div>
-            <div className="text-right text-sm text-slate-600">
-              <p className="text-lg font-semibold text-slate-900">{account.balance}</p>
-              <p className={`text-xs font-semibold ${account.trend === "up" ? "text-emerald-600" : "text-rose-600"}`}>{account.change}</p>
-            </div>
+        {accounts.length === 0 && !loading ? (
+          <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-500">
+            No accounts yet. Add your first bank or cash entity to see realtime balances.
           </div>
-        ))}
+        ) : (
+          accounts.map((account) => (
+            <div key={account.id} className="flex items-center justify-between rounded-2xl border border-slate-100 px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">{account.name}</p>
+                <p className="text-xs text-slate-500">{account.region} · {account.type === "bank" ? "Bank" : "Cash"}</p>
+              </div>
+              <div className="text-right text-sm text-slate-600">
+                <p className="text-lg font-semibold text-slate-900">{account.balance}</p>
+                <p className={`text-xs font-semibold ${account.trend === "up" ? "text-emerald-600" : "text-rose-600"}`}>{account.change}</p>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
