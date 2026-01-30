@@ -623,27 +623,7 @@ function CrmCustomersView({
             </div>
           )}
 
-          {(loading || error) && (
-            <div className="mt-4 space-y-2">
-              {loading && (
-                <div className="flex items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" /> Syncing contacts…
-                </div>
-              )}
-              {error && (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-100 bg-rose-50 px-3 py-2 text-xs text-rose-600">
-                  <span>{error}</span>
-                  <button
-                    type="button"
-                    onClick={onRetry}
-                    className="rounded-full border border-rose-200 px-3 py-1 text-[0.65rem] font-semibold text-rose-600"
-                  >
-                    Retry sync
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Loading state handled in CrmContactsView; customers list currently static */}
         </div>
 
         <div className="space-y-6">
