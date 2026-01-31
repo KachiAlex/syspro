@@ -82,38 +82,3 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: message.includes("Unauthorized") ? 403 : 500 });
   }
 }
-
-    const updated: Partial<typeof ACCESS_CONTROLS[number]> = {};
-    if (Array.isArray(body?.moduleAccess)) {
-      updated.moduleAccess = body.moduleAccess.map((m: any) => ({
-        module: String(m?.module),
-        read: Boolean(m?.read),
-        write: Boolean(m?.write),
-        admin: Boolean(m?.admin),
-      }));
-    }
-
-    ACCESS_CONTROLS[index] = { ...ACCESS_CONTROLS[index], ...updated };
-    return NextResponse.json({ accessControl: ACCESS_CONTROLS[index] });
-  } catch (error) {
-    console.error("Access control patch failed", error);
-    return NextResponse.json({ error: "Unable to update access control" }, { status: 500 });
-  }
-}
-
-export async function DELETE(request: NextRequest) {
-  try {
-    const url = new URL(request.url);
-    const path = url.pathname.replace(/\/+/g, "/");
-    const segments = path.split("/").filter(Boolean);
-    const id = segments[segments.length - 1];
-    if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
-    const before = ACCESS_CONTROLS.length;
-    ACCESS_CONTROLS = ACCESS_CONTROLS.filter((a) => a.id !== id);
-    if (ACCESS_CONTROLS.length === before) return NextResponse.json({ error: "not found" }, { status: 404 });
-    return NextResponse.json({ message: "deleted" }, { status: 200 });
-  } catch (error) {
-    console.error("Access control delete failed", error);
-    return NextResponse.json({ error: "Unable to delete access control" }, { status: 500 });
-  }
-}

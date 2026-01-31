@@ -82,12 +82,3 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: message.includes("Unauthorized") ? 403 : 500 });
   }
 }
-    return NextResponse.json({ error: "Unable to delete approval" }, { status: 500 });
-  }
-}
-    return NextResponse.json({ approval: APPROVALS[index] });
-  } catch (error) {
-    console.error("Approval patch failed", error);
-    return NextResponse.json({ error: "Unable to update approval" }, { status: 500 });
-  }
-}

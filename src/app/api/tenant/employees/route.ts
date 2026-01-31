@@ -82,18 +82,3 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: message.includes("Unauthorized") ? 403 : 500 });
   }
 }
-    return NextResponse.json({ error: "Unable to delete employee" }, { status: 500 });
-  }
-}
-    if (body?.department !== undefined) updated.department = body.department?.toString();
-    if (body?.branch !== undefined) updated.branch = body.branch?.toString();
-    if (body?.region !== undefined) updated.region = body.region?.toString();
-    if (body?.status !== undefined) updated.status = body.status === "inactive" ? "inactive" : "active";
-
-    EMPLOYEES[index] = { ...EMPLOYEES[index], ...updated };
-    return NextResponse.json({ employee: EMPLOYEES[index] });
-  } catch (error) {
-    console.error("Employee patch failed", error);
-    return NextResponse.json({ error: "Unable to update employee" }, { status: 500 });
-  }
-}

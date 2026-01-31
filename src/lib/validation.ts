@@ -58,7 +58,13 @@ export const CreateApprovalRouteSchema = z.object({
   steps: z.array(ApprovalStepSchema).min(1, "At least one step is required"),
 });
 
+export const UpdateApprovalRouteSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  steps: z.array(ApprovalStepSchema).optional(),
+});
+
 export type CreateApprovalRouteInput = z.infer<typeof CreateApprovalRouteSchema>;
+export type UpdateApprovalRouteInput = z.infer<typeof UpdateApprovalRouteSchema>;
 
 // Access control schemas
 export const ModuleAccessSchema = z.object({
