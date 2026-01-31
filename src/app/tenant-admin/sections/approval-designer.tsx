@@ -23,8 +23,12 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
     setError(null);
     try {
       const res = await fetch(`/api/tenant/approvals?tenantSlug=${encodeURIComponent(ts)}`, { cache: "no-store" });
-      if (!res.ok) throw new Error("Failed to load approvals");
-      const payload = await res.json();
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setApprovals([]);
+        setError(payload?.error ?? "Failed to load approvals");
+        return;
+      }
       setApprovals(Array.isArray(payload.approvals) ? payload.approvals : []);
     } catch (err) {
       console.error(err);
@@ -63,7 +67,8 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error("Create failed");
+      const errData = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(errData?.error || "Create failed");
       setName("");
       setSteps([{ owners: "", slaHours: 4 }]);
       await load();
@@ -76,8 +81,9 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
   async function handleDelete(id: string) {
     if (!confirm("Delete approval route?")) return;
     try {
-      const res = await fetch(`/api/tenant/approvals?id=${encodeURIComponent(id)}&type=approval&tenantSlug=${encodeURIComponent(ts)}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Delete failed");
+      const res = await fetch(`/api/tenant/approvals?tenantSlug=${encodeURIComponent(ts)}&id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      const errData = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(errData?.error || "Delete failed");
       await load();
     } catch (err) {
       console.error(err);
@@ -138,9 +144,9 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
                   </div>
                 </div>
                 <div className="mt-3 text-sm text-slate-600">
-                  {a.steps.map((s) => (
+                  {(Array.isArray(a.steps) ? a.steps : []).map((s) => (
                     <div key={s.step} className="flex items-center justify-between">
-                      <div>Step {s.step} · {s.owners.join(", ")}</div>
+                      <div>Step {s.step} · {Array.isArray(s.owners) ? s.owners.join(", ") : String(s.owners ?? "")}</div>
                       <div className="text-xs text-slate-500">SLA {s.slaHours ?? "—"}h</div>
                     </div>
                   ))}

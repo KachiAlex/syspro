@@ -42,12 +42,15 @@ export default function DepartmentManagement({}: {}) {
     if (!name.trim()) return;
     try {
       const payload = { name: name.trim(), scope };
-      const res = await fetch(`/api/tenant/departments`, {
+      const res = await fetch(`/api/tenant/departments?tenantSlug=${encodeURIComponent(ts)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error("Create failed");
+       if (!res.ok) {
+         const errData = await res.json().catch(() => ({}));
+         throw new Error(errData.error || "Create failed");
+       }
       setName("");
       setScope("global");
       await load();
@@ -60,8 +63,11 @@ export default function DepartmentManagement({}: {}) {
   async function handleDelete(id: string) {
     if (!confirm("Delete department?")) return;
     try {
-      const res = await fetch(`/api/tenant/departments/${encodeURIComponent(id)}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Delete failed");
+       const res = await fetch(`/api/tenant/departments?tenantSlug=${encodeURIComponent(ts)}&id=${encodeURIComponent(id)}`, { method: "DELETE" });
+       if (!res.ok) {
+         const errData = await res.json().catch(() => ({}));
+         throw new Error(errData.error || "Delete failed");
+       }
       await load();
     } catch (err) {
       console.error(err);
