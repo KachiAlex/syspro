@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { CRM_LEAD_STAGES, CRM_LEAD_SOURCES } from "@/lib/crm/types";
 import { insertLead } from "@/lib/crm/db";
+import { handleDatabaseError } from "@/lib/api-errors";
 
 const leadSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -49,7 +50,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ lead });
   } catch (error) {
-    console.error("Lead creation failed", error);
-    return NextResponse.json({ error: "Failed to create lead" }, { status: 500 });
+    return handleDatabaseError(error, "Lead creation");
   }
 }

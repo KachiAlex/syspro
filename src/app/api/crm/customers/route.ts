@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { insertCustomer, listCustomers } from "@/lib/crm/db";
+import { handleDatabaseError } from "@/lib/api-errors";
 
 const customerSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -40,8 +41,7 @@ export async function GET(request: NextRequest) {
     });
     return NextResponse.json({ customers });
   } catch (error) {
-    console.error("Customer list failed", error);
-    return NextResponse.json({ error: "Failed to load customers" }, { status: 500 });
+    return handleDatabaseError(error, "Customer list");
   }
 }
 
@@ -73,7 +73,6 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ customer });
   } catch (error) {
-    console.error("Customer creation failed", error);
-    return NextResponse.json({ error: "Failed to create customer" }, { status: 500 });
+    return handleDatabaseError(error, "Customer creation");
   }
 }

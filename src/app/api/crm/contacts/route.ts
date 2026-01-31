@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { insertContact, insertContacts, listContacts } from "@/lib/crm/db";
+import { handleDatabaseError } from "@/lib/api-errors";
 
 const contactPayloadSchema = z.object({
   company: z.string().min(1),
@@ -42,8 +43,7 @@ export async function GET(request: NextRequest) {
     const contacts = await listContacts(parsed.data);
     return NextResponse.json({ contacts });
   } catch (error) {
-    console.error("Contact list failed", error);
-    return NextResponse.json({ error: "Failed to load contacts" }, { status: 500 });
+    return handleDatabaseError(error, "Contact list");
   }
 }
 
@@ -74,7 +74,6 @@ export async function POST(request: NextRequest) {
     );
     return NextResponse.json({ contacts }, { status: 201 });
   } catch (error) {
-    console.error("Contact import failed", error);
-    return NextResponse.json({ error: "Failed to import contacts" }, { status: 500 });
+    return handleDatabaseError(error, "Contact import");
   }
 }

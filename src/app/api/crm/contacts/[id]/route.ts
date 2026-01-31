@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { updateContact } from "@/lib/crm/db";
+import { handleDatabaseError } from "@/lib/api-errors";
 
 const patchSchema = z.object({
   status: z.string().optional(),
@@ -35,7 +36,6 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
     return NextResponse.json({ contact });
   } catch (error) {
-    console.error("Contact update failed", error);
-    return NextResponse.json({ error: "Failed to update contact" }, { status: 500 });
+    return handleDatabaseError(error, "Contact update");
   }
 }

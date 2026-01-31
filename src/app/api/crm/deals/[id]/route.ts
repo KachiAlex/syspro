@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { CRM_PIPELINE_STAGES } from "@/lib/crm/types";
 import { updateDeal } from "@/lib/crm/db";
+import { handleDatabaseError } from "@/lib/api-errors";
 
 const patchSchema = z.object({
   stage: z.enum(CRM_PIPELINE_STAGES).optional(),
@@ -29,7 +30,6 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     }
     return NextResponse.json({ deal });
   } catch (error) {
-    console.error("Deal update failed", error);
-    return NextResponse.json({ error: "Failed to update deal" }, { status: 500 });
+    return handleDatabaseError(error, "Deal update");
   }
 }

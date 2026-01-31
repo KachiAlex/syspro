@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { CRM_LEAD_STAGES } from "@/lib/crm/types";
 import { updateLead } from "@/lib/crm/db";
+import { handleDatabaseError } from "@/lib/api-errors";
 
 const patchSchema = z.object({
   stage: z.enum(CRM_LEAD_STAGES).optional(),
@@ -28,7 +29,6 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     }
     return NextResponse.json({ lead });
   } catch (error) {
-    console.error("Lead update failed", error);
-    return NextResponse.json({ error: "Failed to update lead" }, { status: 500 });
+    return handleDatabaseError(error, "Lead update");
   }
 }

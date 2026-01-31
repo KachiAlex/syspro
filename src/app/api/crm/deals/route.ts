@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { CRM_PIPELINE_STAGES } from "@/lib/crm/types";
 import { insertDeal } from "@/lib/crm/db";
+import { handleDatabaseError } from "@/lib/api-errors";
 
 const dealSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -42,7 +43,6 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ deal });
   } catch (error) {
-    console.error("Deal creation failed", error);
-    return NextResponse.json({ error: "Failed to create deal" }, { status: 500 });
+    return handleDatabaseError(error, "Deal creation");
   }
 }
