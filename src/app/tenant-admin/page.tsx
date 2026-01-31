@@ -85,8 +85,20 @@ import {
   Zap,
   X,
 } from "lucide-react";
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Component, Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, ComponentType, FormEvent } from "react";
+import DepartmentManagement from "@/app/tenant-admin/sections/department-management";
+import RoleBuilder from "@/app/tenant-admin/sections/role-builder";
+import ApprovalDesigner from "@/app/tenant-admin/sections/approval-designer";
+import EmployeeConsole from "@/app/tenant-admin/sections/employee-console";
+import AccessControlPanel from "@/app/tenant-admin/sections/access-control";
+import LifecycleWorkflows from "@/app/tenant-admin/sections/workflows";
+import ModuleRegistry from "@/app/tenant-admin/sections/module-registry";
+import BillingSection from "@/app/tenant-admin/sections/billing";
+import IntegrationsSection from "@/app/tenant-admin/sections/integrations";
+import AnalyticsSection from "@/app/tenant-admin/sections/analytics";
+import SecuritySection from "@/app/tenant-admin/sections/security";
+import CostAllocationSection from "@/app/tenant-admin/sections/cost-allocation";
 
 type NavigationLink = {
   label: string;
@@ -1942,8 +1954,12 @@ const NAVIGATION: NavigationSection[] = [
     links: [
       { label: "People & Access", key: "people-access", icon: Users2 },
       { label: "Structure", key: "structure", icon: GitBranch },
+      { label: "Modules", key: "modules", icon: Layers3 },
       { label: "Billing", key: "billing", icon: CreditCard },
+      { label: "Cost Allocation", key: "cost-allocation", icon: Wallet },
       { label: "Integrations", key: "integrations", icon: PlugZap },
+      { label: "Analytics", key: "analytics", icon: BarChart3 },
+      { label: "Security", key: "security", icon: ShieldCheck },
     ],
   },
 ];
@@ -2945,6 +2961,30 @@ export default function TenantAdminPage() {
                     error={financeError}
                     onRetry={handleFinanceRetry}
                   />
+                ) : activeNav === "structure" ? (
+                  <DepartmentManagement tenantSlug={tenantSlug} />
+                ) : activeNav === "people-access" ? (
+                  <div className="space-y-8">
+                    <RoleBuilder tenantSlug={tenantSlug} />
+                    <EmployeeConsole tenantSlug={tenantSlug} />
+                    <AccessControlPanel tenantSlug={tenantSlug} />
+                  </div>
+                ) : activeNav === "approvals" ? (
+                  <ApprovalDesigner tenantSlug={tenantSlug} />
+                ) : activeNav === "workflows" ? (
+                  <LifecycleWorkflows tenantSlug={tenantSlug} />
+                ) : activeNav === "modules" ? (
+                  <ModuleRegistry tenantSlug={tenantSlug} />
+                ) : activeNav === "billing" ? (
+                  <BillingSection tenantSlug={tenantSlug} />
+                ) : activeNav === "cost-allocation" ? (
+                  <CostAllocationSection tenantSlug={tenantSlug} />
+                ) : activeNav === "integrations" ? (
+                  <IntegrationsSection tenantSlug={tenantSlug} />
+                ) : activeNav === "analytics" ? (
+                  <AnalyticsSection tenantSlug={tenantSlug} />
+                ) : activeNav === "security" ? (
+                  <SecuritySection tenantSlug={tenantSlug} />
                 ) : (
                   <div className="grid gap-8 xl:grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)]">
                     <div className="space-y-8">
