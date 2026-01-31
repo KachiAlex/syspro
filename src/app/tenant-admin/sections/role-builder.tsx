@@ -149,7 +149,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
           <div>
             <p className="text-xs text-slate-500">Permissions</p>
             <div className="mt-2 grid grid-cols-3 gap-2">
-              {PERMISSIONS.map((perm) => (
+              {(PERMISSIONS ?? []).map((perm) => (
                 <label key={perm} className="inline-flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={selectedPerms.includes(perm)} onChange={() => togglePerm(perm)} />
                   <span className="text-slate-700">{perm}</span>
@@ -175,7 +175,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                 </tr>
               </thead>
               <tbody>
-                {roles.map((r) => (
+                {(roles ?? []).map((r) => (
                   editingId === r.id ? (
                     <tr key={r.id} className="border-t border-slate-100 bg-slate-50">
                       <td className="py-3">
@@ -190,7 +190,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                       </td>
                       <td>
                         <div className="flex flex-wrap gap-2">
-                          {PERMISSIONS.map((perm) => (
+                          {(PERMISSIONS ?? []).map((perm) => (
                             <label key={perm} className="inline-flex items-center gap-2 text-sm">
                               <input type="checkbox" checked={editPerms.includes(perm)} onChange={() => setEditPerms(prev => prev.includes(perm) ? prev.filter(p => p !== perm) : [...prev, perm])} />
                               <span className="text-slate-700">{perm}</span>
@@ -215,7 +215,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                     </tr>
                   )
                 ))}
-                {roles.length === 0 && (
+                {(roles ?? []).length === 0 && (
                   <tr>
                     <td colSpan={4} className="py-4 text-sm text-slate-500">No roles yet.</td>
                   </tr>

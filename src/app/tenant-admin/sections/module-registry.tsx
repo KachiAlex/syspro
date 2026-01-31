@@ -80,7 +80,7 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
           </div>
           <div className="flex items-center gap-3">
             <select value={region} onChange={(e) => setRegion(e.target.value)} className="rounded-lg border px-3 py-2">
-              {REGION_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+              {(REGION_OPTIONS ?? []).map((r) => <option key={r} value={r}>{r}</option>)}
             </select>
             <button onClick={load} className="rounded-full border px-3 py-2">Refresh</button>
           </div>
@@ -89,7 +89,7 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
         <div className="mt-6 space-y-3">
           {loading ? (
             <div className="text-sm text-slate-500">Loading modules…</div>
-          ) : modules.length === 0 ? (
+          ) : (modules ?? []).length === 0 ? (
             <div className="text-sm text-slate-500">No modules registered.</div>
           ) : (
             modules.map((m) => (

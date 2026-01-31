@@ -111,7 +111,7 @@ export default function DepartmentManagement({}: {}) {
                 </tr>
               </thead>
               <tbody>
-                {departments.map((d) => (
+                {(departments ?? []).map((d) => (
                   <tr key={d.id} className="border-t border-slate-100">
                     <td className="py-3 font-semibold text-slate-900">{d.name}</td>
                     <td>{d.scope}</td>
@@ -121,7 +121,7 @@ export default function DepartmentManagement({}: {}) {
                     </td>
                   </tr>
                 ))}
-                {departments.length === 0 && (
+                {(departments ?? []).length === 0 && (
                   <tr>
                     <td colSpan={4} className="py-4 text-sm text-slate-500">No departments yet.</td>
                   </tr>

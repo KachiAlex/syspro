@@ -67,11 +67,11 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
           <h3 className="text-lg font-semibold">Reports</h3>
           <button className="btn" onClick={createReport}>Create Report</button>
         </div>
-        {reports.length === 0 ? (
+        {(reports ?? []).length === 0 ? (
           <div>No reports.</div>
         ) : (
           <div className="space-y-2">
-            {reports.map((r) => (
+            {(reports ?? []).map((r) => (
               <div key={r.id} className="flex items-center justify-between p-3 border rounded">
                 <div>
                   <div className="font-medium">{r.name}</div>
@@ -89,11 +89,11 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
 
       <section>
         <h3 className="text-lg font-semibold">Scheduled Exports</h3>
-        {exports.length === 0 ? (
+        {(exports ?? []).length === 0 ? (
           <div>No exports scheduled.</div>
         ) : (
           <div className="space-y-2">
-            {exports.map((e) => (
+            {(exports ?? []).map((e) => (
               <div key={e.id} className="flex items-center justify-between p-3 border rounded">
                 <div>
                   <div className="font-medium">Report {e.reportId} → {e.format.toUpperCase()}</div>

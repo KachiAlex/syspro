@@ -151,7 +151,7 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
           <div className="grid gap-2 md:grid-cols-2">
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Workflow name" className="rounded-lg border px-3 py-2" required />
             <select value={type} onChange={(e) => setType(e.target.value as Workflow["type"])} className="rounded-lg border px-3 py-2">
-              {WORKFLOW_TYPES.map((t) => (
+              {(WORKFLOW_TYPES ?? []).map((t) => (
                 <option key={t} value={t}>
                   {t.charAt(0).toUpperCase() + t.slice(1)}
                 </option>
@@ -162,7 +162,7 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
           <div>
             <p className="mb-2 text-xs text-slate-500">Workflow steps</p>
             <div className="space-y-2">
-              {steps.map((s, idx) => (
+              {(steps ?? []).map((s, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   <div className="w-8 text-sm text-slate-600">Step {idx + 1}</div>
                   <input value={s.title} onChange={(e) => updateStep(idx, "title", e.target.value)} placeholder="Step title" className="rounded-lg border px-3 py-2 flex-1" />
@@ -186,7 +186,7 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
         <div className="mt-4 space-y-4">
           {loading ? (
             <div className="text-sm text-slate-500">Loading workflows…</div>
-          ) : workflows.length === 0 ? (
+          ) : (workflows ?? []).length === 0 ? (
             <div className="text-sm text-slate-500">No workflows defined.</div>
           ) : (
             workflows.map((wf) => (
@@ -195,7 +195,7 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
                   <div className="space-y-3">
                     <input value={editName} onChange={(e) => setEditName(e.target.value)} className="rounded-lg border px-3 py-2 w-full" />
                     <div className="space-y-2">
-                      {editSteps.map((s, idx) => (
+                      {(editSteps ?? []).map((s, idx) => (
                         <div key={idx} className="flex items-center gap-2">
                           <div className="w-8 text-sm text-slate-600">Step {idx + 1}</div>
                           <input value={s.title} onChange={(e) => updateEditStep(idx, "title", e.target.value)} className="rounded-lg border px-3 py-2 flex-1" />

@@ -109,7 +109,7 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
           </div>
 
           <div className="space-y-2">
-            {steps.map((s, idx) => (
+            {(steps ?? []).map((s, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 <div className="w-8 text-sm text-slate-600">Step {idx + 1}</div>
                 <input value={s.owners} onChange={(e) => updateStep(idx, "owners", e.target.value)} placeholder="Owners (comma-separated)" className="rounded-lg border px-3 py-2 flex-1" />
@@ -129,7 +129,7 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
         <div className="mt-4 space-y-3">
           {loading ? (
             <div className="text-sm text-slate-500">Loading routes…</div>
-          ) : approvals.length === 0 ? (
+          ) : (approvals ?? []).length === 0 ? (
             <div className="text-sm text-slate-500">No routes defined.</div>
           ) : (
             approvals.map((a) => (

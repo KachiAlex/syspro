@@ -55,11 +55,11 @@ export default function CostAllocationSection({ tenantSlug }: { tenantSlug?: str
           <h3 className="text-lg font-semibold">Cost Centers</h3>
           <button className="btn" onClick={createCostCenter}>Create Cost Center</button>
         </div>
-        {costCenters.length === 0 ? (
+        {(costCenters ?? []).length === 0 ? (
           <div>No cost centers.</div>
         ) : (
           <div className="space-y-2">
-            {costCenters.map((cc) => {
+            {(costCenters ?? []).map((cc) => {
               const utilization = cc.budget > 0 ? ((cc.spent / cc.budget) * 100).toFixed(1) : 0;
               return (
                 <div key={cc.id} className="flex items-center justify-between p-3 border rounded">

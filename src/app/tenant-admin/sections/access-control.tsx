@@ -145,7 +145,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
           <div>
             <p className="mb-2 text-xs text-slate-500">Module permissions</p>
             <div className="grid gap-3 md:grid-cols-2">
-              {MODULES.map((mod) => {
+              {(MODULES ?? []).map((mod) => {
                 const selected = selectedModules.find((m) => m.module === mod);
                 return (
                   <div key={mod} className="rounded-lg border px-3 py-2">
@@ -181,7 +181,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
         <div className="mt-4 space-y-4">
           {loading ? (
             <div className="text-sm text-slate-500">Loading access controls…</div>
-          ) : accessControls.length === 0 ? (
+          ) : (accessControls ?? []).length === 0 ? (
             <div className="text-sm text-slate-500">No access controls defined.</div>
           ) : (
             accessControls.map((ac) => (
@@ -190,7 +190,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
                   <div className="space-y-3">
                     <p className="font-semibold text-slate-900">{ac.roleName}</p>
                     <div className="grid gap-2 md:grid-cols-2">
-                      {MODULES.map((mod) => {
+                      {(MODULES ?? []).map((mod) => {
                         const selected = editModules.find((m) => m.module === mod);
                         return (
                           <div key={mod} className="rounded-lg border px-3 py-2">

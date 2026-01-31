@@ -65,11 +65,11 @@ export default function SecuritySection({ tenantSlug }: { tenantSlug?: string | 
 
       <section>
         <h3 className="text-lg font-semibold">Audit Logs</h3>
-        {logs.length === 0 ? (
+        {(logs ?? []).length === 0 ? (
           <div>No audit logs.</div>
         ) : (
           <div className="space-y-2">
-            {logs.map((log) => (
+            {(logs ?? []).map((log) => (
               <div key={log.id} className="flex items-start justify-between p-3 border rounded">
                 <div>
                   <div className="font-medium">{log.action} · {log.resource}</div>

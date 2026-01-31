@@ -44,11 +44,11 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
     <div className="space-y-6">
       <section>
         <h3 className="text-lg font-semibold">Connectors</h3>
-        {connectors.length === 0 ? (
+        {(connectors ?? []).length === 0 ? (
           <div>No connectors configured.</div>
         ) : (
           <div className="space-y-2">
-            {connectors.map((c) => (
+            {(connectors ?? []).map((c) => (
               <div key={c.id} className="flex items-center justify-between p-3 border rounded">
                 <div>{c.name}</div>
                 <div>{c.enabled ? "Enabled" : "Disabled"}</div>
@@ -64,7 +64,7 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
           <div className="flex gap-2">
             <button className="btn" onClick={createKey}>Create API key</button>
           </div>
-          {apiKeys.length === 0 ? (
+          {(apiKeys ?? []).length === 0 ? (
             <div>No keys issued.</div>
           ) : (
             apiKeys.map((k) => (

@@ -171,7 +171,7 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
                 </tr>
               </thead>
               <tbody>
-                {employees.map((emp) => (
+                {(employees ?? []).map((emp) => (
                   editingId === emp.id ? (
                     <tr key={emp.id} className="border-t border-slate-100 bg-slate-50">
                       <td className="py-3 font-semibold">{emp.name}</td>
@@ -208,7 +208,7 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
                     </tr>
                   )
                 ))}
-                {employees.length === 0 && (
+                {(employees ?? []).length === 0 && (
                   <tr>
                     <td colSpan={7} className="py-4 text-sm text-slate-500">No employees yet.</td>
                   </tr>

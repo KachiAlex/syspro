@@ -47,11 +47,11 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
     <div className="space-y-6">
       <section>
         <h3 className="text-lg font-semibold">Active Subscriptions</h3>
-        {subscriptions.length === 0 ? (
+        {(subscriptions ?? []).length === 0 ? (
           <div>No active subscriptions.</div>
         ) : (
           <div className="space-y-3">
-            {subscriptions.map((s) => (
+            {(subscriptions ?? []).map((s) => (
               <div key={s.id} className="flex items-center justify-between p-3 border rounded">
                 <div>
                   <div className="font-medium">{s.plan}</div>
@@ -69,11 +69,11 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
 
       <section>
         <h3 className="text-lg font-semibold">Invoices</h3>
-        {invoices.length === 0 ? (
+        {(invoices ?? []).length === 0 ? (
           <div>No invoices.</div>
         ) : (
           <div className="space-y-2">
-            {invoices.map((inv) => (
+            {(invoices ?? []).map((inv) => (
               <div key={inv.id} className="flex items-center justify-between p-3 border rounded">
                 <div>
                   <div className="font-medium">{inv.id} · {inv.amount}</div>
