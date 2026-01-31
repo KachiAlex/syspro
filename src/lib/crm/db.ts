@@ -140,13 +140,27 @@ export async function updateCustomer(id: string, updates: Partial<{ name: string
 export async function listCustomers(filters: { tenantSlug: string; regionId?: string | null; limit?: number }) {
   const sql = SQL;
   await ensureCrmTables(sql);
-  const rows = (await sql`
-    select * from crm_customers
-    where tenant_slug = ${filters.tenantSlug}
-    ${filters.regionId ? sql`and region_id = ${filters.regionId}` : sql``}
-    order by created_at desc
-    ${filters.limit ? sql`limit ${filters.limit}` : sql``}
-  `) as CrmCustomerRecord[];
+  
+  const limit = filters.limit ? Math.min(Math.max(filters.limit, 1), 100) : 50;
+  
+  let rows: CrmCustomerRecord[];
+  if (filters.regionId) {
+    rows = (await sql`
+      select * from crm_customers
+      where tenant_slug = ${filters.tenantSlug}
+      and region_id = ${filters.regionId}
+      order by created_at desc
+      limit ${limit}
+    `) as CrmCustomerRecord[];
+  } else {
+    rows = (await sql`
+      select * from crm_customers
+      where tenant_slug = ${filters.tenantSlug}
+      order by created_at desc
+      limit ${limit}
+    `) as CrmCustomerRecord[];
+  }
+  
   return rows.map(normalizeCustomerRow);
 }
 

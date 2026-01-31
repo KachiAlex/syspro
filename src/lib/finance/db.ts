@@ -251,16 +251,51 @@ export async function listFinanceAccounts(filters: {
 }): Promise<FinanceAccount[]> {
   const sql = SQL;
   await ensureFinanceTables(sql);
-  const rows = (await sql`
-    select *
-    from finance_accounts
-    where tenant_slug = ${filters.tenantSlug}
-      ${filters.regionId ? sql`and (region_id is null or region_id = ${filters.regionId})` : sql``}
-      ${filters.branchId ? sql`and (branch_id is null or branch_id = ${filters.branchId})` : sql``}
-    order by balance desc
-    ${filters.limit ? sql`limit ${filters.limit}` : sql``}
-    ${filters.offset ? sql`offset ${filters.offset}` : sql``}
-  `) as FinanceAccountRecord[];
+  const limit = Math.min(Math.max(filters.limit ?? 50, 1), 100);
+  const offset = Math.max(filters.offset ?? 0, 0);
+  
+  let rows: FinanceAccountRecord[];
+  if (filters.regionId && filters.branchId) {
+    rows = (await sql`
+      select *
+      from finance_accounts
+      where tenant_slug = ${filters.tenantSlug}
+        and (region_id is null or region_id = ${filters.regionId})
+        and (branch_id is null or branch_id = ${filters.branchId})
+      order by balance desc
+      limit ${limit}
+      offset ${offset}
+    `) as FinanceAccountRecord[];
+  } else if (filters.regionId) {
+    rows = (await sql`
+      select *
+      from finance_accounts
+      where tenant_slug = ${filters.tenantSlug}
+        and (region_id is null or region_id = ${filters.regionId})
+      order by balance desc
+      limit ${limit}
+      offset ${offset}
+    `) as FinanceAccountRecord[];
+  } else if (filters.branchId) {
+    rows = (await sql`
+      select *
+      from finance_accounts
+      where tenant_slug = ${filters.tenantSlug}
+        and (branch_id is null or branch_id = ${filters.branchId})
+      order by balance desc
+      limit ${limit}
+      offset ${offset}
+    `) as FinanceAccountRecord[];
+  } else {
+    rows = (await sql`
+      select *
+      from finance_accounts
+      where tenant_slug = ${filters.tenantSlug}
+      order by balance desc
+      limit ${limit}
+      offset ${offset}
+    `) as FinanceAccountRecord[];
+  }
   return rows.map(normalizeFinanceAccountRow);
 }
 
@@ -395,17 +430,95 @@ type InvoiceFilters = {
 export async function listFinanceInvoices(filters: InvoiceFilters): Promise<FinanceInvoice[]> {
   const sql = SQL;
   await ensureFinanceTables(sql);
-  const rows = (await sql`
-    select *
-    from finance_invoices
-    where tenant_slug = ${filters.tenantSlug}
-      ${filters.status ? sql`and status = ${filters.status}` : sql``}
-      ${filters.regionId ? sql`and (region_id is null or region_id = ${filters.regionId})` : sql``}
-      ${filters.branchId ? sql`and (branch_id is null or branch_id = ${filters.branchId})` : sql``}
-    order by issued_date desc, created_at desc
-    ${filters.limit ? sql`limit ${filters.limit}` : sql``}
-    ${filters.offset ? sql`offset ${filters.offset}` : sql``}
-  `) as FinanceInvoiceRecord[];
+  const limit = Math.min(Math.max(filters.limit ?? 50, 1), 100);
+  const offset = Math.max(filters.offset ?? 0, 0);
+  
+  let rows: FinanceInvoiceRecord[];
+  if (filters.status && filters.regionId && filters.branchId) {
+    rows = (await sql`
+      select *
+      from finance_invoices
+      where tenant_slug = ${filters.tenantSlug}
+        and status = ${filters.status}
+        and (region_id is null or region_id = ${filters.regionId})
+        and (branch_id is null or branch_id = ${filters.branchId})
+      order by issued_date desc, created_at desc
+      limit ${limit}
+      offset ${offset}
+    `) as FinanceInvoiceRecord[];
+  } else if (filters.status && filters.regionId) {
+    rows = (await sql`
+      select *
+      from finance_invoices
+      where tenant_slug = ${filters.tenantSlug}
+        and status = ${filters.status}
+        and (region_id is null or region_id = ${filters.regionId})
+      order by issued_date desc, created_at desc
+      limit ${limit}
+      offset ${offset}
+    `) as FinanceInvoiceRecord[];
+  } else if (filters.status && filters.branchId) {
+    rows = (await sql`
+      select *
+      from finance_invoices
+      where tenant_slug = ${filters.tenantSlug}
+        and status = ${filters.status}
+        and (branch_id is null or branch_id = ${filters.branchId})
+      order by issued_date desc, created_at desc
+      limit ${limit}
+      offset ${offset}
+    `) as FinanceInvoiceRecord[];
+  } else if (filters.status) {
+    rows = (await sql`
+      select *
+      from finance_invoices
+      where tenant_slug = ${filters.tenantSlug}
+        and status = ${filters.status}
+      order by issued_date desc, created_at desc
+      limit ${limit}
+      offset ${offset}
+    `) as FinanceInvoiceRecord[];
+  } else if (filters.regionId && filters.branchId) {
+    rows = (await sql`
+      select *
+      from finance_invoices
+      where tenant_slug = ${filters.tenantSlug}
+        and (region_id is null or region_id = ${filters.regionId})
+        and (branch_id is null or branch_id = ${filters.branchId})
+      order by issued_date desc, created_at desc
+      limit ${limit}
+      offset ${offset}
+    `) as FinanceInvoiceRecord[];
+  } else if (filters.regionId) {
+    rows = (await sql`
+      select *
+      from finance_invoices
+      where tenant_slug = ${filters.tenantSlug}
+        and (region_id is null or region_id = ${filters.regionId})
+      order by issued_date desc, created_at desc
+      limit ${limit}
+      offset ${offset}
+    `) as FinanceInvoiceRecord[];
+  } else if (filters.branchId) {
+    rows = (await sql`
+      select *
+      from finance_invoices
+      where tenant_slug = ${filters.tenantSlug}
+        and (branch_id is null or branch_id = ${filters.branchId})
+      order by issued_date desc, created_at desc
+      limit ${limit}
+      offset ${offset}
+    `) as FinanceInvoiceRecord[];
+  } else {
+    rows = (await sql`
+      select *
+      from finance_invoices
+      where tenant_slug = ${filters.tenantSlug}
+      order by issued_date desc, created_at desc
+      limit ${limit}
+      offset ${offset}
+    `) as FinanceInvoiceRecord[];
+  }
 
   if (!rows.length) {
     return [];
