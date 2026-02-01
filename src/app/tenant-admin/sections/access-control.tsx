@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { z } from "zod";
+import { useForm } from "@/lib/use-form";
+import { TextInput, FormButton, FormAlert } from "@/components/form";
 
 type AccessControl = {
   id: string;
@@ -13,21 +16,34 @@ type AccessControl = {
 
 const MODULES = ["crm", "finance", "people", "projects", "billing", "integrations"];
 
+const accessControlSchema = z.object({
+  roleName: z.string().min(1, "Role name is required").min(2, "Name must be at least 2 characters"),
+});
+
+type AccessControlFormData = z.infer<typeof accessControlSchema>;
+
 export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string | null }) {
   const [accessControls, setAccessControls] = useState<AccessControl[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const [roleName, setRoleName] = useState("");
   const [selectedModules, setSelectedModules] = useState<{ module: string; read: boolean; write: boolean; admin: boolean }[]>([]);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editModules, setEditModules] = useState<AccessControl["moduleAccess"]>([]);
   const ts = tenantSlug ?? "kreatix-default";
 
+  const form = useForm<AccessControlFormData>({
+    initialValues: {
+      roleName: "",
+    },
+    schema: accessControlSchema,
+  });
+
   async function load() {
     setLoading(true);
-    setError(null);
+    setServerError(null);
     try {
       const res = await fetch(`/api/tenant/access-control?tenantSlug=${encodeURIComponent(ts)}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load access controls");
@@ -35,7 +51,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
       setAccessControls(Array.isArray(payload.accessControls) ? payload.accessControls : []);
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : String(err));
+      setServerError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -43,7 +59,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
 
   useEffect(() => {
     load();
-  }, []);
+  }, [ts]);
 
   function toggleModulePermission(module: string, permission: "read" | "write" | "admin") {
     setSelectedModules((prev) => {
@@ -69,21 +85,25 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!roleName.trim()) return;
+    const errors = form.validate();
+    if (errors.length > 0) return;
+
     try {
-      const payload = { roleName: roleName.trim(), moduleAccess: selectedModules };
+      const payload = { roleName: form.values.roleName.trim(), moduleAccess: selectedModules };
       const res = await fetch(`/api/tenant/access-control`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Create failed");
-      setRoleName("");
+      form.resetForm();
       setSelectedModules([]);
+      setSuccessMessage("Access control created successfully");
+      setTimeout(() => setSuccessMessage(null), 3000);
       await load();
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : String(err));
+      setServerError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -102,10 +122,12 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
       });
       if (!res.ok) throw new Error("Update failed");
       setEditingId(null);
+      setSuccessMessage("Access control updated successfully");
+      setTimeout(() => setSuccessMessage(null), 3000);
       await load();
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : String(err));
+      setServerError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -119,10 +141,12 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
     try {
       const res = await fetch(`/api/tenant/access-control/${encodeURIComponent(id)}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Delete failed");
+      setSuccessMessage("Access control deleted successfully");
+      setTimeout(() => setSuccessMessage(null), 3000);
       await load();
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : String(err));
+      setServerError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -138,30 +162,50 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
         </div>
 
         <form className="mt-4 space-y-4" onSubmit={handleCreate}>
-          <div>
-            <input value={roleName} onChange={(e) => setRoleName(e.target.value)} placeholder="Role name" className="rounded-lg border px-3 py-2 w-full" required />
-          </div>
+          <TextInput
+            label="Role Name"
+            placeholder="e.g., Regional Manager"
+            required
+            {...form.getFieldProps("roleName")}
+            error={form.errorMap.roleName}
+            hint="Enter the name of the role to configure access"
+          />
 
           <div>
-            <p className="mb-2 text-xs text-slate-500">Module permissions</p>
+            <label className="block text-sm font-medium text-slate-900 mb-3">Module Permissions</label>
             <div className="grid gap-3 md:grid-cols-2">
               {(MODULES ?? []).map((mod) => {
                 const selected = selectedModules.find((m) => m.module === mod);
                 return (
-                  <div key={mod} className="rounded-lg border px-3 py-2">
-                    <p className="mb-2 text-sm font-semibold text-slate-700">{mod}</p>
-                    <div className="flex gap-3">
-                      <label className="inline-flex items-center gap-2 text-xs">
-                        <input type="checkbox" checked={selected?.read ?? false} onChange={() => toggleModulePermission(mod, "read")} />
-                        <span>Read</span>
+                  <div key={mod} className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p className="mb-2 text-sm font-semibold text-slate-900 capitalize">{mod}</p>
+                    <div className="flex gap-4">
+                      <label className="inline-flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selected?.read ?? false}
+                          onChange={() => toggleModulePermission(mod, "read")}
+                          className="h-4 w-4 rounded border-slate-300"
+                        />
+                        <span className="text-slate-700">Read</span>
                       </label>
-                      <label className="inline-flex items-center gap-2 text-xs">
-                        <input type="checkbox" checked={selected?.write ?? false} onChange={() => toggleModulePermission(mod, "write")} />
-                        <span>Write</span>
+                      <label className="inline-flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selected?.write ?? false}
+                          onChange={() => toggleModulePermission(mod, "write")}
+                          className="h-4 w-4 rounded border-slate-300"
+                        />
+                        <span className="text-slate-700">Write</span>
                       </label>
-                      <label className="inline-flex items-center gap-2 text-xs">
-                        <input type="checkbox" checked={selected?.admin ?? false} onChange={() => toggleModulePermission(mod, "admin")} />
-                        <span>Admin</span>
+                      <label className="inline-flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selected?.admin ?? false}
+                          onChange={() => toggleModulePermission(mod, "admin")}
+                          className="h-4 w-4 rounded border-slate-300"
+                        />
+                        <span className="text-slate-700">Admin</span>
                       </label>
                     </div>
                   </div>
@@ -170,9 +214,27 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
             </div>
           </div>
 
-          <button type="submit" className="rounded-full bg-slate-900 px-4 py-2 text-white">Create access control</button>
+          <div className="flex gap-2 pt-2">
+            <FormButton type="submit" loading={form.isSubmitting}>
+              Create access control
+            </FormButton>
+          </div>
 
-          {error && <div className="text-sm text-rose-600">{error}</div>}
+          {serverError && (
+            <FormAlert
+              type="error"
+              title="Error"
+              message={serverError}
+              onClose={() => setServerError(null)}
+            />
+          )}
+          {successMessage && (
+            <FormAlert
+              type="success"
+              message={successMessage}
+              onClose={() => setSuccessMessage(null)}
+            />
+          )}
         </form>
       </div>
 
