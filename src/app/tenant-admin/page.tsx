@@ -309,6 +309,20 @@ const FINANCE_EXPENSES_BASELINE: FinanceExpenseItem[] = [
   { id: "EXP-2408", description: "Training - Analytics certification program", category: "training", amount: "₦890K", submittedBy: "Zainab Ibrahim", submittedDate: "1w ago", status: "approved", branch: "Lagos HQ" },
 ];
 
+type PaymentRecord = {
+  id: string;
+  payableId: string;
+  method: "bank_transfer" | "check" | "cash" | "mobile_money" | "wire";
+  amount: string;
+  paymentDate: string;
+  referenceNumber: string;
+  confirmationDetails: string;
+  recordedBy: string;
+  recordedDate: string;
+};
+
+const PAYMENT_RECORDS_BASELINE: PaymentRecord[] = [];
+
 const DEFAULT_FINANCE_CURRENCY = "₦";
 
 const FINANCE_CASH_ACCOUNTS_BASELINE: FinanceCashAccount[] = [
@@ -4299,11 +4313,19 @@ function FinanceInvoicesWorkspace({
 }
 
 function FinancePaymentsWorkspace() {
-  const [payments] = useState(FINANCE_PAYABLES_BASELINE);
+  const [payments, setPayments] = useState(FINANCE_PAYABLES_BASELINE);
+  const [recordedPayments, setRecordedPayments] = useState<PaymentRecord[]>(PAYMENT_RECORDS_BASELINE);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [branchFilter, setBranchFilter] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [selectedPaymentForRecording, setSelectedPaymentForRecording] = useState<FinanceScheduleItem | null>(null);
+  const [paymentForm, setPaymentForm] = useState({
+    method: "bank_transfer" as const,
+    paymentDate: new Date().toISOString().split('T')[0],
+    referenceNumber: "",
+    confirmationDetails: "",
+  });
 
   const filteredPayments = payments.filter((payment) => {
     const matchesSearch = payment.entity.toLowerCase().includes(searchTerm.toLowerCase());
@@ -4313,16 +4335,57 @@ function FinancePaymentsWorkspace() {
   });
 
   const stats = {
-    totalDue: FINANCE_PAYABLES_BASELINE.reduce((sum, p) => {
+    totalDue: payments.filter(p => p.status !== "paid").reduce((sum, p) => {
       const amount = parseFloat(p.amount.replace(/[₦,M]/g, ""));
       return sum + amount;
     }, 0),
-    overdueCount: FINANCE_PAYABLES_BASELINE.filter((p) => p.status === "overdue").length,
-    pendingCount: FINANCE_PAYABLES_BASELINE.filter((p) => p.status === "current" || p.status === "due_soon").length,
+    overdueCount: payments.filter((p) => p.status === "overdue").length,
+    pendingCount: payments.filter((p) => p.status === "current" || p.status === "due_soon").length,
   };
 
   const handlePayNow = (payment: FinanceScheduleItem) => {
-    console.log("Pay now:", payment.id);
+    setSelectedPaymentForRecording(payment);
+    setPaymentForm({
+      method: "bank_transfer",
+      paymentDate: new Date().toISOString().split('T')[0],
+      referenceNumber: "",
+      confirmationDetails: "",
+    });
+  };
+
+  const handleSavePayment = () => {
+    if (!selectedPaymentForRecording) return;
+    if (!paymentForm.referenceNumber || !paymentForm.confirmationDetails) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    // Create payment record
+    const newRecord: PaymentRecord = {
+      id: `PAY-${Date.now()}`,
+      payableId: selectedPaymentForRecording.id,
+      method: paymentForm.method,
+      amount: selectedPaymentForRecording.amount,
+      paymentDate: paymentForm.paymentDate,
+      referenceNumber: paymentForm.referenceNumber,
+      confirmationDetails: paymentForm.confirmationDetails,
+      recordedBy: "Current User",
+      recordedDate: new Date().toISOString().split('T')[0],
+    };
+
+    // Add to recorded payments
+    setRecordedPayments([...recordedPayments, newRecord]);
+
+    // Update payment status to paid
+    setPayments(payments.map(p => 
+      p.id === selectedPaymentForRecording.id 
+        ? { ...p, status: "paid" as const, dueDate: "Paid" }
+        : p
+    ));
+
+    // Close drawer and reset
+    setSelectedPaymentForRecording(null);
+    setOpenMenuId(null);
   };
 
   const handleReschedule = (payment: FinanceScheduleItem) => {
@@ -4367,7 +4430,24 @@ function FinancePaymentsWorkspace() {
     }
   };
 
-  const uniqueBranches = Array.from(new Set(FINANCE_PAYABLES_BASELINE.map((p) => p.branch)));
+  const getMethodLabel = (method: string) => {
+    switch (method) {
+      case "bank_transfer":
+        return "Bank Transfer";
+      case "check":
+        return "Check";
+      case "cash":
+        return "Cash";
+      case "mobile_money":
+        return "Mobile Money";
+      case "wire":
+        return "Wire Transfer";
+      default:
+        return method;
+    }
+  };
+
+  const uniqueBranches = Array.from(new Set(payments.map((p) => p.branch)));
 
   return (
     <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
@@ -4493,26 +4573,30 @@ function FinancePaymentsWorkspace() {
                               <Send className="h-4 w-4 text-slate-400" />
                               Pay Now
                             </button>
-                            <button
-                              onClick={() => {
-                                handleReschedule(payment);
-                                setOpenMenuId(null);
-                              }}
-                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100"
-                            >
-                              <Clock className="h-4 w-4 text-slate-400" />
-                              Reschedule
-                            </button>
-                            <button
-                              onClick={() => {
-                                handleApprove(payment);
-                                setOpenMenuId(null);
-                              }}
-                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100"
-                            >
-                              <CheckCircle className="h-4 w-4 text-slate-400" />
-                              Approve
-                            </button>
+                            {payment.status !== "paid" && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    handleReschedule(payment);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100"
+                                >
+                                  <Clock className="h-4 w-4 text-slate-400" />
+                                  Reschedule
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleApprove(payment);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100"
+                                >
+                                  <CheckCircle className="h-4 w-4 text-slate-400" />
+                                  Approve
+                                </button>
+                              </>
+                            )}
                             <button
                               onClick={() => {
                                 handleAddNote(payment);
@@ -4545,9 +4629,121 @@ function FinancePaymentsWorkspace() {
           <p>
             Showing <span className="font-semibold text-slate-900">{filteredPayments.length}</span> of{" "}
             <span className="font-semibold text-slate-900">{payments.length}</span> payments
+            {recordedPayments.length > 0 && (
+              <> • <span className="font-semibold text-green-600">{recordedPayments.length} recorded</span></>
+            )}
           </p>
         </div>
       </div>
+
+      {/* Payment Recording Drawer */}
+      {selectedPaymentForRecording && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/40 z-40 transition-opacity"
+            onClick={() => setSelectedPaymentForRecording(null)}
+          />
+          <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-xl z-50 overflow-y-auto rounded-l-3xl">
+            <div className="p-8 space-y-6">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Record Payment</p>
+                  <h3 className="text-2xl font-semibold text-slate-900">{selectedPaymentForRecording.entity}</h3>
+                </div>
+                <button
+                  onClick={() => setSelectedPaymentForRecording(null)}
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Payment Details */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                <div>
+                  <p className="text-xs font-semibold text-slate-600">Amount Due</p>
+                  <p className="text-xl font-bold text-slate-900">{selectedPaymentForRecording.amount}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-600">Original Due Date</p>
+                  <p className="text-sm text-slate-700">{selectedPaymentForRecording.dueDate}</p>
+                </div>
+              </div>
+
+              {/* Form */}
+              <div className="space-y-4">
+                {/* Payment Method */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Payment Method*</label>
+                  <select
+                    value={paymentForm.method}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, method: e.target.value as any })}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+                  >
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="check">Check</option>
+                    <option value="cash">Cash</option>
+                    <option value="mobile_money">Mobile Money</option>
+                    <option value="wire">Wire Transfer</option>
+                  </select>
+                </div>
+
+                {/* Payment Date */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Payment Date*</label>
+                  <input
+                    type="date"
+                    value={paymentForm.paymentDate}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, paymentDate: e.target.value })}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+                  />
+                </div>
+
+                {/* Reference Number */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Reference Number*</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., TRF-123456, CHK-789"
+                    value={paymentForm.referenceNumber}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, referenceNumber: e.target.value })}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+                  />
+                </div>
+
+                {/* Confirmation Details */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Confirmation Details*</label>
+                  <textarea
+                    placeholder="Bank confirmation, receipt details, or payment notes..."
+                    value={paymentForm.confirmationDetails}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, confirmationDetails: e.target.value })}
+                    rows={4}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+                  />
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-6 border-t border-slate-200">
+                <button
+                  onClick={() => setSelectedPaymentForRecording(null)}
+                  className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSavePayment}
+                  className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                >
+                  Record Payment
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
