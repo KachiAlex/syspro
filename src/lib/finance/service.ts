@@ -310,3 +310,360 @@ function humanizeOrgLabel(value?: string | null): string | undefined {
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(" ");
 }
+// GL Posting and Journal Entry Service
+
+import type { Expense, ExpenseTaxType } from "@/lib/finance/types";
+
+export type JournalEntry = {
+  id: string;
+  expenseId: string;
+  account: string;
+  accountId: string;
+  debit: number;
+  credit: number;
+  description: string;
+  reference: string;
+  entryDate: string;
+  createdAt: string;
+};
+
+/**
+ * Generate journal entries for an expense based on its type and tax treatment
+ * Supports 6 scenarios: Standard Vendor, VAT, WHT, Prepaid, Reimbursement, Cash
+ */
+export function generateExpenseJournalEntries(expense: Expense): JournalEntry[] {
+  const entries: JournalEntry[] = [];
+  const date = new Date().toISOString();
+  const baseRef = `EXP-${expense.id.substring(0, 8)}`;
+
+  switch (expense.type) {
+    case "vendor": {
+      // Scenario 1 & 2: Standard Vendor Purchase (with optional VAT/WHT)
+      // Debit: Expense GL account (category-specific)
+      const expenseGl = getGLAccountForCategory(expense.categoryId);
+      entries.push({
+        id: `je_${expense.id}_1`,
+        expenseId: expense.id,
+        account: `Expense - ${expense.category}`,
+        accountId: expenseGl,
+        debit: expense.amount,
+        credit: 0,
+        description: `Vendor expense: ${expense.description}`,
+        reference: baseRef,
+        entryDate: expense.date,
+        createdAt: date,
+      });
+
+      // Credit: Payable (GL 2100)
+      entries.push({
+        id: `je_${expense.id}_2`,
+        expenseId: expense.id,
+        account: "Accounts Payable",
+        accountId: "2100",
+        debit: 0,
+        credit: expense.amount,
+        description: `Payable to ${expense.vendor || "vendor"}`,
+        reference: baseRef,
+        entryDate: expense.date,
+        createdAt: date,
+      });
+
+      // Handle VAT or WHT if applicable
+      if (expense.taxType === "VAT") {
+        // Scenario 2: VAT Entry
+        // Debit: Input Tax (GL 1050) - recoverable
+        entries.push({
+          id: `je_${expense.id}_3`,
+          expenseId: expense.id,
+          account: "Input Tax - VAT",
+          accountId: "1050",
+          debit: expense.taxAmount,
+          credit: 0,
+          description: `VAT 7.5% on vendor purchase`,
+          reference: baseRef,
+          entryDate: expense.date,
+          createdAt: date,
+        });
+
+        // Credit: Payable (increase by tax)
+        entries.push({
+          id: `je_${expense.id}_4`,
+          expenseId: expense.id,
+          account: "Accounts Payable",
+          accountId: "2100",
+          debit: 0,
+          credit: expense.taxAmount,
+          description: `VAT payable on vendor purchase`,
+          reference: baseRef,
+          entryDate: expense.date,
+          createdAt: date,
+        });
+      } else if (expense.taxType === "WHT") {
+        // Scenario 3: WHT Entry (professional services)
+        // Debit: WHT Receivable (GL 1600)
+        entries.push({
+          id: `je_${expense.id}_3`,
+          expenseId: expense.id,
+          account: "Withholding Tax Receivable",
+          accountId: "1600",
+          debit: expense.taxAmount,
+          credit: 0,
+          description: `WHT 5% on professional services`,
+          reference: baseRef,
+          entryDate: expense.date,
+          createdAt: date,
+        });
+
+        // Credit: Payable (already includes WHT)
+        // Amount paid to vendor = gross - WHT
+        const netAmount = expense.amount - expense.taxAmount;
+        entries.push({
+          id: `je_${expense.id}_4`,
+          expenseId: expense.id,
+          account: "Accounts Payable",
+          accountId: "2100",
+          debit: 0,
+          credit: netAmount,
+          description: `Net payable to vendor (after WHT)`,
+          reference: baseRef,
+          entryDate: expense.date,
+          createdAt: date,
+        });
+      }
+      break;
+    }
+
+    case "reimbursement": {
+      // Scenario 5: Employee Reimbursement
+      // Debit: Expense GL account
+      const expenseGl = getGLAccountForCategory(expense.categoryId);
+      entries.push({
+        id: `je_${expense.id}_1`,
+        expenseId: expense.id,
+        account: `Expense - ${expense.category}`,
+        accountId: expenseGl,
+        debit: expense.amount,
+        credit: 0,
+        description: `Employee reimbursement: ${expense.description}`,
+        reference: baseRef,
+        entryDate: expense.date,
+        createdAt: date,
+      });
+
+      // Credit: Employee Receivable (GL 1300) - will be offset when reimbursed
+      entries.push({
+        id: `je_${expense.id}_2`,
+        expenseId: expense.id,
+        account: "Employee Advances/Receivables",
+        accountId: "1300",
+        debit: 0,
+        credit: expense.amount,
+        description: `Reimbursement to employee`,
+        reference: baseRef,
+        entryDate: expense.date,
+        createdAt: date,
+      });
+
+      // Handle tax on reimbursement
+      if (expense.taxType === "VAT") {
+        entries.push({
+          id: `je_${expense.id}_3`,
+          expenseId: expense.id,
+          account: "Input Tax - VAT",
+          accountId: "1050",
+          debit: expense.taxAmount,
+          credit: 0,
+          description: `VAT on reimbursable expense`,
+          reference: baseRef,
+          entryDate: expense.date,
+          createdAt: date,
+        });
+
+        entries.push({
+          id: `je_${expense.id}_4`,
+          expenseId: expense.id,
+          account: "Employee Advances/Receivables",
+          accountId: "1300",
+          debit: 0,
+          credit: expense.taxAmount,
+          description: `VAT component of reimbursement`,
+          reference: baseRef,
+          entryDate: expense.date,
+          createdAt: date,
+        });
+      }
+      break;
+    }
+
+    case "cash": {
+      // Scenario 6: Cash Expense (petty cash)
+      // Debit: Expense GL account
+      const expenseGl = getGLAccountForCategory(expense.categoryId);
+      entries.push({
+        id: `je_${expense.id}_1`,
+        expenseId: expense.id,
+        account: `Expense - ${expense.category}`,
+        accountId: expenseGl,
+        debit: expense.amount,
+        credit: 0,
+        description: `Cash expense: ${expense.description}`,
+        reference: baseRef,
+        entryDate: expense.date,
+        createdAt: date,
+      });
+
+      // Credit: Cash (GL 1000)
+      entries.push({
+        id: `je_${expense.id}_2`,
+        expenseId: expense.id,
+        account: "Cash on Hand",
+        accountId: "1000",
+        debit: 0,
+        credit: expense.amount,
+        description: `Cash payment for expense`,
+        reference: baseRef,
+        entryDate: expense.date,
+        createdAt: date,
+      });
+      break;
+    }
+
+    case "prepaid": {
+      // Scenario 4: Prepaid Expense (multi-period)
+      // Debit: Prepaid GL (GL 1200) - amortized over periods
+      entries.push({
+        id: `je_${expense.id}_1`,
+        expenseId: expense.id,
+        account: "Prepaid Expenses",
+        accountId: "1200",
+        debit: expense.amount,
+        credit: 0,
+        description: `Prepaid ${expense.category} (to be amortized)`,
+        reference: baseRef,
+        entryDate: expense.date,
+        createdAt: date,
+      });
+
+      // Credit: Payable or Cash
+      const creditAccount = expense.vendor ? "2100" : "1000"; // Payable or Cash
+      const creditLabel = expense.vendor ? "Accounts Payable" : "Cash on Hand";
+      entries.push({
+        id: `je_${expense.id}_2`,
+        expenseId: expense.id,
+        account: creditLabel,
+        accountId: creditAccount,
+        debit: 0,
+        credit: expense.amount,
+        description: `Payment for prepaid ${expense.category}`,
+        reference: baseRef,
+        entryDate: expense.date,
+        createdAt: date,
+      });
+
+      // Add amortization note to metadata
+      if (expense.prepaidSchedule) {
+        entries.push({
+          id: `je_${expense.id}_3`,
+          expenseId: expense.id,
+          account: "Prepaid Amortization Schedule",
+          accountId: "1200",
+          debit: 0,
+          credit: 0,
+          description: `Amortization: ${JSON.stringify(expense.prepaidSchedule)}`,
+          reference: baseRef,
+          entryDate: expense.date,
+          createdAt: date,
+        });
+      }
+      break;
+    }
+  }
+
+  return entries;
+}
+
+/**
+ * Get GL account for expense category
+ */
+function getGLAccountForCategory(categoryId: string): string {
+  const categoryGLMap: Record<string, string> = {
+    cat_travel: "6010",
+    cat_supplies: "6020",
+    cat_meals: "6030",
+    cat_insurance: "6040",
+    cat_professional: "6050",
+  };
+  return categoryGLMap[categoryId] || "6999"; // Default to miscellaneous expense
+}
+
+/**
+ * Get GL account for tax type
+ */
+function getGLAccountForTax(taxType: ExpenseTaxType): string {
+  switch (taxType) {
+    case "VAT":
+      return "1050"; // Input Tax - Recoverable
+    case "WHT":
+      return "2080"; // Withholding Tax Payable
+    default:
+      return "";
+  }
+}
+
+/**
+ * Calculate budget usage for an expense
+ */
+export function calculateBudgetUsage(categoryLimit: number | undefined, spent: number): {
+  usage: number;
+  status: "normal" | "warning" | "critical";
+} {
+  if (!categoryLimit || categoryLimit === 0) {
+    return { usage: 0, status: "normal" };
+  }
+
+  const percentage = (spent / categoryLimit) * 100;
+  let status: "normal" | "warning" | "critical" = "normal";
+
+  if (percentage >= 95) {
+    status = "critical";
+  } else if (percentage >= 80) {
+    status = "warning";
+  }
+
+  return {
+    usage: Math.min(percentage, 100),
+    status,
+  };
+}
+
+/**
+ * Determine approval routing based on amount
+ */
+export function determineApprovalRoute(amount: number): {
+  levels: Array<{ level: number; role: "MANAGER" | "FINANCE" | "EXECUTIVE"; threshold: number }>;
+  routeDescription: string;
+} {
+  if (amount <= 50000) {
+    return {
+      levels: [{ level: 1, role: "MANAGER", threshold: 50000 }],
+      routeDescription: "Manager approval only (≤ ₦50,000)",
+    };
+  } else if (amount <= 500000) {
+    return {
+      levels: [
+        { level: 1, role: "MANAGER", threshold: 50000 },
+        { level: 2, role: "FINANCE", threshold: 500000 },
+      ],
+      routeDescription: "Manager + Finance approval (₦50K - ₦500K)",
+    };
+  } else {
+    return {
+      levels: [
+        { level: 1, role: "MANAGER", threshold: 50000 },
+        { level: 2, role: "FINANCE", threshold: 500000 },
+        { level: 3, role: "EXECUTIVE", threshold: Infinity },
+      ],
+      routeDescription: "All 3 levels required (> ₦500K)",
+    };
+  }
+}

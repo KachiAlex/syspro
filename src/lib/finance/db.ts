@@ -709,3 +709,484 @@ export async function updateFinanceInvoice(
   const [invoiceRow, lineRows] = updated;
   return normalizeFinanceInvoiceRow(invoiceRow, lineRows);
 }
+// Expense Management Database Functions
+
+import type {
+  Expense,
+  ExpenseCreateInput,
+  ExpenseUpdateInput,
+  ExpenseApproveInput,
+  ExpenseCategory,
+  ExpenseApproval,
+  ExpenseAuditLog,
+} from "@/lib/finance/types";
+
+export type ExpenseRecord = {
+  id: string;
+  tenant_slug: string;
+  region_id: string | null;
+  branch_id: string | null;
+  type: string;
+  amount: number;
+  tax_amount: number;
+  total_amount: number;
+  tax_type: string;
+  category: string;
+  category_id: string;
+  description: string;
+  vendor: string | null;
+  date: string;
+  approval_status: string;
+  payment_status: string;
+  gl_account_id: string | null;
+  notes: string | null;
+  attachments: string[] | null;
+  prepaid_schedule: unknown;
+  metadata: unknown;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+};
+
+export type ExpenseApprovalRecord = {
+  id: string;
+  expense_id: string;
+  approver_role: string;
+  approver_id: string;
+  approver_name: string;
+  action: string;
+  reason: string | null;
+  timestamp: string;
+  amount_threshold: number;
+};
+
+export type ExpenseAuditLogRecord = {
+  id: string;
+  expense_id: string;
+  action: string;
+  timestamp: string;
+  user_id: string;
+  details: unknown;
+};
+
+export type ExpenseCategoryRecord = {
+  id: string;
+  code: string;
+  name: string;
+  account_id: string;
+  requires_vendor: boolean;
+  requires_receipt: boolean;
+  category_limit: number | null;
+  policy_description: string | null;
+};
+
+export async function ensureExpenseTables(sql: SqlClient = SQL) {
+  await sql`
+    create table if not exists expense_categories (
+      id text primary key,
+      code text not null unique,
+      name text not null,
+      account_id text not null,
+      requires_vendor boolean default false,
+      requires_receipt boolean default false,
+      category_limit numeric,
+      policy_description text,
+      created_at timestamptz default now()
+    )
+  `;
+
+  await sql`
+    create table if not exists expenses (
+      id text primary key,
+      tenant_slug text not null,
+      region_id text,
+      branch_id text,
+      type text not null check (type in ('vendor', 'reimbursement', 'cash', 'prepaid')),
+      amount numeric not null,
+      tax_amount numeric not null default 0,
+      total_amount numeric not null,
+      tax_type text not null check (tax_type in ('VAT', 'WHT', 'NONE')),
+      category text not null,
+      category_id text not null references expense_categories (id),
+      description text not null,
+      vendor text,
+      date date not null,
+      approval_status text not null default 'DRAFT' check (approval_status in ('DRAFT', 'PENDING', 'APPROVED', 'REJECTED', 'CLARIFY_NEEDED')),
+      payment_status text not null default 'UNPAID' check (payment_status in ('UNPAID', 'PAID', 'REIMBURSED', 'PENDING')),
+      gl_account_id text,
+      notes text,
+      attachments text[] default array[]::text[],
+      prepaid_schedule jsonb,
+      metadata jsonb,
+      created_at timestamptz default now(),
+      updated_at timestamptz default now(),
+      created_by text not null
+    )
+  `;
+
+  await sql`
+    create table if not exists expense_approvals (
+      id text primary key,
+      expense_id text not null references expenses (id) on delete cascade,
+      approver_role text not null check (approver_role in ('MANAGER', 'FINANCE', 'EXECUTIVE')),
+      approver_id text not null,
+      approver_name text not null,
+      action text not null check (action in ('APPROVED', 'REJECTED', 'PENDING', 'CLARIFY_NEEDED')),
+      reason text,
+      timestamp timestamptz default now(),
+      amount_threshold numeric not null,
+      created_at timestamptz default now()
+    )
+  `;
+
+  await sql`
+    create table if not exists expense_audit_logs (
+      id text primary key,
+      expense_id text not null references expenses (id) on delete cascade,
+      action text not null,
+      timestamp timestamptz default now(),
+      user_id text not null,
+      details jsonb,
+      created_at timestamptz default now()
+    )
+  `;
+
+  await Promise.all([
+    sql`create index if not exists expenses_tenant_idx on expenses (tenant_slug, approval_status)`,
+    sql`create index if not exists expenses_category_idx on expenses (category_id, approval_status)`,
+    sql`create index if not exists expenses_date_idx on expenses (date)`,
+    sql`create index if not exists expense_approvals_expense_idx on expense_approvals (expense_id)`,
+    sql`create index if not exists expense_audit_logs_expense_idx on expense_audit_logs (expense_id)`,
+  ]);
+}
+
+function normalizeExpenseRecord(record: ExpenseRecord, approvals: ExpenseApprovalRecord[] = [], auditLogs: ExpenseAuditLogRecord[] = []): Expense {
+  return {
+    id: record.id,
+    tenantSlug: record.tenant_slug,
+    regionId: record.region_id,
+    branchId: record.branch_id,
+    type: record.type as any,
+    amount: Number(record.amount),
+    taxAmount: Number(record.tax_amount),
+    totalAmount: Number(record.total_amount),
+    taxType: record.tax_type as any,
+    category: record.category,
+    categoryId: record.category_id,
+    description: record.description,
+    vendor: record.vendor,
+    date: record.date,
+    approvalStatus: record.approval_status as any,
+    paymentStatus: record.payment_status as any,
+    approvals: approvals.map(a => ({
+      id: a.id,
+      expenseId: a.expense_id,
+      approverRole: a.approver_role as any,
+      approverId: a.approver_id,
+      approverName: a.approver_name,
+      action: a.action as any,
+      reason: a.reason,
+      timestamp: a.timestamp,
+      amountThreshold: Number(a.amount_threshold),
+    })),
+    auditLog: auditLogs.map(l => ({
+      id: l.id,
+      expenseId: l.expense_id,
+      action: l.action,
+      timestamp: l.timestamp,
+      user: l.user_id,
+      details: l.details as Record<string, unknown> | null,
+    })),
+    glAccountId: record.gl_account_id,
+    notes: record.notes,
+    attachments: record.attachments,
+    prepaidSchedule: record.prepaid_schedule as Record<string, unknown> | null,
+    metadata: record.metadata as Record<string, unknown> | null,
+    createdAt: record.created_at,
+    updatedAt: record.updated_at,
+    createdBy: record.created_by,
+  };
+}
+
+export async function listExpenses(filters: {
+  tenantSlug: string;
+  approvalStatus?: string;
+  paymentStatus?: string;
+  categoryId?: string;
+  createdBy?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<Expense[]> {
+  const sql = SQL;
+  await ensureExpenseTables(sql);
+  
+  const limit = Math.min(Math.max(filters.limit ?? 50, 1), 100);
+  const offset = Math.max(filters.offset ?? 0, 0);
+  
+  let query = sql`
+    select e.*, 
+           array_agg(row_to_json(ea.*)) filter (where ea.id is not null) as approvals_agg,
+           array_agg(row_to_json(eal.*)) filter (where eal.id is not null) as audit_agg
+    from expenses e
+    left join expense_approvals ea on e.id = ea.expense_id
+    left join expense_audit_logs eal on e.id = eal.expense_id
+    where e.tenant_slug = ${filters.tenantSlug}
+  `;
+
+  if (filters.approvalStatus) {
+    query = sql`${query} and e.approval_status = ${filters.approvalStatus}`;
+  }
+  if (filters.paymentStatus) {
+    query = sql`${query} and e.payment_status = ${filters.paymentStatus}`;
+  }
+  if (filters.categoryId) {
+    query = sql`${query} and e.category_id = ${filters.categoryId}`;
+  }
+  if (filters.createdBy) {
+    query = sql`${query} and e.created_by = ${filters.createdBy}`;
+  }
+
+  query = sql`${query} group by e.id order by e.created_at desc limit ${limit} offset ${offset}`;
+  
+  const rows = await query as any[];
+  return rows.map(r => normalizeExpenseRecord(r as ExpenseRecord, r.approvals_agg || [], r.audit_agg || []));
+}
+
+export async function getExpense(id: string, tenantSlug: string): Promise<Expense | null> {
+  const sql = SQL;
+  await ensureExpenseTables(sql);
+
+  const rows = (await sql`
+    select e.*, 
+           array_agg(row_to_json(ea.*)) filter (where ea.id is not null) as approvals_agg,
+           array_agg(row_to_json(eal.*)) filter (where eal.id is not null) as audit_agg
+    from expenses e
+    left join expense_approvals ea on e.id = ea.expense_id
+    left join expense_audit_logs eal on e.id = eal.expense_id
+    where e.id = ${id} and e.tenant_slug = ${tenantSlug}
+    group by e.id
+  `) as any[];
+
+  if (rows.length === 0) return null;
+  const row = rows[0];
+  return normalizeExpenseRecord(row as ExpenseRecord, row.approvals_agg || [], row.audit_agg || []);
+}
+
+export async function createExpense(payload: ExpenseCreateInput): Promise<Expense> {
+  const sql = SQL;
+  await ensureExpenseTables(sql);
+  
+  const id = randomUUID();
+  const taxAmount = payload.taxType === "NONE" 
+    ? 0 
+    : payload.taxType === "VAT"
+    ? payload.amount * 0.075
+    : payload.amount * 0.05;
+  
+  const totalAmount = payload.amount + taxAmount;
+
+  const [record] = (await sql`
+    insert into expenses (
+      id,
+      tenant_slug,
+      region_id,
+      branch_id,
+      type,
+      amount,
+      tax_amount,
+      total_amount,
+      tax_type,
+      category,
+      category_id,
+      description,
+      vendor,
+      date,
+      approval_status,
+      payment_status,
+      notes,
+      attachments,
+      metadata,
+      created_by
+    ) values (
+      ${id},
+      ${payload.tenantSlug},
+      ${payload.regionId ?? null},
+      ${payload.branchId ?? null},
+      ${payload.type},
+      ${payload.amount},
+      ${taxAmount},
+      ${totalAmount},
+      ${payload.taxType},
+      ${payload.category},
+      ${payload.categoryId},
+      ${payload.description},
+      ${payload.vendor ?? null},
+      ${payload.date},
+      ${payload.approvalStatus ?? "DRAFT"},
+      ${payload.paymentStatus ?? "UNPAID"},
+      ${payload.notes ?? null},
+      ${payload.attachments ? JSON.stringify(payload.attachments) : null},
+      ${payload.metadata ? JSON.stringify(payload.metadata) : null},
+      ${payload.createdBy}
+    )
+    returning *
+  `) as ExpenseRecord[];
+
+  // Create initial audit log
+  await sql`
+    insert into expense_audit_logs (id, expense_id, action, user_id, details)
+    values (${randomUUID()}, ${id}, 'CREATED', ${payload.createdBy}, ${JSON.stringify({ type: payload.type, amount: payload.amount })})
+  `;
+
+  return normalizeExpenseRecord(record);
+}
+
+export async function updateExpense(id: string, tenantSlug: string, updates: ExpenseUpdateInput): Promise<Expense | null> {
+  const sql = SQL;
+  await ensureExpenseTables(sql);
+
+  // Get current expense for audit
+  const current = await getExpense(id, tenantSlug);
+  if (!current) return null;
+
+  const taxAmount = updates.taxType 
+    ? updates.taxType === "NONE" 
+      ? 0 
+      : updates.taxType === "VAT"
+      ? (updates.amount ?? current.amount) * 0.075
+      : (updates.amount ?? current.amount) * 0.05
+    : current.taxAmount;
+  
+  const totalAmount = (updates.amount ?? current.amount) + taxAmount;
+
+  const [record] = (await sql`
+    update expenses
+    set
+      type = ${updates.type ?? current.type},
+      amount = ${updates.amount ?? current.amount},
+      tax_amount = ${taxAmount},
+      total_amount = ${totalAmount},
+      tax_type = ${updates.taxType ?? current.taxType},
+      category = ${updates.category ?? current.category},
+      category_id = ${updates.categoryId ?? current.categoryId},
+      description = ${updates.description ?? current.description},
+      vendor = ${updates.vendor !== undefined ? updates.vendor : current.vendor},
+      date = ${updates.date ?? current.date},
+      approval_status = ${updates.approvalStatus ?? current.approvalStatus},
+      payment_status = ${updates.paymentStatus ?? current.paymentStatus},
+      notes = ${updates.notes !== undefined ? updates.notes : current.notes},
+      updated_at = now()
+    where id = ${id} and tenant_slug = ${tenantSlug}
+    returning *
+  `) as ExpenseRecord[];
+
+  // Create audit log
+  await sql`
+    insert into expense_audit_logs (id, expense_id, action, user_id, details)
+    values (${randomUUID()}, ${id}, 'UPDATED', 'system', ${JSON.stringify({ updates })})
+  `;
+
+  return normalizeExpenseRecord(record);
+}
+
+export async function deleteExpense(id: string, tenantSlug: string): Promise<boolean> {
+  const sql = SQL;
+  await ensureExpenseTables(sql);
+
+  const result = await sql`
+    delete from expenses
+    where id = ${id} and tenant_slug = ${tenantSlug}
+    returning id
+  `;
+
+  return (result as any[]).length > 0;
+}
+
+export async function approveExpense(expenseId: string, tenantSlug: string, approval: ExpenseApproveInput): Promise<Expense | null> {
+  const sql = SQL;
+  await ensureExpenseTables(sql);
+
+  const current = await getExpense(expenseId, tenantSlug);
+  if (!current) return null;
+
+  // Insert approval record
+  const approvalId = randomUUID();
+  await sql`
+    insert into expense_approvals (
+      id,
+      expense_id,
+      approver_role,
+      approver_id,
+      approver_name,
+      action,
+      reason,
+      amount_threshold
+    ) values (
+      ${approvalId},
+      ${expenseId},
+      ${approval.approverRole},
+      ${approval.approverId},
+      ${approval.approverName},
+      ${approval.action},
+      ${approval.reason ?? null},
+      ${current.amount}
+    )
+  `;
+
+  // Update expense status if fully approved
+  let newStatus = current.approvalStatus;
+  if (approval.action === "APPROVED") {
+    // Check if all required approvals are done
+    const approvalsNeeded = current.amount > 500000 ? 3 : current.amount > 50000 ? 2 : 1;
+    const approvalCount = current.approvals.length + 1;
+    
+    if (approvalCount >= approvalsNeeded) {
+      newStatus = "APPROVED";
+    } else {
+      newStatus = "PENDING";
+    }
+  } else if (approval.action === "REJECTED") {
+    newStatus = "REJECTED";
+  } else if (approval.action === "CLARIFY_NEEDED") {
+    newStatus = "CLARIFY_NEEDED";
+  }
+
+  const [record] = (await sql`
+    update expenses
+    set approval_status = ${newStatus}, updated_at = now()
+    where id = ${expenseId}
+    returning *
+  `) as ExpenseRecord[];
+
+  // Create audit log
+  await sql`
+    insert into expense_audit_logs (id, expense_id, action, user_id, details)
+    values (${randomUUID()}, ${expenseId}, 'APPROVAL_' || ${approval.action}, ${approval.approverId}, ${JSON.stringify({ approverRole: approval.approverRole, reason: approval.reason })})
+  `;
+
+  return normalizeExpenseRecord(record, current.approvals);
+}
+
+export async function seedExpenseCategories(sql: SqlClient = SQL) {
+  await ensureExpenseTables(sql);
+
+  const categories = [
+    { code: "TRAVEL", name: "Travel", accountId: "6010", requiresVendor: true },
+    { code: "SUPPLIES", name: "Office Supplies", accountId: "6020", requiresVendor: true },
+    { code: "MEALS", name: "Meals & Entertainment", accountId: "6030", requiresVendor: false },
+    { code: "INSURANCE", name: "Insurance", accountId: "6040", requiresVendor: true },
+    { code: "PROFESSIONAL", name: "Professional Services", accountId: "6050", requiresVendor: true },
+  ];
+
+  for (const cat of categories) {
+    const id = `cat_${cat.code.toLowerCase()}`;
+    const existing = await sql`select id from expense_categories where id = ${id}`;
+    
+    if ((existing as any[]).length === 0) {
+      await sql`
+        insert into expense_categories (id, code, name, account_id, requires_vendor, requires_receipt)
+        values (${id}, ${cat.code}, ${cat.name}, ${cat.accountId}, ${cat.requiresVendor}, true)
+      `;
+    }
+  }
+}
