@@ -4270,35 +4270,253 @@ function FinanceInvoicesWorkspace({
 }
 
 function FinancePaymentsWorkspace() {
+  const [payments] = useState(FINANCE_PAYABLES_BASELINE);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [branchFilter, setBranchFilter] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  const filteredPayments = payments.filter((payment) => {
+    const matchesSearch = payment.entity.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter ? payment.status === statusFilter : true;
+    const matchesBranch = branchFilter ? payment.branch === branchFilter : true;
+    return matchesSearch && matchesStatus && matchesBranch;
+  });
+
+  const stats = {
+    totalDue: FINANCE_PAYABLES_BASELINE.reduce((sum, p) => {
+      const amount = parseFloat(p.amount.replace(/[₦,M]/g, ""));
+      return sum + amount;
+    }, 0),
+    overdueCount: FINANCE_PAYABLES_BASELINE.filter((p) => p.status === "overdue").length,
+    pendingCount: FINANCE_PAYABLES_BASELINE.filter((p) => p.status === "current" || p.status === "due_soon").length,
+  };
+
+  const handlePayNow = (payment: FinanceScheduleItem) => {
+    console.log("Pay now:", payment.id);
+  };
+
+  const handleReschedule = (payment: FinanceScheduleItem) => {
+    console.log("Reschedule:", payment.id);
+  };
+
+  const handleApprove = (payment: FinanceScheduleItem) => {
+    console.log("Approve:", payment.id);
+  };
+
+  const handleAddNote = (payment: FinanceScheduleItem) => {
+    console.log("Add note:", payment.id);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "current":
+        return "bg-blue-50 text-blue-700 border-blue-200";
+      case "due_soon":
+        return "bg-yellow-50 text-yellow-700 border-yellow-200";
+      case "overdue":
+        return "bg-red-50 text-red-700 border-red-200";
+      case "paid":
+        return "bg-green-50 text-green-700 border-green-200";
+      default:
+        return "bg-slate-50 text-slate-700 border-slate-200";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "current":
+        return "Current";
+      case "due_soon":
+        return "Due Soon";
+      case "overdue":
+        return "Overdue";
+      case "paid":
+        return "Paid";
+      default:
+        return status;
+    }
+  };
+
+  const uniqueBranches = Array.from(new Set(FINANCE_PAYABLES_BASELINE.map((p) => p.branch)));
+
   return (
     <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
       <div className="space-y-6">
+        {/* Header */}
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Cash tracking</p>
           <h2 className="text-2xl font-semibold text-slate-900">Payments</h2>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center">
-          <div className="w-full space-y-3">
-            <CalendarClock className="mx-auto h-12 w-12 text-slate-400" />
-            <p className="text-lg font-semibold text-slate-900">Payments Workspace Coming Soon</p>
-            <p className="text-sm text-slate-600">
-              Schedule payments, track transactions, and manage payment gateways.
-            </p>
-            <div className="flex flex-wrap justify-center gap-2 pt-2">
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Payment List
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Schedule Payment
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Gateway Status
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Approval Routing
-              </span>
-            </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-blue-50 to-blue-100 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Total Due</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900">₦{stats.totalDue.toFixed(1)}M</p>
           </div>
+          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-red-50 to-red-100 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Overdue</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900">{stats.overdueCount} items</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-yellow-50 to-yellow-100 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Pending</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900">{stats.pendingCount} items</p>
+          </div>
+        </div>
+
+        {/* Filters and Search */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search vendor..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+            />
+          </div>
+          <select
+            value={statusFilter || ""}
+            onChange={(e) => setStatusFilter(e.target.value || null)}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+          >
+            <option value="">All Status</option>
+            <option value="current">Current</option>
+            <option value="due_soon">Due Soon</option>
+            <option value="overdue">Overdue</option>
+            <option value="paid">Paid</option>
+          </select>
+          <select
+            value={branchFilter || ""}
+            onChange={(e) => setBranchFilter(e.target.value || null)}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+          >
+            <option value="">All Branches</option>
+            {uniqueBranches.map((branch) => (
+              <option key={branch} value={branch}>
+                {branch}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Payment List Table */}
+        <div className="overflow-x-auto rounded-lg border border-slate-200">
+          <table className="w-full border-collapse">
+            <thead className="bg-gradient-to-r from-slate-50 to-slate-100">
+              <tr>
+                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
+                  Vendor
+                </th>
+                <th className="border-b border-slate-200 px-4 py-3 text-right text-xs font-semibold uppercase text-slate-600">
+                  Amount
+                </th>
+                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
+                  Due Date
+                </th>
+                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
+                  Status
+                </th>
+                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
+                  Branch
+                </th>
+                <th className="border-b border-slate-200 px-4 py-3 text-center text-xs font-semibold uppercase text-slate-600">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPayments.length > 0 ? (
+                filteredPayments.map((payment) => (
+                  <tr key={payment.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3 text-sm font-medium text-slate-900">{payment.entity}</td>
+                    <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">{payment.amount}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{payment.dueDate}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold border ${getStatusColor(payment.status)}`}>
+                        {getStatusLabel(payment.status)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{payment.branch}</td>
+                    <td className="px-4 py-3 text-center relative">
+                      <button
+                        onClick={() => setOpenMenuId(openMenuId === payment.id ? null : payment.id)}
+                        className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                      {openMenuId === payment.id && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setOpenMenuId(null)}
+                          />
+                          <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-slate-200 bg-white shadow-lg z-50 overflow-hidden">
+                            <button
+                              onClick={() => {
+                                handlePayNow(payment);
+                                setOpenMenuId(null);
+                              }}
+                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left"
+                            >
+                              <Send className="h-4 w-4 text-slate-400" />
+                              Pay Now
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleReschedule(payment);
+                                setOpenMenuId(null);
+                              }}
+                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100"
+                            >
+                              <Clock className="h-4 w-4 text-slate-400" />
+                              Reschedule
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleApprove(payment);
+                                setOpenMenuId(null);
+                              }}
+                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100"
+                            >
+                              <CheckCircle className="h-4 w-4 text-slate-400" />
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleAddNote(payment);
+                                setOpenMenuId(null);
+                              }}
+                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100"
+                            >
+                              <MessageSquare className="h-4 w-4 text-slate-400" />
+                              Add Note
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-500">
+                    No payments found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Summary */}
+        <div className="rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
+          <p>
+            Showing <span className="font-semibold text-slate-900">{filteredPayments.length}</span> of{" "}
+            <span className="font-semibold text-slate-900">{payments.length}</span> payments
+          </p>
         </div>
       </div>
     </div>
