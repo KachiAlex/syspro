@@ -1834,6 +1834,17 @@ const CRM_VIEW_LABELS: Record<CrmView, string> = {
 };
 type CrmView = (typeof CRM_VIEWS)[number];
 
+const FINANCE_VIEWS = ["overview", "invoices", "payments", "expenses", "accounting", "reports"] as const;
+const FINANCE_VIEW_LABELS: Record<FinanceView, string> = {
+  overview: "Overview",
+  invoices: "Invoices",
+  payments: "Payments",
+  expenses: "Expenses",
+  accounting: "Accounting",
+  reports: "Reports",
+};
+type FinanceView = (typeof FINANCE_VIEWS)[number];
+
 function generateLeadId() {
   return `PIPE-${Math.floor(100 + Math.random() * 900)}`;
 }
@@ -2319,6 +2330,7 @@ export default function TenantAdminPage() {
   const [crmActionType, setCrmActionType] = useState<CrmActionType | null>(null);
   const [crmActionToast, setCrmActionToast] = useState<string | null>(null);
   const [crmView, setCrmView] = useState<CrmView>("dashboard");
+  const [financeView, setFinanceView] = useState<FinanceView>("overview");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isImportingContacts, setIsImportingContacts] = useState(false);
   const [contactImportSample, setContactImportSample] = useState<CrmContactImportSampleState>(defaultContactImportSample());
@@ -2362,7 +2374,9 @@ export default function TenantAdminPage() {
 
   // Finance quick action handlers
   const handleLogInvoice = useCallback(() => {
-    setShowLogInvoiceModal(true);
+    setFinanceView("invoices");
+    setQuickActionToast({ message: "Opening invoices workspace...", type: "success" });
+    setTimeout(() => setQuickActionToast(null), 2000);
   }, []);
 
   const handleSyncToERP = useCallback(() => {
@@ -2371,7 +2385,9 @@ export default function TenantAdminPage() {
   }, []);
 
   const handleSchedulePayment = useCallback(() => {
-    setShowSchedulePaymentModal(true);
+    setFinanceView("payments");
+    setQuickActionToast({ message: "Opening payments workspace...", type: "success" });
+    setTimeout(() => setQuickActionToast(null), 2000);
   }, []);
 
   const handleRouteApproval = useCallback(() => {
@@ -2380,7 +2396,9 @@ export default function TenantAdminPage() {
   }, []);
 
   const handleRecordExpense = useCallback(() => {
-    setShowRecordExpenseModal(true);
+    setFinanceView("expenses");
+    setQuickActionToast({ message: "Opening expenses workspace...", type: "success" });
+    setTimeout(() => setQuickActionToast(null), 2000);
   }, []);
 
   const handleAttachMemo = useCallback(() => {
@@ -2389,7 +2407,9 @@ export default function TenantAdminPage() {
   }, []);
 
   const handleTriggerPayout = useCallback(() => {
-    setShowPayoutModal(true);
+    setFinanceView("payments");
+    setQuickActionToast({ message: "Opening payments workspace...", type: "success" });
+    setTimeout(() => setQuickActionToast(null), 2000);
   }, []);
 
   const handleTreasuryMesh = useCallback(() => {
@@ -3023,6 +3043,8 @@ export default function TenantAdminPage() {
                     onAttachMemo={handleAttachMemo}
                     onTriggerPayout={handleTriggerPayout}
                     onTreasuryMesh={handleTreasuryMesh}
+                    currentView={financeView}
+                    onViewChange={setFinanceView}
                   />
                 ) : activeNav === "structure" ? (
                   <DepartmentManagement tenantSlug={tenantSlug} />
@@ -3487,6 +3509,8 @@ function FinanceWorkspace({
   onAttachMemo,
   onTriggerPayout,
   onTreasuryMesh,
+  currentView,
+  onViewChange,
 }: {
   snapshot: FinanceSnapshot;
   loading: boolean;
@@ -3504,6 +3528,8 @@ function FinanceWorkspace({
   onAttachMemo: () => void;
   onTriggerPayout: () => void;
   onTreasuryMesh: () => void;
+  currentView: FinanceView;
+  onViewChange: (view: FinanceView) => void;
 }) {
   const quickActions: Array<{ label: string; description: string; icon: ComponentType<{ className?: string }>; action: () => void; secondaryAction?: () => void }> = [
     { label: "Log invoice", description: "Sync to ERP", icon: Receipt, action: onLogInvoice, secondaryAction: onSyncToERP },
@@ -3514,24 +3540,46 @@ function FinanceWorkspace({
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Finance quick actions</p>
-          <p className="text-sm text-slate-500">Capture ledger updates without leaving command view</p>
+      {/* Finance Workspace Switcher */}
+      <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
+        <div className="flex gap-1 border-b border-slate-100 p-2">
+          {FINANCE_VIEWS.map((view) => (
+            <button
+              key={view}
+              onClick={() => onViewChange(view)}
+              className={`rounded-2xl px-4 py-2 text-sm font-semibold transition-colors ${
+                currentView === view
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+              }`}
+              type="button"
+            >
+              {FINANCE_VIEW_LABELS[view]}
+            </button>
+          ))}
         </div>
-        <div className="flex flex-wrap gap-2">
-          {quickActions.map((action) => {
-            const Icon = action.icon;
-            return (
-              <button
-                key={action.label}
-                onClick={() => {
-                  action.action();
-                  action.secondaryAction?.();
-                }}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:border-slate-300"
-                type="button"
-              >
+      </div>
+
+      {currentView === "overview" ? (
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Finance quick actions</p>
+              <p className="text-sm text-slate-500">Capture ledger updates without leaving command view</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {quickActions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <button
+                    key={action.label}
+                    onClick={() => {
+                      action.action();
+                      action.secondaryAction?.();
+                    }}
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:border-slate-300"
+                    type="button"
+                  >"
                 <Icon className="h-4 w-4" />
                 <div className="text-left">
                   <p className="font-semibold leading-none">{action.label}</p>
@@ -3567,8 +3615,20 @@ function FinanceWorkspace({
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <FinanceScheduleCard title="Receivables radar" items={snapshot.receivables} accent="text-emerald-600" />
-        <FinanceScheduleCard title="Payables runway" items={snapshot.payables} accent="text-amber-600" />
+        <FinanceScheduleCard 
+          title="Receivables radar" 
+          items={snapshot.receivables.slice(0, 3)} 
+          totalCount={snapshot.receivables.length}
+          accent="text-emerald-600"
+          onViewAll={() => onViewChange("invoices")}
+        />
+        <FinanceScheduleCard 
+          title="Payables runway" 
+          items={snapshot.payables.slice(0, 3)}
+          totalCount={snapshot.payables.length}
+          accent="text-amber-600"
+          onViewAll={() => onViewChange("payments")}
+        />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)]">
@@ -3583,6 +3643,198 @@ function FinanceWorkspace({
           <FinanceExpenseBreakdownCard expenses={snapshot.expenseBreakdown} />
         </div>
       </div>
+        </>
+      ) : currentView === "invoices" ? (
+        <FinanceInvoicesWorkspace />
+      ) : currentView === "payments" ? (
+        <FinancePaymentsWorkspace />
+      ) : currentView === "expenses" ? (
+        <FinanceExpensesWorkspace />
+      ) : currentView === "accounting" ? (
+        <FinanceAccountingWorkspace />
+      ) : currentView === "reports" ? (
+        <FinanceReportsWorkspace />
+      ) : null}
+    </div>
+  );
+}
+
+function FinanceInvoicesWorkspace() {
+  return (
+    <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+      <div className="space-y-6">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Revenue operations</p>
+          <h2 className="text-2xl font-semibold text-slate-900">Invoices</h2>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center">
+          <div className="w-full space-y-3">
+            <Receipt className="mx-auto h-12 w-12 text-slate-400" />
+            <p className="text-lg font-semibold text-slate-900">Invoice Management Coming Soon</p>
+            <p className="text-sm text-slate-600">
+              Create, track, and manage invoices. Send to customers and monitor payment status.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 pt-2">
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Invoice List
+              </span>
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Create Invoice
+              </span>
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Status Tracking
+              </span>
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Bulk Actions
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FinancePaymentsWorkspace() {
+  return (
+    <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+      <div className="space-y-6">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Cash tracking</p>
+          <h2 className="text-2xl font-semibold text-slate-900">Payments</h2>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center">
+          <div className="w-full space-y-3">
+            <CalendarClock className="mx-auto h-12 w-12 text-slate-400" />
+            <p className="text-lg font-semibold text-slate-900">Payments Workspace Coming Soon</p>
+            <p className="text-sm text-slate-600">
+              Schedule payments, track transactions, and manage payment gateways.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 pt-2">
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Payment List
+              </span>
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Schedule Payment
+              </span>
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Gateway Status
+              </span>
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Approval Routing
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FinanceExpensesWorkspace() {
+  return (
+    <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+      <div className="space-y-6">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Cost control</p>
+          <h2 className="text-2xl font-semibold text-slate-900">Expenses</h2>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center">
+          <div className="w-full space-y-3">
+            <FileSpreadsheet className="mx-auto h-12 w-12 text-slate-400" />
+            <p className="text-lg font-semibold text-slate-900">Expenses Workspace Coming Soon</p>
+            <p className="text-sm text-slate-600">
+              Submit expenses, track reimbursements, and manage vendor bills.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 pt-2">
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Expense List
+              </span>
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Submit Expense
+              </span>
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Approval Workflow
+              </span>
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Receipt Upload
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FinanceAccountingWorkspace() {
+  return (
+    <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+      <div className="space-y-6">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Compliance & correctness</p>
+          <h2 className="text-2xl font-semibold text-slate-900">Accounting</h2>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center">
+          <div className="w-full space-y-3">
+            <BarChart3 className="mx-auto h-12 w-12 text-slate-400" />
+            <p className="text-lg font-semibold text-slate-900">Accounting Workspace Coming Soon</p>
+            <p className="text-sm text-slate-600">
+              Chart of accounts, journal entries, bank reconciliation, and period locking.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 pt-2">
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Chart of Accounts
+              </span>
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Journal Entries
+              </span>
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Reconciliation
+              </span>
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Period Lock
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FinanceReportsWorkspace() {
+  return (
+    <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+      <div className="space-y-6">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Decision intelligence</p>
+          <h2 className="text-2xl font-semibold text-slate-900">Reports</h2>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center">
+          <div className="w-full space-y-3">
+            <LineChart className="mx-auto h-12 w-12 text-slate-400" />
+            <p className="text-lg font-semibold text-slate-900">Reports Workspace Coming Soon</p>
+            <p className="text-sm text-slate-600">
+              P&L, Balance Sheet, Cash Flow, and Aged Receivables with multi-dimensional filtering.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 pt-2">
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                P&L Report
+              </span>
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Balance Sheet
+              </span>
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Cash Flow
+              </span>
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
+                Aged Receivables
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -3590,11 +3842,15 @@ function FinanceWorkspace({
 function FinanceScheduleCard({
   title,
   items,
+  totalCount,
   accent,
+  onViewAll,
 }: {
   title: string;
   items: FinanceScheduleItem[];
+  totalCount: number;
   accent: string;
+  onViewAll: () => void;
 }) {
   return (
     <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
@@ -3603,7 +3859,7 @@ function FinanceScheduleCard({
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{title}</p>
           <p className="text-sm text-slate-500">Multi-entity status</p>
         </div>
-        <div className={`rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold ${accent}`}>{items.length} entries</div>
+        <div className={`rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold ${accent}`}>{totalCount} total</div>
       </div>
       <div className="mt-4 space-y-3">
         {items.map((item) => {
@@ -3627,6 +3883,15 @@ function FinanceScheduleCard({
             </div>
           );
         })}
+        {totalCount > items.length && (
+          <button
+            onClick={onViewAll}
+            className="mt-2 w-full rounded-2xl border border-dashed border-slate-300 px-4 py-3 text-sm font-semibold text-slate-600 hover:border-slate-400 hover:text-slate-900"
+            type="button"
+          >
+            View all {totalCount} items →
+          </button>
+        )}
       </div>
     </div>
   );
