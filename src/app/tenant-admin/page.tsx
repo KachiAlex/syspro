@@ -380,7 +380,8 @@ function mapFinanceSnapshotPayload(payload: unknown): FinanceSnapshot {
 }
 
 async function fetchFinanceSnapshot(tenantSlug: string | null, timeframe: string, region?: string): Promise<FinanceSnapshot> {
-  const params = new URLSearchParams({ tenantSlug: tenantSlug ?? "kreatix-default", timeframe });
+  const timeframeValue = TIMEFRAME_MAP[timeframe] || "last_7_days";
+  const params = new URLSearchParams({ tenantSlug: tenantSlug ?? "kreatix-default", timeframe: timeframeValue });
   if (region && region !== "Global HQ") {
     params.set("regionId", regionToId(region));
   }
@@ -1469,7 +1470,6 @@ async function fetchCrmSnapshot(tenantSlug: string | null, timeframe: string, re
   if (region && region !== "Global HQ") {
     params.set("regionId", region.toLowerCase().replace(/\s+/g, "-"));
   }
-  params.set("timeframe", timeframe);
 
   const response = await fetch(`/api/crm/dashboard?${params.toString()}`, { cache: "no-store" });
   if (!response.ok) {
@@ -2287,6 +2287,13 @@ const ACTIVITY_LOG = [
 ];
 
 const TIMEFRAME_OPTIONS = ["Last 24 hours", "Last 7 days", "Last 30 days"];
+
+// Map display names to API values
+const TIMEFRAME_MAP: Record<string, string> = {
+  "Last 24 hours": "last_24_hours",
+  "Last 7 days": "last_7_days",
+  "Last 30 days": "last_30_days",
+};
 
 export default function TenantAdminPage() {
   const [activeNav, setActiveNav] = useState("overview");
