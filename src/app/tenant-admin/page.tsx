@@ -2327,6 +2327,13 @@ export default function TenantAdminPage() {
   const [contactsLoading, setContactsLoading] = useState(false);
   const [contactsError, setContactsError] = useState<string | null>(null);
 
+  // Finance quick actions state
+  const [showLogInvoiceModal, setShowLogInvoiceModal] = useState(false);
+  const [showSchedulePaymentModal, setShowSchedulePaymentModal] = useState(false);
+  const [showRecordExpenseModal, setShowRecordExpenseModal] = useState(false);
+  const [showPayoutModal, setShowPayoutModal] = useState(false);
+  const [quickActionToast, setQuickActionToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
   const entityOptions = ["Axiom Labs", "Nova Holdings", "Helix Metals"];
   const regionOptions = ["Global HQ", "Americas", "EMEA", "APAC"];
 
@@ -2351,6 +2358,43 @@ export default function TenantAdminPage() {
 
   const handleFinanceAccountsRefresh = useCallback(() => {
     setFinanceAccountsVersion((prev) => prev + 1);
+  }, []);
+
+  // Finance quick action handlers
+  const handleLogInvoice = useCallback(() => {
+    setShowLogInvoiceModal(true);
+  }, []);
+
+  const handleSyncToERP = useCallback(() => {
+    setQuickActionToast({ message: "Syncing invoice to ERP system...", type: "success" });
+    setTimeout(() => setQuickActionToast(null), 3000);
+  }, []);
+
+  const handleSchedulePayment = useCallback(() => {
+    setShowSchedulePaymentModal(true);
+  }, []);
+
+  const handleRouteApproval = useCallback(() => {
+    setQuickActionToast({ message: "Payment routed for approval", type: "success" });
+    setTimeout(() => setQuickActionToast(null), 3000);
+  }, []);
+
+  const handleRecordExpense = useCallback(() => {
+    setShowRecordExpenseModal(true);
+  }, []);
+
+  const handleAttachMemo = useCallback(() => {
+    setQuickActionToast({ message: "Memo attached to expense record", type: "success" });
+    setTimeout(() => setQuickActionToast(null), 3000);
+  }, []);
+
+  const handleTriggerPayout = useCallback(() => {
+    setShowPayoutModal(true);
+  }, []);
+
+  const handleTreasuryMesh = useCallback(() => {
+    setQuickActionToast({ message: "Treasury mesh initiated for liquidity management", type: "success" });
+    setTimeout(() => setQuickActionToast(null), 3000);
   }, []);
 
   const refreshContacts = useCallback(async () => {
@@ -2971,6 +3015,14 @@ export default function TenantAdminPage() {
                     cashAccountsLoading={financeAccountsLoading}
                     cashAccountsError={financeAccountsError}
                     onRefreshAccounts={() => setFinanceAccountsVersion((prev) => prev + 1)}
+                    onLogInvoice={handleLogInvoice}
+                    onSyncToERP={handleSyncToERP}
+                    onSchedulePayment={handleSchedulePayment}
+                    onRouteApproval={handleRouteApproval}
+                    onRecordExpense={handleRecordExpense}
+                    onAttachMemo={handleAttachMemo}
+                    onTriggerPayout={handleTriggerPayout}
+                    onTreasuryMesh={handleTreasuryMesh}
                   />
                 ) : activeNav === "structure" ? (
                   <DepartmentManagement tenantSlug={tenantSlug} />
@@ -3427,6 +3479,14 @@ function FinanceWorkspace({
   cashAccountsLoading,
   cashAccountsError,
   onRefreshAccounts,
+  onLogInvoice,
+  onSyncToERP,
+  onSchedulePayment,
+  onRouteApproval,
+  onRecordExpense,
+  onAttachMemo,
+  onTriggerPayout,
+  onTreasuryMesh,
 }: {
   snapshot: FinanceSnapshot;
   loading: boolean;
@@ -3436,12 +3496,20 @@ function FinanceWorkspace({
   cashAccountsLoading: boolean;
   cashAccountsError: string | null;
   onRefreshAccounts: () => void;
+  onLogInvoice: () => void;
+  onSyncToERP: () => void;
+  onSchedulePayment: () => void;
+  onRouteApproval: () => void;
+  onRecordExpense: () => void;
+  onAttachMemo: () => void;
+  onTriggerPayout: () => void;
+  onTreasuryMesh: () => void;
 }) {
-  const quickActions: Array<{ label: string; description: string; icon: ComponentType<{ className?: string }> }> = [
-    { label: "Log invoice", description: "Sync to ERP", icon: Receipt },
-    { label: "Schedule payment", description: "Route approval", icon: CalendarClock },
-    { label: "Record expense", description: "Attach memo", icon: FileSpreadsheet },
-    { label: "Trigger payout", description: "Treasury mesh", icon: PiggyBank },
+  const quickActions: Array<{ label: string; description: string; icon: ComponentType<{ className?: string }>; action: () => void; secondaryAction?: () => void }> = [
+    { label: "Log invoice", description: "Sync to ERP", icon: Receipt, action: onLogInvoice, secondaryAction: onSyncToERP },
+    { label: "Schedule payment", description: "Route approval", icon: CalendarClock, action: onSchedulePayment, secondaryAction: onRouteApproval },
+    { label: "Record expense", description: "Attach memo", icon: FileSpreadsheet, action: onRecordExpense, secondaryAction: onAttachMemo },
+    { label: "Trigger payout", description: "Treasury mesh", icon: PiggyBank, action: onTriggerPayout, secondaryAction: onTreasuryMesh },
   ];
 
   return (
@@ -3457,6 +3525,10 @@ function FinanceWorkspace({
             return (
               <button
                 key={action.label}
+                onClick={() => {
+                  action.action();
+                  action.secondaryAction?.();
+                }}
                 className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:border-slate-300"
                 type="button"
               >
