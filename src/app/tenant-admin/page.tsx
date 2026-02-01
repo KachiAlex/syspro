@@ -1866,6 +1866,7 @@ type CrmContact = {
   phone?: string;
   company?: string;
   tags?: string[];
+  type?: 'individual' | 'business';  // Distinguish contact types
 };
 
 type SavedLineItem = {
@@ -1875,17 +1876,29 @@ type SavedLineItem = {
   category?: string;
 };
 
+type InvoiceLineItem = {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+};
+
 type InvoiceItem = {
   id: string;
   invoiceNumber: string;
   customer: string;
   customerEmail?: string;
   contactId?: string;
+  contactType?: 'individual' | 'business';  // Track if contact is business or individual
   amount: string;
   status: InvoiceStatus;
   dueDate: string;
   issueDate: string;
   branch: string;
+  // Preserve all draft details
+  items?: InvoiceLineItem[];
+  notes?: string;
+  taxRate?: number;
+  discount?: number;
 };
 
 type InvoiceFormTab = "details" | "items" | "taxes" | "preview";
@@ -2487,36 +2500,48 @@ export default function TenantAdminPage() {
     customer: string;
     customerEmail?: string;
     contactId?: string;
+    contactType?: 'individual' | 'business';
     amount: string;
     issueDate: string;
     dueDate: string;
     branch: string;
     status: InvoiceStatus;
-    items: Array<{ description: string; quantity: number; unitPrice: number }>;
+    items: InvoiceLineItem[];
+    notes?: string;
+    taxRate?: number;
+    discount?: number;
   }) => {
-    const invoiceNumber = `INV-${new Date().getFullYear()}-${String(invoices.length + 1).padStart(3, "0")}`;
+    const invoiceNumber = selectedInvoiceId 
+      ? invoices.find(inv => inv.id === selectedInvoiceId)?.invoiceNumber || `INV-${new Date().getFullYear()}-${String(invoices.length + 1).padStart(3, "0")}`
+      : `INV-${new Date().getFullYear()}-${String(invoices.length + 1).padStart(3, "0")}`;
     
     const newInvoice: InvoiceItem = {
-      id: String(Date.now()),
+      id: selectedInvoiceId || String(Date.now()),
       invoiceNumber,
       customer: invoiceData.customer,
       customerEmail: invoiceData.customerEmail,
       contactId: invoiceData.contactId,
+      contactType: invoiceData.contactType,
       amount: invoiceData.amount,
       status: invoiceData.status,
       dueDate: invoiceData.dueDate,
       issueDate: invoiceData.issueDate,
       branch: invoiceData.branch,
+      // Preserve all details for drafts
+      items: invoiceData.items,
+      notes: invoiceData.notes,
+      taxRate: invoiceData.taxRate,
+      discount: invoiceData.discount,
     };
 
     if (selectedInvoiceId) {
       // Update existing invoice
-      setInvoices(invoices.map(inv => inv.id === selectedInvoiceId ? { ...inv, ...newInvoice, id: selectedInvoiceId, invoiceNumber: inv.invoiceNumber } : inv));
-      setQuickActionToast({ message: "Invoice updated successfully", type: "success" });
+      setInvoices(invoices.map(inv => inv.id === selectedInvoiceId ? newInvoice : inv));
+      setQuickActionToast({ message: `Invoice ${invoiceData.status === 'draft' ? 'draft saved' : 'updated'} successfully`, type: "success" });
     } else {
       // Create new invoice
       setInvoices([...invoices, newInvoice]);
-      setQuickActionToast({ message: "Invoice created successfully", type: "success" });
+      setQuickActionToast({ message: `Invoice ${invoiceData.status === 'draft' ? 'draft created' : 'created'} successfully`, type: "success" });
     }
     
     setTimeout(() => setQuickActionToast(null), 3000);
@@ -3055,12 +3080,13 @@ export default function TenantAdminPage() {
         if (data.contacts) {
           const contacts: CrmContact[] = data.contacts.map((c: any) => ({
             id: c.id,
-            firstName: c.firstName || "",
-            lastName: c.lastName || "",
-            email: c.email || "",
-            phone: c.phone || "",
+            firstName: c.firstName || c.contactName?.split(' ')[0] || "",
+            lastName: c.lastName || c.contactName?.split(' ').slice(1).join(' ') || "",
+            email: c.email || c.contactEmail || "",
+            phone: c.phone || c.contactPhone || "",
             company: c.company || "",
             tags: c.tags || [],
+            type: c.company ? 'business' as const : 'individual' as const,  // Distinguish based on company presence
           }));
           setCrmContacts(contacts);
         }
@@ -4242,12 +4268,16 @@ function InvoiceDrawer({
     customer: string;
     customerEmail?: string;
     contactId?: string;
+    contactType?: 'individual' | 'business';
     amount: string;
     issueDate: string;
     dueDate: string;
     branch: string;
     status: InvoiceStatus;
-    items: Array<{ description: string; quantity: number; unitPrice: number }>;
+    items: InvoiceLineItem[];
+    notes?: string;
+    taxRate?: number;
+    discount?: number;
   }) => void;
   crmContacts: CrmContact[];
   savedLineItems: SavedLineItem[];
@@ -4257,15 +4287,18 @@ function InvoiceDrawer({
     customer: invoice?.customer || "",
     customerEmail: invoice?.customerEmail || "",
     contactId: invoice?.contactId || "",
+    contactType: invoice?.contactType as 'individual' | 'business' | undefined,
     amount: invoice?.amount || "",
     issueDate: invoice?.issueDate || new Date().toISOString().split("T")[0],
     dueDate: invoice?.dueDate || "",
     branch: invoice?.branch || "Lagos HQ",
     status: invoice?.status || "draft" as InvoiceStatus,
-    notes: "",
-    items: [{ description: "", quantity: 1, unitPrice: 0 }],
-    taxRate: 7.5,
-    discount: 0,
+    notes: invoice?.notes || "",
+    items: invoice?.items && invoice.items.length > 0 
+      ? invoice.items 
+      : [{ description: "", quantity: 1, unitPrice: 0 }],
+    taxRate: invoice?.taxRate ?? 7.5,
+    discount: invoice?.discount ?? 0,
   });
   
   const [customerSearch, setCustomerSearch] = useState("");
@@ -4373,12 +4406,16 @@ function InvoiceDrawer({
       customer: formData.customer,
       customerEmail: formData.customerEmail,
       contactId: formData.contactId,
+      contactType: formData.contactType,
       amount: total.toFixed(2),
       issueDate: formData.issueDate,
       dueDate: formData.dueDate,
       branch: formData.branch,
       status: status,
       items: formData.items,
+      notes: formData.notes,
+      taxRate: formData.taxRate,
+      discount: formData.discount,
     });
 
     onClose();
@@ -4474,11 +4511,16 @@ function InvoiceDrawer({
   });
 
   const handleSelectContact = (contact: CrmContact) => {
+    // Determine contact type: business if they have a company, individual otherwise
+    const contactType: 'individual' | 'business' = contact.company ? 'business' : 'individual';
+    const displayName = contact.company || `${contact.firstName} ${contact.lastName}`;
+    
     setFormData({
       ...formData,
-      customer: `${contact.firstName} ${contact.lastName}`,
+      customer: displayName,
       customerEmail: contact.email,
       contactId: contact.id,
+      contactType: contactType,
     });
     setCustomerSearch("");
     setShowContactDropdown(false);
@@ -4608,24 +4650,46 @@ function InvoiceDrawer({
                 />
                 {showContactDropdown && filteredContacts.length > 0 && (
                   <div className="absolute z-10 mt-1 w-full rounded-2xl border border-slate-200 bg-white shadow-lg max-h-60 overflow-y-auto">
-                    {filteredContacts.map((contact) => (
-                      <button
-                        key={contact.id}
-                        type="button"
-                        onClick={() => handleSelectContact(contact)}
-                        className="w-full px-4 py-3 text-left hover:bg-slate-50 flex flex-col gap-1"
-                      >
-                        <div className="text-sm font-semibold text-slate-900">
-                          {contact.firstName} {contact.lastName}
-                        </div>
-                        <div className="text-xs text-slate-500">{contact.email}</div>
-                        {contact.company && <div className="text-xs text-slate-400">{contact.company}</div>}
-                      </button>
-                    ))}
+                    {filteredContacts.map((contact) => {
+                      const isBusiness = !!contact.company;
+                      return (
+                        <button
+                          key={contact.id}
+                          type="button"
+                          onClick={() => handleSelectContact(contact)}
+                          className="w-full px-4 py-3 text-left hover:bg-slate-50 flex flex-col gap-1"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-slate-900">
+                              {contact.firstName} {contact.lastName}
+                            </span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              isBusiness 
+                                ? 'bg-blue-50 text-blue-600' 
+                                : 'bg-emerald-50 text-emerald-600'
+                            }`}>
+                              {isBusiness ? '🏢 Business' : '👤 Individual'}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-500">{contact.email}</div>
+                          {contact.company && <div className="text-xs font-medium text-slate-600">Company: {contact.company}</div>}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
                 {formData.customer.trim() === "" && (
                   <p className="mt-1 text-xs text-red-500">Customer name is required</p>
+                )}
+                {formData.contactId && formData.contactType && (
+                  <p className="mt-1 text-xs text-slate-500">
+                    {formData.contactType === 'business' ? '🏢 Business contact from CRM' : '👤 Individual contact from CRM'}
+                  </p>
+                )}
+                {formData.customer && !formData.contactId && (
+                  <p className="mt-1 text-xs text-amber-600">
+                    ⚠️ New contact - will be created manually
+                  </p>
                 )}
               </div>
 
@@ -4750,11 +4814,16 @@ function InvoiceDrawer({
                               onClick={() => handleSelectSavedItem(savedItem, index)}
                               className="w-full px-3 py-2 text-left hover:bg-slate-50 flex justify-between items-center"
                             >
-                              <div>
-                                <div className="text-sm font-semibold text-slate-900">{savedItem.description}</div>
-                                {savedItem.category && <div className="text-xs text-slate-400">{savedItem.category}</div>}
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-semibold text-slate-900">{savedItem.description}</span>
+                                  <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-600">
+                                    📦 From Catalog
+                                  </span>
+                                </div>
+                                {savedItem.category && <div className="text-xs text-slate-400 mt-0.5">{savedItem.category}</div>}
                               </div>
-                              <div className="text-sm font-semibold text-slate-600">₦{savedItem.defaultPrice.toLocaleString()}</div>
+                              <div className="text-sm font-semibold text-slate-600 ml-3">₦{savedItem.defaultPrice.toLocaleString()}</div>
                             </button>
                           ))}
                         </div>
