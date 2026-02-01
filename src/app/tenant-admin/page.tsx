@@ -5360,97 +5360,172 @@ function FinancePaymentsWorkspace() {
 }
 
 function FinanceExpensesWorkspace() {
-  const [expenses] = useState(FINANCE_EXPENSES_BASELINE);
+  const [expenses, setExpenses] = useState<Expense[]>(EXPENSE_RECORDS_BASELINE);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [approvalFilter, setApprovalFilter] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-
-  const filteredExpenses = expenses.filter((expense) => {
-    const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter ? expense.status === statusFilter : true;
-    const matchesCategory = categoryFilter ? expense.category === categoryFilter : true;
-    return matchesSearch && matchesStatus && matchesCategory;
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [showRecordModal, setShowRecordModal] = useState(false);
+  const [recordForm, setRecordForm] = useState({
+    expenseType: "vendor" as const,
+    date: new Date().toISOString().split('T')[0],
+    amount: "",
+    category: "",
+    vendor: "",
+    description: "",
+    department: "",
+    taxType: "none" as const,
+    notes: "",
   });
 
-  const stats = {
-    totalSubmitted: FINANCE_EXPENSES_BASELINE.reduce((sum, e) => {
-      const amount = parseFloat(e.amount.replace(/[₦,MK]/g, ""));
-      const multiplier = e.amount.includes("M") ? 1 : e.amount.includes("K") ? 0.001 : 1;
-      return sum + (amount * multiplier);
-    }, 0),
-    pendingCount: FINANCE_EXPENSES_BASELINE.filter((e) => e.status === "pending").length,
-    approvedCount: FINANCE_EXPENSES_BASELINE.filter((e) => e.status === "approved").length,
+  // Filter expenses
+  const filteredExpenses = expenses.filter((expense) => {
+    const matchesSearch = expense.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (expense.vendorName?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+    const matchesPaymentStatus = statusFilter ? expense.paymentStatus === statusFilter : true;
+    const matchesApprovalStatus = approvalFilter ? expense.approvalStatus === approvalFilter : true;
+    const matchesCategory = categoryFilter ? expense.category.id === categoryFilter : true;
+    return matchesSearch && matchesPaymentStatus && matchesApprovalStatus && matchesCategory;
+  });
+
+  // Calculate metrics
+  const metrics = {
+    totalExpenses: expenses.reduce((sum, e) => sum + e.totalAmount, 0),
+    approvedVsPending: {
+      approved: expenses.filter(e => e.approvalStatus === 'approved').reduce((sum, e) => sum + e.totalAmount, 0),
+      pending: expenses.filter(e => e.approvalStatus === 'pending').reduce((sum, e) => sum + e.totalAmount, 0),
+    },
+    byCategory: EXPENSE_CATEGORIES_BASELINE.map(cat => ({
+      name: cat.name,
+      amount: expenses.filter(e => e.category.id === cat.id && e.approvalStatus === 'approved').reduce((sum, e) => sum + e.totalAmount, 0),
+    })),
+    budgetUsed: 0.72, // 72% consumption
   };
 
-  const handleApprove = (expense: FinanceExpenseItem) => {
-    console.log("Approve expense:", expense.id);
+  const handleOpenRecord = () => {
+    setShowRecordModal(true);
+    setRecordForm({
+      expenseType: "vendor",
+      date: new Date().toISOString().split('T')[0],
+      amount: "",
+      category: "",
+      vendor: "",
+      description: "",
+      department: "",
+      taxType: "none",
+      notes: "",
+    });
   };
 
-  const handleReject = (expense: FinanceExpenseItem) => {
-    console.log("Reject expense:", expense.id);
+  const handleSaveExpense = () => {
+    if (!recordForm.amount || !recordForm.category || !recordForm.description) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    const category = EXPENSE_CATEGORIES_BASELINE.find(c => c.id === recordForm.category);
+    if (!category) return;
+
+    const amount = parseFloat(recordForm.amount);
+    const taxRate = recordForm.taxType === 'vat' ? 7.5 : recordForm.taxType === 'wht' ? 5 : 0;
+    const taxAmount = (amount * taxRate) / 100;
+    const totalAmount = amount + taxAmount;
+
+    const newExpense: Expense = {
+      id: `EXP-${String(expenses.length + 1).padStart(4, '0')}`,
+      tenantId: "tenant-001",
+      expenseDate: recordForm.date,
+      recordedDate: new Date().toISOString().split('T')[0],
+      amount,
+      taxType: recordForm.taxType,
+      taxRate,
+      taxAmount,
+      totalAmount,
+      category,
+      type: recordForm.expenseType,
+      description: recordForm.description,
+      vendorName: recordForm.vendor || undefined,
+      departmentId: recordForm.department || "dept-001",
+      paymentStatus: "unpaid",
+      approvalStatus: "draft",
+      paymentMethod: "bank_transfer",
+      notes: recordForm.notes,
+      receiptUrls: [],
+      createdBy: "Current User",
+      createdAt: new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0],
+      approvals: [],
+      auditTrail: [{
+        id: "audit-new",
+        action: "created",
+        timestamp: new Date().toISOString(),
+        user: "Current User",
+        details: {},
+      }],
+      accountId: category.accountId,
+    };
+
+    setExpenses([...expenses, newExpense]);
+    setShowRecordModal(false);
   };
 
-  const handleViewReceipt = (expense: FinanceExpenseItem) => {
-    console.log("View receipt:", expense.id);
+  const handleApprove = (expense: Expense) => {
+    const updated = { ...expense, approvalStatus: "approved" as const };
+    setExpenses(expenses.map(e => e.id === expense.id ? updated : e));
+    setSelectedExpense(null);
   };
 
-  const handleEditExpense = (expense: FinanceExpenseItem) => {
-    console.log("Edit expense:", expense.id);
+  const handleReject = (expense: Expense) => {
+    const updated = { ...expense, approvalStatus: "rejected" as const };
+    setExpenses(expenses.map(e => e.id === expense.id ? updated : e));
+    setSelectedExpense(null);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "pending":
+      case "unpaid":
         return "bg-yellow-50 text-yellow-700 border-yellow-200";
-      case "approved":
-        return "bg-green-50 text-green-700 border-green-200";
-      case "rejected":
-        return "bg-red-50 text-red-700 border-red-200";
       case "paid":
+        return "bg-green-50 text-green-700 border-green-200";
+      case "reimbursed":
+        return "bg-purple-50 text-purple-700 border-purple-200";
+      case "pending_payment":
         return "bg-blue-50 text-blue-700 border-blue-200";
       default:
         return "bg-slate-50 text-slate-700 border-slate-200";
     }
   };
 
-  const getStatusLabel = (status: string) => {
+  const getApprovalColor = (status: string) => {
     switch (status) {
+      case "draft":
+        return "bg-slate-50 text-slate-700 border-slate-200";
       case "pending":
-        return "Pending";
+        return "bg-yellow-50 text-yellow-700 border-yellow-200";
       case "approved":
-        return "Approved";
+        return "bg-green-50 text-green-700 border-green-200";
       case "rejected":
-        return "Rejected";
-      case "paid":
-        return "Paid";
+        return "bg-red-50 text-red-700 border-red-200";
       default:
-        return status;
+        return "bg-slate-50 text-slate-700 border-slate-200";
     }
   };
 
-  const getCategoryLabel = (category: string) => {
-    switch (category) {
-      case "cloud":
-        return "Cloud";
-      case "logistics":
-        return "Logistics";
-      case "meals":
-        return "Meals & Dining";
-      case "supplies":
-        return "Supplies";
-      case "travel":
-        return "Travel";
-      case "software":
-        return "Software";
-      case "training":
-        return "Training";
-      default:
-        return category;
-    }
+  const formatCurrency = (amount: number) => {
+    return `₦${(amount / 1000000).toFixed(2)}M`;
   };
 
-  const uniqueCategories = Array.from(new Set(FINANCE_EXPENSES_BASELINE.map((e) => e.category)));
+  const formatAmount = (amount: number) => {
+    if (amount >= 1000000) {
+      return `₦${(amount / 1000000).toFixed(2)}M`;
+    } else if (amount >= 1000) {
+      return `₦${(amount / 1000).toFixed(0)}K`;
+    }
+    return `₦${amount.toFixed(0)}`;
+  };
 
   return (
     <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
@@ -5461,19 +5536,27 @@ function FinanceExpensesWorkspace() {
           <h2 className="text-2xl font-semibold text-slate-900">Expenses</h2>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        {/* Dashboard Metrics (4-Column) */}
+        <div className="grid grid-cols-4 gap-4">
           <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-purple-50 to-purple-100 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Total Submitted</p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">₦{stats.totalSubmitted.toFixed(1)}M</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-yellow-50 to-yellow-100 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Pending</p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{stats.pendingCount} items</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Total Expenses</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900">{formatCurrency(metrics.totalExpenses)}</p>
+            <p className="mt-1 text-xs text-slate-500">{expenses.length} records</p>
           </div>
           <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-green-50 to-green-100 p-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Approved</p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{stats.approvedCount} items</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900">{formatCurrency(metrics.approvedVsPending.approved)}</p>
+            <p className="mt-1 text-xs text-slate-500">{expenses.filter(e => e.approvalStatus === 'approved').length} expenses</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-yellow-50 to-yellow-100 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Pending Approval</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900">{formatCurrency(metrics.approvedVsPending.pending)}</p>
+            <p className="mt-1 text-xs text-slate-500">{expenses.filter(e => e.approvalStatus === 'pending').length} awaiting</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-blue-50 to-blue-100 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Budget Usage</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900">{(metrics.budgetUsed * 100).toFixed(0)}%</p>
+            <p className="mt-1 text-xs text-slate-500">₦1.76M / ₦2.45M</p>
           </div>
         </div>
 
@@ -5483,7 +5566,7 @@ function FinanceExpensesWorkspace() {
             <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search expenses..."
+              placeholder="Search by ID, description, vendor..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
@@ -5494,11 +5577,22 @@ function FinanceExpensesWorkspace() {
             onChange={(e) => setStatusFilter(e.target.value || null)}
             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
           >
-            <option value="">All Status</option>
+            <option value="">All Payment Status</option>
+            <option value="unpaid">Unpaid</option>
+            <option value="paid">Paid</option>
+            <option value="reimbursed">Reimbursed</option>
+            <option value="pending_payment">Pending Payment</option>
+          </select>
+          <select
+            value={approvalFilter || ""}
+            onChange={(e) => setApprovalFilter(e.target.value || null)}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+          >
+            <option value="">All Approval Status</option>
+            <option value="draft">Draft</option>
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
-            <option value="paid">Paid</option>
           </select>
           <select
             value={categoryFilter || ""}
@@ -5506,36 +5600,48 @@ function FinanceExpensesWorkspace() {
             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
           >
             <option value="">All Categories</option>
-            {uniqueCategories.map((category) => (
-              <option key={category} value={category}>
-                {getCategoryLabel(category)}
+            {EXPENSE_CATEGORIES_BASELINE.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
               </option>
             ))}
           </select>
+          <button
+            onClick={handleOpenRecord}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+          >
+            Record Expense
+          </button>
         </div>
 
-        {/* Expense List Table */}
+        {/* Expense Table (9 Columns) */}
         <div className="overflow-x-auto rounded-lg border border-slate-200">
           <table className="w-full border-collapse">
             <thead className="bg-gradient-to-r from-slate-50 to-slate-100">
               <tr>
+                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
+                  ID
+                </th>
                 <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
                   Description
                 </th>
                 <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
                   Category
                 </th>
+                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
+                  Vendor
+                </th>
                 <th className="border-b border-slate-200 px-4 py-3 text-right text-xs font-semibold uppercase text-slate-600">
                   Amount
-                </th>
-                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
-                  Submitted By
                 </th>
                 <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
                   Date
                 </th>
                 <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
-                  Status
+                  Payment
+                </th>
+                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
+                  Approval
                 </th>
                 <th className="border-b border-slate-200 px-4 py-3 text-center text-xs font-semibold uppercase text-slate-600">
                   Actions
@@ -5545,20 +5651,33 @@ function FinanceExpensesWorkspace() {
             <tbody>
               {filteredExpenses.length > 0 ? (
                 filteredExpenses.map((expense) => (
-                  <tr key={expense.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3 text-sm font-medium text-slate-900">{expense.description}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{getCategoryLabel(expense.category)}</td>
-                    <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">{expense.amount}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{expense.submittedBy}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{expense.submittedDate}</td>
+                  <tr
+                    key={expense.id}
+                    className="border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer"
+                    onClick={() => setSelectedExpense(expense)}
+                  >
+                    <td className="px-4 py-3 text-sm font-medium text-slate-900">{expense.id}</td>
+                    <td className="px-4 py-3 text-sm text-slate-700">{expense.description}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{expense.category.name}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{expense.vendorName || "—"}</td>
+                    <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">{formatAmount(expense.totalAmount)}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{expense.expenseDate}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold border ${getStatusColor(expense.status)}`}>
-                        {getStatusLabel(expense.status)}
+                      <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold border ${getStatusColor(expense.paymentStatus)}`}>
+                        {expense.paymentStatus.replace(/_/g, ' ').charAt(0).toUpperCase() + expense.paymentStatus.replace(/_/g, ' ').slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold border ${getApprovalColor(expense.approvalStatus)}`}>
+                        {expense.approvalStatus.charAt(0).toUpperCase() + expense.approvalStatus.slice(1)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center relative">
                       <button
-                        onClick={() => setOpenMenuId(openMenuId === expense.id ? null : expense.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenMenuId(openMenuId === expense.id ? null : expense.id);
+                        }}
                         className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
                       >
                         <MoreVertical className="h-4 w-4" />
@@ -5571,51 +5690,39 @@ function FinanceExpensesWorkspace() {
                           />
                           <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-slate-200 bg-white shadow-lg z-50 overflow-hidden">
                             <button
-                              onClick={() => {
-                                handleViewReceipt(expense);
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleApprove(expense);
                                 setOpenMenuId(null);
                               }}
-                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left"
+                              disabled={expense.approvalStatus !== "pending"}
+                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <CheckCircle className="h-4 w-4 text-slate-400" />
+                              Approve
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleReject(expense);
+                                setOpenMenuId(null);
+                              }}
+                              disabled={expense.approvalStatus !== "pending"}
+                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <XCircle className="h-4 w-4 text-slate-400" />
+                              Reject
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuId(null);
+                              }}
+                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100"
                             >
                               <FileText className="h-4 w-4 text-slate-400" />
-                              View Receipt
+                              View Details
                             </button>
-                            {expense.status === "pending" && (
-                              <>
-                                <button
-                                  onClick={() => {
-                                    handleApprove(expense);
-                                    setOpenMenuId(null);
-                                  }}
-                                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100"
-                                >
-                                  <CheckCircle className="h-4 w-4 text-slate-400" />
-                                  Approve
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    handleReject(expense);
-                                    setOpenMenuId(null);
-                                  }}
-                                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100"
-                                >
-                                  <XCircle className="h-4 w-4 text-slate-400" />
-                                  Reject
-                                </button>
-                              </>
-                            )}
-                            {expense.status === "approved" && (
-                              <button
-                                onClick={() => {
-                                  handleEditExpense(expense);
-                                  setOpenMenuId(null);
-                                }}
-                                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100"
-                              >
-                                <Edit className="h-4 w-4 text-slate-400" />
-                                Edit
-                              </button>
-                            )}
                           </div>
                         </>
                       )}
@@ -5624,7 +5731,7 @@ function FinanceExpensesWorkspace() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-sm text-slate-500">
+                  <td colSpan={9} className="px-4 py-8 text-center text-sm text-slate-500">
                     No expenses found
                   </td>
                 </tr>
@@ -5641,6 +5748,314 @@ function FinanceExpensesWorkspace() {
           </p>
         </div>
       </div>
+
+      {/* Expense Detail Drawer */}
+      {selectedExpense && !showRecordModal && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/40 z-40 transition-opacity"
+            onClick={() => setSelectedExpense(null)}
+          />
+          <div className="fixed right-0 top-0 h-full w-full max-w-2xl bg-white shadow-xl z-50 overflow-y-auto rounded-l-3xl">
+            <div className="p-8 space-y-6">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Expense Detail</p>
+                  <h3 className="text-2xl font-semibold text-slate-900">{selectedExpense.id}</h3>
+                </div>
+                <button
+                  onClick={() => setSelectedExpense(null)}
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Amount & Tax Details */}
+              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <h4 className="font-semibold text-slate-900 text-sm">Amount & Tax</h4>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-600">Base Amount</p>
+                    <p className="text-lg font-bold text-slate-900">{formatAmount(selectedExpense.amount)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-600">{selectedExpense.taxType.toUpperCase()} ({selectedExpense.taxRate}%)</p>
+                    <p className="text-lg font-bold text-red-600">{formatAmount(selectedExpense.taxAmount)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-600">Total</p>
+                    <p className="text-lg font-bold text-green-600">{formatAmount(selectedExpense.totalAmount)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Expense Details */}
+              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <h4 className="font-semibold text-slate-900 text-sm">Details</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-600">Category</p>
+                    <p className="text-slate-900">{selectedExpense.category.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-600">Type</p>
+                    <p className="text-slate-900 capitalize">{selectedExpense.type.replace(/_/g, ' ')}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-600">Expense Date</p>
+                    <p className="text-slate-900">{selectedExpense.expenseDate}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-600">Payment Method</p>
+                    <p className="text-slate-900">{selectedExpense.paymentMethod.replace(/_/g, ' ')}</p>
+                  </div>
+                  {selectedExpense.vendorName && (
+                    <div>
+                      <p className="text-xs font-semibold text-slate-600">Vendor</p>
+                      <p className="text-slate-900">{selectedExpense.vendorName}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-xs font-semibold text-slate-600">Department</p>
+                    <p className="text-slate-900">{selectedExpense.departmentId}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status */}
+              <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <h4 className="font-semibold text-slate-900 text-sm">Status</h4>
+                <div className="flex gap-4">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-600">Payment Status</p>
+                    <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold border ${getStatusColor(selectedExpense.paymentStatus)}`}>
+                      {selectedExpense.paymentStatus.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-600">Approval Status</p>
+                    <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold border ${getApprovalColor(selectedExpense.approvalStatus)}`}>
+                      {selectedExpense.approvalStatus}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Approval History */}
+              {selectedExpense.approvals.length > 0 && (
+                <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <h4 className="font-semibold text-slate-900 text-sm">Approval History</h4>
+                  <div className="space-y-2">
+                    {selectedExpense.approvals.map((approval) => (
+                      <div key={approval.id} className="text-xs">
+                        <p className="font-semibold text-slate-900">{approval.action.replace(/_/g, ' ')} by {approval.approverName}</p>
+                        <p className="text-slate-500">{approval.timestamp}</p>
+                        {approval.reason && <p className="text-slate-600 italic">"{approval.reason}"</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Audit Trail */}
+              <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <h4 className="font-semibold text-slate-900 text-sm">Audit Trail</h4>
+                <div className="space-y-2">
+                  {selectedExpense.auditTrail.map((trail) => (
+                    <div key={trail.id} className="text-xs">
+                      <p className="font-semibold text-slate-900">{trail.action}</p>
+                      <p className="text-slate-500">{trail.timestamp} by {trail.user}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-6 border-t border-slate-200">
+                <button
+                  onClick={() => setSelectedExpense(null)}
+                  className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 transition-colors"
+                >
+                  Close
+                </button>
+                {selectedExpense.approvalStatus === "pending" && (
+                  <>
+                    <button
+                      onClick={() => {
+                        handleApprove(selectedExpense);
+                      }}
+                      className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition-colors"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleReject(selectedExpense);
+                      }}
+                      className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
+                    >
+                      Reject
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Record Expense Modal */}
+      {showRecordModal && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/40 z-40 transition-opacity"
+            onClick={() => setShowRecordModal(false)}
+          />
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md rounded-2xl bg-white shadow-xl z-50 max-h-[90vh] overflow-y-auto">
+            <div className="p-8 space-y-6">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Record Expense</p>
+                  <h3 className="text-2xl font-semibold text-slate-900">New Expense</h3>
+                </div>
+                <button
+                  onClick={() => setShowRecordModal(false)}
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Form */}
+              <div className="space-y-4">
+                {/* Expense Type */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Expense Type*</label>
+                  <select
+                    value={recordForm.expenseType}
+                    onChange={(e) => setRecordForm({ ...recordForm, expenseType: e.target.value as any })}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+                  >
+                    <option value="vendor">Vendor Expense</option>
+                    <option value="employee_reimbursement">Employee Reimbursement</option>
+                    <option value="cash">Cash Expense</option>
+                    <option value="prepaid">Prepaid Expense</option>
+                  </select>
+                </div>
+
+                {/* Date */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Date*</label>
+                  <input
+                    type="date"
+                    value={recordForm.date}
+                    onChange={(e) => setRecordForm({ ...recordForm, date: e.target.value })}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Description*</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Flight to Lagos, Office supplies"
+                    value={recordForm.description}
+                    onChange={(e) => setRecordForm({ ...recordForm, description: e.target.value })}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+                  />
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Category*</label>
+                  <select
+                    value={recordForm.category}
+                    onChange={(e) => setRecordForm({ ...recordForm, category: e.target.value })}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+                  >
+                    <option value="">Select Category</option>
+                    {EXPENSE_CATEGORIES_BASELINE.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Amount */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Amount (₦)*</label>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    value={recordForm.amount}
+                    onChange={(e) => setRecordForm({ ...recordForm, amount: e.target.value })}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+                  />
+                </div>
+
+                {/* Vendor */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Vendor</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Arik Air, Shoprite"
+                    value={recordForm.vendor}
+                    onChange={(e) => setRecordForm({ ...recordForm, vendor: e.target.value })}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+                  />
+                </div>
+
+                {/* Tax Type */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Tax Type</label>
+                  <select
+                    value={recordForm.taxType}
+                    onChange={(e) => setRecordForm({ ...recordForm, taxType: e.target.value as any })}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+                  >
+                    <option value="none">None</option>
+                    <option value="vat">VAT (7.5%)</option>
+                    <option value="wht">WHT (5%)</option>
+                  </select>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Notes</label>
+                  <textarea
+                    placeholder="Additional notes or justification..."
+                    value={recordForm.notes}
+                    onChange={(e) => setRecordForm({ ...recordForm, notes: e.target.value })}
+                    rows={3}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+                  />
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-6 border-t border-slate-200">
+                <button
+                  onClick={() => setShowRecordModal(false)}
+                  className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveExpense}
+                  className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                >
+                  Record Expense
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
