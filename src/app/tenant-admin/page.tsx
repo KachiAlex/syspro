@@ -4571,7 +4571,7 @@ function FinancePaymentsWorkspace() {
                               className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left"
                             >
                               <Send className="h-4 w-4 text-slate-400" />
-                              Pay Now
+                              Record Payment
                             </button>
                             {payment.status !== "paid" && (
                               <>
