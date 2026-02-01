@@ -98,6 +98,7 @@ import DepartmentManagement from "@/app/tenant-admin/sections/department-managem
 import RoleBuilder from "@/app/tenant-admin/sections/role-builder";
 import ApprovalDesigner from "@/app/tenant-admin/sections/approval-designer";
 import EmployeeConsole from "@/app/tenant-admin/sections/employee-console";
+import { listExpenses, createExpense, approveExpense, deleteExpense } from "@/lib/api/expenses";
 import AccessControlPanel from "@/app/tenant-admin/sections/access-control";
 import LifecycleWorkflows from "@/app/tenant-admin/sections/workflows";
 import ModuleRegistry from "@/app/tenant-admin/sections/module-registry";
@@ -5361,6 +5362,8 @@ function FinancePaymentsWorkspace() {
 
 function FinanceExpensesWorkspace() {
   const [expenses, setExpenses] = useState<Expense[]>(EXPENSE_RECORDS_BASELINE);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [approvalFilter, setApprovalFilter] = useState<string | null>(null);
@@ -5368,6 +5371,28 @@ function FinanceExpensesWorkspace() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [showRecordModal, setShowRecordModal] = useState(false);
+
+  // Load expenses from API
+  useEffect(() => {
+    const fetchExpenses = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await listExpenses({ tenantSlug: "default" });
+        if (data && Array.isArray(data)) {
+          setExpenses(data);
+        }
+      } catch (err) {
+        console.error("Failed to load expenses:", err);
+        setError("Failed to load expenses. Using sample data.");
+        // Keep baseline data on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExpenses();
+  }, []);
   const [recordForm, setRecordForm] = useState({
     expenseType: "vendor" as const,
     date: new Date().toISOString().split('T')[0],
@@ -5420,7 +5445,7 @@ function FinanceExpensesWorkspace() {
     });
   };
 
-  const handleSaveExpense = () => {
+  const handleSaveExpense = async () => {
     if (!recordForm.amount || !recordForm.category || !recordForm.description) {
       alert("Please fill in all required fields");
       return;
@@ -5429,59 +5454,105 @@ function FinanceExpensesWorkspace() {
     const category = EXPENSE_CATEGORIES_BASELINE.find(c => c.id === recordForm.category);
     if (!category) return;
 
-    const amount = parseFloat(recordForm.amount);
-    const taxRate = recordForm.taxType === 'vat' ? 7.5 : recordForm.taxType === 'wht' ? 5 : 0;
-    const taxAmount = (amount * taxRate) / 100;
-    const totalAmount = amount + taxAmount;
+    try {
+      setLoading(true);
+      const amount = parseFloat(recordForm.amount);
+      
+      const result = await createExpense({
+        tenantSlug: "default",
+        regionId: "region-001",
+        branchId: "branch-001",
+        type: recordForm.expenseType as "vendor" | "reimbursement" | "cash" | "prepaid",
+        amount,
+        taxType: recordForm.taxType === 'vat' ? 'VAT' : recordForm.taxType === 'wht' ? 'WHT' : 'NONE',
+        categoryId: recordForm.category,
+        description: recordForm.description,
+        vendor: recordForm.vendor || undefined,
+        date: recordForm.date,
+        notes: recordForm.notes,
+        createdBy: "current-user",
+      });
 
-    const newExpense: Expense = {
-      id: `EXP-${String(expenses.length + 1).padStart(4, '0')}`,
-      tenantId: "tenant-001",
-      expenseDate: recordForm.date,
-      recordedDate: new Date().toISOString().split('T')[0],
-      amount,
-      taxType: recordForm.taxType,
-      taxRate,
-      taxAmount,
-      totalAmount,
-      category,
-      type: recordForm.expenseType,
-      description: recordForm.description,
-      vendorName: recordForm.vendor || undefined,
-      departmentId: recordForm.department || "dept-001",
-      paymentStatus: "unpaid",
-      approvalStatus: "draft",
-      paymentMethod: "bank_transfer",
-      notes: recordForm.notes,
-      receiptUrls: [],
-      createdBy: "Current User",
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0],
-      approvals: [],
-      auditTrail: [{
-        id: "audit-new",
-        action: "created",
-        timestamp: new Date().toISOString(),
-        user: "Current User",
-        details: {},
-      }],
-      accountId: category.accountId,
-    };
-
-    setExpenses([...expenses, newExpense]);
-    setShowRecordModal(false);
+      // Reload expenses from API
+      const updated = await listExpenses({ tenantSlug: "default" });
+      if (updated && Array.isArray(updated)) {
+        setExpenses(updated);
+      }
+      
+      setShowRecordModal(false);
+      setRecordForm({
+        expenseType: "vendor",
+        date: new Date().toISOString().split('T')[0],
+        amount: "",
+        category: "",
+        vendor: "",
+        description: "",
+        department: "",
+        taxType: "none",
+        notes: "",
+      });
+    } catch (err) {
+      console.error("Error saving expense:", err);
+      setError("Failed to save expense. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleApprove = (expense: Expense) => {
-    const updated = { ...expense, approvalStatus: "approved" as const };
-    setExpenses(expenses.map(e => e.id === expense.id ? updated : e));
-    setSelectedExpense(null);
+  const handleApprove = async (expense: Expense) => {
+    try {
+      setLoading(true);
+      await approveExpense({
+        expenseId: expense.id,
+        tenantSlug: "default",
+        approverRole: "MANAGER",
+        approverId: "current-user",
+        approverName: "Current User",
+        action: "approved",
+        reason: "Approved by manager",
+      });
+
+      // Reload expenses
+      const updated = await listExpenses({ tenantSlug: "default" });
+      if (updated && Array.isArray(updated)) {
+        setExpenses(updated);
+      }
+      
+      setSelectedExpense(null);
+    } catch (err) {
+      console.error("Error approving expense:", err);
+      setError("Failed to approve expense");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleReject = (expense: Expense) => {
-    const updated = { ...expense, approvalStatus: "rejected" as const };
-    setExpenses(expenses.map(e => e.id === expense.id ? updated : e));
-    setSelectedExpense(null);
+  const handleReject = async (expense: Expense) => {
+    try {
+      setLoading(true);
+      await approveExpense({
+        expenseId: expense.id,
+        tenantSlug: "default",
+        approverRole: "MANAGER",
+        approverId: "current-user",
+        approverName: "Current User",
+        action: "rejected",
+        reason: "Rejected by manager",
+      });
+
+      // Reload expenses
+      const updated = await listExpenses({ tenantSlug: "default" });
+      if (updated && Array.isArray(updated)) {
+        setExpenses(updated);
+      }
+      
+      setSelectedExpense(null);
+    } catch (err) {
+      console.error("Error rejecting expense:", err);
+      setError("Failed to reject expense");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
