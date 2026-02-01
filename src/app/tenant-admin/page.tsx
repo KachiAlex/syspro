@@ -322,6 +322,17 @@ const FINANCE_EXPENSE_BREAKDOWN_BASELINE: FinanceExpenseBreakdown[] = [
   { label: "Vendors & services", amount: "₦26.4M", delta: "-3.8%", direction: "down" },
 ];
 
+const MOCK_INVOICES: InvoiceItem[] = [
+  { id: "1", invoiceNumber: "INV-2024-001", customer: "Axiom Labs", amount: "₦145,000", status: "paid", dueDate: "2024-01-15", issueDate: "2024-01-01", branch: "Lagos HQ" },
+  { id: "2", invoiceNumber: "INV-2024-002", customer: "Nova Holdings", amount: "₦892,500", status: "sent", dueDate: "2024-02-10", issueDate: "2024-01-25", branch: "Abuja" },
+  { id: "3", invoiceNumber: "INV-2024-003", customer: "Helix Metals", amount: "₦2,340,000", status: "overdue", dueDate: "2024-01-28", issueDate: "2024-01-14", branch: "Lagos HQ" },
+  { id: "4", invoiceNumber: "INV-2024-004", customer: "Vertex Dynamics", amount: "₦567,800", status: "sent", dueDate: "2024-02-20", issueDate: "2024-02-01", branch: "Port Harcourt" },
+  { id: "5", invoiceNumber: "INV-2024-005", customer: "Quantum Systems", amount: "₦1,234,500", status: "draft", dueDate: "2024-02-28", issueDate: "2024-02-01", branch: "Lagos HQ" },
+  { id: "6", invoiceNumber: "INV-2024-006", customer: "Axiom Labs", amount: "₦445,200", status: "paid", dueDate: "2024-01-20", issueDate: "2024-01-05", branch: "Lagos HQ" },
+  { id: "7", invoiceNumber: "INV-2024-007", customer: "Eclipse Trading", amount: "₦789,000", status: "sent", dueDate: "2024-02-15", issueDate: "2024-01-30", branch: "Kano" },
+  { id: "8", invoiceNumber: "INV-2024-008", customer: "Meridian Corp", amount: "₦3,120,000", status: "overdue", dueDate: "2024-01-25", issueDate: "2024-01-10", branch: "Abuja" },
+];
+
 const FINANCE_BASELINE_SNAPSHOT: FinanceSnapshot = {
   metrics: [
     { label: "Monthly revenue", value: "₦812M", delta: "+4.2%", trend: "up", description: "vs prior period" },
@@ -1845,6 +1856,29 @@ const FINANCE_VIEW_LABELS: Record<FinanceView, string> = {
 };
 type FinanceView = (typeof FINANCE_VIEWS)[number];
 
+type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
+type InvoiceItem = {
+  id: string;
+  invoiceNumber: string;
+  customer: string;
+  amount: string;
+  status: InvoiceStatus;
+  dueDate: string;
+  issueDate: string;
+  branch: string;
+};
+
+type InvoiceFormTab = "details" | "items" | "taxes" | "preview";
+
+const INVOICE_STATUS_OPTIONS: InvoiceStatus[] = ["draft", "sent", "paid", "overdue", "cancelled"];
+const INVOICE_STATUS_META: Record<InvoiceStatus, { label: string; chip: string }> = {
+  draft: { label: "Draft", chip: "bg-slate-100 text-slate-600" },
+  sent: { label: "Sent", chip: "bg-blue-50 text-blue-600" },
+  paid: { label: "Paid", chip: "bg-emerald-50 text-emerald-600" },
+  overdue: { label: "Overdue", chip: "bg-rose-50 text-rose-600" },
+  cancelled: { label: "Cancelled", chip: "bg-slate-100 text-slate-400" },
+};
+
 function generateLeadId() {
   return `PIPE-${Math.floor(100 + Math.random() * 900)}`;
 }
@@ -2345,6 +2379,15 @@ export default function TenantAdminPage() {
   const [showRecordExpenseModal, setShowRecordExpenseModal] = useState(false);
   const [showPayoutModal, setShowPayoutModal] = useState(false);
   const [quickActionToast, setQuickActionToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  // Invoice workspace state
+  const [invoices, setInvoices] = useState<InvoiceItem[]>(MOCK_INVOICES);
+  const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<InvoiceStatus | "all">("all");
+  const [invoiceBranchFilter, setInvoiceBranchFilter] = useState<string>("all");
+  const [invoiceSearchQuery, setInvoiceSearchQuery] = useState("");
+  const [showInvoiceDrawer, setShowInvoiceDrawer] = useState(false);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  const [invoiceFormTab, setInvoiceFormTab] = useState<InvoiceFormTab>("details");
 
   const entityOptions = ["Axiom Labs", "Nova Holdings", "Helix Metals"];
   const regionOptions = ["Global HQ", "Americas", "EMEA", "APAC"];
@@ -3045,6 +3088,19 @@ export default function TenantAdminPage() {
                     onTreasuryMesh={handleTreasuryMesh}
                     currentView={financeView}
                     onViewChange={setFinanceView}
+                    invoices={invoices}
+                    invoiceStatusFilter={invoiceStatusFilter}
+                    invoiceBranchFilter={invoiceBranchFilter}
+                    invoiceSearchQuery={invoiceSearchQuery}
+                    onInvoiceStatusFilterChange={setInvoiceStatusFilter}
+                    onInvoiceBranchFilterChange={setInvoiceBranchFilter}
+                    onInvoiceSearchChange={setInvoiceSearchQuery}
+                    showInvoiceDrawer={showInvoiceDrawer}
+                    onShowInvoiceDrawer={setShowInvoiceDrawer}
+                    selectedInvoiceId={selectedInvoiceId}
+                    onSelectInvoice={setSelectedInvoiceId}
+                    invoiceFormTab={invoiceFormTab}
+                    onInvoiceFormTabChange={setInvoiceFormTab}
                   />
                 ) : activeNav === "structure" ? (
                   <DepartmentManagement tenantSlug={tenantSlug} />
@@ -3511,6 +3567,19 @@ function FinanceWorkspace({
   onTreasuryMesh,
   currentView,
   onViewChange,
+  invoices,
+  invoiceStatusFilter,
+  invoiceBranchFilter,
+  invoiceSearchQuery,
+  onInvoiceStatusFilterChange,
+  onInvoiceBranchFilterChange,
+  onInvoiceSearchChange,
+  showInvoiceDrawer,
+  onShowInvoiceDrawer,
+  selectedInvoiceId,
+  onSelectInvoice,
+  invoiceFormTab,
+  onInvoiceFormTabChange,
 }: {
   snapshot: FinanceSnapshot;
   loading: boolean;
@@ -3530,6 +3599,19 @@ function FinanceWorkspace({
   onTreasuryMesh: () => void;
   currentView: FinanceView;
   onViewChange: (view: FinanceView) => void;
+  invoices: InvoiceItem[];
+  invoiceStatusFilter: InvoiceStatus | "all";
+  invoiceBranchFilter: string;
+  invoiceSearchQuery: string;
+  onInvoiceStatusFilterChange: (status: InvoiceStatus | "all") => void;
+  onInvoiceBranchFilterChange: (branch: string) => void;
+  onInvoiceSearchChange: (query: string) => void;
+  showInvoiceDrawer: boolean;
+  onShowInvoiceDrawer: (show: boolean) => void;
+  selectedInvoiceId: string | null;
+  onSelectInvoice: (id: string | null) => void;
+  invoiceFormTab: InvoiceFormTab;
+  onInvoiceFormTabChange: (tab: InvoiceFormTab) => void;
 }) {
   const quickActions: Array<{ label: string; description: string; icon: ComponentType<{ className?: string }>; action: () => void; secondaryAction?: () => void }> = [
     { label: "Log invoice", description: "Sync to ERP", icon: Receipt, action: onLogInvoice, secondaryAction: onSyncToERP },
@@ -3645,7 +3727,25 @@ function FinanceWorkspace({
       </div>
         </>
       ) : currentView === "invoices" ? (
-        <FinanceInvoicesWorkspace />
+        <FinanceInvoicesWorkspace 
+          invoices={invoices}
+          statusFilter={invoiceStatusFilter}
+          branchFilter={invoiceBranchFilter}
+          searchQuery={invoiceSearchQuery}
+          onStatusFilterChange={onInvoiceStatusFilterChange}
+          onBranchFilterChange={onInvoiceBranchFilterChange}
+          onSearchChange={onInvoiceSearchChange}
+          onCreateInvoice={() => {
+            onSelectInvoice(null);
+            onShowInvoiceDrawer(true);
+            onInvoiceFormTabChange("details");
+          }}
+          onEditInvoice={(id) => {
+            onSelectInvoice(id);
+            onShowInvoiceDrawer(true);
+            onInvoiceFormTabChange("details");
+          }}
+        />
       ) : currentView === "payments" ? (
         <FinancePaymentsWorkspace />
       ) : currentView === "expenses" ? (
@@ -3659,37 +3759,180 @@ function FinanceWorkspace({
   );
 }
 
-function FinanceInvoicesWorkspace() {
+function FinanceInvoicesWorkspace({
+  invoices,
+  statusFilter,
+  branchFilter,
+  searchQuery,
+  onStatusFilterChange,
+  onBranchFilterChange,
+  onSearchChange,
+  onCreateInvoice,
+  onEditInvoice,
+}: {
+  invoices: InvoiceItem[];
+  statusFilter: InvoiceStatus | "all";
+  branchFilter: string;
+  searchQuery: string;
+  onStatusFilterChange: (status: InvoiceStatus | "all") => void;
+  onBranchFilterChange: (branch: string) => void;
+  onSearchChange: (query: string) => void;
+  onCreateInvoice: () => void;
+  onEditInvoice: (id: string) => void;
+}) {
+  const filteredInvoices = invoices.filter((invoice) => {
+    const matchesStatus = statusFilter === "all" || invoice.status === statusFilter;
+    const matchesBranch = branchFilter === "all" || invoice.branch === branchFilter;
+    const matchesSearch =
+      searchQuery === "" ||
+      invoice.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      invoice.customer.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesStatus && matchesBranch && matchesSearch;
+  });
+
+  const branches = Array.from(new Set(invoices.map((inv) => inv.branch)));
+
   return (
-    <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
-      <div className="space-y-6">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Revenue operations</p>
           <h2 className="text-2xl font-semibold text-slate-900">Invoices</h2>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center">
-          <div className="w-full space-y-3">
-            <Receipt className="mx-auto h-12 w-12 text-slate-400" />
-            <p className="text-lg font-semibold text-slate-900">Invoice Management Coming Soon</p>
-            <p className="text-sm text-slate-600">
-              Create, track, and manage invoices. Send to customers and monitor payment status.
-            </p>
-            <div className="flex flex-wrap justify-center gap-2 pt-2">
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Invoice List
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Create Invoice
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Status Tracking
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Bulk Actions
-              </span>
-            </div>
+        <button
+          onClick={onCreateInvoice}
+          className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+          type="button"
+        >
+          <Receipt className="h-4 w-4" />
+          New Invoice
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder="Search invoices or customers..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-300 focus:outline-none"
+            />
           </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => onStatusFilterChange(e.target.value as InvoiceStatus | "all")}
+            className="rounded-2xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:border-slate-300 focus:outline-none"
+          >
+            <option value="all">All Statuses</option>
+            {INVOICE_STATUS_OPTIONS.map((status) => (
+              <option key={status} value={status}>
+                {INVOICE_STATUS_META[status].label}
+              </option>
+            ))}
+          </select>
+          <select
+            value={branchFilter}
+            onChange={(e) => onBranchFilterChange(e.target.value)}
+            className="rounded-2xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:border-slate-300 focus:outline-none"
+          >
+            <option value="all">All Branches</option>
+            {branches.map((branch) => (
+              <option key={branch} value={branch}>
+                {branch}
+              </option>
+            ))}
+          </select>
         </div>
+      </div>
+
+      {/* Invoice Table */}
+      <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/70">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Invoice #
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Customer
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Amount
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Issue Date
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Due Date
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredInvoices.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center">
+                    <div className="space-y-2">
+                      <Receipt className="mx-auto h-10 w-10 text-slate-300" />
+                      <p className="text-sm font-semibold text-slate-900">No invoices found</p>
+                      <p className="text-xs text-slate-500">Try adjusting your filters or create a new invoice</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredInvoices.map((invoice, index) => {
+                  const statusMeta = INVOICE_STATUS_META[invoice.status];
+                  return (
+                    <tr
+                      key={invoice.id}
+                      className={`${index !== filteredInvoices.length - 1 ? "border-b border-slate-100" : ""} hover:bg-slate-50/50`}
+                    >
+                      <td className="px-6 py-4">
+                        <p className="font-semibold text-slate-900">{invoice.invoiceNumber}</p>
+                        <p className="text-xs text-slate-500">{invoice.branch}</p>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-700">{invoice.customer}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-slate-900">{invoice.amount}</td>
+                      <td className="px-6 py-4">
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusMeta.chip}`}>
+                          {statusMeta.label}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{invoice.issueDate}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{invoice.dueDate}</td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => onEditInvoice(invoice.id)}
+                          className="rounded-full border border-slate-200 px-4 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                          type="button"
+                        >
+                          Edit
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+        {filteredInvoices.length > 0 && (
+          <div className="border-t border-slate-100 px-6 py-4">
+            <p className="text-sm text-slate-600">
+              Showing {filteredInvoices.length} of {invoices.length} invoices
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
