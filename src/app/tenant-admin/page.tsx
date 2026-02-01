@@ -437,6 +437,280 @@ const PAYMENT_RECORDS_BASELINE: PaymentRecord[] = [
   },
 ];
 
+// Expense Types
+type ExpenseCategory = {
+  id: string;
+  code: string;
+  name: string;
+  accountId: string;
+  requiresVendor: boolean;
+  requiresReceipt: boolean;
+  categoryLimit?: number;
+  policyDescription: string;
+};
+
+type Approval = {
+  id: string;
+  expenseId: string;
+  approverRole: "manager" | "finance" | "executive";
+  approverId: string;
+  approverName: string;
+  action: "approved" | "rejected" | "clarification_requested";
+  reason?: string;
+  timestamp: string;
+  amountThreshold: number;
+};
+
+type AuditLog = {
+  id: string;
+  action: string;
+  timestamp: string;
+  user: string;
+  details: Record<string, any>;
+};
+
+type Expense = {
+  id: string;
+  tenantId: string;
+  expenseDate: string;
+  recordedDate: string;
+  amount: number;
+  taxType: "none" | "vat" | "wht";
+  taxRate: number;
+  taxAmount: number;
+  totalAmount: number;
+  category: ExpenseCategory;
+  type: "vendor" | "employee_reimbursement" | "cash" | "prepaid";
+  description: string;
+  vendorId?: string;
+  vendorName?: string;
+  employeeId?: string;
+  departmentId: string;
+  projectId?: string;
+  costCenterId?: string;
+  paymentStatus: "unpaid" | "paid" | "reimbursed" | "pending_payment";
+  approvalStatus: "draft" | "pending" | "approved" | "rejected";
+  paymentMethod: "bank_transfer" | "cash" | "corporate_card" | "mobile_money" | "check";
+  linkedPaymentId?: string;
+  linkedInvoiceId?: string;
+  notes: string;
+  receiptUrls: string[];
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  journalEntryId?: string;
+  accountId: string;
+  vatInputAccountId?: string;
+  whtPayableAccountId?: string;
+  approvals: Approval[];
+  auditTrail: AuditLog[];
+};
+
+const EXPENSE_CATEGORIES_BASELINE: ExpenseCategory[] = [
+  { id: "cat-001", code: "OP-100", name: "Travel", accountId: "4110", requiresVendor: true, requiresReceipt: true, policyDescription: "Flights, hotels, transport" },
+  { id: "cat-002", code: "OP-200", name: "Office Supplies", accountId: "4120", requiresVendor: true, requiresReceipt: true, policyDescription: "Stationery, equipment" },
+  { id: "cat-003", code: "OP-300", name: "Meals & Entertainment", accountId: "4130", requiresVendor: false, requiresReceipt: true, policyDescription: "Team meals, client entertainment" },
+  { id: "cat-004", code: "OP-400", name: "Insurance", accountId: "4510", requiresVendor: true, requiresReceipt: true, categoryLimit: 3000000, policyDescription: "Corporate insurance policies" },
+  { id: "cat-005", code: "OP-500", name: "Professional Services", accountId: "4250", requiresVendor: true, requiresReceipt: true, policyDescription: "Consulting, audit, legal" },
+];
+
+const EXPENSE_RECORDS_BASELINE: Expense[] = [
+  {
+    id: "EXP-0001",
+    tenantId: "tenant-001",
+    expenseDate: "2026-01-15",
+    recordedDate: "2026-01-15",
+    amount: 450000,
+    taxType: "vat",
+    taxRate: 7.5,
+    taxAmount: 33750,
+    totalAmount: 483750,
+    category: EXPENSE_CATEGORIES_BASELINE[0],
+    type: "vendor",
+    description: "Flight to Lagos for client meeting",
+    vendorId: "vend-001",
+    vendorName: "Arik Air",
+    employeeId: "emp-001",
+    departmentId: "dept-001",
+    projectId: "proj-001",
+    costCenterId: "cc-001",
+    paymentStatus: "paid",
+    approvalStatus: "approved",
+    paymentMethod: "bank_transfer",
+    linkedPaymentId: "PAY-0045",
+    notes: "Client engagement - Strategic account",
+    receiptUrls: ["flight-receipt.pdf"],
+    createdBy: "emp-001",
+    createdAt: "2026-01-15T09:00:00Z",
+    updatedAt: "2026-01-17T14:30:00Z",
+    approvedBy: "emp-002",
+    approvedAt: "2026-01-17T14:30:00Z",
+    journalEntryId: "JE-12345",
+    accountId: "4110-Travel",
+    vatInputAccountId: "1050",
+    approvals: [
+      { id: "app-001", expenseId: "EXP-0001", approverRole: "manager", approverId: "emp-002", approverName: "John Doe", action: "approved", timestamp: "2026-01-16T10:00:00Z", amountThreshold: 1000000 },
+      { id: "app-002", expenseId: "EXP-0001", approverRole: "finance", approverId: "emp-003", approverName: "Jane Smith", action: "approved", timestamp: "2026-01-17T11:00:00Z", amountThreshold: 2000000 },
+    ],
+    auditTrail: [
+      { id: "audit-001", action: "created", timestamp: "2026-01-15T09:00:00Z", user: "emp-001", details: { amount: 450000 } },
+      { id: "audit-002", action: "submitted", timestamp: "2026-01-15T09:30:00Z", user: "emp-001", details: {} },
+      { id: "audit-003", action: "approved", timestamp: "2026-01-17T14:30:00Z", user: "emp-002", details: { reason: "Approved - within authority" } },
+      { id: "audit-004", action: "posted_to_gl", timestamp: "2026-01-18T08:00:00Z", user: "system", details: { journalEntryId: "JE-12345" } },
+      { id: "audit-005", action: "marked_paid", timestamp: "2026-01-20T10:00:00Z", user: "emp-003", details: { linkedPaymentId: "PAY-0045" } },
+    ],
+  },
+  {
+    id: "EXP-0002",
+    tenantId: "tenant-001",
+    expenseDate: "2026-01-18",
+    recordedDate: "2026-01-18",
+    amount: 50000,
+    taxType: "vat",
+    taxRate: 7.5,
+    taxAmount: 3750,
+    totalAmount: 53750,
+    category: EXPENSE_CATEGORIES_BASELINE[1],
+    type: "vendor",
+    description: "Office stationery and supplies",
+    vendorId: "vend-002",
+    vendorName: "Shoprite",
+    departmentId: "dept-002",
+    paymentStatus: "unpaid",
+    approvalStatus: "pending",
+    paymentMethod: "corporate_card",
+    notes: "General office supplies",
+    receiptUrls: ["shoprite-receipt.pdf"],
+    createdBy: "emp-004",
+    createdAt: "2026-01-18T11:00:00Z",
+    updatedAt: "2026-01-18T11:00:00Z",
+    approvals: [
+      { id: "app-003", expenseId: "EXP-0002", approverRole: "manager", approverId: "emp-002", approverName: "John Doe", action: "approved", timestamp: "2026-01-19T09:00:00Z", amountThreshold: 1000000 },
+    ],
+    auditTrail: [
+      { id: "audit-006", action: "created", timestamp: "2026-01-18T11:00:00Z", user: "emp-004", details: {} },
+      { id: "audit-007", action: "submitted", timestamp: "2026-01-18T12:00:00Z", user: "emp-004", details: {} },
+    ],
+    accountId: "4120-Office",
+    vatInputAccountId: "1050",
+  },
+  {
+    id: "EXP-0003",
+    tenantId: "tenant-001",
+    expenseDate: "2026-01-20",
+    recordedDate: "2026-01-20",
+    amount: 85000,
+    taxType: "vat",
+    taxRate: 7.5,
+    taxAmount: 6375,
+    totalAmount: 91375,
+    category: EXPENSE_CATEGORIES_BASELINE[2],
+    type: "cash",
+    description: "Team lunch - project kickoff meeting",
+    departmentId: "dept-003",
+    projectId: "proj-002",
+    paymentStatus: "paid",
+    approvalStatus: "approved",
+    paymentMethod: "cash",
+    notes: "Project team coordination",
+    receiptUrls: ["lunch-receipt.pdf"],
+    createdBy: "emp-005",
+    createdAt: "2026-01-20T13:00:00Z",
+    updatedAt: "2026-01-21T10:00:00Z",
+    approvedBy: "emp-002",
+    approvedAt: "2026-01-21T10:00:00Z",
+    journalEntryId: "JE-12346",
+    linkedPaymentId: "PAY-0046",
+    accountId: "4130-Meals",
+    vatInputAccountId: "1050",
+    approvals: [
+      { id: "app-004", expenseId: "EXP-0003", approverRole: "manager", approverId: "emp-002", approverName: "John Doe", action: "approved", timestamp: "2026-01-21T09:00:00Z", amountThreshold: 1000000 },
+    ],
+    auditTrail: [
+      { id: "audit-008", action: "created", timestamp: "2026-01-20T13:00:00Z", user: "emp-005", details: {} },
+      { id: "audit-009", action: "approved", timestamp: "2026-01-21T10:00:00Z", user: "emp-002", details: {} },
+    ],
+  },
+  {
+    id: "EXP-0004",
+    tenantId: "tenant-001",
+    expenseDate: "2026-01-25",
+    recordedDate: "2026-01-25",
+    amount: 2400000,
+    taxType: "none",
+    taxRate: 0,
+    taxAmount: 0,
+    totalAmount: 2400000,
+    category: EXPENSE_CATEGORIES_BASELINE[3],
+    type: "prepaid",
+    description: "Annual insurance premium (24-month coverage)",
+    vendorId: "vend-003",
+    vendorName: "AXA Insurance",
+    departmentId: "dept-001",
+    paymentStatus: "paid",
+    approvalStatus: "approved",
+    paymentMethod: "bank_transfer",
+    linkedPaymentId: "PAY-0047",
+    notes: "24-month comprehensive coverage",
+    receiptUrls: ["axa-policy.pdf"],
+    createdBy: "emp-006",
+    createdAt: "2026-01-25T08:00:00Z",
+    updatedAt: "2026-01-26T15:00:00Z",
+    approvedBy: "emp-003",
+    approvedAt: "2026-01-26T15:00:00Z",
+    journalEntryId: "JE-12347",
+    accountId: "1400-Prepaid",
+    approvals: [
+      { id: "app-005", expenseId: "EXP-0004", approverRole: "manager", approverId: "emp-002", approverName: "John Doe", action: "approved", timestamp: "2026-01-25T10:00:00Z", amountThreshold: 1000000 },
+      { id: "app-006", expenseId: "EXP-0004", approverRole: "finance", approverId: "emp-003", approverName: "Jane Smith", action: "approved", timestamp: "2026-01-26T14:00:00Z", amountThreshold: 2000000 },
+      { id: "app-007", expenseId: "EXP-0004", approverRole: "executive", approverId: "emp-007", approverName: "CEO", action: "approved", timestamp: "2026-01-26T15:00:00Z", amountThreshold: 5000000 },
+    ],
+    auditTrail: [
+      { id: "audit-010", action: "created", timestamp: "2026-01-25T08:00:00Z", user: "emp-006", details: {} },
+      { id: "audit-011", action: "approved", timestamp: "2026-01-26T15:00:00Z", user: "emp-003", details: { allApprovalsComplete: true } },
+      { id: "audit-012", action: "posted_to_gl", timestamp: "2026-01-27T08:00:00Z", user: "system", details: { journalEntryId: "JE-12347", prepaidAmortization: "24 months @ ₦100K/month" } },
+    ],
+  },
+  {
+    id: "EXP-0005",
+    tenantId: "tenant-001",
+    expenseDate: "2026-01-28",
+    recordedDate: "2026-01-28",
+    amount: 500000,
+    taxType: "wht",
+    taxRate: 5,
+    taxAmount: 25000,
+    totalAmount: 475000,
+    category: EXPENSE_CATEGORIES_BASELINE[4],
+    type: "vendor",
+    description: "External audit services - Q1 review",
+    vendorId: "vend-004",
+    vendorName: "KPMG",
+    departmentId: "dept-001",
+    paymentStatus: "unpaid",
+    approvalStatus: "pending",
+    paymentMethod: "bank_transfer",
+    notes: "Quarterly audit - compliance requirement",
+    receiptUrls: [],
+    createdBy: "emp-006",
+    createdAt: "2026-01-28T14:00:00Z",
+    updatedAt: "2026-01-28T14:00:00Z",
+    accountId: "4250-Professional",
+    whtPayableAccountId: "2080",
+    approvals: [
+      { id: "app-008", expenseId: "EXP-0005", approverRole: "manager", approverId: "emp-002", approverName: "John Doe", action: "clarification_requested", reason: "Awaiting scope details", timestamp: "2026-01-29T09:00:00Z", amountThreshold: 1000000 },
+    ],
+    auditTrail: [
+      { id: "audit-013", action: "created", timestamp: "2026-01-28T14:00:00Z", user: "emp-006", details: {} },
+      { id: "audit-014", action: "submitted", timestamp: "2026-01-28T14:30:00Z", user: "emp-006", details: {} },
+      { id: "audit-015", action: "clarification_requested", timestamp: "2026-01-29T09:00:00Z", user: "emp-002", details: { question: "Please provide scope of audit" } },
+    ],
+  },
+];
+
 const DEFAULT_FINANCE_CURRENCY = "₦";
 
 const FINANCE_CASH_ACCOUNTS_BASELINE: FinanceCashAccount[] = [
