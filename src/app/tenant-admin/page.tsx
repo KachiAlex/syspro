@@ -3755,6 +3755,25 @@ function FinanceWorkspace({
       ) : currentView === "reports" ? (
         <FinanceReportsWorkspace />
       ) : null}
+
+      {/* Invoice Drawer */}
+      {showInvoiceDrawer && (
+        <InvoiceDrawer
+          invoiceId={selectedInvoiceId}
+          invoice={selectedInvoiceId ? invoices.find((inv) => inv.id === selectedInvoiceId) : null}
+          currentTab={invoiceFormTab}
+          onTabChange={onInvoiceFormTabChange}
+          onClose={() => {
+            onShowInvoiceDrawer(false);
+            onSelectInvoice(null);
+          }}
+          onSave={() => {
+            // Handle save logic here
+            onShowInvoiceDrawer(false);
+            onSelectInvoice(null);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -4079,6 +4098,440 @@ function FinanceReportsWorkspace() {
         </div>
       </div>
     </div>
+  );
+}
+
+function InvoiceDrawer({
+  invoiceId,
+  invoice,
+  currentTab,
+  onTabChange,
+  onClose,
+  onSave,
+}: {
+  invoiceId: string | null;
+  invoice: InvoiceItem | null | undefined;
+  currentTab: InvoiceFormTab;
+  onTabChange: (tab: InvoiceFormTab) => void;
+  onClose: () => void;
+  onSave: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    customer: invoice?.customer || "",
+    amount: invoice?.amount || "",
+    issueDate: invoice?.issueDate || new Date().toISOString().split("T")[0],
+    dueDate: invoice?.dueDate || "",
+    branch: invoice?.branch || "Lagos HQ",
+    status: invoice?.status || "draft" as InvoiceStatus,
+    notes: "",
+    items: [{ description: "", quantity: 1, unitPrice: 0 }],
+    taxRate: 7.5,
+    discount: 0,
+  });
+
+  const tabs: { id: InvoiceFormTab; label: string }[] = [
+    { id: "details", label: "Details" },
+    { id: "items", label: "Line Items" },
+    { id: "taxes", label: "Taxes & Discount" },
+    { id: "preview", label: "Preview" },
+  ];
+
+  const handleAddItem = () => {
+    setFormData({
+      ...formData,
+      items: [...formData.items, { description: "", quantity: 1, unitPrice: 0 }],
+    });
+  };
+
+  const handleRemoveItem = (index: number) => {
+    setFormData({
+      ...formData,
+      items: formData.items.filter((_, i) => i !== index),
+    });
+  };
+
+  const handleItemChange = (index: number, field: string, value: string | number) => {
+    const newItems = [...formData.items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setFormData({ ...formData, items: newItems });
+  };
+
+  const subtotal = formData.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  const taxAmount = subtotal * (formData.taxRate / 100);
+  const discountAmount = subtotal * (formData.discount / 100);
+  const total = subtotal + taxAmount - discountAmount;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Drawer */}
+      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-2xl flex-col bg-white shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-200 px-8 py-6">
+          <div>
+            <h2 className="text-2xl font-semibold text-slate-900">
+              {invoiceId ? `Edit Invoice` : "New Invoice"}
+            </h2>
+            <p className="text-sm text-slate-500">
+              {invoiceId ? invoice?.invoiceNumber : "Create a new invoice for your customer"}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            type="button"
+          >
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="border-b border-slate-200 px-8">
+          <div className="flex gap-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange(tab.id)}
+                className={`border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${
+                  currentTab === tab.id
+                    ? "border-slate-900 text-slate-900"
+                    : "border-transparent text-slate-500 hover:text-slate-700"
+                }`}
+                type="button"
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-8 py-6">
+          {currentTab === "details" && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-slate-900">Customer</label>
+                <input
+                  type="text"
+                  value={formData.customer}
+                  onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:border-slate-300 focus:outline-none"
+                  placeholder="Enter customer name"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900">Issue Date</label>
+                  <input
+                    type="date"
+                    value={formData.issueDate}
+                    onChange={(e) => setFormData({ ...formData, issueDate: e.target.value })}
+                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:border-slate-300 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900">Due Date</label>
+                  <input
+                    type="date"
+                    value={formData.dueDate}
+                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:border-slate-300 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-900">Branch</label>
+                <select
+                  value={formData.branch}
+                  onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:border-slate-300 focus:outline-none"
+                >
+                  <option>Lagos HQ</option>
+                  <option>Abuja</option>
+                  <option>Port Harcourt</option>
+                  <option>Kano</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-900">Notes (Optional)</label>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  rows={4}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:border-slate-300 focus:outline-none"
+                  placeholder="Add any additional notes or payment instructions"
+                />
+              </div>
+            </div>
+          )}
+
+          {currentTab === "items" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-slate-900">Line Items</h3>
+                <button
+                  onClick={handleAddItem}
+                  className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  type="button"
+                >
+                  + Add Item
+                </button>
+              </div>
+
+              {formData.items.map((item, index) => (
+                <div key={index} className="rounded-2xl border border-slate-200 p-4">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Description
+                      </label>
+                      <input
+                        type="text"
+                        value={item.description}
+                        onChange={(e) => handleItemChange(index, "description", e.target.value)}
+                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-slate-300 focus:outline-none"
+                        placeholder="Item description"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                          Quantity
+                        </label>
+                        <input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => handleItemChange(index, "quantity", parseInt(e.target.value) || 0)}
+                          className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-slate-300 focus:outline-none"
+                          min="1"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                          Unit Price (₦)
+                        </label>
+                        <input
+                          type="number"
+                          value={item.unitPrice}
+                          onChange={(e) => handleItemChange(index, "unitPrice", parseFloat(e.target.value) || 0)}
+                          className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-slate-300 focus:outline-none"
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                          Total
+                        </label>
+                        <div className="mt-1 flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2">
+                          <span className="text-sm font-semibold text-slate-900">
+                            ₦{(item.quantity * item.unitPrice).toLocaleString()}
+                          </span>
+                          {formData.items.length > 1 && (
+                            <button
+                              onClick={() => handleRemoveItem(index)}
+                              className="text-rose-600 hover:text-rose-700"
+                              type="button"
+                            >
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-slate-600">Subtotal</span>
+                  <span className="text-lg font-semibold text-slate-900">₦{subtotal.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {currentTab === "taxes" && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-slate-900">Tax Rate (%)</label>
+                <input
+                  type="number"
+                  value={formData.taxRate}
+                  onChange={(e) => setFormData({ ...formData, taxRate: parseFloat(e.target.value) || 0 })}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:border-slate-300 focus:outline-none"
+                  min="0"
+                  step="0.1"
+                />
+                <p className="mt-1 text-xs text-slate-500">Tax amount: ₦{taxAmount.toLocaleString()}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-900">Discount (%)</label>
+                <input
+                  type="number"
+                  value={formData.discount}
+                  onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:border-slate-300 focus:outline-none"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                />
+                <p className="mt-1 text-xs text-slate-500">Discount amount: ₦{discountAmount.toLocaleString()}</p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-600">Subtotal</span>
+                  <span className="font-semibold text-slate-900">₦{subtotal.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-600">Tax ({formData.taxRate}%)</span>
+                  <span className="font-semibold text-emerald-600">+₦{taxAmount.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-600">Discount ({formData.discount}%)</span>
+                  <span className="font-semibold text-rose-600">-₦{discountAmount.toLocaleString()}</span>
+                </div>
+                <div className="border-t border-slate-200 pt-3 flex items-center justify-between">
+                  <span className="text-lg font-semibold text-slate-900">Total</span>
+                  <span className="text-2xl font-bold text-slate-900">₦{total.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {currentTab === "preview" && (
+            <div className="space-y-6">
+              <div className="rounded-2xl border-2 border-slate-200 bg-white p-8">
+                <div className="space-y-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-2xl font-bold text-slate-900">INVOICE</h3>
+                      <p className="mt-1 text-sm text-slate-600">{invoiceId ? invoice?.invoiceNumber : "INV-DRAFT"}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-slate-900">{formData.branch}</p>
+                      <p className="text-xs text-slate-500">Branch</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6 border-y border-slate-200 py-6">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Bill To</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">{formData.customer || "N/A"}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Dates</p>
+                      <p className="mt-1 text-sm text-slate-700">Issued: {formData.issueDate}</p>
+                      <p className="text-sm text-slate-700">Due: {formData.dueDate}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-slate-200">
+                          <th className="pb-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Item</th>
+                          <th className="pb-2 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Qty</th>
+                          <th className="pb-2 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Price</th>
+                          <th className="pb-2 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {formData.items.map((item, index) => (
+                          <tr key={index} className="border-b border-slate-100">
+                            <td className="py-3 text-sm text-slate-900">{item.description || "Untitled Item"}</td>
+                            <td className="py-3 text-right text-sm text-slate-700">{item.quantity}</td>
+                            <td className="py-3 text-right text-sm text-slate-700">₦{item.unitPrice.toLocaleString()}</td>
+                            <td className="py-3 text-right text-sm font-semibold text-slate-900">
+                              ₦{(item.quantity * item.unitPrice).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <div className="w-64 space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-600">Subtotal</span>
+                        <span className="font-semibold text-slate-900">₦{subtotal.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-600">Tax ({formData.taxRate}%)</span>
+                        <span className="font-semibold text-slate-900">₦{taxAmount.toLocaleString()}</span>
+                      </div>
+                      {formData.discount > 0 && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-slate-600">Discount ({formData.discount}%)</span>
+                          <span className="font-semibold text-rose-600">-₦{discountAmount.toLocaleString()}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between border-t border-slate-200 pt-2">
+                        <span className="font-semibold text-slate-900">Total</span>
+                        <span className="text-xl font-bold text-slate-900">₦{total.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {formData.notes && (
+                    <div className="border-t border-slate-200 pt-4">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Notes</p>
+                      <p className="mt-1 text-sm text-slate-700">{formData.notes}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div className="border-t border-slate-200 px-8 py-6">
+          <div className="flex items-center justify-between gap-4">
+            <button
+              onClick={onClose}
+              className="rounded-full border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              type="button"
+            >
+              Cancel
+            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={onSave}
+                className="rounded-full border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                type="button"
+              >
+                Save Draft
+              </button>
+              <button
+                onClick={onSave}
+                className="rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
+                type="button"
+              >
+                {invoiceId ? "Update Invoice" : "Send Invoice"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
