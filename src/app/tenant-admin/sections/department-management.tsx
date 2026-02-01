@@ -9,19 +9,19 @@ type Department = {
   createdAt: string;
 };
 
-export default function DepartmentManagement({}: {}) {
+export default function DepartmentManagement({ tenantSlug }: { tenantSlug?: string | null }) {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [scope, setScope] = useState<Department["scope"]>("global");
+  const ts = tenantSlug ?? "kreatix-default";
 
   async function load() {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ tenantSlug: new URLSearchParams(window.location.search).get("tenantSlug") ?? "kreatix-default" });
-      const res = await fetch(`/api/tenant/departments?${params.toString()}`, { cache: "no-store" });
+      const res = await fetch(`/api/tenant/departments?tenantSlug=${encodeURIComponent(ts)}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load departments");
       const payload = await res.json();
       setDepartments(Array.isArray(payload.departments) ? payload.departments : []);
@@ -35,7 +35,7 @@ export default function DepartmentManagement({}: {}) {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [ts]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();

@@ -37,7 +37,7 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [ts]);
 
   async function toggleModule(m: ModuleItem) {
     try {

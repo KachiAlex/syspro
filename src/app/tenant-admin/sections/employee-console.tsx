@@ -48,7 +48,7 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
 
   useEffect(() => {
     load();
-  }, []);
+  }, [ts]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();

@@ -85,7 +85,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
 
   useEffect(() => {
     load();
-  }, []);
+  }, [ts]);
 
   function togglePerm(perm: string) {
     setSelectedPerms((prev) => (prev.includes(perm) ? prev.filter((p) => p !== perm) : [...prev, perm]));
