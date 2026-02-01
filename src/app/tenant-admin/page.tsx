@@ -2960,6 +2960,10 @@ export default function TenantAdminPage() {
                     loading={financeLoading}
                     error={financeError}
                     onRetry={handleFinanceRetry}
+                    cashAccounts={financeAccounts}
+                    cashAccountsLoading={financeAccountsLoading}
+                    cashAccountsError={financeAccountsError}
+                    onRefreshAccounts={() => setFinanceAccountsVersion((prev) => prev + 1)}
                   />
                 ) : activeNav === "structure" ? (
                   <DepartmentManagement tenantSlug={tenantSlug} />
