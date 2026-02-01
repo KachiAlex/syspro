@@ -17,6 +17,7 @@ import {
   approveExpense,
   seedExpenseCategories,
 } from "@/lib/finance/db";
+import { calculateMonthlyUsage, requiresEscalatedApproval } from "@/lib/finance/budget";
 
 const expenseListSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -72,7 +73,23 @@ export async function POST(request: NextRequest) {
     await seedExpenseCategories();
     
     const expense = await createExpense(parsed.data);
-    return NextResponse.json({ expense }, { status: 201 });
+
+    // Check budget for this category
+    const budgetUsage = calculateMonthlyUsage(parsed.data.categoryId, parsed.data.amount);
+    const requiresEscalation = requiresEscalatedApproval(budgetUsage);
+
+    return NextResponse.json(
+      {
+        expense,
+        budgetCheck: {
+          categoryId: parsed.data.categoryId,
+          monthlyUsage: budgetUsage.usagePercentage,
+          status: budgetUsage.status,
+          requiresEscalation,
+        },
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Create expense failed", error);
     return NextResponse.json({ error: "Failed to create expense" }, { status: 500 });
