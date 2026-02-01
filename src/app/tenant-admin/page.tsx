@@ -4722,7 +4722,7 @@ function FinancePaymentsWorkspace() {
 
   // Filter payments
   const filteredPayments = payments.filter((payment) => {
-    const matchesSearch = payment.reference.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (payment.reference || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter ? payment.status === statusFilter : true;
     const matchesMethod = methodFilter ? payment.method === methodFilter : true;
     const matchesGateway = gatewayFilter ? payment.gateway === gatewayFilter : true;
