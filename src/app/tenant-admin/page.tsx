@@ -3946,7 +3946,7 @@ function FinanceInvoicesWorkspace({
   onCreateInvoice: () => void;
   onEditInvoice: (id: string) => void;
 }) {
-  const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const handlePrintInvoice = (invoice: InvoiceItem) => {
     const printWindow = window.open("", "_blank");
