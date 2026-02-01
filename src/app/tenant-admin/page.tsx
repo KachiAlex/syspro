@@ -312,16 +312,130 @@ const FINANCE_EXPENSES_BASELINE: FinanceExpenseItem[] = [
 type PaymentRecord = {
   id: string;
   payableId: string;
-  method: "bank_transfer" | "check" | "cash" | "mobile_money" | "wire";
-  amount: string;
+  customerId?: string;
+  invoiceId?: string;
+  method: "bank_transfer" | "check" | "cash" | "pos" | "mobile_money" | "wire" | "paystack" | "flutterwave" | "stripe";
+  grossAmount: string;
+  fees: string;
+  netAmount: string;
+  currency: string;
   paymentDate: string;
+  settlementDate?: string;
   referenceNumber: string;
+  gatewayReference?: string;
   confirmationDetails: string;
+  status: "pending" | "successful" | "failed" | "reversed";
+  gateway?: "paystack" | "flutterwave" | "stripe" | "manual";
+  linkedInvoices: string[]; // Invoice IDs
   recordedBy: string;
   recordedDate: string;
+  auditTrail: {
+    action: string;
+    timestamp: string;
+    user: string;
+  }[];
 };
 
-const PAYMENT_RECORDS_BASELINE: PaymentRecord[] = [];
+const PAYMENT_RECORDS_BASELINE: PaymentRecord[] = [
+  {
+    id: "PAY-001",
+    payableId: "PYB-8811",
+    customerId: "CUST-001",
+    invoiceId: "INV-2024-001",
+    method: "bank_transfer",
+    grossAmount: "₦145,000",
+    fees: "₦1,450",
+    netAmount: "₦143,550",
+    currency: "NGN",
+    paymentDate: "2024-02-01",
+    settlementDate: "2024-02-02",
+    referenceNumber: "TRF-20240201-001",
+    gatewayReference: "",
+    confirmationDetails: "Bank transfer confirmed. Ref: 20240201001",
+    status: "successful",
+    gateway: "manual",
+    linkedInvoices: ["INV-2024-001"],
+    recordedBy: "Chioma Okafor",
+    recordedDate: "2024-02-01",
+    auditTrail: [
+      { action: "created", timestamp: "2024-02-01 14:30:00", user: "Chioma Okafor" },
+      { action: "settled", timestamp: "2024-02-02 09:15:00", user: "System" },
+    ],
+  },
+  {
+    id: "PAY-002",
+    payableId: "PYB-8818",
+    customerId: "CUST-002",
+    invoiceId: "INV-2024-002",
+    method: "paystack",
+    grossAmount: "₦892,500",
+    fees: "₦26,776",
+    netAmount: "₦865,724",
+    currency: "NGN",
+    paymentDate: "2024-01-31",
+    settlementDate: "2024-02-03",
+    referenceNumber: "PS-20240131-002",
+    gatewayReference: "ch_xxxxxxxx",
+    confirmationDetails: "Paystack payment successful",
+    status: "successful",
+    gateway: "paystack",
+    linkedInvoices: ["INV-2024-002"],
+    recordedBy: "System",
+    recordedDate: "2024-01-31",
+    auditTrail: [
+      { action: "created", timestamp: "2024-01-31 16:45:00", user: "System" },
+      { action: "settled", timestamp: "2024-02-03 10:00:00", user: "System" },
+    ],
+  },
+  {
+    id: "PAY-003",
+    payableId: "PYB-8820",
+    customerId: "CUST-003",
+    invoiceId: "INV-2024-003",
+    method: "check",
+    grossAmount: "₦2,340,000",
+    fees: "₦0",
+    netAmount: "₦2,340,000",
+    currency: "NGN",
+    paymentDate: "2024-02-04",
+    settlementDate: "",
+    referenceNumber: "CHK-000456",
+    confirmationDetails: "Check received. Awaiting bank clearance.",
+    status: "pending",
+    gateway: "manual",
+    linkedInvoices: ["INV-2024-003"],
+    recordedBy: "Tunde Adeyemi",
+    recordedDate: "2024-02-04",
+    auditTrail: [
+      { action: "created", timestamp: "2024-02-04 11:20:00", user: "Tunde Adeyemi" },
+    ],
+  },
+  {
+    id: "PAY-004",
+    payableId: "PYB-8824",
+    customerId: "CUST-001",
+    invoiceId: "INV-2024-004",
+    method: "flutterwave",
+    grossAmount: "₦567,800",
+    fees: "₦17,034",
+    netAmount: "₦550,766",
+    currency: "NGN",
+    paymentDate: "2024-01-28",
+    settlementDate: "2024-02-01",
+    referenceNumber: "FLW-20240128-004",
+    gatewayReference: "tx_xxxxxxxx",
+    confirmationDetails: "Flutterwave transaction successful",
+    status: "successful",
+    gateway: "flutterwave",
+    linkedInvoices: ["INV-2024-004"],
+    recordedBy: "System",
+    recordedDate: "2024-01-28",
+    auditTrail: [
+      { action: "created", timestamp: "2024-01-28 09:30:00", user: "System" },
+      { action: "settled", timestamp: "2024-02-01 16:45:00", user: "System" },
+    ],
+  },
+];
 
 const DEFAULT_FINANCE_CURRENCY = "₦";
 
