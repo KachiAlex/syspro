@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { z } from "zod";
+import { useForm } from "@/lib/use-form";
+import { useState } from "react";
 
 type Role = {
   id: string;
@@ -22,18 +25,32 @@ const PERMISSIONS = [
   "all",
 ];
 
+const roleSchema = z.object({
+  name: z.string().min(1, "Role name is required").min(3, "Name must be at least 3 characters"),
+  scope: z.enum(["tenant", "region", "branch"]),
+  permissions: z.array(z.string()).min(1, "Select at least one permission"),
+});
+
+type RoleFormData = z.infer<typeof roleSchema>;
+
 export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null }) {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [scope, setScope] = useState<Role["scope"]>("tenant");
-  const [selectedPerms, setSelectedPerms] = useState<string[]>([]);
+  const [serverError, setServerError] = useState<string | null>(null);
   const ts = tenantSlug ?? "kreatix-default";
+
+  const form = useForm<RoleFormData>({
+    initialValues: {
+      name: "",
+      scope: "tenant",
+      permissions: [],
+    },
+    schema: roleSchema,
+  });
 
   async function load() {
     setLoading(true);
-    setError(null);
+    setServerError(null);
     try {
       const res = await fetch(`/api/tenant/roles?tenantSlug=${encodeURIComponent(ts)}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load roles");
@@ -41,34 +58,40 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
       setRoles(Array.isArray(payload.roles) ? payload.roles : []);
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : String(err));
+      setServerError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
   }
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editScope, setEditScope] = useState<Role["scope"]>("tenant");
-  const [editPerms, setEditPerms] = useState<string[]>([]);
+  const [editForm, setEditForm] = useState<RoleFormData>({
+    name: "",
+    scope: "tenant",
+    permissions: [],
+  });
 
   function startEdit(role: Role) {
     setEditingId(role.id);
-    setEditName(role.name);
-    setEditScope(role.scope);
-    setEditPerms(Array.isArray(role.permissions) ? [...role.permissions] : []);
+    setEditForm({
+      name: role.name,
+      scope: role.scope,
+      permissions: Array.isArray(role.permissions) ? [...role.permissions] : [],
+    });
   }
 
   function cancelEdit() {
     setEditingId(null);
-    setEditName("");
-    setEditScope("tenant");
-    setEditPerms([]);
+    setEditForm({
+      name: "",
+      scope: "tenant",
+      permissions: [],
+    });
   }
 
   async function saveEdit(id: string) {
     try {
-      const payload = { name: editName.trim(), scope: editScope, permissions: editPerms };
+      const payload = { name: editForm.name.trim(), scope: editForm.scope, permissions: editForm.permissions };
       const res = await fetch(`/api/tenant/roles?id=${encodeURIComponent(id)}&type=role&tenantSlug=${encodeURIComponent(ts)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -79,7 +102,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
       await load();
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : String(err));
+      setServerError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -88,27 +111,41 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
   }, [ts]);
 
   function togglePerm(perm: string) {
-    setSelectedPerms((prev) => (prev.includes(perm) ? prev.filter((p) => p !== perm) : [...prev, perm]));
+    form.setFieldValues({
+      permissions: form.values.permissions.includes(perm)
+        ? form.values.permissions.filter((p) => p !== perm)
+        : [...form.values.permissions, perm],
+    });
+  }
+
+  function toggleEditPerm(perm: string) {
+    setEditForm((prev) => ({
+      ...prev,
+      permissions: prev.permissions.includes(perm)
+        ? prev.permissions.filter((p) => p !== perm)
+        : [...prev.permissions, perm],
+    }));
   }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
+    const errors = form.validate();
+    if (errors.length > 0) return;
+
     try {
-      const payload = { name: name.trim(), scope, permissions: selectedPerms };
+      const payload = { name: form.values.name.trim(), scope: form.values.scope, permissions: form.values.permissions };
       const res = await fetch(`/api/tenant/roles?tenantSlug=${encodeURIComponent(ts)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Create failed");
-      setName("");
-      setScope("tenant");
-      setSelectedPerms([]);
+      form.resetForm();
+      setServerError(null);
       await load();
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : String(err));
+      setServerError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -120,7 +157,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
       await load();
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : String(err));
+      setServerError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -137,13 +174,26 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
 
         <form className="mt-4 space-y-4" onSubmit={handleCreate}>
           <div className="flex items-center gap-3">
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Role name" className="rounded-lg border px-3 py-2" />
-            <select value={scope} onChange={(e) => setScope(e.target.value as Role["scope"])} className="rounded-lg border px-3 py-2">
+            <div className="flex-1">
+              <input
+                {...form.getFieldProps("name")}
+                placeholder="Role name"
+                className={`w-full rounded-lg border px-3 py-2 ${form.errorMap.name ? "border-rose-300" : "border-slate-200"}`}
+              />
+              {form.errorMap.name && <p className="mt-1 text-xs text-rose-600">{form.errorMap.name}</p>}
+            </div>
+            <select
+              value={form.values.scope}
+              onChange={(e) => form.setValue("scope", e.target.value as Role["scope"])}
+              className="rounded-lg border px-3 py-2"
+            >
               <option value="tenant">Tenant</option>
               <option value="region">Region</option>
               <option value="branch">Branch</option>
             </select>
-            <button type="submit" className="rounded-full bg-slate-900 px-4 py-2 text-white">Create</button>
+            <button type="submit" disabled={form.isSubmitting} className="rounded-full bg-slate-900 px-4 py-2 text-white disabled:opacity-50">
+              {form.isSubmitting ? "Creating..." : "Create"}
+            </button>
           </div>
 
           <div>
@@ -151,14 +201,19 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
             <div className="mt-2 grid grid-cols-3 gap-2">
               {(PERMISSIONS ?? []).map((perm) => (
                 <label key={perm} className="inline-flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={selectedPerms.includes(perm)} onChange={() => togglePerm(perm)} />
+                  <input
+                    type="checkbox"
+                    checked={form.values.permissions.includes(perm)}
+                    onChange={() => togglePerm(perm)}
+                  />
                   <span className="text-slate-700">{perm}</span>
                 </label>
               ))}
             </div>
+            {form.errorMap.permissions && <p className="mt-1 text-xs text-rose-600">{form.errorMap.permissions}</p>}
           </div>
 
-          {error && <div className="text-sm text-rose-600">{error}</div>}
+          {serverError && <div className="text-sm text-rose-600">{serverError}</div>}
         </form>
 
         <div className="mt-6">
@@ -179,10 +234,18 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                   editingId === r.id ? (
                     <tr key={r.id} className="border-t border-slate-100 bg-slate-50">
                       <td className="py-3">
-                        <input value={editName} onChange={(e) => setEditName(e.target.value)} className="rounded-lg border px-2 py-1 w-full" />
+                        <input
+                          value={editForm.name}
+                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                          className="rounded-lg border px-2 py-1 w-full"
+                        />
                       </td>
                       <td>
-                        <select value={editScope} onChange={(e) => setEditScope(e.target.value as Role["scope"])} className="rounded-lg border px-2 py-1">
+                        <select
+                          value={editForm.scope}
+                          onChange={(e) => setEditForm({ ...editForm, scope: e.target.value as Role["scope"] })}
+                          className="rounded-lg border px-2 py-1"
+                        >
                           <option value="tenant">Tenant</option>
                           <option value="region">Region</option>
                           <option value="branch">Branch</option>
@@ -192,7 +255,11 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                         <div className="flex flex-wrap gap-2">
                           {(PERMISSIONS ?? []).map((perm) => (
                             <label key={perm} className="inline-flex items-center gap-2 text-sm">
-                              <input type="checkbox" checked={editPerms.includes(perm)} onChange={() => setEditPerms(prev => prev.includes(perm) ? prev.filter(p => p !== perm) : [...prev, perm])} />
+                              <input
+                                type="checkbox"
+                                checked={editForm.permissions.includes(perm)}
+                                onChange={() => toggleEditPerm(perm)}
+                              />
                               <span className="text-slate-700">{perm}</span>
                             </label>
                           ))}

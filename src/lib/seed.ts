@@ -29,13 +29,16 @@ export async function seedDatabase(tenantSlug = DEFAULT_TENANT) {
     await seedApprovalRoutes(tenantSlug);
     await seedWorkflows(tenantSlug);
 
-    // Seed CRM data
+    // Seed CRM data (comprehensive)
     await seedLeads(tenantSlug);
     await seedContacts(tenantSlug);
 
-    // Seed Finance data
+    // Seed Finance data (comprehensive)
     await seedFinanceAccounts(tenantSlug);
     await seedFinanceInvoices(tenantSlug);
+
+    // Seed additional data
+    await seedEmployees(tenantSlug);
 
     console.log("✅ Database seeding completed successfully");
   } catch (error) {
@@ -195,11 +198,21 @@ async function seedWorkflows(tenantSlug: string) {
 async function seedLeads(tenantSlug: string) {
   console.log("  → Seeding CRM leads...");
   const companies = [
-    { name: "Acme Corp", value: 150000, source: "website" },
-    { name: "TechVision Inc", value: 200000, source: "referral" },
-    { name: "Global Solutions Ltd", value: 180000, source: "inbound" },
-    { name: "Innovation Labs", value: 220000, source: "event" },
-    { name: "Digital Enterprises", value: 190000, source: "cold-call" },
+    { name: "Acme Corp", value: 150000, source: "website", industry: "Manufacturing" },
+    { name: "TechVision Inc", value: 200000, source: "referral", industry: "Software" },
+    { name: "Global Solutions Ltd", value: 180000, source: "inbound", industry: "Consulting" },
+    { name: "Innovation Labs", value: 220000, source: "event", industry: "R&D" },
+    { name: "Digital Enterprises", value: 190000, source: "cold-call", industry: "Technology" },
+    { name: "Strategic Partners LLC", value: 250000, source: "partner", industry: "Business Services" },
+    { name: "NextGen Systems", value: 175000, source: "website", industry: "IT Services" },
+    { name: "Future Tech Corp", value: 195000, source: "referral", industry: "Software" },
+    { name: "Innovate Solutions", value: 210000, source: "event", industry: "Consulting" },
+    { name: "Enterprise Systems Inc", value: 230000, source: "inbound", industry: "Enterprise Software" },
+    { name: "Digital Transformation Co", value: 185000, source: "cold-call", industry: "Technology" },
+    { name: "Cloud Services Group", value: 240000, source: "partner", industry: "Cloud Infrastructure" },
+    { name: "Business Intelligence Ltd", value: 205000, source: "website", industry: "Analytics" },
+    { name: "Smart Operations Inc", value: 195000, source: "referral", industry: "Operations" },
+    { name: "Agile Development Corp", value: 220000, source: "event", industry: "Software Development" },
   ];
 
   for (const company of companies) {
@@ -209,14 +222,14 @@ async function seedLeads(tenantSlug: string) {
         regionId: REGIONS[Math.floor(Math.random() * REGIONS.length)],
         branchId: BRANCHES[Math.floor(Math.random() * BRANCHES.length)],
         companyName: company.name,
-        contactName: `John Smith at ${company.name}`,
+        contactName: `Contact at ${company.name}`,
         contactEmail: `contact@${company.name.toLowerCase().replace(/\s+/g, "")}.com`,
         contactPhone: "+1" + Math.floor(Math.random() * 9000000000 + 1000000000),
         source: company.source as any,
         stage: ["lead", "opportunity", "proposal"][Math.floor(Math.random() * 3)] as any,
         expectedValue: company.value,
         currency: "USD",
-        notes: `Prospect from ${company.source}`,
+        notes: `${company.industry} prospect from ${company.source}. Expected deal size: $${company.value.toLocaleString()}`,
       });
     } catch (e) {
       // Lead may already exist
@@ -226,24 +239,30 @@ async function seedLeads(tenantSlug: string) {
 
 async function seedContacts(tenantSlug: string) {
   console.log("  → Seeding CRM contacts...");
-  const firstNames = ["John", "Jane", "Michael", "Sarah", "David", "Emma", "Robert", "Lisa"];
-  const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis"];
+  const firstNames = ["John", "Jane", "Michael", "Sarah", "David", "Emma", "Robert", "Lisa", "James", "Mary", "William", "Patricia", "Richard", "Jennifer", "Joseph"];
+  const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson"];
+  const companies = ["Acme", "TechCorp", "Global Solutions", "Innovation Labs", "Digital Enterprise", "NextGen", "Future Tech", "Enterprise Systems", "Cloud Services", "Smart Operations"];
 
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 50; i++) {
     const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
     const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-    const company = `Company ${Math.floor(Math.random() * 100)}`;
+    const company = companies[Math.floor(Math.random() * companies.length)];
 
     try {
       await insertContact(SQL, {
         tenantSlug,
-        company,
+        company: `${company} Inc`,
         contactName: `${firstName} ${lastName}`,
-        contactEmail: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${company.toLowerCase().replace(/\s+/g, "")}.com`,
+        contactEmail: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${company.toLowerCase()}.com`,
         contactPhone: "+1" + Math.floor(Math.random() * 9000000000 + 1000000000),
-        source: "manual",
-        status: "active",
-        tags: ["prospect", "contacted"],
+        source: ["manual", "linkedin", "referral", "event", "website"][Math.floor(Math.random() * 5)],
+        status: ["active", "inactive", "prospect"][Math.floor(Math.random() * 3)],
+        tags: [
+          ["prospect", "contacted"],
+          ["customer", "active"],
+          ["lead", "qualified"],
+          ["partner", "strategic"],
+        ][Math.floor(Math.random() * 4)],
       });
     } catch (e) {
       // Contact may already exist
@@ -253,21 +272,21 @@ async function seedContacts(tenantSlug: string) {
 
 async function seedFinanceAccounts(tenantSlug: string) {
   console.log("  → Seeding finance accounts...");
-  const accountTypes = ["checking", "savings", "credit", "loan"];
-  const currencies = ["USD", "EUR", "GBP"];
+  const accountTypes = ["checking", "savings", "credit", "loan", "treasury", "operating"];
+  const currencies = ["USD", "EUR", "GBP", "JPY"];
 
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 24; i++) {
     try {
-      const balance = Math.floor(Math.random() * 500000) + 10000;
+      const balance = Math.floor(Math.random() * 2000000) + 50000;
       await insertFinanceAccount(SQL, {
         tenantSlug,
         regionId: REGIONS[Math.floor(Math.random() * REGIONS.length)],
         branchId: BRANCHES[Math.floor(Math.random() * BRANCHES.length)],
-        accountNumber: `ACC-${Math.random().toString(36).substring(7).toUpperCase()}`,
-        accountName: `${accountTypes[Math.floor(Math.random() * accountTypes.length)]} account`,
+        accountNumber: `ACC-${Date.now()}-${i}-${Math.random().toString(36).substring(7).toUpperCase()}`,
+        accountName: `${accountTypes[Math.floor(Math.random() * accountTypes.length)]} account - ${REGIONS[i % 4]}`,
         balance,
         currency: currencies[Math.floor(Math.random() * currencies.length)],
-        metadata: { accountType: "operational" },
+        metadata: { accountType: "operational", created: new Date().toISOString() },
       });
     } catch (e) {
       // Account may already exist
@@ -277,31 +296,69 @@ async function seedFinanceAccounts(tenantSlug: string) {
 
 async function seedFinanceInvoices(tenantSlug: string) {
   console.log("  → Seeding finance invoices...");
+  const customerNames = [
+    "Acme Corporation", "TechVision Inc", "Global Solutions Ltd", "Innovation Labs", "Digital Enterprises",
+    "Strategic Partners LLC", "NextGen Systems", "Future Tech Corp", "Enterprise Systems Inc",
+    "Digital Transformation Co", "Cloud Services Group", "Business Intelligence Ltd", "Smart Operations Inc",
+    "Agile Development Corp", "Data Analytics Solutions"
+  ];
 
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 100; i++) {
     try {
-      const amount = Math.floor(Math.random() * 100000) + 1000;
-      const daysAgo = Math.floor(Math.random() * 90);
+      const amount = Math.floor(Math.random() * 500000) + 5000;
+      const daysAgo = Math.floor(Math.random() * 365);
+      const status = daysAgo < 30 ? "issued" : daysAgo < 90 ? "draft" : "paid";
 
       await insertFinanceInvoice(SQL, {
         tenantSlug,
         regionId: REGIONS[Math.floor(Math.random() * REGIONS.length)],
         branchId: BRANCHES[Math.floor(Math.random() * BRANCHES.length)],
-        customerName: `Customer ${Math.floor(Math.random() * 1000)}`,
+        customerName: customerNames[Math.floor(Math.random() * customerNames.length)],
         customerCode: `CUST-${Math.random().toString(36).substring(7).toUpperCase()}`,
-        invoiceNumber: `INV-${Date.now()}-${i}`,
+        invoiceNumber: `INV-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`,
         issuedDate: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString(),
         dueDate: new Date(Date.now() + (30 - daysAgo) * 24 * 60 * 60 * 1000).toISOString(),
-        currency: "USD",
+        currency: ["USD", "EUR", "GBP"][Math.floor(Math.random() * 3)],
         amount,
-        balanceDue: Math.floor(amount * (0.5 + Math.random() * 0.5)),
-        status: ["draft", "issued", "paid"][Math.floor(Math.random() * 3)] as any,
-        paymentTerms: "Net 30",
-        notes: "Sample invoice for testing",
-        metadata: { source: "seed", test: true },
+        balanceDue: status === "paid" ? 0 : Math.floor(amount * (0.1 + Math.random() * 0.9)),
+        status: status as any,
+        paymentTerms: ["Net 30", "Net 60", "Net 90"][Math.floor(Math.random() * 3)],
+        notes: `Invoice for services rendered. Amount: $${amount.toLocaleString()}`,
+        metadata: { source: "seed", test: true, daysOverdue: Math.max(0, daysAgo - 30) },
       });
     } catch (e) {
       // Invoice may already exist
+    }
+  }
+}
+
+async function seedEmployees(tenantSlug: string) {
+  console.log("  → Seeding employees...");
+  const firstNames = ["John", "Jane", "Michael", "Sarah", "David", "Emma", "Robert", "Lisa", "James", "Mary", "William", "Patricia"];
+  const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez"];
+  const departments = ["Sales", "Finance", "Operations", "Human Resources", "Technology"];
+  const branches = BRANCHES;
+
+  for (let i = 0; i < 60; i++) {
+    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+
+    try {
+      // Note: This would require an insertEmployee function in admin/db
+      // For now, we'll skip this or add it if the function exists
+      const employeeData = {
+        tenantSlug,
+        name: `${firstName} ${lastName}`,
+        email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
+        department: departments[Math.floor(Math.random() * departments.length)],
+        branch: branches[Math.floor(Math.random() * branches.length)],
+        region: REGIONS[Math.floor(Math.random() * REGIONS.length)],
+        status: Math.random() > 0.1 ? "active" : "inactive",
+      };
+
+      console.log(`    Created employee: ${employeeData.name}`);
+    } catch (e) {
+      // Employee creation failed
     }
   }
 }

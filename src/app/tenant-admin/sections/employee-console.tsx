@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { z } from "zod";
+import { useForm } from "@/lib/use-form";
 
 type Employee = {
   id: string;
@@ -13,26 +15,36 @@ type Employee = {
   createdAt: string;
 };
 
+const employeeSchema = z.object({
+  name: z.string().min(1, "Name is required").min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  department: z.string().optional(),
+  branch: z.string().optional(),
+  region: z.string().optional(),
+});
+
+type EmployeeFormData = z.infer<typeof employeeSchema>;
+
 export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | null }) {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [department, setDepartment] = useState("");
-  const [branch, setBranch] = useState("");
-  const [region, setRegion] = useState("");
-
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editDept, setEditDept] = useState("");
-  const [editBranch, setEditBranch] = useState("");
-  const [editRegion, setEditRegion] = useState("");
+  const [serverError, setServerError] = useState<string | null>(null);
   const ts = tenantSlug ?? "kreatix-default";
+
+  const form = useForm<EmployeeFormData>({
+    initialValues: {
+      name: "",
+      email: "",
+      department: "",
+      branch: "",
+      region: "",
+    },
+    schema: employeeSchema,
+  });
 
   async function load() {
     setLoading(true);
-    setError(null);
+    setServerError(null);
     try {
       const res = await fetch(`/api/tenant/employees?tenantSlug=${encodeURIComponent(ts)}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load employees");
@@ -40,7 +52,7 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
       setEmployees(Array.isArray(payload.employees) ? payload.employees : []);
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : String(err));
+      setServerError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -52,9 +64,11 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim() || !email.trim()) return;
+    const errors = form.validate();
+    if (errors.length > 0) return;
+
     try {
-      const payload = { name: name.trim(), email: email.trim(), department: department || undefined, branch: branch || undefined, region: region || undefined };
+      const payload = { name: form.values.name.trim(), email: form.values.email.trim(), department: form.values.department || undefined, branch: form.values.branch || undefined, region: form.values.region || undefined };
       const res = await fetch(`/api/tenant/employees?tenantSlug=${encodeURIComponent(ts)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -64,28 +78,36 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || "Create failed");
       }
-      setName("");
-      setEmail("");
-      setDepartment("");
-      setBranch("");
-      setRegion("");
+      form.resetForm();
+      setServerError(null);
       await load();
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : String(err));
+      setServerError(err instanceof Error ? err.message : String(err));
     }
   }
 
   function startEdit(emp: Employee) {
     setEditingId(emp.id);
-    setEditDept(emp.department ?? "");
-    setEditBranch(emp.branch ?? "");
-    setEditRegion(emp.region ?? "");
+    setEditForm({
+      department: emp.department ?? "",
+      branch: emp.branch ?? "",
+      region: emp.region ?? "",
+    });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditForm({
+      department: "",
+      branch: "",
+      region: "",
+    });
   }
 
   async function saveEdit(id: string) {
     try {
-      const payload = { department: editDept || undefined, branch: editBranch || undefined, region: editRegion || undefined };
+      const payload = { department: editForm.department || undefined, branch: editForm.branch || undefined, region: editForm.region || undefined };
       const res = await fetch(`/api/tenant/employees?tenantSlug=${encodeURIComponent(ts)}&id=${encodeURIComponent(id)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -99,15 +121,8 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
       await load();
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : String(err));
+      setServerError(err instanceof Error ? err.message : String(err));
     }
-  }
-
-  function cancelEdit() {
-    setEditingId(null);
-    setEditDept("");
-    setEditBranch("");
-    setEditRegion("");
   }
 
   async function handleDelete(id: string) {
@@ -121,9 +136,16 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
       await load();
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : String(err));
+      setServerError(err instanceof Error ? err.message : String(err));
     }
   }
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    department: "",
+    branch: "",
+    region: "",
+  });
 
   return (
     <div className="space-y-6">
@@ -138,17 +160,49 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
 
         <form className="mt-4 space-y-3" onSubmit={handleCreate}>
           <div className="grid gap-2 md:grid-cols-2">
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" className="rounded-lg border px-3 py-2" required />
-            <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" type="email" className="rounded-lg border px-3 py-2" required />
+            <div>
+              <input
+                {...form.getFieldProps("name")}
+                placeholder="Full name"
+                className={`w-full rounded-lg border px-3 py-2 ${form.errorMap.name ? "border-rose-300" : "border-slate-200"}`}
+              />
+              {form.errorMap.name && <p className="mt-1 text-xs text-rose-600">{form.errorMap.name}</p>}
+            </div>
+            <div>
+              <input
+                {...form.getFieldProps("email")}
+                placeholder="Email"
+                type="email"
+                className={`w-full rounded-lg border px-3 py-2 ${form.errorMap.email ? "border-rose-300" : "border-slate-200"}`}
+              />
+              {form.errorMap.email && <p className="mt-1 text-xs text-rose-600">{form.errorMap.email}</p>}
+            </div>
           </div>
           <div className="grid gap-2 md:grid-cols-3">
-            <input value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="Department" className="rounded-lg border px-3 py-2" />
-            <input value={branch} onChange={(e) => setBranch(e.target.value)} placeholder="Branch" className="rounded-lg border px-3 py-2" />
-            <input value={region} onChange={(e) => setRegion(e.target.value)} placeholder="Region" className="rounded-lg border px-3 py-2" />
+            <input
+              value={form.values.department}
+              onChange={(e) => form.setValue("department", e.target.value)}
+              placeholder="Department"
+              className="rounded-lg border px-3 py-2"
+            />
+            <input
+              value={form.values.branch}
+              onChange={(e) => form.setValue("branch", e.target.value)}
+              placeholder="Branch"
+              className="rounded-lg border px-3 py-2"
+            />
+            <input
+              value={form.values.region}
+              onChange={(e) => form.setValue("region", e.target.value)}
+              placeholder="Region"
+              className="rounded-lg border px-3 py-2"
+            />
           </div>
-          <button type="submit" className="rounded-full bg-slate-900 px-4 py-2 text-white">Add employee</button>
+          <button type="submit" disabled={form.isSubmitting} className="rounded-full bg-slate-900 px-4 py-2 text-white disabled:opacity-50">
+            {form.isSubmitting ? "Adding..." : "Add employee"}
+          </button>
 
-          {error && <div className="text-sm text-rose-600">{error}</div>}
+          {serverError && <div className="text-sm text-rose-600">{serverError}</div>}
         </form>
       </div>
 
@@ -177,13 +231,25 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
                       <td className="py-3 font-semibold">{emp.name}</td>
                       <td>{emp.email}</td>
                       <td>
-                        <input value={editDept} onChange={(e) => setEditDept(e.target.value)} className="rounded-lg border px-2 py-1 w-full" />
+                        <input
+                          value={editForm.department}
+                          onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
+                          className="rounded-lg border px-2 py-1 w-full"
+                        />
                       </td>
                       <td>
-                        <input value={editBranch} onChange={(e) => setEditBranch(e.target.value)} className="rounded-lg border px-2 py-1 w-full" />
+                        <input
+                          value={editForm.branch}
+                          onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
+                          className="rounded-lg border px-2 py-1 w-full"
+                        />
                       </td>
                       <td>
-                        <input value={editRegion} onChange={(e) => setEditRegion(e.target.value)} className="rounded-lg border px-2 py-1 w-full" />
+                        <input
+                          value={editForm.region}
+                          onChange={(e) => setEditForm({ ...editForm, region: e.target.value })}
+                          className="rounded-lg border px-2 py-1 w-full"
+                        />
                       </td>
                       <td className="text-xs">{emp.status}</td>
                       <td className="flex gap-2">
