@@ -280,6 +280,28 @@ const FINANCE_PAYABLES_BASELINE: FinanceScheduleItem[] = [
   { id: "PYB-8824", entity: "Carbon Freight", amount: "₦27.2M", dueDate: "Due in 4d", status: "current", branch: "APAC" },
 ];
 
+type FinanceExpenseItem = {
+  id: string;
+  description: string;
+  category: string;
+  amount: string;
+  submittedBy: string;
+  submittedDate: string;
+  status: "pending" | "approved" | "rejected" | "paid";
+  branch: string;
+};
+
+const FINANCE_EXPENSES_BASELINE: FinanceExpenseItem[] = [
+  { id: "EXP-2401", description: "Cloud infrastructure - AWS monthly", category: "cloud", amount: "₦8.4M", submittedBy: "Chioma Okafor", submittedDate: "2d ago", status: "approved", branch: "Global" },
+  { id: "EXP-2402", description: "Logistics freight - Port Harcourt", category: "logistics", amount: "₦3.2M", submittedBy: "Tunde Adeyemi", submittedDate: "1d ago", status: "pending", branch: "Nigeria" },
+  { id: "EXP-2403", description: "Team lunch - Q1 planning session", category: "meals", amount: "₦180K", submittedBy: "Amara Nwankwo", submittedDate: "3h ago", status: "pending", branch: "Lagos HQ" },
+  { id: "EXP-2404", description: "Office supplies - Stationery", category: "supplies", amount: "₦420K", submittedBy: "Kofi Mensah", submittedDate: "5d ago", status: "approved", branch: "Abuja" },
+  { id: "EXP-2405", description: "Travel - Flight to Kano conference", category: "travel", amount: "₦1.2M", submittedBy: "Folake Olumide", submittedDate: "4d ago", status: "approved", branch: "Kano" },
+  { id: "EXP-2406", description: "Software license - Adobe Creative Suite annual", category: "software", amount: "₦2.1M", submittedBy: "Emeka Uche", submittedDate: "6d ago", status: "paid", branch: "Global" },
+  { id: "EXP-2407", description: "Logistics freight - Nairobi shipment", category: "logistics", amount: "₦4.6M", submittedBy: "Hassan Mahmud", submittedDate: "7d ago", status: "rejected", branch: "APAC" },
+  { id: "EXP-2408", description: "Training - Analytics certification program", category: "training", amount: "₦890K", submittedBy: "Zainab Ibrahim", submittedDate: "1w ago", status: "approved", branch: "Lagos HQ" },
+];
+
 const DEFAULT_FINANCE_CURRENCY = "₦";
 
 const FINANCE_CASH_ACCOUNTS_BASELINE: FinanceCashAccount[] = [
@@ -4524,35 +4546,285 @@ function FinancePaymentsWorkspace() {
 }
 
 function FinanceExpensesWorkspace() {
+  const [expenses] = useState(FINANCE_EXPENSES_BASELINE);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  const filteredExpenses = expenses.filter((expense) => {
+    const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter ? expense.status === statusFilter : true;
+    const matchesCategory = categoryFilter ? expense.category === categoryFilter : true;
+    return matchesSearch && matchesStatus && matchesCategory;
+  });
+
+  const stats = {
+    totalSubmitted: FINANCE_EXPENSES_BASELINE.reduce((sum, e) => {
+      const amount = parseFloat(e.amount.replace(/[₦,MK]/g, ""));
+      const multiplier = e.amount.includes("M") ? 1 : e.amount.includes("K") ? 0.001 : 1;
+      return sum + (amount * multiplier);
+    }, 0),
+    pendingCount: FINANCE_EXPENSES_BASELINE.filter((e) => e.status === "pending").length,
+    approvedCount: FINANCE_EXPENSES_BASELINE.filter((e) => e.status === "approved").length,
+  };
+
+  const handleApprove = (expense: FinanceExpenseItem) => {
+    console.log("Approve expense:", expense.id);
+  };
+
+  const handleReject = (expense: FinanceExpenseItem) => {
+    console.log("Reject expense:", expense.id);
+  };
+
+  const handleViewReceipt = (expense: FinanceExpenseItem) => {
+    console.log("View receipt:", expense.id);
+  };
+
+  const handleEditExpense = (expense: FinanceExpenseItem) => {
+    console.log("Edit expense:", expense.id);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-50 text-yellow-700 border-yellow-200";
+      case "approved":
+        return "bg-green-50 text-green-700 border-green-200";
+      case "rejected":
+        return "bg-red-50 text-red-700 border-red-200";
+      case "paid":
+        return "bg-blue-50 text-blue-700 border-blue-200";
+      default:
+        return "bg-slate-50 text-slate-700 border-slate-200";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "Pending";
+      case "approved":
+        return "Approved";
+      case "rejected":
+        return "Rejected";
+      case "paid":
+        return "Paid";
+      default:
+        return status;
+    }
+  };
+
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case "cloud":
+        return "Cloud";
+      case "logistics":
+        return "Logistics";
+      case "meals":
+        return "Meals & Dining";
+      case "supplies":
+        return "Supplies";
+      case "travel":
+        return "Travel";
+      case "software":
+        return "Software";
+      case "training":
+        return "Training";
+      default:
+        return category;
+    }
+  };
+
+  const uniqueCategories = Array.from(new Set(FINANCE_EXPENSES_BASELINE.map((e) => e.category)));
+
   return (
     <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
       <div className="space-y-6">
+        {/* Header */}
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Cost control</p>
           <h2 className="text-2xl font-semibold text-slate-900">Expenses</h2>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center">
-          <div className="w-full space-y-3">
-            <FileSpreadsheet className="mx-auto h-12 w-12 text-slate-400" />
-            <p className="text-lg font-semibold text-slate-900">Expenses Workspace Coming Soon</p>
-            <p className="text-sm text-slate-600">
-              Submit expenses, track reimbursements, and manage vendor bills.
-            </p>
-            <div className="flex flex-wrap justify-center gap-2 pt-2">
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Expense List
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Submit Expense
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Approval Workflow
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Receipt Upload
-              </span>
-            </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-purple-50 to-purple-100 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Total Submitted</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900">₦{stats.totalSubmitted.toFixed(1)}M</p>
           </div>
+          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-yellow-50 to-yellow-100 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Pending</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900">{stats.pendingCount} items</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-green-50 to-green-100 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Approved</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900">{stats.approvedCount} items</p>
+          </div>
+        </div>
+
+        {/* Filters and Search */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search expenses..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+            />
+          </div>
+          <select
+            value={statusFilter || ""}
+            onChange={(e) => setStatusFilter(e.target.value || null)}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+          >
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="paid">Paid</option>
+          </select>
+          <select
+            value={categoryFilter || ""}
+            onChange={(e) => setCategoryFilter(e.target.value || null)}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+          >
+            <option value="">All Categories</option>
+            {uniqueCategories.map((category) => (
+              <option key={category} value={category}>
+                {getCategoryLabel(category)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Expense List Table */}
+        <div className="overflow-x-auto rounded-lg border border-slate-200">
+          <table className="w-full border-collapse">
+            <thead className="bg-gradient-to-r from-slate-50 to-slate-100">
+              <tr>
+                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
+                  Description
+                </th>
+                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
+                  Category
+                </th>
+                <th className="border-b border-slate-200 px-4 py-3 text-right text-xs font-semibold uppercase text-slate-600">
+                  Amount
+                </th>
+                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
+                  Submitted By
+                </th>
+                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
+                  Date
+                </th>
+                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
+                  Status
+                </th>
+                <th className="border-b border-slate-200 px-4 py-3 text-center text-xs font-semibold uppercase text-slate-600">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredExpenses.length > 0 ? (
+                filteredExpenses.map((expense) => (
+                  <tr key={expense.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3 text-sm font-medium text-slate-900">{expense.description}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{getCategoryLabel(expense.category)}</td>
+                    <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">{expense.amount}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{expense.submittedBy}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{expense.submittedDate}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold border ${getStatusColor(expense.status)}`}>
+                        {getStatusLabel(expense.status)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center relative">
+                      <button
+                        onClick={() => setOpenMenuId(openMenuId === expense.id ? null : expense.id)}
+                        className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                      {openMenuId === expense.id && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setOpenMenuId(null)}
+                          />
+                          <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-slate-200 bg-white shadow-lg z-50 overflow-hidden">
+                            <button
+                              onClick={() => {
+                                handleViewReceipt(expense);
+                                setOpenMenuId(null);
+                              }}
+                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left"
+                            >
+                              <FileText className="h-4 w-4 text-slate-400" />
+                              View Receipt
+                            </button>
+                            {expense.status === "pending" && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    handleApprove(expense);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100"
+                                >
+                                  <CheckCircle className="h-4 w-4 text-slate-400" />
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleReject(expense);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100"
+                                >
+                                  <XCircle className="h-4 w-4 text-slate-400" />
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                            {expense.status === "approved" && (
+                              <button
+                                onClick={() => {
+                                  handleEditExpense(expense);
+                                  setOpenMenuId(null);
+                                }}
+                                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100"
+                              >
+                                <Edit className="h-4 w-4 text-slate-400" />
+                                Edit
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-sm text-slate-500">
+                    No expenses found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Summary */}
+        <div className="rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
+          <p>
+            Showing <span className="font-semibold text-slate-900">{filteredExpenses.length}</span> of{" "}
+            <span className="font-semibold text-slate-900">{expenses.length}</span> expenses
+          </p>
         </div>
       </div>
     </div>
