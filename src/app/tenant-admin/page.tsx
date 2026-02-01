@@ -3946,6 +3946,134 @@ function FinanceInvoicesWorkspace({
   onCreateInvoice: () => void;
   onEditInvoice: (id: string) => void;
 }) {
+  const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
+
+  const handlePrintInvoice = (invoice: InvoiceItem) => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const subtotal = invoice.items?.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0) || 0;
+    const taxRate = invoice.taxRate ?? 7.5;
+    const discount = invoice.discount ?? 0;
+    const taxAmount = subtotal * (taxRate / 100);
+    const discountAmount = subtotal * (discount / 100);
+    const total = subtotal + taxAmount - discountAmount;
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Invoice ${invoice.invoiceNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+            .header { border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
+            .invoice-title { font-size: 28px; font-weight: bold; }
+            .invoice-number { font-size: 16px; color: #666; margin-top: 5px; }
+            .section { margin: 20px 0; }
+            .section-title { font-size: 14px; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; color: #666; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th { background: #f5f5f5; padding: 12px; text-align: left; font-weight: bold; border-bottom: 2px solid #ddd; }
+            td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+            .total-row { font-weight: bold; font-size: 16px; }
+            .text-right { text-align: right; }
+            .summary { float: right; width: 300px; margin-top: 30px; }
+            .summary-row { display: flex; justify-content: space-between; padding: 8px 0; }
+            .summary-total { border-top: 2px solid #000; margin-top: 10px; padding-top: 10px; font-weight: bold; font-size: 18px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="invoice-title">INVOICE</div>
+            <div class="invoice-number">${invoice.invoiceNumber}</div>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">Bill To</div>
+            <div><strong>${invoice.customer}</strong></div>
+            ${invoice.customerEmail ? `<div>${invoice.customerEmail}</div>` : ''}
+            ${invoice.contactType ? `<div style="margin-top: 5px; color: #666; font-size: 12px;">${invoice.contactType === 'business' ? '🏢 Business' : '👤 Individual'}</div>` : ''}
+          </div>
+          
+          <div class="section">
+            <div style="display: flex; justify-content: space-between;">
+              <div>
+                <div class="section-title">Issue Date</div>
+                <div>${invoice.issueDate}</div>
+              </div>
+              <div>
+                <div class="section-title">Due Date</div>
+                <div>${invoice.dueDate}</div>
+              </div>
+              <div>
+                <div class="section-title">Branch</div>
+                <div>${invoice.branch}</div>
+              </div>
+              <div>
+                <div class="section-title">Status</div>
+                <div>${INVOICE_STATUS_META[invoice.status].label}</div>
+              </div>
+            </div>
+          </div>
+          
+          ${invoice.items && invoice.items.length > 0 ? `
+          <table>
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th class="text-right">Quantity</th>
+                <th class="text-right">Unit Price</th>
+                <th class="text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${invoice.items.map(item => `
+                <tr>
+                  <td>${item.description}</td>
+                  <td class="text-right">${item.quantity}</td>
+                  <td class="text-right">₦${item.unitPrice.toLocaleString()}</td>
+                  <td class="text-right">₦${(item.quantity * item.unitPrice).toLocaleString()}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div class="summary">
+            <div class="summary-row">
+              <span>Subtotal:</span>
+              <span>₦${subtotal.toLocaleString()}</span>
+            </div>
+            <div class="summary-row">
+              <span>Tax (${taxRate}%):</span>
+              <span>₦${taxAmount.toLocaleString()}</span>
+            </div>
+            ${discount > 0 ? `
+            <div class="summary-row">
+              <span>Discount (${discount}%):</span>
+              <span>-₦${discountAmount.toLocaleString()}</span>
+            </div>
+            ` : ''}
+            <div class="summary-row summary-total">
+              <span>Total:</span>
+              <span>₦${total.toLocaleString()}</span>
+            </div>
+          </div>
+          ` : ''}
+          
+          ${invoice.notes ? `
+          <div class="section" style="clear: both; margin-top: 60px;">
+            <div class="section-title">Notes</div>
+            <div>${invoice.notes}</div>
+          </div>
+          ` : ''}
+        </body>
+      </html>
+    `;
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.print();
+    setOpenMenuId(null);
+  };
+
   const filteredInvoices = invoices.filter((invoice) => {
     const matchesStatus = statusFilter === "all" || invoice.status === statusFilter;
     const matchesBranch = branchFilter === "all" || invoice.branch === branchFilter;
@@ -4076,14 +4204,51 @@ function FinanceInvoicesWorkspace({
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-600">{invoice.issueDate}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">{invoice.dueDate}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 relative">
                         <button
-                          onClick={() => onEditInvoice(invoice.id)}
-                          className="rounded-full border border-slate-200 px-4 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                          onClick={() => setOpenMenuId(openMenuId === invoice.id ? null : invoice.id)}
+                          className="rounded-full p-2 hover:bg-slate-100"
                           type="button"
                         >
-                          Edit
+                          <svg className="h-5 w-5 text-slate-600" fill="currentColor" viewBox="0 0 20 20">
+                            <circle cx="10" cy="4" r="1.5" />
+                            <circle cx="10" cy="10" r="1.5" />
+                            <circle cx="10" cy="16" r="1.5" />
+                          </svg>
                         </button>
+                        {openMenuId === invoice.id && (
+                          <>
+                            <div 
+                              className="fixed inset-0 z-10" 
+                              onClick={() => setOpenMenuId(null)}
+                            />
+                            <div className="absolute right-0 top-12 z-20 w-48 rounded-xl border border-slate-200 bg-white shadow-lg">
+                              <button
+                                onClick={() => {
+                                  onEditInvoice(invoice.id);
+                                  setOpenMenuId(null);
+                                }}
+                                className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-700 hover:bg-slate-50 rounded-t-xl"
+                                type="button"
+                              >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Edit Invoice
+                              </button>
+                              <button
+                                onClick={() => handlePrintInvoice(invoice)}
+                                className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-700 hover:bg-slate-50 rounded-b-xl"
+                                type="button"
+                              >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                                Print Invoice
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </td>
                     </tr>
                   );
