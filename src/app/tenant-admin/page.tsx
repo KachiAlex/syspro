@@ -2381,7 +2381,7 @@ export default function TenantAdminPage() {
   const [quickActionToast, setQuickActionToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   // Invoice workspace state
-  const [invoices, setInvoices] = useState<InvoiceItem[]>(MOCK_INVOICES);
+  const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
   const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<InvoiceStatus | "all">("all");
   const [invoiceBranchFilter, setInvoiceBranchFilter] = useState<string>("all");
   const [invoiceSearchQuery, setInvoiceSearchQuery] = useState("");
@@ -2459,6 +2459,45 @@ export default function TenantAdminPage() {
     setQuickActionToast({ message: "Treasury mesh initiated for liquidity management", type: "success" });
     setTimeout(() => setQuickActionToast(null), 3000);
   }, []);
+
+  // Invoice handlers
+  const handleSaveInvoice = useCallback((invoiceData: {
+    customer: string;
+    amount: string;
+    issueDate: string;
+    dueDate: string;
+    branch: string;
+    status: InvoiceStatus;
+    items: Array<{ description: string; quantity: number; unitPrice: number }>;
+  }) => {
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${String(invoices.length + 1).padStart(3, "0")}`;
+    
+    const newInvoice: InvoiceItem = {
+      id: String(Date.now()),
+      invoiceNumber,
+      customer: invoiceData.customer,
+      amount: invoiceData.amount,
+      status: invoiceData.status,
+      dueDate: invoiceData.dueDate,
+      issueDate: invoiceData.issueDate,
+      branch: invoiceData.branch,
+    };
+
+    if (selectedInvoiceId) {
+      // Update existing invoice
+      setInvoices(invoices.map(inv => inv.id === selectedInvoiceId ? { ...inv, ...newInvoice, id: selectedInvoiceId, invoiceNumber: inv.invoiceNumber } : inv));
+      setQuickActionToast({ message: "Invoice updated successfully", type: "success" });
+    } else {
+      // Create new invoice
+      setInvoices([...invoices, newInvoice]);
+      setQuickActionToast({ message: "Invoice created successfully", type: "success" });
+    }
+    
+    setTimeout(() => setQuickActionToast(null), 3000);
+    setShowInvoiceDrawer(false);
+    setSelectedInvoiceId(null);
+    setInvoiceFormTab("details");
+  }, [invoices, selectedInvoiceId]);
 
   const refreshContacts = useCallback(async () => {
     setContactsLoading(true);
@@ -3101,6 +3140,7 @@ export default function TenantAdminPage() {
                     onSelectInvoice={setSelectedInvoiceId}
                     invoiceFormTab={invoiceFormTab}
                     onInvoiceFormTabChange={setInvoiceFormTab}
+                    onSaveInvoice={handleSaveInvoice}
                   />
                 ) : activeNav === "structure" ? (
                   <DepartmentManagement tenantSlug={tenantSlug} />
@@ -3612,6 +3652,15 @@ function FinanceWorkspace({
   onSelectInvoice: (id: string | null) => void;
   invoiceFormTab: InvoiceFormTab;
   onInvoiceFormTabChange: (tab: InvoiceFormTab) => void;
+  onSaveInvoice: (invoiceData: {
+    customer: string;
+    amount: string;
+    issueDate: string;
+    dueDate: string;
+    branch: string;
+    status: InvoiceStatus;
+    items: Array<{ description: string; quantity: number; unitPrice: number }>;
+  }) => void;
 }) {
   const quickActions: Array<{ label: string; description: string; icon: ComponentType<{ className?: string }>; action: () => void; secondaryAction?: () => void }> = [
     { label: "Log invoice", description: "Sync to ERP", icon: Receipt, action: onLogInvoice, secondaryAction: onSyncToERP },
@@ -3767,11 +3816,7 @@ function FinanceWorkspace({
             onShowInvoiceDrawer(false);
             onSelectInvoice(null);
           }}
-          onSave={() => {
-            // Handle save logic here
-            onShowInvoiceDrawer(false);
-            onSelectInvoice(null);
-          }}
+          onSaveInvoice={onSaveInvoice}
         />
       )}
     </div>
@@ -4107,14 +4152,22 @@ function InvoiceDrawer({
   currentTab,
   onTabChange,
   onClose,
-  onSave,
+  onSaveInvoice,
 }: {
   invoiceId: string | null;
   invoice: InvoiceItem | null | undefined;
   currentTab: InvoiceFormTab;
   onTabChange: (tab: InvoiceFormTab) => void;
   onClose: () => void;
-  onSave: () => void;
+  onSaveInvoice: (invoiceData: {
+    customer: string;
+    amount: string;
+    issueDate: string;
+    dueDate: string;
+    branch: string;
+    status: InvoiceStatus;
+    items: Array<{ description: string; quantity: number; unitPrice: number }>;
+  }) => void;
 }) {
   const [formData, setFormData] = useState({
     customer: invoice?.customer || "",
@@ -4161,6 +4214,77 @@ function InvoiceDrawer({
   const discountAmount = subtotal * (formData.discount / 100);
   const total = subtotal + taxAmount - discountAmount;
 
+  // Validation functions
+  const validateDetails = () => {
+    return (
+      formData.customer.trim() !== "" &&
+      formData.issueDate !== "" &&
+      formData.dueDate !== "" &&
+      formData.branch !== "" &&
+      new Date(formData.dueDate) >= new Date(formData.issueDate)
+    );
+  };
+
+  const validateItems = () => {
+    return (
+      formData.items.length > 0 &&
+      formData.items.every((item) => item.description.trim() !== "" && item.unitPrice > 0 && item.quantity > 0)
+    );
+  };
+
+  const canProceedToTab = (tab: InvoiceFormTab): boolean => {
+    const tabOrder: InvoiceFormTab[] = ["details", "items", "taxes", "preview"];
+    const currentIndex = tabOrder.indexOf(currentTab);
+    const targetIndex = tabOrder.indexOf(tab);
+
+    // Can always go back
+    if (targetIndex <= currentIndex) return true;
+
+    // Can only proceed if current and all previous tabs are valid
+    if (currentTab === "details") return validateDetails();
+    if (currentTab === "items") return validateDetails() && validateItems();
+    if (currentTab === "taxes") return validateDetails() && validateItems();
+
+    return false;
+  };
+
+  const handleNext = () => {
+    const tabOrder: InvoiceFormTab[] = ["details", "items", "taxes", "preview"];
+    const currentIndex = tabOrder.indexOf(currentTab);
+    
+    if (currentIndex < tabOrder.length - 1) {
+      const nextTab = tabOrder[currentIndex + 1];
+      if (canProceedToTab(nextTab)) {
+        onTabChange(nextTab);
+      }
+    }
+  };
+
+  const handlePrevious = () => {
+    const tabOrder: InvoiceFormTab[] = ["details", "items", "taxes", "preview"];
+    const currentIndex = tabOrder.indexOf(currentTab);
+    
+    if (currentIndex > 0) {
+      onTabChange(tabOrder[currentIndex - 1]);
+    }
+  };
+
+  const handleSave = (status: InvoiceStatus) => {
+    if (!validateDetails() || !validateItems()) return;
+
+    onSaveInvoice({
+      customer: formData.customer,
+      amount: total.toFixed(2),
+      issueDate: formData.issueDate,
+      dueDate: formData.dueDate,
+      branch: formData.branch,
+      status: status,
+      items: formData.items,
+    });
+
+    onClose();
+  };
+
   return (
     <>
       {/* Backdrop */}
@@ -4192,23 +4316,44 @@ function InvoiceDrawer({
           </button>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="border-b border-slate-200 px-8">
-          <div className="flex gap-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => onTabChange(tab.id)}
-                className={`border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${
-                  currentTab === tab.id
-                    ? "border-slate-900 text-slate-900"
-                    : "border-transparent text-slate-500 hover:text-slate-700"
-                }`}
-                type="button"
-              >
-                {tab.label}
-              </button>
-            ))}
+        {/* Tab Navigation - Progress Indicator */}
+        <div className="border-b border-slate-200 px-8 py-6">
+          <div className="flex items-center justify-between">
+            {tabs.map((tab, index) => {
+              const tabOrder: InvoiceFormTab[] = ["details", "items", "taxes", "preview"];
+              const currentIndex = tabOrder.indexOf(currentTab);
+              const tabIndex = tabOrder.indexOf(tab.id);
+              const isCompleted = tabIndex < currentIndex;
+              const isCurrent = tab.id === currentTab;
+              
+              return (
+                <div key={tab.id} className="flex flex-1 items-center">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
+                        isCurrent
+                          ? "bg-slate-900 text-white"
+                          : isCompleted
+                          ? "bg-green-500 text-white"
+                          : "bg-slate-200 text-slate-500"
+                      }`}
+                    >
+                      {isCompleted ? "✓" : index + 1}
+                    </div>
+                    <span
+                      className={`text-sm font-semibold ${
+                        isCurrent ? "text-slate-900" : isCompleted ? "text-green-600" : "text-slate-500"
+                      }`}
+                    >
+                      {tab.label}
+                    </span>
+                  </div>
+                  {index < tabs.length - 1 && (
+                    <div className={`mx-4 h-0.5 flex-1 ${isCompleted ? "bg-green-500" : "bg-slate-200"}`} />
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -4217,7 +4362,9 @@ function InvoiceDrawer({
           {currentTab === "details" && (
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-slate-900">Customer</label>
+                <label className="block text-sm font-semibold text-slate-900">
+                  Customer <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={formData.customer}
@@ -4225,11 +4372,16 @@ function InvoiceDrawer({
                   className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:border-slate-300 focus:outline-none"
                   placeholder="Enter customer name"
                 />
+                {formData.customer.trim() === "" && (
+                  <p className="mt-1 text-xs text-red-500">Customer name is required</p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-900">Issue Date</label>
+                  <label className="block text-sm font-semibold text-slate-900">
+                    Issue Date <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="date"
                     value={formData.issueDate}
@@ -4238,18 +4390,25 @@ function InvoiceDrawer({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-900">Due Date</label>
+                  <label className="block text-sm font-semibold text-slate-900">
+                    Due Date <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="date"
                     value={formData.dueDate}
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                     className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:border-slate-300 focus:outline-none"
                   />
+                  {formData.dueDate && formData.issueDate && new Date(formData.dueDate) < new Date(formData.issueDate) && (
+                    <p className="mt-1 text-xs text-red-500">Due date must be after issue date</p>
+                  )}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-900">Branch</label>
+                <label className="block text-sm font-semibold text-slate-900">
+                  Branch <span className="text-red-500">*</span>
+                </label>
                 <select
                   value={formData.branch}
                   onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
@@ -4505,29 +4664,55 @@ function InvoiceDrawer({
         {/* Footer Actions */}
         <div className="border-t border-slate-200 px-8 py-6">
           <div className="flex items-center justify-between gap-4">
-            <button
-              onClick={onClose}
-              className="rounded-full border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              type="button"
-            >
-              Cancel
-            </button>
-            <div className="flex gap-3">
-              <button
-                onClick={onSave}
-                className="rounded-full border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                type="button"
-              >
-                Save Draft
-              </button>
-              <button
-                onClick={onSave}
-                className="rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
-                type="button"
-              >
-                {invoiceId ? "Update Invoice" : "Send Invoice"}
-              </button>
-            </div>
+            {currentTab === "preview" ? (
+              <>
+                <button
+                  onClick={onClose}
+                  className="rounded-full border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  type="button"
+                >
+                  Cancel
+                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleSave("draft")}
+                    className="rounded-full border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    type="button"
+                  >
+                    Save Draft
+                  </button>
+                  <button
+                    onClick={() => handleSave("sent")}
+                    className="rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
+                    type="button"
+                  >
+                    {invoiceId ? "Update Invoice" : "Send Invoice"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={currentTab === "details" ? onClose : handlePrevious}
+                  className="rounded-full border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  type="button"
+                >
+                  {currentTab === "details" ? "Cancel" : "Previous"}
+                </button>
+                <button
+                  onClick={handleNext}
+                  disabled={!canProceedToTab(
+                    currentTab === "details" ? "items" : 
+                    currentTab === "items" ? "taxes" : 
+                    currentTab === "taxes" ? "preview" : "preview"
+                  )}
+                  className="rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  type="button"
+                >
+                  Next
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
