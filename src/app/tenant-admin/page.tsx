@@ -5447,17 +5447,35 @@ function FinanceExpensesWorkspace() {
 
   const handleSaveExpense = async () => {
     if (!recordForm.amount || !recordForm.category || !recordForm.description) {
-      alert("Please fill in all required fields");
+      setError("Please fill in all required fields (Amount, Category, Description)");
       return;
     }
 
     const category = EXPENSE_CATEGORIES_BASELINE.find(c => c.id === recordForm.category);
-    if (!category) return;
+    if (!category) {
+      setError("Selected category not found");
+      return;
+    }
 
     try {
       setLoading(true);
+      setError(null);
       const amount = parseFloat(recordForm.amount);
-      
+
+      if (isNaN(amount) || amount <= 0) {
+        setError("Amount must be a valid number greater than 0");
+        setLoading(false);
+        return;
+      }
+
+      console.log("Creating expense with data:", {
+        tenantSlug: "default",
+        type: recordForm.expenseType,
+        amount,
+        categoryId: recordForm.category,
+        description: recordForm.description,
+      });
+
       const result = await createExpense({
         tenantSlug: "default",
         regionId: "region-001",
@@ -5472,6 +5490,8 @@ function FinanceExpensesWorkspace() {
         notes: recordForm.notes,
         createdBy: "current-user",
       });
+
+      console.log("Expense created successfully:", result);
 
       // Reload expenses from API
       const updated = await listExpenses({ tenantSlug: "default" });
@@ -5491,9 +5511,11 @@ function FinanceExpensesWorkspace() {
         taxType: "none",
         notes: "",
       });
+      setError(null);
     } catch (err) {
       console.error("Error saving expense:", err);
-      setError("Failed to save expense. Please try again.");
+      const errorMessage = err instanceof Error ? err.message : "Failed to save expense. Please check the form and try again.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -6000,6 +6022,16 @@ function FinanceExpensesWorkspace() {
                 </button>
               </div>
 
+              {/* Error Alert */}
+              {error && (
+                <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
               {/* Form */}
               <div className="space-y-4">
                 {/* Expense Type */}
@@ -6112,15 +6144,24 @@ function FinanceExpensesWorkspace() {
               <div className="flex gap-3 pt-6 border-t border-slate-200">
                 <button
                   onClick={() => setShowRecordModal(false)}
-                  className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 transition-colors"
+                  disabled={loading}
+                  className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveExpense}
-                  className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                  disabled={loading}
+                  className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Record Expense
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Record Expense"
+                  )}
                 </button>
               </div>
             </div>
