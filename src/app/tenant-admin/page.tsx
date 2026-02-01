@@ -1857,10 +1857,30 @@ const FINANCE_VIEW_LABELS: Record<FinanceView, string> = {
 type FinanceView = (typeof FINANCE_VIEWS)[number];
 
 type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
+
+type CrmContact = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  tags?: string[];
+};
+
+type SavedLineItem = {
+  id: string;
+  description: string;
+  defaultPrice: number;
+  category?: string;
+};
+
 type InvoiceItem = {
   id: string;
   invoiceNumber: string;
   customer: string;
+  customerEmail?: string;
+  contactId?: string;
   amount: string;
   status: InvoiceStatus;
   dueDate: string;
@@ -2388,6 +2408,8 @@ export default function TenantAdminPage() {
   const [showInvoiceDrawer, setShowInvoiceDrawer] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [invoiceFormTab, setInvoiceFormTab] = useState<InvoiceFormTab>("details");
+  const [crmContacts, setCrmContacts] = useState<CrmContact[]>([]);
+  const [savedLineItems, setSavedLineItems] = useState<SavedLineItem[]>([]);
 
   const entityOptions = ["Axiom Labs", "Nova Holdings", "Helix Metals"];
   const regionOptions = ["Global HQ", "Americas", "EMEA", "APAC"];
@@ -2463,6 +2485,8 @@ export default function TenantAdminPage() {
   // Invoice handlers
   const handleSaveInvoice = useCallback((invoiceData: {
     customer: string;
+    customerEmail?: string;
+    contactId?: string;
     amount: string;
     issueDate: string;
     dueDate: string;
@@ -2476,6 +2500,8 @@ export default function TenantAdminPage() {
       id: String(Date.now()),
       invoiceNumber,
       customer: invoiceData.customer,
+      customerEmail: invoiceData.customerEmail,
+      contactId: invoiceData.contactId,
       amount: invoiceData.amount,
       status: invoiceData.status,
       dueDate: invoiceData.dueDate,
@@ -2498,6 +2524,18 @@ export default function TenantAdminPage() {
     setSelectedInvoiceId(null);
     setInvoiceFormTab("details");
   }, [invoices, selectedInvoiceId]);
+
+  const handleSaveLineItem = useCallback((description: string, defaultPrice: number, category?: string) => {
+    const newItem: SavedLineItem = {
+      id: `item-${Date.now()}`,
+      description,
+      defaultPrice,
+      category,
+    };
+    setSavedLineItems([...savedLineItems, newItem]);
+    setQuickActionToast({ message: "Item saved to catalog", type: "success" });
+    setTimeout(() => setQuickActionToast(null), 2000);
+  }, [savedLineItems]);
 
   const refreshContacts = useCallback(async () => {
     setContactsLoading(true);
@@ -3007,6 +3045,29 @@ export default function TenantAdminPage() {
     refreshContacts();
   }, [refreshContacts]);
 
+  // Fetch CRM contacts for invoice autocomplete
+  useEffect(() => {
+    if (!tenantSlug) return;
+
+    fetch(`/api/crm/contacts?tenantSlug=${tenantSlug}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.contacts) {
+          const contacts: CrmContact[] = data.contacts.map((c: any) => ({
+            id: c.id,
+            firstName: c.firstName || "",
+            lastName: c.lastName || "",
+            email: c.email || "",
+            phone: c.phone || "",
+            company: c.company || "",
+            tags: c.tags || [],
+          }));
+          setCrmContacts(contacts);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch CRM contacts:", err));
+  }, [tenantSlug]);
+
   useEffect(() => {
     if (!crmActionToast) {
       return;
@@ -3141,6 +3202,9 @@ export default function TenantAdminPage() {
                     invoiceFormTab={invoiceFormTab}
                     onInvoiceFormTabChange={setInvoiceFormTab}
                     onSaveInvoice={handleSaveInvoice}
+                    crmContacts={crmContacts}
+                    savedLineItems={savedLineItems}
+                    onSaveLineItem={handleSaveLineItem}
                   />
                 ) : activeNav === "structure" ? (
                   <DepartmentManagement tenantSlug={tenantSlug} />
@@ -3620,6 +3684,10 @@ function FinanceWorkspace({
   onSelectInvoice,
   invoiceFormTab,
   onInvoiceFormTabChange,
+  onSaveInvoice,
+  crmContacts,
+  savedLineItems,
+  onSaveLineItem,
 }: {
   snapshot: FinanceSnapshot;
   loading: boolean;
@@ -3654,6 +3722,8 @@ function FinanceWorkspace({
   onInvoiceFormTabChange: (tab: InvoiceFormTab) => void;
   onSaveInvoice: (invoiceData: {
     customer: string;
+    customerEmail?: string;
+    contactId?: string;
     amount: string;
     issueDate: string;
     dueDate: string;
@@ -3661,6 +3731,9 @@ function FinanceWorkspace({
     status: InvoiceStatus;
     items: Array<{ description: string; quantity: number; unitPrice: number }>;
   }) => void;
+  crmContacts: CrmContact[];
+  savedLineItems: SavedLineItem[];
+  onSaveLineItem: (description: string, defaultPrice: number, category?: string) => void;
 }) {
   const quickActions: Array<{ label: string; description: string; icon: ComponentType<{ className?: string }>; action: () => void; secondaryAction?: () => void }> = [
     { label: "Log invoice", description: "Sync to ERP", icon: Receipt, action: onLogInvoice, secondaryAction: onSyncToERP },
@@ -3817,6 +3890,9 @@ function FinanceWorkspace({
             onSelectInvoice(null);
           }}
           onSaveInvoice={onSaveInvoice}
+          crmContacts={crmContacts}
+          savedLineItems={savedLineItems}
+          onSaveLineItem={onSaveLineItem}
         />
       )}
     </div>
@@ -4153,6 +4229,9 @@ function InvoiceDrawer({
   onTabChange,
   onClose,
   onSaveInvoice,
+  crmContacts,
+  savedLineItems,
+  onSaveLineItem,
 }: {
   invoiceId: string | null;
   invoice: InvoiceItem | null | undefined;
@@ -4161,6 +4240,8 @@ function InvoiceDrawer({
   onClose: () => void;
   onSaveInvoice: (invoiceData: {
     customer: string;
+    customerEmail?: string;
+    contactId?: string;
     amount: string;
     issueDate: string;
     dueDate: string;
@@ -4168,9 +4249,14 @@ function InvoiceDrawer({
     status: InvoiceStatus;
     items: Array<{ description: string; quantity: number; unitPrice: number }>;
   }) => void;
+  crmContacts: CrmContact[];
+  savedLineItems: SavedLineItem[];
+  onSaveLineItem: (description: string, defaultPrice: number, category?: string) => void;
 }) {
   const [formData, setFormData] = useState({
     customer: invoice?.customer || "",
+    customerEmail: invoice?.customerEmail || "",
+    contactId: invoice?.contactId || "",
     amount: invoice?.amount || "",
     issueDate: invoice?.issueDate || new Date().toISOString().split("T")[0],
     dueDate: invoice?.dueDate || "",
@@ -4181,6 +4267,11 @@ function InvoiceDrawer({
     taxRate: 7.5,
     discount: 0,
   });
+  
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [showContactDropdown, setShowContactDropdown] = useState(false);
+  const [itemSearch, setItemSearch] = useState<Record<number, string>>({});
+  const [showItemDropdown, setShowItemDropdown] = useState<Record<number, boolean>>({});
 
   const tabs: { id: InvoiceFormTab; label: string }[] = [
     { id: "details", label: "Details" },
@@ -4272,8 +4363,16 @@ function InvoiceDrawer({
   const handleSave = (status: InvoiceStatus) => {
     if (!validateDetails() || !validateItems()) return;
 
+    // Validate email when sending invoice
+    if (status === "sent" && !formData.customerEmail) {
+      alert("Customer email is required to send invoice");
+      return;
+    }
+
     onSaveInvoice({
       customer: formData.customer,
+      customerEmail: formData.customerEmail,
+      contactId: formData.contactId,
       amount: total.toFixed(2),
       issueDate: formData.issueDate,
       dueDate: formData.dueDate,
@@ -4283,6 +4382,136 @@ function InvoiceDrawer({
     });
 
     onClose();
+  };
+
+  const handlePrintInvoice = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const invoiceNumber = invoice?.invoiceNumber || "DRAFT";
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Invoice ${invoiceNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+            h1 { color: #1e293b; margin-bottom: 10px; }
+            .header { margin-bottom: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; }
+            .details { display: flex; justify-content: space-between; margin-bottom: 30px; }
+            .details div { flex: 1; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+            th { background-color: #f8fafc; font-weight: 600; }
+            .totals { margin-top: 20px; text-align: right; }
+            .totals div { margin: 8px 0; }
+            .grand-total { font-size: 1.2em; font-weight: bold; color: #1e293b; margin-top: 15px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Invoice ${invoiceNumber}</h1>
+            <p><strong>Status:</strong> ${INVOICE_STATUS_META[formData.status].label}</p>
+          </div>
+          <div class="details">
+            <div>
+              <h3>Bill To:</h3>
+              <p><strong>${formData.customer}</strong></p>
+              ${formData.customerEmail ? `<p>${formData.customerEmail}</p>` : ''}
+            </div>
+            <div>
+              <h3>Invoice Details:</h3>
+              <p><strong>Issue Date:</strong> ${formData.issueDate}</p>
+              <p><strong>Due Date:</strong> ${formData.dueDate}</p>
+              <p><strong>Branch:</strong> ${formData.branch}</p>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${formData.items.map(item => `
+                <tr>
+                  <td>${item.description}</td>
+                  <td>${item.quantity}</td>
+                  <td>₦${item.unitPrice.toLocaleString()}</td>
+                  <td>₦${(item.quantity * item.unitPrice).toLocaleString()}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div class="totals">
+            <div><strong>Subtotal:</strong> ₦${subtotal.toLocaleString()}</div>
+            <div><strong>Tax (${formData.taxRate}%):</strong> ₦${taxAmount.toLocaleString()}</div>
+            ${formData.discount > 0 ? `<div><strong>Discount (${formData.discount}%):</strong> -₦${discountAmount.toLocaleString()}</div>` : ''}
+            <div class="grand-total"><strong>Total:</strong> ₦${total.toLocaleString()}</div>
+          </div>
+          ${formData.notes ? `<div style="margin-top: 30px;"><strong>Notes:</strong><p>${formData.notes}</p></div>` : ''}
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  // Filter contacts based on search
+  const filteredContacts = crmContacts.filter(contact => {
+    const searchLower = customerSearch.toLowerCase();
+    return (
+      contact.firstName.toLowerCase().includes(searchLower) ||
+      contact.lastName.toLowerCase().includes(searchLower) ||
+      contact.email.toLowerCase().includes(searchLower) ||
+      (contact.company && contact.company.toLowerCase().includes(searchLower))
+    );
+  });
+
+  const handleSelectContact = (contact: CrmContact) => {
+    setFormData({
+      ...formData,
+      customer: `${contact.firstName} ${contact.lastName}`,
+      customerEmail: contact.email,
+      contactId: contact.id,
+    });
+    setCustomerSearch("");
+    setShowContactDropdown(false);
+  };
+
+  const handleSelectSavedItem = (item: SavedLineItem, index: number) => {
+    const newItems = [...formData.items];
+    newItems[index] = {
+      ...newItems[index],
+      description: item.description,
+      unitPrice: item.defaultPrice,
+    };
+    setFormData({ ...formData, items: newItems });
+    setItemSearch({ ...itemSearch, [index]: "" });
+    setShowItemDropdown({ ...showItemDropdown, [index]: false });
+  };
+
+  const handleSaveCurrentItem = (index: number) => {
+    const item = formData.items[index];
+    if (item.description && item.unitPrice > 0) {
+      onSaveLineItem(item.description, item.unitPrice);
+    }
+  };
+
+  // Filter saved items for dropdown
+  const getFilteredItems = (index: number) => {
+    const search = itemSearch[index] || "";
+    if (!search) return savedLineItems;
+    const searchLower = search.toLowerCase();
+    return savedLineItems.filter(item =>
+      item.description.toLowerCase().includes(searchLower) ||
+      (item.category && item.category.toLowerCase().includes(searchLower))
+    );
   };
 
   return (
@@ -4361,20 +4590,57 @@ function InvoiceDrawer({
         <div className="flex-1 overflow-y-auto px-8 py-6">
           {currentTab === "details" && (
             <div className="space-y-6">
-              <div>
+              <div className="relative">
                 <label className="block text-sm font-semibold text-slate-900">
                   Customer <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  value={formData.customer}
-                  onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
+                  value={customerSearch || formData.customer}
+                  onChange={(e) => {
+                    setCustomerSearch(e.target.value);
+                    setFormData({ ...formData, customer: e.target.value, customerEmail: "", contactId: "" });
+                    setShowContactDropdown(e.target.value.length > 0);
+                  }}
+                  onFocus={() => setShowContactDropdown(customerSearch.length > 0 || formData.customer.length > 0)}
                   className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:border-slate-300 focus:outline-none"
-                  placeholder="Enter customer name"
+                  placeholder="Search CRM contacts..."
                 />
+                {showContactDropdown && filteredContacts.length > 0 && (
+                  <div className="absolute z-10 mt-1 w-full rounded-2xl border border-slate-200 bg-white shadow-lg max-h-60 overflow-y-auto">
+                    {filteredContacts.map((contact) => (
+                      <button
+                        key={contact.id}
+                        type="button"
+                        onClick={() => handleSelectContact(contact)}
+                        className="w-full px-4 py-3 text-left hover:bg-slate-50 flex flex-col gap-1"
+                      >
+                        <div className="text-sm font-semibold text-slate-900">
+                          {contact.firstName} {contact.lastName}
+                        </div>
+                        <div className="text-xs text-slate-500">{contact.email}</div>
+                        {contact.company && <div className="text-xs text-slate-400">{contact.company}</div>}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {formData.customer.trim() === "" && (
                   <p className="mt-1 text-xs text-red-500">Customer name is required</p>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-900">
+                  Customer Email {formData.status === "sent" && <span className="text-red-500">*</span>}
+                </label>
+                <input
+                  type="email"
+                  value={formData.customerEmail}
+                  onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:border-slate-300 focus:outline-none"
+                  placeholder="customer@example.com"
+                />
+                <p className="mt-1 text-xs text-slate-500">Required to send invoice via email</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -4450,17 +4716,49 @@ function InvoiceDrawer({
               {formData.items.map((item, index) => (
                 <div key={index} className="rounded-2xl border border-slate-200 p-4">
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        Description
-                      </label>
+                    <div className="relative">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                          Description
+                        </label>
+                        <button
+                          onClick={() => handleSaveCurrentItem(index)}
+                          className="text-xs text-blue-600 hover:text-blue-700 font-semibold"
+                          type="button"
+                        >
+                          Save to catalog
+                        </button>
+                      </div>
                       <input
                         type="text"
-                        value={item.description}
-                        onChange={(e) => handleItemChange(index, "description", e.target.value)}
+                        value={itemSearch[index] !== undefined ? itemSearch[index] : item.description}
+                        onChange={(e) => {
+                          setItemSearch({ ...itemSearch, [index]: e.target.value });
+                          handleItemChange(index, "description", e.target.value);
+                          setShowItemDropdown({ ...showItemDropdown, [index]: e.target.value.length > 0 });
+                        }}
+                        onFocus={() => setShowItemDropdown({ ...showItemDropdown, [index]: true })}
                         className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-slate-300 focus:outline-none"
-                        placeholder="Item description"
+                        placeholder="Search catalog or enter new item..."
                       />
+                      {showItemDropdown[index] && getFilteredItems(index).length > 0 && (
+                        <div className="absolute z-10 mt-1 w-full rounded-xl border border-slate-200 bg-white shadow-lg max-h-48 overflow-y-auto">
+                          {getFilteredItems(index).map((savedItem) => (
+                            <button
+                              key={savedItem.id}
+                              type="button"
+                              onClick={() => handleSelectSavedItem(savedItem, index)}
+                              className="w-full px-3 py-2 text-left hover:bg-slate-50 flex justify-between items-center"
+                            >
+                              <div>
+                                <div className="text-sm font-semibold text-slate-900">{savedItem.description}</div>
+                                {savedItem.category && <div className="text-xs text-slate-400">{savedItem.category}</div>}
+                              </div>
+                              <div className="text-sm font-semibold text-slate-600">₦{savedItem.defaultPrice.toLocaleString()}</div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-3 gap-3">
@@ -4666,13 +4964,27 @@ function InvoiceDrawer({
           <div className="flex items-center justify-between gap-4">
             {currentTab === "preview" ? (
               <>
-                <button
-                  onClick={onClose}
-                  className="rounded-full border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                  type="button"
-                >
-                  Cancel
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={onClose}
+                    className="rounded-full border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    type="button"
+                  >
+                    Cancel
+                  </button>
+                  {invoiceId && (
+                    <button
+                      onClick={handlePrintInvoice}
+                      className="rounded-full border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                      type="button"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                      </svg>
+                      Print
+                    </button>
+                  )}
+                </div>
                 <div className="flex gap-3">
                   <button
                     onClick={() => handleSave("draft")}
