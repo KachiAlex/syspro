@@ -2972,38 +2972,66 @@ export default function TenantAdminPage() {
         },
       };
 
-      // Call the API
-      const response = await fetch("/api/finance/invoices", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(apiPayload),
-      });
+      // Call the API (PATCH when editing, POST when creating)
+      let response: Response;
+      if (selectedInvoiceId) {
+        response = await fetch(`/api/finance/invoices/${selectedInvoiceId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(apiPayload),
+        });
+      } else {
+        response = await fetch("/api/finance/invoices", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(apiPayload),
+        });
+      }
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({}));
         throw new Error(error.error?.toString() || "Failed to save invoice");
       }
 
-      const result = await response.json();
-      
-      // Update local state after successful API call
-      const newInvoice: InvoiceItem = {
-        id: selectedInvoiceId || result.invoice?.id || String(Date.now()),
-        invoiceNumber,
-        customer: invoiceData.customer,
-        customerEmail: invoiceData.customerEmail,
-        contactId: invoiceData.contactId,
-        contactType: invoiceData.contactType,
-        amount: invoiceData.amount,
-        status: invoiceData.status,
-        dueDate: invoiceData.dueDate,
-        issueDate: invoiceData.issueDate,
-        branch: invoiceData.branch,
-        items: invoiceData.items,
-        notes: invoiceData.notes,
-        taxRate: invoiceData.taxRate,
-        discount: invoiceData.discount,
-      };
+      const result = await response.json().catch(() => ({}));
+
+      // Use API returned invoice when available, otherwise fallback to local data
+      const returned = result.invoice;
+      const newInvoice: InvoiceItem = returned
+        ? {
+            id: returned.id,
+            invoiceNumber: returned.invoiceNumber,
+            customer: returned.customerName,
+            customerEmail: returned.metadata?.customerEmail,
+            contactId: returned.customerCode || undefined,
+            contactType: returned.metadata?.contactType,
+            amount: String(returned.amount),
+            status: returned.status as InvoiceStatus,
+            dueDate: returned.dueDate,
+            issueDate: returned.issuedDate,
+            branch: returned.metadata?.branch,
+            items: returned.metadata?.items,
+            notes: returned.notes,
+            taxRate: returned.metadata?.taxRate,
+            discount: returned.metadata?.discount,
+          }
+        : {
+            id: selectedInvoiceId || String(Date.now()),
+            invoiceNumber,
+            customer: invoiceData.customer,
+            customerEmail: invoiceData.customerEmail,
+            contactId: invoiceData.contactId,
+            contactType: invoiceData.contactType,
+            amount: invoiceData.amount,
+            status: invoiceData.status,
+            dueDate: invoiceData.dueDate,
+            issueDate: invoiceData.issueDate,
+            branch: invoiceData.branch,
+            items: invoiceData.items,
+            notes: invoiceData.notes,
+            taxRate: invoiceData.taxRate,
+            discount: invoiceData.discount,
+          };
 
       if (selectedInvoiceId) {
         setInvoices(invoices.map(inv => inv.id === selectedInvoiceId ? newInvoice : inv));
@@ -3012,7 +3040,38 @@ export default function TenantAdminPage() {
         setInvoices([...invoices, newInvoice]);
         setQuickActionToast({ message: `Invoice ${invoiceData.status === 'draft' ? 'draft created' : 'created'} successfully`, type: "success" });
       }
-      
+
+      // Refresh invoices list from server to ensure UI reflects canonical state
+      try {
+        const query = new URLSearchParams({ tenantSlug: tenantSlug ?? "kreatix-default" });
+        const listRes = await fetch(`/api/finance/invoices?${query.toString()}`, { cache: "no-store" });
+        if (listRes.ok) {
+          const payload = await listRes.json().catch(() => null);
+          if (payload?.invoices && Array.isArray(payload.invoices)) {
+            const formatted = payload.invoices.map((inv: any) => ({
+              id: inv.id,
+              invoiceNumber: inv.invoiceNumber,
+              customer: inv.customerName,
+              customerEmail: inv.metadata?.customerEmail,
+              contactId: inv.customerCode,
+              contactType: inv.metadata?.contactType,
+              amount: String(inv.amount),
+              status: inv.status,
+              dueDate: inv.dueDate,
+              issueDate: inv.issuedDate,
+              branch: inv.metadata?.branch,
+              items: inv.metadata?.items,
+              notes: inv.notes,
+              taxRate: inv.metadata?.taxRate,
+              discount: inv.metadata?.discount,
+            }));
+            setInvoices(formatted);
+          }
+        }
+      } catch (e) {
+        // ignore refresh failures; UI already updated optimistically
+      }
+
       setTimeout(() => setQuickActionToast(null), 3000);
       setShowInvoiceDrawer(false);
       setSelectedInvoiceId(null);

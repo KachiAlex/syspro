@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "cross-env TAILWIND_DISABLE_LIGHTNINGCSS=1 next dev",
+    "test:invoices": "node ./scripts/test-invoices.js",
     "build": "cross-env TAILWIND_DISABLE_LIGHTNINGCSS=1 next build",
     "start": "next start",
     "lint": "eslint"
