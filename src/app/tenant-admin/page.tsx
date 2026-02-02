@@ -4894,11 +4894,6 @@ function FinancePaymentsWorkspace() {
       alert(`Failed to save payment: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   };
-      reference: "",
-      gatewayReference: "",
-      confirmationDetails: "",
-    });
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {

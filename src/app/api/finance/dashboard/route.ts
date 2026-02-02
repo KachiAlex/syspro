@@ -29,7 +29,21 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Finance dashboard API error:", error);
     
-    // Return baseline snapshot on error for now
+    // Return empty snapshot on error
+    const emptySnapshot = {
+      metrics: {
+        revenue: 0,
+        expenses: 0,
+        profit: 0,
+        margin: 0,
+      },
+      trend: [],
+      receivables: [],
+      payables: [],
+      cashAccounts: [],
+      expenseBreakdown: [],
+    };
+
     return NextResponse.json({
       filters: {
         tenantSlug: "kreatix-default",
@@ -37,9 +51,9 @@ export async function GET(request: NextRequest) {
         branchId: undefined,
         timeframe: "last_7_days",
       },
-      snapshot: FINANCE_BASELINE_SNAPSHOT,
+      snapshot: emptySnapshot,
       generatedAt: new Date().toISOString(),
-      _note: "Returned baseline data due to database error",
+      _note: "Returned empty data due to error",
     });
   }
 }
