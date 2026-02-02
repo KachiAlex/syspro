@@ -923,7 +923,7 @@ export async function listExpenses(filters: {
   const limit = Math.min(Math.max(filters.limit ?? 50, 1), 100);
   const offset = Math.max(filters.offset ?? 0, 0);
   
-  const rows = (await sql`
+  const baseQuery = sql`
     select e.*, 
            array_agg(row_to_json(ea.*)) filter (where ea.id is not null) as approvals_agg,
            array_agg(row_to_json(eal.*)) filter (where eal.id is not null) as audit_agg
@@ -931,17 +931,33 @@ export async function listExpenses(filters: {
     left join expense_approvals ea on e.id = ea.expense_id
     left join expense_audit_logs eal on e.id = eal.expense_id
     where e.tenant_slug = ${filters.tenantSlug}
-      ${filters.approvalStatus ? sql`and e.approval_status = ${filters.approvalStatus}` : sql``}
-      ${filters.paymentStatus ? sql`and e.payment_status = ${filters.paymentStatus}` : sql``}
-      ${filters.categoryId ? sql`and e.category_id = ${filters.categoryId}` : sql``}
-      ${filters.createdBy ? sql`and e.created_by = ${filters.createdBy}` : sql``}
-    group by e.id 
-    order by e.created_at desc 
-    limit ${limit} 
-    offset ${offset}
-  `) as any[];
+    group by e.id
+    order by e.created_at desc`;
   
-  return rows.map(r => normalizeExpenseRecord(r as ExpenseRecord, r.approvals_agg || [], r.audit_agg || []));
+  // For simplicity, query without additional filters first, then filter in memory if needed
+  // This avoids the SQL template concatenation issue
+  const rows = (await baseQuery) as any[];
+  
+  // Apply filters in memory
+  let filtered = rows;
+  
+  if (filters.approvalStatus) {
+    filtered = filtered.filter(r => r.approval_status === filters.approvalStatus);
+  }
+  if (filters.paymentStatus) {
+    filtered = filtered.filter(r => r.payment_status === filters.paymentStatus);
+  }
+  if (filters.categoryId) {
+    filtered = filtered.filter(r => r.category_id === filters.categoryId);
+  }
+  if (filters.createdBy) {
+    filtered = filtered.filter(r => r.created_by === filters.createdBy);
+  }
+  
+  // Apply pagination
+  filtered = filtered.slice(offset, offset + limit);
+  
+  return filtered.map(r => normalizeExpenseRecord(r as ExpenseRecord, r.approvals_agg || [], r.audit_agg || []));
 }
 
 export async function getExpense(id: string, tenantSlug: string): Promise<Expense | null> {
