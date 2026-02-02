@@ -6028,9 +6028,6 @@ function FinanceExpensesWorkspace() {
                   <p className="text-sm text-red-700">{error}</p>
                 </div>
               )}
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
 
               {/* Form */}
               <div className="space-y-4">

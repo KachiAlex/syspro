@@ -923,7 +923,7 @@ export async function listExpenses(filters: {
   const limit = Math.min(Math.max(filters.limit ?? 50, 1), 100);
   const offset = Math.max(filters.offset ?? 0, 0);
   
-  let query = sql`
+  const rows = (await sql`
     select e.*, 
            array_agg(row_to_json(ea.*)) filter (where ea.id is not null) as approvals_agg,
            array_agg(row_to_json(eal.*)) filter (where eal.id is not null) as audit_agg
@@ -931,24 +931,16 @@ export async function listExpenses(filters: {
     left join expense_approvals ea on e.id = ea.expense_id
     left join expense_audit_logs eal on e.id = eal.expense_id
     where e.tenant_slug = ${filters.tenantSlug}
-  `;
-
-  if (filters.approvalStatus) {
-    query = sql`${query} and e.approval_status = ${filters.approvalStatus}`;
-  }
-  if (filters.paymentStatus) {
-    query = sql`${query} and e.payment_status = ${filters.paymentStatus}`;
-  }
-  if (filters.categoryId) {
-    query = sql`${query} and e.category_id = ${filters.categoryId}`;
-  }
-  if (filters.createdBy) {
-    query = sql`${query} and e.created_by = ${filters.createdBy}`;
-  }
-
-  query = sql`${query} group by e.id order by e.created_at desc limit ${limit} offset ${offset}`;
+      ${filters.approvalStatus ? sql`and e.approval_status = ${filters.approvalStatus}` : sql``}
+      ${filters.paymentStatus ? sql`and e.payment_status = ${filters.paymentStatus}` : sql``}
+      ${filters.categoryId ? sql`and e.category_id = ${filters.categoryId}` : sql``}
+      ${filters.createdBy ? sql`and e.created_by = ${filters.createdBy}` : sql``}
+    group by e.id 
+    order by e.created_at desc 
+    limit ${limit} 
+    offset ${offset}
+  `) as any[];
   
-  const rows = await query as any[];
   return rows.map(r => normalizeExpenseRecord(r as ExpenseRecord, r.approvals_agg || [], r.audit_agg || []));
 }
 

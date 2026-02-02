@@ -52,8 +52,9 @@ export async function GET(request: NextRequest) {
     const expenses = await listExpenses(parsed.data);
     return NextResponse.json({ expenses });
   } catch (error) {
-    console.error("Finance expenses list failed", error);
-    return NextResponse.json({ error: "Failed to load expenses" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Finance expenses list failed:", errorMessage, error);
+    return NextResponse.json({ error: "Failed to load expenses", details: errorMessage }, { status: 500 });
   }
 }
 
@@ -91,8 +92,9 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Create expense failed", error);
-    return NextResponse.json({ error: "Failed to create expense" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Create expense failed:", errorMessage, error);
+    return NextResponse.json({ error: "Failed to create expense", details: errorMessage }, { status: 500 });
   }
 }
 
@@ -122,8 +124,9 @@ export async function PATCH(request: NextRequest) {
     }
     return NextResponse.json({ expense });
   } catch (error) {
-    console.error("Update expense failed", error);
-    return NextResponse.json({ error: "Failed to update expense" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Update expense failed:", errorMessage, error);
+    return NextResponse.json({ error: "Failed to update expense", details: errorMessage }, { status: 500 });
   }
 }
 
@@ -146,7 +149,8 @@ export async function DELETE(request: NextRequest) {
     }
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete expense failed", error);
-    return NextResponse.json({ error: "Failed to delete expense" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Delete expense failed:", errorMessage, error);
+    return NextResponse.json({ error: "Failed to delete expense", details: errorMessage }, { status: 500 });
   }
 }
