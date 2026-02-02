@@ -3579,6 +3579,82 @@ export default function TenantAdminPage() {
     return () => window.clearTimeout(timeout);
   }, [crmActionToast]);
 
+  // Fetch invoices from database on component mount
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      try {
+        const response = await fetch("/api/finance/invoices?tenantSlug=default");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.invoices && Array.isArray(data.invoices)) {
+            // Convert API format to UI format
+            const formattedInvoices = data.invoices.map((inv: any) => ({
+              id: inv.id,
+              invoiceNumber: inv.invoiceNumber,
+              customer: inv.customerName,
+              amount: inv.amount.toString(),
+              status: inv.status,
+              issueDate: inv.issuedDate,
+              dueDate: inv.dueDate,
+              customerEmail: inv.metadata?.customerEmail,
+              contactId: inv.customerCode,
+              contactType: inv.metadata?.contactType,
+              branch: inv.metadata?.branch,
+              items: inv.metadata?.items || inv.lineItems || [],
+              taxRate: inv.metadata?.taxRate,
+              discount: inv.metadata?.discount,
+              notes: inv.notes,
+            }));
+            setInvoices(formattedInvoices);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch invoices:", err);
+      }
+    };
+    fetchInvoices();
+  }, []);
+
+  // Fetch payments from database on component mount
+  useEffect(() => {
+    const fetchPayments = async () => {
+      try {
+        const response = await fetch("/api/finance/payments?tenantSlug=default");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.payments && Array.isArray(data.payments)) {
+            // Convert API format to UI format
+            const formattedPayments = data.payments.map((pay: any) => ({
+              id: pay.id,
+              payableId: `PYB-${Math.random().toString(36).substr(2, 4)}`,
+              customerId: pay.customerId,
+              invoiceId: pay.invoiceId,
+              reference: pay.reference,
+              grossAmount: pay.grossAmount.toString(),
+              fees: pay.fees.toString(),
+              netAmount: pay.netAmount.toString(),
+              method: pay.method,
+              gateway: pay.gateway,
+              gatewayReference: pay.gatewayReference,
+              paymentDate: pay.paymentDate,
+              settlementDate: pay.settlementDate,
+              confirmationDetails: pay.confirmationDetails,
+              status: pay.status,
+              linkedInvoices: pay.linkedInvoices || [],
+              auditTrail: [{ action: "created", timestamp: pay.createdAt, user: "system" }],
+              createdAt: pay.createdAt,
+              updatedAt: pay.updatedAt,
+            }));
+            setPayments(formattedPayments);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch payments:", err);
+      }
+    };
+    fetchPayments();
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#e9eef5] text-slate-900">
       <div className="flex h-screen flex-col">
