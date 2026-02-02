@@ -11,14 +11,6 @@ const uploadSchema = z.object({
   data: z.string().min(1),
 });
 
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: "10mb",
-    },
-  },
-};
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
