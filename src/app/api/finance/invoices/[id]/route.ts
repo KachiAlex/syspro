@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { financeInvoiceUpdateSchema } from "@/lib/finance/types";
-import { updateFinanceInvoice } from "@/lib/finance/db";
+import { updateFinanceInvoice, deleteFinanceInvoice } from "@/lib/finance/db";
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -22,7 +22,24 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     }
     return NextResponse.json({ invoice });
   } catch (error) {
-    console.error("Finance invoice update failed", error);
-    return NextResponse.json({ error: "Failed to update invoice" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Finance invoice update failed", errorMessage, error);
+    return NextResponse.json({ error: "Failed to update invoice", details: errorMessage }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
+
+  try {
+    const deleted = await deleteFinanceInvoice(params.id);
+    if (!deleted) {
+      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+    }
+    return NextResponse.json({ message: "Invoice deleted" }, { status: 200 });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Finance invoice delete failed", errorMessage, error);
+    return NextResponse.json({ error: "Failed to delete invoice", details: errorMessage }, { status: 500 });
   }
 }

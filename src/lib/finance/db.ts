@@ -724,6 +724,17 @@ export async function updateFinanceInvoice(
   return normalizeFinanceInvoiceRow(invoiceRow, lineRows);
 }
 
+export async function deleteFinanceInvoice(id: string): Promise<boolean> {
+  const sql = SQL;
+  await ensureFinanceTables(sql);
+
+  const result = await sql`
+    delete from finance_invoices where id = ${id}
+  `;
+
+  return result.count > 0;
+}
+
 // Payment Management Database Functions
 
 export type FinancePaymentRecord = {
