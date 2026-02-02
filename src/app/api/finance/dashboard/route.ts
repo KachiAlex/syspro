@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { financeFiltersSchema } from "@/lib/finance/types";
 import { getFinanceDashboardSnapshot } from "@/lib/finance/service";
-import { FINANCE_BASELINE_SNAPSHOT } from "@/lib/finance/mock";
 
 export async function GET(request: NextRequest) {
   try {

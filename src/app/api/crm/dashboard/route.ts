@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateMockDashboardPayload } from "@/lib/crm/mock";
 import { crmFiltersSchema } from "@/lib/crm/types";
 
 export async function GET(request: NextRequest) {
@@ -11,6 +10,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: parseResult.error.flatten() }, { status: 400 });
   }
 
-  const payload = generateMockDashboardPayload(parseResult.data);
+  // Return empty CRM data structure
+  const payload = {
+    metrics: [],
+    totals: { totalLeads: 0, qualifiedLeads: 0, opportunities: 0, dealsWon: 0, dealsLost: 0, revenue: 0, conversionRate: 0 },
+    charts: { salesFunnel: [], revenueByOfficer: [], lostReasons: [] },
+    leads: [],
+    reminders: [],
+    tasks: [],
+    engagements: [],
+  };
+
   return NextResponse.json({ filters: parseResult.data, payload, generatedAt: new Date().toISOString() });
 }

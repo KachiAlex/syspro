@@ -1,6 +1,5 @@
 import { ArrowRight, MessageSquare, PackageCheck, ShieldCheck } from "lucide-react";
 import { MetricStat, Panel, PillButton, SectionHeading, Tag } from "@/components/ui/primitives";
-import { collaborationBursts, partnerSignals, worklist } from "@/lib/mock-data";
 
 export default function SupplierPortalPage() {
   return (
@@ -47,19 +46,9 @@ export default function SupplierPortalPage() {
             </div>
 
             <div className="mt-6 space-y-4">
-              {worklist.map((item) => (
-                <div key={item.id} className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-black/30 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm font-semibold">{item.title}</p>
-                    <p className="text-xs text-white/50">{item.id} · {item.action}</p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-white/60">
-                    <span className="rounded-full bg-white/10 px-3 py-1">{item.priority}</span>
-                    <span>{item.due}</span>
-                    <button className="text-xs font-semibold text-white/70 hover:text-white">Open</button>
-                  </div>
-                </div>
-              ))}
+              <div className="flex items-center justify-center h-32 rounded-2xl border border-white/10 bg-black/30">
+                <p className="text-white/50">No worklist items yet</p>
+              </div>
             </div>
           </Panel>
 
@@ -78,30 +67,15 @@ export default function SupplierPortalPage() {
         <section className="grid gap-6 lg:grid-cols-3">
           <Panel className="space-y-6">
             <SectionHeading eyebrow="Signals" title="Buyer pulse" />
-            <div className="space-y-4">
-              {partnerSignals.map((signal) => (
-                <div key={signal.partner} className="rounded-2xl border border-white/10 bg-black/25 p-4">
-                  <p className="text-sm font-semibold">{signal.partner}</p>
-                  <p className="text-xs text-emerald-300">{signal.metric}</p>
-                  <p className="mt-1 text-xs text-white/60">{signal.note}</p>
-                </div>
-              ))}
+            <div className="flex items-center justify-center h-40 rounded-2xl border border-white/10 bg-black/25">
+              <p className="text-white/50">No signals yet</p>
             </div>
           </Panel>
 
           <Panel className="space-y-5">
             <SectionHeading eyebrow="Collab" title="Live briefs" />
-            <div className="space-y-4">
-              {collaborationBursts.map((burst) => (
-                <div key={burst.title} className="rounded-2xl border border-white/10 bg-white/10 p-4">
-                  <div className="flex items-center justify-between text-xs text-white/60">
-                    <span>{burst.status}</span>
-                    <MessageSquare className="h-4 w-4" />
-                  </div>
-                  <p className="mt-2 text-sm font-semibold">{burst.title}</p>
-                  <p className="text-xs text-white/70">{burst.detail}</p>
-                </div>
-              ))}
+            <div className="flex items-center justify-center h-40 rounded-2xl border border-white/10 bg-white/10">
+              <p className="text-white/50">No briefs yet</p>
             </div>
             <PillButton variant="secondary">
               View full workspace
@@ -113,12 +87,12 @@ export default function SupplierPortalPage() {
             <SectionHeading eyebrow="Ledger" title="Shared settlement" description="Multi-tenant accounting status" />
             <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
               <p className="text-xs text-white/60">Open balance</p>
-              <p className="text-3xl font-semibold">₦820M</p>
-              <p className="text-xs text-emerald-300">+ cleared 92% within SLA</p>
+              <p className="text-3xl font-semibold">₦0</p>
+              <p className="text-xs text-emerald-300">+ cleared 0% within SLA</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
               <p className="text-xs text-white/60">Carbon credit pool</p>
-              <p className="text-3xl font-semibold">412 tCO₂e</p>
+              <p className="text-3xl font-semibold">0 tCO₂e</p>
               <p className="text-xs text-white/60">eligible for shared offset</p>
             </div>
           </Panel>

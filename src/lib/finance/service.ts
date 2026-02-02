@@ -1,4 +1,4 @@
-import { FINANCE_BASELINE_SNAPSHOT } from "@/lib/finance/mock";
+
 import type { FinanceDashboardSnapshot, FinanceFilters } from "@/lib/finance/types";
 import {
   ensureFinanceTables,
@@ -33,19 +33,15 @@ export async function getFinanceDashboardSnapshot(filters: FinanceFilters): Prom
     data = await fetchFinanceData(filters);
   }
 
-  if (!hasAnyFinanceData(data)) {
-    return FINANCE_BASELINE_SNAPSHOT;
-  }
-
-  const mappedTrend = data.trendPoints.length ? mapTrendSeries(data.trendPoints) : FINANCE_BASELINE_SNAPSHOT.trend;
+  const mappedTrend = data.trendPoints.length ? mapTrendSeries(data.trendPoints) : [];
 
   return {
     metrics: buildFinanceMetrics({ accounts: data.accounts, receivables: data.receivables, trend: mappedTrend }),
     trend: mappedTrend,
-    receivables: data.receivables.length ? data.receivables.map(mapScheduleRow) : FINANCE_BASELINE_SNAPSHOT.receivables,
-    payables: data.payables.length ? data.payables.map(mapScheduleRow) : FINANCE_BASELINE_SNAPSHOT.payables,
-    cashAccounts: data.accounts.length ? data.accounts.map(mapAccountRow) : FINANCE_BASELINE_SNAPSHOT.cashAccounts,
-    expenseBreakdown: data.expenses.length ? data.expenses.map(mapExpenseRow) : FINANCE_BASELINE_SNAPSHOT.expenseBreakdown,
+    receivables: data.receivables.length ? data.receivables.map(mapScheduleRow) : [],
+    payables: data.payables.length ? data.payables.map(mapScheduleRow) : [],
+    cashAccounts: data.accounts.length ? data.accounts.map(mapAccountRow) : [],
+    expenseBreakdown: data.expenses.length ? data.expenses.map(mapExpenseRow) : [],
   };
 }
 

@@ -3,7 +3,6 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { ArrowRight, CheckCircle2, CircleDashed, Loader2, PlusCircle, X } from "lucide-react";
 import { Panel, SectionHeading, Tag } from "@/components/ui/primitives";
-import { provisioningBacklog } from "@/lib/mock-data";
 
 const REGION_OPTIONS = [
   "North America",
@@ -398,17 +397,8 @@ export default function SuperadminPage() {
               <SectionHeading eyebrow="Worklist" title="Provisioning backlog" description="Synced with ops war-room" />
               <button className="text-xs uppercase tracking-[0.35em] text-white/60">View all</button>
             </div>
-            <div className="space-y-3">
-              {provisioningBacklog.map((item) => (
-                <div key={item.id} className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm">
-                  <div className="flex items-center justify-between text-xs text-white/50">
-                    <span>{item.id}</span>
-                    <span>{item.state}</span>
-                  </div>
-                  <p className="mt-2 font-semibold">{item.item}</p>
-                  <p className="text-xs text-white/60">Owner · {item.owner}</p>
-                </div>
-              ))}
+            <div className="flex items-center justify-center h-40 rounded-2xl border border-white/10 bg-black/30">
+              <p className="text-white/50">No provisioning items</p>
             </div>
           </Panel>
         </section>

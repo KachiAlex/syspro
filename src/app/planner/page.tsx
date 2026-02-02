@@ -9,11 +9,6 @@ import {
   LineChart,
   Wifi,
 } from "lucide-react";
-import {
-  aiInsights,
-  demandSectors,
-  productionNodes,
-} from "@/lib/mock-data";
 
 export default function PlannerPage() {
   return (
@@ -77,27 +72,8 @@ export default function PlannerPage() {
               <LineChart className="h-6 w-6 text-teal-200" />
             </div>
 
-            <div className="mt-6 grid gap-3">
-              {aiInsights.map((insight) => (
-                <div key={insight.title} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <div
-                    className="mt-1 h-2 w-2 rounded-full"
-                    style={{
-                      background:
-                        insight.severity === "high"
-                          ? "#ff8a9a"
-                          : insight.severity === "medium"
-                            ? "#ffd16b"
-                            : "#7df7b0",
-                    }}
-                  />
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold leading-tight">{insight.title}</p>
-                    <p className="text-sm text-white/70">{insight.detail}</p>
-                    <p className="text-xs text-white/50">Action: {insight.impact}</p>
-                  </div>
-                </div>
-              ))}
+            <div className="mt-6 flex items-center justify-center h-40 rounded-2xl border border-white/10 bg-white/5">
+              <p className="text-white/50">No insights yet</p>
             </div>
           </div>
 
@@ -109,21 +85,21 @@ export default function PlannerPage() {
               <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div>
                   <p className="text-sm text-white/60">Telemetry</p>
-                  <p className="text-lg font-semibold">118 streams live</p>
+                  <p className="text-lg font-semibold">0 streams live</p>
                 </div>
                 <Wifi className="h-5 w-5 text-teal-200" />
               </div>
               <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div>
                   <p className="text-sm text-white/60">Digital twin fidelity</p>
-                  <p className="text-lg font-semibold">98.4%</p>
+                  <p className="text-lg font-semibold">0%</p>
                 </div>
                 <CircuitBoard className="h-5 w-5 text-sky-200" />
               </div>
               <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div>
                   <p className="text-sm text-white/60">Alerts awaiting</p>
-                  <p className="text-lg font-semibold">3 critical</p>
+                  <p className="text-lg font-semibold">0</p>
                 </div>
                 <AlertTriangle className="h-5 w-5 text-rose-300" />
               </div>
@@ -141,22 +117,8 @@ export default function PlannerPage() {
               <Activity className="h-5 w-5 text-purple-200" />
             </div>
 
-            <div className="mt-6 space-y-4">
-              {productionNodes.map((node) => (
-                <div key={node.plant} className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <div>
-                    <p className="text-sm font-medium">{node.plant}</p>
-                    <p className="text-xs text-white/50">{node.status}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-white/60">Uptime</p>
-                    <p className="text-lg font-semibold">{node.uptime}</p>
-                    <p className={`text-xs ${node.signal.startsWith("-") ? "text-rose-300" : "text-emerald-300"}`}>
-                      {node.signal}
-                    </p>
-                  </div>
-                </div>
-              ))}
+            <div className="mt-6 flex items-center justify-center h-40 rounded-2xl border border-white/10 bg-black/20">
+              <p className="text-white/50">No nodes configured</p>
             </div>
           </div>
 
@@ -169,18 +131,8 @@ export default function PlannerPage() {
               <BarChart3 className="h-5 w-5 text-amber-200" />
             </div>
 
-            <div className="mt-6 space-y-6">
-              {demandSectors.map((sector) => (
-                <div key={sector.label}>
-                  <div className="flex items-center justify-between text-xs text-white/50">
-                    <span>{sector.label}</span>
-                    <span>{sector.delta} next 6 weeks</span>
-                  </div>
-                  <div className="mt-2 h-2 rounded-full bg-white/10">
-                    <div className={`h-full rounded-full ${sector.fill}`} style={{ width: sector.width }} />
-                  </div>
-                </div>
-              ))}
+            <div className="mt-6 flex items-center justify-center h-40 rounded-2xl border border-white/10 bg-white/5">
+              <p className="text-white/50">No demand data available</p>
             </div>
           </div>
 
@@ -191,16 +143,16 @@ export default function PlannerPage() {
             <div className="mt-8 space-y-5">
               <div>
                 <p className="text-xs text-white/60">Collections</p>
-                <p className="text-3xl font-semibold">₦4.2B</p>
-                <p className="text-xs text-emerald-300">+6% week / week</p>
+                <p className="text-3xl font-semibold">₦0</p>
+                <p className="text-xs text-emerald-300">+0% week / week</p>
               </div>
               <div>
                 <p className="text-xs text-white/60">Emission budget</p>
-                <p className="text-3xl font-semibold">72%</p>
+                <p className="text-3xl font-semibold">0%</p>
                 <p className="text-xs text-white/60">aligned to ESG targets</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/70">
-                Copilot suggests reallocating ₦420M idle cash toward copper buffering to outpace supplier delays.
+                Awaiting data to generate suggestions.
               </div>
             </div>
           </div>
