@@ -52,7 +52,8 @@ export async function POST(request: NextRequest) {
     const invoice = await insertFinanceInvoice(parsed.data);
     return NextResponse.json({ invoice }, { status: 201 });
   } catch (error) {
-    console.error("Finance invoice create failed", error);
-    return NextResponse.json({ error: "Failed to create invoice" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Finance invoice create failed", errorMessage, error);
+    return NextResponse.json({ error: "Failed to create invoice", details: errorMessage }, { status: 500 });
   }
 }

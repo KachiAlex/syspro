@@ -572,81 +572,78 @@ export async function insertFinanceInvoice(payload: FinanceInvoiceCreateInput): 
   await ensureFinanceTables(sql);
   const invoiceId = randomUUID();
 
-  const rows = await sql.begin(async (transaction) => {
-    const [invoiceRow] = (await transaction`
-      insert into finance_invoices (
-        id,
-        tenant_slug,
-        region_id,
-        branch_id,
-        customer_name,
-        customer_code,
-        invoice_number,
-        purchase_order,
-        issued_date,
-        due_date,
-        currency,
-        amount,
-        balance_due,
-        status,
-        payment_terms,
-        notes,
-        tags,
-        metadata
-      ) values (
-        ${invoiceId},
-        ${payload.tenantSlug},
-        ${payload.regionId ?? null},
-        ${payload.branchId ?? null},
-        ${payload.customerName},
-        ${payload.customerCode ?? null},
-        ${payload.invoiceNumber},
-        ${payload.purchaseOrder ?? null},
-        ${payload.issuedDate},
-        ${payload.dueDate},
-        ${payload.currency ?? "₦"},
-        ${payload.amount},
-        ${payload.balanceDue ?? payload.amount},
-        ${payload.status ?? "draft"},
-        ${payload.paymentTerms ?? null},
-        ${payload.notes ?? null},
-        ${Array.isArray(payload.tags) ? payload.tags : null},
-        ${payload.metadata ?? null}
-      )
-      returning *
-    `) as FinanceInvoiceRecord[];
+  // Insert invoice
+  const [invoiceRow] = (await sql`
+    insert into finance_invoices (
+      id,
+      tenant_slug,
+      region_id,
+      branch_id,
+      customer_name,
+      customer_code,
+      invoice_number,
+      purchase_order,
+      issued_date,
+      due_date,
+      currency,
+      amount,
+      balance_due,
+      status,
+      payment_terms,
+      notes,
+      tags,
+      metadata
+    ) values (
+      ${invoiceId},
+      ${payload.tenantSlug},
+      ${payload.regionId ?? null},
+      ${payload.branchId ?? null},
+      ${payload.customerName},
+      ${payload.customerCode ?? null},
+      ${payload.invoiceNumber},
+      ${payload.purchaseOrder ?? null},
+      ${payload.issuedDate},
+      ${payload.dueDate},
+      ${payload.currency ?? "₦"},
+      ${payload.amount},
+      ${payload.balanceDue ?? payload.amount},
+      ${payload.status ?? "draft"},
+      ${payload.paymentTerms ?? null},
+      ${payload.notes ?? null},
+      ${Array.isArray(payload.tags) ? payload.tags : null},
+      ${payload.metadata ?? null}
+    )
+    returning *
+  `) as FinanceInvoiceRecord[];
 
-    const lineRows = await Promise.all(
-      payload.lineItems.map((line) =>
-        transaction`
-          insert into finance_invoice_lines (
-            id,
-            invoice_id,
-            description,
-            quantity,
-            unit_price,
-            amount,
-            account_code,
-            tax_rate
-          ) values (
-            ${randomUUID()},
-            ${invoiceId},
-            ${line.description},
-            ${line.quantity},
-            ${line.unitPrice},
-            ${line.amount ?? line.quantity * line.unitPrice},
-            ${line.accountCode ?? null},
-            ${line.taxRate ?? null}
-          )
-          returning *
-        `
-      )
-    );
+  // Insert line items
+  const lineRows = (await Promise.all(
+    payload.lineItems.map((line) =>
+      sql`
+        insert into finance_invoice_lines (
+          id,
+          invoice_id,
+          description,
+          quantity,
+          unit_price,
+          amount,
+          account_code,
+          tax_rate
+        ) values (
+          ${randomUUID()},
+          ${invoiceId},
+          ${line.description},
+          ${line.quantity},
+          ${line.unitPrice},
+          ${line.amount ?? line.quantity * line.unitPrice},
+          ${line.accountCode ?? null},
+          ${line.taxRate ?? null}
+        )
+        returning *
+      `
+    )
+  )).flat() as FinanceInvoiceLineRecord[];
 
-    return [invoiceRow[0], lineRows.flat()] as [FinanceInvoiceRecord, FinanceInvoiceLineRecord[]];
-  });
-
-  const [invoiceRow, lineRows] = rows;
   return normalizeFinanceInvoiceRow(invoiceRow, lineRows);
 }
 
@@ -657,82 +654,73 @@ export async function updateFinanceInvoice(
   const sql = SQL;
   await ensureFinanceTables(sql);
 
-  const updated = await sql.begin(async (transaction) => {
-    const [invoiceRow] = (await transaction`
-      update finance_invoices
-      set
-        customer_name = coalesce(${updates.customerName ?? null}, customer_name),
-        customer_code = coalesce(${updates.customerCode ?? null}, customer_code),
-        invoice_number = coalesce(${updates.invoiceNumber ?? null}, invoice_number),
-        purchase_order = coalesce(${updates.purchaseOrder ?? null}, purchase_order),
-        issued_date = coalesce(${updates.issuedDate ?? null}, issued_date),
-        due_date = coalesce(${updates.dueDate ?? null}, due_date),
-        currency = coalesce(${updates.currency ?? null}, currency),
-        amount = coalesce(${updates.amount ?? null}, amount),
-        balance_due = coalesce(${updates.balanceDue ?? null}, balance_due),
-        status = coalesce(${updates.status ?? null}, status),
-        payment_terms = coalesce(${updates.paymentTerms ?? null}, payment_terms),
-        notes = coalesce(${updates.notes ?? null}, notes),
-        tags = coalesce(${updates.tags ?? null}, tags),
-        metadata = coalesce(${updates.metadata ?? null}, metadata),
-        region_id = coalesce(${updates.regionId ?? null}, region_id),
-        branch_id = coalesce(${updates.branchId ?? null}, branch_id),
-        updated_at = now()
-      where id = ${id}
-      returning *
-    `) as FinanceInvoiceRecord[];
+  const [invoiceRow] = (await sql`
+    update finance_invoices
+    set
+      customer_name = coalesce(${updates.customerName ?? null}, customer_name),
+      customer_code = coalesce(${updates.customerCode ?? null}, customer_code),
+      invoice_number = coalesce(${updates.invoiceNumber ?? null}, invoice_number),
+      purchase_order = coalesce(${updates.purchaseOrder ?? null}, purchase_order),
+      issued_date = coalesce(${updates.issuedDate ?? null}, issued_date),
+      due_date = coalesce(${updates.dueDate ?? null}, due_date),
+      currency = coalesce(${updates.currency ?? null}, currency),
+      amount = coalesce(${updates.amount ?? null}, amount),
+      balance_due = coalesce(${updates.balanceDue ?? null}, balance_due),
+      status = coalesce(${updates.status ?? null}, status),
+      payment_terms = coalesce(${updates.paymentTerms ?? null}, payment_terms),
+      notes = coalesce(${updates.notes ?? null}, notes),
+      tags = coalesce(${updates.tags ?? null}, tags),
+      metadata = coalesce(${updates.metadata ?? null}, metadata),
+      region_id = coalesce(${updates.regionId ?? null}, region_id),
+      branch_id = coalesce(${updates.branchId ?? null}, branch_id),
+      updated_at = now()
+    where id = ${id}
+    returning *
+  `) as FinanceInvoiceRecord[];
 
-    if (!invoiceRow) {
-      return null;
-    }
-
-    let lineRows: FinanceInvoiceLineRecord[] | null = null;
-    if (updates.lineItems && updates.lineItems.length) {
-      await transaction`delete from finance_invoice_lines where invoice_id = ${id}`;
-      lineRows = (
-        await Promise.all(
-          updates.lineItems.map((line) =>
-            transaction`
-              insert into finance_invoice_lines (
-                id,
-                invoice_id,
-                description,
-                quantity,
-                unit_price,
-                amount,
-                account_code,
-                tax_rate
-              ) values (
-                ${randomUUID()},
-                ${id},
-                ${line.description},
-                ${line.quantity},
-                ${line.unitPrice},
-                ${line.amount ?? line.quantity * line.unitPrice},
-                ${line.accountCode ?? null},
-                ${line.taxRate ?? null}
-              )
-              returning *
-            `
-          )
-        )
-      ).flat();
-    }
-
-    if (!lineRows) {
-      lineRows = (await transaction`
-        select * from finance_invoice_lines where invoice_id = ${id}
-      `) as FinanceInvoiceLineRecord[];
-    }
-
-    return [invoiceRow, lineRows] as [FinanceInvoiceRecord, FinanceInvoiceLineRecord[]];
-  });
-
-  if (!updated) {
+  if (!invoiceRow) {
     return null;
   }
 
-  const [invoiceRow, lineRows] = updated;
+  let lineRows: FinanceInvoiceLineRecord[] | null = null;
+  if (updates.lineItems && updates.lineItems.length) {
+    await sql`delete from finance_invoice_lines where invoice_id = ${id}`;
+    lineRows = (
+      await Promise.all(
+        updates.lineItems.map((line) =>
+          sql`
+            insert into finance_invoice_lines (
+              id,
+              invoice_id,
+              description,
+              quantity,
+              unit_price,
+              amount,
+              account_code,
+              tax_rate
+            ) values (
+              ${randomUUID()},
+              ${id},
+              ${line.description},
+              ${line.quantity},
+              ${line.unitPrice},
+              ${line.amount ?? line.quantity * line.unitPrice},
+              ${line.accountCode ?? null},
+              ${line.taxRate ?? null}
+            )
+            returning *
+          `
+        )
+      )
+    ).flat();
+  }
+
+  if (!lineRows) {
+    lineRows = (await sql`
+      select * from finance_invoice_lines where invoice_id = ${id}
+    `) as FinanceInvoiceLineRecord[];
+  }
+
   return normalizeFinanceInvoiceRow(invoiceRow, lineRows);
 }
 
