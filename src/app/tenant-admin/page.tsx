@@ -2928,7 +2928,7 @@ export default function TenantAdminPage() {
   }, []);
 
   // Invoice handlers
-  const handleSaveInvoice = useCallback((invoiceData: {
+  const handleSaveInvoice = useCallback(async (invoiceData: {
     customer: string;
     customerEmail?: string;
     contactId?: string;
@@ -2943,44 +2943,89 @@ export default function TenantAdminPage() {
     taxRate?: number;
     discount?: number;
   }) => {
-    const invoiceNumber = selectedInvoiceId 
-      ? invoices.find(inv => inv.id === selectedInvoiceId)?.invoiceNumber || `INV-${new Date().getFullYear()}-${String(invoices.length + 1).padStart(3, "0")}`
-      : `INV-${new Date().getFullYear()}-${String(invoices.length + 1).padStart(3, "0")}`;
-    
-    const newInvoice: InvoiceItem = {
-      id: selectedInvoiceId || String(Date.now()),
-      invoiceNumber,
-      customer: invoiceData.customer,
-      customerEmail: invoiceData.customerEmail,
-      contactId: invoiceData.contactId,
-      contactType: invoiceData.contactType,
-      amount: invoiceData.amount,
-      status: invoiceData.status,
-      dueDate: invoiceData.dueDate,
-      issueDate: invoiceData.issueDate,
-      branch: invoiceData.branch,
-      // Preserve all details for drafts
-      items: invoiceData.items,
-      notes: invoiceData.notes,
-      taxRate: invoiceData.taxRate,
-      discount: invoiceData.discount,
-    };
+    try {
+      const invoiceNumber = selectedInvoiceId 
+        ? invoices.find(inv => inv.id === selectedInvoiceId)?.invoiceNumber || `INV-${new Date().getFullYear()}-${String(invoices.length + 1).padStart(3, "0")}`
+        : `INV-${new Date().getFullYear()}-${String(invoices.length + 1).padStart(3, "0")}`;
+      
+      const amount = parseFloat(invoiceData.amount);
+      
+      // Prepare the invoice data for the API
+      const apiPayload = {
+        tenantSlug: tenantSlug || "kreatix-default",
+        customerName: invoiceData.customer,
+        customerCode: invoiceData.contactId,
+        invoiceNumber,
+        issuedDate: invoiceData.issueDate,
+        dueDate: invoiceData.dueDate,
+        amount,
+        currency: "₦",
+        status: invoiceData.status,
+        notes: invoiceData.notes,
+        metadata: {
+          items: invoiceData.items,
+          taxRate: invoiceData.taxRate,
+          discount: invoiceData.discount,
+          contactType: invoiceData.contactType,
+          customerEmail: invoiceData.customerEmail,
+          branch: invoiceData.branch,
+        },
+      };
 
-    if (selectedInvoiceId) {
-      // Update existing invoice
-      setInvoices(invoices.map(inv => inv.id === selectedInvoiceId ? newInvoice : inv));
-      setQuickActionToast({ message: `Invoice ${invoiceData.status === 'draft' ? 'draft saved' : 'updated'} successfully`, type: "success" });
-    } else {
-      // Create new invoice
-      setInvoices([...invoices, newInvoice]);
-      setQuickActionToast({ message: `Invoice ${invoiceData.status === 'draft' ? 'draft created' : 'created'} successfully`, type: "success" });
+      // Call the API
+      const response = await fetch("/api/finance/invoices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(apiPayload),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error?.toString() || "Failed to save invoice");
+      }
+
+      const result = await response.json();
+      
+      // Update local state after successful API call
+      const newInvoice: InvoiceItem = {
+        id: selectedInvoiceId || result.invoice?.id || String(Date.now()),
+        invoiceNumber,
+        customer: invoiceData.customer,
+        customerEmail: invoiceData.customerEmail,
+        contactId: invoiceData.contactId,
+        contactType: invoiceData.contactType,
+        amount: invoiceData.amount,
+        status: invoiceData.status,
+        dueDate: invoiceData.dueDate,
+        issueDate: invoiceData.issueDate,
+        branch: invoiceData.branch,
+        items: invoiceData.items,
+        notes: invoiceData.notes,
+        taxRate: invoiceData.taxRate,
+        discount: invoiceData.discount,
+      };
+
+      if (selectedInvoiceId) {
+        setInvoices(invoices.map(inv => inv.id === selectedInvoiceId ? newInvoice : inv));
+        setQuickActionToast({ message: `Invoice ${invoiceData.status === 'draft' ? 'draft saved' : 'updated'} successfully`, type: "success" });
+      } else {
+        setInvoices([...invoices, newInvoice]);
+        setQuickActionToast({ message: `Invoice ${invoiceData.status === 'draft' ? 'draft created' : 'created'} successfully`, type: "success" });
+      }
+      
+      setTimeout(() => setQuickActionToast(null), 3000);
+      setShowInvoiceDrawer(false);
+      setSelectedInvoiceId(null);
+      setInvoiceFormTab("details");
+    } catch (error) {
+      console.error("Error saving invoice:", error);
+      setQuickActionToast({ 
+        message: `Failed to save invoice: ${error instanceof Error ? error.message : "Unknown error"}`, 
+        type: "error" 
+      });
+      setTimeout(() => setQuickActionToast(null), 5000);
     }
-    
-    setTimeout(() => setQuickActionToast(null), 3000);
-    setShowInvoiceDrawer(false);
-    setSelectedInvoiceId(null);
-    setInvoiceFormTab("details");
-  }, [invoices, selectedInvoiceId]);
+  }, [invoices, selectedInvoiceId, tenantSlug]);
 
   const handleSaveLineItem = useCallback((description: string, defaultPrice: number, category?: string) => {
     const newItem: SavedLineItem = {
@@ -4762,52 +4807,93 @@ function FinancePaymentsWorkspace() {
     setShowRecordModal(true);
   };
 
-  const handleSaveRecord = () => {
+  const handleSaveRecord = async () => {
     if (!recordForm.reference || !recordForm.confirmationDetails || !recordForm.grossAmount) {
       alert("Please fill in all required fields");
       return;
     }
 
-    const fees = parseFloat(recordForm.fees) || 0;
-    const grossAmount = parseFloat(recordForm.grossAmount);
-    const netAmount = grossAmount - fees;
+    try {
+      const fees = parseFloat(recordForm.fees) || 0;
+      const grossAmount = parseFloat(recordForm.grossAmount);
+      const netAmount = grossAmount - fees;
 
-    const newPayment: PaymentRecord = {
-      id: `PAY-${Date.now()}`,
-      customerId: `CUST-${Math.random().toString(36).substr(2, 9)}`,
-      invoiceId: selectedPayment?.invoiceId || `INV-${Math.random().toString(36).substr(2, 9)}`,
-      reference: recordForm.reference,
-      grossAmount,
-      fees,
-      netAmount,
-      method: recordForm.method,
-      gateway: recordForm.method === "paystack" ? "paystack" : 
-               recordForm.method === "flutterwave" ? "flutterwave" :
-               recordForm.method === "stripe" ? "stripe" : "manual",
-      gatewayReference: recordForm.gatewayReference,
-      paymentDate: recordForm.paymentDate,
-      settlementDate: recordForm.paymentDate,
-      status: "successful",
-      linkedInvoices: selectedPayment?.linkedInvoices || [],
-      auditTrail: [
-        {
-          action: "created",
-          timestamp: new Date().toISOString(),
-          user: "Current User",
-        },
-      ],
-      confirmationDetails: recordForm.confirmationDetails,
-    };
+      // Call the API to save payment
+      const response = await fetch("/api/finance/payments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantSlug: tenantSlug || "kreatix-default",
+          customerId: `CUST-${Math.random().toString(36).substr(2, 9)}`,
+          invoiceId: selectedPayment?.invoiceId,
+          reference: recordForm.reference,
+          grossAmount,
+          fees,
+          method: recordForm.method,
+          gatewayReference: recordForm.gatewayReference,
+          paymentDate: recordForm.paymentDate,
+          confirmationDetails: recordForm.confirmationDetails,
+        }),
+      });
 
-    setPayments([...payments, newPayment]);
-    setShowRecordModal(false);
-    setSelectedPayment(null);
-    setOpenMenuId(null);
-    setRecordForm({
-      method: "bank_transfer",
-      grossAmount: "",
-      fees: "",
-      paymentDate: new Date().toISOString().split('T')[0],
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error?.toString() || error.details || "Failed to save payment");
+      }
+
+      const result = await response.json();
+
+      // Update local state after successful API call
+      const newPayment: PaymentRecord = {
+        id: result.payment?.id || `PAY-${Date.now()}`,
+        payableId: `PYB-${Math.random().toString(36).substr(2, 4)}`,
+        customerId: `CUST-${Math.random().toString(36).substr(2, 9)}`,
+        invoiceId: selectedPayment?.invoiceId || `INV-${Math.random().toString(36).substr(2, 9)}`,
+        reference: recordForm.reference,
+        grossAmount: grossAmount.toLocaleString(),
+        fees: fees.toLocaleString(),
+        netAmount: netAmount.toLocaleString(),
+        method: recordForm.method,
+        gateway: recordForm.method === "paystack" ? "paystack" : 
+                 recordForm.method === "flutterwave" ? "flutterwave" :
+                 recordForm.method === "stripe" ? "stripe" : "manual",
+        gatewayReference: recordForm.gatewayReference,
+        paymentDate: recordForm.paymentDate,
+        settlementDate: recordForm.paymentDate,
+        status: "successful",
+        linkedInvoices: selectedPayment?.linkedInvoices || [],
+        auditTrail: [
+          {
+            action: "created",
+            timestamp: new Date().toISOString(),
+            user: "Current User",
+          },
+        ],
+        confirmationDetails: recordForm.confirmationDetails,
+        referenceNumber: recordForm.reference,
+        currency: "NGN",
+        recordedBy: "Current User",
+        recordedDate: new Date().toISOString().split('T')[0],
+      };
+
+      setPayments([...payments, newPayment]);
+      setShowRecordModal(false);
+      setSelectedPayment(null);
+      setOpenMenuId(null);
+      setRecordForm({
+        method: "bank_transfer",
+        grossAmount: "",
+        fees: "",
+        paymentDate: new Date().toISOString().split('T')[0],
+        reference: "",
+        gatewayReference: "",
+        confirmationDetails: "",
+      });
+    } catch (error) {
+      console.error("Error saving payment:", error);
+      alert(`Failed to save payment: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  };
       reference: "",
       gatewayReference: "",
       confirmationDetails: "",

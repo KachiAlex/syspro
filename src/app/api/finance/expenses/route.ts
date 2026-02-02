@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
 
   const parsed = expenseCreateSchema.safeParse(body);
   if (!parsed.success) {
+    console.log("Validation errors:", parsed.error.flatten());
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
@@ -73,7 +74,9 @@ export async function POST(request: NextRequest) {
     // Seed categories if needed
     await seedExpenseCategories();
     
+    console.log("Creating expense with validated data:", parsed.data);
     const expense = await createExpense(parsed.data);
+    console.log("Expense created successfully:", expense);
 
     // Check budget for this category
     const budgetUsage = calculateMonthlyUsage(parsed.data.categoryId, parsed.data.amount);
