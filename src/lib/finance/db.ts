@@ -214,6 +214,30 @@ export async function ensureFinanceTables(sql: SqlClient = SQL) {
     )
   `;
 
+  await sql`
+    create table if not exists finance_payments (
+      id text primary key,
+      tenant_slug text not null,
+      customer_id text,
+      invoice_id text,
+      reference text not null,
+      gross_amount numeric not null,
+      fees numeric not null default 0,
+      net_amount numeric not null,
+      method text not null check (method in ('bank_transfer', 'check', 'cash', 'pos', 'mobile_money', 'wire', 'paystack', 'flutterwave', 'stripe')),
+      gateway text check (gateway in ('paystack', 'flutterwave', 'stripe', 'manual')),
+      gateway_reference text,
+      payment_date date not null,
+      settlement_date date,
+      confirmation_details text,
+      status text not null default 'pending' check (status in ('pending', 'successful', 'failed', 'reversed')),
+      linked_invoices text[],
+      metadata jsonb,
+      created_at timestamptz default now(),
+      updated_at timestamptz default now()
+    )
+  `;
+
   await Promise.all([
     sql`create index if not exists finance_accounts_tenant_idx on finance_accounts (tenant_slug)`,
     sql`create index if not exists finance_schedules_tenant_idx on finance_schedules (tenant_slug, document_type)`,
@@ -221,6 +245,8 @@ export async function ensureFinanceTables(sql: SqlClient = SQL) {
     sql`create index if not exists finance_trend_points_tenant_idx on finance_trend_points (tenant_slug, timeframe)`,
     sql`create index if not exists finance_invoices_tenant_idx on finance_invoices (tenant_slug, status)`,
     sql`create index if not exists finance_invoice_lines_invoice_idx on finance_invoice_lines (invoice_id)`,
+    sql`create index if not exists finance_payments_tenant_idx on finance_payments (tenant_slug, status)`,
+    sql`create index if not exists finance_payments_invoice_idx on finance_payments (invoice_id)`,
   ]);
 }
 
@@ -709,6 +735,240 @@ export async function updateFinanceInvoice(
   const [invoiceRow, lineRows] = updated;
   return normalizeFinanceInvoiceRow(invoiceRow, lineRows);
 }
+
+// Payment Management Database Functions
+
+export type FinancePaymentRecord = {
+  id: string;
+  tenant_slug: string;
+  customer_id: string | null;
+  invoice_id: string | null;
+  reference: string;
+  gross_amount: number;
+  fees: number;
+  net_amount: number;
+  method: string;
+  gateway: string | null;
+  gateway_reference: string | null;
+  payment_date: string;
+  settlement_date: string | null;
+  confirmation_details: string;
+  status: string;
+  linked_invoices: string[] | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FinancePayment = {
+  id: string;
+  tenantSlug: string;
+  customerId: string | null;
+  invoiceId: string | null;
+  reference: string;
+  grossAmount: number;
+  fees: number;
+  netAmount: number;
+  method: string;
+  gateway: string | null;
+  gatewayReference: string | null;
+  paymentDate: string;
+  settlementDate: string | null;
+  confirmationDetails: string;
+  status: string;
+  linkedInvoices: string[];
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+function normalizePaymentRecord(row: FinancePaymentRecord): FinancePayment {
+  return {
+    id: row.id,
+    tenantSlug: row.tenant_slug,
+    customerId: row.customer_id,
+    invoiceId: row.invoice_id,
+    reference: row.reference,
+    grossAmount: Number(row.gross_amount),
+    fees: Number(row.fees),
+    netAmount: Number(row.net_amount),
+    method: row.method,
+    gateway: row.gateway,
+    gatewayReference: row.gateway_reference,
+    paymentDate: row.payment_date,
+    settlementDate: row.settlement_date,
+    confirmationDetails: row.confirmation_details,
+    status: row.status,
+    linkedInvoices: row.linked_invoices || [],
+    metadata: row.metadata,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function createPayment(data: {
+  tenantSlug: string;
+  customerId?: string;
+  invoiceId?: string;
+  reference: string;
+  grossAmount: number;
+  fees: number;
+  method: string;
+  gateway?: string;
+  gatewayReference?: string;
+  paymentDate: string;
+  settlementDate?: string;
+  confirmationDetails: string;
+  status?: string;
+  linkedInvoices?: string[];
+  metadata?: Record<string, unknown>;
+}): Promise<FinancePayment> {
+  const sql = SQL;
+  await ensureFinanceTables(sql);
+
+  const id = `PAY-${randomUUID().slice(0, 8)}`;
+  const netAmount = data.grossAmount - data.fees;
+
+  const row = (await sql`
+    insert into finance_payments (
+      id,
+      tenant_slug,
+      customer_id,
+      invoice_id,
+      reference,
+      gross_amount,
+      fees,
+      net_amount,
+      method,
+      gateway,
+      gateway_reference,
+      payment_date,
+      settlement_date,
+      confirmation_details,
+      status,
+      linked_invoices,
+      metadata
+    ) values (
+      ${id},
+      ${data.tenantSlug},
+      ${data.customerId ?? null},
+      ${data.invoiceId ?? null},
+      ${data.reference},
+      ${data.grossAmount},
+      ${data.fees},
+      ${netAmount},
+      ${data.method},
+      ${data.gateway ?? null},
+      ${data.gatewayReference ?? null},
+      ${data.paymentDate},
+      ${data.settlementDate ?? null},
+      ${data.confirmationDetails},
+      ${data.status ?? "pending"},
+      ${data.linkedInvoices ? JSON.stringify(data.linkedInvoices) : null},
+      ${data.metadata ? JSON.stringify(data.metadata) : null}
+    )
+    returning *
+  `) as FinancePaymentRecord[];
+
+  return normalizePaymentRecord(row[0]);
+}
+
+export async function getPayment(id: string, tenantSlug: string): Promise<FinancePayment | null> {
+  const sql = SQL;
+  await ensureFinanceTables(sql);
+
+  const rows = (await sql`
+    select * from finance_payments
+    where id = ${id} and tenant_slug = ${tenantSlug}
+  `) as FinancePaymentRecord[];
+
+  if (rows.length === 0) {
+    return null;
+  }
+
+  return normalizePaymentRecord(rows[0]);
+}
+
+export async function listPayments(filters: {
+  tenantSlug: string;
+  status?: string;
+  method?: string;
+  invoiceId?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<FinancePayment[]> {
+  const sql = SQL;
+  await ensureFinanceTables(sql);
+
+  const limit = Math.min(Math.max(filters.limit ?? 50, 1), 100);
+  const offset = Math.max(filters.offset ?? 0, 0);
+
+  const baseQuery = sql`
+    select * from finance_payments
+    where tenant_slug = ${filters.tenantSlug}
+    order by payment_date desc, created_at desc`;
+
+  const rows = (await baseQuery) as FinancePaymentRecord[];
+
+  let filtered = rows;
+
+  if (filters.status) {
+    filtered = filtered.filter(r => r.status === filters.status);
+  }
+  if (filters.method) {
+    filtered = filtered.filter(r => r.method === filters.method);
+  }
+  if (filters.invoiceId) {
+    filtered = filtered.filter(r => r.invoice_id === filters.invoiceId);
+  }
+
+  filtered = filtered.slice(offset, offset + limit);
+
+  return filtered.map(normalizePaymentRecord);
+}
+
+export async function updatePayment(
+  id: string,
+  updates: {
+    status?: string;
+    settlementDate?: string;
+    metadata?: Record<string, unknown>;
+    linkedInvoices?: string[];
+  }
+): Promise<FinancePayment | null> {
+  const sql = SQL;
+  await ensureFinanceTables(sql);
+
+  const row = (await sql`
+    update finance_payments
+    set
+      status = coalesce(${updates.status ?? null}, status),
+      settlement_date = coalesce(${updates.settlementDate ?? null}, settlement_date),
+      linked_invoices = coalesce(${updates.linkedInvoices ? JSON.stringify(updates.linkedInvoices) : null}, linked_invoices),
+      metadata = coalesce(${updates.metadata ? JSON.stringify(updates.metadata) : null}, metadata),
+      updated_at = now()
+    where id = ${id}
+    returning *
+  `) as FinancePaymentRecord[];
+
+  if (row.length === 0) {
+    return null;
+  }
+
+  return normalizePaymentRecord(row[0]);
+}
+
+export async function deletePayment(id: string): Promise<boolean> {
+  const sql = SQL;
+  await ensureFinanceTables(sql);
+
+  const result = await sql`
+    delete from finance_payments where id = ${id}
+  `;
+
+  return result.count > 0;
+}
+
 // Expense Management Database Functions
 
 import type {

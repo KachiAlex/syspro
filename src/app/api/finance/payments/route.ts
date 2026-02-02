@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { createPayment, listPayments } from "@/lib/finance/db";
 
 const paymentCreateSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -37,11 +38,18 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // For now, return empty array - payments storage would go here
-    return NextResponse.json({ payments: [] });
+    const payments = await listPayments({
+      tenantSlug: parsed.data.tenantSlug,
+      status: parsed.data.status,
+      method: parsed.data.method,
+      limit: parsed.data.limit,
+      offset: parsed.data.offset,
+    });
+    return NextResponse.json({ payments });
   } catch (error) {
-    console.error("Payments list failed", error);
-    return NextResponse.json({ error: "Failed to load payments" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Payments list failed:", errorMessage, error);
+    return NextResponse.json({ error: "Failed to load payments", details: errorMessage }, { status: 500 });
   }
 }
 
@@ -58,40 +66,31 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const payment = {
-      id: `PAY-${Date.now()}`,
+    const payment = await createPayment({
       tenantSlug: parsed.data.tenantSlug,
       customerId: parsed.data.customerId,
       invoiceId: parsed.data.invoiceId,
       reference: parsed.data.reference,
       grossAmount: parsed.data.grossAmount,
       fees: parsed.data.fees,
-      netAmount: parsed.data.grossAmount - parsed.data.fees,
       method: parsed.data.method,
       gateway: parsed.data.method === "paystack" ? "paystack" : 
                parsed.data.method === "flutterwave" ? "flutterwave" :
                parsed.data.method === "stripe" ? "stripe" : "manual",
       gatewayReference: parsed.data.gatewayReference,
       paymentDate: parsed.data.paymentDate,
-      settlementDate: parsed.data.paymentDate,
       confirmationDetails: parsed.data.confirmationDetails,
       status: "successful",
-      linkedInvoices: parsed.data.invoiceId ? [parsed.data.invoiceId] : [],
-      auditTrail: [
-        {
-          action: "created",
-          timestamp: new Date().toISOString(),
-          user: "system",
-        },
-      ],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+      linkedInvoices: parsed.data.invoiceId ? [parsed.data.invoiceId] : undefined,
+    });
 
     return NextResponse.json({ payment }, { status: 201 });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Payment create failed:", errorMessage, error);
-    return NextResponse.json({ error: "Failed to create payment", details: errorMessage }, { status: 500 });
+    console.error("Payment creation failed:", errorMessage, error);
+    return NextResponse.json(
+      { error: "Failed to create payment", details: errorMessage },
+      { status: 500 }
+    );
   }
 }
