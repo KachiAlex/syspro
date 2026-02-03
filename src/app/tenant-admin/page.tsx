@@ -129,22 +129,6 @@ const CRM_LEADS: CrmLead[] = [
     contact: "Sara Bello",
     stage: "Contracting",
     owner: "S. Patel",
-              <button
-                onClick={() => {
-                  if (!invoiceId) return;
-                  if (!confirm('Delete this invoice? This action cannot be undone.')) return;
-                  try {
-                    if (typeof onDeleteInvoice === 'function') onDeleteInvoice(invoiceId);
-                  } catch (e) {
-                    console.error('onDeleteInvoice error', e);
-                  }
-                  onClose();
-                }}
-                className="rounded-lg px-3 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 border border-rose-100"
-                type="button"
-              >
-                Delete
-              </button>
     timestamp: "1h ago",
     channel: "call",
   },
