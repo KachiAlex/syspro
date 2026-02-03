@@ -30,9 +30,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid request", details: validation.error.flatten() }, { status: 400 });
     }
 
+    const parsed = validation.data as { name: string; steps: unknown[] };
+
     await ensureAdminTables();
-    const id = await insertApprovalRoute({ tenantSlug, name: validation.data.name, steps: validation.data.steps });
-    return NextResponse.json({ approval: { id, tenantSlug, name: validation.data.name, steps: validation.data.steps, createdAt: new Date().toISOString() } }, { status: 201 });
+    const id = await insertApprovalRoute({ tenantSlug, name: parsed.name, steps: parsed.steps });
+    return NextResponse.json({ approval: { id, tenantSlug, name: parsed.name, steps: parsed.steps, createdAt: new Date().toISOString() } }, { status: 201 });
   } catch (error) {
     console.error("Approval create failed", error);
     const message = error instanceof Error ? error.message : "Unable to create approval";
@@ -55,8 +57,10 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Invalid request", details: validation.error.flatten() }, { status: 400 });
     }
 
+    const parsed = validation.data as { steps?: unknown[] };
+
     await ensureAdminTables();
-    await updateApprovalRoute(id, tenantSlug, { steps: validation.data.steps });
+    await updateApprovalRoute(id, tenantSlug, { steps: parsed.steps });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Approval patch failed", error);

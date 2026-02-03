@@ -3,6 +3,9 @@
  * Manages vendor master data and lookups
  */
 
+import { randomUUID } from "node:crypto";
+import { getSql } from "@/lib/db";
+
 export interface VendorRecord {
   id: string;
   code: string;
@@ -22,6 +25,7 @@ export interface VendorRecord {
   createdAt: string;
   updatedAt: string;
 }
+
 
 export interface VendorLookupResult {
   found: boolean;
@@ -89,43 +93,118 @@ export async function lookupVendor(
   query: string,
   type: "name" | "code" | "email" = "name"
 ): Promise<VendorLookupResult> {
+  // Prefer DB-backed lookup when connection configured
   try {
-    const lowerQuery = query.toLowerCase();
+    const sql = getSql();
+    await sql`
+      select 1
+    `;
 
-    // Exact match
-    let vendor = SAMPLE_VENDORS.find((v) => {
-      switch (type) {
-        case "code":
-          return v.code.toLowerCase() === lowerQuery;
-        case "email":
-          return v.email?.toLowerCase() === lowerQuery;
-        case "name":
-        default:
-          return v.name.toLowerCase() === lowerQuery;
-      }
-    });
+    const q = `%${query}%`;
+    const rows = (await sql`
+      select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
+      from vendors
+      where ${type === "name" ? sql`name ilike ${q}` : type === "code" ? sql`code ilike ${q}` : sql`email ilike ${q}`}
+      order by name asc
+      limit 10
+    `) as any[];
 
-    if (vendor) {
-      return { found: true, vendor };
+    if (rows.length === 0) {
+      return { found: false };
     }
 
-    // Fuzzy match
-    const similar = SAMPLE_VENDORS.filter((v) => {
-      switch (type) {
-        case "code":
-          return v.code.toLowerCase().includes(lowerQuery);
-        case "email":
-          return v.email?.toLowerCase().includes(lowerQuery) || false;
-        case "name":
-        default:
-          return v.name.toLowerCase().includes(lowerQuery);
-      }
-    }).slice(0, 5);
+    // exact match check
+    const exact = rows.find((r) => {
+      const val = (type === "name" ? r.name : type === "code" ? r.code : r.email) || "";
+      return val.toLowerCase() === query.toLowerCase();
+    });
 
-    return { found: false, similar: similar.length > 0 ? similar : undefined };
-  } catch (error) {
-    console.error("Vendor lookup failed:", error);
-    return { found: false };
+    if (exact) {
+      return {
+        found: true,
+        vendor: {
+          id: exact.id,
+          code: exact.code,
+          name: exact.name,
+          email: exact.email,
+          phone: exact.phone,
+          address: exact.address,
+          city: exact.city,
+          state: exact.state,
+          country: exact.country,
+          taxId: exact.tax_id,
+          accountNumber: exact.account_number,
+          bankCode: exact.bank_code,
+          bankName: exact.bank_name,
+          paymentTerms: exact.payment_terms,
+          isActive: exact.is_active,
+          createdAt: exact.created_at,
+          updatedAt: exact.updated_at,
+        },
+      };
+    }
+
+    const similar = rows.map((r) => ({
+      id: r.id,
+      code: r.code,
+      name: r.name,
+      email: r.email,
+      phone: r.phone,
+      address: r.address,
+      city: r.city,
+      state: r.state,
+      country: r.country,
+      taxId: r.tax_id,
+      accountNumber: r.account_number,
+      bankCode: r.bank_code,
+      bankName: r.bank_name,
+      paymentTerms: r.payment_terms,
+      isActive: r.is_active,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    }));
+
+    return { found: false, similar };
+  } catch (err) {
+    // Fallback to sample vendor data if DB unavailable
+    try {
+      const lowerQuery = query.toLowerCase();
+
+      // Exact match
+      let vendor = SAMPLE_VENDORS.find((v) => {
+        switch (type) {
+          case "code":
+            return v.code.toLowerCase() === lowerQuery;
+          case "email":
+            return v.email?.toLowerCase() === lowerQuery;
+          case "name":
+          default:
+            return v.name.toLowerCase() === lowerQuery;
+        }
+      });
+
+      if (vendor) {
+        return { found: true, vendor };
+      }
+
+      // Fuzzy match
+      const similar = SAMPLE_VENDORS.filter((v) => {
+        switch (type) {
+          case "code":
+            return v.code.toLowerCase().includes(lowerQuery);
+          case "email":
+            return v.email?.toLowerCase().includes(lowerQuery) || false;
+          case "name":
+          default:
+            return v.name.toLowerCase().includes(lowerQuery);
+        }
+      }).slice(0, 5);
+
+      return { found: false, similar: similar.length > 0 ? similar : undefined };
+    } catch (error) {
+      console.error("Vendor lookup failed:", error);
+      return { found: false };
+    }
   }
 }
 
@@ -139,32 +218,280 @@ export async function listVendors(
     country?: string;
   }
 ): Promise<VendorRecord[]> {
-  let vendors = SAMPLE_VENDORS;
+  // Try DB first
+  try {
+    const sql = getSql();
+    await ensureVendorTables(sql);
 
-  if (filters?.isActive !== undefined) {
-    vendors = vendors.filter((v) => v.isActive === filters.isActive);
+    const whereClauses: Array<any> = [];
+    if (filters?.isActive !== undefined) {
+      whereClauses.push(sql`is_active = ${filters.isActive}`);
+    }
+    if (filters?.paymentTerms) {
+      whereClauses.push(sql`payment_terms = ${filters.paymentTerms}`);
+    }
+    if (filters?.country) {
+      whereClauses.push(sql`country = ${filters.country}`);
+    }
+
+    const rows = (await sql`
+      select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
+      from vendors
+      ${whereClauses.length ? sql`where ${sql.join(whereClauses, sql` and `)}` : sql``}
+      order by name asc
+      limit 200
+    `) as any[];
+
+    return rows.map((r) => ({
+      id: r.id,
+      code: r.code,
+      name: r.name,
+      email: r.email,
+      phone: r.phone,
+      address: r.address,
+      city: r.city,
+      state: r.state,
+      country: r.country,
+      taxId: r.tax_id,
+      accountNumber: r.account_number,
+      bankCode: r.bank_code,
+      bankName: r.bank_name,
+      paymentTerms: r.payment_terms,
+      isActive: r.is_active,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    }));
+  } catch (err) {
+    // Fallback to samples
+    let vendors = SAMPLE_VENDORS;
+
+    if (filters?.isActive !== undefined) {
+      vendors = vendors.filter((v) => v.isActive === filters.isActive);
+    }
+
+    if (filters?.paymentTerms) {
+      vendors = vendors.filter((v) => v.paymentTerms === filters.paymentTerms);
+    }
+
+    if (filters?.country) {
+      vendors = vendors.filter((v) => v.country === filters.country);
+    }
+
+    return vendors;
   }
-
-  if (filters?.paymentTerms) {
-    vendors = vendors.filter((v) => v.paymentTerms === filters.paymentTerms);
-  }
-
-  if (filters?.country) {
-    vendors = vendors.filter((v) => v.country === filters.country);
-  }
-
-  return vendors;
 }
 
 /**
  * Get vendor by ID
  */
 export async function getVendor(vendorId: string): Promise<VendorRecord | null> {
-  return (
-    SAMPLE_VENDORS.find((v) => v.id === vendorId) || null
-  );
+  try {
+    const sql = getSql();
+    await ensureVendorTables(sql);
+
+    const rows = (await sql`
+      select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
+      from vendors
+      where id = ${vendorId}
+      limit 1
+    `) as any[];
+
+    if (!rows.length) return null;
+
+    const r = rows[0];
+    return {
+      id: r.id,
+      code: r.code,
+      name: r.name,
+      email: r.email,
+      phone: r.phone,
+      address: r.address,
+      city: r.city,
+      state: r.state,
+      country: r.country,
+      taxId: r.tax_id,
+      accountNumber: r.account_number,
+      bankCode: r.bank_code,
+      bankName: r.bank_name,
+      paymentTerms: r.payment_terms,
+      isActive: r.is_active,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    };
+  } catch (err) {
+    return SAMPLE_VENDORS.find((v) => v.id === vendorId) || null;
+  }
 }
 
+export async function createVendor(payload: Partial<VendorRecord>): Promise<VendorRecord> {
+  try {
+    const sql = getSql();
+    await ensureVendorTables(sql);
+
+    const id = payload.id ?? randomUUID();
+    const now = new Date().toISOString();
+
+    const [row] = (await sql`
+      insert into vendors (
+        id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
+      ) values (
+        ${id}, ${payload.code ?? null}, ${payload.name ?? null}, ${payload.email ?? null}, ${payload.phone ?? null}, ${payload.address ?? null}, ${payload.city ?? null}, ${payload.state ?? null}, ${payload.country ?? null}, ${payload.taxId ?? null}, ${payload.accountNumber ?? null}, ${payload.bankCode ?? null}, ${payload.bankName ?? null}, ${payload.paymentTerms ?? "net30"}, ${payload.isActive ?? true}, ${now}, ${now}
+      ) returning *
+    `) as any[];
+
+    return {
+      id: row.id,
+      code: row.code,
+      name: row.name,
+      email: row.email,
+      phone: row.phone,
+      address: row.address,
+      city: row.city,
+      state: row.state,
+      country: row.country,
+      taxId: row.tax_id,
+      accountNumber: row.account_number,
+      bankCode: row.bank_code,
+      bankName: row.bank_name,
+      paymentTerms: row.payment_terms,
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  } catch (err) {
+    // Fallback: return sample created object
+    const now = new Date().toISOString();
+    const vendor: VendorRecord = {
+      id: payload.id ?? `vend-${randomUUID()}`,
+      code: payload.code ?? `V-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+      name: payload.name ?? "New Vendor",
+      email: payload.email,
+      phone: payload.phone,
+      address: payload.address,
+      city: payload.city,
+      state: payload.state,
+      country: payload.country,
+      taxId: payload.taxId,
+      accountNumber: payload.accountNumber,
+      bankCode: payload.bankCode,
+      bankName: payload.bankName,
+      paymentTerms: payload.paymentTerms ?? "net30",
+      isActive: payload.isActive ?? true,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    SAMPLE_VENDORS.push(vendor);
+    return vendor;
+  }
+}
+
+export async function updateVendor(id: string, updates: Partial<VendorRecord>): Promise<VendorRecord | null> {
+  try {
+    const sql = getSql();
+    await ensureVendorTables(sql);
+
+    const [row] = (await sql`
+      update vendors set
+        code = coalesce(${updates.code ?? null}, code),
+        name = coalesce(${updates.name ?? null}, name),
+        email = coalesce(${updates.email ?? null}, email),
+        phone = coalesce(${updates.phone ?? null}, phone),
+        address = coalesce(${updates.address ?? null}, address),
+        city = coalesce(${updates.city ?? null}, city),
+        state = coalesce(${updates.state ?? null}, state),
+        country = coalesce(${updates.country ?? null}, country),
+        tax_id = coalesce(${updates.taxId ?? null}, tax_id),
+        account_number = coalesce(${updates.accountNumber ?? null}, account_number),
+        bank_code = coalesce(${updates.bankCode ?? null}, bank_code),
+        bank_name = coalesce(${updates.bankName ?? null}, bank_name),
+        payment_terms = coalesce(${updates.paymentTerms ?? null}, payment_terms),
+        is_active = coalesce(${updates.isActive ?? null}, is_active),
+        updated_at = now()
+      where id = ${id}
+      returning *
+    `) as any[];
+
+    if (!row) return null;
+
+    return {
+      id: row.id,
+      code: row.code,
+      name: row.name,
+      email: row.email,
+      phone: row.phone,
+      address: row.address,
+      city: row.city,
+      state: row.state,
+      country: row.country,
+      taxId: row.tax_id,
+      accountNumber: row.account_number,
+      bankCode: row.bank_code,
+      bankName: row.bank_name,
+      paymentTerms: row.payment_terms,
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  } catch (err) {
+    const idx = SAMPLE_VENDORS.findIndex((v) => v.id === id);
+    if (idx === -1) return null;
+    const existing = SAMPLE_VENDORS[idx];
+    const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() } as VendorRecord;
+    SAMPLE_VENDORS[idx] = updated;
+    return updated;
+  }
+}
+
+export async function deleteVendor(id: string): Promise<boolean> {
+  try {
+    const sql = getSql();
+    await ensureVendorTables(sql);
+
+    const res = await sql`
+      delete from vendors where id = ${id}
+    `;
+
+    return res.count > 0;
+  } catch (err) {
+    const idx = SAMPLE_VENDORS.findIndex((v) => v.id === id);
+    if (idx === -1) return false;
+    SAMPLE_VENDORS.splice(idx, 1);
+    return true;
+  }
+}
+
+async function ensureVendorTables(sql: ReturnType<typeof getSql>) {
+  try {
+    await sql`
+      create table if not exists vendors (
+        id text primary key,
+        code text,
+        name text not null,
+        email text,
+        phone text,
+        address text,
+        city text,
+        state text,
+        country text,
+        tax_id text,
+        account_number text,
+        bank_code text,
+        bank_name text,
+        payment_terms text default 'net30',
+        is_active boolean default true,
+        created_at timestamptz default now(),
+        updated_at timestamptz default now()
+      )
+    `;
+
+    await sql`create index if not exists vendors_name_idx on vendors (name)`;
+    await sql`create index if not exists vendors_code_idx on vendors (code)`;
+    await sql`create index if not exists vendors_tenant_idx on vendors (country)`;
+  } catch (err) {
+    console.error("ensureVendorTables failed:", err);
+  }
+}
 /**
  * Get payment terms for vendor
  */

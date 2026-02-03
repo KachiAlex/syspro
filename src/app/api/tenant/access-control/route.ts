@@ -30,9 +30,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid request", details: validation.error.flatten() }, { status: 400 });
     }
 
+    // Cast validated data to a known shape to satisfy TypeScript
+    const parsed = validation.data as { roleName: string; moduleAccess: unknown[] };
+
     await ensureAdminTables();
-    const id = await insertAccessControl({ tenantSlug, roleId: `role-${Date.now()}`, roleName: validation.data.roleName, moduleAccess: validation.data.moduleAccess });
-    return NextResponse.json({ accessControl: { id, tenantSlug, roleId: `role-${Date.now()}`, roleName: validation.data.roleName, moduleAccess: validation.data.moduleAccess, tempGrants: [], createdAt: new Date().toISOString() } }, { status: 201 });
+    const roleId = `role-${Date.now()}`;
+    const id = await insertAccessControl({ tenantSlug, roleId, roleName: parsed.roleName, moduleAccess: parsed.moduleAccess });
+    return NextResponse.json({ accessControl: { id, tenantSlug, roleId, roleName: parsed.roleName, moduleAccess: parsed.moduleAccess, tempGrants: [], createdAt: new Date().toISOString() } }, { status: 201 });
   } catch (error) {
     console.error("Access control create failed", error);
     const message = error instanceof Error ? error.message : "Unable to create access control";
@@ -55,8 +59,11 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Invalid request", details: validation.error.flatten() }, { status: 400 });
     }
 
+    // validation.data is unknown; cast to expected shape for update
+    const updateData = validation.data as { roleName?: string; moduleAccess?: unknown[] };
+
     await ensureAdminTables();
-    await updateAccessControl(id, tenantSlug, validation.data);
+    await updateAccessControl(id, tenantSlug, updateData);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Access control patch failed", error);

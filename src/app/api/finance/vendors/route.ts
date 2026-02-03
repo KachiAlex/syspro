@@ -6,6 +6,7 @@ import {
   listVendors,
   getVendor,
   getVendorStats,
+  createVendor,
 } from "@/lib/finance/vendors";
 
 const vendorSearchSchema = z.object({
@@ -20,6 +21,8 @@ const vendorListSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+  console.log('API: GET /api/finance/vendors called');
+  try {
   const url = new URL(request.url);
 
   // Search endpoint: /api/finance/vendors?search=true&query=...
@@ -55,15 +58,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  try {
-    const vendors = await listVendors(parsed.data);
-    return NextResponse.json({ vendors });
-  } catch (error) {
-    console.error("Vendor list failed:", error);
-    return NextResponse.json(
-      { error: "Failed to list vendors" },
-      { status: 500 }
-    );
+    try {
+      const vendors = await listVendors(parsed.data);
+      return NextResponse.json({ vendors });
+    } catch (error) {
+      console.error("Vendor list failed:", error?.stack || error);
+      return NextResponse.json({ error: "Failed to list vendors", details: String(error?.message || error) }, { status: 500 });
+    }
+  } catch (err) {
+    console.error('API GET /api/finance/vendors top-level error:', err?.stack || err);
+    return NextResponse.json({ error: 'Internal error', details: String(err?.message || err) }, { status: 500 });
   }
 }
 
@@ -92,6 +96,35 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+  }
+
+  // Create vendor endpoint
+  try {
+    const createSchema = z.object({
+      name: z.string().min(1),
+      code: z.string().optional(),
+      email: z.string().email().optional(),
+      phone: z.string().optional(),
+      address: z.string().optional(),
+      city: z.string().optional(),
+      state: z.string().optional(),
+      country: z.string().optional(),
+      taxId: z.string().optional(),
+      accountNumber: z.string().optional(),
+      bankCode: z.string().optional(),
+      bankName: z.string().optional(),
+      paymentTerms: z.enum(["net30", "net60", "net90", "immediate", "cod"]).optional(),
+      isActive: z.coerce.boolean().optional(),
+    });
+
+    const parsed = createSchema.safeParse(body);
+    if (parsed.success) {
+      const vendor = await createVendor(parsed.data as any);
+      return NextResponse.json({ vendor }, { status: 201 });
+    }
+  } catch (error) {
+    console.error("Create vendor failed:", error);
+    return NextResponse.json({ error: "Failed to create vendor" }, { status: 500 });
   }
 
   return NextResponse.json({ error: "Invalid request" }, { status: 400 });
