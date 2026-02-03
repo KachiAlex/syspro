@@ -129,6 +129,49 @@ const CRM_LEADS: CrmLead[] = [
     contact: "Sara Bello",
     stage: "Contracting",
     owner: "S. Patel",
+    value: "₦4.2M",
+    status: "overdue",
+  },
+  {
+    id: "PIPE-977",
+    company: "Helios Parts",
+    contact: "Marcus Lee",
+    stage: "Diligence",
+    owner: "D. Ibarra",
+    value: "₦2.8M",
+    status: "pending",
+  },
+  {
+    id: "PIPE-971",
+    company: "Bright Innovations",
+    contact: "Joan Adu",
+    stage: "Proposal",
+    owner: "M. Byrne",
+    value: "₦3.1M",
+    status: "pending",
+  },
+  {
+    id: "PIPE-965",
+    company: "Axiom Mobility",
+    contact: "Hassan Okoro",
+    stage: "Won",
+    owner: "L. Gomez",
+    value: "₦6.5M",
+    status: "won",
+  },
+];
+
+const CRM_TASKS: CrmTask[] = [
+  { id: "TASK-01", title: "Send pricing deck to Nova Retail", due: "Today · 2 PM", assignee: "S. Patel", status: "due" },
+  { id: "TASK-02", title: "Schedule EMEA compliance call", due: "Today · 4 PM", assignee: "D. Ibarra", status: "upcoming" },
+  { id: "TASK-03", title: "Log APAC rollout notes", due: "Tomorrow", assignee: "M. Byrne", status: "upcoming" },
+];
+
+const CRM_ENGAGEMENTS: CrmEngagement[] = [
+  {
+    id: "ENG-01",
+    title: "Discovery call completed",
+    detail: "Helios Parts · 45 min",
     timestamp: "1h ago",
     channel: "call",
   },
@@ -2929,66 +2972,38 @@ export default function TenantAdminPage() {
         },
       };
 
-      // Call the API (PATCH when editing, POST when creating)
-      let response: Response;
-      if (selectedInvoiceId) {
-        response = await fetch(`/api/finance/invoices/${selectedInvoiceId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(apiPayload),
-        });
-      } else {
-        response = await fetch("/api/finance/invoices", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(apiPayload),
-        });
-      }
+      // Call the API
+      const response = await fetch("/api/finance/invoices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(apiPayload),
+      });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
+        const error = await response.json();
         throw new Error(error.error?.toString() || "Failed to save invoice");
       }
 
-      const result = await response.json().catch(() => ({}));
-
-      // Use API returned invoice when available, otherwise fallback to local data
-      const returned = result.invoice;
-      const newInvoice: InvoiceItem = returned
-        ? {
-            id: returned.id,
-            invoiceNumber: returned.invoiceNumber,
-            customer: returned.customerName,
-            customerEmail: returned.metadata?.customerEmail,
-            contactId: returned.customerCode || undefined,
-            contactType: returned.metadata?.contactType,
-            amount: String(returned.amount),
-            status: returned.status as InvoiceStatus,
-            dueDate: returned.dueDate,
-            issueDate: returned.issuedDate,
-            branch: returned.metadata?.branch,
-            items: returned.metadata?.items,
-            notes: returned.notes,
-            taxRate: returned.metadata?.taxRate,
-            discount: returned.metadata?.discount,
-          }
-        : {
-            id: selectedInvoiceId || String(Date.now()),
-            invoiceNumber,
-            customer: invoiceData.customer,
-            customerEmail: invoiceData.customerEmail,
-            contactId: invoiceData.contactId,
-            contactType: invoiceData.contactType,
-            amount: invoiceData.amount,
-            status: invoiceData.status,
-            dueDate: invoiceData.dueDate,
-            issueDate: invoiceData.issueDate,
-            branch: invoiceData.branch,
-            items: invoiceData.items,
-            notes: invoiceData.notes,
-            taxRate: invoiceData.taxRate,
-            discount: invoiceData.discount,
-          };
+      const result = await response.json();
+      
+      // Update local state after successful API call
+      const newInvoice: InvoiceItem = {
+        id: selectedInvoiceId || result.invoice?.id || String(Date.now()),
+        invoiceNumber,
+        customer: invoiceData.customer,
+        customerEmail: invoiceData.customerEmail,
+        contactId: invoiceData.contactId,
+        contactType: invoiceData.contactType,
+        amount: invoiceData.amount,
+        status: invoiceData.status,
+        dueDate: invoiceData.dueDate,
+        issueDate: invoiceData.issueDate,
+        branch: invoiceData.branch,
+        items: invoiceData.items,
+        notes: invoiceData.notes,
+        taxRate: invoiceData.taxRate,
+        discount: invoiceData.discount,
+      };
 
       if (selectedInvoiceId) {
         setInvoices(invoices.map(inv => inv.id === selectedInvoiceId ? newInvoice : inv));
@@ -2997,38 +3012,7 @@ export default function TenantAdminPage() {
         setInvoices([...invoices, newInvoice]);
         setQuickActionToast({ message: `Invoice ${invoiceData.status === 'draft' ? 'draft created' : 'created'} successfully`, type: "success" });
       }
-
-      // Refresh invoices list from server to ensure UI reflects canonical state
-      try {
-        const query = new URLSearchParams({ tenantSlug: tenantSlug ?? "kreatix-default" });
-        const listRes = await fetch(`/api/finance/invoices?${query.toString()}`, { cache: "no-store" });
-        if (listRes.ok) {
-          const payload = await listRes.json().catch(() => null);
-          if (payload?.invoices && Array.isArray(payload.invoices)) {
-            const formatted = payload.invoices.map((inv: any) => ({
-              id: inv.id,
-              invoiceNumber: inv.invoiceNumber,
-              customer: inv.customerName,
-              customerEmail: inv.metadata?.customerEmail,
-              contactId: inv.customerCode,
-              contactType: inv.metadata?.contactType,
-              amount: String(inv.amount),
-              status: inv.status,
-              dueDate: inv.dueDate,
-              issueDate: inv.issuedDate,
-              branch: inv.metadata?.branch,
-              items: inv.metadata?.items,
-              notes: inv.notes,
-              taxRate: inv.metadata?.taxRate,
-              discount: inv.metadata?.discount,
-            }));
-            setInvoices(formatted);
-          }
-        }
-      } catch (e) {
-        // ignore refresh failures; UI already updated optimistically
-      }
-
+      
       setTimeout(() => setQuickActionToast(null), 3000);
       setShowInvoiceDrawer(false);
       setSelectedInvoiceId(null);
@@ -3042,58 +3026,6 @@ export default function TenantAdminPage() {
       setTimeout(() => setQuickActionToast(null), 5000);
     }
   }, [invoices, selectedInvoiceId, tenantSlug]);
-
-  const handleDeleteInvoice = useCallback(async (id: string) => {
-    try {
-      const res = await fetch(`/api/finance/invoices/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        throw new Error(payload.error || "Failed to delete invoice");
-      }
-
-      // refresh list
-      try {
-        const query = new URLSearchParams({ tenantSlug: tenantSlug ?? "kreatix-default" });
-        const listRes = await fetch(`/api/finance/invoices?${query.toString()}`, { cache: "no-store" });
-        if (listRes.ok) {
-          const payload = await listRes.json().catch(() => null);
-          if (payload?.invoices && Array.isArray(payload.invoices)) {
-            const formatted = payload.invoices.map((inv: any) => ({
-              id: inv.id,
-              invoiceNumber: inv.invoiceNumber,
-              customer: inv.customerName,
-              customerEmail: inv.metadata?.customerEmail,
-              contactId: inv.customerCode,
-              contactType: inv.metadata?.contactType,
-              amount: String(inv.amount),
-              status: inv.status,
-              dueDate: inv.dueDate,
-              issueDate: inv.issuedDate,
-              branch: inv.metadata?.branch,
-              items: inv.metadata?.items,
-              notes: inv.notes,
-              taxRate: inv.metadata?.taxRate,
-              discount: inv.metadata?.discount,
-            }));
-            setInvoices(formatted);
-          }
-        }
-      } catch (e) {
-        // ignore
-      }
-
-      setQuickActionToast({ message: "Invoice deleted", type: "success" });
-      setTimeout(() => setQuickActionToast(null), 2500);
-      if (selectedInvoiceId === id) {
-        setSelectedInvoiceId(null);
-        setShowInvoiceDrawer(false);
-      }
-    } catch (err) {
-      console.error("Failed to delete invoice", err);
-      setQuickActionToast({ message: `Failed to delete invoice: ${err instanceof Error ? err.message : String(err)}`, type: "error" });
-      setTimeout(() => setQuickActionToast(null), 4000);
-    }
-  }, [selectedInvoiceId, tenantSlug]);
 
   const handleSaveLineItem = useCallback((description: string, defaultPrice: number, category?: string) => {
     const newItem: SavedLineItem = {
@@ -4381,7 +4313,6 @@ function FinanceWorkspace({
   crmContacts: CrmContact[];
   savedLineItems: SavedLineItem[];
   onSaveLineItem: (description: string, defaultPrice: number, category?: string) => void;
-  onDeleteInvoice?: (id: string) => void;
 }) {
   const quickActions: Array<{ label: string; description: string; icon: ComponentType<{ className?: string }>; action: () => void; secondaryAction?: () => void }> = [
     { label: "Log invoice", description: "Sync to ERP", icon: Receipt, action: onLogInvoice, secondaryAction: onSyncToERP },
@@ -4431,7 +4362,7 @@ function FinanceWorkspace({
                     }}
                     className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:border-slate-300"
                     type="button"
-                  >
+                  >"
                 <Icon className="h-4 w-4" />
                 <div className="text-left">
                   <p className="font-semibold leading-none">{action.label}</p>
@@ -4538,7 +4469,6 @@ function FinanceWorkspace({
             onSelectInvoice(null);
           }}
           onSaveInvoice={onSaveInvoice}
-          onDeleteInvoice={handleDeleteInvoice}
           crmContacts={crmContacts}
           savedLineItems={savedLineItems}
           onSaveLineItem={onSaveLineItem}
@@ -6796,58 +6726,11 @@ function InvoiceDrawer({
               {invoiceId ? invoice?.invoiceNumber : "Create a new invoice for your customer"}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            {invoiceId && (
-              <button
-                onClick={() => {
-                  if (!invoiceId) return;
-                  if (!confirm('Delete this invoice? This action cannot be undone.')) return;
-                  // call parent delete handler if provided
-                  try {
-                    // @ts-ignore - optional prop
-                    if (typeof arguments === 'object' && typeof (window as any) !== 'undefined') {}
-                  } catch (e) {}
-                  // call prop safely
-                  // @ts-ignore
-                  if (typeof (arguments as any) === 'undefined') {}
-                  try {
-                    // Use the prop passed into this component
-                    // @ts-ignore
-                    if (typeof (arguments as any) === 'undefined') {}
-                  } catch (e) {}
-                  // Actually invoke onDeleteInvoice if available
-                  // @ts-ignore
-                  if (typeof (arguments as any) === 'undefined') {}
-                  // Real deletion invocation using the prop name
-                  try {
-                    // @ts-ignore
-                    if (typeof (this as any).onDeleteInvoice === 'function') {
-                      // @ts-ignore
-                      (this as any).onDeleteInvoice(invoiceId);
-                    }
-                  } catch (err) {
-                    // Fallback: try prop from outer scope
-                    try {
-                      // @ts-ignore
-                      if (typeof onDeleteInvoice === 'function') onDeleteInvoice(invoiceId);
-                    } catch (e) {
-                      // ignore
-                    }
-                  }
-
-                  onClose();
-                }}
-                className="rounded-lg px-3 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 border border-rose-100"
-                type="button"
-              >
-                Delete
-              </button>
-            )}
-            <button
-              onClick={onClose}
-              className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-              type="button"
-            >
+          <button
+            onClick={onClose}
+            className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            type="button"
+          >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
