@@ -1,4 +1,5 @@
 import { sql } from "@neondatabase/serverless";
+import { getSql } from "@/lib/db";
 import {
   ChartOfAccount,
   ChartOfAccountCreateInput,
@@ -16,7 +17,8 @@ import {
   TrialBalanceResponse,
   JOURNAL_TYPES,
 } from "./types";
-import { db } from "@/lib/db";
+
+const db = getSql();
 
 /**
  * ACCOUNTING CORE DATABASE SERVICE
@@ -30,65 +32,76 @@ import { db } from "@/lib/db";
 export async function createChartOfAccount(
   input: ChartOfAccountCreateInput
 ): Promise<ChartOfAccount> {
-  const result = await db.query<ChartOfAccount>(
-    `INSERT INTO chart_of_accounts (
-      tenant_slug, account_code, account_name, account_type, sub_type,
-      parent_account_id, description, currency, is_system_account, is_active,
-      branch_id, department_id, project_id,
-      allow_manual_posting, require_cost_center, is_reconciliation_account,
-      created_by
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-    RETURNING *`,
-    [
-      input.tenantSlug,
-      input.accountCode,
-      input.accountName,
-      input.accountType,
-      input.subType,
-      input.parentAccountId,
-      input.description,
-      input.currency,
-      input.isSystemAccount,
-      input.isActive,
-      input.branchId,
-      input.departmentId,
-      input.projectId,
-      input.allowManualPosting,
-      input.requireCostCenter,
-      input.isReconciliationAccount,
-      input.createdBy,
-    ]
-  );
+  try {
+    const sql = getSql();
+    
+    const result = await sql`
+      INSERT INTO chart_of_accounts (
+        tenant_slug, account_code, account_name, account_type, sub_type,
+        parent_account_id, description, currency, is_system_account, is_active,
+        branch_id, department_id, project_id,
+        allow_manual_posting, require_cost_center, is_reconciliation_account,
+        created_by
+      ) VALUES (
+        ${input.tenantSlug}, ${input.accountCode}, ${input.accountName}, 
+        ${input.accountType}, ${input.subType}, ${input.parentAccountId},
+        ${input.description}, ${input.currency}, ${input.isSystemAccount},
+        ${input.isActive}, ${input.branchId}, ${input.departmentId},
+        ${input.projectId}, ${input.allowManualPosting}, ${input.requireCostCenter},
+        ${input.isReconciliationAccount}, ${input.createdBy}
+      )
+      RETURNING *
+    `;
 
-  return result.rows[0];
+    return Array.isArray(result) ? result[0] : result;
+  } catch (error) {
+    console.error("Error creating chart of account:", error);
+    throw error;
+  }
 }
 
 export async function getChartOfAccounts(
   tenantSlug: string,
   filters?: { accountType?: string; branchId?: string; isActive?: boolean }
 ): Promise<ChartOfAccount[]> {
-  let query = "SELECT * FROM chart_of_accounts WHERE tenant_slug = $1";
-  const params: any[] = [tenantSlug];
+  try {
+    const sql = getSql();
+    
+    // Build dynamic query based on filters
+    let whereConditions = ["tenant_slug = $1"];
+    const params: any[] = [tenantSlug];
+    let paramIndex = 2;
 
-  if (filters?.accountType) {
-    query += ` AND account_type = $${params.length + 1}`;
-    params.push(filters.accountType);
+    if (filters?.accountType) {
+      whereConditions.push(`account_type = $${paramIndex}`);
+      params.push(filters.accountType);
+      paramIndex++;
+    }
+
+    if (filters?.branchId) {
+      whereConditions.push(`branch_id = $${paramIndex}`);
+      params.push(filters.branchId);
+      paramIndex++;
+    }
+
+    if (filters?.isActive !== undefined) {
+      whereConditions.push(`is_active = $${paramIndex}`);
+      params.push(filters.isActive);
+      paramIndex++;
+    }
+
+    const whereClause = whereConditions.join(" AND ");
+    
+    // Use raw query with Neon
+    const query = `SELECT * FROM chart_of_accounts WHERE ${whereClause} ORDER BY account_code`;
+    
+    // Execute with params - Neon supports this
+    const result = await (sql as any)(query, params);
+    return Array.isArray(result) ? result : [];
+  } catch (error) {
+    console.error("Error fetching chart of accounts:", error);
+    return [];
   }
-
-  if (filters?.branchId) {
-    query += ` AND branch_id = $${params.length + 1}`;
-    params.push(filters.branchId);
-  }
-
-  if (filters?.isActive !== undefined) {
-    query += ` AND is_active = $${params.length + 1}`;
-    params.push(filters.isActive);
-  }
-
-  query += " ORDER BY account_code";
-
-  const result = await db.query<ChartOfAccount>(query, params);
-  return result.rows;
 }
 
 export async function getChartOfAccount(

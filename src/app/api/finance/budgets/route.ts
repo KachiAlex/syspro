@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import {
   getBudgets,
   getBudgetSummaries,
   createBudget,
   getBudget,
-  budgetCreateSchema,
 } from "@/lib/finance/budgets-db";
+import { budgetCreateSchema } from "@/lib/finance/budgets";
 
 export async function GET(request: NextRequest) {
   try {

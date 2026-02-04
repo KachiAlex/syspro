@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import {
   getBudget,
   updateBudget,
   deleteBudget,
   changeBudgetStatus,
-  budgetUpdateSchema,
 } from "@/lib/finance/budgets-db";
+import { budgetUpdateSchema } from "@/lib/finance/budgets";
 
 export async function GET(
   request: NextRequest,

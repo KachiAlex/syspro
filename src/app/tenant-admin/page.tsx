@@ -115,178 +115,41 @@ type NavigationLink = {
   badge?: string;
 };
 
-const CRM_METRICS: KpiMetric[] = [
-  { label: "Leads created", value: "42", delta: "+8.2%", trend: "up", description: "vs yesterday" },
-  { label: "Open pipeline", value: "₦18.4M", delta: "+3.1%", trend: "up", description: "17 opps" },
-  { label: "Conversion rate", value: "26%", delta: "-1.2%", trend: "down", description: "Last 30d" },
-  { label: "Follow-ups due", value: "12", delta: "+4", trend: "down", description: "Need touch today" },
-];
+const CRM_METRICS = [];
 
-const CRM_LEADS: CrmLead[] = [
-  {
-    id: "PIPE-982",
-    company: "Nova Retail",
-    contact: "Sara Bello",
-    stage: "Contracting",
-    owner: "S. Patel",
-    value: "₦4.2M",
-    status: "overdue",
-  },
-  {
-    id: "PIPE-977",
-    company: "Helios Parts",
-    contact: "Marcus Lee",
-    stage: "Diligence",
-    owner: "D. Ibarra",
-    value: "₦2.8M",
-    status: "pending",
-  },
-  {
-    id: "PIPE-971",
-    company: "Bright Innovations",
-    contact: "Joan Adu",
-    stage: "Proposal",
-    owner: "M. Byrne",
-    value: "₦3.1M",
-    status: "pending",
-  },
-  {
-    id: "PIPE-965",
-    company: "Axiom Mobility",
-    contact: "Hassan Okoro",
-    stage: "Won",
-    owner: "L. Gomez",
-    value: "₦6.5M",
-    status: "won",
-  },
-];
+const CRM_LEADS = [];
 
-const CRM_TASKS: CrmTask[] = [
-  { id: "TASK-01", title: "Send pricing deck to Nova Retail", due: "Today · 2 PM", assignee: "S. Patel", status: "due" },
-  { id: "TASK-02", title: "Schedule EMEA compliance call", due: "Today · 4 PM", assignee: "D. Ibarra", status: "upcoming" },
-  { id: "TASK-03", title: "Log APAC rollout notes", due: "Tomorrow", assignee: "M. Byrne", status: "upcoming" },
-];
+const CRM_TASKS = [];
 
-const CRM_ENGAGEMENTS: CrmEngagement[] = [
-  {
-    id: "ENG-01",
-    title: "Discovery call completed",
-    detail: "Helios Parts · 45 min",
-    timestamp: "1h ago",
-    channel: "call",
-  },
-  {
-    id: "ENG-02",
-    title: "Proposal emailed",
-    detail: "Nova Retail · Contracting",
-    timestamp: "3h ago",
-    channel: "email",
-  },
-  {
-    id: "ENG-03",
-    title: "Demo scheduled",
-    detail: "Bright Innovations · Tomorrow 10a",
-    timestamp: "Yesterday",
-    channel: "meeting",
-  },
-];
+const CRM_ENGAGEMENTS = [];
 
-const CRM_STATUS_META: Record<CrmLead["status"], { label: string; chip: string; dot: string }> = {
-  overdue: { label: "Overdue", chip: "bg-rose-50 text-rose-600", dot: "bg-rose-500" },
-  pending: { label: "Pending", chip: "bg-amber-50 text-amber-600", dot: "bg-amber-500" },
-  won: { label: "Won", chip: "bg-emerald-50 text-emerald-600", dot: "bg-emerald-500" },
-};
+const CRM_STATUS_META = [];
 
-const CRM_REMINDERS: CrmReminder[] = [
-  { id: "REM-01", label: "Follow up Nova Retail", dueAt: new Date().toISOString(), slaSeconds: 7200 },
-  { id: "REM-02", label: "SLA risk · Tembea Steel", dueAt: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(), slaSeconds: 3600 },
-];
+const CRM_REMINDERS = [];
 
-const CRM_CUSTOMERS: CrmCustomerView[] = [
-  {
-    id: "CUST-001",
-    name: "Nova Retail",
-    region: "emea",
-    branch: "lagos",
-    owner: "Sara Bello",
-    status: "Active",
-    contactName: "Sara Bello",
-    contactEmail: "sara@nova.io",
-    contactPhone: "+234 801 555 9988",
-  },
-  {
-    id: "CUST-002",
-    name: "Helios Grid",
-    region: "apac",
-    branch: "nairobi",
-    owner: "Marcus Lee",
-    status: "Onboarding",
-    contactName: "Marcus Lee",
-    contactEmail: "marcus@heliosgrid.com",
-    contactPhone: "+254 701 222 445",
-  },
-  {
-    id: "CUST-003",
-    name: "Tembea Steel",
-    region: "americas",
-    branch: "houston",
-    owner: "Joan Adu",
-    status: "Churn risk",
-    contactName: "Joan Adu",
-    contactEmail: "joan@tembea.steel",
-    contactPhone: "+1 713 555 9000",
-  },
-];
+const CRM_CUSTOMERS = [];
 
-const CRM_CHARTS_BASELINE: CrmChartSnapshot = {
-  funnel: [
-    { stage: "New", value: 120 },
-    { stage: "Qualified", value: 80 },
-    { stage: "Proposal", value: 48 },
-    { stage: "Negotiation", value: 30 },
-    { stage: "Converted", value: 18 },
-  ],
-  revenueByOfficer: [
-    { officer: "Officer 1", value: 120000 },
-    { officer: "Officer 2", value: 86000 },
-    { officer: "Officer 3", value: 54000 },
-  ],
-  lostReasons: [
-    { reason: "Budget", count: 12 },
-    { reason: "Timeline", count: 6 },
-    { reason: "No decision", count: 4 },
-  ],
-};
+const CRM_CHARTS_BASELINE = [];
 
 const CRM_BASELINE_SNAPSHOT: CrmSnapshot = {
-  metrics: CRM_METRICS,
-  leads: CRM_LEADS,
-  tasks: CRM_TASKS,
-  engagements: CRM_ENGAGEMENTS,
-  reminders: CRM_REMINDERS,
-  charts: CRM_CHARTS_BASELINE,
-  customers: CRM_CUSTOMERS,
+  metrics: [],
+  leads: [],
+  tasks: [],
+  engagements: [],
+  reminders: [],
+  charts: {
+    funnel: [],
+    revenueByOfficer: [],
+    lostReasons: [],
+  },
+  customers: [],
 };
 
-const FINANCE_TREND_BASELINE: FinanceTrendSnapshot = {
-  labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-  revenue: [42, 48, 51, 47, 55, 39, 36],
-  expenses: [31, 33, 36, 34, 37, 29, 28],
-};
+const FINANCE_TREND_BASELINE = [];
 
-const FINANCE_RECEIVABLES_BASELINE: FinanceScheduleItem[] = [
-  { id: "RCV-2048", entity: "Nova Retail", amount: "₦48.2M", dueDate: "Due in 2d", status: "due_soon", branch: "EMEA" },
-  { id: "RCV-2052", entity: "Helix Grid", amount: "₦32.7M", dueDate: "Today", status: "current", branch: "APAC" },
-  { id: "RCV-2054", entity: "Tembea Steel", amount: "₦64.3M", dueDate: "3d overdue", status: "overdue", branch: "Americas" },
-  { id: "RCV-2058", entity: "Verdant FMCG", amount: "₦21.9M", dueDate: "Due in 5d", status: "current", branch: "EMEA" },
-];
+const FINANCE_RECEIVABLES_BASELINE = [];
 
-const FINANCE_PAYABLES_BASELINE: FinanceScheduleItem[] = [
-  { id: "PYB-8811", entity: "Apex Suppliers", amount: "₦38.6M", dueDate: "Runs tonight", status: "current", branch: "Global" },
-  { id: "PYB-8818", entity: "Atlas Metals", amount: "₦19.4M", dueDate: "Due in 1d", status: "due_soon", branch: "EMEA" },
-  { id: "PYB-8820", entity: "Lagos Assembly", amount: "₦54.8M", dueDate: "5d overdue", status: "overdue", branch: "Nigeria" },
-  { id: "PYB-8824", entity: "Carbon Freight", amount: "₦27.2M", dueDate: "Due in 4d", status: "current", branch: "APAC" },
-];
+const FINANCE_PAYABLES_BASELINE = [];
 
 type FinanceExpenseItem = {
   id: string;
@@ -299,16 +162,7 @@ type FinanceExpenseItem = {
   branch: string;
 };
 
-const FINANCE_EXPENSES_BASELINE: FinanceExpenseItem[] = [
-  { id: "EXP-2401", description: "Cloud infrastructure - AWS monthly", category: "cloud", amount: "₦8.4M", submittedBy: "Chioma Okafor", submittedDate: "2d ago", status: "approved", branch: "Global" },
-  { id: "EXP-2402", description: "Logistics freight - Port Harcourt", category: "logistics", amount: "₦3.2M", submittedBy: "Tunde Adeyemi", submittedDate: "1d ago", status: "pending", branch: "Nigeria" },
-  { id: "EXP-2403", description: "Team lunch - Q1 planning session", category: "meals", amount: "₦180K", submittedBy: "Amara Nwankwo", submittedDate: "3h ago", status: "pending", branch: "Lagos HQ" },
-  { id: "EXP-2404", description: "Office supplies - Stationery", category: "supplies", amount: "₦420K", submittedBy: "Kofi Mensah", submittedDate: "5d ago", status: "approved", branch: "Abuja" },
-  { id: "EXP-2405", description: "Travel - Flight to Kano conference", category: "travel", amount: "₦1.2M", submittedBy: "Folake Olumide", submittedDate: "4d ago", status: "approved", branch: "Kano" },
-  { id: "EXP-2406", description: "Software license - Adobe Creative Suite annual", category: "software", amount: "₦2.1M", submittedBy: "Emeka Uche", submittedDate: "6d ago", status: "paid", branch: "Global" },
-  { id: "EXP-2407", description: "Logistics freight - Nairobi shipment", category: "logistics", amount: "₦4.6M", submittedBy: "Hassan Mahmud", submittedDate: "7d ago", status: "rejected", branch: "APAC" },
-  { id: "EXP-2408", description: "Training - Analytics certification program", category: "training", amount: "₦890K", submittedBy: "Zainab Ibrahim", submittedDate: "1w ago", status: "approved", branch: "Lagos HQ" },
-];
+const FINANCE_EXPENSES_BASELINE = [];
 
 type PaymentRecord = {
   id: string;
@@ -337,106 +191,7 @@ type PaymentRecord = {
   }[];
 };
 
-const PAYMENT_RECORDS_BASELINE: PaymentRecord[] = [
-  {
-    id: "PAY-001",
-    payableId: "PYB-8811",
-    customerId: "CUST-001",
-    invoiceId: "INV-2024-001",
-    method: "bank_transfer",
-    grossAmount: "₦145,000",
-    fees: "₦1,450",
-    netAmount: "₦143,550",
-    currency: "NGN",
-    paymentDate: "2024-02-01",
-    settlementDate: "2024-02-02",
-    referenceNumber: "TRF-20240201-001",
-    gatewayReference: "",
-    confirmationDetails: "Bank transfer confirmed. Ref: 20240201001",
-    status: "successful",
-    gateway: "manual",
-    linkedInvoices: ["INV-2024-001"],
-    recordedBy: "Chioma Okafor",
-    recordedDate: "2024-02-01",
-    auditTrail: [
-      { action: "created", timestamp: "2024-02-01 14:30:00", user: "Chioma Okafor" },
-      { action: "settled", timestamp: "2024-02-02 09:15:00", user: "System" },
-    ],
-  },
-  {
-    id: "PAY-002",
-    payableId: "PYB-8818",
-    customerId: "CUST-002",
-    invoiceId: "INV-2024-002",
-    method: "paystack",
-    grossAmount: "₦892,500",
-    fees: "₦26,776",
-    netAmount: "₦865,724",
-    currency: "NGN",
-    paymentDate: "2024-01-31",
-    settlementDate: "2024-02-03",
-    referenceNumber: "PS-20240131-002",
-    gatewayReference: "ch_xxxxxxxx",
-    confirmationDetails: "Paystack payment successful",
-    status: "successful",
-    gateway: "paystack",
-    linkedInvoices: ["INV-2024-002"],
-    recordedBy: "System",
-    recordedDate: "2024-01-31",
-    auditTrail: [
-      { action: "created", timestamp: "2024-01-31 16:45:00", user: "System" },
-      { action: "settled", timestamp: "2024-02-03 10:00:00", user: "System" },
-    ],
-  },
-  {
-    id: "PAY-003",
-    payableId: "PYB-8820",
-    customerId: "CUST-003",
-    invoiceId: "INV-2024-003",
-    method: "check",
-    grossAmount: "₦2,340,000",
-    fees: "₦0",
-    netAmount: "₦2,340,000",
-    currency: "NGN",
-    paymentDate: "2024-02-04",
-    settlementDate: "",
-    referenceNumber: "CHK-000456",
-    confirmationDetails: "Check received. Awaiting bank clearance.",
-    status: "pending",
-    gateway: "manual",
-    linkedInvoices: ["INV-2024-003"],
-    recordedBy: "Tunde Adeyemi",
-    recordedDate: "2024-02-04",
-    auditTrail: [
-      { action: "created", timestamp: "2024-02-04 11:20:00", user: "Tunde Adeyemi" },
-    ],
-  },
-  {
-    id: "PAY-004",
-    payableId: "PYB-8824",
-    customerId: "CUST-001",
-    invoiceId: "INV-2024-004",
-    method: "flutterwave",
-    grossAmount: "₦567,800",
-    fees: "₦17,034",
-    netAmount: "₦550,766",
-    currency: "NGN",
-    paymentDate: "2024-01-28",
-    settlementDate: "2024-02-01",
-    referenceNumber: "FLW-20240128-004",
-    gatewayReference: "tx_xxxxxxxx",
-    confirmationDetails: "Flutterwave transaction successful",
-    status: "successful",
-    gateway: "flutterwave",
-    linkedInvoices: ["INV-2024-004"],
-    recordedBy: "System",
-    recordedDate: "2024-01-28",
-    auditTrail: [
-      { action: "created", timestamp: "2024-01-28 09:30:00", user: "System" },
-      { action: "settled", timestamp: "2024-02-01 16:45:00", user: "System" },
-    ],
-  },
-];
+const PAYMENT_RECORDS_BASELINE = [];
 
 // Expense Types
 type ExpenseCategory = {
@@ -510,273 +265,29 @@ type Expense = {
   auditTrail: AuditLog[];
 };
 
-const EXPENSE_CATEGORIES_BASELINE: ExpenseCategory[] = [
-  { id: "cat-001", code: "OP-100", name: "Travel", accountId: "4110", requiresVendor: true, requiresReceipt: true, policyDescription: "Flights, hotels, transport" },
-  { id: "cat-002", code: "OP-200", name: "Office Supplies", accountId: "4120", requiresVendor: true, requiresReceipt: true, policyDescription: "Stationery, equipment" },
-  { id: "cat-003", code: "OP-300", name: "Meals & Entertainment", accountId: "4130", requiresVendor: false, requiresReceipt: true, policyDescription: "Team meals, client entertainment" },
-  { id: "cat-004", code: "OP-400", name: "Insurance", accountId: "4510", requiresVendor: true, requiresReceipt: true, categoryLimit: 3000000, policyDescription: "Corporate insurance policies" },
-  { id: "cat-005", code: "OP-500", name: "Professional Services", accountId: "4250", requiresVendor: true, requiresReceipt: true, policyDescription: "Consulting, audit, legal" },
-];
+const EXPENSE_CATEGORIES_BASELINE = [];
 
-const EXPENSE_RECORDS_BASELINE: Expense[] = [
-  {
-    id: "EXP-0001",
-    tenantId: "tenant-001",
-    expenseDate: "2026-01-15",
-    recordedDate: "2026-01-15",
-    amount: 450000,
-    taxType: "vat",
-    taxRate: 7.5,
-    taxAmount: 33750,
-    totalAmount: 483750,
-    category: EXPENSE_CATEGORIES_BASELINE[0],
-    type: "vendor",
-    description: "Flight to Lagos for client meeting",
-    vendorId: "vend-001",
-    vendorName: "Arik Air",
-    employeeId: "emp-001",
-    departmentId: "dept-001",
-    projectId: "proj-001",
-    costCenterId: "cc-001",
-    paymentStatus: "paid",
-    approvalStatus: "approved",
-    paymentMethod: "bank_transfer",
-    linkedPaymentId: "PAY-0045",
-    notes: "Client engagement - Strategic account",
-    receiptUrls: ["flight-receipt.pdf"],
-    createdBy: "emp-001",
-    createdAt: "2026-01-15T09:00:00Z",
-    updatedAt: "2026-01-17T14:30:00Z",
-    approvedBy: "emp-002",
-    approvedAt: "2026-01-17T14:30:00Z",
-    journalEntryId: "JE-12345",
-    accountId: "4110-Travel",
-    vatInputAccountId: "1050",
-    approvals: [
-      { id: "app-001", expenseId: "EXP-0001", approverRole: "manager", approverId: "emp-002", approverName: "John Doe", action: "approved", timestamp: "2026-01-16T10:00:00Z", amountThreshold: 1000000 },
-      { id: "app-002", expenseId: "EXP-0001", approverRole: "finance", approverId: "emp-003", approverName: "Jane Smith", action: "approved", timestamp: "2026-01-17T11:00:00Z", amountThreshold: 2000000 },
-    ],
-    auditTrail: [
-      { id: "audit-001", action: "created", timestamp: "2026-01-15T09:00:00Z", user: "emp-001", details: { amount: 450000 } },
-      { id: "audit-002", action: "submitted", timestamp: "2026-01-15T09:30:00Z", user: "emp-001", details: {} },
-      { id: "audit-003", action: "approved", timestamp: "2026-01-17T14:30:00Z", user: "emp-002", details: { reason: "Approved - within authority" } },
-      { id: "audit-004", action: "posted_to_gl", timestamp: "2026-01-18T08:00:00Z", user: "system", details: { journalEntryId: "JE-12345" } },
-      { id: "audit-005", action: "marked_paid", timestamp: "2026-01-20T10:00:00Z", user: "emp-003", details: { linkedPaymentId: "PAY-0045" } },
-    ],
-  },
-  {
-    id: "EXP-0002",
-    tenantId: "tenant-001",
-    expenseDate: "2026-01-18",
-    recordedDate: "2026-01-18",
-    amount: 50000,
-    taxType: "vat",
-    taxRate: 7.5,
-    taxAmount: 3750,
-    totalAmount: 53750,
-    category: EXPENSE_CATEGORIES_BASELINE[1],
-    type: "vendor",
-    description: "Office stationery and supplies",
-    vendorId: "vend-002",
-    vendorName: "Shoprite",
-    departmentId: "dept-002",
-    paymentStatus: "unpaid",
-    approvalStatus: "pending",
-    paymentMethod: "corporate_card",
-    notes: "General office supplies",
-    receiptUrls: ["shoprite-receipt.pdf"],
-    createdBy: "emp-004",
-    createdAt: "2026-01-18T11:00:00Z",
-    updatedAt: "2026-01-18T11:00:00Z",
-    approvals: [
-      { id: "app-003", expenseId: "EXP-0002", approverRole: "manager", approverId: "emp-002", approverName: "John Doe", action: "approved", timestamp: "2026-01-19T09:00:00Z", amountThreshold: 1000000 },
-    ],
-    auditTrail: [
-      { id: "audit-006", action: "created", timestamp: "2026-01-18T11:00:00Z", user: "emp-004", details: {} },
-      { id: "audit-007", action: "submitted", timestamp: "2026-01-18T12:00:00Z", user: "emp-004", details: {} },
-    ],
-    accountId: "4120-Office",
-    vatInputAccountId: "1050",
-  },
-  {
-    id: "EXP-0003",
-    tenantId: "tenant-001",
-    expenseDate: "2026-01-20",
-    recordedDate: "2026-01-20",
-    amount: 85000,
-    taxType: "vat",
-    taxRate: 7.5,
-    taxAmount: 6375,
-    totalAmount: 91375,
-    category: EXPENSE_CATEGORIES_BASELINE[2],
-    type: "cash",
-    description: "Team lunch - project kickoff meeting",
-    departmentId: "dept-003",
-    projectId: "proj-002",
-    paymentStatus: "paid",
-    approvalStatus: "approved",
-    paymentMethod: "cash",
-    notes: "Project team coordination",
-    receiptUrls: ["lunch-receipt.pdf"],
-    createdBy: "emp-005",
-    createdAt: "2026-01-20T13:00:00Z",
-    updatedAt: "2026-01-21T10:00:00Z",
-    approvedBy: "emp-002",
-    approvedAt: "2026-01-21T10:00:00Z",
-    journalEntryId: "JE-12346",
-    linkedPaymentId: "PAY-0046",
-    accountId: "4130-Meals",
-    vatInputAccountId: "1050",
-    approvals: [
-      { id: "app-004", expenseId: "EXP-0003", approverRole: "manager", approverId: "emp-002", approverName: "John Doe", action: "approved", timestamp: "2026-01-21T09:00:00Z", amountThreshold: 1000000 },
-    ],
-    auditTrail: [
-      { id: "audit-008", action: "created", timestamp: "2026-01-20T13:00:00Z", user: "emp-005", details: {} },
-      { id: "audit-009", action: "approved", timestamp: "2026-01-21T10:00:00Z", user: "emp-002", details: {} },
-    ],
-  },
-  {
-    id: "EXP-0004",
-    tenantId: "tenant-001",
-    expenseDate: "2026-01-25",
-    recordedDate: "2026-01-25",
-    amount: 2400000,
-    taxType: "none",
-    taxRate: 0,
-    taxAmount: 0,
-    totalAmount: 2400000,
-    category: EXPENSE_CATEGORIES_BASELINE[3],
-    type: "prepaid",
-    description: "Annual insurance premium (24-month coverage)",
-    vendorId: "vend-003",
-    vendorName: "AXA Insurance",
-    departmentId: "dept-001",
-    paymentStatus: "paid",
-    approvalStatus: "approved",
-    paymentMethod: "bank_transfer",
-    linkedPaymentId: "PAY-0047",
-    notes: "24-month comprehensive coverage",
-    receiptUrls: ["axa-policy.pdf"],
-    createdBy: "emp-006",
-    createdAt: "2026-01-25T08:00:00Z",
-    updatedAt: "2026-01-26T15:00:00Z",
-    approvedBy: "emp-003",
-    approvedAt: "2026-01-26T15:00:00Z",
-    journalEntryId: "JE-12347",
-    accountId: "1400-Prepaid",
-    approvals: [
-      { id: "app-005", expenseId: "EXP-0004", approverRole: "manager", approverId: "emp-002", approverName: "John Doe", action: "approved", timestamp: "2026-01-25T10:00:00Z", amountThreshold: 1000000 },
-      { id: "app-006", expenseId: "EXP-0004", approverRole: "finance", approverId: "emp-003", approverName: "Jane Smith", action: "approved", timestamp: "2026-01-26T14:00:00Z", amountThreshold: 2000000 },
-      { id: "app-007", expenseId: "EXP-0004", approverRole: "executive", approverId: "emp-007", approverName: "CEO", action: "approved", timestamp: "2026-01-26T15:00:00Z", amountThreshold: 5000000 },
-    ],
-    auditTrail: [
-      { id: "audit-010", action: "created", timestamp: "2026-01-25T08:00:00Z", user: "emp-006", details: {} },
-      { id: "audit-011", action: "approved", timestamp: "2026-01-26T15:00:00Z", user: "emp-003", details: { allApprovalsComplete: true } },
-      { id: "audit-012", action: "posted_to_gl", timestamp: "2026-01-27T08:00:00Z", user: "system", details: { journalEntryId: "JE-12347", prepaidAmortization: "24 months @ ₦100K/month" } },
-    ],
-  },
-  {
-    id: "EXP-0005",
-    tenantId: "tenant-001",
-    expenseDate: "2026-01-28",
-    recordedDate: "2026-01-28",
-    amount: 500000,
-    taxType: "wht",
-    taxRate: 5,
-    taxAmount: 25000,
-    totalAmount: 475000,
-    category: EXPENSE_CATEGORIES_BASELINE[4],
-    type: "vendor",
-    description: "External audit services - Q1 review",
-    vendorId: "vend-004",
-    vendorName: "KPMG",
-    departmentId: "dept-001",
-    paymentStatus: "unpaid",
-    approvalStatus: "pending",
-    paymentMethod: "bank_transfer",
-    notes: "Quarterly audit - compliance requirement",
-    receiptUrls: [],
-    createdBy: "emp-006",
-    createdAt: "2026-01-28T14:00:00Z",
-    updatedAt: "2026-01-28T14:00:00Z",
-    accountId: "4250-Professional",
-    whtPayableAccountId: "2080",
-    approvals: [
-      { id: "app-008", expenseId: "EXP-0005", approverRole: "manager", approverId: "emp-002", approverName: "John Doe", action: "clarification_requested", reason: "Awaiting scope details", timestamp: "2026-01-29T09:00:00Z", amountThreshold: 1000000 },
-    ],
-    auditTrail: [
-      { id: "audit-013", action: "created", timestamp: "2026-01-28T14:00:00Z", user: "emp-006", details: {} },
-      { id: "audit-014", action: "submitted", timestamp: "2026-01-28T14:30:00Z", user: "emp-006", details: {} },
-      { id: "audit-015", action: "clarification_requested", timestamp: "2026-01-29T09:00:00Z", user: "emp-002", details: { question: "Please provide scope of audit" } },
-    ],
-  },
-];
+const EXPENSE_RECORDS_BASELINE = [];
 
 const DEFAULT_FINANCE_CURRENCY = "₦";
 
-const FINANCE_CASH_ACCOUNTS_BASELINE: FinanceCashAccount[] = [
-  {
-    id: "ACC-01",
-    name: "Zenith Treasury",
-    type: "bank",
-    balance: "₦312.4M",
-    currency: "₦",
-    trend: "up",
-    change: "+₦8.2M vs last week",
-    region: "Global",
-  },
-  {
-    id: "ACC-02",
-    name: "Ecobank Ops",
-    type: "bank",
-    balance: "₦148.0M",
-    currency: "₦",
-    trend: "down",
-    change: "-₦3.6M vs last week",
-    region: "EMEA",
-  },
-  {
-    id: "ACC-03",
-    name: "Cash-in-Transit",
-    type: "cash",
-    balance: "₦42.6M",
-    currency: "₦",
-    trend: "up",
-    change: "+₦1.4M vs last week",
-    region: "APAC",
-  },
-];
+const FINANCE_CASH_ACCOUNTS_BASELINE = [];
 
-const FINANCE_EXPENSE_BREAKDOWN_BASELINE: FinanceExpenseBreakdown[] = [
-  { label: "Cloud infrastructure", amount: "₦48.2M", delta: "+6.4%", direction: "up" },
-  { label: "Logistics + freight", amount: "₦34.6M", delta: "-2.1%", direction: "down" },
-  { label: "Payroll", amount: "₦128.9M", delta: "+1.2%", direction: "up" },
-  { label: "Vendors & services", amount: "₦26.4M", delta: "-3.8%", direction: "down" },
-];
+const FINANCE_EXPENSE_BREAKDOWN_BASELINE = [];
 
-const MOCK_INVOICES: InvoiceItem[] = [
-  { id: "1", invoiceNumber: "INV-2024-001", customer: "Axiom Labs", amount: "₦145,000", status: "paid", dueDate: "2024-01-15", issueDate: "2024-01-01", branch: "Lagos HQ" },
-  { id: "2", invoiceNumber: "INV-2024-002", customer: "Nova Holdings", amount: "₦892,500", status: "sent", dueDate: "2024-02-10", issueDate: "2024-01-25", branch: "Abuja" },
-  { id: "3", invoiceNumber: "INV-2024-003", customer: "Helix Metals", amount: "₦2,340,000", status: "overdue", dueDate: "2024-01-28", issueDate: "2024-01-14", branch: "Lagos HQ" },
-  { id: "4", invoiceNumber: "INV-2024-004", customer: "Vertex Dynamics", amount: "₦567,800", status: "sent", dueDate: "2024-02-20", issueDate: "2024-02-01", branch: "Port Harcourt" },
-  { id: "5", invoiceNumber: "INV-2024-005", customer: "Quantum Systems", amount: "₦1,234,500", status: "draft", dueDate: "2024-02-28", issueDate: "2024-02-01", branch: "Lagos HQ" },
-  { id: "6", invoiceNumber: "INV-2024-006", customer: "Axiom Labs", amount: "₦445,200", status: "paid", dueDate: "2024-01-20", issueDate: "2024-01-05", branch: "Lagos HQ" },
-  { id: "7", invoiceNumber: "INV-2024-007", customer: "Eclipse Trading", amount: "₦789,000", status: "sent", dueDate: "2024-02-15", issueDate: "2024-01-30", branch: "Kano" },
-  { id: "8", invoiceNumber: "INV-2024-008", customer: "Meridian Corp", amount: "₦3,120,000", status: "overdue", dueDate: "2024-01-25", issueDate: "2024-01-10", branch: "Abuja" },
-];
+const MOCK_INVOICES = [];
 
 const FINANCE_BASELINE_SNAPSHOT: FinanceSnapshot = {
-  metrics: [
-    { label: "Monthly revenue", value: "₦812M", delta: "+4.2%", trend: "up", description: "vs prior period" },
-    { label: "OpEx burn", value: "₦534M", delta: "-1.9%", trend: "down", description: "track to budget" },
-    { label: "Days sales outstanding", value: "42 days", delta: "-3", trend: "up", description: "collections velocity" },
-    { label: "Cash runway", value: "13.4 mo", delta: "+0.3", trend: "up", description: "multi-entity" },
-  ],
-  trend: FINANCE_TREND_BASELINE,
-  receivables: FINANCE_RECEIVABLES_BASELINE,
-  payables: FINANCE_PAYABLES_BASELINE,
-  cashAccounts: FINANCE_CASH_ACCOUNTS_BASELINE,
-  expenseBreakdown: FINANCE_EXPENSE_BREAKDOWN_BASELINE,
+  metrics: [],
+  trend: {
+    labels: [],
+    revenue: [],
+    expenses: [],
+  },
+  receivables: [],
+  payables: [],
+  cashAccounts: [],
+  expenseBreakdown: [],
 };
 
 const FINANCE_SCHEDULE_STATUS_META: Record<FinanceScheduleItem["status"], { label: string; chip: string }> = {
@@ -2474,131 +1985,13 @@ const NAVIGATION: NavigationSection[] = [
   },
 ];
 
-const INVOICE_QUEUE: InvoiceRow[] = [
-  {
-    id: "INV-98231",
-    vendor: "Apex Suppliers",
-    amount: "$184,200",
-    channel: "NetSuite",
-    eta: "12m",
-    status: "ready",
-    notes: "3-way match complete",
-  },
-  {
-    id: "INV-98244",
-    vendor: "Forge Parts",
-    amount: "$96,440",
-    channel: "Coupa",
-    eta: "45m",
-    status: "variance",
-    notes: "Tax variance flagged",
-  },
-  {
-    id: "INV-98257",
-    vendor: "Atlas Metals",
-    amount: "$62,010",
-    channel: "SAP",
-    eta: "1h 12m",
-    status: "hold",
-    notes: "Awaiting compliance",
-  },
-  {
-    id: "INV-98273",
-    vendor: "Helix Freight",
-    amount: "$48,870",
-    channel: "QuickBooks",
-    eta: "28m",
-    status: "ready",
-    notes: "Payment run S-14",
-  },
-];
+const INVOICE_QUEUE = [];
 
-const DEAL_PIPELINE: DealOpportunity[] = [
-  {
-    name: "Kreatix Metals",
-    stage: "Diligence",
-    value: "$18.2M",
-    owner: "D. Ibarra",
-    probability: 68,
-    region: "EMEA",
-  },
-  {
-    name: "Nova Retail",
-    stage: "Contracting",
-    value: "$11.4M",
-    owner: "S. Patel",
-    probability: 54,
-    region: "APAC",
-  },
-  {
-    name: "Axiom Mobility",
-    stage: "Sourcing",
-    value: "$6.8M",
-    owner: "L. Gomez",
-    probability: 41,
-    region: "AMER",
-  },
-  {
-    name: "Helios Parts",
-    stage: "Negotiation",
-    value: "$22.6M",
-    owner: "M. Byrne",
-    probability: 73,
-    region: "Global",
-  },
-];
+const DEAL_PIPELINE = [];
 
-const APPROVAL_ROUTES: ApprovalRoute[] = [
-  {
-    name: "Finance · CapEx ladder",
-    pending: 6,
-    owners: ["Aria S.", "Myra L."],
-    updated: "8m ago",
-    eta: "2h SLA",
-  },
-  {
-    name: "Legal · Vendor onboarding",
-    pending: 4,
-    owners: ["Khalid P.", "Nita R."],
-    updated: "22m ago",
-    eta: "45m",
-    critical: true,
-  },
-  {
-    name: "HR · Global policy",
-    pending: 8,
-    owners: ["D. Ibarra"],
-    updated: "1h ago",
-    eta: "6h",
-  },
-];
+const APPROVAL_ROUTES = [];
 
-const ALERT_FEED: AlertItem[] = [
-  {
-    label: "Payroll queue saturation",
-    detail: "NA payroll connector retrying",
-    severity: "critical",
-    timestamp: "Active now",
-  },
-  {
-    label: "Webhook latency",
-    detail: "Billing events lagging by 2.8m",
-    severity: "warning",
-    timestamp: "12 min ago",
-  },
-  {
-    label: "Policy evidence expiring",
-    detail: "SOC Type II package needs refresh",
-    severity: "info",
-    timestamp: "56 min ago",
-  },
-  {
-    label: "Regional approval reroutes",
-    detail: "EMEA policy toggled to OPS",
-    severity: "warning",
-    timestamp: "1 hr ago",
-  },
-];
+const ALERT_FEED = [];
 
 const INVOICE_STATUS_STYLES: Record<InvoiceRow["status"], string> = {
   ready: "bg-emerald-50 text-emerald-600",
@@ -2657,144 +2050,11 @@ const HEADLINE_MAP: Record<string, string> = {
   integrations: "Integrations",
 };
 
-const KPI_METRICS: KpiMetric[] = [
-  {
-    label: "Invoices cleared",
-    value: "1,284",
-    delta: "+12.4%",
-    trend: "up",
-    description: "Since last 7 days",
-  },
-  {
-    label: "Deals in diligence",
-    value: "$38.2M",
-    delta: "+4.1%",
-    trend: "up",
-    description: "Avg. daily volume",
-  },
-  {
-    label: "Payroll readiness",
-    value: "98.1%",
-    delta: "-1.4%",
-    trend: "down",
-    description: "Cutoff in 36h",
-  },
-  {
-    label: "Critical alerts",
-    value: "7",
-    delta: "+2",
-    trend: "down",
-    description: "Cleared past hour",
-  },
-];
+const KPI_METRICS = [];
 
-const LIVE_PANELS: LiveOperationPanel[] = [
-  {
-    title: "Invoice stream",
-    countLabel: "224 ready for sync",
-    primaryColor: "border-l-4 border-emerald-300",
-    pills: ["NetSuite", "Sync pending"],
-    items: [
-      {
-        title: "PO-44819",
-        meta: "Apex Suppliers",
-        supporting: "$184K · Aging 12h",
-        statusColor: "text-emerald-600",
-      },
-      {
-        title: "PO-44820",
-        meta: "Forge Parts",
-        supporting: "$96K · Aging 4h",
-        statusColor: "text-emerald-600",
-      },
-      {
-        title: "PO-44821",
-        meta: "Atlas Metals",
-        supporting: "$62K · Aging 36h",
-        statusColor: "text-amber-500",
-      },
-    ],
-  },
-  {
-    title: "Approvals",
-    countLabel: "18 routing",
-    primaryColor: "border-l-4 border-sky-300",
-    pills: ["Finance", "Ops"],
-    items: [
-      {
-        title: "Expansion budget",
-        meta: "Subsidiary · EMEA",
-        supporting: "Step 2 of 4",
-        statusColor: "text-sky-600",
-      },
-      {
-        title: "HR policy update",
-        meta: "Global · Legal",
-        supporting: "Pending CFO",
-        statusColor: "text-sky-600",
-      },
-      {
-        title: "Supplier onboarding",
-        meta: "APAC · Ops",
-        supporting: "Awaiting security",
-        statusColor: "text-amber-500",
-      },
-    ],
-  },
-  {
-    title: "System alerts",
-    countLabel: "5 SLA risk",
-    primaryColor: "border-l-4 border-rose-300",
-    pills: ["SLA", "Latency"],
-    items: [
-      {
-        title: "Webhook lag",
-        meta: "Billing · 2.8m",
-        supporting: "Auto-mitigated",
-        statusColor: "text-rose-500",
-      },
-      {
-        title: "Payroll queue",
-        meta: "NA Payroll",
-        supporting: "Manual override",
-        statusColor: "text-rose-500",
-      },
-      {
-        title: "Contract sync",
-        meta: "CRM connector",
-        supporting: "Retrying",
-        statusColor: "text-amber-500",
-      },
-    ],
-  },
-];
+const LIVE_PANELS = [];
 
-const ACTIVITY_LOG = [
-  {
-    title: "Invoice batch posted",
-    detail: "NetSuite · 248 docs",
-    timestamp: "8 min ago",
-    tone: "emerald" as const,
-  },
-  {
-    title: "EMEA approvals rerouted",
-    detail: "Policy change by D. Ibarra",
-    timestamp: "14 min ago",
-    tone: "sky" as const,
-  },
-  {
-    title: "SLA breach mitigated",
-    detail: "API latency normalized",
-    timestamp: "23 min ago",
-    tone: "rose" as const,
-  },
-  {
-    title: "Security review completed",
-    detail: "SOC evidence bundle",
-    timestamp: "1 hr ago",
-    tone: "slate" as const,
-  },
-];
+const ACTIVITY_LOG = [];
 
 const TIMEFRAME_OPTIONS = ["Last 24 hours", "Last 7 days", "Last 30 days"];
 
@@ -2847,6 +2107,7 @@ export default function TenantAdminPage() {
 
   // Invoice workspace state
   const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<InvoiceStatus | "all">("all");
   const [invoiceBranchFilter, setInvoiceBranchFilter] = useState<string>("all");
   const [invoiceSearchQuery, setInvoiceSearchQuery] = useState("");
@@ -3087,8 +2348,8 @@ export default function TenantAdminPage() {
               contacts: normalizedContacts.map((contact) => ({
                 company: contact.company,
                 contactName: contact.contact,
-                contactEmail: contact.email || undefined,
-                contactPhone: contact.phone || undefined,
+                contactEmail: contact.email && contact.email.trim() ? contact.email.trim() : undefined,
+                contactPhone: contact.phone && contact.phone.trim() ? contact.phone.trim() : undefined,
                 source: contact.source,
                 status: contact.status,
                 tags: contact.tags,
@@ -4852,9 +4113,9 @@ function FinancePaymentsWorkspace() {
         const response = await fetch("/api/finance/vendor-payments?tenantSlug=kreatix-default");
         if (!response.ok) throw new Error("Failed to fetch payments");
         const data = await response.json();
-        if (data.data && Array.isArray(data.data)) {
-          // Transform API response to PaymentRecord format if needed
-          setPayments(data.data);
+        const paymentsList = data.data || data.payments || [];
+        if (Array.isArray(paymentsList)) {
+          setPayments(paymentsList);
         }
       } catch (err) {
         console.error("Failed to load payments:", err);
@@ -5053,1462 +4314,1136 @@ function FinancePaymentsWorkspace() {
   };
 
   return (
-    <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Cash tracking</p>
-          <h2 className="text-2xl font-semibold text-slate-900">Vendor Payments</h2>
+    <div className="space-y-6">
+      {/* Dashboard Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">Total Received</p>
+          <p className="text-2xl font-semibold text-slate-900 mt-2">{formatCurrency(metrics.totalReceived)}</p>
+          <p className="text-xs text-slate-500 mt-1">From {payments.filter(p => p.status === "successful" || p.status === "settled").length} payments</p>
         </div>
-
-        {/* Loading State */}
-        {loading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-              <p className="text-sm text-slate-500">Loading payments...</p>
-            </div>
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && !loading && (
-          <div className="rounded-lg bg-red-50 border border-red-200 p-4 flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="font-medium text-red-900">{error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="mt-2 text-sm text-red-700 hover:text-red-900 font-medium"
-              >
-                Try again
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!loading && !error && payments.length === 0 && (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <CreditCard className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-600 font-medium">No payments yet</p>
-              <p className="text-sm text-slate-500 mt-1">Create your first payment to get started</p>
-            </div>
-          </div>
-        )}
-
-        {!loading && !error && payments.length > 0 && (
-          <>
-        {/* Header continued */}
-          <h2 className="text-2xl font-semibold text-slate-900">Payments</h2>
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">Pending Amount</p>
+          <p className="text-2xl font-semibold text-yellow-600 mt-2">{formatCurrency(metrics.pendingAmount)}</p>
+          <p className="text-xs text-slate-500 mt-1">Awaiting settlement</p>
         </div>
-
-        {/* Dashboard Metrics */}
-        <div className="grid grid-cols-4 gap-4">
-          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-green-50 to-green-100 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Total Received</p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{formatCurrency(metrics.totalReceived)}</p>
-            <p className="mt-1 text-xs text-slate-500">{payments.filter(p => p.status === "settled").length} settled</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-yellow-50 to-yellow-100 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Pending</p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{formatCurrency(metrics.pendingAmount)}</p>
-            <p className="mt-1 text-xs text-slate-500">{payments.filter(p => p.status === "pending").length} payments</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-red-50 to-red-100 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Failed</p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{formatCurrency(metrics.failedAmount)}</p>
-            <p className="mt-1 text-xs text-slate-500">{payments.filter(p => p.status === "failed").length} failed</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-blue-50 to-blue-100 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Success Rate</p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{metrics.successRate}%</p>
-            <p className="mt-1 text-xs text-slate-500">{formatCurrency(metrics.totalFees)} in fees</p>
-          </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">Fees Charged</p>
+          <p className="text-2xl font-semibold text-slate-900 mt-2">{formatCurrency(metrics.totalFees)}</p>
+          <p className="text-xs text-slate-500 mt-1">Processing fees</p>
         </div>
-
-        {/* Filters and Search */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by reference..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-            />
-          </div>
-          <select
-            value={statusFilter || ""}
-            onChange={(e) => setStatusFilter(e.target.value || null)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-          >
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="successful">Successful</option>
-            <option value="settled">Settled</option>
-            <option value="failed">Failed</option>
-            <option value="reversed">Reversed</option>
-          </select>
-          <select
-            value={methodFilter || ""}
-            onChange={(e) => setMethodFilter(e.target.value || null)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-          >
-            <option value="">All Methods</option>
-            <option value="bank_transfer">Bank Transfer</option>
-            <option value="check">Check</option>
-            <option value="cash">Cash</option>
-            <option value="mobile_money">Mobile Money</option>
-            <option value="wire">Wire Transfer</option>
-          </select>
-          <select
-            value={gatewayFilter || ""}
-            onChange={(e) => setGatewayFilter(e.target.value || null)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-          >
-            <option value="">All Gateways</option>
-            <option value="manual">Manual</option>
-            <option value="paystack">Paystack</option>
-            <option value="flutterwave">Flutterwave</option>
-            <option value="stripe">Stripe</option>
-          </select>
-          <button
-            onClick={() => handleOpenRecord()}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
-          >
-            Record Payment
-          </button>
-        </div>
-
-        {/* Payment Table */}
-        <div className="overflow-x-auto rounded-lg border border-slate-200">
-          <table className="w-full border-collapse">
-            <thead className="bg-gradient-to-r from-slate-50 to-slate-100">
-              <tr>
-                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
-                  Reference
-                </th>
-                <th className="border-b border-slate-200 px-4 py-3 text-right text-xs font-semibold uppercase text-slate-600">
-                  Gross
-                </th>
-                <th className="border-b border-slate-200 px-4 py-3 text-right text-xs font-semibold uppercase text-slate-600">
-                  Fees
-                </th>
-                <th className="border-b border-slate-200 px-4 py-3 text-right text-xs font-semibold uppercase text-slate-600">
-                  Net
-                </th>
-                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
-                  Method
-                </th>
-                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
-                  Gateway
-                </th>
-                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
-                  Status
-                </th>
-                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
-                  Date
-                </th>
-                <th className="border-b border-slate-200 px-4 py-3 text-center text-xs font-semibold uppercase text-slate-600">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredPayments.length > 0 ? (
-                filteredPayments.map((payment) => (
-                  <tr
-                    key={payment.id}
-                    className="border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer"
-                    onClick={() => setSelectedPayment(payment)}
-                  >
-                    <td className="px-4 py-3 text-sm font-medium text-slate-900">{payment.reference}</td>
-                    <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">{formatCurrency(payment.grossAmount)}</td>
-                    <td className="px-4 py-3 text-right text-sm text-slate-600">{formatCurrency(payment.fees)}</td>
-                    <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">{formatCurrency(payment.netAmount)}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{getMethodLabel(payment.method)}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{getGatewayLabel(payment.gateway)}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold border ${getStatusColor(payment.status)}`}>
-                        {getStatusLabel(payment.status)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{payment.paymentDate}</td>
-                    <td className="px-4 py-3 text-center relative">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenMenuId(openMenuId === payment.id ? null : payment.id);
-                        }}
-                        className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
-                      {openMenuId === payment.id && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-40"
-                            onClick={() => setOpenMenuId(null)}
-                          />
-                          <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-slate-200 bg-white shadow-lg z-50 overflow-hidden">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenRecord(payment);
-                                setOpenMenuId(null);
-                              }}
-                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left"
-                            >
-                              <Send className="h-4 w-4 text-slate-400" />
-                              Edit Payment
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenMenuId(null);
-                              }}
-                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100"
-                            >
-                              <Download className="h-4 w-4 text-slate-400" />
-                              Download Receipt
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenMenuId(null);
-                              }}
-                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100"
-                            >
-                              <FileText className="h-4 w-4 text-slate-400" />
-                              View Details
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-sm text-slate-500">
-                    No payments found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Summary */}
-        <div className="rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
-          <p>
-            Showing <span className="font-semibold text-slate-900">{filteredPayments.length}</span> of{" "}
-            <span className="font-semibold text-slate-900">{payments.length}</span> payments
-          </p>
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">Success Rate</p>
+          <p className="text-2xl font-semibold text-green-600 mt-2">{metrics.successRate}%</p>
+          <p className="text-xs text-slate-500 mt-1">Of all payments</p>
         </div>
       </div>
 
-      {/* Payment Detail Drawer */}
-      {selectedPayment && !showRecordModal && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/40 z-40 transition-opacity"
-            onClick={() => setSelectedPayment(null)}
-          />
-          <div className="fixed right-0 top-0 h-full w-full max-w-2xl bg-white shadow-xl z-50 overflow-y-auto rounded-l-3xl">
-            <div className="p-8 space-y-6">
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Payment Detail</p>
-                  <h3 className="text-2xl font-semibold text-slate-900">{selectedPayment.reference}</h3>
-                </div>
-                <button
-                  onClick={() => setSelectedPayment(null)}
-                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-600"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
+      {/* Payments Table */}
+      <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-slate-900">Payment Records</h3>
+          <button
+            onClick={() => handleOpenRecord()}
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+          >
+            + Record Payment
+          </button>
+        </div>
 
-              {/* Amount Details */}
-              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <h4 className="font-semibold text-slate-900 text-sm">Amount Details</h4>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">Gross Amount</p>
-                    <p className="text-lg font-bold text-slate-900">{formatCurrency(selectedPayment.grossAmount)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">Fees</p>
-                    <p className="text-lg font-bold text-red-600">{formatCurrency(selectedPayment.fees)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">Net Amount</p>
-                    <p className="text-lg font-bold text-green-600">{formatCurrency(selectedPayment.netAmount)}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment Details */}
-              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <h4 className="font-semibold text-slate-900 text-sm">Payment Information</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">Payment Method</p>
-                    <p className="text-slate-900">{getMethodLabel(selectedPayment.method)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">Gateway</p>
-                    <p className="text-slate-900">{getGatewayLabel(selectedPayment.gateway)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">Payment Date</p>
-                    <p className="text-slate-900">{selectedPayment.paymentDate}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">Settlement Date</p>
-                    <p className="text-slate-900">{selectedPayment.settlementDate}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">Status</p>
-                    <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold border ${getStatusColor(selectedPayment.status)}`}>
-                      {getStatusLabel(selectedPayment.status)}
-                    </span>
-                  </div>
-                  {selectedPayment.gatewayReference && (
-                    <div>
-                      <p className="text-xs font-semibold text-slate-600">Gateway Reference</p>
-                      <p className="text-slate-900 font-mono text-xs">{selectedPayment.gatewayReference}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Linked Invoices */}
-              {selectedPayment.linkedInvoices.length > 0 && (
-                <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <h4 className="font-semibold text-slate-900 text-sm">Linked Invoices</h4>
-                  <div className="space-y-2">
-                    {selectedPayment.linkedInvoices.map((invoice) => (
-                      <div key={invoice} className="flex items-center justify-between text-sm">
-                        <span className="text-slate-700">{invoice}</span>
-                        <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">Linked</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Audit Trail */}
-              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <h4 className="font-semibold text-slate-900 text-sm">Activity</h4>
-                <div className="space-y-2">
-                  {selectedPayment.auditTrail.map((trail, idx) => (
-                    <div key={idx} className="text-xs text-slate-600">
-                      <p className="font-semibold text-slate-900">{trail.action}</p>
-                      <p className="text-slate-500">{new Date(trail.timestamp).toLocaleString()} by {trail.user}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-3 pt-6 border-t border-slate-200">
-                <button
-                  onClick={() => setSelectedPayment(null)}
-                  className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 transition-colors"
-                >
-                  Close
-                </button>
-                <button
-                  onClick={() => handleOpenRecord(selectedPayment)}
-                  className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
-                >
-                  Edit Payment
-                </button>
-              </div>
-            </div>
+        {loading && <p className="text-slate-600 py-8 text-center">Loading payments...</p>}
+        {error && <p className="text-rose-600 py-8 text-center">{error}</p>}
+        
+        {!loading && filteredPayments.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-slate-500 text-sm">No payments recorded yet</p>
+            <p className="text-xs text-slate-400 mt-1">Payments will appear here once recorded</p>
           </div>
-        </>
-      )}
+        )}
+
+        {filteredPayments.length > 0 && (
+          <table className="w-full text-sm">
+            <thead className="border-b border-slate-200">
+              <tr>
+                <th className="text-left py-3 px-4 font-medium text-slate-700">Reference</th>
+                <th className="text-right py-3 px-4 font-medium text-slate-700">Gross Amount</th>
+                <th className="text-right py-3 px-4 font-medium text-slate-700">Fees</th>
+                <th className="text-right py-3 px-4 font-medium text-slate-700">Net Amount</th>
+                <th className="text-left py-3 px-4 font-medium text-slate-700">Method</th>
+                <th className="text-left py-3 px-4 font-medium text-slate-700">Status</th>
+                <th className="text-left py-3 px-4 font-medium text-slate-700">Date</th>
+                <th className="text-center py-3 px-4 font-medium text-slate-700">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPayments.map((payment) => (
+                <tr key={payment.id} className="border-b border-slate-100 hover:bg-slate-50">
+                  <td className="py-3 px-4 text-slate-900 font-medium">{payment.reference}</td>
+                  <td className="py-3 px-4 text-right text-slate-900">₦{typeof payment.grossAmount === 'string' ? payment.grossAmount : payment.grossAmount.toLocaleString()}</td>
+                  <td className="py-3 px-4 text-right text-slate-600">₦{typeof payment.fees === 'string' ? payment.fees : payment.fees.toLocaleString()}</td>
+                  <td className="py-3 px-4 text-right text-slate-900 font-medium">₦{typeof payment.netAmount === 'string' ? payment.netAmount : payment.netAmount.toLocaleString()}</td>
+                  <td className="py-3 px-4 text-slate-600">{getMethodLabel(payment.method)}</td>
+                  <td className="py-3 px-4">
+                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium border ${getStatusColor(payment.status)}`}>
+                      {getStatusLabel(payment.status)}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-slate-600 text-xs">{payment.paymentDate}</td>
+                  <td className="py-3 px-4 text-center">
+                    <button
+                      onClick={() => setSelectedPayment(payment)}
+                      className="text-blue-600 hover:text-blue-700 text-sm"
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
 
       {/* Record Payment Modal */}
       {showRecordModal && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/40 z-40 transition-opacity"
-            onClick={() => {
-              setShowRecordModal(false);
-              setSelectedPayment(null);
-            }}
-          />
-          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md rounded-2xl bg-white shadow-xl z-50 max-h-[90vh] overflow-y-auto">
-            <div className="p-8 space-y-6">
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Record Payment</p>
-                  <h3 className="text-2xl font-semibold text-slate-900">New Payment</h3>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowRecordModal(false);
-                    setSelectedPayment(null);
-                  }}
-                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-600"
-                >
-                  <X className="h-5 w-5" />
-                </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">Record Payment</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Reference</label>
+                <input
+                  type="text"
+                  value={recordForm.reference}
+                  onChange={(e) => setRecordForm({ ...recordForm, reference: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900"
+                  placeholder="e.g., TRF-001"
+                />
               </div>
 
-              {/* Form */}
-              <div className="space-y-4">
-                {/* Reference Number */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Reference Number*</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., PAY-001, TRF-123456"
-                    value={recordForm.reference}
-                    onChange={(e) => setRecordForm({ ...recordForm, reference: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                  />
-                </div>
-
-                {/* Payment Method */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Payment Method*</label>
-                  <select
-                    value={recordForm.method}
-                    onChange={(e) => setRecordForm({ ...recordForm, method: e.target.value as any })}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                  >
-                    <option value="bank_transfer">Bank Transfer</option>
-                    <option value="check">Check</option>
-                    <option value="cash">Cash</option>
-                    <option value="mobile_money">Mobile Money</option>
-                    <option value="wire">Wire Transfer</option>
-                    <option value="paystack">Paystack</option>
-                    <option value="flutterwave">Flutterwave</option>
-                    <option value="stripe">Stripe</option>
-                  </select>
-                </div>
-
-                {/* Gross Amount */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Gross Amount (₦)*</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    value={recordForm.grossAmount}
-                    onChange={(e) => setRecordForm({ ...recordForm, grossAmount: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                  />
-                </div>
-
-                {/* Fees */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Fees (₦)</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    value={recordForm.fees}
-                    onChange={(e) => setRecordForm({ ...recordForm, fees: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                  />
-                </div>
-
-                {/* Payment Date */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Payment Date*</label>
-                  <input
-                    type="date"
-                    value={recordForm.paymentDate}
-                    onChange={(e) => setRecordForm({ ...recordForm, paymentDate: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                  />
-                </div>
-
-                {/* Gateway Reference (conditional) */}
-                {(recordForm.method === "paystack" || recordForm.method === "flutterwave" || recordForm.method === "stripe") && (
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-900 mb-2">Gateway Reference</label>
-                    <input
-                      type="text"
-                      placeholder="External transaction ID"
-                      value={recordForm.gatewayReference}
-                      onChange={(e) => setRecordForm({ ...recordForm, gatewayReference: e.target.value })}
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                    />
-                  </div>
-                )}
-
-                {/* Confirmation Details */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Confirmation Details*</label>
-                  <textarea
-                    placeholder="Bank confirmation, receipt details, or payment notes..."
-                    value={recordForm.confirmationDetails}
-                    onChange={(e) => setRecordForm({ ...recordForm, confirmationDetails: e.target.value })}
-                    rows={4}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Method</label>
+                <select
+                  value={recordForm.method}
+                  onChange={(e) => setRecordForm({ ...recordForm, method: e.target.value as any })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900"
+                >
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="cash">Cash</option>
+                  <option value="corporate_card">Corporate Card</option>
+                  <option value="other">Other</option>
+                </select>
               </div>
 
-              {/* Actions */}
-              <div className="flex gap-3 pt-6 border-t border-slate-200">
-                <button
-                  onClick={() => {
-                    setShowRecordModal(false);
-                    setSelectedPayment(null);
-                  }}
-                  className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveRecord}
-                  className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
-                >
-                  Record Payment
-                </button>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Gross Amount</label>
+                <input
+                  type="number"
+                  value={recordForm.grossAmount}
+                  onChange={(e) => setRecordForm({ ...recordForm, grossAmount: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900"
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Fees</label>
+                <input
+                  type="number"
+                  value={recordForm.fees}
+                  onChange={(e) => setRecordForm({ ...recordForm, fees: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900"
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Payment Date</label>
+                <input
+                  type="date"
+                  value={recordForm.paymentDate}
+                  onChange={(e) => setRecordForm({ ...recordForm, paymentDate: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Confirmation Details</label>
+                <textarea
+                  value={recordForm.confirmationDetails}
+                  onChange={(e) => setRecordForm({ ...recordForm, confirmationDetails: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900"
+                  placeholder="Receipt #, notes, etc."
+                  rows={3}
+                />
               </div>
             </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowRecordModal(false)}
+                className="flex-1 px-4 py-2 text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveRecord}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Save Payment
+              </button>
+            </div>
           </div>
-        </>
+        </div>
       )}
-        </>
-        )}
     </div>
   );
 }
 
 function FinanceExpensesWorkspace() {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [approvalFilter, setApprovalFilter] = useState<string | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [showRecordModal, setShowRecordModal] = useState(false);
+  const [showCreateCategory, setShowCreateCategory] = useState(false);
+  const [newCategory, setNewCategory] = useState({
+    code: '',
+    name: '',
+    accountId: '',
+  });
+  const [recordForm, setRecordForm] = useState({
+    type: 'reimbursement',
+    amount: '',
+    taxType: 'NONE',
+    category: 'Meals & Entertainment',
+    categoryId: 'cat_meals',
+    description: '',
+    date: new Date().toISOString().split('T')[0],
+    notes: '',
+  });
 
-  // Load expenses from API
   useEffect(() => {
-    const fetchExpenses = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch("/api/finance/expenses?tenantSlug=kreatix-default");
-        if (!response.ok) throw new Error("Failed to fetch expenses");
-        const data = await response.json();
-        if (data.data && Array.isArray(data.data)) {
-          setExpenses(data.data);
-        } else if (Array.isArray(data)) {
-          setExpenses(data);
+        
+        // Fetch categories first
+        const categoriesResponse = await fetch("/api/finance/expense-categories?tenantSlug=kreatix-default").catch(err => {
+          console.error("Fetch categories error:", err);
+          return null;
+        });
+        
+        if (categoriesResponse?.ok) {
+          const catData = await categoriesResponse.json();
+          setCategories(Array.isArray(catData.categories) ? catData.categories : catData.data || []);
+        }
+        
+        // Fetch expenses
+        const response = await fetch("/api/finance/expenses?tenantSlug=kreatix-default").catch(err => {
+          console.error("Fetch error:", err);
+          throw err;
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setExpenses(Array.isArray(data.expenses) ? data.expenses : data.data || []);
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          console.error("API error:", errData);
+          setError(`Error loading expenses: ${response.status}`);
+          setExpenses([]);
         }
       } catch (err) {
         console.error("Failed to load expenses:", err);
         setError("Failed to load expenses");
+        setExpenses([]);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchExpenses();
+    fetchData();
   }, []);
-  const [recordForm, setRecordForm] = useState({
-    expenseType: "vendor" as const,
-    date: new Date().toISOString().split('T')[0],
-    amount: "",
-    category: "",
-    vendor: "",
-    description: "",
-    department: "",
-    taxType: "none" as const,
-    notes: "",
-  });
-
-  // Filter expenses
-  const filteredExpenses = expenses.filter((expense) => {
-    const matchesSearch = expense.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (expense.vendorName?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
-    const matchesPaymentStatus = statusFilter ? expense.paymentStatus === statusFilter : true;
-    const matchesApprovalStatus = approvalFilter ? expense.approvalStatus === approvalFilter : true;
-    const matchesCategory = categoryFilter ? expense.category.id === categoryFilter : true;
-    return matchesSearch && matchesPaymentStatus && matchesApprovalStatus && matchesCategory;
-  });
-
-  // Calculate metrics
-  const metrics = {
-    totalExpenses: expenses.reduce((sum, e) => sum + e.totalAmount, 0),
-    approvedVsPending: {
-      approved: expenses.filter(e => e.approvalStatus === 'approved').reduce((sum, e) => sum + e.totalAmount, 0),
-      pending: expenses.filter(e => e.approvalStatus === 'pending').reduce((sum, e) => sum + e.totalAmount, 0),
-    },
-    byCategory: EXPENSE_CATEGORIES_BASELINE.map(cat => ({
-      name: cat.name,
-      amount: expenses.filter(e => e.category.id === cat.id && e.approvalStatus === 'approved').reduce((sum, e) => sum + e.totalAmount, 0),
-    })),
-    budgetUsed: 0.72, // 72% consumption
-  };
 
   const handleOpenRecord = () => {
-    setShowRecordModal(true);
     setRecordForm({
-      expenseType: "vendor",
+      type: 'reimbursement',
+      amount: '',
+      taxType: 'NONE',
+      category: 'Meals & Entertainment',
+      categoryId: 'cat_meals',
+      description: '',
       date: new Date().toISOString().split('T')[0],
-      amount: "",
-      category: "",
-      vendor: "",
-      description: "",
-      department: "",
-      taxType: "none",
-      notes: "",
+      notes: '',
     });
+    setShowRecordModal(true);
   };
 
-  const handleSaveExpense = async () => {
-    if (!recordForm.amount || !recordForm.category || !recordForm.description) {
-      setError("Please fill in all required fields (Amount, Category, Description)");
+  const handleSaveRecord = async () => {
+    if (!recordForm.description || !recordForm.amount) {
+      alert('Please fill in description and amount');
       return;
     }
 
-    const category = EXPENSE_CATEGORIES_BASELINE.find(c => c.id === recordForm.category);
-    if (!category) {
-      setError("Selected category not found");
+    console.log('Submitting expense with category:', recordForm.categoryId, recordForm.category);
+
+    try {
+      const response = await fetch('/api/finance/expenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantSlug: 'kreatix-default',
+          type: recordForm.type,
+          amount: parseFloat(recordForm.amount),
+          taxType: recordForm.taxType,
+          category: recordForm.category,
+          categoryId: recordForm.categoryId,
+          description: recordForm.description,
+          date: recordForm.date,
+          notes: recordForm.notes,
+          createdBy: 'kreatix-default-user',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const newExpense = data.expense || data;
+        setExpenses([newExpense, ...expenses]);
+        setShowRecordModal(false);
+        setRecordForm({
+          type: 'reimbursement',
+          amount: '',
+          taxType: 'NONE',
+          category: 'Meals & Entertainment',
+          categoryId: 'cat_meals',
+          description: '',
+          date: new Date().toISOString().split('T')[0],
+          notes: '',
+        });
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        console.error('API error:', errData);
+        alert('Failed to record expense: ' + JSON.stringify(errData));
+      }
+    } catch (err) {
+      console.error('Error recording expense:', err);
+      alert('Error recording expense: ' + String(err));
+    }
+  };
+
+  const handleCreateCategory = async () => {
+    if (!newCategory.code || !newCategory.name || !newCategory.accountId) {
+      alert('Please fill in all category fields');
       return;
     }
 
     try {
-      setLoading(true);
-      setError(null);
-      const amount = parseFloat(recordForm.amount);
+      const response = await fetch('/api/finance/expense-categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: newCategory.code.toUpperCase(),
+          name: newCategory.name,
+          accountId: newCategory.accountId,
+          requiresVendor: true,
+          requiresReceipt: true,
+        }),
+      });
 
-      if (isNaN(amount) || amount <= 0) {
-        setError("Amount must be a valid number greater than 0");
-        setLoading(false);
-        return;
+      if (response.ok) {
+        const data = await response.json();
+        const createdCategory = data.category;
+        
+        // Add to categories list
+        setCategories([...categories, createdCategory]);
+        
+        // Select the newly created category
+        setRecordForm({
+          ...recordForm,
+          categoryId: createdCategory.id,
+          category: createdCategory.name,
+        });
+        
+        // Reset and close category form
+        setNewCategory({ code: '', name: '', accountId: '' });
+        setShowCreateCategory(false);
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        alert('Failed to create category: ' + JSON.stringify(errData));
       }
-
-      console.log("Creating expense with data:", {
-        tenantSlug: "default",
-        type: recordForm.expenseType,
-        amount,
-        categoryId: recordForm.category,
-        description: recordForm.description,
-      });
-
-      const result = await createExpense({
-        tenantSlug: "default",
-        regionId: "region-001",
-        branchId: "branch-001",
-        type: recordForm.expenseType as "vendor" | "reimbursement" | "cash" | "prepaid",
-        amount,
-        taxType: recordForm.taxType === 'vat' ? 'VAT' : recordForm.taxType === 'wht' ? 'WHT' : 'NONE',
-        categoryId: recordForm.category,
-        description: recordForm.description,
-        vendor: recordForm.vendor || undefined,
-        date: recordForm.date,
-        notes: recordForm.notes,
-        createdBy: "current-user",
-      });
-
-      console.log("Expense created successfully:", result);
-
-      // Reload expenses from API
-      const updated = await listExpenses({ tenantSlug: "default" });
-      if (updated && Array.isArray(updated)) {
-        setExpenses(updated);
-      }
-      
-      setShowRecordModal(false);
-      setRecordForm({
-        expenseType: "vendor",
-        date: new Date().toISOString().split('T')[0],
-        amount: "",
-        category: "",
-        vendor: "",
-        description: "",
-        department: "",
-        taxType: "none",
-        notes: "",
-      });
-      setError(null);
     } catch (err) {
-      console.error("Error saving expense:", err);
-      const errorMessage = err instanceof Error ? err.message : "Failed to save expense. Please check the form and try again.";
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
+      console.error('Error creating category:', err);
+      alert('Error creating category: ' + String(err));
     }
-  };
-
-  const handleApprove = async (expense: Expense) => {
-    try {
-      setLoading(true);
-      await approveExpense({
-        expenseId: expense.id,
-        tenantSlug: "default",
-        approverRole: "MANAGER",
-        approverId: "current-user",
-        approverName: "Current User",
-        action: "APPROVED",
-        reason: "Approved by manager",
-      });
-
-      // Reload expenses
-      const updated = await listExpenses({ tenantSlug: "default" });
-      if (updated && Array.isArray(updated)) {
-        setExpenses(updated);
-      }
-      
-      setSelectedExpense(null);
-    } catch (err) {
-      console.error("Error approving expense:", err);
-      setError("Failed to approve expense");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleReject = async (expense: Expense) => {
-    try {
-      setLoading(true);
-      await approveExpense({
-        expenseId: expense.id,
-        tenantSlug: "default",
-        approverRole: "MANAGER",
-        approverId: "current-user",
-        approverName: "Current User",
-        action: "REJECTED",
-        reason: "Rejected by manager",
-      });
-
-      // Reload expenses
-      const updated = await listExpenses({ tenantSlug: "default" });
-      if (updated && Array.isArray(updated)) {
-        setExpenses(updated);
-      }
-      
-      setSelectedExpense(null);
-    } catch (err) {
-      console.error("Error rejecting expense:", err);
-      setError("Failed to reject expense");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "unpaid":
-        return "bg-yellow-50 text-yellow-700 border-yellow-200";
-      case "paid":
-        return "bg-green-50 text-green-700 border-green-200";
-      case "reimbursed":
-        return "bg-purple-50 text-purple-700 border-purple-200";
-      case "pending_payment":
-        return "bg-blue-50 text-blue-700 border-blue-200";
-      default:
-        return "bg-slate-50 text-slate-700 border-slate-200";
-    }
-  };
-
-  const getApprovalColor = (status: string) => {
-    switch (status) {
-      case "draft":
-        return "bg-slate-50 text-slate-700 border-slate-200";
-      case "pending":
-        return "bg-yellow-50 text-yellow-700 border-yellow-200";
-      case "approved":
-        return "bg-green-50 text-green-700 border-green-200";
-      case "rejected":
-        return "bg-red-50 text-red-700 border-red-200";
-      default:
-        return "bg-slate-50 text-slate-700 border-slate-200";
-    }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return `₦${(amount / 1000000).toFixed(2)}M`;
-  };
-
-  const formatAmount = (amount: number) => {
-    if (amount >= 1000000) {
-      return `₦${(amount / 1000000).toFixed(2)}M`;
-    } else if (amount >= 1000) {
-      return `₦${(amount / 1000).toFixed(0)}K`;
-    }
-    return `₦${amount.toFixed(0)}`;
   };
 
   return (
     <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
-      <div className="space-y-6">
-        {/* Header */}
+      <div className="mb-6 flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Cost control</p>
           <h2 className="text-2xl font-semibold text-slate-900">Expenses</h2>
+          <p className="text-sm text-slate-500 mt-1">Track and manage expense records</p>
         </div>
-
-        {/* Loading State */}
-        {loading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-              <p className="text-sm text-slate-500">Loading expenses...</p>
-            </div>
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && !loading && (
-          <div className="rounded-lg bg-red-50 border border-red-200 p-4 flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="font-medium text-red-900">{error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="mt-2 text-sm text-red-700 hover:text-red-900 font-medium"
-              >
-                Try again
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!loading && !error && expenses.length === 0 && (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <DollarSign className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-600 font-medium">No expenses yet</p>
-              <p className="text-sm text-slate-500 mt-1">Create your first expense to get started</p>
-            </div>
-          </div>
-        )}
-
-        {!loading && !error && expenses.length > 0 && (
-          <>
-        {/* Dashboard Metrics (4-Column) */}
-        <div className="grid grid-cols-4 gap-4">
-          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-purple-50 to-purple-100 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Total Expenses</p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{formatCurrency(metrics.totalExpenses)}</p>
-            <p className="mt-1 text-xs text-slate-500">{expenses.length} records</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-green-50 to-green-100 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Approved</p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{formatCurrency(metrics.approvedVsPending.approved)}</p>
-            <p className="mt-1 text-xs text-slate-500">{expenses.filter(e => e.approvalStatus === 'approved').length} expenses</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-yellow-50 to-yellow-100 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Pending Approval</p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{formatCurrency(metrics.approvedVsPending.pending)}</p>
-            <p className="mt-1 text-xs text-slate-500">{expenses.filter(e => e.approvalStatus === 'pending').length} awaiting</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-blue-50 to-blue-100 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Budget Usage</p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{(metrics.budgetUsed * 100).toFixed(0)}%</p>
-            <p className="mt-1 text-xs text-slate-500">₦1.76M / ₦2.45M</p>
-          </div>
-        </div>
-
-        {/* Filters and Search */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by ID, description, vendor..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-            />
-          </div>
-          <select
-            value={statusFilter || ""}
-            onChange={(e) => setStatusFilter(e.target.value || null)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-          >
-            <option value="">All Payment Status</option>
-            <option value="unpaid">Unpaid</option>
-            <option value="paid">Paid</option>
-            <option value="reimbursed">Reimbursed</option>
-            <option value="pending_payment">Pending Payment</option>
-          </select>
-          <select
-            value={approvalFilter || ""}
-            onChange={(e) => setApprovalFilter(e.target.value || null)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-          >
-            <option value="">All Approval Status</option>
-            <option value="draft">Draft</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </select>
-          <select
-            value={categoryFilter || ""}
-            onChange={(e) => setCategoryFilter(e.target.value || null)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-          >
-            <option value="">All Categories</option>
-            {EXPENSE_CATEGORIES_BASELINE.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={handleOpenRecord}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
-          >
-            Record Expense
-          </button>
-        </div>
-
-        {/* Expense Table (9 Columns) */}
-        <div className="overflow-x-auto rounded-lg border border-slate-200">
-          <table className="w-full border-collapse">
-            <thead className="bg-gradient-to-r from-slate-50 to-slate-100">
-              <tr>
-                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
-                  ID
-                </th>
-                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
-                  Description
-                </th>
-                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
-                  Category
-                </th>
-                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
-                  Vendor
-                </th>
-                <th className="border-b border-slate-200 px-4 py-3 text-right text-xs font-semibold uppercase text-slate-600">
-                  Amount
-                </th>
-                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
-                  Date
-                </th>
-                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
-                  Payment
-                </th>
-                <th className="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">
-                  Approval
-                </th>
-                <th className="border-b border-slate-200 px-4 py-3 text-center text-xs font-semibold uppercase text-slate-600">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredExpenses.length > 0 ? (
-                filteredExpenses.map((expense) => (
-                  <tr
-                    key={expense.id}
-                    className="border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer"
-                    onClick={() => setSelectedExpense(expense)}
-                  >
-                    <td className="px-4 py-3 text-sm font-medium text-slate-900">{expense.id}</td>
-                    <td className="px-4 py-3 text-sm text-slate-700">{expense.description}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{expense.category.name}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{expense.vendorName || "—"}</td>
-                    <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">{formatAmount(expense.totalAmount)}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{expense.expenseDate}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold border ${getStatusColor(expense.paymentStatus)}`}>
-                        {expense.paymentStatus.replace(/_/g, ' ').charAt(0).toUpperCase() + expense.paymentStatus.replace(/_/g, ' ').slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold border ${getApprovalColor(expense.approvalStatus)}`}>
-                        {expense.approvalStatus.charAt(0).toUpperCase() + expense.approvalStatus.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center relative">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenMenuId(openMenuId === expense.id ? null : expense.id);
-                        }}
-                        className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
-                      {openMenuId === expense.id && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-40"
-                            onClick={() => setOpenMenuId(null)}
-                          />
-                          <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-slate-200 bg-white shadow-lg z-50 overflow-hidden">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleApprove(expense);
-                                setOpenMenuId(null);
-                              }}
-                              disabled={expense.approvalStatus !== "pending"}
-                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <CheckCircle className="h-4 w-4 text-slate-400" />
-                              Approve
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleReject(expense);
-                                setOpenMenuId(null);
-                              }}
-                              disabled={expense.approvalStatus !== "pending"}
-                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <XCircle className="h-4 w-4 text-slate-400" />
-                              Reject
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenMenuId(null);
-                              }}
-                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left border-t border-slate-100"
-                            >
-                              <FileText className="h-4 w-4 text-slate-400" />
-                              View Details
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-sm text-slate-500">
-                    No expenses found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Summary */}
-        <div className="rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
-          <p>
-            Showing <span className="font-semibold text-slate-900">{filteredExpenses.length}</span> of{" "}
-            <span className="font-semibold text-slate-900">{expenses.length}</span> expenses
-          </p>
-        </div>
+        <button
+          onClick={handleOpenRecord}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+        >
+          Record Expense
+        </button>
       </div>
 
-      {/* Expense Detail Drawer */}
-      {selectedExpense && !showRecordModal && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/40 z-40 transition-opacity"
-            onClick={() => setSelectedExpense(null)}
-          />
-          <div className="fixed right-0 top-0 h-full w-full max-w-2xl bg-white shadow-xl z-50 overflow-y-auto rounded-l-3xl">
-            <div className="p-8 space-y-6">
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Expense Detail</p>
-                  <h3 className="text-2xl font-semibold text-slate-900">{selectedExpense.id}</h3>
-                </div>
-                <button
-                  onClick={() => setSelectedExpense(null)}
-                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-600"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
+      {loading && <p className="text-slate-600 py-8 text-center">Loading expenses...</p>}
+      {error && <p className="text-rose-600 py-8 text-center text-sm">{error}</p>}
 
-              {/* Amount & Tax Details */}
-              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <h4 className="font-semibold text-slate-900 text-sm">Amount & Tax</h4>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">Base Amount</p>
-                    <p className="text-lg font-bold text-slate-900">{formatAmount(selectedExpense.amount)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">{selectedExpense.taxType.toUpperCase()} ({selectedExpense.taxRate}%)</p>
-                    <p className="text-lg font-bold text-red-600">{formatAmount(selectedExpense.taxAmount)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">Total</p>
-                    <p className="text-lg font-bold text-green-600">{formatAmount(selectedExpense.totalAmount)}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Expense Details */}
-              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <h4 className="font-semibold text-slate-900 text-sm">Details</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">Category</p>
-                    <p className="text-slate-900">{selectedExpense.category.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">Type</p>
-                    <p className="text-slate-900 capitalize">{selectedExpense.type.replace(/_/g, ' ')}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">Expense Date</p>
-                    <p className="text-slate-900">{selectedExpense.expenseDate}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">Payment Method</p>
-                    <p className="text-slate-900">{selectedExpense.paymentMethod.replace(/_/g, ' ')}</p>
-                  </div>
-                  {selectedExpense.vendorName && (
-                    <div>
-                      <p className="text-xs font-semibold text-slate-600">Vendor</p>
-                      <p className="text-slate-900">{selectedExpense.vendorName}</p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">Department</p>
-                    <p className="text-slate-900">{selectedExpense.departmentId}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Status */}
-              <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <h4 className="font-semibold text-slate-900 text-sm">Status</h4>
-                <div className="flex gap-4">
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">Payment Status</p>
-                    <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold border ${getStatusColor(selectedExpense.paymentStatus)}`}>
-                      {selectedExpense.paymentStatus.replace(/_/g, ' ')}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-600">Approval Status</p>
-                    <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold border ${getApprovalColor(selectedExpense.approvalStatus)}`}>
-                      {selectedExpense.approvalStatus}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Approval History */}
-              {selectedExpense.approvals.length > 0 && (
-                <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <h4 className="font-semibold text-slate-900 text-sm">Approval History</h4>
-                  <div className="space-y-2">
-                    {selectedExpense.approvals.map((approval) => (
-                      <div key={approval.id} className="text-xs">
-                        <p className="font-semibold text-slate-900">{approval.action.replace(/_/g, ' ')} by {approval.approverName}</p>
-                        <p className="text-slate-500">{approval.timestamp}</p>
-                        {approval.reason && <p className="text-slate-600 italic">"{approval.reason}"</p>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Audit Trail */}
-              <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <h4 className="font-semibold text-slate-900 text-sm">Audit Trail</h4>
-                <div className="space-y-2">
-                  {selectedExpense.auditTrail.map((trail) => (
-                    <div key={trail.id} className="text-xs">
-                      <p className="font-semibold text-slate-900">{trail.action}</p>
-                      <p className="text-slate-500">{trail.timestamp} by {trail.user}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-3 pt-6 border-t border-slate-200">
-                <button
-                  onClick={() => setSelectedExpense(null)}
-                  className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 transition-colors"
-                >
-                  Close
-                </button>
-                {selectedExpense.approvalStatus === "pending" && (
-                  <>
-                    <button
-                      onClick={() => {
-                        handleApprove(selectedExpense);
-                      }}
-                      className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition-colors"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleReject(selectedExpense);
-                      }}
-                      className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
-                    >
-                      Reject
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </>
+      {!loading && !error && expenses.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-slate-500">No expenses recorded yet</p>
+          <p className="text-xs text-slate-400 mt-1">Expense records will appear here once submitted</p>
+        </div>
       )}
 
-      {/* Record Expense Modal */}
+      {expenses.length > 0 && (
+        <table className="w-full text-sm">
+          <thead className="border-b border-slate-200">
+            <tr>
+              <th className="text-left py-3 px-4 font-medium text-slate-700">ID</th>
+              <th className="text-left py-3 px-4 font-medium text-slate-700">Description</th>
+              <th className="text-right py-3 px-4 font-medium text-slate-700">Amount</th>
+              <th className="text-left py-3 px-4 font-medium text-slate-700">Category</th>
+              <th className="text-left py-3 px-4 font-medium text-slate-700">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {expenses.map((expense: any) => (
+              <tr key={expense.id} className="border-b border-slate-100 hover:bg-slate-50">
+                <td className="py-3 px-4 text-slate-900 font-medium">{expense.id?.slice(0, 8)}</td>
+                <td className="py-3 px-4 text-slate-600">{expense.description || 'N/A'}</td>
+                <td className="py-3 px-4 text-right text-slate-900 font-medium">₦{(expense.amount || 0).toLocaleString()}</td>
+                <td className="py-3 px-4 text-slate-600">{expense.categoryId || 'Other'}</td>
+                <td className="py-3 px-4"><span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-full">{expense.approvalStatus || 'pending'}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
       {showRecordModal && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/40 z-40 transition-opacity"
-            onClick={() => setShowRecordModal(false)}
-          />
-          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md rounded-2xl bg-white shadow-xl z-50 max-h-[90vh] overflow-y-auto">
-            <div className="p-8 space-y-6">
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Record Expense</p>
-                  <h3 className="text-2xl font-semibold text-slate-900">New Expense</h3>
-                </div>
-                <button
-                  onClick={() => setShowRecordModal(false)}
-                  className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-600"
-                >
-                  <X className="h-5 w-5" />
-                </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Record Expense</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                <input
+                  type="text"
+                  value={recordForm.description}
+                  onChange={(e) => setRecordForm({...recordForm, description: e.target.value})}
+                  placeholder="e.g., Office supplies"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
 
-              {/* Error Alert */}
-              {error && (
-                <div className="rounded-lg bg-red-50 border border-red-200 p-3">
-                  <p className="text-sm text-red-700">{error}</p>
-                </div>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Amount</label>
+                <input
+                  type="number"
+                  value={recordForm.amount}
+                  onChange={(e) => setRecordForm({...recordForm, amount: e.target.value})}
+                  placeholder="0.00"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
 
-              {/* Form */}
-              <div className="space-y-4">
-                {/* Expense Type */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Expense Type*</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
                   <select
-                    value={recordForm.expenseType}
-                    onChange={(e) => setRecordForm({ ...recordForm, expenseType: e.target.value as any })}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+                    value={recordForm.type}
+                    onChange={(e) => setRecordForm({...recordForm, type: e.target.value})}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="vendor">Vendor Expense</option>
-                    <option value="employee_reimbursement">Employee Reimbursement</option>
-                    <option value="cash">Cash Expense</option>
-                    <option value="prepaid">Prepaid Expense</option>
+                    <option value="reimbursement">Reimbursement</option>
+                    <option value="vendor">Vendor</option>
+                    <option value="cash">Cash</option>
+                    <option value="prepaid">Prepaid</option>
                   </select>
                 </div>
-
-                {/* Date */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Date*</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Tax Type</label>
+                  <select
+                    value={recordForm.taxType}
+                    onChange={(e) => setRecordForm({...recordForm, taxType: e.target.value})}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="NONE">None</option>
+                    <option value="VAT">VAT</option>
+                    <option value="WHT">WHT</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                  <select
+                    value={recordForm.categoryId}
+                    onChange={(e) => {
+                      if (e.target.value === '__create_new__') {
+                        setShowCreateCategory(true);
+                      } else {
+                        const selectedCategory = categories.find(cat => cat.id === e.target.value);
+                        setRecordForm({
+                          ...recordForm, 
+                          categoryId: e.target.value, 
+                          category: selectedCategory?.name || e.target.value
+                        });
+                      }
+                    }}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {categories.length > 0 ? (
+                      <>
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                        <option value="__create_new__" className="font-semibold text-blue-600">
+                          + Create new category...
+                        </option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="cat_meals">Meals & Entertainment</option>
+                        <option value="cat_travel">Travel</option>
+                        <option value="cat_supplies">Office Supplies</option>
+                        <option value="cat_insurance">Insurance</option>
+                        <option value="cat_professional">Professional Services</option>
+                        <option value="__create_new__" className="font-semibold text-blue-600">
+                          + Create new category...
+                        </option>
+                      </>
+                    )}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
                   <input
                     type="date"
                     value={recordForm.date}
-                    onChange={(e) => setRecordForm({ ...recordForm, date: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                  />
-                </div>
-
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Description*</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Flight to Lagos, Office supplies"
-                    value={recordForm.description}
-                    onChange={(e) => setRecordForm({ ...recordForm, description: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                  />
-                </div>
-
-                {/* Category */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Category*</label>
-                  <select
-                    value={recordForm.category}
-                    onChange={(e) => setRecordForm({ ...recordForm, category: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                  >
-                    <option value="">Select Category</option>
-                    {EXPENSE_CATEGORIES_BASELINE.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Amount */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Amount (₦)*</label>
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    value={recordForm.amount}
-                    onChange={(e) => setRecordForm({ ...recordForm, amount: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                  />
-                </div>
-
-                {/* Vendor */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Vendor</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Arik Air, Shoprite"
-                    value={recordForm.vendor}
-                    onChange={(e) => setRecordForm({ ...recordForm, vendor: e.target.value })}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                  />
-                </div>
-
-                {/* Tax Type */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Tax Type</label>
-                  <select
-                    value={recordForm.taxType}
-                    onChange={(e) => setRecordForm({ ...recordForm, taxType: e.target.value as any })}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
-                  >
-                    <option value="none">None</option>
-                    <option value="vat">VAT (7.5%)</option>
-                    <option value="wht">WHT (5%)</option>
-                  </select>
-                </div>
-
-                {/* Notes */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Notes</label>
-                  <textarea
-                    placeholder="Additional notes or justification..."
-                    value={recordForm.notes}
-                    onChange={(e) => setRecordForm({ ...recordForm, notes: e.target.value })}
-                    rows={3}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-200"
+                    onChange={(e) => setRecordForm({...recordForm, date: e.target.value})}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex gap-3 pt-6 border-t border-slate-200">
-                <button
-                  onClick={() => setShowRecordModal(false)}
-                  disabled={loading}
-                  className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveExpense}
-                  disabled={loading}
-                  className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    "Record Expense"
-                  )}
-                </button>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+                <textarea
+                  value={recordForm.notes}
+                  onChange={(e) => setRecordForm({...recordForm, notes: e.target.value})}
+                  placeholder="Additional details..."
+                  rows={2}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
             </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowRecordModal(false)}
+                className="flex-1 px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveRecord}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
+              >
+                Save Expense
+              </button>
+            </div>
           </div>
-        </>
+        </div>
       )}
-        </>
-        )}
+
+      {showCreateCategory && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Create New Category</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Category Name</label>
+                <input
+                  type="text"
+                  value={newCategory.name}
+                  onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
+                  placeholder="e.g., Marketing, Equipment, Software"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Category Code</label>
+                <input
+                  type="text"
+                  value={newCategory.code}
+                  onChange={(e) => setNewCategory({...newCategory, code: e.target.value.toUpperCase()})}
+                  placeholder="e.g., MKTG, EQUIP, SOFT"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">GL Account Code</label>
+                <input
+                  type="text"
+                  value={newCategory.accountId}
+                  onChange={(e) => setNewCategory({...newCategory, accountId: e.target.value})}
+                  placeholder="e.g., 6060, 6070"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowCreateCategory(false);
+                  setNewCategory({ code: '', name: '', accountId: '' });
+                }}
+                className="flex-1 px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateCategory}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition"
+              >
+                Create Category
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function FinanceAccountingWorkspace() {
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showAddAccount, setShowAddAccount] = useState(false);
+  const [accountFilter, setAccountFilter] = useState<string>('all');
+  const [newAccount, setNewAccount] = useState({
+    code: '',
+    name: '',
+    type: 'asset',
+    balance: '',
+    description: '',
+  });
+
+  const accountTypes = [
+    { value: 'asset', label: 'Asset' },
+    { value: 'liability', label: 'Liability' },
+    { value: 'equity', label: 'Equity' },
+    { value: 'revenue', label: 'Revenue' },
+    { value: 'expense', label: 'Expense' },
+  ];
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch("/api/accounting/accounts?tenantSlug=kreatix-default").catch(err => {
+          console.error("Fetch error:", err);
+          throw err;
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setAccounts(Array.isArray(data.accounts) ? data.accounts : data.data || []);
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          console.error("API error:", errData);
+          setError(`Error loading accounts: ${response.status}`);
+          setAccounts([]);
+        }
+      } catch (err) {
+        console.error("Failed to load accounts:", err);
+        setError("Failed to load accounts");
+        setAccounts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAccounts();
+  }, []);
+
+  const handleAddAccount = async () => {
+    if (!newAccount.code || !newAccount.name) {
+      alert('Please fill in account code and name');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/accounting/accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantSlug: 'kreatix-default',
+          code: newAccount.code,
+          name: newAccount.name,
+          type: newAccount.type,
+          balance: parseFloat(newAccount.balance || '0'),
+          description: newAccount.description,
+          currency: '₦',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const createdAccount = data.account || data;
+        setAccounts([createdAccount, ...accounts]);
+        setShowAddAccount(false);
+        setNewAccount({
+          code: '',
+          name: '',
+          type: 'asset',
+          balance: '',
+          description: '',
+        });
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        console.error('API error:', errData);
+        alert('Failed to add account: ' + JSON.stringify(errData));
+      }
+    } catch (err) {
+      console.error('Error adding account:', err);
+      alert('Error adding account: ' + String(err));
+    }
+  };
+
+  const filteredAccounts = accountFilter === 'all' 
+    ? accounts 
+    : accounts.filter((acc: any) => acc.type?.toLowerCase() === accountFilter);
+
   return (
     <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
-      <div className="space-y-6">
+      <div className="mb-6 flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Compliance & correctness</p>
-          <h2 className="text-2xl font-semibold text-slate-900">Accounting</h2>
+          <h2 className="text-2xl font-semibold text-slate-900">Chart of Accounts</h2>
+          <p className="text-sm text-slate-500 mt-1">Manage accounting GL structure</p>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center">
-          <div className="w-full space-y-3">
-            <BarChart3 className="mx-auto h-12 w-12 text-slate-400" />
-            <p className="text-lg font-semibold text-slate-900">Accounting Workspace Coming Soon</p>
-            <p className="text-sm text-slate-600">
-              Chart of accounts, journal entries, bank reconciliation, and period locking.
-            </p>
-            <div className="flex flex-wrap justify-center gap-2 pt-2">
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Chart of Accounts
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Journal Entries
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Reconciliation
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Period Lock
-              </span>
+        <button
+          onClick={() => setShowAddAccount(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+        >
+          Add Account
+        </button>
+      </div>
+
+      {/* Filter buttons */}
+      <div className="mb-6 flex gap-2 flex-wrap">
+        <button
+          onClick={() => setAccountFilter('all')}
+          className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+            accountFilter === 'all' 
+              ? 'bg-blue-100 text-blue-700' 
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+          }`}
+        >
+          All
+        </button>
+        {accountTypes.map((type) => (
+          <button
+            key={type.value}
+            onClick={() => setAccountFilter(type.value)}
+            className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+              accountFilter === type.value
+                ? 'bg-blue-100 text-blue-700'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            {type.label}
+          </button>
+        ))}
+      </div>
+
+      {loading && <p className="text-slate-600 py-8 text-center">Loading accounts...</p>}
+      {error && <p className="text-rose-600 py-8 text-center text-sm">{error}</p>}
+
+      {!loading && !error && filteredAccounts.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-slate-500">No accounts found</p>
+          <p className="text-xs text-slate-400 mt-1">
+            {accountFilter === 'all' 
+              ? 'Accounts will appear here once added' 
+              : `No ${accountTypes.find(t => t.value === accountFilter)?.label.toLowerCase()} accounts yet`}
+          </p>
+        </div>
+      )}
+
+      {filteredAccounts.length > 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="border-b border-slate-200">
+              <tr>
+                <th className="text-left py-3 px-4 font-medium text-slate-700">Code</th>
+                <th className="text-left py-3 px-4 font-medium text-slate-700">Name</th>
+                <th className="text-left py-3 px-4 font-medium text-slate-700">Type</th>
+                <th className="text-left py-3 px-4 font-medium text-slate-700">Description</th>
+                <th className="text-right py-3 px-4 font-medium text-slate-700">Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredAccounts.map((account: any) => (
+                <tr key={account.id} className="border-b border-slate-100 hover:bg-slate-50 transition">
+                  <td className="py-3 px-4 text-slate-900 font-semibold">{account.code || account.id?.slice(0, 8)}</td>
+                  <td className="py-3 px-4 text-slate-900">{account.name || 'N/A'}</td>
+                  <td className="py-3 px-4">
+                    <span className="inline-flex px-2 py-1 text-xs font-medium bg-slate-100 text-slate-700 rounded-full">
+                      {account.type ? account.type.charAt(0).toUpperCase() + account.type.slice(1) : 'Asset'}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-slate-600 text-xs">{account.description || '-'}</td>
+                  <td className="py-3 px-4 text-right text-slate-900 font-medium">
+                    ₦{(account.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {showAddAccount && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Add Account</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Account Code</label>
+                <input
+                  type="text"
+                  value={newAccount.code}
+                  onChange={(e) => setNewAccount({...newAccount, code: e.target.value.toUpperCase()})}
+                  placeholder="e.g., 1000, 2100"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Account Name</label>
+                <input
+                  type="text"
+                  value={newAccount.name}
+                  onChange={(e) => setNewAccount({...newAccount, name: e.target.value})}
+                  placeholder="e.g., Cash, Accounts Payable"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Account Type</label>
+                <select
+                  value={newAccount.type}
+                  onChange={(e) => setNewAccount({...newAccount, type: e.target.value})}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {accountTypes.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Opening Balance</label>
+                <input
+                  type="number"
+                  value={newAccount.balance}
+                  onChange={(e) => setNewAccount({...newAccount, balance: e.target.value})}
+                  placeholder="0.00"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Description (Optional)</label>
+                <textarea
+                  value={newAccount.description}
+                  onChange={(e) => setNewAccount({...newAccount, description: e.target.value})}
+                  placeholder="e.g., Operating cash account"
+                  rows={2}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowAddAccount(false);
+                  setNewAccount({
+                    code: '',
+                    name: '',
+                    type: 'asset',
+                    balance: '',
+                    description: '',
+                  });
+                }}
+                className="flex-1 px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddAccount}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
+              >
+                Add Account
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
 function FinanceReportsWorkspace() {
+  const [reportType, setReportType] = useState<'pl' | 'balance' | 'cashflow' | 'aged'>('pl');
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    return d.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [reportData, setReportData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const reportTypes = [
+    { value: 'pl', label: 'Profit & Loss', icon: '📊' },
+    { value: 'balance', label: 'Balance Sheet', icon: '⚖️' },
+    { value: 'cashflow', label: 'Cash Flow', icon: '💰' },
+    { value: 'aged', label: 'Aged Receivables', icon: '📋' },
+  ];
+
+  const handleGenerateReport = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch(
+        `/api/finance/reports?tenantSlug=kreatix-default&type=${reportType}&startDate=${startDate}&endDate=${endDate}`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setReportData(data.report || data.data || {});
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        console.error('API error:', errData);
+        setError(`Error generating report: ${response.status}`);
+      }
+    } catch (err) {
+      console.error('Error generating report:', err);
+      setError('Failed to generate report');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExport = (format: 'pdf' | 'excel') => {
+    const params = new URLSearchParams({
+      tenantSlug: 'kreatix-default',
+      type: reportType,
+      startDate,
+      endDate,
+      format,
+    });
+    window.location.href = `/api/finance/reports/export?${params.toString()}`;
+  };
+
   return (
-    <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
-      <div className="space-y-6">
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Decision intelligence</p>
-          <h2 className="text-2xl font-semibold text-slate-900">Reports</h2>
+    <div className="space-y-6">
+      {/* Report Type Selector */}
+      <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold text-slate-900">Financial Reports</h2>
+          <p className="text-sm text-slate-500 mt-1">Generate and analyze financial statements</p>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center">
-          <div className="w-full space-y-3">
-            <LineChart className="mx-auto h-12 w-12 text-slate-400" />
-            <p className="text-lg font-semibold text-slate-900">Reports Workspace Coming Soon</p>
-            <p className="text-sm text-slate-600">
-              P&L, Balance Sheet, Cash Flow, and Aged Receivables with multi-dimensional filtering.
-            </p>
-            <div className="flex flex-wrap justify-center gap-2 pt-2">
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                P&L Report
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Balance Sheet
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Cash Flow
-              </span>
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                Aged Receivables
-              </span>
-            </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          {reportTypes.map((type) => (
+            <button
+              key={type.value}
+              onClick={() => {
+                setReportType(type.value as any);
+                setReportData(null);
+              }}
+              className={`p-4 rounded-lg border-2 transition text-center ${
+                reportType === type.value
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
+              }`}
+            >
+              <div className="text-2xl mb-2">{type.icon}</div>
+              <div className="text-sm font-semibold text-slate-900">{type.label}</div>
+            </button>
+          ))}
+        </div>
+
+        {/* Date Range Controls */}
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => {
+                setStartDate(e.target.value);
+                setReportData(null);
+              }}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">End Date</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => {
+                setEndDate(e.target.value);
+                setReportData(null);
+              }}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
         </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={handleGenerateReport}
+            disabled={loading}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+          >
+            {loading ? 'Generating...' : 'Generate Report'}
+          </button>
+          {reportData && (
+            <>
+              <button
+                onClick={() => handleExport('pdf')}
+                className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition"
+              >
+                📄 PDF
+              </button>
+              <button
+                onClick={() => handleExport('excel')}
+                className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition"
+              >
+                📊 Excel
+              </button>
+            </>
+          )}
+        </div>
       </div>
+
+      {/* Report Content */}
+      {error && (
+        <div className="rounded-3xl border border-rose-200 bg-rose-50 p-8">
+          <p className="text-rose-600 text-sm">{error}</p>
+        </div>
+      )}
+
+      {loading && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+          <p className="text-slate-600 py-8 text-center">Generating report...</p>
+        </div>
+      )}
+
+      {reportData && !loading && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+          <div className="mb-6">
+            <h3 className="text-xl font-semibold text-slate-900">
+              {reportTypes.find(t => t.value === reportType)?.label}
+            </h3>
+            <p className="text-sm text-slate-500 mt-1">
+              {startDate} to {endDate}
+            </p>
+          </div>
+
+          {/* Summary Metrics */}
+          {reportData.metrics && reportData.metrics.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              {reportData.metrics.map((metric: any, idx: number) => (
+                <div key={idx} className="p-4 bg-slate-50 rounded-lg">
+                  <p className="text-xs text-slate-500 uppercase tracking-wide">{metric.label}</p>
+                  <p className="text-2xl font-bold text-slate-900 mt-2">₦{metric.value?.toLocaleString() || '0'}</p>
+                  {metric.change !== undefined && (
+                    <p className={`text-xs mt-2 ${metric.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {metric.change >= 0 ? '+' : ''}{metric.change}%
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Report Table */}
+          {reportData.items && reportData.items.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b border-slate-200">
+                  <tr>
+                    <th className="text-left py-3 px-4 font-medium text-slate-700">Item</th>
+                    <th className="text-right py-3 px-4 font-medium text-slate-700">Amount</th>
+                    <th className="text-right py-3 px-4 font-medium text-slate-700">% of Total</th>
+                    {reportData.items[0]?.priorAmount !== undefined && (
+                      <th className="text-right py-3 px-4 font-medium text-slate-700">Prior Period</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportData.items.map((item: any, idx: number) => (
+                    <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="py-3 px-4 text-slate-900">{item.name || item.label}</td>
+                      <td className="py-3 px-4 text-right text-slate-900 font-medium">
+                        ₦{(item.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                      <td className="py-3 px-4 text-right text-slate-600">
+                        {item.percentage !== undefined ? `${item.percentage}%` : '-'}
+                      </td>
+                      {item.priorAmount !== undefined && (
+                        <td className="py-3 px-4 text-right text-slate-600">
+                          ₦{(item.priorAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-slate-500">No data available for the selected period</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!reportData && !loading && !error && (
+        <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center">
+          <p className="text-slate-600">Select report type and date range, then click "Generate Report"</p>
+        </div>
+      )}
     </div>
   );
 }

@@ -11,7 +11,7 @@ import {
 } from "@/lib/finance/vendor-payments";
 
 const paymentListSchema = z.object({
-  tenantSlug: z.string().min(1),
+  tenantSlug: z.string().min(1).optional(),
   vendorId: z.string().uuid().optional(),
   status: z.enum(["draft", "posted", "reconciled", "cancelled"]).optional(),
   method: z.enum(["bank_transfer", "cash", "corporate_card", "other"]).optional(),
@@ -83,23 +83,27 @@ export async function GET(request: NextRequest) {
 
     // List payments with filters
     const parsed = paymentListSchema.safeParse({
-      tenantSlug: url.searchParams.get("tenantSlug"),
-      vendorId: url.searchParams.get("vendorId"),
-      status: url.searchParams.get("status"),
-      method: url.searchParams.get("method"),
-      limit: url.searchParams.get("limit"),
-      offset: url.searchParams.get("offset"),
+      tenantSlug: url.searchParams.get("tenantSlug") || undefined,
+      vendorId: url.searchParams.get("vendorId") || undefined,
+      status: url.searchParams.get("status") || undefined,
+      method: url.searchParams.get("method") || undefined,
+      limit: url.searchParams.get("limit") || undefined,
+      offset: url.searchParams.get("offset") || undefined,
     });
 
     if (!parsed.success) {
+      console.error("Vendor payments validation error:", parsed.error.flatten());
       return NextResponse.json(
         { error: "Invalid parameters", details: parsed.error.flatten() },
         { status: 400 }
       );
     }
 
-    const payments = await listVendorPayments(parsed.data);
-    return NextResponse.json({ payments });
+    const payments = await listVendorPayments(parsed.data).catch((err) => {
+      console.error("Database error in listVendorPayments:", err);
+      return [];
+    });
+    return NextResponse.json({ data: payments, payments });
 
   } catch (error) {
     console.error("Vendor Payments GET error:", error?.stack || error);

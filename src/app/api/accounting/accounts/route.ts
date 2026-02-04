@@ -36,11 +36,12 @@ export async function GET(request: NextRequest) {
       isActive: isActive ? isActive === "true" : undefined,
     });
 
-    return NextResponse.json({ data: accounts });
+    return NextResponse.json({ accounts, data: accounts });
   } catch (error) {
-    console.error("Error fetching accounts:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Error fetching accounts:", errorMessage, error);
     return NextResponse.json(
-      { error: "Failed to fetch accounts" },
+      { error: "Failed to fetch accounts", details: errorMessage },
       { status: 500 }
     );
   }
@@ -52,10 +53,15 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    }
+
     const parsed = chartOfAccountCreateSchema.safeParse(body);
 
     if (!parsed.success) {
+      console.log("Validation errors:", parsed.error.flatten());
       return NextResponse.json(
         { error: parsed.error.flatten() },
         { status: 400 }
@@ -64,11 +70,12 @@ export async function POST(request: NextRequest) {
 
     const account = await createChartOfAccount(parsed.data);
 
-    return NextResponse.json({ data: account }, { status: 201 });
+    return NextResponse.json({ account, data: account }, { status: 201 });
   } catch (error) {
-    console.error("Error creating account:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Error creating account:", errorMessage, error);
     return NextResponse.json(
-      { error: "Failed to create account" },
+      { error: "Failed to create account", details: errorMessage },
       { status: 500 }
     );
   }

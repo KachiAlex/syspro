@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { approveBudget, getBudgetApprovals, budgetApproveSchema } from "@/lib/finance/budgets-db";
+import { approveBudget, getBudgetApprovals } from "@/lib/finance/budgets-db";
+import { budgetApproveSchema } from "@/lib/finance/budgets";
 
 export async function GET(
   request: NextRequest,

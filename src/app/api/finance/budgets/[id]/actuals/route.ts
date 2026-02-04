@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import {
   getBudgetActuals,
   recordBudgetActual,
-  budgetActualSchema,
 } from "@/lib/finance/budgets-db";
+import { budgetActualSchema } from "@/lib/finance/budgets";
 
 export async function GET(
   request: NextRequest,

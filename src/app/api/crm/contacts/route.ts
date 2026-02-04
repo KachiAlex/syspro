@@ -6,8 +6,8 @@ import { handleDatabaseError } from "@/lib/api-errors";
 const contactPayloadSchema = z.object({
   company: z.string().min(1),
   contactName: z.string().min(1),
-  contactEmail: z.string().email().optional().or(z.literal("")),
-  contactPhone: z.string().min(3).optional().or(z.literal("")),
+  contactEmail: z.string().email().or(z.literal("")).optional(),
+  contactPhone: z.string().min(3).or(z.literal("")).optional(),
   source: z.string().optional(),
   status: z.string().optional(),
   tags: z.array(z.string().min(1)).optional(),
