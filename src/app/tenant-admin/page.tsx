@@ -4823,7 +4823,9 @@ function FinanceInvoicesWorkspace({
 }
 
 function FinancePaymentsWorkspace() {
-  const [payments, setPayments] = useState<PaymentRecord[]>(PAYMENT_RECORDS_BASELINE);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [methodFilter, setMethodFilter] = useState<string | null>(null);
@@ -4840,6 +4842,30 @@ function FinancePaymentsWorkspace() {
     gatewayReference: "",
     confirmationDetails: "",
   });
+
+  // Load payments from API
+  useEffect(() => {
+    const fetchPayments = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch("/api/finance/vendor-payments?tenantSlug=kreatix-default");
+        if (!response.ok) throw new Error("Failed to fetch payments");
+        const data = await response.json();
+        if (data.data && Array.isArray(data.data)) {
+          // Transform API response to PaymentRecord format if needed
+          setPayments(data.data);
+        }
+      } catch (err) {
+        console.error("Failed to load payments:", err);
+        setError("Failed to load payments");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPayments();
+  }, []);
 
   // Filter payments
   const filteredPayments = payments.filter((payment) => {
@@ -5032,6 +5058,49 @@ function FinancePaymentsWorkspace() {
         {/* Header */}
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Cash tracking</p>
+          <h2 className="text-2xl font-semibold text-slate-900">Vendor Payments</h2>
+        </div>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+              <p className="text-sm text-slate-500">Loading payments...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="rounded-lg bg-red-50 border border-red-200 p-4 flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-red-900">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-2 text-sm text-red-700 hover:text-red-900 font-medium"
+              >
+                Try again
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !error && payments.length === 0 && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <CreditCard className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-600 font-medium">No payments yet</p>
+              <p className="text-sm text-slate-500 mt-1">Create your first payment to get started</p>
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && payments.length > 0 && (
+          <>
+        {/* Header continued */}
           <h2 className="text-2xl font-semibold text-slate-900">Payments</h2>
         </div>
 
@@ -5513,13 +5582,15 @@ function FinancePaymentsWorkspace() {
           </div>
         </>
       )}
+        </>
+        )}
     </div>
   );
 }
 
 function FinanceExpensesWorkspace() {
-  const [expenses, setExpenses] = useState<Expense[]>(EXPENSE_RECORDS_BASELINE);
-  const [loading, setLoading] = useState(false);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -5535,14 +5606,17 @@ function FinanceExpensesWorkspace() {
       try {
         setLoading(true);
         setError(null);
-        const data = await listExpenses({ tenantSlug: "default" });
-        if (data && Array.isArray(data)) {
+        const response = await fetch("/api/finance/expenses?tenantSlug=kreatix-default");
+        if (!response.ok) throw new Error("Failed to fetch expenses");
+        const data = await response.json();
+        if (data.data && Array.isArray(data.data)) {
+          setExpenses(data.data);
+        } else if (Array.isArray(data)) {
           setExpenses(data);
         }
       } catch (err) {
         console.error("Failed to load expenses:", err);
-        setError("Failed to load expenses. Using sample data.");
-        // Keep baseline data on error
+        setError("Failed to load expenses");
       } finally {
         setLoading(false);
       }
@@ -5687,7 +5761,7 @@ function FinanceExpensesWorkspace() {
         approverRole: "MANAGER",
         approverId: "current-user",
         approverName: "Current User",
-        action: "approved",
+        action: "APPROVED",
         reason: "Approved by manager",
       });
 
@@ -5715,7 +5789,7 @@ function FinanceExpensesWorkspace() {
         approverRole: "MANAGER",
         approverId: "current-user",
         approverName: "Current User",
-        action: "rejected",
+        action: "REJECTED",
         reason: "Rejected by manager",
       });
 
@@ -5786,6 +5860,45 @@ function FinanceExpensesWorkspace() {
           <h2 className="text-2xl font-semibold text-slate-900">Expenses</h2>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+              <p className="text-sm text-slate-500">Loading expenses...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="rounded-lg bg-red-50 border border-red-200 p-4 flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-red-900">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-2 text-sm text-red-700 hover:text-red-900 font-medium"
+              >
+                Try again
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !error && expenses.length === 0 && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <DollarSign className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-600 font-medium">No expenses yet</p>
+              <p className="text-sm text-slate-500 mt-1">Create your first expense to get started</p>
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && expenses.length > 0 && (
+          <>
         {/* Dashboard Metrics (4-Column) */}
         <div className="grid grid-cols-4 gap-4">
           <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-purple-50 to-purple-100 p-4">
@@ -6322,6 +6435,8 @@ function FinanceExpensesWorkspace() {
           </div>
         </>
       )}
+        </>
+        )}
     </div>
   );
 }
