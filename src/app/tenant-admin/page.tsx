@@ -71,6 +71,7 @@ import {
   Mail,
   MessageSquare,
   MoreVertical,
+  Package,
   Receipt,
   Megaphone,
   Menu,
@@ -84,6 +85,7 @@ import {
   ShieldCheck,
   TrendingDown,
   TrendingUp,
+  Truck,
   Users,
   Users2,
   Wallet,
@@ -1953,6 +1955,8 @@ const NAVIGATION: NavigationSection[] = [
       { label: "Overview", key: "overview", icon: LayoutDashboard },
       { label: "CRM", key: "crm", icon: Handshake },
       { label: "Finance", key: "finance", icon: Wallet },
+      { label: "Inventory", key: "inventory", icon: Package },
+      { label: "Procurement", key: "procurement", icon: Truck },
       { label: "HR & Operations", key: "hr-ops", icon: Users },
       { label: "Projects", key: "projects", icon: KanbanSquare },
       { label: "IT & Support", key: "it-support", icon: Headphones },
@@ -2034,6 +2038,8 @@ const HEADLINE_MAP: Record<string, string> = {
   overview: "Overview",
   crm: "CRM",
   finance: "Finance",
+  inventory: "Inventory",
+  procurement: "Procurement",
   "hr-ops": "HR & Operations",
   projects: "Projects",
   "it-support": "IT & Support",
@@ -2086,6 +2092,25 @@ export default function TenantAdminPage() {
   const [financeAccountsLoading, setFinanceAccountsLoading] = useState(false);
   const [financeAccountsError, setFinanceAccountsError] = useState<string | null>(null);
   const [financeAccountsVersion, setFinanceAccountsVersion] = useState(0);
+
+  // Inventory state
+  const [inventoryView, setInventoryView] = useState<"products" | "stock" | "transfers" | "alerts">("products");
+  const [inventoryProducts, setInventoryProducts] = useState<Array<{ id: string; name: string; sku: string; category: string; currentStock: number; minStock: number; unitCost: number }>>([]);
+  const [showNewProductModal, setShowNewProductModal] = useState(false);
+  const [showStockTransferModal, setShowStockTransferModal] = useState(false);
+  const [inventoryLoading, setInventoryLoading] = useState(false);
+  const [inventoryError, setInventoryError] = useState<string | null>(null);
+  const [inventoryToast, setInventoryToast] = useState<string | null>(null);
+
+  // Procurement state
+  const [procurementView, setProcurementView] = useState<"vendors" | "purchase-orders" | "invoices" | "approvals">("vendors");
+  const [procurementVendors, setProcurementVendors] = useState<Array<{ id: string; name: string; code: string; category: string; paymentTerms: string; status: "active" | "inactive" }>>([]);
+  const [showNewVendorModal, setShowNewVendorModal] = useState(false);
+  const [showNewPOModal, setShowNewPOModal] = useState(false);
+  const [procurementLoading, setProcurementLoading] = useState(false);
+  const [procurementError, setProcurementError] = useState<string | null>(null);
+  const [procurementToast, setProcurementToast] = useState<string | null>(null);
+
   const [crmActionType, setCrmActionType] = useState<CrmActionType | null>(null);
   const [crmActionToast, setCrmActionToast] = useState<string | null>(null);
   const [crmView, setCrmView] = useState<CrmView>("dashboard");
@@ -3046,6 +3071,32 @@ export default function TenantAdminPage() {
                     savedLineItems={savedLineItems}
                     onSaveLineItem={handleSaveLineItem}
                   />
+                ) : activeNav === "inventory" ? (
+                  <InventoryWorkspace
+                    currentView={inventoryView}
+                    onViewChange={setInventoryView}
+                    products={inventoryProducts}
+                    onAddProduct={() => setShowNewProductModal(true)}
+                    onTransferStock={() => setShowStockTransferModal(true)}
+                    loading={inventoryLoading}
+                    error={inventoryError}
+                    tenantSlug={tenantSlug}
+                    toast={inventoryToast}
+                    onToastDismiss={() => setInventoryToast(null)}
+                  />
+                ) : activeNav === "procurement" ? (
+                  <ProcurementWorkspace
+                    currentView={procurementView}
+                    onViewChange={setProcurementView}
+                    vendors={procurementVendors}
+                    onAddVendor={() => setShowNewVendorModal(true)}
+                    onCreatePO={() => setShowNewPOModal(true)}
+                    loading={procurementLoading}
+                    error={procurementError}
+                    tenantSlug={tenantSlug}
+                    toast={procurementToast}
+                    onToastDismiss={() => setProcurementToast(null)}
+                  />
                 ) : activeNav === "structure" ? (
                   <DepartmentManagement tenantSlug={tenantSlug} />
                 ) : activeNav === "people-access" ? (
@@ -3105,6 +3156,473 @@ export default function TenantAdminPage() {
         className="hidden"
         onChange={handleImportFileChange}
       />
+    </div>
+  );
+}
+
+function InventoryWorkspace({
+  currentView,
+  onViewChange,
+  products,
+  onAddProduct,
+  onTransferStock,
+  loading,
+  error,
+  tenantSlug,
+  toast,
+  onToastDismiss,
+}: {
+  currentView: "products" | "stock" | "transfers" | "alerts";
+  onViewChange: (view: "products" | "stock" | "transfers" | "alerts") => void;
+  products: Array<{ id: string; name: string; sku: string; category: string; currentStock: number; minStock: number; unitCost: number }>;
+  onAddProduct: () => void;
+  onTransferStock: () => void;
+  loading: boolean;
+  error: string | null;
+  tenantSlug: string | null;
+  toast: string | null;
+  onToastDismiss: () => void;
+}) {
+  return (
+    <div className="space-y-8">
+      {/* Toast notification */}
+      {toast && (
+        <div className="rounded-2xl bg-emerald-50 border border-emerald-200 px-6 py-4 text-emerald-600">
+          <div className="flex items-center justify-between">
+            <span>{toast}</span>
+            <button onClick={onToastDismiss} className="text-emerald-600 hover:text-emerald-700">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* View tabs */}
+      <div className="flex gap-3 border-b border-slate-200">
+        {(["products", "stock", "transfers", "alerts"] as const).map((view) => (
+          <button
+            key={view}
+            onClick={() => onViewChange(view)}
+            className={`px-4 py-3 text-sm font-medium transition ${
+              currentView === view
+                ? "border-b-2 border-slate-900 text-slate-900"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            {view.charAt(0).toUpperCase() + view.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* Error state */}
+      {error && (
+        <div className="rounded-2xl bg-rose-50 border border-rose-200 px-6 py-4 text-rose-600">
+          <p className="font-medium">{error}</p>
+        </div>
+      )}
+
+      {/* Products View */}
+      {currentView === "products" && (
+        <div className="space-y-6">
+          {/* Summary Cards */}
+          <div className="grid gap-4 md:grid-cols-4">
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Products</p>
+              <p className="mt-3 text-3xl font-semibold text-slate-900">{products.length}</p>
+              <p className="mt-2 text-sm text-slate-500">Active SKUs in catalog</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Low Stock Items</p>
+              <p className="mt-3 text-3xl font-semibold text-slate-900">{products.filter(p => p.currentStock <= p.minStock).length}</p>
+              <p className="mt-2 text-sm text-slate-500">Require replenishment</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Inventory Value</p>
+              <p className="mt-3 text-3xl font-semibold text-slate-900">₦{(products.reduce((sum, p) => sum + (p.currentStock * p.unitCost), 0) / 1000000).toFixed(1)}M</p>
+              <p className="mt-2 text-sm text-slate-500">Total asset value</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Categories</p>
+              <p className="mt-3 text-3xl font-semibold text-slate-900">{new Set(products.map(p => p.category)).size}</p>
+              <p className="mt-2 text-sm text-slate-500">Product categories</p>
+            </div>
+          </div>
+
+          {/* Add Product Button */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Product Catalog</p>
+              <h2 className="text-xl font-semibold text-slate-900">All Products</h2>
+            </div>
+            <button
+              onClick={onAddProduct}
+              className="inline-flex items-center gap-2 rounded-full bg-slate-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800"
+            >
+              <Package className="h-4 w-4" />
+              Add Product
+            </button>
+          </div>
+
+          {/* Products Table */}
+          <div className="rounded-3xl border border-slate-100 bg-white overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 border-b border-slate-100">
+                <tr>
+                  <th className="px-6 py-3 text-left font-semibold text-slate-900">Product</th>
+                  <th className="px-6 py-3 text-left font-semibold text-slate-900">SKU</th>
+                  <th className="px-6 py-3 text-left font-semibold text-slate-900">Category</th>
+                  <th className="px-6 py-3 text-right font-semibold text-slate-900">Current Stock</th>
+                  <th className="px-6 py-3 text-right font-semibold text-slate-900">Min Level</th>
+                  <th className="px-6 py-3 text-right font-semibold text-slate-900">Unit Cost</th>
+                  <th className="px-6 py-3 text-center font-semibold text-slate-900">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {products.length > 0 ? (
+                  products.map((product) => (
+                    <tr key={product.id} className="hover:bg-slate-50">
+                      <td className="px-6 py-4">{product.name}</td>
+                      <td className="px-6 py-4 text-slate-500">{product.sku}</td>
+                      <td className="px-6 py-4">{product.category}</td>
+                      <td className="px-6 py-4 text-right font-medium">{product.currentStock}</td>
+                      <td className="px-6 py-4 text-right text-slate-500">{product.minStock}</td>
+                      <td className="px-6 py-4 text-right">₦{product.unitCost.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+                          product.currentStock > product.minStock
+                            ? "bg-emerald-50 text-emerald-600"
+                            : "bg-rose-50 text-rose-600"
+                        }`}>
+                          {product.currentStock > product.minStock ? "In Stock" : "Low Stock"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
+                      No products found. Click "Add Product" to create one.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Stock View */}
+      {currentView === "stock" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Stock Levels</p>
+              <h2 className="text-xl font-semibold text-slate-900">Inventory Status</h2>
+            </div>
+            <button
+              onClick={onTransferStock}
+              className="inline-flex items-center gap-2 rounded-full bg-slate-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800"
+            >
+              <ArrowUpRight className="h-4 w-4" />
+              Transfer Stock
+            </button>
+          </div>
+
+          <div className="rounded-3xl border border-slate-100 bg-white overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 border-b border-slate-100">
+                <tr>
+                  <th className="px-6 py-3 text-left font-semibold text-slate-900">Product</th>
+                  <th className="px-6 py-3 text-right font-semibold text-slate-900">Quantity</th>
+                  <th className="px-6 py-3 text-right font-semibold text-slate-900">Value</th>
+                  <th className="px-6 py-3 text-center font-semibold text-slate-900">Location</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {products.map((product) => (
+                  <tr key={product.id} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 font-medium">{product.name}</td>
+                    <td className="px-6 py-4 text-right">{product.currentStock} units</td>
+                    <td className="px-6 py-4 text-right">₦{(product.currentStock * product.unitCost).toLocaleString()}</td>
+                    <td className="px-6 py-4 text-center text-slate-500">Main Warehouse</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Transfers View */}
+      {currentView === "transfers" && (
+        <div className="space-y-6">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Stock Movements</p>
+            <h2 className="text-xl font-semibold text-slate-900">Transfer History</h2>
+          </div>
+
+          <div className="rounded-3xl border border-slate-100 bg-white p-8 text-center">
+            <Package className="h-12 w-12 mx-auto text-slate-300 mb-4" />
+            <p className="text-slate-600 font-medium">No transfers recorded yet</p>
+            <p className="text-sm text-slate-500 mt-1">Transfers will appear here as you move inventory</p>
+            <button
+              onClick={onTransferStock}
+              className="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+            >
+              <ArrowUpRight className="h-4 w-4" />
+              Create Transfer
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Alerts View */}
+      {currentView === "alerts" && (
+        <div className="space-y-6">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Notifications</p>
+            <h2 className="text-xl font-semibold text-slate-900">Inventory Alerts</h2>
+          </div>
+
+          {products.filter(p => p.currentStock <= p.minStock).length > 0 ? (
+            <div className="space-y-3">
+              {products.filter(p => p.currentStock <= p.minStock).map((product) => (
+                <div key={product.id} className="rounded-2xl border border-rose-100 bg-rose-50 p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium text-rose-900">{product.name} - Low Stock Alert</p>
+                      <p className="text-sm text-rose-700 mt-1">Current: {product.currentStock} units | Minimum: {product.minStock} units</p>
+                    </div>
+                    <span className="inline-flex rounded-full bg-rose-100 text-rose-600 px-3 py-1 text-xs font-medium">Critical</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-emerald-100 bg-emerald-50 p-8 text-center">
+              <CheckCircle2 className="h-12 w-12 mx-auto text-emerald-500 mb-4" />
+              <p className="text-emerald-900 font-medium">All stock levels are healthy</p>
+              <p className="text-sm text-emerald-700 mt-1">No alerts to address at this time</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProcurementWorkspace({
+  currentView,
+  onViewChange,
+  vendors,
+  onAddVendor,
+  onCreatePO,
+  loading,
+  error,
+  tenantSlug,
+  toast,
+  onToastDismiss,
+}: {
+  currentView: "vendors" | "purchase-orders" | "invoices" | "approvals";
+  onViewChange: (view: "vendors" | "purchase-orders" | "invoices" | "approvals") => void;
+  vendors: Array<{ id: string; name: string; code: string; category: string; paymentTerms: string; status: "active" | "inactive" }>;
+  onAddVendor: () => void;
+  onCreatePO: () => void;
+  loading: boolean;
+  error: string | null;
+  tenantSlug: string | null;
+  toast: string | null;
+  onToastDismiss: () => void;
+}) {
+  return (
+    <div className="space-y-8">
+      {/* Toast notification */}
+      {toast && (
+        <div className="rounded-2xl bg-emerald-50 border border-emerald-200 px-6 py-4 text-emerald-600">
+          <div className="flex items-center justify-between">
+            <span>{toast}</span>
+            <button onClick={onToastDismiss} className="text-emerald-600 hover:text-emerald-700">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* View tabs */}
+      <div className="flex gap-3 border-b border-slate-200">
+        {(["vendors", "purchase-orders", "invoices", "approvals"] as const).map((view) => (
+          <button
+            key={view}
+            onClick={() => onViewChange(view)}
+            className={`px-4 py-3 text-sm font-medium transition ${
+              currentView === view
+                ? "border-b-2 border-slate-900 text-slate-900"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            {view === "purchase-orders"
+              ? "Purchase Orders"
+              : view.charAt(0).toUpperCase() + view.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* Error state */}
+      {error && (
+        <div className="rounded-2xl bg-rose-50 border border-rose-200 px-6 py-4 text-rose-600">
+          <p className="font-medium">{error}</p>
+        </div>
+      )}
+
+      {/* Vendors View */}
+      {currentView === "vendors" && (
+        <div className="space-y-6">
+          {/* Summary Cards */}
+          <div className="grid gap-4 md:grid-cols-4">
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Vendors</p>
+              <p className="mt-3 text-3xl font-semibold text-slate-900">{vendors.length}</p>
+              <p className="mt-2 text-sm text-slate-500">Active suppliers</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Active</p>
+              <p className="mt-3 text-3xl font-semibold text-slate-900">{vendors.filter(v => v.status === "active").length}</p>
+              <p className="mt-2 text-sm text-slate-500">Approved suppliers</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Categories</p>
+              <p className="mt-3 text-3xl font-semibold text-slate-900">{new Set(vendors.map(v => v.category)).size}</p>
+              <p className="mt-2 text-sm text-slate-500">Vendor categories</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Avg Payment Terms</p>
+              <p className="mt-3 text-3xl font-semibold text-slate-900">Net 30</p>
+              <p className="mt-2 text-sm text-slate-500">Payment window</p>
+            </div>
+          </div>
+
+          {/* Add Vendor Button */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Vendor Registry</p>
+              <h2 className="text-xl font-semibold text-slate-900">All Suppliers</h2>
+            </div>
+            <button
+              onClick={onAddVendor}
+              className="inline-flex items-center gap-2 rounded-full bg-slate-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800"
+            >
+              <Truck className="h-4 w-4" />
+              Add Vendor
+            </button>
+          </div>
+
+          {/* Vendors Table */}
+          <div className="rounded-3xl border border-slate-100 bg-white overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 border-b border-slate-100">
+                <tr>
+                  <th className="px-6 py-3 text-left font-semibold text-slate-900">Vendor Name</th>
+                  <th className="px-6 py-3 text-left font-semibold text-slate-900">Code</th>
+                  <th className="px-6 py-3 text-left font-semibold text-slate-900">Category</th>
+                  <th className="px-6 py-3 text-left font-semibold text-slate-900">Payment Terms</th>
+                  <th className="px-6 py-3 text-center font-semibold text-slate-900">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {vendors.length > 0 ? (
+                  vendors.map((vendor) => (
+                    <tr key={vendor.id} className="hover:bg-slate-50">
+                      <td className="px-6 py-4 font-medium">{vendor.name}</td>
+                      <td className="px-6 py-4 text-slate-500">{vendor.code}</td>
+                      <td className="px-6 py-4">{vendor.category}</td>
+                      <td className="px-6 py-4">{vendor.paymentTerms}</td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+                          vendor.status === "active"
+                            ? "bg-emerald-50 text-emerald-600"
+                            : "bg-slate-50 text-slate-600"
+                        }`}>
+                          {vendor.status.charAt(0).toUpperCase() + vendor.status.slice(1)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                      No vendors found. Click "Add Vendor" to create one.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Purchase Orders View */}
+      {currentView === "purchase-orders" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Purchase Requisitions</p>
+              <h2 className="text-xl font-semibold text-slate-900">Active Orders</h2>
+            </div>
+            <button
+              onClick={onCreatePO}
+              className="inline-flex items-center gap-2 rounded-full bg-slate-900 text-white px-4 py-2 text-sm font-medium hover:bg-slate-800"
+            >
+              <FileText className="h-4 w-4" />
+              Create PO
+            </button>
+          </div>
+
+          <div className="rounded-3xl border border-slate-100 bg-white p-8 text-center">
+            <FileText className="h-12 w-12 mx-auto text-slate-300 mb-4" />
+            <p className="text-slate-600 font-medium">No purchase orders yet</p>
+            <p className="text-sm text-slate-500 mt-1">POs will appear here as you create them</p>
+            <button
+              onClick={onCreatePO}
+              className="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+            >
+              <FileText className="h-4 w-4" />
+              Create Order
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Invoices View */}
+      {currentView === "invoices" && (
+        <div className="space-y-6">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Vendor Invoices</p>
+            <h2 className="text-xl font-semibold text-slate-900">Received Bills</h2>
+          </div>
+
+          <div className="rounded-3xl border border-slate-100 bg-white p-8 text-center">
+            <Receipt className="h-12 w-12 mx-auto text-slate-300 mb-4" />
+            <p className="text-slate-600 font-medium">No invoices recorded</p>
+            <p className="text-sm text-slate-500 mt-1">Vendor invoices will display after PO receipt and invoicing</p>
+          </div>
+        </div>
+      )}
+
+      {/* Approvals View */}
+      {currentView === "approvals" && (
+        <div className="space-y-6">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Approval Queue</p>
+            <h2 className="text-xl font-semibold text-slate-900">Pending Approvals</h2>
+          </div>
+
+          <div className="rounded-3xl border border-slate-100 bg-white p-8 text-center">
+            <CheckCircle2 className="h-12 w-12 mx-auto text-slate-300 mb-4" />
+            <p className="text-slate-600 font-medium">All current approvals are complete</p>
+            <p className="text-sm text-slate-500 mt-1">Items awaiting approval will appear here</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
