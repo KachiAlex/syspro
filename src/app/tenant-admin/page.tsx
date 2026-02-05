@@ -9360,38 +9360,390 @@ function ProjectsWorkspace({
       )}
 
       {currentView === "tasks" && (
-        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <p className="text-slate-500">Tasks & milestones management coming soon</p>
+        <div className="space-y-6">
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Task Overview</p>
+                <h3 className="text-lg font-semibold text-slate-900">Project Tasks & Milestones</h3>
+              </div>
+              <div className="flex gap-2">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+                  {projectsTasks.filter(t => t.status === 'done').length} Done
+                </span>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                  {projectsTasks.filter(t => t.status === 'in-progress').length} In Progress
+                </span>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Task Title</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Project</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Assigned To</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Status</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Due Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projectsTasks.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-slate-500">No tasks yet. Create a project first.</td>
+                    </tr>
+                  ) : (
+                    projectsTasks.map((task) => (
+                      <tr key={task.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="px-4 py-3 text-sm text-slate-900 font-medium">{task.title}</td>
+                        <td className="px-4 py-3 text-sm text-slate-500">{task.projectId}</td>
+                        <td className="px-4 py-3 text-sm text-slate-500">{task.assignee}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            task.status === 'done' ? 'bg-emerald-50 text-emerald-700' :
+                            task.status === 'in-progress' ? 'bg-blue-50 text-blue-700' :
+                            'bg-slate-100 text-slate-600'
+                          }`}>
+                            {task.status === 'done' ? 'Done' : task.status === 'in-progress' ? 'In Progress' : 'To Do'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-500">{task.dueDate}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 
       {currentView === "time-tracking" && (
-        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <p className="text-slate-500">Time tracking entries will appear here</p>
+        <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-3 mb-6">
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Hours</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">{projectsTimeEntries.reduce((sum, e) => sum + e.hours, 0).toFixed(1)}</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Billable Hours</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">{projectsTimeEntries.filter(e => e.billable).reduce((sum, e) => sum + e.hours, 0).toFixed(1)}</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Time Entries</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">{projectsTimeEntries.length}</p>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Time Entries</p>
+                <h3 className="text-lg font-semibold text-slate-900">Logged Hours by Employee</h3>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Employee</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Project</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Hours</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Date</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Billable</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projectsTimeEntries.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-slate-500">No time entries yet</td>
+                    </tr>
+                  ) : (
+                    projectsTimeEntries.map((entry) => (
+                      <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="px-4 py-3 text-sm text-slate-900 font-medium">{entry.employeeName}</td>
+                        <td className="px-4 py-3 text-sm text-slate-500">{entry.projectId}</td>
+                        <td className="px-4 py-3 text-sm text-slate-900 font-medium">{entry.hours}h</td>
+                        <td className="px-4 py-3 text-sm text-slate-500">{entry.date}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            entry.billable ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {entry.billable ? 'Billable' : 'Non-billable'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 
       {currentView === "billable-hours" && (
-        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <p className="text-slate-500">Billable hours analysis coming soon</p>
+        <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-3 mb-6">
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Hours</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">{projectsTimeEntries.reduce((sum, e) => sum + e.hours, 0).toFixed(1)}</p>
+              <p className="text-xs text-slate-500 mt-2">100% of logged time</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Billable Hours</p>
+              <p className="text-3xl font-bold text-emerald-600 mt-2">{projectsTimeEntries.filter(e => e.billable).reduce((sum, e) => sum + e.hours, 0).toFixed(1)}</p>
+              <p className="text-xs text-slate-500 mt-2">{projectsTimeEntries.length > 0 ? ((projectsTimeEntries.filter(e => e.billable).reduce((sum, e) => sum + e.hours, 0) / projectsTimeEntries.reduce((sum, e) => sum + e.hours, 0) * 100).toFixed(1)) : 0}% billable</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Non-billable Hours</p>
+              <p className="text-3xl font-bold text-amber-600 mt-2">{projectsTimeEntries.filter(e => !e.billable).reduce((sum, e) => sum + e.hours, 0).toFixed(1)}</p>
+              <p className="text-xs text-slate-500 mt-2">{projectsTimeEntries.length > 0 ? ((projectsTimeEntries.filter(e => !e.billable).reduce((sum, e) => sum + e.hours, 0) / projectsTimeEntries.reduce((sum, e) => sum + e.hours, 0) * 100).toFixed(1)) : 0}% internal</p>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Utilization</p>
+                <h3 className="text-lg font-semibold text-slate-900">Hours by Project</h3>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {projectsList.length === 0 ? (
+                <p className="text-slate-500 text-sm">No projects yet</p>
+              ) : (
+                projectsList.map((proj) => {
+                  const projHours = projectsTimeEntries.filter(e => e.projectId === proj.id);
+                  const billableHours = projHours.filter(e => e.billable).reduce((sum, e) => sum + e.hours, 0);
+                  const totalHours = projHours.reduce((sum, e) => sum + e.hours, 0);
+                  const billablePercent = totalHours > 0 ? (billableHours / totalHours * 100) : 0;
+
+                  return (
+                    <div key={proj.id} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-900">{proj.name}</span>
+                        <span className="text-sm text-slate-500">{totalHours.toFixed(1)}h ({billablePercent.toFixed(0)}% billable)</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                        <div className="h-full bg-emerald-600 rounded-full" style={{ width: `${billablePercent}%` }} />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
         </div>
       )}
 
       {currentView === "budgets" && (
-        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <p className="text-slate-500">Project budgets coming soon</p>
+        <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-3 mb-6">
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Budget</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">₦{projectsList.reduce((sum, p) => sum + p.budget, 0).toLocaleString()}</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Spent</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">₦{projectsList.reduce((sum, p) => sum + p.spent, 0).toLocaleString()}</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Remaining</p>
+              <p className="text-3xl font-bold text-emerald-600 mt-2">₦{(projectsList.reduce((sum, p) => sum + p.budget, 0) - projectsList.reduce((sum, p) => sum + p.spent, 0)).toLocaleString()}</p>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Budget Tracking</p>
+                <h3 className="text-lg font-semibold text-slate-900">Budget vs Spending by Project</h3>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Project</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Budget</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Spent</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Remaining</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Utilization</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projectsList.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-slate-500">No projects yet</td>
+                    </tr>
+                  ) : (
+                    projectsList.map((proj) => {
+                      const remaining = proj.budget - proj.spent;
+                      const utilPercent = (proj.spent / proj.budget * 100);
+                      return (
+                        <tr key={proj.id} className="border-b border-slate-100 hover:bg-slate-50">
+                          <td className="px-4 py-3 text-sm text-slate-900 font-medium">{proj.name}</td>
+                          <td className="px-4 py-3 text-sm text-slate-500">₦{proj.budget.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-sm text-slate-500">₦{proj.spent.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-sm font-medium" style={{ color: remaining < 0 ? '#dc2626' : '#059669' }}>₦{remaining.toLocaleString()}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="h-2 w-24 rounded-full bg-slate-200 overflow-hidden">
+                                <div className="h-full bg-blue-600 rounded-full" style={{ width: `${Math.min(utilPercent, 100)}%` }} />
+                              </div>
+                              <span className="text-xs font-medium text-slate-600">{utilPercent.toFixed(0)}%</span>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 
       {currentView === "invoicing" && (
-        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <p className="text-slate-500">Project invoicing coming soon</p>
+        <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-3 mb-6">
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Invoices</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">{projectsInvoices.length}</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Invoiced</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">₦{projectsInvoices.reduce((sum, i) => sum + i.amount, 0).toLocaleString()}</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Outstanding</p>
+              <p className="text-3xl font-bold text-amber-600 mt-2">₦{projectsInvoices.filter(i => i.status !== 'paid').reduce((sum, i) => sum + i.amount, 0).toLocaleString()}</p>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Project Invoices</p>
+                <h3 className="text-lg font-semibold text-slate-900">Billing Overview</h3>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Invoice #</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Project</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Amount</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Status</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Due Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projectsInvoices.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-slate-500">No invoices yet</td>
+                    </tr>
+                  ) : (
+                    projectsInvoices.map((inv) => (
+                      <tr key={inv.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="px-4 py-3 text-sm text-slate-900 font-medium">{inv.invoiceNumber}</td>
+                        <td className="px-4 py-3 text-sm text-slate-500">{inv.projectId}</td>
+                        <td className="px-4 py-3 text-sm text-slate-900 font-medium">₦{inv.amount.toLocaleString()}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            inv.status === 'paid' ? 'bg-emerald-50 text-emerald-700' :
+                            inv.status === 'sent' ? 'bg-blue-50 text-blue-700' :
+                            'bg-slate-100 text-slate-600'
+                          }`}>
+                            {inv.status === 'paid' ? 'Paid' : inv.status === 'sent' ? 'Sent' : 'Draft'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-500">{inv.dueDate}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 
       {currentView === "profitability" && (
-        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <p className="text-slate-500">Profitability analysis coming soon</p>
+        <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-3 mb-6">
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Revenue</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">₦{projectsProfitability.reduce((sum, p) => sum + p.revenue, 0).toLocaleString()}</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Costs</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">₦{projectsProfitability.reduce((sum, p) => sum + p.costs, 0).toLocaleString()}</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Profit</p>
+              <p className="text-3xl font-bold text-emerald-600 mt-2">₦{projectsProfitability.reduce((sum, p) => sum + p.margin, 0).toLocaleString()}</p>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Project Analysis</p>
+                <h3 className="text-lg font-semibold text-slate-900">Profitability by Project</h3>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Project</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Revenue</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Costs</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Profit</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Margin %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projectsProfitability.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-slate-500">No profitability data yet</td>
+                    </tr>
+                  ) : (
+                    projectsProfitability.map((proj) => (
+                      <tr key={proj.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="px-4 py-3 text-sm text-slate-900 font-medium">{proj.projectName}</td>
+                        <td className="px-4 py-3 text-sm text-slate-500">₦{proj.revenue.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm text-slate-500">₦{proj.costs.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm font-medium" style={{ color: proj.margin >= 0 ? '#059669' : '#dc2626' }}>₦{proj.margin.toLocaleString()}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              proj.marginPercent >= 30 ? 'bg-emerald-50 text-emerald-700' :
+                              proj.marginPercent >= 15 ? 'bg-blue-50 text-blue-700' :
+                              proj.marginPercent >= 0 ? 'bg-amber-50 text-amber-700' :
+                              'bg-rose-50 text-rose-700'
+                            }`}>
+                              {proj.marginPercent.toFixed(1)}%
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 
