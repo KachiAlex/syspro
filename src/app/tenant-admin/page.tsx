@@ -9166,7 +9166,7 @@ function HRWorkspace({
       </div>
 
       {currentView === "my-attendance" && (
-        <EmployeeAttendanceDashboard />
+        <EmployeeAttendanceDashboard tenantSlug={tenantSlug} />
       )}
 
       {currentView === "employees" && (

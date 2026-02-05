@@ -18,12 +18,16 @@ interface DailyAttendance {
 }
 
 export default function EmployeeAttendanceDashboard({
-  tenantSlug,
-  employeeId,
+  tenantSlug: propTenantSlug,
+  employeeId: propEmployeeId,
 }: {
-  tenantSlug: string | null;
-  employeeId: string;
-}) {
+  tenantSlug?: string | null;
+  employeeId?: string;
+} = {}) {
+  // Use provided props or generate defaults
+  const [tenantSlug] = useState(() => propTenantSlug || "default");
+  const [employeeId] = useState(() => propEmployeeId || `user-${Date.now()}`);
+  
   const [todayAttendance, setTodayAttendance] = useState<DailyAttendance | null>(null);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [workMode, setWorkMode] = useState<'ONSITE' | 'REMOTE' | 'HYBRID' | 'FIELD' | 'LEAVE' | 'TRAINING'>('ONSITE');
@@ -34,14 +38,13 @@ export default function EmployeeAttendanceDashboard({
   // Fetch today's attendance
   useEffect(() => {
     const fetchToday = async () => {
-      if (!tenantSlug) return;
-      
       try {
         const today = new Date().toISOString().split('T')[0];
         const res = await fetch(
           `/api/attendance?action=today&tenantSlug=${tenantSlug}&employeeId=${employeeId}`
         );
         const data = await res.json();
+        console.log('Attendance fetch response:', data);
         
         if (data.records && data.records.length > 0) {
           setTodayAttendance(data.records[0]);
@@ -71,12 +74,11 @@ export default function EmployeeAttendanceDashboard({
   }, [tenantSlug, employeeId]);
 
   const handleCheckIn = async () => {
-    if (!tenantSlug) return;
-    
     try {
       const today = new Date().toISOString().split('T')[0];
       const res = await fetch('/api/attendance', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'check-in',
           tenantSlug,
@@ -87,13 +89,14 @@ export default function EmployeeAttendanceDashboard({
       });
 
       const data = await res.json();
+      console.log('Check-in response:', data);
       if (res.ok) {
         setTodayAttendance(data.record);
         setIsCheckedIn(true);
         setToast('✓ Check-in successful');
         setTimeout(() => setToast(null), 3000);
       } else {
-        setToast('✗ Check-in failed');
+        setToast(`✗ Check-in failed: ${data.error}`);
       }
     } catch (error) {
       console.error('Check-in error:', error);
@@ -108,6 +111,7 @@ export default function EmployeeAttendanceDashboard({
       const today = new Date().toISOString().split('T')[0];
       const res = await fetch('/api/attendance', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'check-out',
           tenantSlug,
@@ -117,6 +121,7 @@ export default function EmployeeAttendanceDashboard({
       });
 
       const data = await res.json();
+      console.log('Check-out response:', data);
       if (res.ok) {
         setTodayAttendance(data.record);
         setToast('✓ Check-out recorded');
@@ -129,12 +134,11 @@ export default function EmployeeAttendanceDashboard({
   };
 
   const handleModeChange = async (newMode: DailyAttendance['mode']) => {
-    if (!tenantSlug) return;
-
     try {
       const today = new Date().toISOString().split('T')[0];
       const res = await fetch('/api/attendance', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'set-mode',
           tenantSlug,
@@ -145,6 +149,7 @@ export default function EmployeeAttendanceDashboard({
       });
 
       const data = await res.json();
+      console.log('Mode change response:', data);
       if (res.ok) {
         setTodayAttendance(data.record);
         setWorkMode(newMode);
