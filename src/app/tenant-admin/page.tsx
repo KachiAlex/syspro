@@ -100,6 +100,7 @@ import DepartmentManagement from "@/app/tenant-admin/sections/department-managem
 import RoleBuilder from "@/app/tenant-admin/sections/role-builder";
 import ApprovalDesigner from "@/app/tenant-admin/sections/approval-designer";
 import EmployeeConsole from "@/app/tenant-admin/sections/employee-console";
+import EmployeeAttendanceDashboard from "@/components/employee-attendance-dashboard";
 import { listExpenses, createExpense, approveExpense, deleteExpense } from "@/lib/api/expenses";
 import AccessControlPanel from "@/app/tenant-admin/sections/access-control";
 import LifecycleWorkflows from "@/app/tenant-admin/sections/workflows";
@@ -9108,9 +9109,10 @@ function HRWorkspace({
   onToastDismiss: () => void;
 }) {
   const views = [
+    { key: "my-attendance", label: "My Attendance", icon: CheckCircle2 },
     { key: "employees", label: "Employees", icon: Users },
     { key: "departments", label: "Departments", icon: Building2 },
-    { key: "attendance", label: "Attendance & Leave", icon: CalendarClock },
+    { key: "team-attendance", label: "Team Attendance", icon: CalendarClock },
     { key: "payroll", label: "Payroll", icon: DollarSign },
     { key: "benefits", label: "Benefits & Deductions", icon: PiggyBank },
     { key: "performance-reviews", label: "Performance Reviews", icon: BarChart3 },
@@ -9125,7 +9127,7 @@ function HRWorkspace({
           <p className="text-slate-500">Manage employees, payroll, and performance</p>
         </div>
         <button onClick={currentView === "employees" ? onAddEmployee : onAddDepartment} className="rounded-lg bg-slate-900 px-6 py-2 font-medium text-white hover:bg-slate-800">
-          {currentView === "employees" ? "+ Add Employee" : "+ Add Department"}
+          {currentView === "employees" ? "+ Add Employee" : currentView === "departments" ? "+ Add Department" : ""}
         </button>
       </div>
 
@@ -9145,6 +9147,10 @@ function HRWorkspace({
           </button>
         ))}
       </div>
+
+      {currentView === "my-attendance" && (
+        <EmployeeAttendanceDashboard />
+      )}
 
       {currentView === "employees" && (
         <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
@@ -9212,7 +9218,7 @@ function HRWorkspace({
         </div>
       )}
 
-      {currentView === "attendance" && (
+      {currentView === "team-attendance" && (
         <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
           <div className="grid gap-6 lg:grid-cols-3 mb-6">
             <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
