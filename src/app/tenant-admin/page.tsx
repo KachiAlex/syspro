@@ -2101,6 +2101,8 @@ export default function TenantAdminPage() {
   const [inventoryLoading, setInventoryLoading] = useState(false);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
   const [inventoryToast, setInventoryToast] = useState<string | null>(null);
+  const [newProductCategory, setNewProductCategory] = useState("");
+  const [productCategories, setProductCategories] = useState(["Electronics", "Furniture", "Office Supplies", "Equipment", "Other"]);
 
   // Procurement state
   const [procurementView, setProcurementView] = useState<"vendors" | "purchase-orders" | "invoices" | "approvals">("vendors");
@@ -2110,6 +2112,8 @@ export default function TenantAdminPage() {
   const [procurementLoading, setProcurementLoading] = useState(false);
   const [procurementError, setProcurementError] = useState<string | null>(null);
   const [procurementToast, setProcurementToast] = useState<string | null>(null);
+  const [newVendorCategory, setNewVendorCategory] = useState("");
+  const [vendorCategories, setVendorCategories] = useState(["Raw Materials", "Office Supplies", "Equipment", "Services", "Other"]);
 
   const [crmActionType, setCrmActionType] = useState<CrmActionType | null>(null);
   const [crmActionToast, setCrmActionToast] = useState<string | null>(null);
@@ -2217,6 +2221,13 @@ export default function TenantAdminPage() {
   const handleAddProduct = useCallback(async (formData: FormData) => {
     try {
       setInventoryLoading(true);
+      const categoryValue = newProductCategory || formData.get("category");
+      
+      // If custom category was entered, add it to the categories list
+      if (newProductCategory && !productCategories.includes(newProductCategory)) {
+        setProductCategories([...productCategories, newProductCategory]);
+      }
+      
       const response = await fetch("/api/inventory/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2224,7 +2235,7 @@ export default function TenantAdminPage() {
           tenantSlug: tenantSlug || "default",
           name: formData.get("name"),
           sku: formData.get("sku"),
-          category: formData.get("category"),
+          category: categoryValue,
           currentStock: parseInt(formData.get("currentStock") as string) || 0,
           minStock: parseInt(formData.get("minStock") as string) || 0,
           unitCost: parseFloat(formData.get("unitCost") as string) || 0,
@@ -2241,6 +2252,7 @@ export default function TenantAdminPage() {
       setInventoryToast(`Product "${result.product.name}" added successfully`);
       setTimeout(() => setInventoryToast(null), 3000);
       setShowNewProductModal(false);
+      setNewProductCategory("");
     } catch (error) {
       console.error("Error adding product:", error);
       setInventoryToast(`Error: ${error instanceof Error ? error.message : "Failed to add product"}`);
@@ -2248,7 +2260,7 @@ export default function TenantAdminPage() {
     } finally {
       setInventoryLoading(false);
     }
-  }, [tenantSlug, inventoryProducts]);
+  }, [tenantSlug, inventoryProducts, newProductCategory, productCategories]);
 
   const handleTransferStock = useCallback(async (formData: FormData) => {
     try {
@@ -2287,6 +2299,13 @@ export default function TenantAdminPage() {
   const handleAddVendor = useCallback(async (formData: FormData) => {
     try {
       setProcurementLoading(true);
+      const categoryValue = newVendorCategory || formData.get("category");
+      
+      // If custom category was entered, add it to the categories list
+      if (newVendorCategory && !vendorCategories.includes(newVendorCategory)) {
+        setVendorCategories([...vendorCategories, newVendorCategory]);
+      }
+      
       const response = await fetch("/api/procurement/vendors", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2294,7 +2313,7 @@ export default function TenantAdminPage() {
           tenantSlug: tenantSlug || "default",
           name: formData.get("name"),
           code: formData.get("code"),
-          category: formData.get("category"),
+          category: categoryValue,
           paymentTerms: formData.get("paymentTerms"),
         }),
       });
@@ -2309,6 +2328,7 @@ export default function TenantAdminPage() {
       setProcurementToast(`Vendor "${result.vendor.name}" added successfully`);
       setTimeout(() => setProcurementToast(null), 3000);
       setShowNewVendorModal(false);
+      setNewVendorCategory("");
     } catch (error) {
       console.error("Error adding vendor:", error);
       setProcurementToast(`Error: ${error instanceof Error ? error.message : "Failed to add vendor"}`);
@@ -2316,7 +2336,7 @@ export default function TenantAdminPage() {
     } finally {
       setProcurementLoading(false);
     }
-  }, [tenantSlug, procurementVendors]);
+  }, [tenantSlug, procurementVendors, newVendorCategory, vendorCategories]);
 
   const handleCreatePO = useCallback(async (formData: FormData) => {
     try {
@@ -3285,7 +3305,7 @@ export default function TenantAdminPage() {
           <div className="w-full max-w-2xl rounded-3xl bg-white p-8 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-semibold text-slate-900">Add New Product</h2>
-              <button onClick={() => setShowNewProductModal(false)} className="text-slate-500 hover:text-slate-700">
+              <button onClick={() => { setShowNewProductModal(false); setNewProductCategory(""); }} className="text-slate-500 hover:text-slate-700">
                 <X className="h-6 w-6" />
               </button>
             </div>
@@ -3326,15 +3346,28 @@ export default function TenantAdminPage() {
                 <select
                   name="category"
                   required
+                  onChange={(e) => {
+                    if (e.target.value === "create-new") {
+                      setNewProductCategory("");
+                    }
+                  }}
                   className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
                 >
                   <option value="">Select category</option>
-                  <option value="Electronics">Electronics</option>
-                  <option value="Furniture">Furniture</option>
-                  <option value="Office Supplies">Office Supplies</option>
-                  <option value="Equipment">Equipment</option>
-                  <option value="Other">Other</option>
+                  {productCategories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                  <option value="create-new">+ Create new category</option>
                 </select>
+                {newProductCategory !== undefined && newProductCategory !== "" && (
+                  <input
+                    type="text"
+                    placeholder="Enter new category name"
+                    value={newProductCategory}
+                    onChange={(e) => setNewProductCategory(e.target.value)}
+                    className="w-full mt-2 rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                  />
+                )}
               </div>
 
               <div className="grid grid-cols-3 gap-4">
@@ -3374,7 +3407,7 @@ export default function TenantAdminPage() {
               <div className="flex gap-3 justify-end pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowNewProductModal(false)}
+                  onClick={() => { setShowNewProductModal(false); setNewProductCategory(""); }}
                   className="rounded-lg border border-slate-200 px-6 py-2 font-medium text-slate-700 hover:bg-slate-50"
                 >
                   Cancel
@@ -3489,7 +3522,7 @@ export default function TenantAdminPage() {
           <div className="w-full max-w-2xl rounded-3xl bg-white p-8 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-semibold text-slate-900">Add New Vendor</h2>
-              <button onClick={() => setShowNewVendorModal(false)} className="text-slate-500 hover:text-slate-700">
+              <button onClick={() => { setShowNewVendorModal(false); setNewVendorCategory(""); }} className="text-slate-500 hover:text-slate-700">
                 <X className="h-6 w-6" />
               </button>
             </div>
@@ -3531,15 +3564,24 @@ export default function TenantAdminPage() {
                   <select
                     name="category"
                     required
+                    onChange={(e) => { if (e.target.value === "create-new") setNewVendorCategory(""); }}
                     className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
                   >
                     <option value="">Select category</option>
-                    <option value="Raw Materials">Raw Materials</option>
-                    <option value="Office Supplies">Office Supplies</option>
-                    <option value="Equipment">Equipment</option>
-                    <option value="Services">Services</option>
-                    <option value="Other">Other</option>
+                    {vendorCategories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                    <option value="create-new">+ Create new category</option>
                   </select>
+                  {newVendorCategory !== undefined && newVendorCategory !== "" && (
+                    <input
+                      type="text"
+                      value={newVendorCategory}
+                      onChange={(e) => setNewVendorCategory(e.target.value)}
+                      placeholder="Enter new category name"
+                      className="w-full mt-2 rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                    />
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-900 mb-2">Payment Terms</label>
@@ -3561,7 +3603,7 @@ export default function TenantAdminPage() {
               <div className="flex gap-3 justify-end pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowNewVendorModal(false)}
+                  onClick={() => { setShowNewVendorModal(false); setNewVendorCategory(""); }}
                   className="rounded-lg border border-slate-200 px-6 py-2 font-medium text-slate-700 hover:bg-slate-50"
                 >
                   Cancel
