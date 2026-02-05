@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-
-// In-memory storage for departments
-const departments: Record<string, Array<{ id: string; name: string; manager: string; headcount: number }>> = {};
+import { getDepartments, addDepartment } from "@/lib/persistent-storage";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const tenantSlug = searchParams.get("tenantSlug") || "default";
 
+  const departments = await getDepartments();
   const tenantDepartments = departments[tenantSlug] || [];
   return NextResponse.json({ departments: tenantDepartments });
 }
@@ -22,10 +21,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!departments[tenantSlug]) {
-    departments[tenantSlug] = [];
-  }
-
   const newDepartment = {
     id: `dept-${Date.now()}`,
     name,
@@ -33,7 +28,7 @@ export async function POST(request: NextRequest) {
     headcount: 0,
   };
 
-  departments[tenantSlug].push(newDepartment);
+  await addDepartment(tenantSlug, newDepartment);
 
   return NextResponse.json(
     { department: newDepartment, message: "Department created successfully" },
