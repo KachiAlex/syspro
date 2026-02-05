@@ -9625,10 +9625,10 @@ function ProjectsWorkspace({
               </div>
               <div className="flex gap-2">
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
-                  {projectsTasks.filter(t => t.status === 'done').length} Done
+                  {tasks.filter(t => t.status === 'done').length} Done
                 </span>
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                  {projectsTasks.filter(t => t.status === 'in-progress').length} In Progress
+                  {tasks.filter(t => t.status === 'in-progress').length} In Progress
                 </span>
               </div>
             </div>
@@ -9645,12 +9645,12 @@ function ProjectsWorkspace({
                   </tr>
                 </thead>
                 <tbody>
-                  {projectsTasks.length === 0 ? (
+                  {tasks.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-4 py-8 text-center text-slate-500">No tasks yet. Create a project first.</td>
                     </tr>
                   ) : (
-                    projectsTasks.map((task) => (
+                    tasks.map((task) => (
                       <tr key={task.id} className="border-b border-slate-100 hover:bg-slate-50">
                         <td className="px-4 py-3 text-sm text-slate-900 font-medium">{task.title}</td>
                         <td className="px-4 py-3 text-sm text-slate-500">{task.projectId}</td>
@@ -9680,15 +9680,15 @@ function ProjectsWorkspace({
           <div className="grid gap-6 lg:grid-cols-3 mb-6">
             <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Hours</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">{projectsTimeEntries.reduce((sum, e) => sum + e.hours, 0).toFixed(1)}</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">{timeEntries.reduce((sum, e) => sum + e.hours, 0).toFixed(1)}</p>
             </div>
             <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Billable Hours</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">{projectsTimeEntries.filter(e => e.billable).reduce((sum, e) => sum + e.hours, 0).toFixed(1)}</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">{timeEntries.filter(e => e.billable).reduce((sum, e) => sum + e.hours, 0).toFixed(1)}</p>
             </div>
             <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Time Entries</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">{projectsTimeEntries.length}</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">{timeEntries.length}</p>
             </div>
           </div>
 
@@ -9712,12 +9712,12 @@ function ProjectsWorkspace({
                   </tr>
                 </thead>
                 <tbody>
-                  {projectsTimeEntries.length === 0 ? (
+                  {timeEntries.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-4 py-8 text-center text-slate-500">No time entries yet</td>
                     </tr>
                   ) : (
-                    projectsTimeEntries.map((entry) => (
+                    timeEntries.map((entry) => (
                       <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
                         <td className="px-4 py-3 text-sm text-slate-900 font-medium">{entry.employeeName}</td>
                         <td className="px-4 py-3 text-sm text-slate-500">{entry.projectId}</td>
@@ -9745,18 +9745,18 @@ function ProjectsWorkspace({
           <div className="grid gap-6 lg:grid-cols-3 mb-6">
             <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Hours</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">{projectsTimeEntries.reduce((sum, e) => sum + e.hours, 0).toFixed(1)}</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">{timeEntries.reduce((sum, e) => sum + e.hours, 0).toFixed(1)}</p>
               <p className="text-xs text-slate-500 mt-2">100% of logged time</p>
             </div>
             <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Billable Hours</p>
-              <p className="text-3xl font-bold text-emerald-600 mt-2">{projectsTimeEntries.filter(e => e.billable).reduce((sum, e) => sum + e.hours, 0).toFixed(1)}</p>
-              <p className="text-xs text-slate-500 mt-2">{projectsTimeEntries.length > 0 ? ((projectsTimeEntries.filter(e => e.billable).reduce((sum, e) => sum + e.hours, 0) / projectsTimeEntries.reduce((sum, e) => sum + e.hours, 0) * 100).toFixed(1)) : 0}% billable</p>
+              <p className="text-3xl font-bold text-emerald-600 mt-2">{timeEntries.filter(e => e.billable).reduce((sum, e) => sum + e.hours, 0).toFixed(1)}</p>
+              <p className="text-xs text-slate-500 mt-2">{timeEntries.length > 0 ? ((timeEntries.filter(e => e.billable).reduce((sum, e) => sum + e.hours, 0) / timeEntries.reduce((sum, e) => sum + e.hours, 0) * 100).toFixed(1)) : 0}% billable</p>
             </div>
             <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Non-billable Hours</p>
-              <p className="text-3xl font-bold text-amber-600 mt-2">{projectsTimeEntries.filter(e => !e.billable).reduce((sum, e) => sum + e.hours, 0).toFixed(1)}</p>
-              <p className="text-xs text-slate-500 mt-2">{projectsTimeEntries.length > 0 ? ((projectsTimeEntries.filter(e => !e.billable).reduce((sum, e) => sum + e.hours, 0) / projectsTimeEntries.reduce((sum, e) => sum + e.hours, 0) * 100).toFixed(1)) : 0}% internal</p>
+              <p className="text-3xl font-bold text-amber-600 mt-2">{timeEntries.filter(e => !e.billable).reduce((sum, e) => sum + e.hours, 0).toFixed(1)}</p>
+              <p className="text-xs text-slate-500 mt-2">{timeEntries.length > 0 ? ((timeEntries.filter(e => !e.billable).reduce((sum, e) => sum + e.hours, 0) / timeEntries.reduce((sum, e) => sum + e.hours, 0) * 100).toFixed(1)) : 0}% internal</p>
             </div>
           </div>
 
@@ -9769,11 +9769,11 @@ function ProjectsWorkspace({
             </div>
 
             <div className="space-y-4">
-              {projectsList.length === 0 ? (
+              {projects.length === 0 ? (
                 <p className="text-slate-500 text-sm">No projects yet</p>
               ) : (
-                projectsList.map((proj) => {
-                  const projHours = projectsTimeEntries.filter(e => e.projectId === proj.id);
+                projects.map((proj) => {
+                  const projHours = timeEntries.filter(e => e.projectId === proj.id);
                   const billableHours = projHours.filter(e => e.billable).reduce((sum, e) => sum + e.hours, 0);
                   const totalHours = projHours.reduce((sum, e) => sum + e.hours, 0);
                   const billablePercent = totalHours > 0 ? (billableHours / totalHours * 100) : 0;
@@ -9801,15 +9801,15 @@ function ProjectsWorkspace({
           <div className="grid gap-6 lg:grid-cols-3 mb-6">
             <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Budget</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">₦{projectsList.reduce((sum, p) => sum + p.budget, 0).toLocaleString()}</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">₦{projects.reduce((sum, p) => sum + p.budget, 0).toLocaleString()}</p>
             </div>
             <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Spent</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">₦{projectsList.reduce((sum, p) => sum + p.spent, 0).toLocaleString()}</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">₦{projects.reduce((sum, p) => sum + p.spent, 0).toLocaleString()}</p>
             </div>
             <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Remaining</p>
-              <p className="text-3xl font-bold text-emerald-600 mt-2">₦{(projectsList.reduce((sum, p) => sum + p.budget, 0) - projectsList.reduce((sum, p) => sum + p.spent, 0)).toLocaleString()}</p>
+              <p className="text-3xl font-bold text-emerald-600 mt-2">₦{(projects.reduce((sum, p) => sum + p.budget, 0) - projects.reduce((sum, p) => sum + p.spent, 0)).toLocaleString()}</p>
             </div>
           </div>
 
@@ -9833,12 +9833,12 @@ function ProjectsWorkspace({
                   </tr>
                 </thead>
                 <tbody>
-                  {projectsList.length === 0 ? (
+                  {projects.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-4 py-8 text-center text-slate-500">No projects yet</td>
                     </tr>
                   ) : (
-                    projectsList.map((proj) => {
+                    projects.map((proj) => {
                       const remaining = proj.budget - proj.spent;
                       const utilPercent = (proj.spent / proj.budget * 100);
                       return (
@@ -9871,15 +9871,15 @@ function ProjectsWorkspace({
           <div className="grid gap-6 lg:grid-cols-3 mb-6">
             <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Invoices</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">{projectsInvoices.length}</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">{invoices.length}</p>
             </div>
             <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Invoiced</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">₦{projectsInvoices.reduce((sum, i) => sum + i.amount, 0).toLocaleString()}</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">₦{invoices.reduce((sum, i) => sum + i.amount, 0).toLocaleString()}</p>
             </div>
             <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Outstanding</p>
-              <p className="text-3xl font-bold text-amber-600 mt-2">₦{projectsInvoices.filter(i => i.status !== 'paid').reduce((sum, i) => sum + i.amount, 0).toLocaleString()}</p>
+              <p className="text-3xl font-bold text-amber-600 mt-2">₦{invoices.filter(i => i.status !== 'paid').reduce((sum, i) => sum + i.amount, 0).toLocaleString()}</p>
             </div>
           </div>
 
@@ -9903,12 +9903,12 @@ function ProjectsWorkspace({
                   </tr>
                 </thead>
                 <tbody>
-                  {projectsInvoices.length === 0 ? (
+                  {invoices.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-4 py-8 text-center text-slate-500">No invoices yet</td>
                     </tr>
                   ) : (
-                    projectsInvoices.map((inv) => (
+                    invoices.map((inv) => (
                       <tr key={inv.id} className="border-b border-slate-100 hover:bg-slate-50">
                         <td className="px-4 py-3 text-sm text-slate-900 font-medium">{inv.invoiceNumber}</td>
                         <td className="px-4 py-3 text-sm text-slate-500">{inv.projectId}</td>
@@ -9938,15 +9938,15 @@ function ProjectsWorkspace({
           <div className="grid gap-6 lg:grid-cols-3 mb-6">
             <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Revenue</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">₦{projectsProfitability.reduce((sum, p) => sum + p.revenue, 0).toLocaleString()}</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">₦{profitability.reduce((sum, p) => sum + p.revenue, 0).toLocaleString()}</p>
             </div>
             <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Costs</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">₦{projectsProfitability.reduce((sum, p) => sum + p.costs, 0).toLocaleString()}</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">₦{profitability.reduce((sum, p) => sum + p.costs, 0).toLocaleString()}</p>
             </div>
             <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Profit</p>
-              <p className="text-3xl font-bold text-emerald-600 mt-2">₦{projectsProfitability.reduce((sum, p) => sum + p.margin, 0).toLocaleString()}</p>
+              <p className="text-3xl font-bold text-emerald-600 mt-2">₦{profitability.reduce((sum, p) => sum + p.margin, 0).toLocaleString()}</p>
             </div>
           </div>
 
@@ -9970,12 +9970,12 @@ function ProjectsWorkspace({
                   </tr>
                 </thead>
                 <tbody>
-                  {projectsProfitability.length === 0 ? (
+                  {profitability.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-4 py-8 text-center text-slate-500">No profitability data yet</td>
                     </tr>
                   ) : (
-                    projectsProfitability.map((proj) => (
+                    profitability.map((proj) => (
                       <tr key={proj.id} className="border-b border-slate-100 hover:bg-slate-50">
                         <td className="px-4 py-3 text-sm text-slate-900 font-medium">{proj.projectName}</td>
                         <td className="px-4 py-3 text-sm text-slate-500">₦{proj.revenue.toLocaleString()}</td>
