@@ -9214,31 +9214,287 @@ function HRWorkspace({
 
       {currentView === "attendance" && (
         <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <p className="text-slate-500">Attendance & leave management coming soon</p>
+          <div className="grid gap-6 lg:grid-cols-3 mb-6">
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase text-slate-400 font-medium">Total Attendance Rate</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">
+                {hrAttendance.length > 0 
+                  ? ((hrAttendance.filter(a => a.status === 'present').length / hrAttendance.length) * 100).toFixed(1)
+                  : 0}%
+              </p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase text-slate-400 font-medium">Present Today</p>
+              <p className="text-3xl font-bold text-emerald-600 mt-2">
+                {hrAttendance.filter(a => a.status === 'present').length}
+              </p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase text-slate-400 font-medium">On Leave</p>
+              <p className="text-3xl font-bold text-amber-600 mt-2">
+                {hrAttendance.filter(a => a.status === 'leave').length}
+              </p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Employee</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Date</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Hours</th>
+                </tr>
+              </thead>
+              <tbody>
+                {hrAttendance.length === 0 ? (
+                  <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">No attendance records yet</td></tr>
+                ) : (
+                  hrAttendance.map((record) => (
+                    <tr key={record.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="px-4 py-3 text-sm text-slate-900">{record.employeeName}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{new Date(record.date).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                          record.status === 'present' ? 'bg-emerald-50 text-emerald-700' :
+                          record.status === 'leave' ? 'bg-amber-50 text-amber-700' :
+                          'bg-slate-100 text-slate-600'
+                        }`}>
+                          {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{record.hours}h</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {currentView === "payroll" && (
         <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <p className="text-slate-500">Payroll management coming soon</p>
+          <div className="grid gap-6 lg:grid-cols-3 mb-6">
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase text-slate-400 font-medium">Total Payroll</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">
+                ₦{hrPayrollRuns.reduce((sum, p) => sum + (p.totalAmount || 0), 0).toLocaleString()}
+              </p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase text-slate-400 font-medium">Payroll Runs</p>
+              <p className="text-3xl font-bold text-blue-600 mt-2">{hrPayrollRuns.length}</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase text-slate-400 font-medium">Avg Salary</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">
+                ₦{hrPayrollRuns.length > 0 
+                  ? (hrPayrollRuns.reduce((sum, p) => sum + (p.totalAmount || 0), 0) / hrPayrollRuns.length).toLocaleString(undefined, {maximumFractionDigits: 0})
+                  : 0}
+              </p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Month</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Employees</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Total Amount</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {hrPayrollRuns.length === 0 ? (
+                  <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">No payroll runs yet</td></tr>
+                ) : (
+                  hrPayrollRuns.map((run) => (
+                    <tr key={run.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="px-4 py-3 text-sm text-slate-900">{run.month || 'Monthly'}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{run.employeeCount || hrEmployees.length}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-slate-900">₦{(run.totalAmount || 0).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                          run.status === 'processed' ? 'bg-emerald-50 text-emerald-700' :
+                          'bg-blue-50 text-blue-700'
+                        }`}>
+                          {run.status || 'Processed'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {currentView === "benefits" && (
         <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <p className="text-slate-500">Benefits & deductions management coming soon</p>
+          <div className="grid gap-6 lg:grid-cols-3 mb-6">
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase text-slate-400 font-medium">Total Benefits</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">
+                ₦{hrBenefits.reduce((sum, b) => sum + (b.amount || 0), 0).toLocaleString()}
+              </p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase text-slate-400 font-medium">Active Plans</p>
+              <p className="text-3xl font-bold text-emerald-600 mt-2">
+                {[...new Set(hrBenefits.map(b => b.type))].length}
+              </p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase text-slate-400 font-medium">Beneficiaries</p>
+              <p className="text-3xl font-bold text-blue-600 mt-2">{hrBenefits.length}</p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Benefit Type</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Employee</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Amount</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Start Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {hrBenefits.length === 0 ? (
+                  <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">No benefits assigned yet</td></tr>
+                ) : (
+                  hrBenefits.map((benefit) => (
+                    <tr key={benefit.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="px-4 py-3 text-sm font-medium text-slate-900">{benefit.type}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{benefit.employeeName}</td>
+                      <td className="px-4 py-3 text-sm text-slate-900">₦{(benefit.amount || 0).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{new Date(benefit.startDate).toLocaleDateString()}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {currentView === "performance-reviews" && (
         <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <p className="text-slate-500">Performance reviews coming soon</p>
+          <div className="grid gap-6 lg:grid-cols-3 mb-6">
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase text-slate-400 font-medium">Total Reviews</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">{hrPerformanceReviews.length}</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase text-slate-400 font-medium">Avg Rating</p>
+              <p className="text-3xl font-bold text-amber-600 mt-2">
+                {hrPerformanceReviews.length > 0
+                  ? (hrPerformanceReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / hrPerformanceReviews.length).toFixed(1)
+                  : 0}/5
+              </p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase text-slate-400 font-medium">Top Performers</p>
+              <p className="text-3xl font-bold text-emerald-600 mt-2">
+                {hrPerformanceReviews.filter(r => (r.rating || 0) >= 4).length}
+              </p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Employee</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Review Date</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Rating</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Feedback</th>
+                </tr>
+              </thead>
+              <tbody>
+                {hrPerformanceReviews.length === 0 ? (
+                  <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">No performance reviews yet</td></tr>
+                ) : (
+                  hrPerformanceReviews.map((review) => (
+                    <tr key={review.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="px-4 py-3 text-sm font-medium text-slate-900">{review.employeeName}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{new Date(review.reviewDate).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className={`inline-flex px-3 py-1 rounded-full text-sm font-bold ${
+                          (review.rating || 0) >= 4.5 ? 'bg-emerald-50 text-emerald-700' :
+                          (review.rating || 0) >= 4 ? 'bg-blue-50 text-blue-700' :
+                          (review.rating || 0) >= 3 ? 'bg-amber-50 text-amber-700' :
+                          'bg-rose-50 text-rose-700'
+                        }`}>
+                          {review.rating || 0}/5
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600 max-w-xs truncate">{review.feedback || 'No feedback'}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {currentView === "documents" && (
         <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <p className="text-slate-500">Document management coming soon</p>
+          <div className="grid gap-6 lg:grid-cols-3 mb-6">
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase text-slate-400 font-medium">Total Documents</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">{hrDocuments.length}</p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase text-slate-400 font-medium">Document Types</p>
+              <p className="text-3xl font-bold text-blue-600 mt-2">
+                {[...new Set(hrDocuments.map(d => d.type))].length}
+              </p>
+            </div>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase text-slate-400 font-medium">Recent Uploads</p>
+              <p className="text-3xl font-bold text-emerald-600 mt-2">
+                {hrDocuments.filter(d => {
+                  const uploadDate = new Date(d.uploadDate);
+                  const thirtyDaysAgo = new Date();
+                  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                  return uploadDate >= thirtyDaysAgo;
+                }).length}
+              </p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Document Name</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Type</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Employee</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">Upload Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {hrDocuments.length === 0 ? (
+                  <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">No documents uploaded yet</td></tr>
+                ) : (
+                  hrDocuments.map((doc) => (
+                    <tr key={doc.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="px-4 py-3 text-sm font-medium text-slate-900">{doc.name}</td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                          {doc.type}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{doc.employeeName}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{new Date(doc.uploadDate).toLocaleDateString()}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
