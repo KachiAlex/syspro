@@ -3935,6 +3935,15 @@ export default function TenantAdminPage() {
               onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
+                const department = formData.get("department") as string;
+                
+                // If user selects "create-new", open the department modal instead
+                if (department === "create-new") {
+                  setShowAddEmployeeModal(false);
+                  setShowAddDepartmentModal(true);
+                  return;
+                }
+                
                 handleAddEmployee(formData);
               }}
               className="space-y-4"
@@ -3965,13 +3974,20 @@ export default function TenantAdminPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-900 mb-2">Department</label>
-                  <input
-                    type="text"
+                  <select
                     name="department"
                     required
-                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
-                    placeholder="e.g., Engineering"
-                  />
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                  >
+                    <option value="">Select a department</option>
+                    {hrDepartments.map((dept) => (
+                      <option key={dept.id} value={dept.name}>{dept.name}</option>
+                    ))}
+                    <option value="create-new">+ Create new department</option>
+                  </select>
+                  {hrDepartments.length === 0 && (
+                    <p className="mt-1 text-xs text-slate-500">No departments yet. <button type="button" onClick={() => { setShowAddEmployeeModal(false); setShowAddDepartmentModal(true); }} className="text-slate-900 underline hover:text-slate-700">Create one</button></p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-900 mb-2">Position</label>
