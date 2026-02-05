@@ -2406,16 +2406,18 @@ export default function TenantAdminPage() {
   const handleAddEmployee = useCallback(async (formData: FormData) => {
     try {
       setHrLoading(true);
+      const payload = {
+        tenantSlug: tenantSlug || "default",
+        name: formData.get("name"),
+        email: formData.get("email"),
+        department: formData.get("department"),
+        position: formData.get("position"),
+      };
+      
       const response = await fetch("/api/hr/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tenantSlug: tenantSlug || "default",
-          name: formData.get("name"),
-          email: formData.get("email"),
-          department: formData.get("department"),
-          position: formData.get("position"),
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -2424,10 +2426,17 @@ export default function TenantAdminPage() {
       }
 
       const result = await response.json();
-      setHrEmployees([...hrEmployees, result.employee]);
-      setHrToast(`Employee "${result.employee.name}" added successfully`);
+      console.log("Employee creation response:", result);
+      
+      if (result.employee) {
+        setHrEmployees([...hrEmployees, result.employee]);
+        setHrToast(`Employee "${result.employee.name}" added successfully`);
+        setShowAddEmployeeModal(false);
+      } else {
+        throw new Error("No employee data in response");
+      }
+      
       setTimeout(() => setHrToast(null), 3000);
-      setShowAddEmployeeModal(false);
     } catch (error) {
       console.error("Error adding employee:", error);
       setHrToast(`Error: ${error instanceof Error ? error.message : "Failed to add employee"}`);
@@ -2460,6 +2469,13 @@ export default function TenantAdminPage() {
       setHrToast(`Department "${result.department.name}" created successfully`);
       setTimeout(() => setHrToast(null), 3000);
       setShowAddDepartmentModal(false);
+      
+      // If the department was being created from the employee modal, reopen the employee modal
+      // so the user can add employees to the newly created department
+      if (typeof window !== "undefined" && sessionStorage.getItem("reopenEmployeeModal")) {
+        setShowAddEmployeeModal(true);
+        sessionStorage.removeItem("reopenEmployeeModal");
+      }
     } catch (error) {
       console.error("Error adding department:", error);
       setHrToast(`Error: ${error instanceof Error ? error.message : "Failed to add department"}`);
@@ -3940,6 +3956,7 @@ export default function TenantAdminPage() {
                 
                 // If user selects "create-new", open the department modal instead
                 if (department === "create-new") {
+                  sessionStorage.setItem("reopenEmployeeModal", "true");
                   setShowAddEmployeeModal(false);
                   setShowAddDepartmentModal(true);
                   return;
