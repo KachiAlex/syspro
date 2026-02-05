@@ -2213,6 +2213,145 @@ export default function TenantAdminPage() {
     setTimeout(() => setQuickActionToast(null), 3000);
   }, []);
 
+  // Inventory handlers
+  const handleAddProduct = useCallback(async (formData: FormData) => {
+    try {
+      setInventoryLoading(true);
+      const response = await fetch("/api/inventory/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantSlug: tenantSlug || "default",
+          name: formData.get("name"),
+          sku: formData.get("sku"),
+          category: formData.get("category"),
+          currentStock: parseInt(formData.get("currentStock") as string) || 0,
+          minStock: parseInt(formData.get("minStock") as string) || 0,
+          unitCost: parseFloat(formData.get("unitCost") as string) || 0,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to add product");
+      }
+
+      const result = await response.json();
+      setInventoryProducts([...inventoryProducts, result.product]);
+      setInventoryToast(`Product "${result.product.name}" added successfully`);
+      setTimeout(() => setInventoryToast(null), 3000);
+      setShowNewProductModal(false);
+    } catch (error) {
+      console.error("Error adding product:", error);
+      setInventoryToast(`Error: ${error instanceof Error ? error.message : "Failed to add product"}`);
+      setTimeout(() => setInventoryToast(null), 5000);
+    } finally {
+      setInventoryLoading(false);
+    }
+  }, [tenantSlug, inventoryProducts]);
+
+  const handleTransferStock = useCallback(async (formData: FormData) => {
+    try {
+      setInventoryLoading(true);
+      const response = await fetch("/api/inventory/stock-transfers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantSlug: tenantSlug || "default",
+          productId: formData.get("product"),
+          quantity: parseInt(formData.get("quantity") as string) || 0,
+          fromLocation: formData.get("fromLocation"),
+          toLocation: formData.get("toLocation"),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create transfer");
+      }
+
+      const result = await response.json();
+      setInventoryToast(`Transferred ${result.transfer.quantity} units successfully`);
+      setTimeout(() => setInventoryToast(null), 3000);
+      setShowStockTransferModal(false);
+    } catch (error) {
+      console.error("Error transferring stock:", error);
+      setInventoryToast(`Error: ${error instanceof Error ? error.message : "Failed to transfer stock"}`);
+      setTimeout(() => setInventoryToast(null), 5000);
+    } finally {
+      setInventoryLoading(false);
+    }
+  }, [tenantSlug]);
+
+  // Procurement handlers
+  const handleAddVendor = useCallback(async (formData: FormData) => {
+    try {
+      setProcurementLoading(true);
+      const response = await fetch("/api/procurement/vendors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantSlug: tenantSlug || "default",
+          name: formData.get("name"),
+          code: formData.get("code"),
+          category: formData.get("category"),
+          paymentTerms: formData.get("paymentTerms"),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to add vendor");
+      }
+
+      const result = await response.json();
+      setProcurementVendors([...procurementVendors, result.vendor]);
+      setProcurementToast(`Vendor "${result.vendor.name}" added successfully`);
+      setTimeout(() => setProcurementToast(null), 3000);
+      setShowNewVendorModal(false);
+    } catch (error) {
+      console.error("Error adding vendor:", error);
+      setProcurementToast(`Error: ${error instanceof Error ? error.message : "Failed to add vendor"}`);
+      setTimeout(() => setProcurementToast(null), 5000);
+    } finally {
+      setProcurementLoading(false);
+    }
+  }, [tenantSlug, procurementVendors]);
+
+  const handleCreatePO = useCallback(async (formData: FormData) => {
+    try {
+      setProcurementLoading(true);
+      const response = await fetch("/api/procurement/purchase-orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantSlug: tenantSlug || "default",
+          vendorId: formData.get("vendor"),
+          items: formData.get("items"),
+          quantity: parseInt(formData.get("quantity") as string) || 0,
+          amount: parseFloat(formData.get("amount") as string) || 0,
+          deliveryDate: formData.get("deliveryDate"),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create PO");
+      }
+
+      const result = await response.json();
+      setProcurementToast(`PO "${result.purchaseOrder.poNumber}" created successfully`);
+      setTimeout(() => setProcurementToast(null), 3000);
+      setShowNewPOModal(false);
+    } catch (error) {
+      console.error("Error creating PO:", error);
+      setProcurementToast(`Error: ${error instanceof Error ? error.message : "Failed to create PO"}`);
+      setTimeout(() => setProcurementToast(null), 5000);
+    } finally {
+      setProcurementLoading(false);
+    }
+  }, [tenantSlug]);
+
   // Invoice handlers
   const handleSaveInvoice = useCallback(async (invoiceData: {
     customer: string;
@@ -3140,6 +3279,402 @@ export default function TenantAdminPage() {
           </main>
         </div>
       </div>
+      {/* Inventory Modals */}
+      {showNewProductModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-3xl bg-white p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold text-slate-900">Add New Product</h2>
+              <button onClick={() => setShowNewProductModal(false)} className="text-slate-500 hover:text-slate-700">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                handleAddProduct(formData);
+              }}
+              className="space-y-4"
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Product Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                    placeholder="e.g., Laptop Computer"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">SKU</label>
+                  <input
+                    type="text"
+                    name="sku"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                    placeholder="e.g., LAP-001"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Category</label>
+                <select
+                  name="category"
+                  required
+                  className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                >
+                  <option value="">Select category</option>
+                  <option value="Electronics">Electronics</option>
+                  <option value="Furniture">Furniture</option>
+                  <option value="Office Supplies">Office Supplies</option>
+                  <option value="Equipment">Equipment</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Current Stock</label>
+                  <input
+                    type="number"
+                    name="currentStock"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Min Level</label>
+                  <input
+                    type="number"
+                    name="minStock"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Unit Cost (₦)</label>
+                  <input
+                    type="number"
+                    name="unitCost"
+                    step="0.01"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowNewProductModal(false)}
+                  className="rounded-lg border border-slate-200 px-6 py-2 font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-slate-900 px-6 py-2 font-medium text-white hover:bg-slate-800"
+                >
+                  Add Product
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showStockTransferModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-3xl bg-white p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold text-slate-900">Transfer Stock</h2>
+              <button onClick={() => setShowStockTransferModal(false)} className="text-slate-500 hover:text-slate-700">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                handleTransferStock(formData);
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Product</label>
+                <select
+                  name="product"
+                  required
+                  className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                >
+                  <option value="">Select product</option>
+                  {inventoryProducts.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name} ({p.currentStock} available)</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Quantity</label>
+                <input
+                  type="number"
+                  name="quantity"
+                  required
+                  className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                  placeholder="0"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">From Location</label>
+                  <select
+                    name="fromLocation"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                  >
+                    <option value="">Select location</option>
+                    <option value="Main Warehouse">Main Warehouse</option>
+                    <option value="Branch A">Branch A</option>
+                    <option value="Branch B">Branch B</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">To Location</label>
+                  <select
+                    name="toLocation"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                  >
+                    <option value="">Select location</option>
+                    <option value="Main Warehouse">Main Warehouse</option>
+                    <option value="Branch A">Branch A</option>
+                    <option value="Branch B">Branch B</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowStockTransferModal(false)}
+                  className="rounded-lg border border-slate-200 px-6 py-2 font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-slate-900 px-6 py-2 font-medium text-white hover:bg-slate-800"
+                >
+                  Transfer Stock
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Procurement Modals */}
+      {showNewVendorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-3xl bg-white p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold text-slate-900">Add New Vendor</h2>
+              <button onClick={() => setShowNewVendorModal(false)} className="text-slate-500 hover:text-slate-700">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                handleAddVendor(formData);
+              }}
+              className="space-y-4"
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Vendor Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                    placeholder="e.g., ABC Supplies Ltd"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Vendor Code</label>
+                  <input
+                    type="text"
+                    name="code"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                    placeholder="e.g., VEN-001"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Category</label>
+                  <select
+                    name="category"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                  >
+                    <option value="">Select category</option>
+                    <option value="Raw Materials">Raw Materials</option>
+                    <option value="Office Supplies">Office Supplies</option>
+                    <option value="Equipment">Equipment</option>
+                    <option value="Services">Services</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Payment Terms</label>
+                  <select
+                    name="paymentTerms"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                  >
+                    <option value="">Select terms</option>
+                    <option value="Net 15">Net 15</option>
+                    <option value="Net 30">Net 30</option>
+                    <option value="Net 45">Net 45</option>
+                    <option value="Net 60">Net 60</option>
+                    <option value="COD">COD (Cash on Delivery)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowNewVendorModal(false)}
+                  className="rounded-lg border border-slate-200 px-6 py-2 font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-slate-900 px-6 py-2 font-medium text-white hover:bg-slate-800"
+                >
+                  Add Vendor
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showNewPOModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-3xl bg-white p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold text-slate-900">Create Purchase Order</h2>
+              <button onClick={() => setShowNewPOModal(false)} className="text-slate-500 hover:text-slate-700">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                handleCreatePO(formData);
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Vendor</label>
+                <select
+                  name="vendor"
+                  required
+                  className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                >
+                  <option value="">Select vendor</option>
+                  {procurementVendors.map((v) => (
+                    <option key={v.id} value={v.id}>{v.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Items Description</label>
+                <textarea
+                  name="items"
+                  required
+                  className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                  placeholder="List items to order..."
+                  rows={4}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Quantity</label>
+                  <input
+                    type="number"
+                    name="quantity"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Estimated Amount (₦)</label>
+                  <input
+                    type="number"
+                    name="amount"
+                    step="0.01"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Delivery Date</label>
+                <input
+                  type="date"
+                  name="deliveryDate"
+                  required
+                  className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowNewPOModal(false)}
+                  className="rounded-lg border border-slate-200 px-6 py-2 font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-slate-900 px-6 py-2 font-medium text-white hover:bg-slate-800"
+                >
+                  Create PO
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {crmActionType && (
         <CrmActionModal
           type={crmActionType}
