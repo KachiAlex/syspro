@@ -2115,6 +2115,35 @@ export default function TenantAdminPage() {
   const [newVendorCategory, setNewVendorCategory] = useState("");
   const [vendorCategories, setVendorCategories] = useState(["Raw Materials", "Office Supplies", "Equipment", "Services", "Other"]);
 
+  // HR state
+  const [hrView, setHrView] = useState<"employees" | "departments" | "attendance" | "payroll" | "benefits" | "performance-reviews" | "documents">("employees");
+  const [hrEmployees, setHrEmployees] = useState<Array<{ id: string; name: string; email: string; department: string; position: string; status: "active" | "inactive" }>>([]);
+  const [hrDepartments, setHrDepartments] = useState<Array<{ id: string; name: string; manager: string; headcount: number }>>([]);
+  const [hrAttendance, setHrAttendance] = useState<Array<{ id: string; employeeId: string; employeeName: string; date: string; status: "present" | "absent" | "late" | "leave" }>>([]);
+  const [hrPayrollRuns, setHrPayrollRuns] = useState<Array<{ id: string; period: string; status: "draft" | "approved" | "paid"; totalAmount: number; employeeCount: number }>>([]);
+  const [hrBenefits, setHrBenefits] = useState<Array<{ id: string; name: string; category: string; coverage: string; cost: number }>>([]);
+  const [hrPerformanceReviews, setHrPerformanceReviews] = useState<Array<{ id: string; employeeId: string; employeeName: string; reviewer: string; rating: number; date: string }>>([]);
+  const [hrDocuments, setHrDocuments] = useState<Array<{ id: string; name: string; type: string; uploadedBy: string; uploadedDate: string }>>([]);
+  const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
+  const [showAddDepartmentModal, setShowAddDepartmentModal] = useState(false);
+  const [hrLoading, setHrLoading] = useState(false);
+  const [hrError, setHrError] = useState<string | null>(null);
+  const [hrToast, setHrToast] = useState<string | null>(null);
+
+  // Projects state
+  const [projectsView, setProjectsView] = useState<"projects" | "tasks" | "time-tracking" | "billable-hours" | "budgets" | "invoicing" | "profitability">("projects");
+  const [projectsList, setProjectsList] = useState<Array<{ id: string; name: string; client: string; status: "active" | "completed" | "on-hold"; budget: number; spent: number; progress: number }>>([]);
+  const [projectsTasks, setProjectsTasks] = useState<Array<{ id: string; projectId: string; title: string; assignee: string; status: "todo" | "in-progress" | "done"; dueDate: string }>>([]);
+  const [projectsTimeEntries, setProjectsTimeEntries] = useState<Array<{ id: string; projectId: string; employeeName: string; hours: number; date: string; billable: boolean }>>([]);
+  const [projectsBudgets, setProjectsBudgets] = useState<Array<{ id: string; projectId: string; totalBudget: number; spent: number; remaining: number }>>([]);
+  const [projectsInvoices, setProjectsInvoices] = useState<Array<{ id: string; projectId: string; invoiceNumber: string; amount: number; status: "draft" | "sent" | "paid"; dueDate: string }>>([]);
+  const [projectsProfitability, setProjectsProfitability] = useState<Array<{ id: string; projectId: string; projectName: string; revenue: number; costs: number; margin: number; marginPercent: number }>>([]);
+  const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
+  const [showLogTimeModal, setShowLogTimeModal] = useState(false);
+  const [projectsLoading, setProjectsLoading] = useState(false);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
+  const [projectsToast, setProjectsToast] = useState<string | null>(null);
+
   const [crmActionType, setCrmActionType] = useState<CrmActionType | null>(null);
   const [crmActionToast, setCrmActionToast] = useState<string | null>(null);
   const [crmView, setCrmView] = useState<CrmView>("dashboard");
@@ -2371,6 +2400,144 @@ export default function TenantAdminPage() {
       setProcurementLoading(false);
     }
   }, [tenantSlug]);
+
+  // HR handlers
+  const handleAddEmployee = useCallback(async (formData: FormData) => {
+    try {
+      setHrLoading(true);
+      const response = await fetch("/api/hr/employees", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantSlug: tenantSlug || "default",
+          name: formData.get("name"),
+          email: formData.get("email"),
+          department: formData.get("department"),
+          position: formData.get("position"),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to add employee");
+      }
+
+      const result = await response.json();
+      setHrEmployees([...hrEmployees, result.employee]);
+      setHrToast(`Employee "${result.employee.name}" added successfully`);
+      setTimeout(() => setHrToast(null), 3000);
+      setShowAddEmployeeModal(false);
+    } catch (error) {
+      console.error("Error adding employee:", error);
+      setHrToast(`Error: ${error instanceof Error ? error.message : "Failed to add employee"}`);
+      setTimeout(() => setHrToast(null), 5000);
+    } finally {
+      setHrLoading(false);
+    }
+  }, [tenantSlug, hrEmployees]);
+
+  const handleAddDepartment = useCallback(async (formData: FormData) => {
+    try {
+      setHrLoading(true);
+      const response = await fetch("/api/hr/departments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantSlug: tenantSlug || "default",
+          name: formData.get("name"),
+          manager: formData.get("manager"),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to add department");
+      }
+
+      const result = await response.json();
+      setHrDepartments([...hrDepartments, result.department]);
+      setHrToast(`Department "${result.department.name}" created successfully`);
+      setTimeout(() => setHrToast(null), 3000);
+      setShowAddDepartmentModal(false);
+    } catch (error) {
+      console.error("Error adding department:", error);
+      setHrToast(`Error: ${error instanceof Error ? error.message : "Failed to add department"}`);
+      setTimeout(() => setHrToast(null), 5000);
+    } finally {
+      setHrLoading(false);
+    }
+  }, [tenantSlug, hrDepartments]);
+
+  // Projects handlers
+  const handleCreateProject = useCallback(async (formData: FormData) => {
+    try {
+      setProjectsLoading(true);
+      const response = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantSlug: tenantSlug || "default",
+          name: formData.get("name"),
+          client: formData.get("client"),
+          budget: parseFloat(formData.get("budget") as string) || 0,
+          startDate: formData.get("startDate"),
+          endDate: formData.get("endDate"),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create project");
+      }
+
+      const result = await response.json();
+      setProjectsList([...projectsList, result.project]);
+      setProjectsToast(`Project "${result.project.name}" created successfully`);
+      setTimeout(() => setProjectsToast(null), 3000);
+      setShowCreateProjectModal(false);
+    } catch (error) {
+      console.error("Error creating project:", error);
+      setProjectsToast(`Error: ${error instanceof Error ? error.message : "Failed to create project"}`);
+      setTimeout(() => setProjectsToast(null), 5000);
+    } finally {
+      setProjectsLoading(false);
+    }
+  }, [tenantSlug, projectsList]);
+
+  const handleLogTime = useCallback(async (formData: FormData) => {
+    try {
+      setProjectsLoading(true);
+      const response = await fetch("/api/projects/time-entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantSlug: tenantSlug || "default",
+          projectId: formData.get("project"),
+          employeeName: formData.get("employeeName"),
+          hours: parseFloat(formData.get("hours") as string) || 0,
+          billable: formData.get("billable") === "on",
+          date: formData.get("date"),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to log time");
+      }
+
+      const result = await response.json();
+      setProjectsTimeEntries([...projectsTimeEntries, result.timeEntry]);
+      setProjectsToast(`Time logged successfully`);
+      setTimeout(() => setProjectsToast(null), 3000);
+      setShowLogTimeModal(false);
+    } catch (error) {
+      console.error("Error logging time:", error);
+      setProjectsToast(`Error: ${error instanceof Error ? error.message : "Failed to log time"}`);
+      setTimeout(() => setProjectsToast(null), 5000);
+    } finally {
+      setProjectsLoading(false);
+    }
+  }, [tenantSlug, projectsTimeEntries]);
 
   // Invoice handlers
   const handleSaveInvoice = useCallback(async (invoiceData: {
@@ -3256,6 +3423,43 @@ export default function TenantAdminPage() {
                     toast={procurementToast}
                     onToastDismiss={() => setProcurementToast(null)}
                   />
+                ) : activeNav === "hr-ops" ? (
+                  <HRWorkspace
+                    currentView={hrView}
+                    onViewChange={setHrView}
+                    employees={hrEmployees}
+                    departments={hrDepartments}
+                    attendance={hrAttendance}
+                    payrollRuns={hrPayrollRuns}
+                    benefits={hrBenefits}
+                    performanceReviews={hrPerformanceReviews}
+                    documents={hrDocuments}
+                    onAddEmployee={() => setShowAddEmployeeModal(true)}
+                    onAddDepartment={() => setShowAddDepartmentModal(true)}
+                    loading={hrLoading}
+                    error={hrError}
+                    tenantSlug={tenantSlug}
+                    toast={hrToast}
+                    onToastDismiss={() => setHrToast(null)}
+                  />
+                ) : activeNav === "projects" ? (
+                  <ProjectsWorkspace
+                    currentView={projectsView}
+                    onViewChange={setProjectsView}
+                    projects={projectsList}
+                    tasks={projectsTasks}
+                    timeEntries={projectsTimeEntries}
+                    budgets={projectsBudgets}
+                    invoices={projectsInvoices}
+                    profitability={projectsProfitability}
+                    onCreateProject={() => setShowCreateProjectModal(true)}
+                    onLogTime={() => setShowLogTimeModal(true)}
+                    loading={projectsLoading}
+                    error={projectsError}
+                    tenantSlug={tenantSlug}
+                    toast={projectsToast}
+                    onToastDismiss={() => setProjectsToast(null)}
+                  />
                 ) : activeNav === "structure" ? (
                   <DepartmentManagement tenantSlug={tenantSlug} />
                 ) : activeNav === "people-access" ? (
@@ -3710,6 +3914,343 @@ export default function TenantAdminPage() {
                   className="rounded-lg bg-slate-900 px-6 py-2 font-medium text-white hover:bg-slate-800"
                 >
                   Create PO
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showAddEmployeeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-3xl bg-white p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold text-slate-900">Add New Employee</h2>
+              <button onClick={() => setShowAddEmployeeModal(false)} className="text-slate-500 hover:text-slate-700">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                handleAddEmployee(formData);
+              }}
+              className="space-y-4"
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Full Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                    placeholder="e.g., John Doe"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                    placeholder="john@company.com"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Department</label>
+                  <input
+                    type="text"
+                    name="department"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                    placeholder="e.g., Engineering"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Position</label>
+                  <input
+                    type="text"
+                    name="position"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                    placeholder="e.g., Senior Developer"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAddEmployeeModal(false)}
+                  className="rounded-lg border border-slate-200 px-6 py-2 font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-slate-900 px-6 py-2 font-medium text-white hover:bg-slate-800"
+                >
+                  Add Employee
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showAddDepartmentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-3xl bg-white p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold text-slate-900">Add New Department</h2>
+              <button onClick={() => setShowAddDepartmentModal(false)} className="text-slate-500 hover:text-slate-700">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                handleAddDepartment(formData);
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Department Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                  placeholder="e.g., Engineering"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Department Manager</label>
+                <input
+                  type="text"
+                  name="manager"
+                  required
+                  className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                  placeholder="e.g., Jane Smith"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAddDepartmentModal(false)}
+                  className="rounded-lg border border-slate-200 px-6 py-2 font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-slate-900 px-6 py-2 font-medium text-white hover:bg-slate-800"
+                >
+                  Create Department
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showCreateProjectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-3xl bg-white p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold text-slate-900">Create New Project</h2>
+              <button onClick={() => setShowCreateProjectModal(false)} className="text-slate-500 hover:text-slate-700">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                handleCreateProject(formData);
+              }}
+              className="space-y-4"
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Project Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                    placeholder="e.g., Website Redesign"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Client</label>
+                  <input
+                    type="text"
+                    name="client"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                    placeholder="e.g., Acme Corp"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Budget (₦)</label>
+                  <input
+                    type="number"
+                    name="budget"
+                    required
+                    step="0.01"
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Start Date</label>
+                  <input
+                    type="date"
+                    name="startDate"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">End Date</label>
+                <input
+                  type="date"
+                  name="endDate"
+                  required
+                  className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateProjectModal(false)}
+                  className="rounded-lg border border-slate-200 px-6 py-2 font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-slate-900 px-6 py-2 font-medium text-white hover:bg-slate-800"
+                >
+                  Create Project
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showLogTimeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-3xl bg-white p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold text-slate-900">Log Time Entry</h2>
+              <button onClick={() => setShowLogTimeModal(false)} className="text-slate-500 hover:text-slate-700">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                handleLogTime(formData);
+              }}
+              className="space-y-4"
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Project</label>
+                  <select
+                    name="project"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                  >
+                    <option value="">Select project</option>
+                    {projectsList.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Employee Name</label>
+                  <input
+                    type="text"
+                    name="employeeName"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                    placeholder="e.g., John Doe"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Hours</label>
+                  <input
+                    type="number"
+                    name="hours"
+                    required
+                    step="0.5"
+                    min="0"
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:outline-none"
+                    placeholder="e.g., 8"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Date</label>
+                  <input
+                    type="date"
+                    name="date"
+                    required
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-slate-900 focus:border-slate-900 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="billable"
+                    className="rounded border-slate-200 text-slate-900 focus:ring-slate-900"
+                  />
+                  <span className="ml-2 text-sm text-slate-700">Mark as billable</span>
+                </label>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowLogTimeModal(false)}
+                  className="rounded-lg border border-slate-200 px-6 py-2 font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-slate-900 px-6 py-2 font-medium text-white hover:bg-slate-800"
+                >
+                  Log Time
                 </button>
               </div>
             </form>
@@ -8511,6 +9052,339 @@ function ActivityStream() {
           </Fragment>
         ))}
       </div>
+    </div>
+  );
+}
+
+function HRWorkspace({
+  currentView,
+  onViewChange,
+  employees,
+  departments,
+  attendance,
+  payrollRuns,
+  benefits,
+  performanceReviews,
+  documents,
+  onAddEmployee,
+  onAddDepartment,
+  loading,
+  error,
+  tenantSlug,
+  toast,
+  onToastDismiss,
+}: {
+  currentView: string;
+  onViewChange: (view: string) => void;
+  employees: Array<any>;
+  departments: Array<any>;
+  attendance: Array<any>;
+  payrollRuns: Array<any>;
+  benefits: Array<any>;
+  performanceReviews: Array<any>;
+  documents: Array<any>;
+  onAddEmployee: () => void;
+  onAddDepartment: () => void;
+  loading: boolean;
+  error: string | null;
+  tenantSlug: string | null;
+  toast: string | null;
+  onToastDismiss: () => void;
+}) {
+  const views = [
+    { key: "employees", label: "Employees", icon: Users },
+    { key: "departments", label: "Departments", icon: Building2 },
+    { key: "attendance", label: "Attendance & Leave", icon: CalendarClock },
+    { key: "payroll", label: "Payroll", icon: DollarSign },
+    { key: "benefits", label: "Benefits & Deductions", icon: PiggyBank },
+    { key: "performance-reviews", label: "Performance Reviews", icon: BarChart3 },
+    { key: "documents", label: "Documents", icon: FileText },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Human Resources</h1>
+          <p className="text-slate-500">Manage employees, payroll, and performance</p>
+        </div>
+        <button onClick={currentView === "employees" ? onAddEmployee : onAddDepartment} className="rounded-lg bg-slate-900 px-6 py-2 font-medium text-white hover:bg-slate-800">
+          {currentView === "employees" ? "+ Add Employee" : "+ Add Department"}
+        </button>
+      </div>
+
+      <div className="flex gap-2 border-b border-slate-200 overflow-x-auto">
+        {views.map((view) => (
+          <button
+            key={view.key}
+            onClick={() => onViewChange(view.key)}
+            className={`flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              currentView === view.key
+                ? "border-slate-900 text-slate-900"
+                : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            <view.icon className="h-4 w-4" />
+            {view.label}
+          </button>
+        ))}
+      </div>
+
+      {currentView === "employees" && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Name</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Email</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Department</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Position</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {employees.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-slate-500">No employees yet</td>
+                  </tr>
+                ) : (
+                  employees.map((emp) => (
+                    <tr key={emp.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="px-4 py-3 text-sm text-slate-900">{emp.name}</td>
+                      <td className="px-4 py-3 text-sm text-slate-500">{emp.email}</td>
+                      <td className="px-4 py-3 text-sm text-slate-500">{emp.department}</td>
+                      <td className="px-4 py-3 text-sm text-slate-500">{emp.position}</td>
+                      <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${emp.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>{emp.status}</span></td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {currentView === "departments" && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Department</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Manager</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Headcount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {departments.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-8 text-center text-slate-500">No departments yet</td>
+                  </tr>
+                ) : (
+                  departments.map((dept) => (
+                    <tr key={dept.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="px-4 py-3 text-sm text-slate-900">{dept.name}</td>
+                      <td className="px-4 py-3 text-sm text-slate-500">{dept.manager}</td>
+                      <td className="px-4 py-3 text-sm text-slate-500">{dept.headcount}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {currentView === "attendance" && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <p className="text-slate-500">Attendance & leave management coming soon</p>
+        </div>
+      )}
+
+      {currentView === "payroll" && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <p className="text-slate-500">Payroll management coming soon</p>
+        </div>
+      )}
+
+      {currentView === "benefits" && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <p className="text-slate-500">Benefits & deductions management coming soon</p>
+        </div>
+      )}
+
+      {currentView === "performance-reviews" && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <p className="text-slate-500">Performance reviews coming soon</p>
+        </div>
+      )}
+
+      {currentView === "documents" && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <p className="text-slate-500">Document management coming soon</p>
+        </div>
+      )}
+
+      {toast && (
+        <div className="fixed bottom-4 right-4 rounded-lg bg-slate-900 px-4 py-3 text-sm text-white shadow-lg">
+          {toast}
+          <button onClick={onToastDismiss} className="ml-4 text-slate-300 hover:text-white">✕</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProjectsWorkspace({
+  currentView,
+  onViewChange,
+  projects,
+  tasks,
+  timeEntries,
+  budgets,
+  invoices,
+  profitability,
+  onCreateProject,
+  onLogTime,
+  loading,
+  error,
+  tenantSlug,
+  toast,
+  onToastDismiss,
+}: {
+  currentView: string;
+  onViewChange: (view: string) => void;
+  projects: Array<any>;
+  tasks: Array<any>;
+  timeEntries: Array<any>;
+  budgets: Array<any>;
+  invoices: Array<any>;
+  profitability: Array<any>;
+  onCreateProject: () => void;
+  onLogTime: () => void;
+  loading: boolean;
+  error: string | null;
+  tenantSlug: string | null;
+  toast: string | null;
+  onToastDismiss: () => void;
+}) {
+  const views = [
+    { key: "projects", label: "Projects", icon: KanbanSquare },
+    { key: "tasks", label: "Tasks & Milestones", icon: ClipboardList },
+    { key: "time-tracking", label: "Time Tracking", icon: Clock },
+    { key: "billable-hours", label: "Billable Hours", icon: Banknote },
+    { key: "budgets", label: "Project Budgets", icon: PieChart },
+    { key: "invoicing", label: "Invoicing", icon: Receipt },
+    { key: "profitability", label: "Profitability", icon: TrendingUp },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Projects & Operations</h1>
+          <p className="text-slate-500">Track projects, time, and profitability</p>
+        </div>
+        <button onClick={currentView === "time-tracking" ? onLogTime : onCreateProject} className="rounded-lg bg-slate-900 px-6 py-2 font-medium text-white hover:bg-slate-800">
+          {currentView === "time-tracking" ? "+ Log Time" : "+ Create Project"}
+        </button>
+      </div>
+
+      <div className="flex gap-2 border-b border-slate-200 overflow-x-auto">
+        {views.map((view) => (
+          <button
+            key={view.key}
+            onClick={() => onViewChange(view.key)}
+            className={`flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              currentView === view.key
+                ? "border-slate-900 text-slate-900"
+                : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            <view.icon className="h-4 w-4" />
+            {view.label}
+          </button>
+        ))}
+      </div>
+
+      {currentView === "projects" && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Project</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Client</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Budget</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Progress</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projects.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-slate-500">No projects yet</td>
+                  </tr>
+                ) : (
+                  projects.map((proj) => (
+                    <tr key={proj.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="px-4 py-3 text-sm text-slate-900">{proj.name}</td>
+                      <td className="px-4 py-3 text-sm text-slate-500">{proj.client}</td>
+                      <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${proj.status === "active" ? "bg-emerald-50 text-emerald-700" : proj.status === "completed" ? "bg-blue-50 text-blue-700" : "bg-amber-50 text-amber-700"}`}>{proj.status}</span></td>
+                      <td className="px-4 py-3 text-sm text-slate-500">₦{proj.budget.toLocaleString()}</td>
+                      <td className="px-4 py-3"><div className="h-2 w-24 rounded-full bg-slate-200"><div className="h-full rounded-full bg-slate-900" style={{ width: `${proj.progress}%` }} /></div></td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {currentView === "tasks" && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <p className="text-slate-500">Tasks & milestones management coming soon</p>
+        </div>
+      )}
+
+      {currentView === "time-tracking" && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <p className="text-slate-500">Time tracking entries will appear here</p>
+        </div>
+      )}
+
+      {currentView === "billable-hours" && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <p className="text-slate-500">Billable hours analysis coming soon</p>
+        </div>
+      )}
+
+      {currentView === "budgets" && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <p className="text-slate-500">Project budgets coming soon</p>
+        </div>
+      )}
+
+      {currentView === "invoicing" && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <p className="text-slate-500">Project invoicing coming soon</p>
+        </div>
+      )}
+
+      {currentView === "profitability" && (
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <p className="text-slate-500">Profitability analysis coming soon</p>
+        </div>
+      )}
+
+      {toast && (
+        <div className="fixed bottom-4 right-4 rounded-lg bg-slate-900 px-4 py-3 text-sm text-white shadow-lg">
+          {toast}
+          <button onClick={onToastDismiss} className="ml-4 text-slate-300 hover:text-white">✕</button>
+        </div>
+      )}
     </div>
   );
 }
