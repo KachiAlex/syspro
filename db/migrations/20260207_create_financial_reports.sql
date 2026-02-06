@@ -10,44 +10,44 @@ WITH revenue_actuals AS (
   -- Get all revenue transactions (positive income accounts)
   SELECT
     ca.id as chart_account_id,
-    ca.code,
-    ca.name,
+    ca.account_code,
+    ca.account_name,
     'INCOME' as account_type,
     SUM(jl.debit_amount - jl.credit_amount) as amount_total
   FROM chart_of_accounts ca
   JOIN journal_lines jl ON ca.id = jl.account_id
   JOIN journal_entries je ON jl.journal_entry_id = je.id
   WHERE ca.account_type = 'INCOME'
-  AND je.status = 'POSTED'
-  GROUP BY ca.id, ca.code, ca.name
+  AND je.approval_status = 'POSTED'
+  GROUP BY ca.id, ca.account_code, ca.account_name
 ),
 expense_actuals AS (
   -- Get all expense transactions
   SELECT
     ca.id as chart_account_id,
-    ca.code,
-    ca.name,
+    ca.account_code,
+    ca.account_name,
     'EXPENSE' as account_type,
     SUM(jl.debit_amount - jl.credit_amount) as amount_total
   FROM chart_of_accounts ca
   JOIN journal_lines jl ON ca.id = jl.account_id
   JOIN journal_entries je ON jl.journal_entry_id = je.id
   WHERE ca.account_type = 'EXPENSE'
-  AND je.status = 'POSTED'
-  GROUP BY ca.id, ca.code, ca.name
+  AND je.approval_status = 'POSTED'
+  GROUP BY ca.id, ca.account_code, ca.account_name
 )
 SELECT
   'REVENUE' as section,
-  code,
-  name,
+  account_code,
+  account_name,
   amount_total,
   'INCOME' as account_type
 FROM revenue_actuals
 UNION ALL
 SELECT
   'EXPENSES' as section,
-  code,
-  name,
+  account_code,
+  account_name,
   amount_total,
   'EXPENSE' as account_type
 FROM expense_actuals;
@@ -60,10 +60,10 @@ CREATE OR REPLACE VIEW balance_sheet_view AS
 WITH asset_balances AS (
   SELECT
     'ASSETS' as section,
-    ca.code,
-    ca.name,
+    ca.account_code,
+    ca.account_name,
     'ASSET' as account_type,
-    COALESCE(ab.current_balance, 0) as balance
+    COALESCE(ab.closing_balance, 0) as balance
   FROM chart_of_accounts ca
   LEFT JOIN account_balances ab ON ca.id = ab.account_id
   WHERE ca.account_type = 'ASSET'
@@ -71,10 +71,10 @@ WITH asset_balances AS (
 liability_balances AS (
   SELECT
     'LIABILITIES' as section,
-    ca.code,
-    ca.name,
+    ca.account_code,
+    ca.account_name,
     'LIABILITY' as account_type,
-    COALESCE(ab.current_balance, 0) as balance
+    COALESCE(ab.closing_balance, 0) as balance
   FROM chart_of_accounts ca
   LEFT JOIN account_balances ab ON ca.id = ab.account_id
   WHERE ca.account_type = 'LIABILITY'
@@ -82,10 +82,10 @@ liability_balances AS (
 equity_balances AS (
   SELECT
     'EQUITY' as section,
-    ca.code,
-    ca.name,
+    ca.account_code,
+    ca.account_name,
     'EQUITY' as account_type,
-    COALESCE(ab.current_balance, 0) as balance
+    COALESCE(ab.closing_balance, 0) as balance
   FROM chart_of_accounts ca
   LEFT JOIN account_balances ab ON ca.id = ab.account_id
   WHERE ca.account_type = 'EQUITY'
@@ -104,20 +104,20 @@ CREATE OR REPLACE VIEW cash_flow_view AS
 SELECT
   je.created_at::DATE as transaction_date,
   CASE
-    WHEN ca.account_type = 'ASSET' AND ca.code LIKE '1010%' THEN 'OPERATING'
-    WHEN ca.account_type = 'ASSET' AND ca.code LIKE '1%' THEN 'INVESTING'
+    WHEN ca.account_type = 'ASSET' AND ca.account_code LIKE '1010%' THEN 'OPERATING'
+    WHEN ca.account_type = 'ASSET' AND ca.account_code LIKE '1%' THEN 'INVESTING'
     WHEN ca.account_type = 'LIABILITY' THEN 'FINANCING'
     ELSE 'OPERATING'
   END as cash_flow_category,
-  ca.code,
-  ca.name,
+  ca.account_code,
+  ca.account_name,
   SUM(jl.debit_amount - jl.credit_amount) as net_cash_flow
 FROM journal_entries je
 JOIN journal_lines jl ON je.id = jl.journal_entry_id
 JOIN chart_of_accounts ca ON jl.account_id = ca.id
-WHERE je.status = 'POSTED'
+WHERE je.approval_status = 'POSTED'
 AND ca.account_type IN ('ASSET', 'LIABILITY')
-GROUP BY je.created_at::DATE, cash_flow_category, ca.code, ca.name;
+GROUP BY je.created_at::DATE, cash_flow_category, ca.account_code, ca.account_name;
 
 -- ============================================================================
 -- AGED RECEIVABLES (Accounts Receivable Aging)
@@ -200,10 +200,10 @@ FROM (
 CREATE OR REPLACE VIEW trial_balance_extended_view AS
 SELECT
   ca.id,
-  ca.code,
-  ca.name,
+  ca.account_code,
+  ca.account_name,
   ca.account_type,
-  ca.account_subtype,
+  ca.sub_type,
   tb.debit_balance,
   tb.credit_balance,
   tb.debit_balance - tb.credit_balance as net_balance
@@ -215,11 +215,11 @@ LEFT JOIN (
     SUM(credit_amount) as credit_balance
   FROM journal_lines
   WHERE journal_entry_id IN (
-    SELECT id FROM journal_entries WHERE status = 'POSTED'
+    SELECT id FROM journal_entries WHERE approval_status = 'POSTED'
   )
   GROUP BY account_id
 ) tb ON ca.id = tb.account_id
-ORDER BY ca.account_type, ca.code;
+ORDER BY ca.account_type, ca.account_code;
 
 -- ============================================================================
 -- GENERAL LEDGER EXTENDED VIEW
@@ -227,26 +227,24 @@ ORDER BY ca.account_type, ca.code;
 
 CREATE OR REPLACE VIEW general_ledger_extended_view AS
 SELECT
-  ca.code,
-  ca.name,
+  ca.account_code,
+  ca.account_name,
   ca.account_type,
   je.created_at::DATE as transaction_date,
   jl.description,
-  jl.reference_number,
   jl.debit_amount,
-  jl.credit_amount,
-  jl.running_balance
+  jl.credit_amount
 FROM journal_lines jl
 JOIN journal_entries je ON jl.journal_entry_id = je.id
 JOIN chart_of_accounts ca ON jl.account_id = ca.id
-WHERE je.status = 'POSTED'
-ORDER BY ca.code, je.created_at;
+WHERE je.approval_status = 'POSTED'
+ORDER BY ca.account_code, je.created_at;
 
 -- ============================================================================
 -- INDEXES FOR REPORT QUERIES
 -- ============================================================================
 
-CREATE INDEX idx_journal_entries_status ON journal_entries(status);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_status ON journal_entries(approval_status);
 CREATE INDEX idx_journal_entries_created_at ON journal_entries(created_at DESC);
 CREATE INDEX idx_journal_lines_account_id ON journal_lines(account_id);
 CREATE INDEX idx_journal_lines_journal_entry_id ON journal_lines(journal_entry_id);

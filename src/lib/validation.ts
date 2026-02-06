@@ -124,6 +124,77 @@ export const UpdateModuleSchema = z.object({
 export type CreateModuleInput = z.infer<typeof CreateModuleSchema>;
 export type UpdateModuleInput = z.infer<typeof UpdateModuleSchema>;
 
+// Automation schemas
+const ConditionSchema: z.ZodType<any> = z.lazy(() =>
+  z.object({
+    all: z.array(ConditionSchema).optional(),
+    any: z.array(ConditionSchema).optional(),
+    field: z.string().optional(),
+    op: z.enum(["eq", "neq", "gt", "gte", "lt", "lte", "includes", "excludes", "exists", "missing"]).optional(),
+    value: z.any().optional(),
+  })
+);
+
+export const AutomationActionSchema = z.object({
+  type: z.string().min(1, "Action type is required"),
+  params: z.record(z.any()).optional(),
+  targetModule: z.string().optional(),
+});
+
+export const CreateRuleSchema = z.object({
+  name: z.string().min(1, "Rule name is required").max(200),
+  description: z.string().optional(),
+  eventType: z.string().min(1, "Event type is required"),
+  condition: ConditionSchema,
+  actions: z.array(AutomationActionSchema).min(1, "At least one action is required"),
+  scope: z.record(z.any()).optional(),
+  enabled: z.boolean().optional(),
+  simulationOnly: z.boolean().optional(),
+});
+
+export const UpdateRuleSchema = CreateRuleSchema.partial();
+
+// Policy schemas
+export const CreatePolicySchema = z.object({
+  key: z.string().min(1, "Policy key is required").max(100),
+  name: z.string().min(1, "Policy name is required").max(200),
+  category: z.string().optional(),
+  scope: z.record(z.any()).optional(),
+  document: z.record(z.any()),
+  effectiveAt: z.string().optional(),
+});
+
+export const UpdatePolicySchema = z.object({
+  status: z.enum(["draft", "published", "deprecated"]).optional(),
+  document: z.record(z.any()).optional(),
+  effectiveAt: z.string().optional(),
+});
+
+export const PolicyOverrideSchema = z.object({
+  scope: z.record(z.any()).optional(),
+  reason: z.string().optional(),
+  createdBy: z.string().optional(),
+});
+
+// Report schemas
+export const CreateReportSchema = z.object({
+  name: z.string().min(1, "Report name is required"),
+  reportType: z.string().min(1, "Report type is required"),
+  definition: z.record(z.any()),
+  filters: z.record(z.any()).optional(),
+  schedule: z.string().optional(),
+  enabled: z.boolean().optional(),
+});
+
+export const UpdateReportSchema = z.object({
+  name: z.string().optional(),
+  reportType: z.string().optional(),
+  definition: z.record(z.any()).optional(),
+  filters: z.record(z.any()).optional(),
+  schedule: z.string().optional(),
+  enabled: z.boolean().optional(),
+});
+
 /**
  * Safe parsing wrapper that returns error or data.
  */

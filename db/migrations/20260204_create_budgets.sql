@@ -6,7 +6,7 @@
 -- Budget master table
 CREATE TABLE IF NOT EXISTS budgets (
   id BIGSERIAL PRIMARY KEY,
-  tenant_id BIGINT NOT NULL,
+  tenant_slug TEXT NOT NULL,
   code VARCHAR(50) NOT NULL,
   name VARCHAR(255) NOT NULL,
   description TEXT,
@@ -41,15 +41,14 @@ CREATE TABLE IF NOT EXISTS budgets (
   version_number INTEGER DEFAULT 1,
   notes TEXT,
   
-  CONSTRAINT unique_budget_code UNIQUE (tenant_id, code),
-  CONSTRAINT budgets_tenant_fk FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+  CONSTRAINT unique_budget_code UNIQUE (tenant_slug, code)
 );
 
 -- Budget line items
 CREATE TABLE IF NOT EXISTS budget_lines (
   id BIGSERIAL PRIMARY KEY,
   budget_id BIGINT NOT NULL,
-  tenant_id BIGINT NOT NULL,
+  tenant_slug TEXT NOT NULL,
   
   -- Line details
   line_number INTEGER NOT NULL,
@@ -75,7 +74,6 @@ CREATE TABLE IF NOT EXISTS budget_lines (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
   CONSTRAINT budget_lines_budget_fk FOREIGN KEY (budget_id) REFERENCES budgets(id) ON DELETE CASCADE,
-  CONSTRAINT budget_lines_tenant_fk FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
   CONSTRAINT unique_budget_line UNIQUE (budget_id, line_number)
 );
 
@@ -83,7 +81,7 @@ CREATE TABLE IF NOT EXISTS budget_lines (
 CREATE TABLE IF NOT EXISTS budget_versions (
   id BIGSERIAL PRIMARY KEY,
   budget_id BIGINT NOT NULL,
-  tenant_id BIGINT NOT NULL,
+  tenant_slug TEXT NOT NULL,
   
   version_number INTEGER NOT NULL,
   status VARCHAR(20) NOT NULL,
@@ -97,7 +95,6 @@ CREATE TABLE IF NOT EXISTS budget_versions (
   budget_snapshot JSONB,
   
   CONSTRAINT budget_versions_budget_fk FOREIGN KEY (budget_id) REFERENCES budgets(id) ON DELETE CASCADE,
-  CONSTRAINT budget_versions_tenant_fk FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
   CONSTRAINT unique_budget_version UNIQUE (budget_id, version_number)
 );
 
@@ -106,7 +103,7 @@ CREATE TABLE IF NOT EXISTS budget_actuals (
   id BIGSERIAL PRIMARY KEY,
   budget_id BIGINT NOT NULL,
   budget_line_id BIGINT,
-  tenant_id BIGINT NOT NULL,
+  tenant_slug TEXT NOT NULL,
   
   -- Reference to actual transactions
   actual_type VARCHAR(50) NOT NULL CHECK (actual_type IN ('EXPENSE', 'INVOICE', 'PURCHASE_ORDER', 'PAYMENT')),
@@ -130,15 +127,14 @@ CREATE TABLE IF NOT EXISTS budget_actuals (
   notes TEXT,
   
   CONSTRAINT budget_actuals_budget_fk FOREIGN KEY (budget_id) REFERENCES budgets(id) ON DELETE CASCADE,
-  CONSTRAINT budget_actuals_budget_line_fk FOREIGN KEY (budget_line_id) REFERENCES budget_lines(id) ON DELETE SET NULL,
-  CONSTRAINT budget_actuals_tenant_fk FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+  CONSTRAINT budget_actuals_budget_line_fk FOREIGN KEY (budget_line_id) REFERENCES budget_lines(id) ON DELETE SET NULL
 );
 
 -- Rolling forecasts and trend projections
 CREATE TABLE IF NOT EXISTS budget_forecasts (
   id BIGSERIAL PRIMARY KEY,
   budget_id BIGINT NOT NULL,
-  tenant_id BIGINT NOT NULL,
+  tenant_slug TEXT NOT NULL,
   
   forecast_type VARCHAR(30) NOT NULL CHECK (forecast_type IN ('ROLLING', 'TREND_BASED', 'SCENARIO')),
   
@@ -165,15 +161,14 @@ CREATE TABLE IF NOT EXISTS budget_forecasts (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
-  CONSTRAINT budget_forecasts_budget_fk FOREIGN KEY (budget_id) REFERENCES budgets(id) ON DELETE CASCADE,
-  CONSTRAINT budget_forecasts_tenant_fk FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+  CONSTRAINT budget_forecasts_budget_fk FOREIGN KEY (budget_id) REFERENCES budgets(id) ON DELETE CASCADE
 );
 
 -- Budget approval workflow
 CREATE TABLE IF NOT EXISTS budget_approvals (
   id BIGSERIAL PRIMARY KEY,
   budget_id BIGINT NOT NULL,
-  tenant_id BIGINT NOT NULL,
+  tenant_slug TEXT NOT NULL,
   
   approval_sequence INTEGER NOT NULL,
   approver_role VARCHAR(100) NOT NULL,
@@ -186,7 +181,6 @@ CREATE TABLE IF NOT EXISTS budget_approvals (
   approved_at TIMESTAMP,
   
   CONSTRAINT budget_approvals_budget_fk FOREIGN KEY (budget_id) REFERENCES budgets(id) ON DELETE CASCADE,
-  CONSTRAINT budget_approvals_tenant_fk FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
   CONSTRAINT unique_budget_approval UNIQUE (budget_id, approval_sequence)
 );
 
@@ -195,7 +189,7 @@ CREATE TABLE IF NOT EXISTS budget_variances (
   id BIGSERIAL PRIMARY KEY,
   budget_id BIGINT NOT NULL,
   budget_line_id BIGINT,
-  tenant_id BIGINT NOT NULL,
+  tenant_slug TEXT NOT NULL,
   
   variance_type VARCHAR(30) NOT NULL CHECK (variance_type IN ('OVER_BUDGET', 'UNDER_BUDGET', 'THRESHOLD_WARNING')),
   
@@ -216,12 +210,11 @@ CREATE TABLE IF NOT EXISTS budget_variances (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
   CONSTRAINT budget_variances_budget_fk FOREIGN KEY (budget_id) REFERENCES budgets(id) ON DELETE CASCADE,
-  CONSTRAINT budget_variances_budget_line_fk FOREIGN KEY (budget_line_id) REFERENCES budget_lines(id) ON DELETE SET NULL,
-  CONSTRAINT budget_variances_tenant_fk FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+  CONSTRAINT budget_variances_budget_line_fk FOREIGN KEY (budget_line_id) REFERENCES budget_lines(id) ON DELETE SET NULL
 );
 
 -- Indexes for performance
-CREATE INDEX idx_budgets_tenant_id ON budgets(tenant_id);
+CREATE INDEX idx_budgets_tenant_slug ON budgets(tenant_slug);
 CREATE INDEX idx_budgets_status ON budgets(status);
 CREATE INDEX idx_budgets_budget_type ON budgets(budget_type);
 CREATE INDEX idx_budgets_fiscal_year ON budgets(fiscal_year);
@@ -250,7 +243,7 @@ CREATE INDEX idx_budget_forecasts_type ON budget_forecasts(forecast_type);
 CREATE OR REPLACE VIEW budget_summary_view AS
 SELECT
   b.id,
-  b.tenant_id,
+  b.tenant_slug,
   b.code,
   b.name,
   b.budget_type,
@@ -266,14 +259,14 @@ SELECT
   b.approved_at
 FROM budgets b
 LEFT JOIN budget_actuals ba ON b.id = ba.budget_id
-GROUP BY b.id, b.tenant_id, b.code, b.name, b.budget_type, b.period_type, b.fiscal_year, b.status, b.total_budget_amount, b.created_at, b.approved_at;
+GROUP BY b.id, b.tenant_slug, b.code, b.name, b.budget_type, b.period_type, b.fiscal_year, b.status, b.total_budget_amount, b.created_at, b.approved_at;
 
 -- View: Budget Line Variance Detail
 CREATE OR REPLACE VIEW budget_line_variance_view AS
 SELECT
   bl.id as budget_line_id,
   bl.budget_id,
-  bl.tenant_id,
+  bl.tenant_slug,
   bl.account_code,
   bl.account_name,
   bl.budgeted_amount,
@@ -283,4 +276,4 @@ SELECT
   ROUND(((COALESCE(SUM(ba.actual_amount), 0) + COALESCE(SUM(ba.committed_amount), 0)) / NULLIF(bl.budgeted_amount, 0) * 100)::NUMERIC, 2) as percent_utilized
 FROM budget_lines bl
 LEFT JOIN budget_actuals ba ON bl.id = ba.budget_line_id
-GROUP BY bl.id, bl.budget_id, bl.tenant_id, bl.account_code, bl.account_name, bl.budgeted_amount;
+GROUP BY bl.id, bl.budget_id, bl.tenant_slug, bl.account_code, bl.account_name, bl.budgeted_amount;

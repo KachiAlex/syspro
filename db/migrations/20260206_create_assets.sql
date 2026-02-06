@@ -4,7 +4,7 @@
 -- Asset Categories
 CREATE TABLE IF NOT EXISTS asset_categories (
   id BIGSERIAL PRIMARY KEY,
-  tenant_id BIGINT NOT NULL,
+  tenant_slug TEXT NOT NULL,
   
   code VARCHAR(50) NOT NULL,
   name VARCHAR(255) NOT NULL,
@@ -26,14 +26,13 @@ CREATE TABLE IF NOT EXISTS asset_categories (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
-  CONSTRAINT unique_asset_category UNIQUE (tenant_id, code),
-  CONSTRAINT asset_categories_tenant_fk FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+  CONSTRAINT unique_asset_category UNIQUE (tenant_slug, code)
 );
 
 -- Assets (Fixed Assets Register)
 CREATE TABLE IF NOT EXISTS assets (
   id BIGSERIAL PRIMARY KEY,
-  tenant_id BIGINT NOT NULL,
+  tenant_slug TEXT NOT NULL,
   
   code VARCHAR(50) NOT NULL,
   name VARCHAR(255) NOT NULL,
@@ -75,15 +74,14 @@ CREATE TABLE IF NOT EXISTS assets (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
-  CONSTRAINT unique_asset_code UNIQUE (tenant_id, code),
-  CONSTRAINT assets_tenant_fk FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+  CONSTRAINT unique_asset_code UNIQUE (tenant_slug, code),
   CONSTRAINT assets_category_fk FOREIGN KEY (category_id) REFERENCES asset_categories(id) ON DELETE RESTRICT
 );
 
 -- Depreciation Schedules (Monthly calculation records)
 CREATE TABLE IF NOT EXISTS depreciation_schedules (
   id BIGSERIAL PRIMARY KEY,
-  tenant_id BIGINT NOT NULL,
+  tenant_slug TEXT NOT NULL,
   asset_id BIGINT NOT NULL,
   
   -- Period Info
@@ -104,7 +102,7 @@ CREATE TABLE IF NOT EXISTS depreciation_schedules (
   
   -- Journal Posting
   is_posted BOOLEAN DEFAULT FALSE,
-  journal_entry_id BIGINT,
+  journal_entry_id UUID,
   posted_at TIMESTAMP,
   
   -- Status
@@ -114,7 +112,6 @@ CREATE TABLE IF NOT EXISTS depreciation_schedules (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
   CONSTRAINT unique_asset_period UNIQUE (asset_id, period_year, period_month),
-  CONSTRAINT depreciation_schedules_tenant_fk FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
   CONSTRAINT depreciation_schedules_asset_fk FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE,
   CONSTRAINT depreciation_schedules_journal_fk FOREIGN KEY (journal_entry_id) REFERENCES journal_entries(id) ON DELETE SET NULL
 );
@@ -122,7 +119,7 @@ CREATE TABLE IF NOT EXISTS depreciation_schedules (
 -- Asset Journals (Depreciation journal entries)
 CREATE TABLE IF NOT EXISTS asset_journals (
   id BIGSERIAL PRIMARY KEY,
-  tenant_id BIGINT NOT NULL,
+  tenant_slug TEXT NOT NULL,
   asset_id BIGINT NOT NULL,
   
   -- Transaction Info
@@ -138,7 +135,7 @@ CREATE TABLE IF NOT EXISTS asset_journals (
   credit_account_id BIGINT,
   
   -- GL Integration
-  journal_entry_id BIGINT,
+  journal_entry_id UUID,
   posted_to_gl BOOLEAN DEFAULT FALSE,
   
   -- Metadata
@@ -147,14 +144,13 @@ CREATE TABLE IF NOT EXISTS asset_journals (
   created_by VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
-  CONSTRAINT asset_journals_tenant_fk FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
   CONSTRAINT asset_journals_asset_fk FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE
 );
 
 -- Asset Disposals (Scrapping, selling)
 CREATE TABLE IF NOT EXISTS asset_disposals (
   id BIGSERIAL PRIMARY KEY,
-  tenant_id BIGINT NOT NULL,
+  tenant_slug TEXT NOT NULL,
   asset_id BIGINT NOT NULL,
   
   -- Disposal Info
@@ -171,7 +167,7 @@ CREATE TABLE IF NOT EXISTS asset_disposals (
   gain_loss_account_id BIGINT,
   
   -- Journal Posting
-  journal_entry_id BIGINT,
+  journal_entry_id UUID,
   is_posted BOOLEAN DEFAULT FALSE,
   
   -- Metadata
@@ -180,17 +176,16 @@ CREATE TABLE IF NOT EXISTS asset_disposals (
   approved_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
-  CONSTRAINT asset_disposals_tenant_fk FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
   CONSTRAINT asset_disposals_asset_fk FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE
 );
 
 -- INDEXES FOR PERFORMANCE
-CREATE INDEX idx_assets_tenant_id ON assets(tenant_id);
+CREATE INDEX idx_assets_tenant_slug ON assets(tenant_slug);
 CREATE INDEX idx_assets_category_id ON assets(category_id);
 CREATE INDEX idx_assets_status ON assets(asset_status);
 CREATE INDEX idx_assets_purchase_date ON assets(purchase_date DESC);
 
-CREATE INDEX idx_asset_categories_tenant_id ON asset_categories(tenant_id);
+CREATE INDEX idx_asset_categories_tenant_slug ON asset_categories(tenant_slug);
 CREATE INDEX idx_asset_categories_active ON asset_categories(is_active);
 
 CREATE INDEX idx_depreciation_schedules_asset_id ON depreciation_schedules(asset_id);
@@ -211,7 +206,7 @@ CREATE INDEX idx_asset_disposals_date ON asset_disposals(disposal_date DESC);
 CREATE OR REPLACE VIEW asset_register_view AS
 SELECT
   a.id,
-  a.tenant_id,
+  a.tenant_slug,
   a.code,
   a.name,
   ac.name as category_name,
@@ -224,14 +219,14 @@ SELECT
   a.asset_status,
   a.location,
   EXTRACT(YEAR FROM a.purchase_date) as purchase_year,
-  DATEDIFF(DAY, a.purchase_date, CURRENT_DATE) as days_in_use
+  (CURRENT_DATE - a.purchase_date) as days_in_use
 FROM assets a
 LEFT JOIN asset_categories ac ON a.category_id = ac.id;
 
 -- Depreciation Summary by Category
 CREATE OR REPLACE VIEW depreciation_summary_view AS
 SELECT
-  a.tenant_id,
+  a.tenant_slug,
   ac.id as category_id,
   ac.name as category_name,
   COUNT(a.id) as asset_count,
@@ -243,13 +238,13 @@ FROM assets a
 LEFT JOIN asset_categories ac ON a.category_id = ac.id
 LEFT JOIN depreciation_schedules ds ON a.id = ds.asset_id AND EXTRACT(YEAR FROM ds.period_start_date) = EXTRACT(YEAR FROM CURRENT_DATE)
 WHERE a.asset_status != 'DISPOSED'
-GROUP BY a.tenant_id, ac.id, ac.name;
+GROUP BY a.tenant_slug, ac.id, ac.name;
 
 -- Next Depreciation Schedule
 CREATE OR REPLACE VIEW next_depreciation_schedules_view AS
 SELECT
   a.id as asset_id,
-  a.tenant_id,
+  a.tenant_slug,
   a.code,
   a.name,
   ac.name as category_name,
@@ -262,4 +257,4 @@ FROM assets a
 LEFT JOIN asset_categories ac ON a.category_id = ac.id
 LEFT JOIN depreciation_schedules ds ON a.id = ds.asset_id AND ds.is_posted = TRUE
 WHERE a.asset_status IN ('IN_USE', 'REVALUED')
-GROUP BY a.id, a.tenant_id, a.code, a.name, ac.name, a.purchase_cost, a.accumulated_depreciation;
+GROUP BY a.id, a.tenant_slug, a.code, a.name, ac.name, a.purchase_cost, a.accumulated_depreciation;

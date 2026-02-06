@@ -35,10 +35,7 @@ CREATE TABLE IF NOT EXISTS chart_of_accounts (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
-  UNIQUE (tenant_slug, account_code),
-  INDEX idx_tenant_type (tenant_slug, account_type),
-  INDEX idx_parent (parent_account_id),
-  INDEX idx_branch_dept (branch_id, department_id)
+  UNIQUE (tenant_slug, account_code)
 );
 
 -- ============================================================
@@ -65,9 +62,7 @@ CREATE TABLE IF NOT EXISTS fiscal_periods (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
-  UNIQUE (tenant_slug, fiscal_year, period_number),
-  INDEX idx_tenant_status (tenant_slug, status),
-  INDEX idx_dates (start_date, end_date)
+  UNIQUE (tenant_slug, fiscal_year, period_number)
 );
 
 -- ============================================================
@@ -108,13 +103,7 @@ CREATE TABLE IF NOT EXISTS journal_entries (
   
   -- Control
   is_reversing BOOLEAN DEFAULT FALSE,
-  reversed_entry_id UUID REFERENCES journal_entries(id),
-  
-  INDEX idx_tenant_period (tenant_slug, fiscal_period_id),
-  INDEX idx_posting_date (posting_date),
-  INDEX idx_approval_status (approval_status),
-  INDEX idx_reference (reference_type, reference_id),
-  INDEX idx_journal_type (journal_type)
+  reversed_entry_id UUID REFERENCES journal_entries(id)
 );
 
 -- ============================================================
@@ -142,11 +131,7 @@ CREATE TABLE IF NOT EXISTS journal_lines (
   is_reconciled BOOLEAN DEFAULT FALSE,
   reconciled_at TIMESTAMP,
   
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  
-  INDEX idx_journal_entry (journal_entry_id),
-  INDEX idx_account (account_id),
-  INDEX idx_cost_center (branch_id, department_id, cost_center_id)
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================
@@ -168,9 +153,7 @@ CREATE TABLE IF NOT EXISTS account_balances (
   
   last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
-  UNIQUE (account_id, fiscal_period_id),
-  INDEX idx_tenant_period (tenant_slug, fiscal_period_id),
-  INDEX idx_account_period (account_id, fiscal_period_id)
+  UNIQUE (account_id, fiscal_period_id)
 );
 
 -- ============================================================
@@ -192,11 +175,7 @@ CREATE TABLE IF NOT EXISTS accounting_audit_log (
   user_name VARCHAR(255),
   ip_address VARCHAR(45),
   
-  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  
-  INDEX idx_entity (entity_type, entity_id),
-  INDEX idx_tenant_time (tenant_slug, timestamp),
-  INDEX idx_action (action)
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================
@@ -259,6 +238,30 @@ ORDER BY je.posting_date, je.journal_number;
 -- ============================================================
 -- INDEXES FOR PERFORMANCE
 -- ============================================================
+
+CREATE INDEX IF NOT EXISTS idx_chart_of_accounts_tenant_type ON chart_of_accounts(tenant_slug, account_type);
+CREATE INDEX IF NOT EXISTS idx_chart_of_accounts_parent ON chart_of_accounts(parent_account_id);
+CREATE INDEX IF NOT EXISTS idx_chart_of_accounts_branch_dept ON chart_of_accounts(branch_id, department_id);
+
+CREATE INDEX IF NOT EXISTS idx_fiscal_periods_tenant_status ON fiscal_periods(tenant_slug, status);
+CREATE INDEX IF NOT EXISTS idx_fiscal_periods_dates ON fiscal_periods(start_date, end_date);
+
+CREATE INDEX IF NOT EXISTS idx_journal_entries_tenant_period ON journal_entries(tenant_slug, fiscal_period_id);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_posting_date ON journal_entries(posting_date);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_approval_status ON journal_entries(approval_status);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_reference ON journal_entries(reference_type, reference_id);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_journal_type ON journal_entries(journal_type);
+
+CREATE INDEX IF NOT EXISTS idx_journal_lines_entry ON journal_lines(journal_entry_id);
+CREATE INDEX IF NOT EXISTS idx_journal_lines_account ON journal_lines(account_id);
+CREATE INDEX IF NOT EXISTS idx_journal_lines_cost_center ON journal_lines(branch_id, department_id, cost_center_id);
+
+CREATE INDEX IF NOT EXISTS idx_account_balances_tenant_period ON account_balances(tenant_slug, fiscal_period_id);
+CREATE INDEX IF NOT EXISTS idx_account_balances_account_period ON account_balances(account_id, fiscal_period_id);
+
+CREATE INDEX IF NOT EXISTS idx_accounting_audit_entity ON accounting_audit_log(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_accounting_audit_tenant_time ON accounting_audit_log(tenant_slug, timestamp);
+CREATE INDEX IF NOT EXISTS idx_accounting_audit_action ON accounting_audit_log(action);
 
 CREATE INDEX idx_journal_entries_tenant ON journal_entries(tenant_slug);
 CREATE INDEX idx_journal_lines_account_date ON journal_lines(account_id, created_at);

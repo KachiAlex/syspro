@@ -1,8 +1,5 @@
--- IT SUPPORT MODULE
--- Tickets, SLA policies, engineer profiles, field dispatch, incidents, knowledge base
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
 -- ============================================================================
 -- SLA POLICIES
 -- ============================================================================
@@ -222,4 +219,3 @@ CREATE TABLE IF NOT EXISTS knowledge_base_articles (
 CREATE INDEX IF NOT EXISTS idx_knowledge_articles_tenant ON knowledge_base_articles (tenant_slug);
 CREATE INDEX IF NOT EXISTS idx_knowledge_articles_status ON knowledge_base_articles (publish_status);
 CREATE INDEX IF NOT EXISTS idx_knowledge_articles_tags ON knowledge_base_articles USING GIN (tags);
-```}

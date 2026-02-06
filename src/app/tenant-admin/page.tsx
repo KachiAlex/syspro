@@ -117,6 +117,9 @@ import CostAllocationSection from "@/app/tenant-admin/sections/cost-allocation";
 import ItSupportWorkspace from "@/app/tenant-admin/sections/it-support-workspace";
 import RevOpsWorkspace from "@/app/tenant-admin/sections/revops-workspace";
 import type { RevOpsOverviewSnapshot } from "@/lib/revops-data";
+import AutomationRules from "@/app/tenant-admin/sections/automation-rules";
+import PoliciesSection from "@/app/tenant-admin/sections/policies";
+import ReportsSection from "@/app/tenant-admin/sections/reports";
 
 type NavigationLink = {
   label: string;
@@ -3638,6 +3641,12 @@ export default function TenantAdminPage() {
                   <ApprovalDesigner tenantSlug={tenantSlug} />
                 ) : activeNav === "workflows" ? (
                   <LifecycleWorkflows tenantSlug={tenantSlug} />
+                ) : activeNav === "automation-rules" ? (
+                  <AutomationRules tenantSlug={tenantSlug} />
+                ) : activeNav === "policies" ? (
+                  <PoliciesSection tenantSlug={tenantSlug} />
+                ) : activeNav === "reports" ? (
+                  <ReportsSection tenantSlug={tenantSlug} />
                 ) : activeNav === "modules" ? (
                   <ModuleRegistry tenantSlug={tenantSlug} />
                 ) : activeNav === "billing" ? (
