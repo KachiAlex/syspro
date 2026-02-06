@@ -9,9 +9,28 @@ export type SignalType =
   | 'MEETING_ATTENDED'
   | 'LMS_ACTIVITY'
   | 'MANAGER_OVERRIDE'
-  | 'AVAILABILITY_CONFIRMATION';
+  | 'AVAILABILITY_CONFIRMATION'
+  | 'BREAK_START'
+  | 'BREAK_END';
 
 export type AttendanceStatus = 'PRESENT' | 'PRESENT_LOW_CONFIDENCE' | 'ABSENT' | 'ON_LEAVE' | 'TRAINING';
+
+export type TimesheetEntryType = 'CHECK_IN' | 'CHECK_OUT' | 'BREAK_START' | 'BREAK_END' | 'MEETING_START' | 'MEETING_END' | 'TASK_START' | 'TASK_END';
+
+export interface TimesheetEntry {
+  id: string;
+  tenantId: string;
+  employeeId: string;
+  workDate: string;
+  entryType: TimesheetEntryType;
+  timestamp: string;
+  description?: string;
+  taskId?: string;
+  meetingId?: string;
+  location?: string;
+  notes?: string;
+  createdAt: string;
+}
 
 export interface AttendanceRecord {
   id: string;

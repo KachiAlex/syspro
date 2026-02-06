@@ -1,8 +1,5 @@
-// Employee Attendance Dashboard Component
-'use client';
-
 import { useState, useEffect } from 'react';
-import { Clock, LogIn, LogOut, AlertCircle, TrendingUp, Activity } from 'lucide-react';
+import { Clock, LogIn, LogOut, AlertCircle, TrendingUp, Activity, Play, Pause, Coffee, Calendar } from 'lucide-react';
 
 interface DailyAttendance {
   workDate: string;
@@ -15,6 +12,21 @@ interface DailyAttendance {
   timeLogged: number;
   meetingsAttended: number;
   flags: string[];
+}
+
+interface TimesheetEntry {
+  id: string;
+  tenantId: string;
+  employeeId: string;
+  workDate: string;
+  entryType: 'CHECK_IN' | 'CHECK_OUT' | 'BREAK_START' | 'BREAK_END' | 'MEETING_START' | 'MEETING_END' | 'TASK_START' | 'TASK_END';
+  timestamp: string;
+  description?: string;
+  taskId?: string;
+  meetingId?: string;
+  location?: string;
+  notes?: string;
+  createdAt: string;
 }
 
 export default function EmployeeAttendanceDashboard({
@@ -34,6 +46,21 @@ export default function EmployeeAttendanceDashboard({
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
   const [recentRecords, setRecentRecords] = useState<DailyAttendance[]>([]);
+  const [timesheetEntries, setTimesheetEntries] = useState<TimesheetEntry[]>([]);
+
+  // Helper function to transform API record to component format
+  const transformRecord = (record: any): DailyAttendance => ({
+    workDate: record.workDate,
+    mode: record.workMode,
+    confidenceScore: record.confidenceScore,
+    status: record.attendanceStatus,
+    checkInTime: record.checkInTime,
+    checkOutTime: record.checkOutTime,
+    taskCount: record.taskActivityCount,
+    timeLogged: record.timeLoggedHours || 0,
+    meetingsAttended: record.meetingsAttended,
+    flags: [], // TODO: implement flags from signals
+  });
 
   // Fetch today's attendance
   useEffect(() => {
@@ -47,9 +74,11 @@ export default function EmployeeAttendanceDashboard({
         console.log('Attendance fetch response:', data);
         
         if (data.records && data.records.length > 0) {
-          setTodayAttendance(data.records[0]);
+          // Transform API record to component format
+          const transformedRecord = transformRecord(data.records[0]);
+          setTodayAttendance(transformedRecord);
           setIsCheckedIn(!!data.records[0].checkInTime);
-          setWorkMode(data.records[0].mode);
+          setWorkMode(data.records[0].workMode);
         }
         
         // Fetch last 7 days
@@ -62,7 +91,16 @@ export default function EmployeeAttendanceDashboard({
           `/api/attendance?startDate=${startDate}&endDate=${endDate}&tenantSlug=${tenantSlug}&employeeId=${employeeId}`
         );
         const weekData = await weekRes.json();
-        setRecentRecords(weekData.records || []);
+        // Transform records to component format
+        const transformedRecords = (weekData.records || []).map(transformRecord);
+        setRecentRecords(transformedRecords);
+
+        // Fetch today's timesheet entries
+        const timesheetRes = await fetch(
+          `/api/attendance/timesheet?tenantSlug=${tenantSlug}&employeeId=${employeeId}&workDate=${today}`
+        );
+        const timesheetData = await timesheetRes.json();
+        setTimesheetEntries(timesheetData.entries || []);
       } catch (error) {
         console.error('Failed to fetch attendance:', error);
       } finally {
@@ -91,7 +129,7 @@ export default function EmployeeAttendanceDashboard({
       const data = await res.json();
       console.log('Check-in response:', data);
       if (res.ok) {
-        setTodayAttendance(data.record);
+        setTodayAttendance(transformRecord(data.record));
         setIsCheckedIn(true);
         setToast('✓ Check-in successful');
         setTimeout(() => setToast(null), 3000);
@@ -123,7 +161,7 @@ export default function EmployeeAttendanceDashboard({
       const data = await res.json();
       console.log('Check-out response:', data);
       if (res.ok) {
-        setTodayAttendance(data.record);
+        setTodayAttendance(transformRecord(data.record));
         setToast('✓ Check-out recorded');
         setTimeout(() => setToast(null), 3000);
       }
@@ -151,13 +189,45 @@ export default function EmployeeAttendanceDashboard({
       const data = await res.json();
       console.log('Mode change response:', data);
       if (res.ok) {
-        setTodayAttendance(data.record);
+        setTodayAttendance(transformRecord(data.record));
         setWorkMode(newMode);
         setToast(`✓ Mode changed to ${newMode}`);
         setTimeout(() => setToast(null), 3000);
       }
     } catch (error) {
       console.error('Mode change error:', error);
+    }
+  };
+
+  const handleTimesheetEntry = async (entryType: TimesheetEntry['entryType'], description?: string) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const res = await fetch('/api/attendance/timesheet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantSlug,
+          employeeId,
+          workDate: today,
+          entryType,
+          description,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        // Refresh timesheet entries
+        const timesheetRes = await fetch(
+          `/api/attendance/timesheet?tenantSlug=${tenantSlug}&employeeId=${employeeId}&workDate=${today}`
+        );
+        const timesheetData = await timesheetRes.json();
+        setTimesheetEntries(timesheetData.entries || []);
+        setToast(`✓ ${entryType.replace('_', ' ')} logged`);
+        setTimeout(() => setToast(null), 3000);
+      }
+    } catch (error) {
+      console.error('Timesheet entry error:', error);
+      setToast('✗ Error logging timesheet entry');
     }
   };
 
@@ -314,6 +384,137 @@ export default function EmployeeAttendanceDashboard({
           </div>
         </div>
       )}
+
+      {/* Daily Timesheet */}
+      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <p className="text-xs uppercase text-slate-400 font-medium mb-1">Daily Timesheet</p>
+            <p className="text-sm text-slate-600">Track your work sessions and breaks</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleTimesheetEntry('BREAK_START', 'Break started')}
+              disabled={!isCheckedIn}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-amber-200 text-amber-700 hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Coffee size={16} />
+              Start Break
+            </button>
+            <button
+              onClick={() => handleTimesheetEntry('BREAK_END', 'Break ended')}
+              disabled={!isCheckedIn}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-emerald-200 text-emerald-700 hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Play size={16} />
+              End Break
+            </button>
+          </div>
+        </div>
+
+        {/* Timesheet Timeline */}
+        <div className="space-y-3">
+          {timesheetEntries.length === 0 ? (
+            <div className="text-center py-8 text-slate-500">
+              <Calendar size={24} className="mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No timesheet entries yet</p>
+              <p className="text-xs">Check in to start tracking your time</p>
+            </div>
+          ) : (
+            timesheetEntries.map((entry, index) => {
+              const entryTime = new Date(entry.timestamp);
+              const isLast = index === timesheetEntries.length - 1;
+              
+              const getEntryIcon = (type: TimesheetEntry['entryType']) => {
+                switch (type) {
+                  case 'CHECK_IN': return <LogIn size={16} className="text-emerald-600" />;
+                  case 'CHECK_OUT': return <LogOut size={16} className="text-amber-600" />;
+                  case 'BREAK_START': return <Coffee size={16} className="text-amber-600" />;
+                  case 'BREAK_END': return <Play size={16} className="text-emerald-600" />;
+                  default: return <Clock size={16} className="text-slate-600" />;
+                }
+              };
+
+              const getEntryColor = (type: TimesheetEntry['entryType']) => {
+                switch (type) {
+                  case 'CHECK_IN': return 'border-emerald-200 bg-emerald-50';
+                  case 'CHECK_OUT': return 'border-amber-200 bg-amber-50';
+                  case 'BREAK_START': return 'border-amber-200 bg-amber-50';
+                  case 'BREAK_END': return 'border-emerald-200 bg-emerald-50';
+                  default: return 'border-slate-200 bg-slate-50';
+                }
+              };
+
+              return (
+                <div key={entry.id} className="flex items-start gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${getEntryColor(entry.entryType)}`}>
+                      {getEntryIcon(entry.entryType)}
+                    </div>
+                    {!isLast && <div className="w-px h-8 bg-slate-200 mt-2"></div>}
+                  </div>
+                  <div className="flex-1 pb-4">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-slate-900">
+                        {entry.entryType.replace('_', ' ')}
+                      </p>
+                      <p className="text-sm text-slate-500 font-mono">
+                        {entryTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                    {entry.description && (
+                      <p className="text-sm text-slate-600 mt-1">{entry.description}</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Timesheet Summary */}
+        {timesheetEntries.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-slate-200">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-slate-500">Total Hours</p>
+                <p className="font-bold text-slate-900">
+                  {(() => {
+                    const checkInEntry = timesheetEntries.find(e => e.entryType === 'CHECK_IN');
+                    const checkOutEntry = timesheetEntries.find(e => e.entryType === 'CHECK_OUT');
+                    if (checkInEntry && checkOutEntry) {
+                      const hours = (new Date(checkOutEntry.timestamp).getTime() - new Date(checkInEntry.timestamp).getTime()) / (1000 * 60 * 60);
+                      return hours.toFixed(1) + 'h';
+                    }
+                    return '0.0h';
+                  })()}
+                </p>
+              </div>
+              <div>
+                <p className="text-slate-500">Break Time</p>
+                <p className="font-bold text-slate-900">
+                  {(() => {
+                    let totalBreakTime = 0;
+                    let breakStart: Date | null = null;
+                    
+                    timesheetEntries.forEach(entry => {
+                      if (entry.entryType === 'BREAK_START') {
+                        breakStart = new Date(entry.timestamp);
+                      } else if (entry.entryType === 'BREAK_END' && breakStart) {
+                        totalBreakTime += (new Date(entry.timestamp).getTime() - breakStart.getTime());
+                        breakStart = null;
+                      }
+                    });
+                    
+                    const hours = totalBreakTime / (1000 * 60 * 60);
+                    return hours.toFixed(1) + 'h';
+                  })()}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Flags/Alerts */}
       {todayAttendance?.flags && todayAttendance.flags.length > 0 && (

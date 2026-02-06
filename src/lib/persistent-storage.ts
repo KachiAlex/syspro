@@ -87,3 +87,80 @@ export async function addDepartment(
   departments[tenantSlug].push(department);
   await saveDepartments(departments);
 }
+
+// Attendance storage
+const ATTENDANCE_FILE = path.join(DATA_DIR, "attendance.json");
+
+// Timesheet storage
+const TIMESHEET_FILE = path.join(DATA_DIR, "timesheet.json");
+
+export async function getAttendanceRecords(): Promise<any[]> {
+  try {
+    await ensureDataDir();
+    const data = await fs.readFile(ATTENDANCE_FILE, "utf-8");
+    return JSON.parse(data);
+  } catch (error) {
+    // File doesn't exist or is empty, return empty array
+    return [];
+  }
+}
+
+export async function saveAttendanceRecords(records: any[]): Promise<void> {
+  try {
+    await ensureDataDir();
+    await fs.writeFile(ATTENDANCE_FILE, JSON.stringify(records, null, 2));
+  } catch (error) {
+    console.error("Error saving attendance records:", error);
+  }
+}
+
+export async function addAttendanceRecord(record: any): Promise<void> {
+  const records = await getAttendanceRecords();
+  records.push(record);
+  await saveAttendanceRecords(records);
+}
+
+export async function updateAttendanceRecord(recordId: string, updates: any): Promise<void> {
+  const records = await getAttendanceRecords();
+  const index = records.findIndex(r => r.id === recordId);
+  if (index !== -1) {
+    records[index] = { ...records[index], ...updates, updatedAt: new Date().toISOString() };
+    await saveAttendanceRecords(records);
+  }
+}
+
+// Timesheet storage functions
+export async function getTimesheetEntries(): Promise<any[]> {
+  try {
+    await ensureDataDir();
+    const data = await fs.readFile(TIMESHEET_FILE, "utf-8");
+    return JSON.parse(data);
+  } catch (error) {
+    // File doesn't exist or is empty, return empty array
+    return [];
+  }
+}
+
+export async function saveTimesheetEntries(entries: any[]): Promise<void> {
+  try {
+    await ensureDataDir();
+    await fs.writeFile(TIMESHEET_FILE, JSON.stringify(entries, null, 2));
+  } catch (error) {
+    console.error("Error saving timesheet entries:", error);
+  }
+}
+
+export async function addTimesheetEntry(entry: any): Promise<void> {
+  const entries = await getTimesheetEntries();
+  entries.push(entry);
+  await saveTimesheetEntries(entries);
+}
+
+export async function getTimesheetEntriesForDate(tenantId: string, employeeId: string, workDate: string): Promise<any[]> {
+  const entries = await getTimesheetEntries();
+  return entries.filter(entry => 
+    entry.tenantId === tenantId && 
+    entry.employeeId === employeeId && 
+    entry.workDate === workDate
+  ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+}

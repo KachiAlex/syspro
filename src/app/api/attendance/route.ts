@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AttendanceRecord, AttendanceStatus, WorkMode } from '@/lib/attendance-types';
 import AttendanceConfidenceCalculator from '@/lib/attendance-calculator';
+import { getAttendanceRecords, saveAttendanceRecords, addAttendanceRecord, updateAttendanceRecord, addTimesheetEntry } from '@/lib/persistent-storage';
 
-// In-memory storage for attendance records (replace with database in production)
-let attendanceRecords: AttendanceRecord[] = [];
+// In-memory storage for signals and policies
 let signalRecords: any[] = [];
 let policyRecords: any[] = [];
 
@@ -46,6 +46,8 @@ export async function GET(request: NextRequest) {
   if (!tenantSlug) {
     return NextResponse.json({ error: 'tenantSlug required' }, { status: 400 });
   }
+
+  const attendanceRecords = await getAttendanceRecords();
 
   // Get today's attendance
   if (action === 'today') {
@@ -131,6 +133,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'tenantSlug, employeeId, workDate required' }, { status: 400 });
   }
 
+  const attendanceRecords = await getAttendanceRecords();
   const policy = policyRecords.find(p => p.tenantId === tenantSlug) || DEFAULT_POLICY;
   const today = new Date().toISOString().split('T')[0];
 
@@ -160,9 +163,11 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date().toISOString(),
       };
       attendanceRecords.push(record);
+      await saveAttendanceRecords(attendanceRecords);
     } else {
       record.checkInTime = new Date().toISOString();
       record.updatedAt = new Date().toISOString();
+      await updateAttendanceRecord(record.id, { checkInTime: record.checkInTime, updatedAt: record.updatedAt });
     }
 
     // Recalculate ACS
@@ -176,13 +181,26 @@ export async function POST(request: NextRequest) {
 
     record.confidenceScore = AttendanceConfidenceCalculator.calculateACS(input, policy);
     record.attendanceStatus = AttendanceConfidenceCalculator.getAttendanceStatus(record.confidenceScore, policy, record);
+    await updateAttendanceRecord(record.id, { confidenceScore: record.confidenceScore, attendanceStatus: record.attendanceStatus });
+
+    // Add timesheet entry for check-in
+    await addTimesheetEntry({
+      id: crypto.randomUUID(),
+      tenantId: tenantSlug,
+      employeeId,
+      workDate,
+      entryType: 'CHECK_IN',
+      timestamp: record.checkInTime,
+      description: `Checked in for ${workMode || 'ONSITE'} work`,
+      createdAt: new Date().toISOString(),
+    });
 
     return NextResponse.json({ record, message: 'Check-in successful' });
   }
 
   // Check out
   if (action === 'check-out') {
-    const record = attendanceRecords.find(
+    let record = attendanceRecords.find(
       r => r.tenantId === tenantSlug && r.employeeId === employeeId && r.workDate === workDate
     );
 
@@ -192,6 +210,19 @@ export async function POST(request: NextRequest) {
 
     record.checkOutTime = new Date().toISOString();
     record.updatedAt = new Date().toISOString();
+    await updateAttendanceRecord(record.id, { checkOutTime: record.checkOutTime, updatedAt: record.updatedAt });
+
+    // Add timesheet entry for check-out
+    await addTimesheetEntry({
+      id: crypto.randomUUID(),
+      tenantId: tenantSlug,
+      employeeId,
+      workDate,
+      entryType: 'CHECK_OUT',
+      timestamp: record.checkOutTime,
+      description: 'Checked out',
+      createdAt: new Date().toISOString(),
+    });
 
     return NextResponse.json({ record, message: 'Check-out successful' });
   }
@@ -221,9 +252,11 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date().toISOString(),
       };
       attendanceRecords.push(record);
+      await saveAttendanceRecords(attendanceRecords);
     } else {
       record.workMode = workMode;
       record.updatedAt = new Date().toISOString();
+      await updateAttendanceRecord(record.id, { workMode: record.workMode, updatedAt: record.updatedAt });
     }
 
     return NextResponse.json({ record, message: 'Work mode updated' });
@@ -265,6 +298,14 @@ export async function POST(request: NextRequest) {
 
     // Store override log
     signalRecords.push(overrideLog);
+    await updateAttendanceRecord(record.id, { 
+      attendanceStatus: newStatus, 
+      confidenceScore: newConfidenceScore, 
+      isOverride: true, 
+      overrideReason: reason, 
+      overrideByUserId: overriddenByUserId,
+      updatedAt: record.updatedAt 
+    });
 
     return NextResponse.json({ record, overrideLog, message: 'Attendance overridden' });
   }
@@ -284,6 +325,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Required fields missing' }, { status: 400 });
   }
 
+  const attendanceRecords = await getAttendanceRecords();
   let record = attendanceRecords.find(
     r => r.tenantId === tenantSlug && r.employeeId === employeeId && r.workDate === workDate
   );
@@ -324,6 +366,17 @@ export async function PUT(request: NextRequest) {
   record.confidenceScore = AttendanceConfidenceCalculator.calculateACS(input, policy);
   record.attendanceStatus = AttendanceConfidenceCalculator.getAttendanceStatus(record.confidenceScore, policy, record);
 
+  // Save updated record
+  await updateAttendanceRecord(record.id, { 
+    taskActivityCount: record.taskActivityCount,
+    timeLoggedHours: record.timeLoggedHours,
+    meetingsAttended: record.meetingsAttended,
+    lmsActivityScore: record.lmsActivityScore,
+    confidenceScore: record.confidenceScore,
+    attendanceStatus: record.attendanceStatus,
+    updatedAt: record.updatedAt 
+  });
+
   // Generate flags
   const flags = AttendanceConfidenceCalculator.generateFlags(record, policy);
 
@@ -339,6 +392,9 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'tenantSlug and recordId required' }, { status: 400 });
   }
 
-  attendanceRecords = attendanceRecords.filter(r => r.id !== recordId || r.tenantId !== tenantSlug);
+  const attendanceRecords = await getAttendanceRecords();
+  const filtered = attendanceRecords.filter(r => !(r.id === recordId && r.tenantId === tenantSlug));
+  await saveAttendanceRecords(filtered);
+  
   return NextResponse.json({ message: 'Attendance record deleted' });
 }

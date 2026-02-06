@@ -64,6 +64,7 @@ import {
   LineChart,
   Handshake,
   Headphones,
+  RefreshCcw,
   KanbanSquare,
   PieChart,
   Layers3,
@@ -94,6 +95,7 @@ import {
   Zap,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import { Component, Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, ComponentType, FormEvent } from "react";
 import DepartmentManagement from "@/app/tenant-admin/sections/department-management";
@@ -101,6 +103,8 @@ import RoleBuilder from "@/app/tenant-admin/sections/role-builder";
 import ApprovalDesigner from "@/app/tenant-admin/sections/approval-designer";
 import EmployeeConsole from "@/app/tenant-admin/sections/employee-console";
 import EmployeeAttendanceDashboard from "@/components/employee-attendance-dashboard";
+import AttendanceReports from "@/components/attendance-reports";
+import StaffReports from "@/components/staff-reports";
 import { listExpenses, createExpense, approveExpense, deleteExpense } from "@/lib/api/expenses";
 import AccessControlPanel from "@/app/tenant-admin/sections/access-control";
 import LifecycleWorkflows from "@/app/tenant-admin/sections/workflows";
@@ -110,6 +114,9 @@ import IntegrationsSection from "@/app/tenant-admin/sections/integrations";
 import AnalyticsSection from "@/app/tenant-admin/sections/analytics";
 import SecuritySection from "@/app/tenant-admin/sections/security";
 import CostAllocationSection from "@/app/tenant-admin/sections/cost-allocation";
+import ItSupportWorkspace from "@/app/tenant-admin/sections/it-support-workspace";
+import RevOpsWorkspace from "@/app/tenant-admin/sections/revops-workspace";
+import type { RevOpsOverviewSnapshot } from "@/lib/revops-data";
 
 type NavigationLink = {
   label: string;
@@ -1961,7 +1968,7 @@ const NAVIGATION: NavigationSection[] = [
       { label: "HR & Operations", key: "hr-ops", icon: Users },
       { label: "Projects", key: "projects", icon: KanbanSquare },
       { label: "IT & Support", key: "it-support", icon: Headphones },
-      { label: "Marketing & Sales", key: "marketing-sales", icon: Megaphone },
+      { label: "Revenue Operations (RevOps)", key: "revops", icon: Megaphone },
     ],
   },
   {
@@ -2044,7 +2051,7 @@ const HEADLINE_MAP: Record<string, string> = {
   "hr-ops": "HR & Operations",
   projects: "Projects",
   "it-support": "IT & Support",
-  "marketing-sales": "Marketing & Sales",
+  revops: "Revenue Operations (RevOps)",
   workflows: "Workflows",
   approvals: "Approvals",
   "automation-rules": "Automation Rules",
@@ -2093,6 +2100,10 @@ export default function TenantAdminPage() {
   const [financeAccountsLoading, setFinanceAccountsLoading] = useState(false);
   const [financeAccountsError, setFinanceAccountsError] = useState<string | null>(null);
   const [financeAccountsVersion, setFinanceAccountsVersion] = useState(0);
+  const [revopsOverview, setRevopsOverview] = useState<RevOpsOverviewSnapshot | null>(null);
+  const [revopsOverviewLoading, setRevopsOverviewLoading] = useState(false);
+  const [revopsOverviewError, setRevopsOverviewError] = useState<string | null>(null);
+  const [revopsOverviewVersion, setRevopsOverviewVersion] = useState(0);
 
   // Inventory state
   const [inventoryView, setInventoryView] = useState<"products" | "stock" | "transfers" | "alerts">("products");
@@ -2187,8 +2198,34 @@ export default function TenantAdminPage() {
     if (activeNav === "finance") {
       return financeSnapshot.metrics;
     }
+    if (activeNav === "revops" && revopsOverview) {
+      return revopsOverview.metrics.map((metric) => {
+        const deltaValue =
+          typeof metric.delta === "number"
+            ? `${metric.delta > 0 ? "+" : ""}${metric.delta}%`
+            : "—";
+        const trend: "up" | "down" = metric.deltaDirection
+          ? metric.deltaDirection
+          : typeof metric.delta === "number" && metric.delta < 0
+          ? "down"
+          : "up";
+        const description =
+          typeof metric.delta === "number"
+            ? trend === "down"
+              ? "Decline vs prior period"
+              : "Improvement vs prior period"
+            : "RevOps telemetry indicator";
+        return {
+          label: metric.label,
+          value: metric.value,
+          delta: deltaValue,
+          trend,
+          description,
+        } satisfies KpiMetric;
+      });
+    }
     return KPI_METRICS;
-  }, [activeNav, crmSnapshot.metrics, financeSnapshot.metrics]);
+  }, [activeNav, crmSnapshot.metrics, financeSnapshot.metrics, revopsOverview]);
 
   const handleCrmRetry = useCallback(() => {
     setCrmRequestVersion((prev) => prev + 1);
@@ -2429,9 +2466,16 @@ export default function TenantAdminPage() {
       console.log("Employee creation response:", result);
       
       if (result.employee) {
-        setHrEmployees([...hrEmployees, result.employee]);
         setHrToast(`Employee "${result.employee.name}" added successfully`);
         setShowAddEmployeeModal(false);
+        
+        // Auto-refresh employee list
+        const fetchResponse = await fetch(`/api/hr/employees?tenantSlug=${tenantSlug || "default"}`);
+        if (fetchResponse.ok) {
+          const data = await fetchResponse.json();
+          const employees = data.employees?.[tenantSlug || "default"] || [];
+          setHrEmployees(employees);
+        }
       } else {
         throw new Error("No employee data in response");
       }
@@ -2444,7 +2488,7 @@ export default function TenantAdminPage() {
     } finally {
       setHrLoading(false);
     }
-  }, [tenantSlug, hrEmployees]);
+  }, [tenantSlug]);
 
   const handleAddDepartment = useCallback(async (formData: FormData) => {
     try {
@@ -2465,10 +2509,17 @@ export default function TenantAdminPage() {
       }
 
       const result = await response.json();
-      setHrDepartments([...hrDepartments, result.department]);
       setHrToast(`Department "${result.department.name}" created successfully`);
       setTimeout(() => setHrToast(null), 3000);
       setShowAddDepartmentModal(false);
+      
+      // Auto-refresh department list
+      const fetchResponse = await fetch(`/api/hr/departments?tenantSlug=${tenantSlug || "default"}`);
+      if (fetchResponse.ok) {
+        const data = await fetchResponse.json();
+        const departments = data.departments?.[tenantSlug || "default"] || [];
+        setHrDepartments(departments);
+      }
       
       // If the department was being created from the employee modal, reopen the employee modal
       // so the user can add employees to the newly created department
@@ -2483,7 +2534,7 @@ export default function TenantAdminPage() {
     } finally {
       setHrLoading(false);
     }
-  }, [tenantSlug, hrDepartments]);
+  }, [tenantSlug]);
 
   // Projects handlers
   const handleCreateProject = useCallback(async (formData: FormData) => {
@@ -2524,16 +2575,20 @@ export default function TenantAdminPage() {
   const handleLogTime = useCallback(async (formData: FormData) => {
     try {
       setProjectsLoading(true);
+      const employeeName = formData.get("employeeName") as string;
+      const hours = parseFloat(formData.get("hours") as string) || 0;
+      const date = formData.get("date") as string;
+      
       const response = await fetch("/api/projects/time-entries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tenantSlug: tenantSlug || "default",
           projectId: formData.get("project"),
-          employeeName: formData.get("employeeName"),
-          hours: parseFloat(formData.get("hours") as string) || 0,
+          employeeName,
+          hours,
           billable: formData.get("billable") === "on",
-          date: formData.get("date"),
+          date,
         }),
       });
 
@@ -2546,6 +2601,26 @@ export default function TenantAdminPage() {
       setProjectsTimeEntries([...projectsTimeEntries, result.timeEntry]);
       setProjectsToast(`Time logged successfully`);
       setTimeout(() => setProjectsToast(null), 3000);
+      
+      // Send TIME_LOG signal to attendance module
+      try {
+        await fetch("/api/attendance", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tenantSlug: tenantSlug || "default",
+            employeeId: employeeName.toLowerCase().replace(/\s+/g, "-"), // Convert name to employeeId
+            workDate: date,
+            signalType: "TIME_LOG",
+            signalData: { hours },
+          }),
+        });
+        console.log(`Sent TIME_LOG signal for ${employeeName}: ${hours} hours on ${date}`);
+      } catch (signalError) {
+        console.error("Failed to send TIME_LOG signal:", signalError);
+        // Don't fail the operation if signal fails
+      }
+      
       setShowLogTimeModal(false);
     } catch (error) {
       console.error("Error logging time:", error);
@@ -3173,6 +3248,44 @@ export default function TenantAdminPage() {
   }, [activeNav, tenantSlug, selectedRegion, financeAccountsVersion]);
 
   useEffect(() => {
+    if (activeNav !== "revops" && revopsOverviewVersion === 0) {
+      return;
+    }
+
+    let cancelled = false;
+    setRevopsOverviewLoading(true);
+    setRevopsOverviewError(null);
+    const slug = tenantSlug?.trim() || "kreatix-default";
+
+    fetch(`/api/revops/overview?tenantSlug=${encodeURIComponent(slug)}`, { cache: "no-store" })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload?.error ?? "Unable to load RevOps overview");
+        }
+        if (!cancelled) {
+          setRevopsOverview(payload.overview ?? null);
+        }
+      })
+      .catch((error) => {
+        console.error("RevOps overview fetch failed", error);
+        if (!cancelled) {
+          setRevopsOverview(null);
+          setRevopsOverviewError(error instanceof Error ? error.message : "Unable to load RevOps overview");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setRevopsOverviewLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeNav, tenantSlug, revopsOverviewVersion]);
+
+  useEffect(() => {
     refreshContacts();
   }, [refreshContacts]);
 
@@ -3328,9 +3441,30 @@ export default function TenantAdminPage() {
                     {crmActionToast && (
                       <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-600">{crmActionToast}</span>
                     )}
+                    {revopsOverviewLoading && (
+                      <span className="rounded-full bg-slate-900/5 px-3 py-1">Loading RevOps metrics…</span>
+                    )}
+                    {revopsOverviewError && (
+                      <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">RevOps: {revopsOverviewError}</span>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 text-sm">
+                  <button
+                    type="button"
+                    onClick={() => setRevopsOverviewVersion((prev) => prev + 1)}
+                    disabled={revopsOverviewLoading}
+                    className={`inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-600 shadow-sm hover:border-slate-300 ${
+                      revopsOverviewLoading ? "cursor-not-allowed opacity-60" : ""
+                    }`}
+                  >
+                    {revopsOverviewLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCcw className="h-4 w-4" />
+                    )}
+                    {revopsOverviewLoading ? "Syncing RevOps" : "Refresh RevOps"}
+                  </button>
                   <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-600 shadow-sm hover:border-slate-300">
                     <CalendarClock className="h-4 w-4" />
                     {selectedTimeframe}
@@ -3340,6 +3474,14 @@ export default function TenantAdminPage() {
                     <Command className="h-4 w-4" />
                     Launch command palette
                   </button>
+                  <Link
+                    href="/planner"
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-600 shadow-sm hover:border-slate-300"
+                  >
+                    <KanbanSquare className="h-4 w-4" />
+                    Open Planner
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
                 </div>
               </div>
             </header>
@@ -3476,6 +3618,13 @@ export default function TenantAdminPage() {
                     tenantSlug={tenantSlug}
                     toast={projectsToast}
                     onToastDismiss={() => setProjectsToast(null)}
+                  />
+                ) : activeNav === "it-support" ? (
+                  <ItSupportWorkspace tenantSlug={tenantSlug} region={selectedRegion} />
+                ) : activeNav === "revops" ? (
+                  <RevOpsWorkspace
+                    tenantSlug={tenantSlug}
+                    onRefresh={() => setRevopsOverviewVersion((prev) => prev + 1)}
                   />
                 ) : activeNav === "structure" ? (
                   <DepartmentManagement tenantSlug={tenantSlug} />
@@ -9130,6 +9279,8 @@ function HRWorkspace({
     { key: "employees", label: "Employees", icon: Users },
     { key: "departments", label: "Departments", icon: Building2 },
     { key: "team-attendance", label: "Team Attendance", icon: CalendarClock },
+    { key: "attendance-reports", label: "Attendance Reports", icon: BarChart3 },
+    { key: "staff-reports", label: "Staff Reports", icon: FileText },
     { key: "payroll", label: "Payroll", icon: DollarSign },
     { key: "benefits", label: "Benefits & Deductions", icon: PiggyBank },
     { key: "performance-reviews", label: "Performance Reviews", icon: BarChart3 },
@@ -9294,6 +9445,14 @@ function HRWorkspace({
             </table>
           </div>
         </div>
+      )}
+
+      {currentView === "attendance-reports" && (
+        <AttendanceReports tenantSlug={tenantSlug} />
+      )}
+
+      {currentView === "staff-reports" && (
+        <StaffReports tenantSlug={tenantSlug} />
       )}
 
       {currentView === "payroll" && (

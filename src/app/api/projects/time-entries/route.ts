@@ -1,44 +1,57 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// In-memory storage for time entries
-const timeEntries: Record<string, Array<{ id: string; projectId: string; employeeName: string; hours: number; date: string; billable: boolean }>> = {};
+import { listTimeEntries, logTimeEntry } from "@/lib/projects-data";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const tenantSlug = searchParams.get("tenantSlug") || "default";
+  const projectId = searchParams.get("projectId") || undefined;
 
-  const tenantTimeEntries = timeEntries[tenantSlug] || [];
-  return NextResponse.json({ timeEntries: tenantTimeEntries });
+  const timeEntries = listTimeEntries(tenantSlug, projectId);
+  return NextResponse.json({ timeEntries });
 }
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { tenantSlug = "default", projectId, employeeName, hours, date, billable } = body;
+  const {
+    tenantSlug = "default",
+    projectId,
+    workstreamId,
+    taskId,
+    employeeId,
+    hours,
+    date,
+    billable = false,
+  } = body as {
+    tenantSlug?: string;
+    projectId?: string;
+    workstreamId?: string;
+    taskId?: string;
+    employeeId?: string;
+    hours?: number;
+    date?: string;
+    billable?: boolean;
+  };
 
-  if (!projectId || !employeeName || hours === undefined || !date) {
+  if (!projectId || !workstreamId || !taskId || !employeeId || hours === undefined || !date) {
     return NextResponse.json(
       { error: "Missing required fields" },
       { status: 400 }
     );
   }
 
-  if (!timeEntries[tenantSlug]) {
-    timeEntries[tenantSlug] = [];
-  }
-
-  const newTimeEntry = {
-    id: `time-${Date.now()}`,
+  const entry = logTimeEntry(tenantSlug, {
     projectId,
-    employeeName,
-    hours: parseFloat(hours),
+    workstreamId,
+    taskId,
+    employeeId,
+    hours: Number(hours),
     date,
-    billable: billable || false,
-  };
-
-  timeEntries[tenantSlug].push(newTimeEntry);
+    billable,
+  });
 
   return NextResponse.json(
-    { timeEntry: newTimeEntry, message: "Time entry logged successfully" },
+    { timeEntry: entry, message: "Time entry logged successfully" },
     { status: 201 }
   );
 }
