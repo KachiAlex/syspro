@@ -98,7 +98,7 @@ import {
 import Link from "next/link";
 import { Component, Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, ComponentType, FormEvent } from "react";
-import DepartmentManagement from "@/app/tenant-admin/sections/department-management";
+import OrgStructureManager from "@/app/tenant-admin/sections/org-structure";
 import RoleBuilder from "@/app/tenant-admin/sections/role-builder";
 import ApprovalDesigner from "@/app/tenant-admin/sections/approval-designer";
 import EmployeeConsole from "@/app/tenant-admin/sections/employee-console";
@@ -107,6 +107,7 @@ import AttendanceReports from "@/components/attendance-reports";
 import StaffReports from "@/components/staff-reports";
 import { listExpenses, createExpense, approveExpense, deleteExpense } from "@/lib/api/expenses";
 import AccessControlPanel from "@/app/tenant-admin/sections/access-control";
+import AdminControlCenter from "@/app/tenant-admin/sections/admin-control-center";
 import LifecycleWorkflows from "@/app/tenant-admin/sections/workflows";
 import ModuleRegistry from "@/app/tenant-admin/sections/module-registry";
 import BillingSection from "@/app/tenant-admin/sections/billing";
@@ -118,6 +119,7 @@ import ItSupportWorkspace from "@/app/tenant-admin/sections/it-support-workspace
 import RevOpsWorkspace from "@/app/tenant-admin/sections/revops-workspace";
 import type { RevOpsOverviewSnapshot } from "@/lib/revops-data";
 import AutomationRules from "@/app/tenant-admin/sections/automation-rules";
+import AutomationDashboard from "@/app/tenant-admin/sections/automation-dashboard";
 import PoliciesSection from "@/app/tenant-admin/sections/policies";
 import ReportsSection from "@/app/tenant-admin/sections/reports";
 
@@ -1988,6 +1990,7 @@ const NAVIGATION: NavigationSection[] = [
   {
     label: "Admin",
     links: [
+      { label: "Admin Control", key: "admin-control", icon: Command },
       { label: "People & Access", key: "people-access", icon: Users2 },
       { label: "Structure", key: "structure", icon: GitBranch },
       { label: "Modules", key: "modules", icon: Layers3 },
@@ -2057,6 +2060,7 @@ const HEADLINE_MAP: Record<string, string> = {
   revops: "Revenue Operations (RevOps)",
   workflows: "Workflows",
   approvals: "Approvals",
+  "admin-control": "Admin Control",
   "automation-rules": "Automation Rules",
   policies: "Policies",
   reports: "Reports",
@@ -3629,8 +3633,10 @@ export default function TenantAdminPage() {
                     tenantSlug={tenantSlug}
                     onRefresh={() => setRevopsOverviewVersion((prev) => prev + 1)}
                   />
+                ) : activeNav === "admin-control" ? (
+                  <AdminControlCenter />
                 ) : activeNav === "structure" ? (
-                  <DepartmentManagement tenantSlug={tenantSlug} />
+                  <OrgStructureManager tenantSlug={tenantSlug} />
                 ) : activeNav === "people-access" ? (
                   <div className="space-y-8">
                     <RoleBuilder tenantSlug={tenantSlug} />
@@ -3643,6 +3649,8 @@ export default function TenantAdminPage() {
                   <LifecycleWorkflows tenantSlug={tenantSlug} />
                 ) : activeNav === "automation-rules" ? (
                   <AutomationRules tenantSlug={tenantSlug} />
+                ) : activeNav === "dashboards" ? (
+                  <AutomationDashboard tenantSlug={tenantSlug} />
                 ) : activeNav === "policies" ? (
                   <PoliciesSection tenantSlug={tenantSlug} />
                 ) : activeNav === "reports" ? (

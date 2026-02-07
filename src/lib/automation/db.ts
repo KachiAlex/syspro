@@ -1,6 +1,12 @@
 import { getSql } from "@/lib/db";
 import { AutomationRule, Action } from "./types";
 
+export type AutomationSummary = {
+  rules: { total: number; enabled: number; simulationOnly: number };
+  queue: { pending: number; processing: number; completed: number; failed: number; oldestPending: string | null; nextScheduled: string | null; maxAttempt: number | null };
+  audits: { total: number; matched: number; unmatched: number; lastEvent: string | null; lastRule: string | null; lastOutcome: string | null; lastCreatedAt: string | null };
+};
+
 const SQL = getSql();
 
 type SqlClient = ReturnType<typeof getSql>;
@@ -180,6 +186,97 @@ export async function listAutomationAudits(tenantSlug: string, limit = 50, sql: 
     simulation: row.simulation,
     createdAt: row.created_at?.toISOString?.() ?? row.created_at,
   }));
+}
+
+export async function fetchAutomationSummary(tenantSlug: string, sql: SqlClient = SQL): Promise<AutomationSummary> {
+  await ensureAutomationTables(sql);
+
+  const [ruleRow] = await sql`
+    select
+      count(*)::int as total,
+      coalesce(sum(case when enabled then 1 else 0 end), 0)::int as enabled,
+      coalesce(sum(case when simulation_only then 1 else 0 end), 0)::int as simulation_only
+    from automation_rules
+    where tenant_slug = ${tenantSlug}
+  ` as any[];
+
+  const queueRows = await sql`
+    select status, count(*)::int as count, min(created_at) as oldest_created, min(scheduled_for) as next_scheduled, max(attempt_count)::int as max_attempts
+    from automation_action_queue
+    where tenant_slug = ${tenantSlug}
+    group by status
+  ` as any[];
+
+  const queue = {
+    pending: 0,
+    processing: 0,
+    completed: 0,
+    failed: 0,
+    oldestPending: null as string | null,
+    nextScheduled: null as string | null,
+    maxAttempt: null as number | null,
+  };
+
+  for (const row of queueRows) {
+    const count = Number(row.count) || 0;
+    if (row.status === "pending") queue.pending = count;
+    if (row.status === "processing") queue.processing = count;
+    if (row.status === "completed") queue.completed = count;
+    if (row.status === "failed") queue.failed = count;
+
+    if (row.status === "pending") {
+      const oldest = row.oldest_created?.toISOString?.() ?? row.oldest_created ?? null;
+      const next = row.next_scheduled?.toISOString?.() ?? row.next_scheduled ?? null;
+      queue.oldestPending = queue.oldestPending || oldest;
+      queue.nextScheduled = queue.nextScheduled || next;
+    }
+
+    const attempts = row.max_attempts === null || row.max_attempts === undefined ? null : Number(row.max_attempts);
+    if (attempts !== null) {
+      queue.maxAttempt = queue.maxAttempt === null ? attempts : Math.max(queue.maxAttempt, attempts);
+    }
+  }
+
+  const auditCounts = await sql`
+    select matched, count(*)::int as count
+    from automation_rule_audits
+    where tenant_slug = ${tenantSlug}
+    group by matched
+  ` as any[];
+
+  let matched = 0;
+  let unmatched = 0;
+  for (const row of auditCounts) {
+    if (row.matched) matched += Number(row.count) || 0;
+    else unmatched += Number(row.count) || 0;
+  }
+
+  const [lastAudit] = await sql`
+    select a.trigger_event, a.matched, a.result, a.created_at, r.name as rule_name
+    from automation_rule_audits a
+    left join automation_rules r on r.id = a.rule_id
+    where a.tenant_slug = ${tenantSlug}
+    order by a.created_at desc
+    limit 1
+  ` as any[];
+
+  return {
+    rules: {
+      total: Number(ruleRow?.total) || 0,
+      enabled: Number(ruleRow?.enabled) || 0,
+      simulationOnly: Number(ruleRow?.simulation_only) || 0,
+    },
+    queue,
+    audits: {
+      total: matched + unmatched,
+      matched,
+      unmatched,
+      lastEvent: lastAudit?.trigger_event ? JSON.stringify(lastAudit.trigger_event) : null,
+      lastRule: lastAudit?.rule_name || null,
+      lastOutcome: lastAudit ? (lastAudit.matched ? "matched" : "skipped") : null,
+      lastCreatedAt: lastAudit?.created_at?.toISOString?.() ?? lastAudit?.created_at ?? null,
+    },
+  };
 }
 
 export async function fetchPendingActions(limit = 25, tenantSlug?: string, maxAttempts = 5, sql: SqlClient = SQL) {
