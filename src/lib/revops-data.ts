@@ -463,7 +463,7 @@ function seedTenant(tenantSlug: string): RevOpsTenantStore {
     }
   );
 
-  const crmDeals: CrmDealSnapshot[] = [
+  const newCrmDeals: CrmDealSnapshot[] = [
     {
       id: randomUUID(),
       opportunityId: "OPP-90001",
@@ -506,6 +506,8 @@ function seedTenant(tenantSlug: string): RevOpsTenantStore {
       closeDate: new Date("2025-12-05").toISOString(),
     }
   ];
+
+  crmDeals.push(...newCrmDeals);
 
   revenueAttributions.push(
     {

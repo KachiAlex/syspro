@@ -15,11 +15,11 @@ type PolicyEvaluationResult = {
   reason?: string;
 };
 
-async function postWebhook(action: AutomationAction) {
+async function postWebhook(action: AutomationAction): Promise<ActionHandlerResult> {
   const payload = action.action_payload || {};
   const url = payload.url;
   if (!url || typeof url !== "string") {
-    return { status: "failed", error: "webhook:post requires payload.url" } as ActionHandlerResult;
+    return { status: "failed", error: "webhook:post requires payload.url" };
   }
   try {
     const res = await fetch(url, {
@@ -81,10 +81,4 @@ export async function handleAutomationAction(action: AutomationAction): Promise<
   } catch (err: any) {
     return { status: "failed", error: err?.message || String(err) };
   }
-}
-
-export async function evaluatePolicyDecision(input: PolicyEvaluationInput): Promise<PolicyEvaluationResult> {
-  // Placeholder; return allow until enforcement layer is added.
-  console.log("Policy evaluation placeholder", input);
-  return { allowed: true, reason: "Default allow (placeholder)" };
 }
