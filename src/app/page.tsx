@@ -42,9 +42,9 @@ function Header() {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-4">
-            <button className="text-gray-700 hover:text-blue-600 transition-colors">
-              Sign In
-            </button>
+                  <button className="text-gray-700 hover:text-blue-600 transition-colors" onClick={() => startLoginFlow()}>
+                    Sign In
+                  </button>
             <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
               Request Demo
             </button>
@@ -69,9 +69,14 @@ function Header() {
               <a href="#resources" className="text-gray-700 hover:text-blue-600 transition-colors">Resources</a>
               <a href="#contact" className="text-gray-700 hover:text-blue-600 transition-colors">Contact</a>
               <div className="flex flex-col gap-2 pt-4 border-t border-gray-200">
-                <button className="text-gray-700 hover:text-blue-600 transition-colors text-left">
-                  Sign In
-                </button>
+                  <button className="text-gray-700 hover:text-blue-600 transition-colors text-left" onClick={() => startLoginFlow()}>
+                    Sign In
+                  </button>
+                // Login flow trigger
+                function startLoginFlow() {
+                  // TODO: Implement actual login flow (redirect, modal, etc.)
+                  window.location.href = "/access";
+                }
                 <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                   Request Demo
                 </button>

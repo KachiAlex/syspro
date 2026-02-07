@@ -5,6 +5,7 @@
  */
 
 import { NextRequest } from "next/server";
+import { getSql } from "@/lib/db";
 
 export interface SessionUser {
   id: string;
@@ -28,7 +29,7 @@ export function getCurrentUser(request: NextRequest): SessionUser | null {
   // Method 1: Check for development headers
   const userId = request.headers.get("X-User-Id");
   const userEmail = request.headers.get("X-User-Email") || "user@example.com";
-  const tenantSlug = request.headers.get("X-Tenant-Slug") || "kreatix-default";
+  const tenantSlug = request.headers.get("X-Tenant-Slug") || undefined;
   const roleId = request.headers.get("X-Role-Id") || "viewer";
 
   if (userId) {
@@ -56,26 +57,47 @@ export function getCurrentUser(request: NextRequest): SessionUser | null {
   //   }
   // }
 
-  // Method 3: Return default user for development
-  return {
-    id: "demo-user-001",
-    email: "demo@example.com",
-    name: "Demo User",
-    tenantSlug: tenantSlug || "kreatix-default",
-    roleId: "admin", // Default to admin for demo
-  };
+  // Method 3: For strict tenant isolation we return null unless an explicit
+  // authenticated user is present. This prevents accidental cross-tenant
+  // data exposure when no tenant header/session is provided.
+  return null;
 }
 
 /**
  * Validate that user has permission for the tenant
  */
-export function validateTenantAccess(user: SessionUser, requestedTenantSlug: string): boolean {
-  // In production, check if user is a member of the tenant
-  // For now, just verify the tenant slug matches
-  if (user.tenantSlug && user.tenantSlug !== requestedTenantSlug) {
+export async function validateTenantAccess(user: SessionUser, requestedTenantSlug: string): Promise<boolean> {
+  if (!requestedTenantSlug) return false;
+
+  // Super-admins (global admins) may have access across tenants.
+  if (user.roleId === "superadmin") return true;
+
+  // If the user's session already includes a tenant slug that matches,
+  // allow access immediately (fast path).
+  if (user.tenantSlug && user.tenantSlug === requestedTenantSlug) return true;
+
+  // Otherwise, check the database for tenant membership/role assignment.
+  try {
+    const sql = getSql();
+
+    // Check tenant_user_roles first (role assignment table)
+    const roleRows = await sql`
+      SELECT 1 FROM tenant_user_roles WHERE tenant_slug = ${requestedTenantSlug} AND user_id = ${user.id} LIMIT 1
+    `;
+    if (Array.isArray(roleRows) && roleRows.length > 0) return true;
+
+    // Check tenant_members table as a fallback
+    const memberRows = await sql`
+      SELECT 1 FROM tenant_members WHERE tenant_slug = ${requestedTenantSlug} AND user_id = ${user.id} LIMIT 1
+    `;
+    if (Array.isArray(memberRows) && memberRows.length > 0) return true;
+
+    return false;
+  } catch (error) {
+    console.error("validateTenantAccess DB check failed:", error);
+    // On DB failure, be conservative and deny access
     return false;
   }
-  return true;
 }
 
 /**
