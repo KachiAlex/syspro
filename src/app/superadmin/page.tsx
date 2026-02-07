@@ -1,20 +1,9 @@
-"use client";
+'use client';
 
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
-import { ArrowRight, CheckCircle2, CircleDashed, Loader2, PlusCircle, X } from "lucide-react";
-import { Panel, SectionHeading, Tag } from "@/components/ui/primitives";
+import { useState, useEffect, useMemo, FormEvent, ChangeEvent } from 'react';
+import { TrendingUp, Users, DollarSign, Zap, AlertCircle, Check, Search, Download, PlusCircle, Eye, Edit, Trash2, Loader2, ArrowRight, X } from 'lucide-react';
 
-const REGION_OPTIONS = [
-  "North America",
-  "South America",
-  "Europe",
-  "Middle East",
-  "Africa",
-  "Asia-Pacific",
-  "Australia & New Zealand",
-] as const;
-
-type TenantSummary = {
+interface Tenant {
   slug: string;
   name: string;
   region: string;
@@ -22,9 +11,10 @@ type TenantSummary = {
   ledger: string;
   seats: number;
   persisted: boolean;
-};
-
-type ApiTenantSummary = Omit<TenantSummary, "persisted">;
+  email?: string;
+  plan?: 'starter' | 'professional' | 'enterprise';
+  health?: 'healthy' | 'warning' | 'critical';
+}
 
 interface TenantFormState {
   companyName: string;
@@ -39,6 +29,16 @@ interface TenantFormState {
   adminNotes: string;
 }
 
+const REGION_OPTIONS = [
+  "North America",
+  "South America",
+  "Europe",
+  "Middle East",
+  "Africa",
+  "Asia-Pacific",
+  "Australia & New Zealand",
+] as const;
+
 const INITIAL_TENANT_FORM: TenantFormState = {
   companyName: "",
   companySlug: "",
@@ -52,16 +52,35 @@ const INITIAL_TENANT_FORM: TenantFormState = {
   adminNotes: "",
 };
 
+const MOCK_METRICS = {
+  totalTenants: '12',
+  monthlyRevenue: '$65,000',
+  totalUsers: '1,619',
+  activeTrials: '2',
+  tenantChange: '+2 vs last month',
+  revenueChange: '+5.2% vs last month',
+  userChange: '+12.3% vs last month',
+  trialChange: '+1 vs last month',
+};
+
+const HEALTH_STATUS = [
+  { label: 'Healthy', value: 9, color: 'bg-green-500' },
+  { label: 'Warning', value: 2, color: 'bg-yellow-500' },
+  { label: 'Critical', value: 1, color: 'bg-red-500' }
+];
+
 export default function SuperadminPage() {
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [planFilter, setPlanFilter] = useState('all');
   const [showTenantModal, setShowTenantModal] = useState(false);
-  const [tenants, setTenants] = useState<TenantSummary[]>([]);
   const [formState, setFormState] = useState<TenantFormState>(INITIAL_TENANT_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  // Load tenants
   useEffect(() => {
     let isCancelled = false;
 
@@ -77,12 +96,7 @@ export default function SuperadminPage() {
           return;
         }
 
-        const normalized = (data.tenants as ApiTenantSummary[]).map((tenant) => ({
-          ...tenant,
-          persisted: true,
-        }));
-
-        setTenants(normalized);
+        setTenants(data.tenants);
       } catch (error) {
         console.error("Failed to load tenants", error);
       }
@@ -94,6 +108,33 @@ export default function SuperadminPage() {
     };
   }, []);
 
+  // Map tenants to include mock data
+  const enrichedTenants = useMemo(() => {
+    return tenants.map((t, idx) => ({
+      ...t,
+      email: `admin@${t.slug}.com`,
+      plan: (
+        idx % 3 === 0 ? 'enterprise' :
+        idx % 3 === 1 ? 'professional' :
+        'starter'
+      ) as 'starter' | 'professional' | 'enterprise',
+      health: (
+        t.status === 'active' ? (idx % 7 === 0 ? 'warning' : idx % 13 === 0 ? 'critical' : 'healthy') :
+        'healthy'
+      ) as 'healthy' | 'warning' | 'critical',
+    }));
+  }, [tenants]);
+
+  const filteredTenants = useMemo(() => {
+    return enrichedTenants.filter(t => {
+      const matchesSearch = t.name.toLowerCase().includes(search.toLowerCase()) || 
+                           (t.email?.toLowerCase().includes(search.toLowerCase()) ?? false);
+      const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
+      const matchesPlan = planFilter === 'all' || t.plan === planFilter;
+      return matchesSearch && matchesStatus && matchesPlan;
+    });
+  }, [enrichedTenants, search, statusFilter, planFilter]);
+
   function handleOpenTenantModal() {
     setFormError(null);
     setFormSuccess(null);
@@ -102,100 +143,18 @@ export default function SuperadminPage() {
 
   function handleCloseTenantModal() {
     setShowTenantModal(false);
-    setIsSubmitting(false);
-  }
-
-  async function handleTenantAction(targetTenant: TenantSummary, action: "suspend" | "activate" | "delete") {
-    setActionError(null);
-
-    const slug = targetTenant.slug;
-    const loadingKey = `${slug}:${action}`;
-    setActionLoading(loadingKey);
-
-    try {
-      if (action === "delete") {
-        const response = await fetch(`/api/tenants/${slug}`, {
-          method: "DELETE",
-        });
-
-        if (response.status === 404) {
-          setTenants((prev) => prev.filter((tenant) => tenant.slug !== slug));
-          return;
-        }
-
-        if (!response.ok) {
-          const data = await response.json().catch(() => null);
-          throw new Error(data?.error ?? "Unable to delete tenant");
-        }
-
-        setTenants((prev) => prev.filter((tenant) => tenant.slug !== slug));
-        return;
-      }
-
-      const response = await fetch(`/api/tenants/${slug}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          setActionError("Tenant not found. Please refresh and try again.");
-          return;
-        }
-        throw new Error(data?.error ?? "Unable to update tenant status");
-      }
-
-      setTenants((prev) =>
-        prev.map((tenant) =>
-          tenant.slug === slug ? { ...data.tenantSummary, persisted: true } : tenant
-        )
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to process action";
-      setActionError(message);
-    } finally {
-      setActionLoading(null);
-    }
-  }
-
-  function handleFieldChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
-    const { name, value } = event.target;
-    setFormState((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  }
-
-  async function handleTenantSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+    setFormState(INITIAL_TENANT_FORM);
     setFormError(null);
+  }
 
-    if (formState.adminPassword !== formState.confirmPassword) {
-      setFormError("Admin passwords do not match.");
-      return;
-    }
+  function handleFieldChange(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+    const { name, value } = e.currentTarget;
+    setFormState(prev => ({ ...prev, [name]: value }));
+  }
 
-    if (!formState.companyName || !formState.companySlug) {
-      setFormError("Company name and tenant slug are required.");
-      return;
-    }
-
-    const missingFields: string[] = [];
-    if (!formState.region) missingFields.push("region");
-    if (!formState.industry) missingFields.push("industry");
-    if (!formState.adminName) missingFields.push("admin name");
-    if (!formState.adminEmail) missingFields.push("admin email");
-    if (!formState.adminPassword) missingFields.push("admin password");
-
-    if (missingFields.length > 0) {
-      const lastField = missingFields.pop();
-      const fieldList = missingFields.length ? `${missingFields.join(", ")} and ${lastField}` : lastField;
-      setFormError(`Please provide ${fieldList}.`);
-      return;
-    }
-
+  async function handleSubmitTenant(e: FormEvent) {
+    e.preventDefault();
+    setFormError(null);
     setIsSubmitting(true);
 
     try {
@@ -221,8 +180,7 @@ export default function SuperadminPage() {
         throw new Error(data?.error ?? "Unable to create tenant");
       }
 
-      const createdTenant: TenantSummary = { ...data.tenantSummary, persisted: true };
-      setTenants((prev) => [createdTenant, ...prev.filter((tenant) => tenant.slug !== createdTenant.slug)]);
+      setTenants(prev => [data.tenantSummary, ...prev.filter(t => t.slug !== data.tenantSummary.slug)]);
       setFormState(INITIAL_TENANT_FORM);
       setShowTenantModal(false);
       setFormSuccess(`Tenant ${data.tenantSummary.name} created successfully.`);
@@ -234,421 +192,427 @@ export default function SuperadminPage() {
     }
   }
 
+  const getStatusColor = (status: string) => {
+    switch(status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'trial': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getHealthIcon = (health: string) => {
+    switch(health) {
+      case 'healthy': return <Check className="w-5 h-5 text-green-600" />;
+      case 'warning': return <AlertCircle className="w-5 h-5 text-yellow-600" />;
+      case 'critical': return <AlertCircle className="w-5 h-5 text-red-600" />;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#04050f] text-white">
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-x-0 top-0 h-80 bg-gradient-to-b from-[#1ff0d8]/20 via-transparent to-transparent" />
-        <div className="absolute right-[-10%] top-1/2 h-72 w-72 -translate-y-1/2 rounded-full blur-[180px]" style={{ background: "rgba(127, 91, 255, 0.35)" }} />
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <h1 className="text-3xl font-bold text-gray-900">Platform Dashboard</h1>
+          <p className="mt-2 text-gray-600">Monitor and manage all Syspro tenants</p>
+        </div>
       </div>
 
-      <main className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12 lg:px-10">
-        <header className="rounded-[40px] border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-4">
-              <Tag tone="indigo">Superadmin Command</Tag>
-              <h1 className="text-4xl font-semibold tracking-tight">Produce tenants. Orchestrate the mesh.</h1>
-              <p className="max-w-2xl text-sm text-white/70 lg:text-base">
-                Manage every tenant environment, provision copilots, and notarize policy updates. This dashboard mirrors what our AI control plane enforces in production.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Panel className="space-y-1" variant="frost">
-                <p className="text-xs uppercase tracking-[0.35em] text-white/50">Active tenants</p>
-                <p className="text-3xl font-semibold">37</p>
-                <p className="text-xs text-emerald-300">+4 in last 30 days</p>
-              </Panel>
-              <Panel className="space-y-1" variant="frost">
-                <p className="text-xs uppercase tracking-[0.35em] text-white/50">Copilot skills</p>
-                <p className="text-3xl font-semibold">82</p>
-                <p className="text-xs text-white/60">12 awaiting approval</p>
-              </Panel>
-            </div>
-          </div>
-        </header>
-
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {formSuccess && (
-          <div className="rounded-3xl border border-emerald-300/30 bg-emerald-300/10 px-6 py-4 text-sm text-emerald-200">
+          <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
             {formSuccess}
           </div>
         )}
-        {actionError && (
-          <div className="rounded-3xl border border-rose-300/30 bg-rose-300/10 px-6 py-3 text-sm text-rose-200">
-            {actionError}
-          </div>
-        )}
 
-        <section className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-          <Panel variant="glass" className="space-y-6">
-            <SectionHeading eyebrow="Tenant creation" title="Mint a new tenant" description="Spin infra, seed datasets, and assign copilots" />
-            <p className="text-sm text-white/70">
-              Draft a multi-tenant blueprint, load compliance templates, then hand the admin keys to the customer champion. We notarize every provisioning step.
-            </p>
-            <div className="grid gap-4 text-sm text-white/70 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-xs uppercase tracking-[0.35em] text-white/40">Blueprint runtime</p>
-                <p className="mt-2 text-2xl font-semibold text-white">~4 min</p>
-                <p className="text-xs text-white/50">Includes ledger sync + copilot seeding</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-xs uppercase tracking-[0.35em] text-white/40">Latest tenants</p>
-                <p className="mt-2 text-2xl font-semibold text-white">Tembea • NovaFoods</p>
-                <p className="text-xs text-white/50">Next up · Skyline Energy</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-3 text-xs text-white/60">
-              <span className="rounded-full border border-white/15 px-4 py-1.5">ISO playbook attached</span>
-              <span className="rounded-full border border-white/15 px-4 py-1.5">KYC warm start</span>
-              <span className="rounded-full border border-white/15 px-4 py-1.5">Copilot catalog synced</span>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <button type="button" className="flex items-center justify-center gap-2 rounded-2xl border border-white/20 px-4 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white/70 hover:text-white">
-                <CircleDashed className="h-4 w-4" />
-                Draft deck
-              </button>
-              <button
-                type="button"
-                onClick={handleOpenTenantModal}
-                className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#05060a] sm:w-auto"
-              >
-                <PlusCircle className="h-4 w-4" />
-                Create tenant
-              </button>
-            </div>
-            <p className="text-xs text-white/60">Provisioning tasks auto-sync to the backlog once you publish.</p>
-          </Panel>
-
-          <Panel className="space-y-6" variant="glass">
-            <div className="flex items-center justify-between">
-              <SectionHeading eyebrow="Tenant ledger" title="Live tenants" description="Every action mirrored to compliance twin" />
-              <button className="inline-flex items-center gap-2 text-xs font-semibold text-white/70 hover:text-white">
-                Export CSV
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="divide-y divide-white/10 rounded-3xl border border-white/10">
-              <div className="grid grid-cols-6 gap-4 px-6 py-3 text-xs uppercase tracking-[0.35em] text-white/40">
-                <span>Name</span>
-                <span>Region</span>
-                <span>Status</span>
-                <span>Ledger delta</span>
-                <span>Seats</span>
-                <span className="text-right">Actions</span>
-              </div>
-              {tenants.map((tenant) => (
-                <div key={tenant.slug} className="grid grid-cols-6 gap-4 px-6 py-4 text-sm">
-                  <span className="font-semibold">{tenant.name}</span>
-                  <span className="text-white/70">{tenant.region}</span>
-                  <span className={`text-sm ${tenant.status === "Live" ? "text-emerald-300" : tenant.status === "Suspended" ? "text-rose-300" : "text-amber-300"}`}>
-                    {tenant.status}
-                  </span>
-                  <span className="text-white/80">{tenant.ledger}</span>
-                  <span className="text-white/60">{tenant.seats}</span>
-                  <div className="flex flex-wrap justify-end gap-2 text-xs">
-                    {(() => {
-                      const isLive = tenant.status === "Live";
-                      const toggleAction: "suspend" | "activate" = isLive ? "suspend" : "activate";
-                      return (
-                        <button
-                          type="button"
-                          disabled={actionLoading === `${tenant.slug}:${toggleAction}`}
-                          onClick={() => handleTenantAction(tenant, toggleAction)}
-                          className="rounded-full border border-white/20 px-3 py-1 text-white/70 hover:text-white disabled:opacity-60"
-                        >
-                          {isLive ? "Suspend" : "Activate"}
-                        </button>
-                      );
-                    })()}
-                    <button
-                      type="button"
-                      disabled={actionLoading === `${tenant.slug}:delete`}
-                      onClick={() => handleTenantAction(tenant, "delete")}
-                      className="rounded-full border border-rose-400/40 px-3 py-1 text-rose-200 hover:text-rose-100 disabled:opacity-60"
-                    >
-                      Delete
-                    </button>
-                  </div>
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600">Total Tenants</p>
+                <div className="mt-3">
+                  <p className="text-3xl font-bold text-gray-900">{MOCK_METRICS.totalTenants}</p>
+                  <p className="mt-2 text-sm text-gray-500">{MOCK_METRICS.tenantChange}</p>
                 </div>
-              ))}
+              </div>
+              <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                <Users className="w-6 h-6" />
+              </div>
             </div>
-          </Panel>
-        </section>
+          </div>
 
-        <section className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
-          <Panel variant="card" className="space-y-6">
-            <SectionHeading eyebrow="Compliance" title="Policy pulses" description="All superadmin moves notarized" />
-            <div className="space-y-4 text-sm text-white/80">
-              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/40 p-4">
-                <CheckCircle2 className="h-5 w-5 text-emerald-300" />
-                <p>Ledger parity checks green across all live tenants.</p>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
+                <div className="mt-3">
+                  <p className="text-3xl font-bold text-gray-900">{MOCK_METRICS.monthlyRevenue}</p>
+                  <p className="mt-2 text-sm text-green-600">{MOCK_METRICS.revenueChange}</p>
+                </div>
               </div>
-              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/40 p-4">
-                <CircleDashed className="h-5 w-5 text-amber-300" />
-                <p>3 policy playbooks awaiting human review before copilot rollout.</p>
-              </div>
-              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/40 p-4">
-                <CircleDashed className="h-5 w-5 text-sky-300" />
-                <p>KYC refresh cycle begins Feb 1 — schedule tenant attestations.</p>
+              <div className="p-3 rounded-lg bg-gradient-to-br from-green-500 to-green-600 text-white">
+                <DollarSign className="w-6 h-6" />
               </div>
             </div>
-          </Panel>
+          </div>
 
-          <Panel variant="card" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <SectionHeading eyebrow="Worklist" title="Provisioning backlog" description="Synced with ops war-room" />
-              <button className="text-xs uppercase tracking-[0.35em] text-white/60">View all</button>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600">Total Users</p>
+                <div className="mt-3">
+                  <p className="text-3xl font-bold text-gray-900">{MOCK_METRICS.totalUsers}</p>
+                  <p className="mt-2 text-sm text-gray-500">{MOCK_METRICS.userChange}</p>
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+                <Users className="w-6 h-6" />
+              </div>
             </div>
-            <div className="flex items-center justify-center h-40 rounded-2xl border border-white/10 bg-black/30">
-              <p className="text-white/50">No provisioning items</p>
-            </div>
-          </Panel>
-        </section>
+          </div>
 
-        <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <Panel variant="glass" className="space-y-6">
-            <SectionHeading eyebrow="Licensing" title="Recommended commercial model" description="Blend governance fees with usage-based expansion" />
-            <div className="grid gap-4 text-sm text-white/80 lg:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-xs uppercase tracking-[0.35em] text-white/50">Platform retainer</p>
-                <p className="mt-2 text-2xl font-semibold text-white">$12k / tenant / mo</p>
-                <p className="text-xs text-white/60">Covers multi-tenant hosting, policy layer, and support SLAs.</p>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600">Active Trials</p>
+                <div className="mt-3">
+                  <p className="text-3xl font-bold text-gray-900">{MOCK_METRICS.activeTrials}</p>
+                  <p className="mt-2 text-sm text-gray-500">{MOCK_METRICS.trialChange}</p>
+                </div>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-xs uppercase tracking-[0.35em] text-white/50">Seat bundles</p>
-                <p className="mt-2 text-2xl font-semibold text-white">$120 / persona</p>
-                <p className="text-xs text-white/60">Planner, supplier, finance, treasury seats pooled & auto true-up.</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-xs uppercase tracking-[0.35em] text-white/50">Data-plane add-ons</p>
-                <p className="mt-2 text-2xl font-semibold text-white">$0.45 / tx</p>
-                <p className="text-xs text-white/60">Sovereign storage, ESG copilots, and supplier mesh usage.</p>
+              <div className="p-3 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+                <Zap className="w-6 h-6" />
               </div>
             </div>
-            <p className="text-sm text-white/70">
-              Tenants commit to an annual platform retainer, then flex seats by persona tier. Data-plane add-ons meter heavy workloads (ledger sync, AI copilots, supplier mesh calls) so operations teams can forecast spend per business unit.
-            </p>
-            <div className="space-y-3 text-sm text-white/70">
-              <div className="flex items-center gap-3">
-                <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-xs uppercase tracking-[0.3em] text-emerald-200">Why</span>
-                <p>Aligns with multi-tenant ERP economics: predictable governance fee + transparent growth lever for adoption.</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="rounded-full border border-sky-300/30 bg-sky-300/10 px-3 py-1 text-xs uppercase tracking-[0.3em] text-sky-200">Next</span>
-                <p>Expose sliders in this console so superadmins can model invoices, then sync outputs to billing + CRM.</p>
+          </div>
+        </div>
+
+        {/* Health Status Row */}
+        <div className="grid grid-cols-3 gap-6 mb-8">
+          {HEALTH_STATUS.map((status) => (
+            <div key={status.label} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">{status.label}</p>
+                  <p className="mt-2 text-2xl font-bold text-gray-900">{status.value}</p>
+                  <p className="text-xs text-gray-500 mt-1">No issues detected</p>
+                </div>
+                <div className={`w-12 h-12 rounded-lg ${status.color} opacity-20`} />
               </div>
             </div>
-          </Panel>
-          <Panel variant="card" className="space-y-4">
-            <SectionHeading eyebrow="Packaging" title="Bundle recommendations" description="Mix personas + copilots for each industry" />
-            <ul className="space-y-3 text-sm text-white/75">
-              <li className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-white font-semibold">Industrial Core</p>
-                <p className="text-xs text-white/60">Planner + Supplier copilots · 200 seats · ESG add-on for regulators.</p>
-              </li>
-              <li className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-white font-semibold">Finance Command</p>
-                <p className="text-xs text-white/60">Treasury + ledger copilots · 80 seats · Data-plane priority channel.</p>
-              </li>
-              <li className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                <p className="text-white font-semibold">Supplier Mesh Pro</p>
-                <p className="text-xs text-white/60">Shared supplier workspace · pay-per-transaction mesh calls.</p>
-              </li>
-            </ul>
-            <p className="text-xs text-white/60">Document these bundles in RevOps to auto-generate licensing schedules during tenant onboarding.</p>
-          </Panel>
-        </section>
+          ))}
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Revenue Growth</h3>
+            <div className="space-y-4">
+              {['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'].map((month, idx) => {
+                const heights = [40, 50, 58, 65, 72, 78, 82];
+                return (
+                  <div key={month} className="flex items-end gap-2">
+                    <span className="w-10 text-xs font-medium text-gray-600">{month}</span>
+                    <div className="flex-1 bg-gradient-to-r from-blue-400 to-blue-600 rounded" style={{height: `${heights[idx]}%`, minHeight: '24px'}}></div>
+                    <span className="text-xs text-gray-600">$50K+</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Tenant Growth</h3>
+            <div className="space-y-4">
+              {['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'].map((month, idx) => {
+                const heights = [6, 7, 8, 9, 10, 11, 12];
+                return (
+                  <div key={month} className="flex items-end gap-2">
+                    <span className="w-10 text-xs font-medium text-gray-600">{month}</span>
+                    <div className="flex-1 bg-gradient-to-r from-purple-400 to-purple-600 rounded" style={{height: `${heights[idx] * 10}%`, minHeight: '28px'}}></div>
+                    <span className="text-xs text-gray-600">{heights[idx]}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Tenant Management */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          {/* Header */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Tenant Management</h2>
+                <p className="text-sm text-gray-600 mt-1">Manage all tenant accounts and subscriptions</p>
+              </div>
+              <button
+                onClick={handleOpenTenantModal}
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+              >
+                <PlusCircle className="w-4 h-4" />
+                Add Tenant
+              </button>
+            </div>
+
+            {/* Search and Filters */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by company name or email..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="trial">Trial</option>
+              </select>
+              <select
+                value={planFilter}
+                onChange={(e) => setPlanFilter(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              >
+                <option value="all">All Plans</option>
+                <option value="starter">Starter</option>
+                <option value="professional">Professional</option>
+                <option value="enterprise">Enterprise</option>
+              </select>
+              <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <Download className="w-4 h-4" />
+                Export
+              </button>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tenant</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Plan</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Users</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Health</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTenants.map((tenant, idx) => (
+                  <tr key={tenant.slug} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                    <td className="px-6 py-4">
+                      <div>
+                        <p className="font-medium text-gray-900">{tenant.name}</p>
+                        <p className="text-sm text-gray-600">{tenant.email || `admin@${tenant.slug}.com`}</p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(tenant.status)}`}>
+                        {tenant.status.charAt(0).toUpperCase() + tenant.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-medium text-gray-900 capitalize">{tenant.plan}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm font-medium text-gray-900">{tenant.seats} seats</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        {getHealthIcon(tenant.health!)}
+                        <span className="text-sm capitalize text-gray-700">{tenant.health}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex gap-2">
+                        <button className="p-2 hover:bg-gray-200 rounded transition-colors" title="View">
+                          <Eye className="w-4 h-4 text-gray-600" />
+                        </button>
+                        <button className="p-2 hover:bg-gray-200 rounded transition-colors" title="Edit">
+                          <Edit className="w-4 h-4 text-gray-600" />
+                        </button>
+                        <button className="p-2 hover:bg-gray-200 rounded transition-colors" title="Delete">
+                          <Trash2 className="w-4 h-4 text-red-600" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <p className="text-sm text-gray-600">Showing {filteredTenants.length} of {enrichedTenants.length} tenants</p>
+          </div>
+        </div>
       </main>
 
+      {/* Add Tenant Modal */}
       {showTenantModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#01020a]/80 px-4 py-8 backdrop-blur-md">
-          <div className="relative w-full max-w-4xl rounded-[32px] border border-white/10 bg-[#04050f] p-6 shadow-2xl sm:p-8">
-            <button
-              type="button"
-              onClick={handleCloseTenantModal}
-              className="absolute right-4 top-4 rounded-full border border-white/20 p-2 text-white/70 hover:text-white sm:right-6 sm:top-6"
-              aria-label="Close modal"
-            >
-              <X className="h-4 w-4" />
-            </button>
-            <div className="flex flex-col gap-3 pr-6">
-              <Tag tone="teal">Create tenant</Tag>
-              <h2 className="text-3xl font-semibold">Onboard a new company</h2>
-              <p className="text-sm text-white/70">Collect core company details and designate the founding admin. We’ll provision infra + credentials in one pass.</p>
-              {formError && <p className="rounded-2xl border border-rose-300/40 bg-rose-300/10 px-4 py-2 text-sm text-rose-200">{formError}</p>}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-96 overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Add New Tenant</h2>
+              <button onClick={handleCloseTenantModal} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <form onSubmit={handleTenantSubmit} className="mt-8 grid max-h-[70vh] gap-8 overflow-y-auto pr-4 lg:grid-cols-2">
-              <div className="space-y-5">
-                <SectionHeading eyebrow="Company" title="Tenant blueprint" description="Name, sector, and routing metadata" />
-                <div className="space-y-4 text-sm">
-                  <div>
-                    <label htmlFor="companyName" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                      Company name
-                    </label>
-                    <input
-                      id="companyName"
-                      name="companyName"
-                      value={formState.companyName}
-                      onChange={handleFieldChange}
-                      placeholder="Aurora Plastics"
-                      className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="companySlug" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                      Tenant slug
-                    </label>
-                    <input
-                      id="companySlug"
-                      name="companySlug"
-                      value={formState.companySlug}
-                      onChange={handleFieldChange}
-                      placeholder="aurora-plastics"
-                      className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
-                    />
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label htmlFor="region" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                        Region
-                      </label>
-                      <select
-                        id="region"
-                        name="region"
-                        value={formState.region}
-                        onChange={handleFieldChange}
-                        className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white focus:border-white/40 focus:outline-none"
-                      >
-                        <option value="">Select region</option>
-                        {REGION_OPTIONS.map((region) => (
-                          <option key={region} value={region}>
-                            {region}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label htmlFor="industry" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                        Industry
-                      </label>
-                      <input
-                        id="industry"
-                        name="industry"
-                        value={formState.industry}
-                        onChange={handleFieldChange}
-                        placeholder="Advanced manufacturing"
-                        className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label htmlFor="seats" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                      Approx. seats
-                    </label>
-                    <input
-                      id="seats"
-                      name="seats"
-                      value={formState.seats}
-                      onChange={handleFieldChange}
-                      placeholder="> 250 employees"
-                      className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
-                    />
-                  </div>
+
+            {formError && (
+              <div className="mx-6 mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                {formError}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmitTenant} className="p-6 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Company Name *</label>
+                  <input
+                    type="text"
+                    name="companyName"
+                    value={formState.companyName}
+                    onChange={handleFieldChange}
+                    placeholder="Acme Corp"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Slug *</label>
+                  <input
+                    type="text"
+                    name="companySlug"
+                    value={formState.companySlug}
+                    onChange={handleFieldChange}
+                    placeholder="acme-corp"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    required
+                  />
                 </div>
               </div>
-              <div className="space-y-5">
-                <SectionHeading eyebrow="Admin" title="Founding admin" description="Primary contact credentials" />
-                <div className="space-y-4 text-sm">
-                  <div>
-                    <label htmlFor="adminName" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                      Admin name
-                    </label>
-                    <input
-                      id="adminName"
-                      name="adminName"
-                      value={formState.adminName}
-                      onChange={handleFieldChange}
-                      placeholder="Adaora Umeh"
-                      className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="adminEmail" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                      Admin email
-                    </label>
-                    <input
-                      id="adminEmail"
-                      name="adminEmail"
-                      type="email"
-                      value={formState.adminEmail}
-                      onChange={handleFieldChange}
-                      placeholder="admin@aurora.com"
-                      className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
-                    />
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label htmlFor="adminPassword" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                        Password
-                      </label>
-                      <input
-                        id="adminPassword"
-                        name="adminPassword"
-                        type="password"
-                        value={formState.adminPassword}
-                        onChange={handleFieldChange}
-                        placeholder="••••••••"
-                        className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="confirmPassword" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                        Confirm
-                      </label>
-                      <input
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        type="password"
-                        value={formState.confirmPassword}
-                        onChange={handleFieldChange}
-                        placeholder="••••••••"
-                        className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label htmlFor="adminNotes" className="text-xs uppercase tracking-[0.35em] text-white/50">
-                      Notes for ops (optional)
-                    </label>
-                    <textarea
-                      id="adminNotes"
-                      name="adminNotes"
-                      rows={3}
-                      value={formState.adminNotes}
-                      onChange={handleFieldChange}
-                      placeholder="Kickoff call scheduled, requires ESG copilot."
-                      className="mt-2 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="lg:col-span-2 flex flex-wrap items-center justify-between gap-4 text-sm">
-                <p className="text-white/60">We hash admin credentials, ship the invite email, and mirror the blueprint to the provisioning backlog.</p>
-                <div className="flex flex-wrap gap-3">
-                  <button type="button" onClick={handleCloseTenantModal} className="rounded-2xl border border-white/20 px-5 py-3 text-white/70 hover:text-white">
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="group inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 font-semibold text-[#05060a] disabled:cursor-not-allowed disabled:opacity-70"
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Region *</label>
+                  <select
+                    name="region"
+                    value={formState.region}
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    required
                   >
-                    {isSubmitting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    )}
-                    {isSubmitting ? 'Creating…' : 'Deploy tenant'}
-                  </button>
+                    <option value="">Select region</option>
+                    {REGION_OPTIONS.map(r => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Industry</label>
+                  <input
+                    type="text"
+                    name="industry"
+                    value={formState.industry}
+                    onChange={handleFieldChange}
+                    placeholder="Manufacturing"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Admin Name *</label>
+                  <input
+                    type="text"
+                    name="adminName"
+                    value={formState.adminName}
+                    onChange={handleFieldChange}
+                    placeholder="John Doe"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Admin Email *</label>
+                  <input
+                    type="email"
+                    name="adminEmail"
+                    value={formState.adminEmail}
+                    onChange={handleFieldChange}
+                    placeholder="john@acme.com"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                  <input
+                    type="password"
+                    name="adminPassword"
+                    value={formState.adminPassword}
+                    onChange={handleFieldChange}
+                    placeholder="••••••••"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password *</label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={formState.confirmPassword}
+                    onChange={handleFieldChange}
+                    placeholder="••••••••"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleCloseTenantModal}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRight className="w-4 h-4" />
+                      Deploy Tenant
+                    </>
+                  )}
+                </button>
               </div>
             </form>
           </div>
