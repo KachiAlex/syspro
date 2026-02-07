@@ -11,6 +11,7 @@ import {
   ShoppingCart,
   Shield,
 } from 'lucide-react';
+import { ImageWithFallback } from '@/components/ImageWithFallback';
 
 // Header Component
 function Header() {
@@ -130,12 +131,12 @@ function Hero() {
 
           {/* Right Image */}
           <div className="relative">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-blue-100 to-blue-50 p-8 h-80 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-6xl mb-4">📊</div>
-                <p className="text-gray-700 font-semibold">Dashboard Preview</p>
-                <p className="text-sm text-gray-600 mt-2">Real-time analytics and insights</p>
-              </div>
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+              <ImageWithFallback 
+                src="https://images.unsplash.com/photo-1608222351212-18fe0ec7b13b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMGFuYWx5dGljcyUyMGRhc2hib2FyZHxlbnwxfHx8fDE3NzAzNTg4ODV8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+                alt="Syspro Dashboard" 
+                className="w-full h-auto"
+              />
             </div>
             {/* Floating Card */}
             <div className="absolute -bottom-6 -left-6 bg-white rounded-lg shadow-xl p-4 max-w-xs hidden lg:block">
@@ -290,12 +291,12 @@ function Benefits() {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Image */}
           <div className="order-2 lg:order-1">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-blue-100 to-blue-50 p-8 h-80 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-6xl mb-4">👥</div>
-                <p className="text-gray-700 font-semibold">Team Collaboration</p>
-                <p className="text-sm text-gray-600 mt-2">Work together seamlessly</p>
-              </div>
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+              <ImageWithFallback 
+                src="https://images.unsplash.com/photo-1590650589327-3f67c43ad8a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMHRlYW0lMjBvZmZpY2UlMjBjb2xsYWJvcmF0aW9ufGVufDF8fHx8MTc3MDQ2Mzg0M3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+                alt="Team collaboration" 
+                className="w-full h-auto"
+              />
             </div>
           </div>
 
@@ -449,12 +450,12 @@ function CTA() {
 
           {/* Right Image */}
           <div className="hidden lg:block">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-blue-100 to-blue-50 p-8 h-80 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-6xl mb-4">🤝</div>
-                <p className="text-gray-700 font-semibold">Business Meeting</p>
-                <p className="text-sm text-gray-600 mt-2">Professional collaboration</p>
-              </div>
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+              <ImageWithFallback 
+                src="https://images.unsplash.com/photo-1642522029691-029b5a432954?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBjb3Jwb3JhdGUlMjBtZWV0aW5nfGVufDF8fHx8MTc3MDQ2Mzg0NHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+                alt="Business meeting" 
+                className="w-full h-auto"
+              />
             </div>
           </div>
         </div>
