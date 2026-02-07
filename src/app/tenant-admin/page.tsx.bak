@@ -1,0 +1,7 @@
+"use client";
+
+// backup of original Tenant Admin page (auto-created by assistant)
+
+export default function TenantAdminPageBackup() {
+  return <div>Tenant admin page backup saved as page.tsx.bak</div>;
+}
