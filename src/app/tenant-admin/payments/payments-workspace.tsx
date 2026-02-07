@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
+import { FormAlert } from "@/components/form";
 
 interface VendorPayment {
   id: string;
@@ -21,9 +22,32 @@ interface VendorPayment {
   }>;
 }
 
+const STATUS_COLORS: Record<string, string> = {
+  draft: "bg-slate-100 text-slate-900",
+  posted: "bg-blue-100 text-blue-900",
+  reconciled: "bg-green-100 text-green-900",
+  cancelled: "bg-rose-100 text-rose-900"
+};
+
+const STATUS_ICONS: Record<string, string> = {
+  draft: "📝",
+  posted: "✓",
+  reconciled: "✓✓",
+  cancelled: "✕"
+};
+
+const METHOD_LABELS: Record<string, string> = {
+  bank_transfer: "Bank Transfer",
+  cash: "Cash",
+  corporate_card: "Corporate Card",
+  other: "Other"
+};
+
 export default function VendorPaymentsWorkspace() {
   const [payments, setPayments] = useState<VendorPayment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filters, setFilters] = useState({
     status: "",
@@ -36,6 +60,8 @@ export default function VendorPaymentsWorkspace() {
   }, [filters]);
 
   const loadPayments = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({
         tenantSlug: "demo-tenant", // TODO: Get from context
@@ -47,56 +73,65 @@ export default function VendorPaymentsWorkspace() {
       const response = await fetch(`/api/finance/vendor-payments?${params}`);
       const data = await response.json();
       setPayments(data.payments || []);
-    } catch (error) {
-      console.error("Failed to load payments:", error);
+    } catch (err) {
+      console.error("Failed to load payments:", err);
+      setError("Failed to load payments");
     } finally {
       setLoading(false);
     }
   };
 
   const getStatusColor = (status: string) => {
-    const colors = {
-      draft: "bg-gray-100 text-gray-800",
-      posted: "bg-blue-100 text-blue-800",
-      reconciled: "bg-green-100 text-green-800",
-      cancelled: "bg-red-100 text-red-800"
-    };
-    return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800";
+    return STATUS_COLORS[status] || STATUS_COLORS.draft;
+  };
+
+  const getStatusIcon = (status: string) => {
+    return STATUS_ICONS[status] || "•";
   };
 
   const getMethodLabel = (method: string) => {
-    const labels = {
-      bank_transfer: "Bank Transfer",
-      cash: "Cash",
-      corporate_card: "Corporate Card",
-      other: "Other"
-    };
-    return labels[method as keyof typeof labels] || method;
+    return METHOD_LABELS[method] || method;
   };
 
   if (loading) {
-    return <div className="p-6">Loading vendor payments...</div>;
+    return (
+      <div className="p-6">
+        <div className="rounded-lg bg-slate-50 p-8 text-center">
+          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900"></div>
+          <p className="mt-3 text-slate-600">Loading payments…</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Vendor Payments</h1>
+    <div className="space-y-6 p-6">
+      {error && <FormAlert type="error" title="Error" message={error} onClose={() => setError(null)} />}
+      {success && <FormAlert type="success" message={success} onClose={() => setSuccess(null)} />}
+
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Financial Management</p>
+          <h1 className="text-2xl font-semibold text-slate-900">Vendor Payments</h1>
+          <p className="mt-1 text-sm text-slate-600">Track and manage all vendor payments and reconciliations</p>
+        </div>
         <button 
           onClick={() => setShowCreateModal(true)}
-          className="btn btn-primary"
+          className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
-          New Payment
+          + New Payment
         </button>
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-4 gap-4">
+      <div className="rounded-2xl border border-slate-100 bg-white p-6">
+        <p className="mb-4 text-sm font-semibold text-slate-900">Filters</p>
+        <div className="grid grid-cols-3 gap-4">
           <select
             value={filters.status}
             onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-            className="form-select"
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
           >
             <option value="">All Status</option>
             <option value="draft">Draft</option>
@@ -108,7 +143,7 @@ export default function VendorPaymentsWorkspace() {
           <select
             value={filters.method}
             onChange={(e) => setFilters({ ...filters, method: e.target.value })}
-            className="form-select"
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
           >
             <option value="">All Methods</option>
             <option value="bank_transfer">Bank Transfer</option>
@@ -119,90 +154,77 @@ export default function VendorPaymentsWorkspace() {
           
           <input
             type="text"
-            placeholder="Vendor ID"
+            placeholder="Search vendor…"
             value={filters.vendorId}
             onChange={(e) => setFilters({ ...filters, vendorId: e.target.value })}
-            className="form-input"
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
           />
         </div>
       </div>
 
-      {/* Payments Table */}
-      <div className="bg-white rounded-lg shadow">
+      {/* Payments List */}
+      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="w-full">
+            <thead className="border-b border-slate-100 bg-slate-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Payment Number
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Vendor
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Method
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Payment Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Applied
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Unapplied
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Payment</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Method</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Amount</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Applied</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Unapplied</th>
+                <th className="px-6 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {payments.map((payment) => (
-                <tr key={payment.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {payment.paymentNumber}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {payment.vendorId}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {getMethodLabel(payment.method)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {format(new Date(payment.paymentDate), "MMM dd, yyyy")}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {payment.currency} {payment.amount.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {payment.currency} {payment.appliedAmount.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {payment.currency} {payment.unappliedAmount.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(payment.status)}`}>
-                      {payment.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <button className="text-indigo-600 hover:text-indigo-900 mr-3">
-                      View
-                    </button>
-                    {payment.unappliedAmount > 0 && payment.status !== "cancelled" && (
-                      <button className="text-green-600 hover:text-green-900">
-                        Apply
-                      </button>
-                    )}
+            <tbody className="divide-y divide-slate-100">
+              {payments.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-6 py-12 text-center">
+                    <div className="rounded-lg bg-blue-50 p-4 text-sm">
+                      <p className="font-medium text-blue-900">No payments yet</p>
+                      <p className="mt-1 text-blue-700">Create your first payment to get started</p>
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                payments.map((payment) => (
+                  <tr key={payment.id} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 text-sm font-semibold text-slate-900">
+                      {payment.paymentNumber}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">
+                      {getMethodLabel(payment.method)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">
+                      {format(new Date(payment.paymentDate), "MMM dd, yyyy")}
+                    </td>
+                    <td className="px-6 py-4 text-right text-sm font-medium text-slate-900">
+                      {payment.currency} {payment.amount.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 text-right text-sm text-slate-600">
+                      {payment.currency} {payment.appliedAmount.toLocaleString()}
+                    </td>
+                    <td className={`px-6 py-4 text-right text-sm font-medium ${payment.unappliedAmount > 0 ? "text-amber-600" : "text-slate-600"}`}>
+                      {payment.currency} {payment.unappliedAmount.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(payment.status)}`}>
+                        {getStatusIcon(payment.status)} {payment.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right text-sm">
+                      <div className="flex justify-end gap-2">
+                        <button className="text-blue-600 hover:text-blue-900">View</button>
+                        {payment.unappliedAmount > 0 && payment.status !== "cancelled" && (
+                          <button className="text-green-600 hover:text-green-900">Apply</button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -214,7 +236,12 @@ export default function VendorPaymentsWorkspace() {
           onClose={() => setShowCreateModal(false)}
           onSuccess={() => {
             setShowCreateModal(false);
+            setSuccess("Payment created successfully");
+            setTimeout(() => setSuccess(null), 3000);
             loadPayments();
+          }}
+          onError={(err) => {
+            setError(err);
           }}
         />
       )}
@@ -225,9 +252,10 @@ export default function VendorPaymentsWorkspace() {
 interface CreatePaymentModalProps {
   onClose: () => void;
   onSuccess: () => void;
+  onError: (error: string) => void;
 }
 
-function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalProps) {
+function CreatePaymentModal({ onClose, onSuccess, onError }: CreatePaymentModalProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     vendorId: "",
@@ -239,6 +267,12 @@ function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.vendorId.trim() || !formData.amount) {
+      onError("Vendor ID and amount are required");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -259,24 +293,24 @@ function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalProps) {
         onSuccess();
       } else {
         const error = await response.json();
-        alert(`Payment creation failed: ${error.error}`);
+        onError(error.error || "Payment creation failed");
       }
     } catch (error) {
       console.error("Payment creation error:", error);
-      alert("Payment creation failed");
+      onError(error instanceof Error ? error.message : "Payment creation failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h3 className="text-lg font-semibold mb-4">Create Vendor Payment</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-lg">
+        <h3 className="mb-4 text-lg font-semibold text-slate-900">Create Vendor Payment</h3>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-2 block text-sm font-medium text-slate-900">
               Vendor ID
             </label>
             <input
@@ -284,18 +318,19 @@ function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalProps) {
               required
               value={formData.vendorId}
               onChange={(e) => setFormData({ ...formData, vendorId: e.target.value })}
-              className="form-input w-full"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              placeholder="Enter vendor ID"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-2 block text-sm font-medium text-slate-900">
               Payment Method
             </label>
             <select
               value={formData.method}
               onChange={(e) => setFormData({ ...formData, method: e.target.value as any })}
-              className="form-select w-full"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
             >
               <option value="bank_transfer">Bank Transfer</option>
               <option value="cash">Cash</option>
@@ -305,7 +340,7 @@ function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-2 block text-sm font-medium text-slate-900">
               Amount
             </label>
             <input
@@ -314,12 +349,13 @@ function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalProps) {
               required
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              className="form-input w-full"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              placeholder="0.00"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-2 block text-sm font-medium text-slate-900">
               Payment Date
             </label>
             <input
@@ -327,22 +363,22 @@ function CreatePaymentModal({ onClose, onSuccess }: CreatePaymentModalProps) {
               required
               value={formData.paymentDate}
               onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
-              className="form-input w-full"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
             />
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
+          <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="btn btn-outline"
+              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="btn btn-primary"
+              className="rounded-full bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
               disabled={loading}
             >
               {loading ? "Creating..." : "Create Payment"}

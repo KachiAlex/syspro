@@ -98,6 +98,8 @@ import {
 import Link from "next/link";
 import { Component, Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, ComponentType, FormEvent } from "react";
+import { FormAlert } from "@/components/form";
+import { usePermissions } from "@/lib/use-permissions";
 import OrgStructureManager from "@/app/tenant-admin/sections/org-structure";
 import RoleBuilder from "@/app/tenant-admin/sections/role-builder";
 import ApprovalDesigner from "@/app/tenant-admin/sections/approval-designer";
@@ -108,6 +110,7 @@ import StaffReports from "@/components/staff-reports";
 import { listExpenses, createExpense, approveExpense, deleteExpense } from "@/lib/api/expenses";
 import AccessControlPanel from "@/app/tenant-admin/sections/access-control";
 import AdminControlCenter from "@/app/tenant-admin/sections/admin-control-center";
+import AdminRestrictions from "@/app/tenant-admin/sections/admin-restrictions";
 import LifecycleWorkflows from "@/app/tenant-admin/sections/workflows";
 import ModuleRegistry from "@/app/tenant-admin/sections/module-registry";
 import BillingSection from "@/app/tenant-admin/sections/billing";
@@ -2093,6 +2096,10 @@ export default function TenantAdminPage() {
   const [selectedRegion, setSelectedRegion] = useState("Global HQ");
   const [selectedTimeframe, setSelectedTimeframe] = useState(TIMEFRAME_OPTIONS[1]);
   const [tenantSlug, setTenantSlug] = useState<string | null>(null);
+
+  // Role-based access control
+  const { permissions, loading: permissionsLoading, canRead, canWrite, canAdmin } = usePermissions(tenantSlug);
+
   const [loadingTenant, setLoadingTenant] = useState(false);
   const [tenantError, setTenantError] = useState<string | null>(null);
   const [crmSnapshot, setCrmSnapshot] = useState<CrmSnapshot>(CRM_BASELINE_SNAPSHOT);
@@ -2175,6 +2182,10 @@ export default function TenantAdminPage() {
   const [contactsLoading, setContactsLoading] = useState(false);
   const [contactsError, setContactsError] = useState<string | null>(null);
 
+  // Main page error/success state
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [pageSuccess, setPageSuccess] = useState<string | null>(null);
+
   // Finance quick actions state
   const [showLogInvoiceModal, setShowLogInvoiceModal] = useState(false);
   const [showSchedulePaymentModal, setShowSchedulePaymentModal] = useState(false);
@@ -2198,6 +2209,41 @@ export default function TenantAdminPage() {
   const regionOptions = ["Global HQ", "Americas", "EMEA", "APAC"];
 
   const headline = useMemo(() => HEADLINE_MAP[activeNav] ?? "Tenant admin", [activeNav]);
+  
+  // Helper function to check if user has permission to access current navigation
+  const hasAccessToNav = useMemo(() => {
+    if (!permissions) return true; // Allow if no permissions loaded yet
+    
+    const permissionMap: Record<string, string> = {
+      crm: "crm",
+      finance: "finance",
+      inventory: "inventory",
+      procurement: "procurement",
+      "hr-ops": "people",
+      projects: "projects",
+      "it-support": "itsupport",
+      revops: "revops",
+      workflows: "automation",
+      approvals: "automation",
+      "automation-rules": "automation",
+      "admin-control": "admin",
+      "people-access": "people",
+      structure: "people",
+      modules: "admin",
+      billing: "billing",
+      "cost-allocation": "finance",
+      integrations: "integrations",
+      analytics: "analytics",
+      security: "security",
+      policies: "policies",
+      reports: "reports",
+      dashboards: "dashboards",
+    };
+    
+    const module = permissionMap[activeNav];
+    if (!module) return true; // Allow if no permission mapping
+    return canRead(module);
+  }, [activeNav, permissions, canRead]);
   const kpiMetrics = useMemo(() => {
     if (activeNav === "crm") {
       return crmSnapshot.metrics;
@@ -3406,6 +3452,22 @@ export default function TenantAdminPage() {
 
   return (
     <div className="min-h-screen bg-[#e9eef5] text-slate-900">
+      {pageError && (
+        <FormAlert
+          type="error"
+          title="Error"
+          message={pageError}
+          onClose={() => setPageError(null)}
+        />
+      )}
+      {pageSuccess && (
+        <FormAlert
+          type="success"
+          title="Success"
+          message={pageSuccess}
+          onClose={() => setPageSuccess(null)}
+        />
+      )}
       <div className="flex h-screen flex-col">
         <TopBar
           entityOptions={entityOptions}
@@ -3423,7 +3485,42 @@ export default function TenantAdminPage() {
           <Sidebar
             collapsed={sidebarCollapsed}
             onToggle={() => setSidebarCollapsed((prev) => !prev)}
-            navigation={NAVIGATION}
+            navigation={NAVIGATION.map((section) => ({
+              ...section,
+              links: section.links.filter((link) => {
+                // Map navigation keys to permission modules
+                const permissionMap: Record<string, string> = {
+                  overview: "overview",
+                  crm: "crm",
+                  finance: "finance",
+                  inventory: "inventory",
+                  procurement: "procurement",
+                  "hr-ops": "people",
+                  projects: "projects",
+                  "it-support": "itsupport",
+                  revops: "revops",
+                  workflows: "automation",
+                  approvals: "automation",
+                  "automation-rules": "automation",
+                  policies: "policies",
+                  reports: "reports",
+                  dashboards: "dashboards",
+                  "admin-control": "admin",
+                  "people-access": "people",
+                  structure: "people",
+                  modules: "admin",
+                  billing: "billing",
+                  "cost-allocation": "finance",
+                  integrations: "integrations",
+                  analytics: "analytics",
+                  security: "security",
+                };
+                const module = permissionMap[link.key];
+                if (!module) return true; // Show if no permission mapping
+                if (!permissions) return true; // Show if no permissions loaded yet
+                return canRead(module);
+              }),
+            })).filter((section) => section.links.length > 0)}
             activeKey={activeNav}
             onNavigate={setActiveNav}
           />
@@ -3497,8 +3594,25 @@ export default function TenantAdminPage() {
               <div className="space-y-10">
                 <KpiGrid metrics={kpiMetrics} />
 
-                {activeNav === "crm" ? (
-                  <CrmDashboard
+                {/* Permission Denied Message */}
+                {!permissionsLoading && !hasAccessToNav && (
+                  <div className="rounded-3xl border border-rose-200 bg-rose-50 p-8 text-center">
+                    <AlertTriangle className="h-12 w-12 mx-auto text-rose-600 mb-4" />
+                    <h3 className="text-xl font-semibold text-rose-900 mb-2">Access Restricted</h3>
+                    <p className="text-rose-700 mb-6">You don't have permission to access this section. Contact your administrator to request access.</p>
+                    <button
+                      onClick={() => setActiveNav("overview")}
+                      className="inline-flex items-center gap-2 rounded-full bg-rose-600 text-white px-6 py-2 font-medium hover:bg-rose-700"
+                    >
+                      <ArrowUpRight className="h-4 w-4" />
+                      Return to Overview
+                    </button>
+                  </div>
+                )}
+
+                {hasAccessToNav ? (
+                  activeNav === "crm" ? (
+                    <CrmDashboard
                     snapshot={crmSnapshot}
                     loading={crmLoading}
                     error={crmError}
@@ -3525,7 +3639,7 @@ export default function TenantAdminPage() {
                     onTagFilterChange={handleContactTagFilterChange}
                     onTagToggle={handleContactTagToggle}
                   />
-                ) : activeNav === "finance" ? (
+                ) : activeNav === "finance" && canRead("finance") ? (
                   <FinanceWorkspace
                     snapshot={financeSnapshot}
                     loading={financeLoading}
@@ -3563,7 +3677,7 @@ export default function TenantAdminPage() {
                     savedLineItems={savedLineItems}
                     onSaveLineItem={handleSaveLineItem}
                   />
-                ) : activeNav === "inventory" ? (
+                ) : activeNav === "inventory" && canRead("inventory") ? (
                   <InventoryWorkspace
                     currentView={inventoryView}
                     onViewChange={setInventoryView}
@@ -3576,7 +3690,7 @@ export default function TenantAdminPage() {
                     toast={inventoryToast}
                     onToastDismiss={() => setInventoryToast(null)}
                   />
-                ) : activeNav === "procurement" ? (
+                ) : activeNav === "procurement" && canRead("procurement") ? (
                   <ProcurementWorkspace
                     currentView={procurementView}
                     onViewChange={setProcurementView}
@@ -3589,7 +3703,7 @@ export default function TenantAdminPage() {
                     toast={procurementToast}
                     onToastDismiss={() => setProcurementToast(null)}
                   />
-                ) : activeNav === "hr-ops" ? (
+                ) : activeNav === "hr-ops" && canRead("people") ? (
                   <HRWorkspace
                     currentView={hrView}
                     onViewChange={setHrView}
@@ -3608,7 +3722,7 @@ export default function TenantAdminPage() {
                     toast={hrToast}
                     onToastDismiss={() => setHrToast(null)}
                   />
-                ) : activeNav === "projects" ? (
+                ) : activeNav === "projects" && canRead("projects") ? (
                   <ProjectsWorkspace
                     currentView={projectsView}
                     onViewChange={setProjectsView}
@@ -3626,46 +3740,49 @@ export default function TenantAdminPage() {
                     toast={projectsToast}
                     onToastDismiss={() => setProjectsToast(null)}
                   />
-                ) : activeNav === "it-support" ? (
+                ) : activeNav === "it-support" && canRead("itsupport") ? (
                   <ItSupportWorkspace tenantSlug={tenantSlug} region={selectedRegion} />
-                ) : activeNav === "revops" ? (
+                ) : activeNav === "revops" && canRead("revops") ? (
                   <RevOpsWorkspace
                     tenantSlug={tenantSlug}
                     onRefresh={() => setRevopsOverviewVersion((prev) => prev + 1)}
                   />
-                ) : activeNav === "admin-control" ? (
-                  <AdminControlCenter />
-                ) : activeNav === "structure" ? (
+                ) : activeNav === "admin-control" && canAdmin("admin") ? (
+                  <div className="space-y-8">
+                    <AdminRestrictions tenantSlug={tenantSlug} />
+                    <AdminControlCenter />
+                  </div>
+                ) : activeNav === "structure" && canAdmin("people") ? (
                   <OrgStructureManager tenantSlug={tenantSlug} />
-                ) : activeNav === "people-access" ? (
+                ) : activeNav === "people-access" && canAdmin("people") ? (
                   <div className="space-y-8">
                     <RoleBuilder tenantSlug={tenantSlug} />
                     <EmployeeConsole tenantSlug={tenantSlug} />
                     <AccessControlPanel tenantSlug={tenantSlug} />
                   </div>
-                ) : activeNav === "approvals" ? (
+                ) : activeNav === "approvals" && canRead("automation") ? (
                   <ApprovalDesigner tenantSlug={tenantSlug} />
-                ) : activeNav === "workflows" ? (
+                ) : activeNav === "workflows" && canRead("automation") ? (
                   <LifecycleWorkflows tenantSlug={tenantSlug} />
-                ) : activeNav === "automation-rules" ? (
+                ) : activeNav === "automation-rules" && canAdmin("automation") ? (
                   <AutomationRules tenantSlug={tenantSlug} />
-                ) : activeNav === "dashboards" ? (
+                ) : activeNav === "dashboards" && canRead("dashboards") ? (
                   <AutomationDashboard tenantSlug={tenantSlug} />
-                ) : activeNav === "policies" ? (
+                ) : activeNav === "policies" && canRead("policies") ? (
                   <PoliciesSection tenantSlug={tenantSlug} />
-                ) : activeNav === "reports" ? (
+                ) : activeNav === "reports" && canRead("reports") ? (
                   <ReportsSection tenantSlug={tenantSlug} />
-                ) : activeNav === "modules" ? (
+                ) : activeNav === "modules" && canAdmin("admin") ? (
                   <ModuleRegistry tenantSlug={tenantSlug} />
-                ) : activeNav === "billing" ? (
+                ) : activeNav === "billing" && canRead("billing") ? (
                   <BillingSection tenantSlug={tenantSlug} />
-                ) : activeNav === "cost-allocation" ? (
+                ) : activeNav === "cost-allocation" && canRead("finance") ? (
                   <CostAllocationSection tenantSlug={tenantSlug} />
-                ) : activeNav === "integrations" ? (
+                ) : activeNav === "integrations" && canAdmin("integrations") ? (
                   <IntegrationsSection tenantSlug={tenantSlug} />
-                ) : activeNav === "analytics" ? (
+                ) : activeNav === "analytics" && canRead("analytics") ? (
                   <AnalyticsSection tenantSlug={tenantSlug} />
-                ) : activeNav === "security" ? (
+                ) : activeNav === "security" && canAdmin("security") ? (
                   <SecuritySection tenantSlug={tenantSlug} />
                 ) : (
                   <div className="grid gap-8 xl:grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)]">
@@ -3680,7 +3797,8 @@ export default function TenantAdminPage() {
                       <ActivityStream />
                     </div>
                   </div>
-                )}
+                )
+                ) : null}
               </div>
             </section>
           </main>
@@ -6008,7 +6126,7 @@ function FinancePaymentsWorkspace() {
 
   const handleSaveRecord = async () => {
     if (!recordForm.reference || !recordForm.confirmationDetails || !recordForm.grossAmount) {
-      alert("Please fill in all required fields");
+      setPageError("Please fill in all required fields");
       return;
     }
 
@@ -6090,7 +6208,7 @@ function FinancePaymentsWorkspace() {
       });
     } catch (error) {
       console.error("Error saving payment:", error);
-      alert(`Failed to save payment: ${error instanceof Error ? error.message : "Unknown error"}`);
+      setPageError(`Failed to save payment: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   };
 
@@ -6418,7 +6536,7 @@ function FinanceExpensesWorkspace() {
 
   const handleSaveRecord = async () => {
     if (!recordForm.description || !recordForm.amount) {
-      alert('Please fill in description and amount');
+      setPageError('Please fill in description and amount');
       return;
     }
 
@@ -6460,17 +6578,17 @@ function FinanceExpensesWorkspace() {
       } else {
         const errData = await response.json().catch(() => ({}));
         console.error('API error:', errData);
-        alert('Failed to record expense: ' + JSON.stringify(errData));
+        setPageError('Failed to record expense: ' + JSON.stringify(errData));
       }
     } catch (err) {
       console.error('Error recording expense:', err);
-      alert('Error recording expense: ' + String(err));
+      setPageError('Error recording expense: ' + String(err));
     }
   };
 
   const handleCreateCategory = async () => {
     if (!newCategory.code || !newCategory.name || !newCategory.accountId) {
-      alert('Please fill in all category fields');
+      setPageError('Please fill in all category fields');
       return;
     }
 
@@ -6506,11 +6624,11 @@ function FinanceExpensesWorkspace() {
         setShowCreateCategory(false);
       } else {
         const errData = await response.json().catch(() => ({}));
-        alert('Failed to create category: ' + JSON.stringify(errData));
+        setPageError('Failed to create category: ' + JSON.stringify(errData));
       }
     } catch (err) {
       console.error('Error creating category:', err);
-      alert('Error creating category: ' + String(err));
+      setPageError('Error creating category: ' + String(err));
     }
   };
 
@@ -6822,7 +6940,7 @@ function FinanceAccountingWorkspace() {
 
   const handleAddAccount = async () => {
     if (!newAccount.code || !newAccount.name) {
-      alert('Please fill in account code and name');
+      setPageError('Please fill in account code and name');
       return;
     }
 
@@ -6856,11 +6974,11 @@ function FinanceAccountingWorkspace() {
       } else {
         const errData = await response.json().catch(() => ({}));
         console.error('API error:', errData);
-        alert('Failed to add account: ' + JSON.stringify(errData));
+        setPageError('Failed to add account: ' + JSON.stringify(errData));
       }
     } catch (err) {
       console.error('Error adding account:', err);
-      alert('Error adding account: ' + String(err));
+      setPageError('Error adding account: ' + String(err));
     }
   };
 
@@ -7434,7 +7552,7 @@ function InvoiceDrawer({
 
     // Validate email when sending invoice
     if (status === "sent" && !formData.customerEmail) {
-      alert("Customer email is required to send invoice");
+      setPageError("Customer email is required to send invoice");
       return;
     }
 

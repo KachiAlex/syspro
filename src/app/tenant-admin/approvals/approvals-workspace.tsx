@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
+import { FormAlert } from "@/components/form";
 
 interface Approval {
   id: string;
@@ -31,6 +32,8 @@ interface Approval {
 export default function ApprovalsWorkspace() {
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     status: "",
     entityType: ""
@@ -41,6 +44,8 @@ export default function ApprovalsWorkspace() {
   }, [filters]);
 
   const loadApprovals = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({
         tenantSlug: "demo-tenant", // TODO: Get from context
@@ -51,8 +56,9 @@ export default function ApprovalsWorkspace() {
       const response = await fetch(`/api/finance/approvals?${params}`);
       const data = await response.json();
       setApprovals(data.approvals || []);
-    } catch (error) {
-      console.error("Failed to load approvals:", error);
+    } catch (err) {
+      console.error("Failed to load approvals:", err);
+      setError("Failed to load approvals");
     } finally {
       setLoading(false);
     }
@@ -84,35 +90,52 @@ export default function ApprovalsWorkspace() {
       });
 
       if (response.ok) {
+        setSuccess(`Approval ${decision} successfully`);
+        setTimeout(() => setSuccess(null), 3000);
         loadApprovals();
       } else {
         const error = await response.json();
-        alert(`Decision failed: ${error.error}`);
+        setError(error.error || "Decision failed");
       }
-    } catch (error) {
-      console.error("Decision error:", error);
-      alert("Decision failed");
+    } catch (err) {
+      console.error("Decision error:", err);
+      setError(err instanceof Error ? err.message : "Decision failed");
     }
   };
 
   if (loading) {
-    return <div className="p-6">Loading approvals...</div>;
+    return (
+      <div className="p-6">
+        <div className="rounded-lg bg-slate-50 p-8 text-center">
+          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900"></div>
+          <p className="mt-3 text-slate-600">Loading approvals…</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Approvals</h1>
-        <button className="btn btn-primary">Configure Rules</button>
+    <div className="space-y-6 p-6">
+      {error && <FormAlert type="error" title="Error" message={error} onClose={() => setError(null)} />}
+      {success && <FormAlert type="success" message={success} onClose={() => setSuccess(null)} />}
+
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Financial Management</p>
+          <h1 className="text-2xl font-semibold text-slate-900">Approvals</h1>
+          <p className="mt-1 text-sm text-slate-600">Review and authorize financial documents</p>
+        </div>
+        <button className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">⚙️ Configure Rules</button>
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-3 gap-4">
+      <div className="rounded-2xl border border-slate-100 bg-white p-6">
+        <p className="mb-4 text-sm font-semibold text-slate-900">Filters</p>
+        <div className="grid grid-cols-2 gap-4">
           <select
             value={filters.status}
             onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-            className="form-select"
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
           >
             <option value="">All Status</option>
             <option value="pending">Pending</option>
@@ -124,7 +147,7 @@ export default function ApprovalsWorkspace() {
           <select
             value={filters.entityType}
             onChange={(e) => setFilters({ ...filters, entityType: e.target.value })}
-            className="form-select"
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
           >
             <option value="">All Types</option>
             <option value="purchase_order">Purchase Orders</option>
@@ -135,83 +158,89 @@ export default function ApprovalsWorkspace() {
       </div>
 
       {/* Approvals Table */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="w-full">
+            <thead className="border-b border-slate-100 bg-slate-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   Entity Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   Entity ID
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   Requested By
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   Current Step
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   Created
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-slate-100">
               {approvals.map((approval) => (
-                <tr key={approval.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <tr key={approval.id} className="hover:bg-slate-50">
+                  <td className="px-6 py-4 text-sm font-medium text-slate-900">
                     {approval.entityType.replace("_", " ")}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 text-sm text-slate-600">
                     {approval.entityId.slice(0, 8)}...
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 text-sm text-slate-600">
                     {approval.requestedBy.slice(0, 8)}...
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 text-sm text-slate-600">
                     Step {approval.currentStep + 1} of {approval.approverChain.length}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(approval.status)}`}>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(approval.status)}`}>
+                      {approval.status === "pending" && "⏳"}
+                      {approval.status === "approved" && "✓"}
+                      {approval.status === "rejected" && "✕"}
+                      {approval.status === "escalated" && "⬆️"}
                       {approval.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 text-sm text-slate-600">
                     {format(new Date(approval.createdAt), "MMM dd, yyyy")}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {approval.status === "pending" && (
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleDecision(approval.id, "approved")}
-                          className="text-green-600 hover:text-green-900"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleDecision(approval.id, "rejected")}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Reject
-                        </button>
-                        <button
-                          onClick={() => handleDecision(approval.id, "escalated")}
-                          className="text-orange-600 hover:text-orange-900"
-                        >
-                          Escalate
-                        </button>
-                      </div>
-                    )}
-                    <button className="text-indigo-600 hover:text-indigo-900">
-                      View Details
-                    </button>
+                  <td className="px-6 py-4 text-sm">
+                    <div className="flex gap-2">
+                      {approval.status === "pending" && (
+                        <>
+                          <button
+                            onClick={() => handleDecision(approval.id, "approved")}
+                            className="text-green-600 hover:text-green-900"
+                          >
+                            ✓ Approve
+                          </button>
+                          <button
+                            onClick={() => handleDecision(approval.id, "rejected")}
+                            className="text-rose-600 hover:text-rose-900"
+                          >
+                            ✕ Reject
+                          </button>
+                          <button
+                            onClick={() => handleDecision(approval.id, "escalated")}
+                            className="text-amber-600 hover:text-amber-900"
+                          >
+                            ⬆️ Escalate
+                          </button>
+                        </>
+                      )}
+                      <button className="text-blue-600 hover:text-blue-900">
+                        Details
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -221,4 +250,16 @@ export default function ApprovalsWorkspace() {
       </div>
     </div>
   );
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  pending: "bg-amber-100 text-amber-900",
+  approved: "bg-green-100 text-green-900",
+  rejected: "bg-rose-100 text-rose-900",
+  escalated: "bg-orange-100 text-orange-900",
+  cancelled: "bg-slate-100 text-slate-900"
+};
+
+function getStatusColor(status: string) {
+  return STATUS_COLORS[status] || STATUS_COLORS.cancelled;
 }
