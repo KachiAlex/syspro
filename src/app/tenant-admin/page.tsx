@@ -3450,23 +3450,37 @@ export default function TenantAdminPage() {
     fetchPayments();
   }, []);
 
+  // Auto-dismiss success alerts after 4 seconds
+  useEffect(() => {
+    if (pageSuccess) {
+      const timer = setTimeout(() => {
+        setPageSuccess(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [pageSuccess]);
+
   return (
     <div className="min-h-screen bg-[#e9eef5] text-slate-900">
       {pageError && (
-        <FormAlert
-          type="error"
-          title="Error"
-          message={pageError}
-          onClose={() => setPageError(null)}
-        />
+        <div className="fixed left-0 right-0 top-0 z-50 flex justify-center px-4 pt-4">
+          <FormAlert
+            type="error"
+            title="Error"
+            message={pageError}
+            onClose={() => setPageError(null)}
+          />
+        </div>
       )}
       {pageSuccess && (
-        <FormAlert
-          type="success"
-          title="Success"
-          message={pageSuccess}
-          onClose={() => setPageSuccess(null)}
-        />
+        <div className="fixed left-0 right-0 top-0 z-50 flex justify-center px-4 pt-4 animate-in fade-in slide-in-from-top-4 duration-300">
+          <FormAlert
+            type="success"
+            title="Success"
+            message={pageSuccess}
+            onClose={() => setPageSuccess(null)}
+          />
+        </div>
       )}
       <div className="flex h-screen flex-col">
         <TopBar

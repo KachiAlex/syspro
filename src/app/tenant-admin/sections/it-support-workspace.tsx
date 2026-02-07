@@ -19,6 +19,7 @@ import {
   UserCheck,
   X,
 } from "lucide-react";
+import { FormAlert } from "@/components/form";
 import type {
   FieldJob,
   KnowledgeBaseArticle,
@@ -559,7 +560,12 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
       </div>
 
       {workspaceError && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{workspaceError}</div>
+        <FormAlert
+          type="error"
+          title="Error loading IT support workspace"
+          message={workspaceError}
+          onClose={() => setWorkspaceError(null)}
+        />
       )}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -676,7 +682,14 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
               )}
             </div>
 
-            {detailError && <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-600">{detailError}</div>}
+            {detailError && (
+              <FormAlert
+                type="error"
+                title="Error updating ticket"
+                message={detailError}
+                onClose={() => setDetailError(null)}
+              />
+            )}
 
             {!selectedTicket && !detailLoading && (
               <div className="mt-6 rounded-2xl border border-dashed border-slate-200 px-6 py-10 text-center text-sm text-slate-500">
@@ -956,7 +969,14 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
               </button>
             </div>
 
-            {createError && <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">{createError}</div>}
+            {createError && (
+              <FormAlert
+                type="error"
+                title="Error creating ticket"
+                message={createError}
+                onClose={() => setCreateError(null)}
+              />
+            )}
 
             <form onSubmit={handleCreateTicket} className="mt-6 space-y-5">
               <div>

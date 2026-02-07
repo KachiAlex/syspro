@@ -18,6 +18,8 @@ import {
   Shield,
 } from "lucide-react";
 
+import { FormAlert } from "@/components/form";
+
 import type {
   AttributionModel,
   AttributionSummary,
@@ -879,7 +881,14 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
       </div>
 
       {loading && <div className="rounded-3xl border border-slate-100 bg-white p-4 text-sm text-slate-500">Syncing RevOps telemetry…</div>}
-      {error && <div className="rounded-3xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</div>}
+      {error && (
+        <FormAlert
+          type="error"
+          title="Error loading RevOps workspace"
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="rounded-3xl border border-slate-100 bg-white p-4">
@@ -918,7 +927,14 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
               <Input label="Target segments" value={campaignForm.targetSegments} onChange={(value) => setCampaignForm((prev) => ({ ...prev, targetSegments: value }))} placeholder="Enterprise, Carrier" />
             </div>
             <Textarea label="Objective" value={campaignForm.objective} onChange={(value) => setCampaignForm((prev) => ({ ...prev, objective: value }))} required />
-            {formError && <p className="text-sm text-rose-600">{formError}</p>}
+            {formError && (
+              <FormAlert
+                type="error"
+                title="Error"
+                message={formError}
+                onClose={() => setFormError(null)}
+              />
+            )}
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setCampaignModalOpen(false)} className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">
                 Cancel
@@ -957,7 +973,14 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
                 ))}
               </select>
             </label>
-            {formError && <p className="text-sm text-rose-600">{formError}</p>}
+            {formError && (
+              <FormAlert
+                type="error"
+                title="Error"
+                message={formError}
+                onClose={() => setFormError(null)}
+              />
+            )}
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setLeadSourceModalOpen(false)} className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">
                 Cancel
@@ -984,7 +1007,14 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
               <Input label="Region" value={assetForm.region} onChange={(value) => setAssetForm((prev) => ({ ...prev, region: value }))} />
               <Input label="Tags" value={assetForm.tags} onChange={(value) => setAssetForm((prev) => ({ ...prev, tags: value }))} placeholder="fiber, enterprise" />
             </div>
-            {formError && <p className="text-sm text-rose-600">{formError}</p>}
+            {formError && (
+              <FormAlert
+                type="error"
+                title="Error"
+                message={formError}
+                onClose={() => setFormError(null)}
+              />
+            )}
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setAssetModalOpen(false)} className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">
                 Cancel
