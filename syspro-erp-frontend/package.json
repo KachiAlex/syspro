@@ -1,0 +1,51 @@
+{
+  "name": "syspro-erp-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "cross-env NODE_OPTIONS='--max-old-space-size=4096' TAILWIND_DISABLE_LIGHTNINGCSS=1 next dev",
+    "build": "cross-env TAILWIND_DISABLE_LIGHTNINGCSS=1 next build",
+    "start": "next start",
+    "lint": "eslint",
+    "lint:it-support": "eslint src/app/tenant-admin/sections/it-support-workspace.tsx src/app/api/support",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:it-support": "vitest run src/__tests__/it-support.test.ts",
+    "test:invoices": "node ./scripts/test-invoices.js",
+    "test:vendors": "node ./scripts/test-vendors.js",
+    "test:vendors:ci": "start-server-and-test \"npm run dev\" http://localhost:3000 \"npm run test:vendors\"",
+    "migrate": "node ./scripts/run-migrations.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.2",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "bcryptjs": "^2.4.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "lightningcss": "^1.27.0",
+    "lucide-react": "^0.475.0",
+    "next": "16.1.3",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "tailwind-merge": "^3.4.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "babel-plugin-react-compiler": "1.0.0",
+    "cross-env": "^7.0.3",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.3",
+    "pg": "^8.10.0",
+    "start-server-and-test": "^1.14.0",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^4.0.18"
+  }
+}
