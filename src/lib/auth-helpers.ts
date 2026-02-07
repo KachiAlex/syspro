@@ -28,7 +28,7 @@ export function getCurrentUser(request: NextRequest): SessionUser | null {
   // Method 1: Check for development headers
   const userId = request.headers.get("X-User-Id");
   const userEmail = request.headers.get("X-User-Email") || "user@example.com";
-  const tenantSlug = request.headers.get("X-Tenant-Slug") || "kreatix-default";
+  const tenantSlug = request.headers.get("X-Tenant-Slug") || undefined;
   const roleId = request.headers.get("X-Role-Id") || "viewer";
 
   if (userId) {
@@ -56,26 +56,27 @@ export function getCurrentUser(request: NextRequest): SessionUser | null {
   //   }
   // }
 
-  // Method 3: Return default user for development
-  return {
-    id: "demo-user-001",
-    email: "demo@example.com",
-    name: "Demo User",
-    tenantSlug: tenantSlug || "kreatix-default",
-    roleId: "admin", // Default to admin for demo
-  };
+  // Method 3: For strict tenant isolation we return null unless an explicit
+  // authenticated user is present. This prevents accidental cross-tenant
+  // data exposure when no tenant header/session is provided.
+  return null;
 }
 
 /**
  * Validate that user has permission for the tenant
  */
 export function validateTenantAccess(user: SessionUser, requestedTenantSlug: string): boolean {
-  // In production, check if user is a member of the tenant
-  // For now, just verify the tenant slug matches
-  if (user.tenantSlug && user.tenantSlug !== requestedTenantSlug) {
-    return false;
-  }
-  return true;
+  // Reject if no requested tenant provided
+  if (!requestedTenantSlug) return false;
+
+  // Super-admins (global admins) may have access across tenants.
+  // If you have a stronger global admin flag, check it here. For now,
+  // treat roleId === 'superadmin' as global access.
+  if (user.roleId === "superadmin") return true;
+
+  // Deny if user's tenant is not set or doesn't match the requested tenant
+  if (!user.tenantSlug) return false;
+  return user.tenantSlug === requestedTenantSlug;
 }
 
 /**

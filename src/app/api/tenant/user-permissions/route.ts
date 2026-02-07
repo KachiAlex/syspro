@@ -18,16 +18,17 @@ import { getCurrentUser, validateTenantAccess, getRolePermissionsFromDB } from "
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const tenantSlug = searchParams.get("tenantSlug") || "kreatix-default";
+    const tenantSlug = searchParams.get("tenantSlug");
+
+    if (!tenantSlug) {
+      return NextResponse.json({ error: "tenantSlug is required" }, { status: 400 });
+    }
 
     // Step 1: Get current user from request (session/headers)
     const user = getCurrentUser(request);
-    
+
     if (!user) {
-      return NextResponse.json(
-        { error: "User not authenticated" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "User not authenticated" }, { status: 401 });
     }
 
     // Step 2: Validate user has access to this tenant
