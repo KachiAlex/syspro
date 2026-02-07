@@ -109,6 +109,7 @@ import AttendanceReports from "@/components/attendance-reports";
 import StaffReports from "@/components/staff-reports";
 import { listExpenses, createExpense, approveExpense, deleteExpense } from "@/lib/api/expenses";
 import AccessControlPanel from "@/app/tenant-admin/sections/access-control";
+import RoleAssignmentPanel from "@/app/tenant-admin/sections/role-assignment";
 import AdminControlCenter from "@/app/tenant-admin/sections/admin-control-center";
 import AdminRestrictions from "@/app/tenant-admin/sections/admin-restrictions";
 import LifecycleWorkflows from "@/app/tenant-admin/sections/workflows";
@@ -3771,6 +3772,7 @@ export default function TenantAdminPage() {
                 ) : activeNav === "people-access" && canAdmin("people") ? (
                   <div className="space-y-8">
                     <RoleBuilder tenantSlug={tenantSlug} />
+                    <RoleAssignmentPanel tenantSlug={tenantSlug} />
                     <EmployeeConsole tenantSlug={tenantSlug} />
                     <AccessControlPanel tenantSlug={tenantSlug} />
                   </div>

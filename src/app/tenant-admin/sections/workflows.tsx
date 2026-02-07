@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { useForm } from "@/lib/use-form";
 import { TextInput, SelectInput, FormButton, FormAlert } from "@/components/form";
+import { usePermissions, useCanAction } from "@/hooks/use-permissions";
 
 type Workflow = {
   id: string;
@@ -34,6 +35,10 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
   const [editName, setEditName] = useState("");
   const [editSteps, setEditSteps] = useState<Workflow["steps"]>([]);
   const ts = tenantSlug ?? "kreatix-default";
+  
+  // Get user permissions
+  const permissions = usePermissions();
+  const { canCreate, canEdit, canDelete } = useCanAction(permissions, "automation");
 
   const form = useForm<WorkflowFormData>({
     initialValues: {
@@ -238,7 +243,12 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
           </div>
 
           <div className="flex gap-2 pt-2">
-            <FormButton type="submit" loading={form.isSubmitting}>
+            <FormButton 
+              type="submit" 
+              loading={form.isSubmitting}
+              disabled={!canCreate || permissions.loading}
+              title={!canCreate ? "You don't have permission to create workflows" : undefined}
+            >
               Create workflow
             </FormButton>
           </div>
@@ -300,8 +310,22 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
                         <p className="text-xs text-slate-500">{wf.type}</p>
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={() => startEdit(wf)} className="rounded-full border px-3 py-1 text-xs">Edit</button>
-                        <button onClick={() => handleDelete(wf.id)} className="rounded-full border border-rose-200 px-3 py-1 text-xs text-rose-700">Delete</button>
+                        <button 
+                          onClick={() => startEdit(wf)} 
+                          disabled={!canEdit || permissions.loading}
+                          className="rounded-full border px-3 py-1 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                          title={!canEdit ? "You don't have permission to edit workflows" : undefined}
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(wf.id)} 
+                          disabled={!canDelete || permissions.loading}
+                          className="rounded-full border border-rose-200 px-3 py-1 text-xs text-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title={!canDelete ? "You don't have permission to delete workflows" : undefined}
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                     <div className="mt-2 space-y-1 text-sm text-slate-600">

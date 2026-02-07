@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { useForm } from "@/lib/use-form";
 import { TextInput, FormButton, FormAlert } from "@/components/form";
+import { usePermissions, useCanAction } from "@/hooks/use-permissions";
 
 type AccessControl = {
   id: string;
@@ -96,6 +97,10 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
 
   const ts = tenantSlug ?? "kreatix-default";
+  
+  // Get user permissions
+  const permissions = usePermissions();
+  const { canCreate } = useCanAction(permissions, "admin");
 
   const form = useForm<AccessControlFormData>({
     initialValues: {
@@ -253,7 +258,9 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
               form.resetForm();
               setSelectedModules([]);
             }}
-            className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            disabled={!canCreate || permissions.loading}
+            className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            title={!canCreate ? "You don't have permission to create roles" : undefined}
           >
             {showCreateForm ? "Cancel" : "+ Create Role"}
           </button>

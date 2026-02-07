@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePermissions, useCanAction } from "@/hooks/use-permissions";
 
 type Approval = {
   id: string;
@@ -17,6 +18,10 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
   const [name, setName] = useState("");
   const [steps, setSteps] = useState<{ owners: string; slaHours?: number }[]>([{ owners: "", slaHours: 4 }]);
   const ts = tenantSlug ?? "kreatix-default";
+  
+  // Get user permissions
+  const permissions = usePermissions();
+  const { canCreate, canDelete } = useCanAction(permissions, "automation");
 
   async function load() {
     setLoading(true);
@@ -105,7 +110,14 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
         <form className="mt-4 space-y-3" onSubmit={handleCreate}>
           <div className="flex items-center gap-3">
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Route name" className="rounded-lg border px-3 py-2 w-full" />
-            <button type="submit" className="rounded-full bg-slate-900 px-4 py-2 text-white">Create</button>
+            <button 
+              type="submit" 
+              disabled={!canCreate || permissions.loading}
+              className="rounded-full bg-slate-900 px-4 py-2 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              title={!canCreate ? "You don't have permission to create approval routes" : undefined}
+            >
+              Create
+            </button>
           </div>
 
           <div className="space-y-2">
@@ -140,7 +152,14 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
                     <p className="text-xs text-slate-500">Created {new Date(a.createdAt).toLocaleString()}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => handleDelete(a.id)} className="rounded-full border border-rose-200 px-3 py-1 text-xs text-rose-700">Delete</button>
+                    <button 
+                      onClick={() => handleDelete(a.id)} 
+                      disabled={!canDelete || permissions.loading}
+                      className="rounded-full border border-rose-200 px-3 py-1 text-xs text-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={!canDelete ? "You don't have permission to delete approval routes" : undefined}
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
                 <div className="mt-3 text-sm text-slate-600">

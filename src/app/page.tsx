@@ -1,247 +1,620 @@
+'use client';
+
+import { useState } from 'react';
+import { Menu, X, ArrowRight, Play, Check, Star } from 'lucide-react';
 import {
-  ArrowRight,
-  BadgeCheck,
-  CircuitBoard,
-  Cpu,
-  GaugeCircle,
-  ShieldCheck,
-  Sparkles,
-  Waves,
-} from "lucide-react";
+  Users,
+  DollarSign,
+  UserCog,
+  FolderKanban,
+  Zap,
+  ShoppingCart,
+  Shield,
+} from 'lucide-react';
 
-const logos = ["Tembea Steel", "NovaFoods", "TransAfrica", "Skyline Energy"];
+// Header Component
+function Header() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-const featurePillars = [
-  {
-    label: "Finance Ops",
-    title: "AI balanced ledgers",
-    copy: "Close books daily, simulate FX exposure, and sync carbon budgets across every tenant.",
-  },
-  {
-    label: "Manufacturing",
-    title: "Digital twin execution",
-    copy: "Blend production telemetry with demand signals to reroute capacity before turbulence hits.",
-  },
-  {
-    label: "Supply Mesh",
-    title: "Trusted partner mesh",
-    copy: "Share autonomous playbooks with suppliers through consented, tenant-aware data rooms.",
-  },
-];
-
-const stats = [
-  { label: "Forecast precision", value: "97.2%", detail: "+3.4 pt YoY" },
-  { label: "Working capital", value: "+₦1.8B", detail: "Freed in 60 days" },
-  { label: "Carbon certainty", value: "92%", detail: "Scope 3 traced" },
-];
-
-const meshHighlights = [
-  {
-    title: "Neural constraint solver",
-    body: "Model entire BOM hierarchies and instantly recompute viable scenarios as outages emerge.",
-    icon: GaugeCircle,
-  },
-  {
-    title: "Trusted data mesh",
-    body: "Tenant isolation with lineage, policy controls, and audit friendly encryption at edge.",
-    icon: ShieldCheck,
-  },
-  {
-    title: "Event-driven autopilot",
-    body: "Kafka-native blueprints orchestrate procurement, logistics, and treasury actions in sync",
-    icon: Waves,
-  },
-];
-
-const copilotMoments = [
-  "Summarize supply risk posture per tenant",
-  "Draft cash + carbon mitigation orders",
-  "Interrogate real-time digital twins via natural language",
-  "Launch scenario drills that notify partner war-rooms",
-];
-
-export default function Home() {
   return (
-    <div className="relative overflow-hidden bg-[#03030a] text-white">
-      <div className="pointer-events-none absolute inset-0">
-        <div
-          className="absolute left-[-10%] top-[-10%] h-[420px] w-[420px] rounded-full blur-[160px]"
-          style={{ background: "rgba(75, 255, 230, 0.2)" }}
-        />
-        <div
-          className="absolute right-[-15%] top-1/2 h-[520px] w-[520px] -translate-y-1/2 rounded-full blur-[180px]"
-          style={{ background: "rgba(115, 80, 255, 0.25)" }}
-        />
-      </div>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">
+      <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <div className="flex items-center">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">S</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">Syspro</span>
+            </div>
+          </div>
 
-      <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-24 px-6 pb-24 pt-12 lg:px-10">
-        <section className="relative grid gap-10 lg:grid-cols-[1.1fr_0.9fr]" id="hero">
-          <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.5em] text-teal-200/80">
-              <Sparkles className="h-4 w-4" />
-              Neural ERP
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-8">
+            <a href="#features" className="text-gray-700 hover:text-blue-600 transition-colors">Features</a>
+            <a href="#solutions" className="text-gray-700 hover:text-blue-600 transition-colors">Solutions</a>
+            <a href="#pricing" className="text-gray-700 hover:text-blue-600 transition-colors">Pricing</a>
+            <a href="#resources" className="text-gray-700 hover:text-blue-600 transition-colors">Resources</a>
+            <a href="#contact" className="text-gray-700 hover:text-blue-600 transition-colors">Contact</a>
+          </div>
+
+          {/* CTA Buttons */}
+          <div className="hidden md:flex items-center gap-4">
+            <button className="text-gray-700 hover:text-blue-600 transition-colors">
+              Sign In
+            </button>
+            <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              Request Demo
+            </button>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button 
+            className="md:hidden text-gray-700"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden py-4 border-t border-gray-200">
+            <div className="flex flex-col gap-4">
+              <a href="#features" className="text-gray-700 hover:text-blue-600 transition-colors">Features</a>
+              <a href="#solutions" className="text-gray-700 hover:text-blue-600 transition-colors">Solutions</a>
+              <a href="#pricing" className="text-gray-700 hover:text-blue-600 transition-colors">Pricing</a>
+              <a href="#resources" className="text-gray-700 hover:text-blue-600 transition-colors">Resources</a>
+              <a href="#contact" className="text-gray-700 hover:text-blue-600 transition-colors">Contact</a>
+              <div className="flex flex-col gap-2 pt-4 border-t border-gray-200">
+                <button className="text-gray-700 hover:text-blue-600 transition-colors text-left">
+                  Sign In
+                </button>
+                <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                  Request Demo
+                </button>
+              </div>
             </div>
-            <div>
-              <h1 className="text-4xl font-semibold leading-tight tracking-tight text-white/95 lg:text-6xl">
-                A command marketing surface for multi-tenant supply chains.
-              </h1>
-              <p className="mt-4 max-w-2xl text-base text-white/70 lg:text-lg">
-                Syspro threads finance, production, and partner ecosystems into one cinematic experience. AI copilots choreograph cash, carbon, and capacity decisions—before disruption arrives.
-              </p>
+          </div>
+        )}
+      </nav>
+    </header>
+  );
+}
+
+// Hero Section
+function Hero() {
+  return (
+    <section className="pt-24 pb-16 md:pt-32 md:pb-24 bg-gradient-to-b from-blue-50 to-white">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left Content */}
+          <div className="max-w-2xl">
+            <div className="inline-block mb-4 px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm">
+              🚀 The Future of Enterprise Management
             </div>
-            <div className="flex flex-wrap items-center gap-4">
-              <a
-                href="/access"
-                className="group inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#05060a]"
-              >
-                Launch Access Portal
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </a>
-              <button className="inline-flex items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-sm text-white/80 hover:text-white">
-                Download deck
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+              Unify Your Business Operations with{' '}
+              <span className="text-blue-600">Syspro</span>
+            </h1>
+            <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
+              The all-in-one B2B ERP solution that streamlines CRM, Finance, HR, Projects, and more. 
+              Empower your team with intelligent automation and real-time insights.
+            </p>
+            
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-8">
+              <button className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl">
+                Get Started Free
+                <ArrowRight size={20} />
+              </button>
+              <button className="border-2 border-gray-300 text-gray-700 px-8 py-3 rounded-lg hover:border-gray-400 transition-all flex items-center justify-center gap-2">
+                <Play size={20} />
+                Watch Demo
               </button>
             </div>
-            <div className="space-y-3">
-              <p className="text-xs uppercase tracking-[0.35em] text-white/50">Trusted by adaptive manufacturers</p>
-              <div className="flex flex-wrap gap-6 text-white/60">
-                {logos.map((logo) => (
-                  <span key={logo} className="text-sm tracking-[0.3em]">
-                    {logo}
-                  </span>
+
+            {/* Trust Indicators */}
+            <div className="flex items-center gap-6 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <span className="text-green-600">✓</span>
+                <span>Free 30-day trial</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-green-600">✓</span>
+                <span>No credit card required</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Image */}
+          <div className="relative">
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-blue-100 to-blue-50 p-8 h-80 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-6xl mb-4">📊</div>
+                <p className="text-gray-700 font-semibold">Dashboard Preview</p>
+                <p className="text-sm text-gray-600 mt-2">Real-time analytics and insights</p>
+              </div>
+            </div>
+            {/* Floating Card */}
+            <div className="absolute -bottom-6 -left-6 bg-white rounded-lg shadow-xl p-4 max-w-xs hidden lg:block">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl">📈</span>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Productivity Increase</p>
+                  <p className="text-2xl font-bold text-gray-900">+47%</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Stats Section
+function Stats() {
+  const stats = [
+    { value: '10,000+', label: 'Active Businesses', icon: '🏢' },
+    { value: '99.9%', label: 'Uptime Guarantee', icon: '⚡' },
+    { value: '150+', label: 'Countries Worldwide', icon: '🌍' },
+    { value: '24/7', label: 'Customer Support', icon: '💬' },
+  ];
+
+  return (
+    <section className="py-16 bg-gradient-to-br from-blue-600 to-blue-800">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+          {stats.map((stat, index) => (
+            <div key={index} className="text-center">
+              <div className="text-4xl mb-2">{stat.icon}</div>
+              <div className="text-3xl md:text-4xl font-bold text-white mb-2">
+                {stat.value}
+              </div>
+              <div className="text-blue-100">
+                {stat.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Features Section
+function Features() {
+  const features = [
+    {
+      icon: Users,
+      title: 'CRM',
+      description: 'Manage customer relationships, track leads, and close deals faster with our intelligent CRM system.',
+      color: 'from-blue-500 to-blue-600'
+    },
+    {
+      icon: DollarSign,
+      title: 'Finance & Accounting',
+      description: 'Complete financial management with automated invoicing, expense tracking, and real-time reporting.',
+      color: 'from-green-500 to-green-600'
+    },
+    {
+      icon: UserCog,
+      title: 'HR & Operations',
+      description: 'Streamline employee management, payroll, attendance, and performance tracking in one place.',
+      color: 'from-purple-500 to-purple-600'
+    },
+    {
+      icon: FolderKanban,
+      title: 'Project Management',
+      description: 'Plan, execute, and monitor projects with powerful tools for task management and collaboration.',
+      color: 'from-orange-500 to-orange-600'
+    },
+    {
+      icon: Zap,
+      title: 'Automation',
+      description: 'Automate repetitive tasks and workflows to save time and reduce human error across your operations.',
+      color: 'from-yellow-500 to-yellow-600'
+    },
+    {
+      icon: ShoppingCart,
+      title: 'Sales & Procurement',
+      description: 'Optimize your supply chain with integrated sales orders, purchase orders, and inventory management.',
+      color: 'from-pink-500 to-pink-600'
+    },
+    {
+      icon: Shield,
+      title: 'Admin Controls',
+      description: 'Enterprise-grade security with role-based access, audit trails, and comprehensive system controls.',
+      color: 'from-indigo-500 to-indigo-600'
+    }
+  ];
+
+  return (
+    <section id="features" className="py-16 md:py-24 bg-white">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Everything Your Business Needs
+          </h2>
+          <p className="text-lg text-gray-600">
+            Syspro brings together all essential business functions into one powerful, integrated platform
+          </p>
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <div 
+                key={index}
+                className="group p-6 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300 bg-white"
+              >
+                <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                  <Icon className="text-white" size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600">
+                  {feature.description}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Benefits Section
+function Benefits() {
+  const benefits = [
+    'Real-time data synchronization across all modules',
+    'Customizable dashboards and reports',
+    'Mobile-first responsive design',
+    'Advanced security and compliance features',
+    'Seamless third-party integrations',
+    'AI-powered insights and analytics'
+  ];
+
+  return (
+    <section className="py-16 md:py-24 bg-gray-50">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left Image */}
+          <div className="order-2 lg:order-1">
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-blue-100 to-blue-50 p-8 h-80 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-6xl mb-4">👥</div>
+                <p className="text-gray-700 font-semibold">Team Collaboration</p>
+                <p className="text-sm text-gray-600 mt-2">Work together seamlessly</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Content */}
+          <div className="order-1 lg:order-2">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              Why Businesses Choose Syspro
+            </h2>
+            <p className="text-lg text-gray-600 mb-8">
+              Built for scale, designed for simplicity. Syspro adapts to your business needs 
+              while providing enterprise-grade reliability and performance.
+            </p>
+
+            <div className="space-y-4 mb-8">
+              {benefits.map((benefit, index) => (
+                <div key={index} className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
+                    <Check className="text-blue-600" size={16} />
+                  </div>
+                  <span className="text-gray-700">{benefit}</span>
+                </div>
+              ))}
+            </div>
+
+            <button className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl">
+              Explore All Features
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Testimonials Section
+function Testimonials() {
+  const testimonials = [
+    {
+      name: 'Sarah Johnson',
+      role: 'CEO, TechCorp Solutions',
+      content: 'Syspro has transformed how we manage our operations. The integration between modules is seamless and has saved us countless hours.',
+      rating: 5,
+      avatar: '👩‍💼'
+    },
+    {
+      name: 'Michael Chen',
+      role: 'CFO, Global Industries',
+      content: 'The finance and accounting module is incredibly powerful. Real-time reporting has given us the insights we need to make better decisions.',
+      rating: 5,
+      avatar: '👨‍💼'
+    },
+    {
+      name: 'Emily Rodriguez',
+      role: 'Operations Director, LogiTech',
+      content: 'Implementation was smooth and the support team is outstanding. Syspro has become the backbone of our business operations.',
+      rating: 5,
+      avatar: '👩‍💻'
+    }
+  ];
+
+  return (
+    <section className="py-16 md:py-24 bg-white">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Trusted by Industry Leaders
+          </h2>
+          <p className="text-lg text-gray-600">
+            See what our customers have to say about their experience with Syspro
+          </p>
+        </div>
+
+        {/* Testimonials Grid */}
+        <div className="grid md:grid-cols-3 gap-8">
+          {testimonials.map((testimonial, index) => (
+            <div 
+              key={index}
+              className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow"
+            >
+              {/* Rating */}
+              <div className="flex gap-1 mb-4">
+                {[...Array(testimonial.rating)].map((_, i) => (
+                  <Star key={i} className="text-yellow-400 fill-yellow-400" size={20} />
                 ))}
               </div>
-            </div>
-          </div>
 
-          <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 backdrop-blur">
-            <div className="space-y-2 text-xs uppercase tracking-[0.35em] text-white/50">
-              <span>Live mesh signal</span>
-              <div className="h-px w-full bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-            </div>
-            <div className="mt-6 grid gap-6">
-              {stats.map((stat) => (
-                <div key={stat.label} className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                  <p className="text-xs text-white/50">{stat.label}</p>
-                  <p className="text-3xl font-semibold">{stat.value}</p>
-                  <p className="text-xs text-emerald-300">{stat.detail}</p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-8 rounded-2xl border border-white/15 bg-gradient-to-br from-white/10 to-white/0 p-5 text-sm text-white/70">
-              “Syspro rebuilt our operating rhythm—we forecast in hours, not quarters, while tracing every scope 3 gram.” — Chief Supply Officer, Tembea Steel
-            </div>
-          </div>
-        </section>
-
-        <section id="platform" className="space-y-10">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.4em] text-white/50">Platform</p>
-              <h2 className="mt-2 text-3xl font-semibold">An opinionated surface for tenants, copilots, and superadmins.</h2>
-            </div>
-            <div className="rounded-full border border-white/10 px-4 py-2 text-xs uppercase tracking-[0.35em] text-white/60">
-              Persona-aware navigation
-            </div>
-          </div>
-          <div className="grid gap-6 lg:grid-cols-3">
-            {featurePillars.map((pillar) => (
-              <div key={pillar.title} className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
-                <p className="text-xs uppercase tracking-[0.45em] text-white/50">{pillar.label}</p>
-                <h3 className="mt-3 text-2xl font-semibold">{pillar.title}</h3>
-                <p className="mt-3 text-sm text-white/70">{pillar.copy}</p>
-                <div className="mt-6 inline-flex items-center gap-2 text-xs text-white/70">
-                  <BadgeCheck className="h-4 w-4 text-emerald-300" />
-                  Multi-tenant ready
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section id="mesh" className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="rounded-[32px] border border-white/10 bg-gradient-to-br from-white/10 to-white/0 p-8 backdrop-blur">
-            <p className="text-xs uppercase tracking-[0.4em] text-white/50">Neural mesh</p>
-            <h2 className="mt-4 text-3xl font-semibold">Digital twins breathing in telemetry + finance.</h2>
-            <p className="mt-4 text-sm text-white/70">
-              Bring together planner canvases, supplier bursts, and treasury instructions over an event mesh powered by Kafka + Pulsar. Every signal is versioned and replayable for audits.
-            </p>
-            <div className="mt-8 space-y-5">
-              {meshHighlights.map(({ title, body, icon: Icon }) => (
-                <div key={title} className="flex gap-4 rounded-2xl border border-white/10 bg-black/30 p-5">
-                  <Icon className="h-6 w-6 text-teal-200" />
-                  <div>
-                    <p className="text-base font-semibold">{title}</p>
-                    <p className="text-sm text-white/70">{body}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 backdrop-blur">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.4em] text-white/50">Mesh console</p>
-                <h3 className="mt-2 text-xl font-semibold">Live telemetry fabric</h3>
-              </div>
-              <CircuitBoard className="h-6 w-6 text-sky-200" />
-            </div>
-            <div className="mt-8 grid gap-6 text-sm">
-              {["13 telemetry clusters synced", "118 partner nodes live", "4 alerts muted via autopilot", "98.4% twin fidelity"].map((item) => (
-                <div key={item} className="rounded-2xl border border-white/10 bg-black/25 p-5">
-                  {item}
-                </div>
-              ))}
-            </div>
-            <div className="mt-8 rounded-2xl border border-white/10 bg-black/40 p-5 text-xs text-white/60">
-              All actions notarized to tenant-ledgers with cryptographic proofs. Superadmins gain oversight without touching proprietary tenant data.
-            </div>
-          </div>
-        </section>
-
-        <section id="copilot" className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 backdrop-blur">
-            <p className="text-xs uppercase tracking-[0.4em] text-white/50">AI Copilot</p>
-            <h2 className="mt-3 text-3xl font-semibold">Conversational command mesh.</h2>
-            <p className="mt-4 text-sm text-white/70">
-              Copilot fuses GPT-class reasoning with your policies, orchestrating playbooks across finance, supply, and ESG teams.
-            </p>
-            <div className="mt-8 space-y-4">
-              {copilotMoments.map((moment) => (
-                <div key={moment} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-black/30 p-5">
-                  <Cpu className="mt-1 h-5 w-5 text-emerald-200" />
-                  <p className="text-sm text-white/80">{moment}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-[32px] border border-white/10 bg-gradient-to-br from-white/10 to-white/0 p-8 backdrop-blur">
-            <div className="space-y-4">
-              <p className="text-xs uppercase tracking-[0.4em] text-white/50">Superadmin view</p>
-              <h3 className="text-2xl font-semibold">Provision tenants, ship copilots, audit impact.</h3>
-              <p className="text-sm text-white/70">
-                Build once, configure per tenant. The superadmin dashboard lets you mint environments, curate partner-level policies, and publish copilot skills with rollback safety.
+              {/* Content */}
+              <p className="text-gray-700 mb-6 italic">
+                "{testimonial.content}"
               </p>
-            </div>
-            <div className="mt-8 grid gap-4 text-sm text-white/80">
-              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/25 p-4">
-                <span>Tenants deployed</span>
-                <span className="text-2xl font-semibold">37</span>
-              </div>
-              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/25 p-4">
-                <span>Copilot skills live</span>
-                <span className="text-2xl font-semibold">82</span>
-              </div>
-              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/25 p-4">
-                <span>Policy updates this week</span>
-                <span className="text-2xl font-semibold">14</span>
+
+              {/* Author */}
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-2xl">
+                  {testimonial.avatar}
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">{testimonial.name}</p>
+                  <p className="text-sm text-gray-600">{testimonial.role}</p>
+                </div>
               </div>
             </div>
-            <div className="mt-8 rounded-2xl border border-white/10 bg-black/40 p-5 text-xs text-white/60">
-              Ready to activate a tenant? Hop into the access portal to launch superadmin tooling and begin orchestrating the mesh.
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// CTA Section
+function CTA() {
+  return (
+    <section className="py-16 md:py-24 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+          backgroundSize: '48px 48px'
+        }} />
+      </div>
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left Content */}
+          <div>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
+              Ready to Transform Your Business?
+            </h2>
+            <p className="text-lg text-blue-100 mb-8">
+              Join thousands of businesses already using Syspro to streamline operations and drive growth. 
+              Start your free 30-day trial today—no credit card required.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <button className="bg-white text-blue-600 px-8 py-3 rounded-lg hover:bg-gray-100 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl font-semibold">
+                Start Free Trial
+                <ArrowRight size={20} />
+              </button>
+              <button className="border-2 border-white text-white px-8 py-3 rounded-lg hover:bg-white/10 transition-all">
+                Schedule a Demo
+              </button>
+            </div>
+
+            <div className="flex items-center gap-4 text-blue-100 text-sm">
+              <span>✓ Free 30-day trial</span>
+              <span>✓ No credit card</span>
+              <span>✓ Cancel anytime</span>
             </div>
           </div>
-        </section>
+
+          {/* Right Image */}
+          <div className="hidden lg:block">
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-blue-100 to-blue-50 p-8 h-80 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-6xl mb-4">🤝</div>
+                <p className="text-gray-700 font-semibold">Business Meeting</p>
+                <p className="text-sm text-gray-600 mt-2">Professional collaboration</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Footer Component
+function Footer() {
+  const footerLinks = {
+    product: [
+      { label: 'Features', href: '#' },
+      { label: 'Pricing', href: '#' },
+      { label: 'Security', href: '#' },
+      { label: 'Integrations', href: '#' },
+      { label: 'Updates', href: '#' }
+    ],
+    company: [
+      { label: 'About Us', href: '#' },
+      { label: 'Careers', href: '#' },
+      { label: 'Blog', href: '#' },
+      { label: 'Press Kit', href: '#' },
+      { label: 'Partners', href: '#' }
+    ],
+    resources: [
+      { label: 'Documentation', href: '#' },
+      { label: 'Help Center', href: '#' },
+      { label: 'Community', href: '#' },
+      { label: 'Webinars', href: '#' },
+      { label: 'Case Studies', href: '#' }
+    ],
+    legal: [
+      { label: 'Privacy Policy', href: '#' },
+      { label: 'Terms of Service', href: '#' },
+      { label: 'Cookie Policy', href: '#' },
+      { label: 'GDPR', href: '#' },
+      { label: 'Compliance', href: '#' }
+    ]
+  };
+
+  return (
+    <footer className="bg-gray-900 text-gray-300">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        <div className="grid md:grid-cols-2 lg:grid-cols-6 gap-8 mb-12">
+          {/* Company Info */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">S</span>
+              </div>
+              <span className="text-xl font-bold text-white">Syspro</span>
+            </div>
+            <p className="text-gray-400 mb-6">
+              The all-in-one B2B ERP solution that empowers businesses to streamline operations and drive growth.
+            </p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <span>📧</span>
+                <span>contact@syspro.com</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span>📞</span>
+                <span>+1 (555) 123-4567</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span>📍</span>
+                <span>San Francisco, CA</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Product Links */}
+          <div>
+            <h3 className="text-white font-semibold mb-4">Product</h3>
+            <ul className="space-y-2">
+              {footerLinks.product.map((link, index) => (
+                <li key={index}>
+                  <a href={link.href} className="hover:text-blue-400 transition-colors text-sm">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Company Links */}
+          <div>
+            <h3 className="text-white font-semibold mb-4">Company</h3>
+            <ul className="space-y-2">
+              {footerLinks.company.map((link, index) => (
+                <li key={index}>
+                  <a href={link.href} className="hover:text-blue-400 transition-colors text-sm">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Resources Links */}
+          <div>
+            <h3 className="text-white font-semibold mb-4">Resources</h3>
+            <ul className="space-y-2">
+              {footerLinks.resources.map((link, index) => (
+                <li key={index}>
+                  <a href={link.href} className="hover:text-blue-400 transition-colors text-sm">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Legal Links */}
+          <div>
+            <h3 className="text-white font-semibold mb-4">Legal</h3>
+            <ul className="space-y-2">
+              {footerLinks.legal.map((link, index) => (
+                <li key={index}>
+                  <a href={link.href} className="hover:text-blue-400 transition-colors text-sm">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-800 pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <p className="text-sm text-gray-400">
+              © 2024 Syspro. All rights reserved.
+            </p>
+            <div className="flex gap-6 mt-4 md:mt-0">
+              <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors">Twitter</a>
+              <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors">LinkedIn</a>
+              <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors">GitHub</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// Main Export
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-white">
+      <Header />
+      <main>
+        <Hero />
+        <Stats />
+        <Features />
+        <Benefits />
+        <Testimonials />
+        <CTA />
       </main>
+      <Footer />
     </div>
   );
 }

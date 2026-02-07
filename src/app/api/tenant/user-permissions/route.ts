@@ -1,62 +1,99 @@
 /**
  * API endpoint for getting user permissions
  * GET /api/tenant/user-permissions?tenantSlug=...
+ * 
+ * This endpoint returns the computed permissions for the current user,
+ * taking into account:
+ * - User's assigned role
+ * - Role's base permissions
+ * - Tenant-wide module restrictions
+ * - Feature flags
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import type { UserPermissions } from "@/lib/permissions";
+import { applyRestrictions } from "@/lib/permissions";
+import { getCurrentUser, validateTenantAccess, getRolePermissionsFromDB } from "@/lib/auth-helpers";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const tenantSlug = searchParams.get("tenantSlug") || "kreatix-default";
 
-    // TODO: In production, fetch actual user from session/auth
-    // and their assigned role and permissions from the database
+    // Step 1: Get current user from request (session/headers)
+    const user = getCurrentUser(request);
     
-    // For now, return default admin permissions
-    // In a real app, this would:
-    // 1. Get the current user from the session
-    // 2. Look up their role assignments for the tenant
-   // 3. Get the role definition and permissions
-    // 4. Apply any tenant-admin restrictions
-    // 5. Return the computed permissions
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not authenticated" },
+        { status: 401 }
+      );
+    }
 
+    // Step 2: Validate user has access to this tenant
+    if (!validateTenantAccess(user, tenantSlug)) {
+      return NextResponse.json(
+        { error: "Access denied to this tenant" },
+        { status: 403 }
+      );
+    }
+
+    // Step 3: Get user's role permissions
+    const rolePermissions = await getRolePermissionsFromDB(user.roleId);
+
+    // Step 4: Build the permissions object
     const permissions: UserPermissions = {
-      userId: "current-user", // Would come from session
+      userId: user.id,
       tenantSlug,
-      role: "admin",
+      role: user.roleId,
       scope: "tenant",
-      modules: {
-        overview: "admin",
-        crm: "admin",
-        finance: "admin",
-        people: "admin",
-        projects: "admin",
-        billing: "admin",
-        itsupport: "admin",
-        revops: "admin",
-        automation: "admin",
-        admin: "admin",
-        integrations: "admin",
-        analytics: "admin",
-        security: "admin",
-        inventory: "admin",
-        procurement: "admin",
-        policies: "admin",
-        reports: "admin",
-        dashboards: "admin",
-      },
-      features: ["all"],
-      restrictions: [], // Tenant admin can set restrictions here
+      modules: rolePermissions,
+      features: getFeatureFlags(user.roleId),
+      restrictions: [], // Will be populated from tenant restrictions endpoint
     };
 
-    return NextResponse.json({ permissions }, { status: 200 });
+    // Step 5: Apply tenant-wide restrictions if they exist
+    // TODO: Fetch restrictions from access-restrictions endpoint and apply them
+    // const restrictions = await getTenantRestrictions(tenantSlug);
+    // const finalPermissions = applyRestrictions(permissions, restrictions);
+
+    return NextResponse.json({
+      permissions,
+    });
   } catch (error) {
-    console.error("Error fetching user permissions:", error);
+    console.error("Failed to fetch permissions:", error);
     return NextResponse.json(
       { error: "Failed to fetch permissions" },
       { status: 500 }
     );
   }
+}
+
+/**
+ * Get feature flags for a role
+ * Feature flags control access to beta/experimental features
+ */
+function getFeatureFlags(roleId: string): string[] {
+  const featuresByRole: Record<string, string[]> = {
+    admin: [
+      "all",
+      "beta_features",
+      "advanced_analytics",
+      "custom_reports",
+      "api_access",
+    ],
+    manager: [
+      "reports",
+      "advanced_analytics",
+      "custom_reports",
+    ],
+    editor: [
+      "reports",
+    ],
+    viewer: [
+      "reports",
+    ],
+  };
+
+  return featuresByRole[roleId] || [];
 }

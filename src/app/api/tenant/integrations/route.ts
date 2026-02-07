@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { randomUUID } from "crypto";
+import { enforcePermission } from "@/lib/api-permission-enforcer";
 
 let CONNECTORS = [
   { id: "conn-1", tenantSlug: "kreatix-default", name: "Stripe", enabled: true },
@@ -10,20 +11,37 @@ let API_KEYS = [
   { id: "key-1", tenantSlug: "kreatix-default", label: "Admin key", key: "sk_live_12345", revoked: false },
 ];
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const tenantSlug = url.searchParams.get("tenantSlug") ?? "kreatix-default";
-    return NextResponse.json({ connectors: CONNECTORS.filter((c) => c.tenantSlug === tenantSlug), apiKeys: API_KEYS.filter((k) => k.tenantSlug === tenantSlug) });
+    
+    // Enforce read permission on integrations module
+    const check = await enforcePermission(request, "integrations", "read", tenantSlug);
+    if (!check.allowed) {
+      return check.response;
+    }
+
+    return NextResponse.json({ 
+      connectors: CONNECTORS.filter((c) => c.tenantSlug === tenantSlug), 
+      apiKeys: API_KEYS.filter((k) => k.tenantSlug === tenantSlug) 
+    });
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const tenantSlug = url.searchParams.get("tenantSlug") ?? "kreatix-default";
+    
+    // Enforce admin permission on integrations module (strict)
+    const check = await enforcePermission(request, "integrations", "admin", tenantSlug);
+    if (!check.allowed) {
+      return check.response;
+    }
+
     const body = await request.json().catch(() => ({}));
     if (body.type === "connector") {
       const connector = { id: `conn-${randomUUID().slice(0,6)}`, tenantSlug, name: body.name ?? "Unknown", enabled: !!body.enabled };
@@ -41,10 +59,17 @@ export async function POST(request: Request) {
   }
 }
 
-export async function PATCH(request: Request) {
+export async function PATCH(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const tenantSlug = url.searchParams.get("tenantSlug") ?? "kreatix-default";
+    
+    // Enforce admin permission on integrations module
+    const check = await enforcePermission(request, "integrations", "admin", tenantSlug);
+    if (!check.allowed) {
+      return check.response;
+    }
+
     const body = await request.json().catch(() => ({}));
     if (body.connectorId) {
       CONNECTORS = CONNECTORS.map((c) => (c.id === body.connectorId && c.tenantSlug === tenantSlug ? { ...c, ...body.updates } : c));
@@ -60,10 +85,17 @@ export async function PATCH(request: Request) {
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const tenantSlug = url.searchParams.get("tenantSlug") ?? "kreatix-default";
+    
+    // Enforce admin permission on integrations module
+    const check = await enforcePermission(request, "integrations", "admin", tenantSlug);
+    if (!check.allowed) {
+      return check.response;
+    }
+
     const id = url.searchParams.get("id");
     const type = url.searchParams.get("type");
     if (type === "connector" && id) {
@@ -78,4 +110,5 @@ export async function DELETE(request: Request) {
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
+}
 }

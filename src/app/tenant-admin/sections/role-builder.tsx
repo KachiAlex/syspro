@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { useForm } from "@/lib/use-form";
 import { TextInput, FormButton, FormAlert } from "@/components/form";
+import { usePermissions, useCanAction } from "@/hooks/use-permissions";
 
 type Role = {
   id: string;
@@ -89,6 +90,10 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const ts = tenantSlug ?? "kreatix-default";
+  
+  // Get user permissions
+  const permissions = usePermissions();
+  const { canCreate, canEdit, canDelete } = useCanAction(permissions, "admin");
 
   const form = useForm<RoleFormData>({
     initialValues: {
@@ -239,7 +244,9 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
               setShowCreateForm(!showCreateForm);
               form.resetForm();
             }}
-            className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            disabled={!canCreate || permissions.loading}
+            className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            title={!canCreate ? "You don't have permission to create roles" : undefined}
           >
             {showCreateForm ? "Cancel" : "+ Create Role"}
           </button>
@@ -515,13 +522,17 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                         <div className="flex gap-2">
                           <button
                             onClick={() => startEdit(role)}
-                            className="rounded-full border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50"
+                            disabled={!canEdit || permissions.loading}
+                            className="rounded-full border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={!canEdit ? "You don't have permission to edit roles" : undefined}
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDelete(role.id)}
-                            className="rounded-full border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50"
+                            disabled={!canDelete || permissions.loading}
+                            className="rounded-full border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={!canDelete ? "You don't have permission to delete roles" : undefined}
                           >
                             Delete
                           </button>

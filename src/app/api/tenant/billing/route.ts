@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { randomUUID } from "crypto";
+import { enforcePermission } from "@/lib/api-permission-enforcer";
 
 let INVOICES = [
   { id: "INV-1001", tenantSlug: "kreatix-default", amount: "₦48,200", dueDate: "2026-02-05", status: "pending" },
@@ -10,10 +11,17 @@ let SUBSCRIPTIONS = [
   { id: "SUB-01", tenantSlug: "kreatix-default", plan: "Business", status: "active", nextBillingDate: "2026-02-28", seats: 12 },
 ];
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const tenantSlug = url.searchParams.get("tenantSlug") ?? "kreatix-default";
+    
+    // Enforce read permission on billing module
+    const check = await enforcePermission(request, "billing", "read", tenantSlug);
+    if (!check.allowed) {
+      return check.response;
+    }
+
     const payload = {
       invoices: INVOICES.filter((i) => i.tenantSlug === tenantSlug),
       subscriptions: SUBSCRIPTIONS.filter((s) => s.tenantSlug === tenantSlug),
@@ -24,10 +32,17 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const tenantSlug = url.searchParams.get("tenantSlug") ?? "kreatix-default";
+    
+    // Enforce write permission on billing module
+    const check = await enforcePermission(request, "billing", "write", tenantSlug);
+    if (!check.allowed) {
+      return check.response;
+    }
+
     const body = await request.json().catch(() => ({}));
     if (body.type === "invoice") {
       const invoice = { id: `INV-${randomUUID().slice(0,8)}`, tenantSlug, amount: body.amount ?? "₦0", dueDate: body.dueDate ?? new Date().toISOString(), status: body.status ?? "pending" };
@@ -45,10 +60,17 @@ export async function POST(request: Request) {
   }
 }
 
-export async function PATCH(request: Request) {
+export async function PATCH(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const tenantSlug = url.searchParams.get("tenantSlug") ?? "kreatix-default";
+    
+    // Enforce write permission on billing module
+    const check = await enforcePermission(request, "billing", "write", tenantSlug);
+    if (!check.allowed) {
+      return check.response;
+    }
+
     const body = await request.json().catch(() => ({}));
     if (body.invoiceId) {
       INVOICES = INVOICES.map((inv) => (inv.id === body.invoiceId && inv.tenantSlug === tenantSlug ? { ...inv, ...body.updates } : inv));
@@ -64,10 +86,17 @@ export async function PATCH(request: Request) {
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const tenantSlug = url.searchParams.get("tenantSlug") ?? "kreatix-default";
+    
+    // Enforce write permission on billing module
+    const check = await enforcePermission(request, "billing", "write", tenantSlug);
+    if (!check.allowed) {
+      return check.response;
+    }
+
     const id = url.searchParams.get("id");
     const type = url.searchParams.get("type");
     if (type === "invoice" && id) {

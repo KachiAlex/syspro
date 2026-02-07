@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { useForm } from "@/lib/use-form";
+import { usePermissions, useCanAction } from "@/hooks/use-permissions";
 
 type Employee = {
   id: string;
@@ -30,6 +31,10 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const ts = tenantSlug ?? "kreatix-default";
+  
+  // Get user permissions
+  const permissions = usePermissions();
+  const { canCreate, canEdit, canDelete } = useCanAction(permissions, "people");
 
   const form = useForm<EmployeeFormData>({
     initialValues: {
@@ -198,7 +203,12 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
               className="rounded-lg border px-3 py-2"
             />
           </div>
-          <button type="submit" disabled={form.isSubmitting} className="rounded-full bg-slate-900 px-4 py-2 text-white disabled:opacity-50">
+          <button 
+            type="submit" 
+            disabled={form.isSubmitting || !canCreate || permissions.loading} 
+            className="rounded-full bg-slate-900 px-4 py-2 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            title={!canCreate ? "You don't have permission to create employees" : undefined}
+          >
             {form.isSubmitting ? "Adding..." : "Add employee"}
           </button>
 
@@ -268,8 +278,22 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
                         <span className={`text-xs font-semibold rounded-full px-2 py-1 ${emp.status === "active" ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-600"}`}>{emp.status}</span>
                       </td>
                       <td className="flex gap-2">
-                        <button onClick={() => startEdit(emp)} className="rounded-full border px-3 py-1 text-xs">Edit</button>
-                        <button onClick={() => handleDelete(emp.id)} className="rounded-full border border-rose-200 px-3 py-1 text-xs text-rose-700">Delete</button>
+                        <button 
+                          onClick={() => startEdit(emp)} 
+                          disabled={!canEdit || permissions.loading}
+                          className="rounded-full border px-3 py-1 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                          title={!canEdit ? "You don't have permission to edit employees" : undefined}
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(emp.id)} 
+                          disabled={!canDelete || permissions.loading}
+                          className="rounded-full border border-rose-200 px-3 py-1 text-xs text-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title={!canDelete ? "You don't have permission to delete employees" : undefined}
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   )

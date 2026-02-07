@@ -2,27 +2,42 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureAdminTables, insertEmployee, getEmployees, updateEmployee, deleteEmployee } from "@/lib/admin/db";
 import { extractAuthContext, requirePermission, validateTenant } from "@/lib/auth-helper";
 import { CreateEmployeeSchema, UpdateEmployeeSchema, safeParse } from "@/lib/validation";
+import { enforcePermission } from "@/lib/api-permission-enforcer";
+
+// Helper to get tenantSlug from request
+function getTenantSlug(request: NextRequest): string {
+  return new URL(request.url).searchParams.get("tenantSlug") || "kreatix-default";
+}
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = extractAuthContext(request);
-    const tenantSlug = validateTenant(auth.tenantSlug);
-    requirePermission(auth.userRole, "read");
+    const tenantSlug = getTenantSlug(request);
+    
+    // Enforce read permission on people module
+    const check = await enforcePermission(request, "people", "read", tenantSlug);
+    if (!check.allowed) {
+      return check.response;
+    }
+
     await ensureAdminTables();
     const employees = await getEmployees(tenantSlug);
     return NextResponse.json({ tenant: tenantSlug, employees });
   } catch (error) {
     console.error("Employee GET failed", error);
     const message = error instanceof Error ? error.message : "Unable to fetch employees";
-    return NextResponse.json({ error: message }, { status: message.includes("Unauthorized") ? 403 : 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = extractAuthContext(request);
-    const tenantSlug = validateTenant(auth.tenantSlug);
-    requirePermission(auth.userRole, "write");
+    const tenantSlug = getTenantSlug(request);
+    
+    // Enforce write permission on people module
+    const check = await enforcePermission(request, "people", "write", tenantSlug);
+    if (!check.allowed) {
+      return check.response;
+    }
     
     const body = await request.json().catch(() => ({}));
     const validation = safeParse(CreateEmployeeSchema, body);
@@ -36,16 +51,20 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Employee create failed", error);
     const message = error instanceof Error ? error.message : "Unable to create employee";
-    return NextResponse.json({ error: message }, { status: message.includes("Unauthorized") ? 403 : 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 export async function PATCH(request: NextRequest) {
   try {
-    const auth = extractAuthContext(request);
-    const tenantSlug = validateTenant(auth.tenantSlug);
+    const tenantSlug = getTenantSlug(request);
     const id = new URL(request.url).searchParams.get("id");
-    requirePermission(auth.userRole, "write");
+    
+    // Enforce write permission on people module
+    const check = await enforcePermission(request, "people", "write", tenantSlug);
+    if (!check.allowed) {
+      return check.response;
+    }
     
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
     
@@ -61,16 +80,20 @@ export async function PATCH(request: NextRequest) {
   } catch (error) {
     console.error("Employee patch failed", error);
     const message = error instanceof Error ? error.message : "Unable to update employee";
-    return NextResponse.json({ error: message }, { status: message.includes("Unauthorized") ? 403 : 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
-    const auth = extractAuthContext(request);
-    const tenantSlug = validateTenant(auth.tenantSlug);
+    const tenantSlug = getTenantSlug(request);
     const id = new URL(request.url).searchParams.get("id");
-    requirePermission(auth.userRole, "delete");
+    
+    // Enforce admin permission on people module
+    const check = await enforcePermission(request, "people", "admin", tenantSlug);
+    if (!check.allowed) {
+      return check.response;
+    }
     
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
     await ensureAdminTables();
@@ -79,6 +102,6 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     console.error("Employee delete failed", error);
     const message = error instanceof Error ? error.message : "Unable to delete employee";
-    return NextResponse.json({ error: message }, { status: message.includes("Unauthorized") ? 403 : 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
