@@ -32,11 +32,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Step 2: Validate user has access to this tenant
-    if (!validateTenantAccess(user, tenantSlug)) {
-      return NextResponse.json(
-        { error: "Access denied to this tenant" },
-        { status: 403 }
-      );
+    const hasAccess = await validateTenantAccess(user, tenantSlug);
+    if (!hasAccess) {
+      return NextResponse.json({ error: "Access denied to this tenant" }, { status: 403 });
     }
 
     // Step 3: Get user's role permissions
