@@ -59,12 +59,13 @@ export function usePermissions() {
 
         // Attempt to get from API endpoint that checks current session
         const res = await fetch("/api/user/permissions", {
+          cache: "no-store",
+        }).catch(() => null);
+
         if (res && res.status === 401 && typeof window !== "undefined") {
           window.location.assign("/access?error=auth_required");
           return;
         }
-          cache: "no-store",
-        }).catch(() => null);
 
         if (res && res.ok) {
           const data = await res.json();
