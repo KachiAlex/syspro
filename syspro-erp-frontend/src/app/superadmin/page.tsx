@@ -75,6 +75,8 @@ export default function SuperadminPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [planFilter, setPlanFilter] = useState('all');
   const [showTenantModal, setShowTenantModal] = useState(false);
+  const [editingSlug, setEditingSlug] = useState<string | null>(null);
+  const [isReadOnly, setIsReadOnly] = useState(false);
   const [formState, setFormState] = useState<TenantFormState>(INITIAL_TENANT_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -138,6 +140,7 @@ export default function SuperadminPage() {
   function handleOpenTenantModal() {
     setFormError(null);
     setFormSuccess(null);
+    setEditingSlug(null);
     setShowTenantModal(true);
   }
 
@@ -145,6 +148,77 @@ export default function SuperadminPage() {
     setShowTenantModal(false);
     setFormState(INITIAL_TENANT_FORM);
     setFormError(null);
+    setEditingSlug(null);
+    setIsReadOnly(false);
+  }
+
+  function handleViewTenant(tenant: Tenant) {
+    // simple view behaviour: open modal in read-only mode (reuse modal)
+    setFormError(null);
+    setFormSuccess(null);
+    setFormState({
+      companyName: tenant.name || '',
+      companySlug: tenant.slug || '',
+      region: tenant.region || '',
+      industry: '',
+      seats: tenant.seats ? String(tenant.seats) : '',
+      adminName: '',
+      adminEmail: tenant.email || '',
+      adminPassword: '',
+      confirmPassword: '',
+      adminNotes: '',
+    });
+    setEditingSlug(tenant.slug ?? null);
+    setIsReadOnly(true);
+    setShowTenantModal(true);
+  }
+
+  function handleEditTenant(tenant: Tenant) {
+    setFormError(null);
+    setFormSuccess(null);
+    setFormState({
+      companyName: tenant.name || '',
+      companySlug: tenant.slug || '',
+      region: tenant.region || '',
+      industry: '',
+      seats: tenant.seats ? String(tenant.seats) : '',
+      adminName: '',
+      adminEmail: tenant.email || '',
+      adminPassword: '',
+      confirmPassword: '',
+      adminNotes: '',
+    });
+    setEditingSlug(tenant.slug ?? null);
+    setIsReadOnly(false);
+    setShowTenantModal(true);
+  }
+
+  async function handleDeleteTenant(slug?: string) {
+    if (!slug) return;
+    const confirmed = confirm(`Delete tenant ${slug}? This cannot be undone.`);
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/tenants/${encodeURIComponent(slug)}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.status === 404) {
+        // Tenant already missing on server — remove from UI list to keep in sync
+        setTenants(prev => prev.filter(t => t.slug !== slug));
+        setFormSuccess(`Tenant ${slug} was not found on server and was removed from the list.`);
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error(data?.error || 'Unable to delete tenant');
+      }
+
+      setTenants(prev => prev.filter(t => t.slug !== slug));
+      setFormSuccess(`Tenant ${slug} deleted.`);
+    } catch (err) {
+      console.error('Delete tenant failed', err);
+      setFormError(err instanceof Error ? err.message : String(err));
+    }
   }
 
   function handleFieldChange(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
@@ -183,6 +257,7 @@ export default function SuperadminPage() {
       setTenants(prev => [data.tenantSummary, ...prev.filter(t => t.slug !== data.tenantSummary.slug)]);
       setFormState(INITIAL_TENANT_FORM);
       setShowTenantModal(false);
+        setIsReadOnly(false);
       setFormSuccess(`Tenant ${data.tenantSummary.name} created successfully.`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to create tenant";
@@ -410,7 +485,7 @@ export default function SuperadminPage() {
               </thead>
               <tbody>
                 {filteredTenants.map((tenant, idx) => (
-                  <tr key={tenant.slug} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                  <tr key={tenant.slug ?? `tenant-${idx}`} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                     <td className="px-6 py-4">
                       <div>
                         <p className="font-medium text-gray-900">{tenant.name}</p>
@@ -436,13 +511,13 @@ export default function SuperadminPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2">
-                        <button className="p-2 hover:bg-gray-200 rounded transition-colors" title="View">
+                        <button onClick={() => handleViewTenant(tenant)} className="p-2 hover:bg-gray-200 rounded transition-colors" title="View" disabled={!tenant.slug}>
                           <Eye className="w-4 h-4 text-gray-600" />
                         </button>
-                        <button className="p-2 hover:bg-gray-200 rounded transition-colors" title="Edit">
+                        <button onClick={() => handleEditTenant(tenant)} className="p-2 hover:bg-gray-200 rounded transition-colors" title="Edit" disabled={!tenant.slug}>
                           <Edit className="w-4 h-4 text-gray-600" />
                         </button>
-                        <button className="p-2 hover:bg-gray-200 rounded transition-colors" title="Delete">
+                        <button onClick={() => handleDeleteTenant(tenant.slug)} className="p-2 hover:bg-gray-200 rounded transition-colors" title="Delete" disabled={!tenant.slug}>
                           <Trash2 className="w-4 h-4 text-red-600" />
                         </button>
                       </div>
@@ -487,8 +562,9 @@ export default function SuperadminPage() {
                     value={formState.companyName}
                     onChange={handleFieldChange}
                     placeholder="Acme Corp"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${isReadOnly ? 'bg-gray-50 border-gray-200' : 'border-gray-300 focus:ring-blue-600'}`}
                     required
+                    readOnly={isReadOnly}
                   />
                 </div>
                 <div>
@@ -499,8 +575,9 @@ export default function SuperadminPage() {
                     value={formState.companySlug}
                     onChange={handleFieldChange}
                     placeholder="acme-corp"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${isReadOnly ? 'bg-gray-50 border-gray-200' : 'border-gray-300 focus:ring-blue-600'}`}
                     required
+                    readOnly={isReadOnly}
                   />
                 </div>
               </div>
@@ -512,12 +589,13 @@ export default function SuperadminPage() {
                     name="region"
                     value={formState.region}
                     onChange={handleFieldChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none ${isReadOnly ? 'bg-gray-50 border-gray-200' : 'border-gray-300 focus:ring-2 focus:ring-blue-600'}`}
                     required
+                    disabled={isReadOnly}
                   >
                     <option value="">Select region</option>
                     {REGION_OPTIONS.map(r => (
-                      <option key={r} value={r}>{r}</option>
+                    <option key={r} value={r}>{r}</option>
                     ))}
                   </select>
                 </div>
@@ -543,8 +621,9 @@ export default function SuperadminPage() {
                     value={formState.adminName}
                     onChange={handleFieldChange}
                     placeholder="John Doe"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none ${isReadOnly ? 'bg-gray-50 border-gray-200' : 'border-gray-300 focus:ring-2 focus:ring-blue-600'}`}
                     required
+                    readOnly={isReadOnly}
                   />
                 </div>
                 <div>
@@ -555,8 +634,9 @@ export default function SuperadminPage() {
                     value={formState.adminEmail}
                     onChange={handleFieldChange}
                     placeholder="john@acme.com"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none ${isReadOnly ? 'bg-gray-50 border-gray-200' : 'border-gray-300 focus:ring-2 focus:ring-blue-600'}`}
                     required
+                    readOnly={isReadOnly}
                   />
                 </div>
               </div>
@@ -598,18 +678,18 @@ export default function SuperadminPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  disabled={isSubmitting || isReadOnly}
+                  className={`flex-1 flex items-center justify-center gap-2 ${isReadOnly ? 'bg-gray-300 text-gray-700 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'} px-4 py-2 rounded-lg disabled:opacity-50 transition-colors`}
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Creating...
+                      {editingSlug ? 'Updating...' : 'Creating...'}
                     </>
                   ) : (
                     <>
                       <ArrowRight className="w-4 h-4" />
-                      Deploy Tenant
+                      {editingSlug ? 'Update Tenant' : 'Deploy Tenant'}
                     </>
                   )}
                 </button>

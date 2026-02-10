@@ -63,7 +63,7 @@ export async function GET() {
     await ensureTenantTable(sql);
 
     const rows = (await sql`
-      select name, slug, region, status, ledger_delta, seats from tenants order by created_at desc nulls last
+      select name, slug, region, status, ledger_delta, seats from tenants order by "createdAt" desc nulls last
     `) as TenantRow[];
 
     return NextResponse.json({ tenants: rows.map(mapTenantRow) });

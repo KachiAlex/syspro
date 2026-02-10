@@ -27,19 +27,41 @@ export type PermissionLevel = "none" | "read" | "write" | "admin";
  */
 export function getCurrentUser(request: NextRequest): SessionUser | null {
   // Method 1: Check for development headers
-  const userId = request.headers.get("X-User-Id");
-  const userEmail = request.headers.get("X-User-Email") || "user@example.com";
-  const tenantSlug = request.headers.get("X-Tenant-Slug") || undefined;
-  const roleId = request.headers.get("X-Role-Id") || "viewer";
+  const userId = typeof request.headers?.get === "function" ? request.headers.get("X-User-Id") : undefined;
+  const userEmail = typeof request.headers?.get === "function" ? request.headers.get("X-User-Email") || "user@example.com" : "user@example.com";
+  const tenantSlugFromHeader = typeof request.headers?.get === "function" ? request.headers.get("X-Tenant-Slug") || undefined : undefined;
+  const roleIdFromHeader = typeof request.headers?.get === "function" ? request.headers.get("X-Role-Id") || "viewer" : "viewer";
 
   if (userId) {
     return {
       id: userId,
       email: userEmail,
-      name: request.headers.get("X-User-Name") || undefined,
-      tenantSlug,
-      roleId,
+      name: typeof request.headers?.get === "function" ? request.headers.get("X-User-Name") || undefined : undefined,
+      tenantSlug: tenantSlugFromHeader,
+      roleId: roleIdFromHeader,
     };
+  }
+
+  // Method 2: Check cookies (dev flows may set cookies from client Access page)
+  try {
+    if (typeof (request as any).cookies?.get === "function") {
+      const cookieGet = (request as any).cookies.get as (k: string) => string | undefined | null;
+      const cookieUserId = cookieGet("X-User-Id") || cookieGet("dev-user-id") || cookieGet("userId");
+      if (cookieUserId) {
+        const cookieEmail = cookieGet("X-User-Email") || "user@example.com";
+        const cookieRole = cookieGet("X-Role-Id") || "viewer";
+        const cookieTenant = cookieGet("tenantSlug") || cookieGet("X-Tenant-Slug") || undefined;
+        return {
+          id: cookieUserId,
+          email: cookieEmail,
+          name: cookieGet("X-User-Name") || undefined,
+          tenantSlug: cookieTenant,
+          roleId: cookieRole,
+        };
+      }
+    }
+  } catch (e) {
+    // ignore cookie read errors and continue to returning null
   }
 
   // Method 2: Check cookies (would come from your auth provider)

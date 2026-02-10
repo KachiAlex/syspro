@@ -79,6 +79,8 @@ export default function SuperadminPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Load tenants
   useEffect(() => {
@@ -189,6 +191,34 @@ export default function SuperadminPage() {
       setFormError(message);
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function handleDeleteTenant(slug: string) {
+    if (!slug) return;
+    const ok = confirm(`Delete tenant "${slug}"? This cannot be undone.`);
+    if (!ok) return;
+
+    setActionError(null);
+    setActionLoading(slug);
+    try {
+      const res = await fetch(`/api/tenants/${encodeURIComponent(slug)}`, { method: 'DELETE' });
+      if (res.status === 404) {
+        setTenants(prev => prev.filter(t => t.slug !== slug));
+        return;
+      }
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? 'Unable to delete tenant');
+      }
+
+      setTenants(prev => prev.filter(t => t.slug !== slug));
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unable to delete tenant';
+      setActionError(msg);
+    } finally {
+      setActionLoading(null);
     }
   }
 
@@ -442,7 +472,12 @@ export default function SuperadminPage() {
                         <button className="p-2 hover:bg-gray-200 rounded transition-colors" title="Edit">
                           <Edit className="w-4 h-4 text-gray-600" />
                         </button>
-                        <button className="p-2 hover:bg-gray-200 rounded transition-colors" title="Delete">
+                        <button
+                          onClick={() => handleDeleteTenant(tenant.slug)}
+                          disabled={actionLoading === tenant.slug}
+                          className="p-2 hover:bg-gray-200 rounded transition-colors disabled:opacity-50"
+                          title="Delete"
+                        >
                           <Trash2 className="w-4 h-4 text-red-600" />
                         </button>
                       </div>

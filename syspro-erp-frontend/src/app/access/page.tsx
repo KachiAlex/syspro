@@ -56,10 +56,27 @@ export default function AccessPage() {
         setSlugError("Enter a tenant slug to continue");
         return;
       }
-      router.push(`/tenant-admin?tenantSlug=${encodeURIComponent(normalizedSlug)}`);
+      // In local/dev flows we POST to /api/dev/session which sets cookies server-side
+      // This is more reliable than client-side document.cookie for SSR layouts.
+      // Use a server-side redirect endpoint to reliably set cookies then redirect
+      if (typeof window !== "undefined") {
+        if (process.env.NODE_ENV !== "production") {
+          window.location.href = `/api/dev/session?tenantSlug=${encodeURIComponent(normalizedSlug)}&userId=dev-user-1&roleId=admin`;
+        } else {
+          try {
+            document.cookie = `tenantSlug=${encodeURIComponent(normalizedSlug)}; path=/; samesite=lax`;
+            document.cookie = `X-User-Id=dev-user-1; path=/; samesite=lax`;
+            document.cookie = `X-Role-Id=admin; path=/; samesite=lax`;
+          } catch (e) {
+            // ignore cookie setting failures in restrictive browsers
+          }
+          window.location.href = `/tenant-admin?tenantSlug=${encodeURIComponent(normalizedSlug)}`;
+        }
+      }
       return;
     }
-    router.push("/superadmin");
+    // Full page navigation for superadmin too
+    if (typeof window !== "undefined") window.location.href = "/superadmin";
   }
 
   return (

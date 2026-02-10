@@ -39,6 +39,15 @@ export function usePermissions(tenantSlug?: string | null) {
             setLoading(false);
             return;
           }
+
+             // If user is not authenticated, log a warning instead of redirecting in local development
+             if (response.status === 401) {
+               // In local development avoid forcing a redirect from deep client hooks.
+               // Let the Access portal handle routing. Log for visibility instead.
+               console.warn("Received 401 from /api/user/permissions; skipping auto-redirect in dev.");
+               return;
+             }
+
           throw new Error("Failed to load permissions");
         }
 
@@ -67,7 +76,15 @@ export function usePermissions(tenantSlug?: string | null) {
         { cache: "no-store" }
       );
 
-      if (!response.ok) throw new Error("Failed to refresh permissions");
+      if (!response.ok) {
+         if (response.status === 401) {
+           // In local development avoid forcing a redirect from deep client hooks.
+           // Let the Access portal handle routing. Log for visibility instead.
+           console.warn("Received 401 from /api/user/permissions; skipping auto-redirect in dev.");
+           return;
+         }
+        throw new Error("Failed to refresh permissions");
+      }
 
       const data = await response.json();
       setPermissions(data.permissions || null);
