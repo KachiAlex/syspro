@@ -462,6 +462,34 @@ export async function listLeads(filters: Partial<{ tenantSlug: string; regionId:
   return rows.map(normalizeLeadRow);
 }
 
+export async function countLeads(filters: Partial<{ tenantSlug: string; regionId: string; branchId: string; salesOfficerId: string }>) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  const params: any[] = [];
+  let idx = 1;
+  let where = "where 1=1";
+  if (filters.tenantSlug) {
+    params.push(filters.tenantSlug);
+    where += ` and tenant_slug = $${idx++}`;
+  }
+  if (filters.regionId) {
+    params.push(filters.regionId);
+    where += ` and region_id = $${idx++}`;
+  }
+  if (filters.branchId) {
+    params.push(filters.branchId);
+    where += ` and branch_id = $${idx++}`;
+  }
+  if (filters.salesOfficerId) {
+    params.push(filters.salesOfficerId);
+    where += ` and assigned_officer_id = $${idx++}`;
+  }
+
+  const query = `select count(*)::int as cnt from crm_leads ${where}`;
+  const rows = (await sql(query, params)) as any[];
+  return rows.length ? Number(rows[0].cnt) : 0;
+}
+
 function normalizeLeadRow(row: any) {
   return {
     id: row.id as string,

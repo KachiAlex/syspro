@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { CRM_LEAD_STAGES, CRM_LEAD_SOURCES } from "@/lib/crm/types";
-import { insertLead } from "@/lib/crm/db";
+import { insertLead, listLeads, countLeads } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
 
 const leadSchema = z.object({
@@ -69,7 +69,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const leads = await listLeads({ tenantSlug, regionId, branchId, salesOfficerId, limit, offset } as any);
-    return NextResponse.json({ leads });
+    const total = await countLeads({ tenantSlug, regionId, branchId, salesOfficerId } as any);
+    return NextResponse.json({ leads, total });
   } catch (error) {
     return handleDatabaseError(error, "List leads");
   }

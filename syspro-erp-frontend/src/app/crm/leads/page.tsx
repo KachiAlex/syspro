@@ -21,6 +21,8 @@ export default function LeadsPage({ tenantSlug }: { tenantSlug?: string | null }
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(12);
+  const [total, setTotal] = useState<number | null>(null);
+  const totalPages = total !== null ? Math.max(1, Math.ceil(total / pageSize)) : null;
 
   const loadLeads = (p = page, size = pageSize) => {
     setLoading(true);
@@ -33,10 +35,11 @@ export default function LeadsPage({ tenantSlug }: { tenantSlug?: string | null }
       { cache: "no-store" }
     )
       .then((r) => r.json())
-      .then((data) => {
-        if (data?.leads) setLeads(data.leads);
-        else setError("No leads returned");
-      })
+        .then((data) => {
+          if (data?.leads) setLeads(data.leads);
+          else setError("No leads returned");
+          if (typeof data?.total === "number") setTotal(data.total);
+        })
       .catch((err) => setError(String(err?.message ?? err)))
       .finally(() => setLoading(false));
   };
@@ -116,20 +119,18 @@ export default function LeadsPage({ tenantSlug }: { tenantSlug?: string | null }
 
           <button
             onClick={() => {
-              // only advance if we received a full page (simple heuristic)
-              if (leads.length >= pageSize) {
-                const np = page + 1;
-                setPage(np);
-                loadLeads(np, pageSize);
-              }
+              const np = page + 1;
+              if (totalPages !== null && np >= totalPages) return;
+              setPage(np);
+              loadLeads(np, pageSize);
             }}
-            disabled={leads.length < pageSize}
-            className={`px-3 py-1 rounded border ${leads.length < pageSize ? "opacity-50 cursor-not-allowed" : "hover:bg-slate-100"}`}
+            disabled={totalPages !== null ? page >= totalPages - 1 : leads.length < pageSize}
+            className={`px-3 py-1 rounded border ${totalPages !== null ? (page >= totalPages - 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-slate-100") : leads.length < pageSize ? "opacity-50 cursor-not-allowed" : "hover:bg-slate-100"}`}
           >
             Next
           </button>
 
-          <span className="text-sm text-slate-600 ml-3">Page {page + 1}</span>
+          <span className="text-sm text-slate-600 ml-3">Page {page + 1}{totalPages ? ` of ${totalPages}` : ""}</span>
         </div>
 
         <div className="flex items-center gap-2">
