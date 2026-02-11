@@ -75,6 +75,8 @@ export default function SuperadminPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [planFilter, setPlanFilter] = useState('all');
   const [showTenantModal, setShowTenantModal] = useState(false);
+  const [editingTenant, setEditingTenant] = useState<string | null>(null);
+  const [editFormState, setEditFormState] = useState<{adminName:string; adminEmail:string}>({adminName:'', adminEmail:''});
   const [formState, setFormState] = useState<TenantFormState>(INITIAL_TENANT_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -143,6 +145,16 @@ export default function SuperadminPage() {
     setShowTenantModal(true);
   }
 
+  function handleOpenEditModal(tenant: Tenant) {
+    setEditingTenant(tenant.slug);
+    setEditFormState({ adminName: tenant.name || '', adminEmail: tenant.email || '' });
+  }
+
+  function handleCloseEditModal() {
+    setEditingTenant(null);
+    setEditFormState({ adminName:'', adminEmail:'' });
+  }
+
   function handleCloseTenantModal() {
     setShowTenantModal(false);
     setFormState(INITIAL_TENANT_FORM);
@@ -152,6 +164,11 @@ export default function SuperadminPage() {
   function handleFieldChange(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value } = e.currentTarget;
     setFormState(prev => ({ ...prev, [name]: value }));
+  }
+
+  function handleEditFieldChange(e: ChangeEvent<HTMLInputElement>) {
+    const { name, value } = e.currentTarget;
+    setEditFormState(prev => ({ ...prev, [name]: value }));
   }
 
   async function handleSubmitTenant(e: FormEvent) {
@@ -495,7 +512,7 @@ export default function SuperadminPage() {
                           <Eye className="w-4 h-4 text-gray-600" />
                         </button>
                         <button className="p-2 hover:bg-gray-200 rounded transition-colors" title="Edit">
-                          <Edit className="w-4 h-4 text-gray-600" />
+                          <Edit className="w-4 h-4 text-gray-600" onClick={() => handleOpenEditModal(tenant)} />
                         </button>
                         <button
                           onClick={() => handleActivateTenant(tenant.slug)}
@@ -519,6 +536,52 @@ export default function SuperadminPage() {
                 ))}
               </tbody>
             </table>
+
+            {/* Edit Tenant Modal */}
+            {editingTenant && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+                  <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                    <h2 className="text-xl font-semibold text-gray-900">Edit Tenant Admin</h2>
+                    <button onClick={handleCloseEditModal} className="text-gray-400 hover:text-gray-600">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <form onSubmit={async (e)=>{
+                    e.preventDefault();
+                    if (!editingTenant) return;
+                    setActionError(null);
+                    setActionLoading(editingTenant + '-edit');
+                    try {
+                      const res = await fetch(`/api/tenants/${encodeURIComponent(editingTenant)}`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ adminEmail: editFormState.adminEmail, adminName: editFormState.adminName }) });
+                      if (!res.ok) {
+                        const d = await res.json().catch(()=>null);
+                        throw new Error(d?.error || 'Unable to update tenant');
+                      }
+                      const j = await res.json();
+                      setTenants(prev => prev.map(t => t.slug === editingTenant ? { ...t, email: j?.tenantSummary?.admin_email ?? editFormState.adminEmail, name: j?.tenantSummary?.name ?? t.name } : t));
+                      handleCloseEditModal();
+                    } catch (err:any) {
+                      setActionError(err?.message || 'Unable to update');
+                    } finally { setActionLoading(null); }
+                  }} className="p-6 space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Admin Name</label>
+                      <input name="adminName" value={editFormState.adminName} onChange={handleEditFieldChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Admin Email</label>
+                      <input name="adminEmail" value={editFormState.adminEmail} onChange={handleEditFieldChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                    </div>
+                    <div className="flex gap-3">
+                      <button type="button" onClick={handleCloseEditModal} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg">Cancel</button>
+                      <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Footer */}
