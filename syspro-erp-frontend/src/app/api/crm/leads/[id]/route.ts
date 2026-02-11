@@ -32,3 +32,14 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     return handleDatabaseError(error, "Lead update");
   }
 }
+
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
+  try {
+    const lead = await getLead(params.id);
+    if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+    return NextResponse.json({ lead });
+  } catch (error) {
+    return handleDatabaseError(error, "Get lead");
+  }
+}

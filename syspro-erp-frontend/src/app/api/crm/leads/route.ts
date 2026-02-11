@@ -53,3 +53,24 @@ export async function POST(request: NextRequest) {
     return handleDatabaseError(error, "Lead creation");
   }
 }
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const tenantSlug = searchParams.get("tenantSlug");
+  if (!tenantSlug) {
+    return NextResponse.json({ error: "tenantSlug is required" }, { status: 400 });
+  }
+
+  const regionId = searchParams.get("regionId") || undefined;
+  const branchId = searchParams.get("branchId") || undefined;
+  const salesOfficerId = searchParams.get("salesOfficerId") || undefined;
+  const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined;
+  const offset = searchParams.get("offset") ? Number(searchParams.get("offset")) : undefined;
+
+  try {
+    const leads = await listLeads({ tenantSlug, regionId, branchId, salesOfficerId, limit, offset } as any);
+    return NextResponse.json({ leads });
+  } catch (error) {
+    return handleDatabaseError(error, "List leads");
+  }
+}

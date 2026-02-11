@@ -419,6 +419,49 @@ export async function updateLead(id: string, updates: Partial<{
   return updated.length ? normalizeLeadRow(updated[0]) : null;
 }
 
+export async function getLead(id: string) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  const rows = (await sql`select * from crm_leads where id = ${id} limit 1`) as any[];
+  return rows.length ? normalizeLeadRow(rows[0]) : null;
+}
+
+export async function listLeads(filters: Partial<{ tenantSlug: string; regionId: string; branchId: string; salesOfficerId: string; limit: number; offset: number }>) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  const params: any[] = [];
+  let idx = 1;
+  let where = "where 1=1";
+  if (filters.tenantSlug) {
+    params.push(filters.tenantSlug);
+    where += ` and tenant_slug = $${idx++}`;
+  }
+  if (filters.regionId) {
+    params.push(filters.regionId);
+    where += ` and region_id = $${idx++}`;
+  }
+  if (filters.branchId) {
+    params.push(filters.branchId);
+    where += ` and branch_id = $${idx++}`;
+  }
+  if (filters.salesOfficerId) {
+    params.push(filters.salesOfficerId);
+    where += ` and assigned_officer_id = $${idx++}`;
+  }
+  const limit = Math.min(Math.max(filters.limit ?? 50, 1), 200);
+  const offset = Math.max(filters.offset ?? 0, 0);
+
+  const query = `
+    select * from crm_leads
+    ${where}
+    order by created_at desc
+    limit ${limit} offset ${offset}
+  `;
+
+  const rows = (await sql(query, params)) as any[];
+  return rows.map(normalizeLeadRow);
+}
+
 function normalizeLeadRow(row: any) {
   return {
     id: row.id as string,

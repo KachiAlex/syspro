@@ -77,6 +77,8 @@ export default function SuperadminPage() {
   const [showTenantModal, setShowTenantModal] = useState(false);
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [formState, setFormState] = useState<TenantFormState>(INITIAL_TENANT_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -218,6 +220,32 @@ export default function SuperadminPage() {
     } catch (err) {
       console.error('Delete tenant failed', err);
       setFormError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async function handleActivateTenant(slug?: string) {
+    if (!slug) return;
+    setActionError(null);
+    setActionLoading(slug + '-activate');
+    try {
+      const res = await fetch(`/api/tenants/${encodeURIComponent(slug)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'activate' }),
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || 'Unable to activate tenant');
+      }
+
+      // update local state with returned tenant status if provided
+      const newStatus = data?.tenantSummary?.status ?? 'active';
+      setTenants(prev => prev.map(t => t.slug === slug ? { ...t, status: newStatus } : t));
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setActionLoading(null);
     }
   }
 
@@ -516,6 +544,14 @@ export default function SuperadminPage() {
                         </button>
                         <button onClick={() => handleEditTenant(tenant)} className="p-2 hover:bg-gray-200 rounded transition-colors" title="Edit" disabled={!tenant.slug}>
                           <Edit className="w-4 h-4 text-gray-600" />
+                        </button>
+                        <button
+                          onClick={() => handleActivateTenant(tenant.slug)}
+                          disabled={!tenant.slug || actionLoading === (tenant.slug + '-activate')}
+                          className="p-2 hover:bg-gray-200 rounded transition-colors disabled:opacity-50"
+                          title="Activate"
+                        >
+                          <Check className="w-4 h-4 text-green-600" />
                         </button>
                         <button onClick={() => handleDeleteTenant(tenant.slug)} className="p-2 hover:bg-gray-200 rounded transition-colors" title="Delete" disabled={!tenant.slug}>
                           <Trash2 className="w-4 h-4 text-red-600" />
