@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import NewLeadModal from "./NewLeadModal";
 
 type Lead = {
   id: string;
@@ -19,34 +20,38 @@ export default function LeadsPage({ tenantSlug }: { tenantSlug?: string | null }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let mounted = true;
+  const loadLeads = () => {
     setLoading(true);
+    setError(null);
     fetch(`/api/crm/leads?tenantSlug=${encodeURIComponent(ts)}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
-        if (!mounted) return;
         if (data?.leads) setLeads(data.leads);
         else setError("No leads returned");
       })
-      .catch((err) => {
-        if (!mounted) return;
-        setError(String(err?.message ?? err));
-      })
-      .finally(() => mounted && setLoading(false));
+      .catch((err) => setError(String(err?.message ?? err)))
+      .finally(() => setLoading(false));
+  };
 
-    return () => {
-      mounted = false;
-    };
+  useEffect(() => {
+    loadLeads();
   }, [ts]);
 
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-semibold">Leads</h2>
-        <div>
-          <span className="text-sm text-slate-600">Tenant: </span>
-          <span className="font-medium">{ts}</span>
+        <div className="flex items-center gap-4">
+          <div>
+            <span className="text-sm text-slate-600">Tenant: </span>
+            <span className="font-medium">{ts}</span>
+          </div>
+          <button
+            onClick={() => setShowNew(true)}
+            className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+          >
+            New Lead
+          </button>
         </div>
       </div>
 
@@ -82,6 +87,17 @@ export default function LeadsPage({ tenantSlug }: { tenantSlug?: string | null }
       </div>
 
       {!loading && leads.length === 0 && !error && <p className="mt-4 text-slate-600">No leads found.</p>}
+
+      {showNew && (
+        <NewLeadModal
+          tenantSlug={ts}
+          onClose={() => setShowNew(false)}
+          onCreated={() => {
+            setShowNew(false);
+            loadLeads();
+          }}
+        />
+      )}
     </div>
   );
 }
