@@ -114,7 +114,7 @@ export default function SuperadminPage() {
   const enrichedTenants = useMemo(() => {
     return tenants.map((t, idx) => ({
       ...t,
-      email: `admin@${t.slug}.com`,
+      email: (t as any).admin_email || `admin@${t.slug}.com`,
       plan: (
         idx % 3 === 0 ? 'enterprise' :
         idx % 3 === 1 ? 'professional' :
@@ -216,6 +216,31 @@ export default function SuperadminPage() {
       setTenants(prev => prev.filter(t => t.slug !== slug));
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Unable to delete tenant';
+      setActionError(msg);
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleActivateTenant(slug: string) {
+    if (!slug) return;
+    setActionError(null);
+    setActionLoading(slug + '-activate');
+    try {
+      const res = await fetch(`/api/tenants/${encodeURIComponent(slug)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'activate' }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? 'Unable to activate tenant');
+      }
+      const j = await res.json();
+      // update local state
+      setTenants(prev => prev.map(t => t.slug === slug ? { ...t, status: j?.tenantSummary?.status ?? 'Live' } : t));
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unable to activate tenant';
       setActionError(msg);
     } finally {
       setActionLoading(null);
@@ -471,6 +496,14 @@ export default function SuperadminPage() {
                         </button>
                         <button className="p-2 hover:bg-gray-200 rounded transition-colors" title="Edit">
                           <Edit className="w-4 h-4 text-gray-600" />
+                        </button>
+                        <button
+                          onClick={() => handleActivateTenant(tenant.slug)}
+                          disabled={actionLoading === tenant.slug + '-activate'}
+                          className="p-2 hover:bg-gray-200 rounded transition-colors disabled:opacity-50"
+                          title="Activate"
+                        >
+                          <Check className="w-4 h-4 text-green-600" />
                         </button>
                         <button
                           onClick={() => handleDeleteTenant(tenant.slug)}

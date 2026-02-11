@@ -11,6 +11,7 @@ export type TenantRow = {
   status: string;
   ledger_delta: string;
   seats: number | null;
+  admin_email?: string | null;
 };
 
 const payloadSchema = z.object({
@@ -63,7 +64,7 @@ export async function GET() {
     await ensureTenantTable(sql);
 
     const rows = (await sql`
-      select name, slug, region, status, ledger_delta, seats from tenants order by "createdAt" desc nulls last
+      select name, slug, region, status, ledger_delta, seats, admin_email from tenants order by "createdAt" desc nulls last
     `) as TenantRow[];
 
     return NextResponse.json({ tenants: rows.map(mapTenantRow) });
@@ -81,6 +82,7 @@ export function mapTenantRow(row: TenantRow) {
     status: row.status as string,
     ledger: row.ledger_delta ?? "₦0",
     seats: typeof row.seats === "number" ? row.seats : 0,
+    admin_email: (row as any).admin_email ?? null,
   };
 }
 

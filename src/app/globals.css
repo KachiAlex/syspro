@@ -24,3 +24,22 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ensure text inputs are always black text on white background for legibility */
+input,
+textarea,
+select,
+input[type=text],
+input[type=email],
+input[type=password],
+input[type=search],
+textarea,
+select {
+  color: #000000 !important;
+  background: #ffffff !important;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+}

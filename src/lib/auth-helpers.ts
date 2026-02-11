@@ -6,6 +6,7 @@
 
 import { NextRequest } from "next/server";
 import { getSql } from "@/lib/db";
+import { verifySession, signSession, cookieOptions } from '@/lib/session';
 
 export interface SessionUser {
   id: string;
@@ -41,21 +42,25 @@ export function getCurrentUser(request: NextRequest): SessionUser | null {
       roleId,
     };
   }
-
-  // Method 2: Check cookies (would come from your auth provider)
-  // const sessionCookie = request.cookies.get("next-auth.session-token");
-  // if (sessionCookie) {
-  //   const session = await getSession({ req: request });
-  //   if (session?.user) {
-  //     return {
-  //       id: session.user.id || "anonymous",
-  //       email: session.user.email || "unknown@example.com",
-  //       name: session.user.name,
-  //       tenantSlug: request.headers.get("X-Tenant-Slug") || "kreatix-default",
-  //       roleId: session.user.roleId || "viewer",
-  //     };
-  //   }
-  // }
+  // Method 2: Check signed session cookie
+  try {
+    const cookie = request.cookies.get('session')?.value || request.cookies.get('syspro_session')?.value;
+    if (cookie) {
+      const payload = verifySession(cookie);
+      if (payload && typeof payload === 'object') {
+        if ((payload as any).exp && Date.now() > (payload as any).exp) return null;
+        return {
+          id: (payload as any).id,
+          email: (payload as any).email,
+          name: (payload as any).name,
+          tenantSlug: (payload as any).tenantSlug,
+          roleId: (payload as any).roleId || 'viewer',
+        };
+      }
+    }
+  } catch (e) {
+    // ignore cookie parse errors
+  }
 
   // Method 3: For strict tenant isolation we return null unless an explicit
   // authenticated user is present. This prevents accidental cross-tenant
@@ -148,6 +153,31 @@ export async function getRolePermissionsFromDB(roleId: string) {
     console.error("Failed to get role permissions from DB:", error);
     return getDefaultRolePermissions(roleId);
   }
+}
+
+export function createSessionCookieValue(user: { id: string; email: string; name?: string; tenantSlug?: string; roleId?: string }, maxAgeSeconds = 60 * 60 * 24 * 7) {
+  const payload = {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    tenantSlug: user.tenantSlug,
+    roleId: user.roleId,
+    iat: Date.now(),
+    exp: Date.now() + maxAgeSeconds * 1000,
+  };
+  return signSession(payload);
+}
+
+export function sessionCookieOptions(maxAgeSeconds = 60 * 60 * 24 * 7) {
+  const { name, options } = cookieOptions();
+  return {
+    name,
+    maxAge: maxAgeSeconds,
+    httpOnly: options.httpOnly,
+    path: options.path,
+    sameSite: options.sameSite,
+    secure: options.secure,
+  } as const;
 }
 
 /**
