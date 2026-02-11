@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { insertCustomer, listCustomers } from "@/lib/crm/db";
+import { insertCustomer, listCustomers, countCustomers } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
 
 const customerSchema = z.object({
@@ -39,7 +39,8 @@ export async function GET(request: NextRequest) {
       regionId: parsed.data.regionId,
       limit: parsed.data.limit,
     });
-    return NextResponse.json({ customers });
+    const total = await countCustomers({ tenantSlug: parsed.data.tenantSlug, regionId: parsed.data.regionId });
+    return NextResponse.json({ customers, total });
   } catch (error) {
     return handleDatabaseError(error, "Customer list");
   }

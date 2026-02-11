@@ -164,6 +164,19 @@ export async function listCustomers(filters: { tenantSlug: string; regionId?: st
   return rows.map(normalizeCustomerRow);
 }
 
+export async function countCustomers(filters: { tenantSlug: string; regionId?: string | null }) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  const params: any[] = [filters.tenantSlug];
+  let query = `select count(*)::int as cnt from crm_customers where tenant_slug = $1`;
+  if (filters.regionId) {
+    params.push(filters.regionId);
+    query += ` and region_id = $${params.length}`;
+  }
+  const rows = (await sql(query, params)) as any[];
+  return rows.length ? Number(rows[0].cnt) : 0;
+}
+
 function normalizeCustomerRow(row: CrmCustomerRecord) {
   return {
     id: row.id,
@@ -275,6 +288,19 @@ export async function listContacts(filters: { tenantSlug: string; tag?: string |
   return rows.map(normalizeContactRow);
 }
 
+export async function countContacts(filters: { tenantSlug: string; tag?: string | null }) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  const params: any[] = [filters.tenantSlug];
+  let query = `select count(*)::int as cnt from crm_contacts where tenant_slug = $1`;
+  if (filters.tag) {
+    params.push(filters.tag);
+    query += ` and array_position(coalesce(tags, array[]::text[]), $${params.length}) is not null`;
+  }
+  const rows = (await sql(query, params)) as any[];
+  return rows.length ? Number(rows[0].cnt) : 0;
+}
+
 export async function updateContact(
   id: string,
   updates: Partial<{ status: string | null; tags: string[]; contactEmail: string | null; contactPhone: string | null }>
@@ -358,6 +384,62 @@ export async function updateDeal(id: string, updates: Partial<{
     returning *
   `) as Record<string, unknown>[];
   return updated.length ? normalizeDealRow(updated[0]) : null;
+}
+
+export async function listDeals(filters: Partial<{ tenantSlug: string; customerId?: string; leadId?: string; stage?: string; limit?: number; offset?: number }>) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  const params: any[] = [];
+  let idx = 1;
+  let where = "where 1=1";
+  if (filters.tenantSlug) {
+    params.push(filters.tenantSlug);
+    where += ` and tenant_slug = $${idx++}`;
+  }
+  if (filters.customerId) {
+    params.push(filters.customerId);
+    where += ` and customer_id = $${idx++}`;
+  }
+  if (filters.leadId) {
+    params.push(filters.leadId);
+    where += ` and lead_id = $${idx++}`;
+  }
+  if (filters.stage) {
+    params.push(filters.stage);
+    where += ` and stage = $${idx++}`;
+  }
+  const limit = Math.min(Math.max(filters.limit ?? 50, 1), 200);
+  const offset = Math.max(filters.offset ?? 0, 0);
+  const query = `select * from crm_deals ${where} order by created_at desc limit ${limit} offset ${offset}`;
+  const rows = (await sql(query, params)) as any[];
+  return rows.map(normalizeDealRow);
+}
+
+export async function countDeals(filters: Partial<{ tenantSlug: string; customerId?: string; leadId?: string; stage?: string }>) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  const params: any[] = [];
+  let idx = 1;
+  let where = "where 1=1";
+  if (filters.tenantSlug) {
+    params.push(filters.tenantSlug);
+    where += ` and tenant_slug = $${idx++}`;
+  }
+  if (filters.customerId) {
+    params.push(filters.customerId);
+    where += ` and customer_id = $${idx++}`;
+  }
+  if (filters.leadId) {
+    params.push(filters.leadId);
+    where += ` and lead_id = $${idx++}`;
+  }
+  if (filters.stage) {
+    params.push(filters.stage);
+    where += ` and stage = $${idx++}`;
+  }
+  const query = `select count(*)::int as cnt from crm_deals ${where}`;
+  const rows = (await sql(query, params)) as any[];
+  return rows.length ? Number(rows[0].cnt) : 0;
 }
 
 export async function insertLead(row: {

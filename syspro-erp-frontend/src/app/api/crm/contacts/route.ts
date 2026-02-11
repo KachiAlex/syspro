@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { insertContact, insertContacts, listContacts } from "@/lib/crm/db";
+import { insertContact, insertContacts, listContacts, countContacts } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
 
 const contactPayloadSchema = z.object({
@@ -41,7 +41,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const contacts = await listContacts(parsed.data);
-    return NextResponse.json({ contacts });
+    const total = await countContacts(parsed.data);
+    return NextResponse.json({ contacts, total });
   } catch (error) {
     return handleDatabaseError(error, "Contact list");
   }
