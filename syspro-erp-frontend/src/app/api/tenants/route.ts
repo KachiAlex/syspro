@@ -203,7 +203,8 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Tenant creation failed", error);
     const message = error instanceof Error ? error.message : String(error);
-    // Return the error message to the client to aid debugging (safe in dev).
-    return NextResponse.json({ error: message }, { status: 500 });
+    const stack = error instanceof Error ? error.stack : undefined;
+    // Return the error message and stack to the client to aid debugging (dev only).
+    return NextResponse.json({ error: message, stack }, { status: 500 });
   }
 }
