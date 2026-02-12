@@ -49,7 +49,24 @@ export const db: DbClient = {
     if ((client as any).query) {
       res = await (client as any).query(queryText, params);
     } else {
-      res = await (client as any)([queryText] as unknown as TemplateStringsArray, ...(params || []));
+      // Convert a pg-style text with $1,$2 placeholders into a template
+      // strings array for template-tag clients (e.g. neon). This lets us
+      // support callers that use `db.query(text, params)` while still
+      // supporting template-tag DB clients.
+      const values = params || [];
+      const parts: string[] = [];
+      const re = /\$(\d+)/g;
+      let lastIndex = 0;
+      let match: RegExpExecArray | null;
+      while ((match = re.exec(queryText)) !== null) {
+        const idx = match.index;
+        parts.push(queryText.slice(lastIndex, idx));
+        lastIndex = idx + match[0].length;
+      }
+      parts.push(queryText.slice(lastIndex));
+
+      const strings = parts as unknown as TemplateStringsArray;
+      res = await (client as any)(strings, ...values);
     }
 
     if (Array.isArray(res)) {
