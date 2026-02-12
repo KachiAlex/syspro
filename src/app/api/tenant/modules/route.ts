@@ -46,8 +46,8 @@ export async function POST(request: NextRequest) {
     }
 
     await ensureAdminTables();
-    const id = await insertModule({ tenantSlug, key: validation.data.key, name: validation.data.name, enabled: validation.data.enabled });
-    return NextResponse.json({ module: { id, tenantSlug, key: validation.data.key, name: validation.data.name, enabled: validation.data.enabled, regions: [], flags: {}, createdAt: new Date().toISOString() } }, { status: 201 });
+    const id = await insertModule({ tenantSlug, key: validation.data.key, name: validation.data.name, enabled: !!validation.data.enabled });
+    return NextResponse.json({ module: { id, tenantSlug, key: validation.data.key, name: validation.data.name, enabled: !!validation.data.enabled, regions: [], flags: {}, createdAt: new Date().toISOString() } }, { status: 201 });
   } catch (error) {
     console.error("Module create failed", error);
     const message = error instanceof Error ? error.message : "Unable to create module";
