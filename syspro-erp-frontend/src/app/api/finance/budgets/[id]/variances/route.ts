@@ -3,11 +3,10 @@ import {
   getBudgetVariances,
   acknowledgeBudgetVariance,
 } from "@/lib/finance/budgets-db";
+import { db } from "@/lib/sql-client";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, context: any) {
+  const { params } = context;
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
     const varianceType = request.nextUrl.searchParams.get("varianceType");
@@ -50,10 +49,8 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, context: any) {
+  const { params } = context;
   try {
     const body = await request.json();
     const { varianceId, acknowledgedBy } = body;

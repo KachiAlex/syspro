@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import type {
   CrmLeadStage,
   CrmLeadSource,
@@ -9,9 +9,7 @@ import type {
   CrmContact,
 } from "./types";
 
-const SQL = getSql();
-
-type SqlClient = ReturnType<typeof getSql>;
+/* using imported SQL */
 
 function serializeTextArray(values?: string[] | null): string {
   if (!values || values.length === 0) {
@@ -173,7 +171,7 @@ export async function countCustomers(filters: { tenantSlug: string; regionId?: s
     params.push(filters.regionId);
     query += ` and region_id = $${params.length}`;
   }
-  const rows = (await sql(query, params)) as any[];
+  const rows = (await db.query(query, params)).rows as any[];
   return rows.length ? Number(rows[0].cnt) : 0;
 }
 
@@ -284,7 +282,7 @@ export async function listContacts(filters: { tenantSlug: string; tag?: string |
     offset ${offset}
   `;
 
-  const rows = (await sql(query, params)) as CrmContactRecord[];
+  const rows = (await db.query(query, params)).rows as CrmContactRecord[];
   return rows.map(normalizeContactRow);
 }
 
@@ -297,7 +295,7 @@ export async function countContacts(filters: { tenantSlug: string; tag?: string 
     params.push(filters.tag);
     query += ` and array_position(coalesce(tags, array[]::text[]), $${params.length}) is not null`;
   }
-  const rows = (await sql(query, params)) as any[];
+  const rows = (await db.query(query, params)).rows as any[];
   return rows.length ? Number(rows[0].cnt) : 0;
 }
 
@@ -411,7 +409,7 @@ export async function listDeals(filters: Partial<{ tenantSlug: string; customerI
   const limit = Math.min(Math.max(filters.limit ?? 50, 1), 200);
   const offset = Math.max(filters.offset ?? 0, 0);
   const query = `select * from crm_deals ${where} order by created_at desc limit ${limit} offset ${offset}`;
-  const rows = (await sql(query, params)) as any[];
+  const rows = (await db.query(query, params)).rows as any[];
   return rows.map(normalizeDealRow);
 }
 
@@ -438,7 +436,7 @@ export async function countDeals(filters: Partial<{ tenantSlug: string; customer
     where += ` and stage = $${idx++}`;
   }
   const query = `select count(*)::int as cnt from crm_deals ${where}`;
-  const rows = (await sql(query, params)) as any[];
+  const rows = (await db.query(query, params)).rows as any[];
   return rows.length ? Number(rows[0].cnt) : 0;
 }
 
@@ -540,7 +538,7 @@ export async function listLeads(filters: Partial<{ tenantSlug: string; regionId:
     limit ${limit} offset ${offset}
   `;
 
-  const rows = (await sql(query, params)) as any[];
+  const rows = (await db.query(query, params)).rows as any[];
   return rows.map(normalizeLeadRow);
 }
 
@@ -568,7 +566,7 @@ export async function countLeads(filters: Partial<{ tenantSlug: string; regionId
   }
 
   const query = `select count(*)::int as cnt from crm_leads ${where}`;
-  const rows = (await sql(query, params)) as any[];
+  const rows = (await db.query(query, params)).rows as any[];
   return rows.length ? Number(rows[0].cnt) : 0;
 }
 

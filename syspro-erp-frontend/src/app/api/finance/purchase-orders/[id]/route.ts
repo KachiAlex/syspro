@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder } from "@/lib/finance/purchase-orders";
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_request: NextRequest, context: any) {
+  const { params } = context;
   const { id } = params;
   try {
     const po = await getPurchaseOrder(id);
@@ -14,7 +15,8 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: any) {
+  const { params } = context;
   const { id } = params;
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -29,7 +31,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_request: NextRequest, context: any) {
+  const { params } = context;
   const { id } = params;
   try {
     const ok = await deletePurchaseOrder(id);

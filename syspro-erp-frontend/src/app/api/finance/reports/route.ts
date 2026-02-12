@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,25 +15,26 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
+    const tenant = tenantSlug as string;
 
-    const sql = getSql();
+    const sql = SQL;
     let report: any = {};
 
     switch (type) {
       case "pl":
-        report = await generatePLReport(sql, tenantSlug, startDate, endDate);
+        report = await generatePLReport(sql, tenant, startDate || undefined, endDate || undefined);
         break;
       case "balance":
-        report = await generateBalanceSheetReport(sql, tenantSlug, startDate, endDate);
+        report = await generateBalanceSheetReport(sql, tenant, startDate || undefined, endDate || undefined);
         break;
       case "cashflow":
-        report = await generateCashFlowReport(sql, tenantSlug, startDate, endDate);
+        report = await generateCashFlowReport(sql, tenant, startDate || undefined, endDate || undefined);
         break;
       case "aged":
-        report = await generateAgedReceivablesReport(sql, tenantSlug, startDate, endDate);
+        report = await generateAgedReceivablesReport(sql, tenant, startDate || undefined, endDate || undefined);
         break;
       default:
-        report = await generatePLReport(sql, tenantSlug, startDate, endDate);
+        report = await generatePLReport(sql, tenant, startDate || undefined, endDate || undefined);
     }
 
     return NextResponse.json({ report });

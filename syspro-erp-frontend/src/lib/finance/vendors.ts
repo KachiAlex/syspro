@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "../sql-client";
 
 export interface VendorRecord {
   id: string;
@@ -95,19 +95,15 @@ export async function lookupVendor(
 ): Promise<VendorLookupResult> {
   // Prefer DB-backed lookup when connection configured
   try {
-    const sql = getSql();
+    const sql = SQL;
     await sql`
       select 1
     `;
 
     const q = `%${query}%`;
-    const rows = (await sql`
-      select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
-      from vendors
-      where ${type === "name" ? sql`name ilike ${q}` : type === "code" ? sql`code ilike ${q}` : sql`email ilike ${q}`}
-      order by name asc
-      limit 10
-    `) as any[];
+    const whereField = type === "name" ? "name" : type === "code" ? "code" : "email";
+    const queryText = `select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at from vendors where ${whereField} ilike $1 order by name asc limit 10`;
+    const rows = (await db.query<any>(queryText, [q])).rows;
 
     if (rows.length === 0) {
       return { found: false };
@@ -220,7 +216,7 @@ export async function listVendors(
 ): Promise<VendorRecord[]> {
   // Try DB first
   try {
-    const sql = getSql();
+    const sql = SQL;
     await ensureVendorTables(sql);
 
     const whereClauses: Array<any> = [];
@@ -237,7 +233,7 @@ export async function listVendors(
     const rows = (await sql`
       select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
       from vendors
-      ${whereClauses.length ? sql`where ${sql.join(whereClauses, sql` and `)}` : sql``}
+      ${whereClauses.length ? sql`where ${(sql as any).join(whereClauses, sql` and `)}` : sql``}
       order by name asc
       limit 200
     `) as any[];
@@ -286,7 +282,7 @@ export async function listVendors(
  */
 export async function getVendor(vendorId: string): Promise<VendorRecord | null> {
   try {
-    const sql = getSql();
+    const sql = SQL;
     await ensureVendorTables(sql);
 
     const rows = (await sql`
@@ -325,7 +321,7 @@ export async function getVendor(vendorId: string): Promise<VendorRecord | null> 
 
 export async function createVendor(payload: Partial<VendorRecord>): Promise<VendorRecord> {
   try {
-    const sql = getSql();
+    const sql = SQL;
     await ensureVendorTables(sql);
 
     const id = payload.id ?? randomUUID();
@@ -388,7 +384,7 @@ export async function createVendor(payload: Partial<VendorRecord>): Promise<Vend
 
 export async function updateVendor(id: string, updates: Partial<VendorRecord>): Promise<VendorRecord | null> {
   try {
-    const sql = getSql();
+    const sql = SQL;
     await ensureVendorTables(sql);
 
     const [row] = (await sql`
@@ -445,13 +441,10 @@ export async function updateVendor(id: string, updates: Partial<VendorRecord>): 
 
 export async function deleteVendor(id: string): Promise<boolean> {
   try {
-    const sql = getSql();
+    const sql = SQL;
     await ensureVendorTables(sql);
 
-    const res = await sql`
-      delete from vendors where id = ${id}
-    `;
-
+    const res = await db.query<{ count: number }>(`delete from vendors where id = $1`, [id]);
     return res.count > 0;
   } catch (err) {
     const idx = SAMPLE_VENDORS.findIndex((v) => v.id === id);
@@ -461,7 +454,7 @@ export async function deleteVendor(id: string): Promise<boolean> {
   }
 }
 
-async function ensureVendorTables(sql: ReturnType<typeof getSql>) {
+async function ensureVendorTables(sql: SqlClient) {
   try {
     await sql`
       create table if not exists vendors (

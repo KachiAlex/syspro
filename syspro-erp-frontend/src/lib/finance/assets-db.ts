@@ -1,6 +1,4 @@
-import { getSql } from "@/lib/db";
-
-const db = getSql();
+import { db } from "../sql-client";
 import {
   Asset,
   AssetCategory,
@@ -270,17 +268,17 @@ export async function calculateAndCreateDepreciationSchedules(
       [assetId.toString(), year, month > 1 ? month - 1 : 12]
     );
 
-    let openingNBV = asset.net_book_value || asset.purchase_cost;
+    let openingNBV = asset.netBookValue || asset.purchaseCost;
     if (previousSchedule.rows.length > 0) {
       openingNBV = previousSchedule.rows[0].closing_net_book_value;
     }
 
     // Calculate depreciation
     const depreciationAmount = calculateMonthlyDepreciation(
-      asset.purchase_cost,
-      asset.residual_value || 0,
-      asset.useful_life_years,
-      asset.depreciation_method as DepreciationMethod,
+      asset.purchaseCost,
+      asset.residualValue || 0,
+      asset.usefulLifeYears,
+      asset.depreciationMethod as DepreciationMethod,
       openingNBV
     );
 
@@ -305,7 +303,7 @@ export async function calculateAndCreateDepreciationSchedules(
         periodStartDate,
         periodEndDate,
         openingNBV,
-        100 / (asset.useful_life_years * 12), // Monthly rate
+        100 / (asset.usefulLifeYears * 12), // Monthly rate
         depreciationAmount,
         closingNBV,
       ]
@@ -452,7 +450,7 @@ export async function createAssetDisposal(
     const asset = await getAsset(validated.assetId, validated.tenantId);
     if (!asset) return null;
 
-    const gainLoss = (validated.salePrice || 0) - (asset.net_book_value || 0);
+    const gainLoss = (validated.salePrice || 0) - (asset.netBookValue || 0);
 
     const result = await db.query(
       `
@@ -470,7 +468,7 @@ export async function createAssetDisposal(
         validated.disposalDate,
         validated.disposalMethod,
         validated.salePrice || null,
-        asset.net_book_value,
+        asset.netBookValue,
         gainLoss,
         validated.cashReceiptAccountId?.toString() || null,
         validated.gainLossAccountId?.toString() || null,
@@ -546,7 +544,7 @@ export async function generateBatchDepreciation(
 
     for (const asset of assets) {
       const schedule = await calculateAndCreateDepreciationSchedules(
-        BigInt(asset.id),
+        BigInt(String(asset.id)),
         tenantId,
         year,
         month
@@ -573,7 +571,7 @@ export async function revalueAsset(
     const asset = await getAsset(assetId, tenantId);
     if (!asset) return null;
 
-    const difference = newValue - (asset.net_book_value || 0);
+    const difference = newValue - (asset.netBookValue || 0);
 
     // Create revaluation journal
     await createAssetJournal({

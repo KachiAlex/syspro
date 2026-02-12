@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { FALLBACK_ORG_TREE, OrgNode, ORG_NODE_STATUSES, ORG_NODE_TYPES } from "@/lib/org-tree";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 
 const DEFAULT_TENANT_SLUG = "kreatix-default";
 
@@ -10,7 +10,7 @@ type TenantStructureRow = {
   tree: unknown;
 };
 
-type SqlClient = ReturnType<typeof getSql>;
+// using SqlClient from sql-client
 
 const NODE_TYPE_ENUM = z.enum(ORG_NODE_TYPES as [OrgNode["type"], ...OrgNode["type"][]]);
 const STATUS_ENUM = z.enum(ORG_NODE_STATUSES);
@@ -169,7 +169,7 @@ function moveNode(tree: OrgNode, nodeId: string, targetParentId: string, positio
 
 export async function GET(request: NextRequest) {
   try {
-    const sql = getSql();
+    const sql = SQL;
     const tenantSlug = resolveTenantSlug(request);
     const tree = await loadTenantTree(sql, tenantSlug);
     return NextResponse.json({ tree, tenantSlug, fetchedAt: new Date().toISOString() });
@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const sql = getSql();
+    const sql = SQL;
     const tenantSlug = resolveTenantSlug(request);
     const tree = await loadTenantTree(sql, tenantSlug);
     const parent = findNodeWithParent(tree, parsed.data.parentId);
@@ -231,7 +231,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const sql = getSql();
+    const sql = SQL;
     const tenantSlug = resolveTenantSlug(request);
     const tree = await loadTenantTree(sql, tenantSlug);
     const current = findNodeWithParent(tree, parsed.data.nodeId);
@@ -270,7 +270,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const sql = getSql();
+    const sql = SQL;
     const tenantSlug = resolveTenantSlug(request);
     const tree = await loadTenantTree(sql, tenantSlug);
     const current = findNodeWithParent(tree, parsed.data.nodeId);

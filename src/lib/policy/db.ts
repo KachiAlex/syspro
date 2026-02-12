@@ -1,8 +1,4 @@
-import { getSql } from "@/lib/db";
-
-const SQL = getSql();
-
-type SqlClient = ReturnType<typeof getSql>;
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 
 export async function ensurePolicyTables(sql: SqlClient = SQL) {
   await sql`create extension if not exists "pgcrypto"`;

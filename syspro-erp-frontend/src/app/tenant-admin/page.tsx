@@ -142,7 +142,7 @@ const CRM_TASKS = [];
 
 const CRM_ENGAGEMENTS = [];
 
-const CRM_STATUS_META = [];
+const CRM_STATUS_META: Record<string, { label: string; chip: string; dot: string }> = {};
 
 const CRM_REMINDERS = [];
 
@@ -189,16 +189,17 @@ type PaymentRecord = {
   customerId?: string;
   invoiceId?: string;
   method: "bank_transfer" | "check" | "cash" | "pos" | "mobile_money" | "wire" | "paystack" | "flutterwave" | "stripe";
-  grossAmount: string;
-  fees: string;
-  netAmount: string;
+  grossAmount: number | string;
+  fees: number | string;
+  netAmount: number | string;
   currency: string;
   paymentDate: string;
   settlementDate?: string;
   referenceNumber: string;
+  reference?: string;
   gatewayReference?: string;
   confirmationDetails: string;
-  status: "pending" | "successful" | "failed" | "reversed";
+  status: "pending" | "successful" | "failed" | "reversed" | "settled";
   gateway?: "paystack" | "flutterwave" | "stripe" | "manual";
   linkedInvoices: string[]; // Invoice IDs
   recordedBy: string;
@@ -444,6 +445,12 @@ function formatCurrency(value: number, currency = "₦"): string {
   return `${currency}${value.toLocaleString("en-NG", { maximumFractionDigits: 0 })}`;
 }
 
+function formatNumber(value?: number | string | null): string {
+  if (value === null || value === undefined) return "0";
+  const n = typeof value === "string" ? parseFloat(value as string) : (value as number);
+  return Number.isFinite(n) ? n.toLocaleString("en-NG") : "0";
+}
+
 function humanizeOrgLabel(value?: string | null): string | undefined {
   if (!value) {
     return undefined;
@@ -594,6 +601,7 @@ function CrmCustomersView({
   importing: boolean;
   onExportContacts: () => void;
 }) {
+  const [error, setError] = useState<string | null>(null);
   const highlightedCustomers = customers.slice(0, 4);
 
   return (
@@ -2007,13 +2015,13 @@ const NAVIGATION: NavigationSection[] = [
   },
 ];
 
-const INVOICE_QUEUE = [];
+const INVOICE_QUEUE: any[] = [];
 
-const DEAL_PIPELINE = [];
+const DEAL_PIPELINE: any[] = [];
 
-const APPROVAL_ROUTES = [];
+const APPROVAL_ROUTES: any[] = [];
 
-const ALERT_FEED = [];
+const ALERT_FEED: any[] = [];
 
 const INVOICE_STATUS_STYLES: Record<InvoiceRow["status"], string> = {
   ready: "bg-emerald-50 text-emerald-600",
@@ -2052,6 +2060,14 @@ const ACTIVITY_TONE_CLASSES: Record<(typeof ACTIVITY_LOG)[number]["tone"], strin
   slate: "bg-slate-400",
 };
 
+type ActivityEvent = {
+  id: string;
+  title: string;
+  details?: string;
+  tone: "emerald" | "sky" | "rose" | "slate";
+  timestamp: string;
+};
+
 const HEADLINE_MAP: Record<string, string> = {
   overview: "Overview",
   crm: "CRM",
@@ -2075,11 +2091,11 @@ const HEADLINE_MAP: Record<string, string> = {
   integrations: "Integrations",
 };
 
-const KPI_METRICS = [];
+const KPI_METRICS: any[] = [];
 
-const LIVE_PANELS = [];
+const LIVE_PANELS: any[] = [];
 
-const ACTIVITY_LOG = [];
+const ACTIVITY_LOG: ActivityEvent[] = [];
 
 const TIMEFRAME_OPTIONS = ["Last 24 hours", "Last 7 days", "Last 30 days"];
 
@@ -2096,7 +2112,7 @@ export default function TenantAdminPage() {
   const [selectedEntity, setSelectedEntity] = useState("Axiom Labs");
   const [selectedRegion, setSelectedRegion] = useState("Global HQ");
   const [selectedTimeframe, setSelectedTimeframe] = useState(TIMEFRAME_OPTIONS[1]);
-  const [tenantSlug, setTenantSlug] = useState<string | null>(null);
+  const [tenantSlug, setTenantSlug] = useState<string | null>("kreatix-default");
 
   // Role-based access control
   const { permissions, loading: permissionsLoading, canRead, canWrite, canAdmin } = usePermissions(tenantSlug);
@@ -3644,7 +3660,7 @@ export default function TenantAdminPage() {
                     onSamplePrefill={handleContactSamplePrefill}
                     importingContacts={isImportingContacts}
                     currentView={crmView}
-                    onViewChange={setCrmView}
+                    onViewChange={(v) => setCrmView(v as any)}
                     contacts={importedContacts}
                     contactsLoading={contactsLoading}
                     contactsError={contactsError}
@@ -3673,7 +3689,7 @@ export default function TenantAdminPage() {
                     onTriggerPayout={handleTriggerPayout}
                     onTreasuryMesh={handleTreasuryMesh}
                     currentView={financeView}
-                    onViewChange={setFinanceView}
+                    onViewChange={(v) => setFinanceView(v as any)}
                     invoices={invoices}
                     invoiceStatusFilter={invoiceStatusFilter}
                     invoiceBranchFilter={invoiceBranchFilter}
@@ -3695,7 +3711,7 @@ export default function TenantAdminPage() {
                 ) : activeNav === "inventory" && canRead("inventory") ? (
                   <InventoryWorkspace
                     currentView={inventoryView}
-                    onViewChange={setInventoryView}
+                    onViewChange={(v) => setInventoryView(v as any)}
                     products={inventoryProducts}
                     onAddProduct={() => setShowNewProductModal(true)}
                     onTransferStock={() => setShowStockTransferModal(true)}
@@ -3708,7 +3724,7 @@ export default function TenantAdminPage() {
                 ) : activeNav === "procurement" && canRead("procurement") ? (
                   <ProcurementWorkspace
                     currentView={procurementView}
-                    onViewChange={setProcurementView}
+                    onViewChange={(v) => setProcurementView(v as any)}
                     vendors={procurementVendors}
                     onAddVendor={() => setShowNewVendorModal(true)}
                     onCreatePO={() => setShowNewPOModal(true)}
@@ -3721,7 +3737,7 @@ export default function TenantAdminPage() {
                 ) : activeNav === "hr-ops" && canRead("people") ? (
                   <HRWorkspace
                     currentView={hrView}
-                    onViewChange={setHrView}
+                    onViewChange={(v) => setHrView(v as any)}
                     employees={hrEmployees}
                     departments={hrDepartments}
                     attendance={hrAttendance}
@@ -3740,7 +3756,7 @@ export default function TenantAdminPage() {
                 ) : activeNav === "projects" && canRead("projects") ? (
                   <ProjectsWorkspace
                     currentView={projectsView}
-                    onViewChange={setProjectsView}
+                    onViewChange={(v) => setProjectsView(v as any)}
                     projects={projectsList}
                     tasks={projectsTasks}
                     timeEntries={projectsTimeEntries}
@@ -3771,23 +3787,23 @@ export default function TenantAdminPage() {
                   <OrgStructureManager tenantSlug={tenantSlug} />
                 ) : activeNav === "people-access" && canAdmin("people") ? (
                   <div className="space-y-8">
-                    <RoleBuilder tenantSlug={tenantSlug} />
-                    <RoleAssignmentPanel tenantSlug={tenantSlug} />
-                    <EmployeeConsole tenantSlug={tenantSlug} />
-                    <AccessControlPanel tenantSlug={tenantSlug} />
+                    <RoleBuilder tenantSlug={tenantSlug ?? "kreatix-default"} />
+                    <RoleAssignmentPanel tenantSlug={tenantSlug ?? "kreatix-default"} />
+                    <EmployeeConsole tenantSlug={tenantSlug ?? "kreatix-default"} />
+                    <AccessControlPanel tenantSlug={tenantSlug ?? "kreatix-default"} />
                   </div>
                 ) : activeNav === "approvals" && canRead("automation") ? (
                   <ApprovalDesigner tenantSlug={tenantSlug} />
                 ) : activeNav === "workflows" && canRead("automation") ? (
                   <LifecycleWorkflows tenantSlug={tenantSlug} />
                 ) : activeNav === "automation-rules" && canAdmin("automation") ? (
-                  <AutomationRules tenantSlug={tenantSlug} />
+                  <AutomationRules tenantSlug={tenantSlug ?? "kreatix-default"} />
                 ) : activeNav === "dashboards" && canRead("dashboards") ? (
                   <AutomationDashboard tenantSlug={tenantSlug} />
                 ) : activeNav === "policies" && canRead("policies") ? (
-                  <PoliciesSection tenantSlug={tenantSlug} />
+                  <PoliciesSection tenantSlug={tenantSlug ?? "kreatix-default"} />
                 ) : activeNav === "reports" && canRead("reports") ? (
-                  <ReportsSection tenantSlug={tenantSlug} />
+                  <ReportsSection tenantSlug={tenantSlug ?? "kreatix-default"} />
                 ) : activeNav === "modules" && canAdmin("admin") ? (
                   <ModuleRegistry tenantSlug={tenantSlug} />
                 ) : activeNav === "billing" && canRead("billing") ? (
@@ -6064,8 +6080,8 @@ function FinancePaymentsWorkspace() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<PaymentRecord | null>(null);
   const [showRecordModal, setShowRecordModal] = useState(false);
-  const [recordForm, setRecordForm] = useState({
-    method: "bank_transfer" as const,
+  const [recordForm, setRecordForm] = useState<{ method: string; grossAmount: string; fees: string; paymentDate: string; reference: string; gatewayReference: string; confirmationDetails: string }>({
+    method: "bank_transfer",
     grossAmount: "",
     fees: "",
     paymentDate: new Date().toISOString().split('T')[0],
@@ -6100,7 +6116,7 @@ function FinancePaymentsWorkspace() {
 
   // Filter payments
   const filteredPayments = payments.filter((payment) => {
-    const matchesSearch = (payment.reference || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = ((payment.reference || payment.referenceNumber || "") as string).toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter ? payment.status === statusFilter : true;
     const matchesMethod = methodFilter ? payment.method === methodFilter : true;
     const matchesGateway = gatewayFilter ? payment.gateway === gatewayFilter : true;
@@ -6111,15 +6127,15 @@ function FinancePaymentsWorkspace() {
   const metrics = {
     totalReceived: payments
       .filter(p => p.status === "successful" || p.status === "settled")
-      .reduce((sum, p) => sum + p.netAmount, 0),
+      .reduce((sum, p) => sum + (typeof p.netAmount === "string" ? parseFloat(p.netAmount) || 0 : p.netAmount), 0),
     pendingAmount: payments
       .filter(p => p.status === "pending")
-      .reduce((sum, p) => sum + p.grossAmount, 0),
+      .reduce((sum, p) => sum + (typeof p.grossAmount === "string" ? parseFloat(p.grossAmount) || 0 : p.grossAmount), 0),
     failedAmount: payments
       .filter(p => p.status === "failed")
-      .reduce((sum, p) => sum + p.grossAmount, 0),
-    totalFees: payments.reduce((sum, p) => sum + p.fees, 0),
-    successRate: payments.length > 0 
+      .reduce((sum, p) => sum + (typeof p.grossAmount === "string" ? parseFloat(p.grossAmount) || 0 : p.grossAmount), 0),
+    totalFees: payments.reduce((sum, p) => sum + (typeof p.fees === "string" ? parseFloat(p.fees) || 0 : p.fees), 0),
+    successRate: payments.length > 0
       ? ((payments.filter(p => p.status === "successful" || p.status === "settled").length / payments.length) * 100).toFixed(1)
       : "0",
   };
@@ -6129,10 +6145,10 @@ function FinancePaymentsWorkspace() {
       setSelectedPayment(payment);
       setRecordForm({
         method: "bank_transfer",
-        grossAmount: payment.grossAmount.toString(),
-        fees: payment.fees.toString(),
+        grossAmount: String(payment.grossAmount),
+        fees: String(payment.fees),
         paymentDate: payment.paymentDate,
-        reference: payment.reference,
+        reference: payment.reference || payment.referenceNumber || "",
         gatewayReference: payment.gatewayReference || "",
         confirmationDetails: "",
       });
@@ -6142,7 +6158,7 @@ function FinancePaymentsWorkspace() {
 
   const handleSaveRecord = async () => {
     if (!recordForm.reference || !recordForm.confirmationDetails || !recordForm.grossAmount) {
-      setPageError("Please fill in all required fields");
+      setError("Please fill in all required fields");
       return;
     }
 
@@ -6156,13 +6172,13 @@ function FinancePaymentsWorkspace() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tenantSlug: tenantSlug || "kreatix-default",
+          tenantSlug: "kreatix-default",
           customerId: `CUST-${Math.random().toString(36).substr(2, 9)}`,
           invoiceId: selectedPayment?.invoiceId,
           reference: recordForm.reference,
           grossAmount,
           fees,
-          method: recordForm.method,
+          method: recordForm.method as any,
           gatewayReference: recordForm.gatewayReference,
           paymentDate: recordForm.paymentDate,
           confirmationDetails: recordForm.confirmationDetails,
@@ -6183,10 +6199,10 @@ function FinancePaymentsWorkspace() {
         customerId: `CUST-${Math.random().toString(36).substr(2, 9)}`,
         invoiceId: selectedPayment?.invoiceId || `INV-${Math.random().toString(36).substr(2, 9)}`,
         reference: recordForm.reference,
-        grossAmount: grossAmount.toLocaleString(),
-        fees: fees.toLocaleString(),
-        netAmount: netAmount.toLocaleString(),
-        method: recordForm.method,
+        grossAmount: grossAmount,
+        fees: fees,
+        netAmount: netAmount,
+        method: recordForm.method as any,
         gateway: recordForm.method === "paystack" ? "paystack" : 
                  recordForm.method === "flutterwave" ? "flutterwave" :
                  recordForm.method === "stripe" ? "stripe" : "manual",
@@ -6224,7 +6240,7 @@ function FinancePaymentsWorkspace() {
       });
     } catch (error) {
       console.error("Error saving payment:", error);
-      setPageError(`Failed to save payment: ${error instanceof Error ? error.message : "Unknown error"}`);
+      setError(`Failed to save payment: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   };
 
@@ -6281,6 +6297,11 @@ function FinancePaymentsWorkspace() {
 
   const formatCurrency = (amount: number) => {
     return `₦${(amount / 1000000).toFixed(2)}M`;
+  };
+
+  const formatMoneyValue = (value: number | string | undefined | null) => {
+    const n = typeof value === "string" ? parseFloat(value) || 0 : typeof value === "number" ? value : 0;
+    return n.toLocaleString();
   };
 
   return (
@@ -6348,10 +6369,10 @@ function FinancePaymentsWorkspace() {
             <tbody>
               {filteredPayments.map((payment) => (
                 <tr key={payment.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="py-3 px-4 text-slate-900 font-medium">{payment.reference}</td>
-                  <td className="py-3 px-4 text-right text-slate-900">₦{typeof payment.grossAmount === 'string' ? payment.grossAmount : payment.grossAmount.toLocaleString()}</td>
-                  <td className="py-3 px-4 text-right text-slate-600">₦{typeof payment.fees === 'string' ? payment.fees : payment.fees.toLocaleString()}</td>
-                  <td className="py-3 px-4 text-right text-slate-900 font-medium">₦{typeof payment.netAmount === 'string' ? payment.netAmount : payment.netAmount.toLocaleString()}</td>
+                  <td className="py-3 px-4 text-slate-900 font-medium">{payment.reference || payment.referenceNumber}</td>
+                  <td className="py-3 px-4 text-right text-slate-900">₦{formatMoneyValue(payment.grossAmount)}</td>
+                  <td className="py-3 px-4 text-right text-slate-600">₦{formatMoneyValue(payment.fees)}</td>
+                  <td className="py-3 px-4 text-right text-slate-900 font-medium">₦{formatMoneyValue(payment.netAmount)}</td>
                   <td className="py-3 px-4 text-slate-600">{getMethodLabel(payment.method)}</td>
                   <td className="py-3 px-4">
                     <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium border ${getStatusColor(payment.status)}`}>
@@ -6552,7 +6573,7 @@ function FinanceExpensesWorkspace() {
 
   const handleSaveRecord = async () => {
     if (!recordForm.description || !recordForm.amount) {
-      setPageError('Please fill in description and amount');
+      setError('Please fill in description and amount');
       return;
     }
 
@@ -6594,17 +6615,17 @@ function FinanceExpensesWorkspace() {
       } else {
         const errData = await response.json().catch(() => ({}));
         console.error('API error:', errData);
-        setPageError('Failed to record expense: ' + JSON.stringify(errData));
+        setError('Failed to record expense: ' + JSON.stringify(errData));
       }
     } catch (err) {
       console.error('Error recording expense:', err);
-      setPageError('Error recording expense: ' + String(err));
+      setError('Error recording expense: ' + String(err));
     }
   };
 
   const handleCreateCategory = async () => {
     if (!newCategory.code || !newCategory.name || !newCategory.accountId) {
-      setPageError('Please fill in all category fields');
+      setError('Please fill in all category fields');
       return;
     }
 
@@ -6640,11 +6661,11 @@ function FinanceExpensesWorkspace() {
         setShowCreateCategory(false);
       } else {
         const errData = await response.json().catch(() => ({}));
-        setPageError('Failed to create category: ' + JSON.stringify(errData));
+        setError('Failed to create category: ' + JSON.stringify(errData));
       }
     } catch (err) {
       console.error('Error creating category:', err);
-      setPageError('Error creating category: ' + String(err));
+      setError('Error creating category: ' + String(err));
     }
   };
 
@@ -6956,7 +6977,7 @@ function FinanceAccountingWorkspace() {
 
   const handleAddAccount = async () => {
     if (!newAccount.code || !newAccount.name) {
-      setPageError('Please fill in account code and name');
+      setError('Please fill in account code and name');
       return;
     }
 
@@ -6990,11 +7011,11 @@ function FinanceAccountingWorkspace() {
       } else {
         const errData = await response.json().catch(() => ({}));
         console.error('API error:', errData);
-        setPageError('Failed to add account: ' + JSON.stringify(errData));
+        setError('Failed to add account: ' + JSON.stringify(errData));
       }
     } catch (err) {
       console.error('Error adding account:', err);
-      setPageError('Error adding account: ' + String(err));
+      setError('Error adding account: ' + String(err));
     }
   };
 
@@ -7453,6 +7474,8 @@ function InvoiceDrawer({
   savedLineItems: SavedLineItem[];
   onSaveLineItem: (description: string, defaultPrice: number, category?: string) => void;
 }) {
+  const [localError, setLocalError] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     customer: invoice?.customer || "",
     customerEmail: invoice?.customerEmail || "",
@@ -7568,7 +7591,7 @@ function InvoiceDrawer({
 
     // Validate email when sending invoice
     if (status === "sent" && !formData.customerEmail) {
-      setPageError("Customer email is required to send invoice");
+      setLocalError("Customer email is required to send invoice");
       return;
     }
 
@@ -9379,7 +9402,7 @@ function ActivityStream() {
               <div className={`mt-1 h-2.5 w-2.5 rounded-full ${ACTIVITY_TONE_CLASSES[event.tone]}`} />
               <div>
                 <p className="font-semibold text-slate-900">{event.title}</p>
-                <p className="text-sm text-slate-500">{event.detail}</p>
+                <p className="text-sm text-slate-500">{event.details}</p>
                 <p className="text-xs text-slate-400">{event.timestamp}</p>
               </div>
             </div>

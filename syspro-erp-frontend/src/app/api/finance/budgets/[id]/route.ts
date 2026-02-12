@@ -6,12 +6,11 @@ import {
   changeBudgetStatus,
 } from "@/lib/finance/budgets-db";
 import { budgetUpdateSchema } from "@/lib/finance/budgets";
+import { db } from "@/lib/sql-client";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, context: any) {
   try {
+    const { params } = context;
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
 
     if (!tenantSlug) {
@@ -48,10 +47,8 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, context: any) {
+  const { params } = context;
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
 
@@ -102,10 +99,8 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, context: any) {
+  const { params } = context;
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
 

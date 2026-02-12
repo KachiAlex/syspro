@@ -1,4 +1,4 @@
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import { AutomationRule, Action } from "./types";
 
 export type AutomationSummary = {
@@ -7,9 +7,8 @@ export type AutomationSummary = {
   audits: { total: number; matched: number; unmatched: number; lastEvent: string | null; lastRule: string | null; lastOutcome: string | null; lastCreatedAt: string | null };
 };
 
-const SQL = getSql();
+/* using imported SQL */
 
-type SqlClient = ReturnType<typeof getSql>;
 
 export async function ensureAutomationTables(sql: SqlClient = SQL) {
   await sql`create extension if not exists "pgcrypto"`;
@@ -129,7 +128,7 @@ export async function updateAutomationRule(id: string, tenantSlug: string, updat
   if (fields.length === 0) return getAutomationRule(id, tenantSlug, sql);
 
   const query = `update automation_rules set ${fields.join(", ")}, updated_at = now() where id = $${fields.length + 1} and tenant_slug = $${fields.length + 2} returning *`;
-  const [row] = await sql(query, ...values, id, tenantSlug) as any[];
+  const [row] = (await db.query(query, [...values, id, tenantSlug])).rows as any[];
   return row ? mapRuleRow(row) : null;
 }
 

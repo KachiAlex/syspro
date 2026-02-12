@@ -5,7 +5,7 @@
  */
 
 import { NextRequest } from "next/server";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import { verifySession, signSession, cookieOptions } from '@/lib/session';
 
 export interface SessionUser {
@@ -83,7 +83,7 @@ export async function validateTenantAccess(user: SessionUser, requestedTenantSlu
 
   // Otherwise, check the database for tenant membership/role assignment.
   try {
-    const sql = getSql();
+    const sql = SQL;
 
     // Check tenant_user_roles first (role assignment table)
     const roleRows = await sql`

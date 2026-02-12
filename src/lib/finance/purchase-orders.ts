@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 
 export type POItemRecord = {
   id: string;
@@ -46,8 +46,7 @@ export type PurchaseOrder = {
   updatedAt: string;
 };
 
-const SQL = getSql();
-
+// using SQL from sql-client
 export async function ensurePurchaseOrderTables(sql = SQL) {
   await sql`
     create table if not exists purchase_orders (
@@ -185,10 +184,13 @@ export async function createPurchaseOrder(payload: {
     ) returning *
   `) as PurchaseOrderRecord[];
 
-  const itemRows = (await Promise.all(payload.items.map((it) => sql`
-    insert into purchase_order_items (id, purchase_order_id, sku, description, quantity, unit_price, amount)
-    values (${randomUUID()}, ${id}, ${it.sku ?? null}, ${it.description}, ${it.quantity}, ${it.unitPrice}, ${it.quantity * it.unitPrice}) returning *
-  `))).flat() as POItemRecord[];
+  const itemRows = await Promise.all(payload.items.map(async (it) => {
+    const rows = await sql<POItemRecord>`
+      insert into purchase_order_items (id, purchase_order_id, sku, description, quantity, unit_price, amount)
+      values (${randomUUID()}, ${id}, ${it.sku ?? null}, ${it.description}, ${it.quantity}, ${it.unitPrice}, ${it.quantity * it.unitPrice}) returning *
+    `;
+    return rows[0];
+  })) as POItemRecord[];
 
   return normalizePO(row, itemRows);
 }
@@ -211,7 +213,7 @@ export async function updatePurchaseOrder(id: string, updates: Partial<PurchaseO
   if (updates.items && Array.isArray(updates.items)) {
     await sql`delete from purchase_order_items where purchase_order_id = ${id}`;
     await Promise.all((updates.items as POItemRecord[]).map((it) => sql`
-      insert into purchase_order_items (id, purchase_order_id, sku, description, quantity, unit_price, amount) values (${it.id ?? randomUUID()}, ${id}, ${it.sku ?? null}, ${it.description}, ${it.quantity}, ${it.unit_price ?? it.unitPrice}, ${it.amount ?? it.quantity * (it.unit_price ?? it.unitPrice)})
+      insert into purchase_order_items (id, purchase_order_id, sku, description, quantity, unit_price, amount) values (${(it as any).id ?? randomUUID()}, ${id}, ${(it as any).sku ?? null}, ${(it as any).description}, ${(it as any).quantity}, ${(it as any).unit_price ?? (it as any).unitPrice}, ${(it as any).amount ?? (it as any).quantity * ((it as any).unit_price ?? (it as any).unitPrice)})
     `));
   }
 
@@ -226,6 +228,6 @@ export async function deletePurchaseOrder(id: string) {
   const sql = SQL;
   await ensurePurchaseOrderTables(sql);
 
-  const res = await sql`delete from purchase_orders where id = ${id}`;
+  const res = await db.query<{ count: number }>(`delete from purchase_orders where id = $1`, [id]);
   return res.count > 0;
 }

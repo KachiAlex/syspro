@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import type {
   CrmLeadStage,
   CrmLeadSource,
@@ -9,9 +9,7 @@ import type {
   CrmContact,
 } from "./types";
 
-const SQL = getSql();
-
-type SqlClient = ReturnType<typeof getSql>;
+// using SQL and db from sql-client
 
 function serializeTextArray(values?: string[] | null): string {
   if (!values || values.length === 0) {
@@ -271,7 +269,7 @@ export async function listContacts(filters: { tenantSlug: string; tag?: string |
     offset ${offset}
   `;
 
-  const rows = (await sql(query, params)) as CrmContactRecord[];
+  const rows = (await db.query<CrmContactRecord>(query, params)) as CrmContactRecord[];
   return rows.map(normalizeContactRow);
 }
 

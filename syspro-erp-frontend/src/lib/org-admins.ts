@@ -1,8 +1,6 @@
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 
-const SQL = getSql();
-
-type SqlClient = ReturnType<typeof getSql>;
+/* using imported SQL */
 
 export type OrgAdminScope = "global" | "continent" | "region" | "country" | "state" | "branch" | "department" | "team";
 

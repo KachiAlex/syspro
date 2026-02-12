@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 
 export interface JournalEntry {
   id: string;
@@ -37,7 +37,7 @@ export interface ChartOfAccount {
   isActive: boolean;
 }
 
-const SQL = getSql();
+// using SQL imported from sql-client
 
 // Default chart of accounts for vendor transactions
 const DEFAULT_ACCOUNTS: Record<string, ChartOfAccount> = {
@@ -377,7 +377,7 @@ export async function getJournalEntries(filters: {
   }
 
   const whereClause = whereConditions.length > 0 
-    ? sql`where ${sql.join(whereConditions, sql` and `)}`
+    ? sql`where ${db.join(whereConditions, ' and ')}`
     : sql``;
 
   const entries = (await sql`

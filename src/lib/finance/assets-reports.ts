@@ -8,25 +8,25 @@ import { z } from "zod";
  * Depreciation Methods
  */
 export type DepreciationMethod = "STRAIGHT_LINE" | "REDUCING_BALANCE";
-export const DEPRECIATION_METHODS: DepreciationMethod[] = ["STRAIGHT_LINE", "REDUCING_BALANCE"];
+export const DEPRECIATION_METHODS = ["STRAIGHT_LINE", "REDUCING_BALANCE"] as const;
 
 /**
  * Asset Status Lifecycle
  */
 export type AssetStatus = "ACQUIRED" | "IN_USE" | "UNDER_MAINTENANCE" | "REVALUED" | "DISPOSED";
-export const ASSET_STATUSES: AssetStatus[] = ["ACQUIRED", "IN_USE", "UNDER_MAINTENANCE", "REVALUED", "DISPOSED"];
+export const ASSET_STATUSES = ["ACQUIRED", "IN_USE", "UNDER_MAINTENANCE", "REVALUED", "DISPOSED"] as const;
 
 /**
  * Disposal Methods
  */
 export type DisposalMethod = "SCRAP" | "SALE" | "DONATION" | "EXCHANGE";
-export const DISPOSAL_METHODS: DisposalMethod[] = ["SCRAP", "SALE", "DONATION", "EXCHANGE"];
+export const DISPOSAL_METHODS = ["SCRAP", "SALE", "DONATION", "EXCHANGE"] as const;
 
 /**
  * Depreciation Schedule Status
  */
 export type DepreciationScheduleStatus = "DRAFT" | "CALCULATED" | "POSTED" | "REVERSED";
-export const DEPRECIATION_SCHEDULE_STATUSES: DepreciationScheduleStatus[] = ["DRAFT", "CALCULATED", "POSTED", "REVERSED"];
+export const DEPRECIATION_SCHEDULE_STATUSES = ["DRAFT", "CALCULATED", "POSTED", "REVERSED"] as const;
 
 /**
  * Asset Category Interface
@@ -191,7 +191,7 @@ export const assetCategoryCreateSchema = z.object({
   name: z.string().min(1).max(255),
   description: z.string().optional(),
   defaultUsefulLifeYears: z.number().int().positive().default(5),
-  defaultDepreciationMethod: z.enum(DEPRECIATION_METHODS),
+  defaultDepreciationMethod: z.enum(DEPRECIATION_METHODS as unknown as [string, ...string[]]),
   defaultResidualPercent: z.number().min(0).max(100).optional(),
   assetAccountId: z.bigint().optional(),
   accumulatedDepreciationAccountId: z.bigint().optional(),
@@ -210,7 +210,7 @@ export const assetCreateSchema = z.object({
   purchaseCost: z.number().nonnegative(),
   purchaseInvoiceId: z.bigint().optional(),
   usefulLifeYears: z.number().int().positive().default(5),
-  depreciationMethod: z.enum(DEPRECIATION_METHODS),
+  depreciationMethod: z.enum(DEPRECIATION_METHODS as unknown as [string, ...string[]]),
   residualValue: z.number().nonnegative().optional(),
 });
 
@@ -219,9 +219,9 @@ export const assetUpdateSchema = z.object({
   description: z.string().optional(),
   location: z.string().optional(),
   usefulLifeYears: z.number().int().positive().optional(),
-  depreciationMethod: z.enum(DEPRECIATION_METHODS).optional(),
+  depreciationMethod: z.enum(DEPRECIATION_METHODS as unknown as [string, ...string[]]).optional(),
   residualValue: z.number().nonnegative().optional(),
-  assetStatus: z.enum(ASSET_STATUSES).optional(),
+  assetStatus: z.enum(ASSET_STATUSES as unknown as [string, ...string[]]).optional(),
 });
 
 export const depreciationScheduleCreateSchema = z.object({
@@ -237,7 +237,7 @@ export const assetDisposalCreateSchema = z.object({
   tenantId: z.bigint(),
   assetId: z.bigint(),
   disposalDate: z.date(),
-  disposalMethod: z.enum(DISPOSAL_METHODS),
+  disposalMethod: z.enum(DISPOSAL_METHODS as unknown as [string, ...string[]]),
   salePrice: z.number().nonnegative().optional(),
   cashReceiptAccountId: z.bigint().optional(),
   gainLossAccountId: z.bigint().optional(),

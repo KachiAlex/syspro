@@ -62,12 +62,12 @@ export async function GET(request: NextRequest) {
       const vendors = await listVendors(parsed.data);
       return NextResponse.json({ vendors });
     } catch (error) {
-      console.error("Vendor list failed:", error?.stack || error);
-      return NextResponse.json({ error: "Failed to list vendors", details: String(error?.message || error) }, { status: 500 });
+      console.error("Vendor list failed:", (error as any)?.stack || error);
+      return NextResponse.json({ error: "Failed to list vendors", details: String((error as any)?.message || error) }, { status: 500 });
     }
   } catch (err) {
-    console.error('API GET /api/finance/vendors top-level error:', err?.stack || err);
-    return NextResponse.json({ error: 'Internal error', details: String(err?.message || err) }, { status: 500 });
+    console.error('API GET /api/finance/vendors top-level error:', (err as any)?.stack || err);
+    return NextResponse.json({ error: 'Internal error', details: String((err as any)?.message || err) }, { status: 500 });
   }
 }
 

@@ -19,7 +19,8 @@ const vendorUpdateSchema = z.object({
   isActive: z.coerce.boolean().optional(),
 });
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_request: NextRequest, context: any) {
+  const { params } = context;
   const { id } = params;
   try {
     const vendor = await getVendor(id);
@@ -31,7 +32,8 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: any) {
+  const { params } = context;
   const { id } = params;
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
@@ -53,7 +55,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_request: NextRequest, context: any) {
+  const { params } = context;
   const { id } = params;
   try {
     const ok = await deleteVendor(id);

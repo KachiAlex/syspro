@@ -127,7 +127,7 @@ export async function enforcePermission(
   }
 
   // Step 3: Get role permissions
-  const permissions = getRolePermissionsFromDB(user.roleId);
+  const permissions = await getRolePermissionsFromDB(user.roleId);
 
   // Step 4: Check if user has required permission
   const allowed = hasPermission(user, module, permissions, required);

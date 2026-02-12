@@ -131,7 +131,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
   }, [ts]);
 
   function togglePerm(perm: string) {
-    form.setFieldValues({
+    (form as any).setFieldValues({
       permissions: form.values.permissions.includes(perm)
         ? form.values.permissions.filter((p) => p !== perm)
         : [...form.values.permissions, perm],
@@ -313,9 +313,9 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                     checked={form.values.permissions.includes("all")}
                     onChange={() => {
                       if (form.values.permissions.includes("all")) {
-                        form.setFieldValues({ permissions: [] });
+                        (form as any).setFieldValues({ permissions: [] });
                       } else {
-                        form.setFieldValues({ permissions: ["all"] });
+                        (form as any).setFieldValues({ permissions: ["all"] });
                       }
                     }}
                     className="mt-1 h-5 w-5 rounded border-slate-300"

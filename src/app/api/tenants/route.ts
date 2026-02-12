@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 
 export type TenantRow = {
   name: string;
@@ -28,7 +28,7 @@ const payloadSchema = z.object({
   adminNotes: z.string().optional().default(""),
 });
 
-export async function ensureTenantTable(sql: ReturnType<typeof getSql>) {
+export async function ensureTenantTable(sql: any) {
   await sql`
     create table if not exists tenants (
       id uuid primary key,
@@ -59,7 +59,7 @@ export async function ensureTenantTable(sql: ReturnType<typeof getSql>) {
 
 export async function GET() {
   try {
-    const sql = getSql();
+    const sql = SQL;
     await ensureTenantTable(sql);
 
     const rows = (await sql`
@@ -129,14 +129,14 @@ export async function POST(request: Request) {
     const payload = parsed.data;
     const computedDomain = `${payload.companySlug}.syspro.local`;
     const computedSchema = `${payload.companySlug.replace(/-/g, "_")}_schema`;
-    const sql = getSql();
+    const sql = SQL;
     await ensureTenantTable(sql);
     const computedCode = await generateUniqueTenantCode(sql, payload.companySlug);
 
     const tenantId = randomUUID();
     const passwordHash = await bcrypt.hash(payload.adminPassword, 12);
 
-    const tenantRows = (await sql(
+    const tenantRes = await db.query<TenantRow>(
       `
         insert into tenants (
           id,
@@ -189,7 +189,7 @@ export async function POST(request: Request) {
         passwordHash,
         payload.adminNotes ?? "",
       ]
-    )) as TenantRow[];
+    );
 
     const tenantSummary = mapTenantRow(tenantRows[0]);
 

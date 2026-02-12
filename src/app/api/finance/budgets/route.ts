@@ -5,6 +5,7 @@ import {
   createBudget,
   getBudget,
 } from "@/lib/finance/budgets-db";
+import { db } from "@/lib/sql-client";
 import { budgetCreateSchema } from "@/lib/finance/budgets";
 
 export async function GET(request: NextRequest) {
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     const filters = {
       status: status as any,
-      budgetType,
+      budgetType: budgetType || undefined,
       fiscalYear: fiscalYear ? parseInt(fiscalYear) : undefined,
     };
 

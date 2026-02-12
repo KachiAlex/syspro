@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { extractAuthContext, requirePermission, validateTenant } from "@/lib/auth-helper";
 import { createReportJob, listReportJobs } from "@/lib/reporting/db";
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, context: any) {
+  const { params } = context;
   try {
     const auth = extractAuthContext(request);
     const tenantSlug = validateTenant(auth.tenantSlug);
@@ -23,7 +24,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   }
 }
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, context: any) {
+  const { params } = context;
   try {
     const auth = extractAuthContext(request);
     const tenantSlug = validateTenant(auth.tenantSlug);

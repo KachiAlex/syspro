@@ -46,8 +46,28 @@ export async function POST(request: NextRequest) {
     }
 
     await ensureAdminTables();
-    const id = await insertEmployee({ tenantSlug, name: validation.data.name, email: validation.data.email, departmentId: validation.data.department, branchId: validation.data.branch, regionId: validation.data.region });
-    return NextResponse.json({ employee: { id, tenantSlug, name: validation.data.name, email: validation.data.email, department: validation.data.department, branch: validation.data.branch, region: validation.data.region, status: "active", createdAt: new Date().toISOString() } }, { status: 201 });
+    const data = validation.data;
+    const id = await insertEmployee({
+      tenantSlug,
+      name: data.name,
+      email: data.email,
+      departmentId: data.department,
+      branchId: data.branch,
+      regionId: data.region,
+    });
+    return NextResponse.json({
+      employee: {
+        id,
+        tenantSlug,
+        name: data.name,
+        email: data.email,
+        department: data.department,
+        branch: data.branch,
+        region: data.region,
+        status: "active",
+        createdAt: new Date().toISOString(),
+      },
+    }, { status: 201 });
   } catch (error) {
     console.error("Employee create failed", error);
     const message = error instanceof Error ? error.message : "Unable to create employee";

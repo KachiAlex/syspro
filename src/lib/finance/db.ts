@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import type {
   FinanceAccount,
   FinanceAccountCreateInput,
@@ -12,9 +12,7 @@ import type {
   FinanceInvoiceUpdateInput,
 } from "@/lib/finance/types";
 
-const SQL = getSql();
-
-type SqlClient = ReturnType<typeof getSql>;
+// using SQL and Db client imported from sql-client
 
 export type FinanceAccountRecord = {
   id: string;
@@ -617,9 +615,9 @@ export async function insertFinanceInvoice(payload: FinanceInvoiceCreateInput): 
   `) as FinanceInvoiceRecord[];
 
   // Insert line items
-  const lineRows = (await Promise.all(
-    payload.lineItems.map((line) =>
-      sql`
+  const lineRows = await Promise.all(
+    payload.lineItems.map(async (line) => {
+      const rows = await sql<FinanceInvoiceLineRecord>`
         insert into finance_invoice_lines (
           id,
           invoice_id,
@@ -640,9 +638,10 @@ export async function insertFinanceInvoice(payload: FinanceInvoiceCreateInput): 
           ${line.taxRate ?? null}
         )
         returning *
-      `
-    )
-  )).flat() as FinanceInvoiceLineRecord[];
+      `;
+      return rows[0];
+    })
+  ) as FinanceInvoiceLineRecord[];
 
   return normalizeFinanceInvoiceRow(invoiceRow, lineRows);
 }
@@ -728,9 +727,7 @@ export async function deleteFinanceInvoice(id: string): Promise<boolean> {
   const sql = SQL;
   await ensureFinanceTables(sql);
 
-  const result = await sql`
-    delete from finance_invoices where id = ${id}
-  `;
+  const result = await db.query<{ count: number }>(`delete from finance_invoices where id = $1`, [id]);
 
   return result.count > 0;
 }
@@ -961,9 +958,7 @@ export async function deletePayment(id: string): Promise<boolean> {
   const sql = SQL;
   await ensureFinanceTables(sql);
 
-  const result = await sql`
-    delete from finance_payments where id = ${id}
-  `;
+  const result = await db.query<{ count: number }>(`delete from finance_payments where id = $1`, [id]);
 
   return result.count > 0;
 }

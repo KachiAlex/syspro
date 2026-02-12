@@ -3,7 +3,7 @@
  * Provides comprehensive reporting for vendor spend, aging, risk analysis, etc.
  */
 
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 
 export interface VendorSpendReport {
   vendorId: string;
@@ -67,7 +67,7 @@ export interface TaxReport {
   complianceStatus: "compliant" | "pending" | "non_compliant";
 }
 
-const SQL = getSql();
+// using `SQL` imported above
 
 export async function getVendorSpendReport(
   tenantSlug: string,
@@ -96,7 +96,7 @@ export async function getVendorSpendReport(
   }
 
   const whereClause = whereConditions.length > 0 
-    ? sql`where ${sql.join(whereConditions, sql` and `)}`
+    ? sql`where ${db.join(whereConditions, ' and ')}`
     : sql``;
 
   const limitClause = filters?.limit ? sql`limit ${filters.limit}` : sql``;
@@ -194,7 +194,7 @@ export async function getVendorAgingReport(
   }
 
   const whereClause = whereConditions.length > 0 
-    ? sql`where ${sql.join(whereConditions, sql` and `)}`
+    ? sql`where ${db.join(whereConditions, ' and ')}`
     : sql``;
 
   const results = (await sql`
@@ -408,7 +408,7 @@ export async function getTaxReport(
   }
 
   const whereClause = whereConditions.length > 0 
-    ? sql`where ${sql.join(whereConditions, sql` and `)}`
+    ? sql`where ${db.join(whereConditions, ' and ')}`
     : sql``;
 
   const results = (await sql`
@@ -417,9 +417,7 @@ export async function getTaxReport(
       v.legal_name as vendor_name,
       v.tax_id,
       sum(b.taxes) as total_tax_withheld,
-      -- Estimate VAT input (assuming 7.5% VAT rate)
       sum(b.taxes) * 0.75 as vat_input,
-      -- Estimate withholding tax (assuming 5% WHT rate)
       sum(b.taxes) * 0.25 as withholding_tax,
       coalesce(date_trunc('month', b.bill_date)::text, date_trunc('month', current_date)::text) as period,
       case 

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
-import { getSql } from "@/lib/db";
+import { db, sql as SQL } from "../sql-client";
+import type { SqlClient } from "../sql-client";
 import type {
   FinanceAccount,
   FinanceAccountCreateInput,
@@ -12,9 +13,7 @@ import type {
   FinanceInvoiceUpdateInput,
 } from "@/lib/finance/types";
 
-const SQL = getSql();
-
-type SqlClient = ReturnType<typeof getSql>;
+/* using imported SQL */
 
 export type FinanceAccountRecord = {
   id: string;
@@ -238,16 +237,14 @@ export async function ensureFinanceTables(sql: SqlClient = SQL) {
     )
   `;
 
-  await Promise.all([
-    sql`create index if not exists finance_accounts_tenant_idx on finance_accounts (tenant_slug)`,
-    sql`create index if not exists finance_schedules_tenant_idx on finance_schedules (tenant_slug, document_type)`,
-    sql`create index if not exists finance_expense_categories_tenant_idx on finance_expense_categories (tenant_slug)`,
-    sql`create index if not exists finance_trend_points_tenant_idx on finance_trend_points (tenant_slug, timeframe)`,
-    sql`create index if not exists finance_invoices_tenant_idx on finance_invoices (tenant_slug, status)`,
-    sql`create index if not exists finance_invoice_lines_invoice_idx on finance_invoice_lines (invoice_id)`,
-    sql`create index if not exists finance_payments_tenant_idx on finance_payments (tenant_slug, status)`,
-    sql`create index if not exists finance_payments_invoice_idx on finance_payments (invoice_id)`,
-  ]);
+  await sql`create index if not exists finance_accounts_tenant_idx on finance_accounts (tenant_slug)`;
+  await sql`create index if not exists finance_schedules_tenant_idx on finance_schedules (tenant_slug, document_type)`;
+  await sql`create index if not exists finance_expense_categories_tenant_idx on finance_expense_categories (tenant_slug)`;
+  await sql`create index if not exists finance_trend_points_tenant_idx on finance_trend_points (tenant_slug, timeframe)`;
+  await sql`create index if not exists finance_invoices_tenant_idx on finance_invoices (tenant_slug, status)`;
+  await sql`create index if not exists finance_invoice_lines_invoice_idx on finance_invoice_lines (invoice_id)`;
+  await sql`create index if not exists finance_payments_tenant_idx on finance_payments (tenant_slug, status)`;
+  await sql`create index if not exists finance_payments_invoice_idx on finance_payments (invoice_id)`;
 }
 
 function normalizeFinanceAccountRow(row: FinanceAccountRecord): FinanceAccount {
@@ -617,32 +614,31 @@ export async function insertFinanceInvoice(payload: FinanceInvoiceCreateInput): 
   `) as FinanceInvoiceRecord[];
 
   // Insert line items
-  const lineRows = (await Promise.all(
-    payload.lineItems.map((line) =>
-      sql`
-        insert into finance_invoice_lines (
-          id,
-          invoice_id,
-          description,
-          quantity,
-          unit_price,
-          amount,
-          account_code,
-          tax_rate
-        ) values (
-          ${randomUUID()},
-          ${invoiceId},
-          ${line.description},
-          ${line.quantity},
-          ${line.unitPrice},
-          ${line.amount ?? line.quantity * line.unitPrice},
-          ${line.accountCode ?? null},
-          ${line.taxRate ?? null}
-        )
-        returning *
-      `
-    )
-  )).flat() as FinanceInvoiceLineRecord[];
+  const lineRows = await Promise.all(payload.lineItems.map(async (line) => {
+    const rows = (await sql`
+      insert into finance_invoice_lines (
+        id,
+        invoice_id,
+        description,
+        quantity,
+        unit_price,
+        amount,
+        account_code,
+        tax_rate
+      ) values (
+        ${randomUUID()},
+        ${invoiceId},
+        ${line.description},
+        ${line.quantity},
+        ${line.unitPrice},
+        ${line.amount ?? line.quantity * line.unitPrice},
+        ${line.accountCode ?? null},
+        ${line.taxRate ?? null}
+      )
+      returning *
+    `) as FinanceInvoiceLineRecord[];
+    return rows[0];
+  })) as FinanceInvoiceLineRecord[];
 
   return normalizeFinanceInvoiceRow(invoiceRow, lineRows);
 }
@@ -685,34 +681,33 @@ export async function updateFinanceInvoice(
   let lineRows: FinanceInvoiceLineRecord[] | null = null;
   if (updates.lineItems && updates.lineItems.length) {
     await sql`delete from finance_invoice_lines where invoice_id = ${id}`;
-    lineRows = (
-      await Promise.all(
-        updates.lineItems.map((line) =>
-          sql`
-            insert into finance_invoice_lines (
-              id,
-              invoice_id,
-              description,
-              quantity,
-              unit_price,
-              amount,
-              account_code,
-              tax_rate
-            ) values (
-              ${randomUUID()},
-              ${id},
-              ${line.description},
-              ${line.quantity},
-              ${line.unitPrice},
-              ${line.amount ?? line.quantity * line.unitPrice},
-              ${line.accountCode ?? null},
-              ${line.taxRate ?? null}
-            )
-            returning *
-          `
-        )
-      )
-    ).flat();
+    lineRows = await Promise.all(
+      updates.lineItems.map(async (line) => {
+        const rows = (await sql`
+          insert into finance_invoice_lines (
+            id,
+            invoice_id,
+            description,
+            quantity,
+            unit_price,
+            amount,
+            account_code,
+            tax_rate
+          ) values (
+            ${randomUUID()},
+            ${id},
+            ${line.description},
+            ${line.quantity},
+            ${line.unitPrice},
+            ${line.amount ?? line.quantity * line.unitPrice},
+            ${line.accountCode ?? null},
+            ${line.taxRate ?? null}
+          )
+          returning *
+        `) as FinanceInvoiceLineRecord[];
+        return rows[0];
+      })
+    );
   }
 
   if (!lineRows) {
@@ -728,10 +723,7 @@ export async function deleteFinanceInvoice(id: string): Promise<boolean> {
   const sql = SQL;
   await ensureFinanceTables(sql);
 
-  const result = await sql`
-    delete from finance_invoices where id = ${id}
-  `;
-
+  const result = await db.query<{ count: number }>(`delete from finance_invoices where id = $1`, [id]);
   return result.count > 0;
 }
 
@@ -961,10 +953,7 @@ export async function deletePayment(id: string): Promise<boolean> {
   const sql = SQL;
   await ensureFinanceTables(sql);
 
-  const result = await sql`
-    delete from finance_payments where id = ${id}
-  `;
-
+  const result = await db.query<{ count: number }>(`delete from finance_payments where id = $1`, [id]);
   return result.count > 0;
 }
 
@@ -1119,7 +1108,36 @@ export async function ensureExpenseTables(sql: SqlClient = SQL) {
   ]);
 }
 
-function normalizeExpenseRecord(record: ExpenseRecord, approvals: ExpenseApprovalRecord[] = [], auditLogs: ExpenseAuditLogRecord[] = []): Expense {
+function normalizeExpenseRecord(
+  record: ExpenseRecord,
+  approvals: Array<ExpenseApprovalRecord | ExpenseApproval> = [],
+  auditLogs: ExpenseAuditLogRecord[] = []
+): Expense {
+  const normApprovals = approvals.map((a) => {
+    // support both DB record shape (snake_case) and DTO shape (camelCase)
+    const id = (a as any).id;
+    const expenseId = (a as any).expense_id ?? (a as any).expenseId;
+    const approverRole = (a as any).approver_role ?? (a as any).approverRole;
+    const approverId = (a as any).approver_id ?? (a as any).approverId;
+    const approverName = (a as any).approver_name ?? (a as any).approverName;
+    const action = (a as any).action;
+    const reason = (a as any).reason;
+    const timestamp = (a as any).timestamp;
+    const amountThreshold = (a as any).amount_threshold ?? (a as any).amountThreshold ?? 0;
+
+    return {
+      id,
+      expenseId,
+      approverRole: approverRole as any,
+      approverId,
+      approverName,
+      action: action as any,
+      reason,
+      timestamp,
+      amountThreshold: Number(amountThreshold),
+    } as ExpenseApproval;
+  });
+
   return {
     id: record.id,
     tenantSlug: record.tenant_slug,
@@ -1137,17 +1155,7 @@ function normalizeExpenseRecord(record: ExpenseRecord, approvals: ExpenseApprova
     date: record.date,
     approvalStatus: record.approval_status as any,
     paymentStatus: record.payment_status as any,
-    approvals: approvals.map(a => ({
-      id: a.id,
-      expenseId: a.expense_id,
-      approverRole: a.approver_role as any,
-      approverId: a.approver_id,
-      approverName: a.approver_name,
-      action: a.action as any,
-      reason: a.reason,
-      timestamp: a.timestamp,
-      amountThreshold: Number(a.amount_threshold),
-    })),
+    approvals: normApprovals,
     auditLog: auditLogs.map(l => ({
       id: l.id,
       expenseId: l.expense_id,
@@ -1182,20 +1190,19 @@ export async function listExpenses(filters: {
   const limit = Math.min(Math.max(filters.limit ?? 50, 1), 100);
   const offset = Math.max(filters.offset ?? 0, 0);
   
-  const baseQuery = sql`
-    select e.*, 
+  const queryText = `select e.*, 
            array_agg(row_to_json(ea.*)) filter (where ea.id is not null) as approvals_agg,
            array_agg(row_to_json(eal.*)) filter (where eal.id is not null) as audit_agg
     from expenses e
     left join expense_approvals ea on e.id = ea.expense_id
     left join expense_audit_logs eal on e.id = eal.expense_id
-    where e.tenant_slug = ${filters.tenantSlug}
+    where e.tenant_slug = $1
     group by e.id
     order by e.created_at desc`;
-  
+
   // For simplicity, query without additional filters first, then filter in memory if needed
   // This avoids the SQL template concatenation issue
-  const rows = (await baseQuery) as any[];
+  const rows = (await db.query<any>(queryText, [filters.tenantSlug])).rows;
   
   // Apply filters in memory
   let filtered = rows;

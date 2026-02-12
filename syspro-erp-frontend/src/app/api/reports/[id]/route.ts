@@ -3,7 +3,8 @@ import { extractAuthContext, requirePermission, validateTenant } from "@/lib/aut
 import { UpdateReportSchema, safeParse } from "@/lib/validation";
 import { updateReport } from "@/lib/reporting/db";
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: any) {
+  const { params } = context;
   try {
     const auth = extractAuthContext(request);
     const tenantSlug = validateTenant(auth.tenantSlug);

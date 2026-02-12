@@ -11,7 +11,7 @@ type RouteContext = {
   params: { ticketId: string };
 };
 
-export async function GET(request: NextRequest, context: RouteContext) {
+export async function GET(request: NextRequest, context: any) {
   const { searchParams } = new URL(request.url);
   const tenantSlug = searchParams.get("tenantSlug") || "default";
   const ticket = getTicketById(tenantSlug, context.params.ticketId);
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   return NextResponse.json({ ticket });
 }
 
-export async function PATCH(request: NextRequest, context: RouteContext) {
+export async function PATCH(request: NextRequest, context: any) {
   const body = (await request.json()) as {
     tenantSlug?: string;
     status?: TicketStatus;

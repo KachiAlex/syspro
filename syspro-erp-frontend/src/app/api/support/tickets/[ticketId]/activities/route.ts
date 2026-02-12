@@ -6,14 +6,14 @@ type RouteContext = {
   params: { ticketId: string };
 };
 
-export async function GET(request: NextRequest, context: RouteContext) {
+export async function GET(request: NextRequest, context: any) {
   const { searchParams } = new URL(request.url);
   const tenantSlug = searchParams.get("tenantSlug") || "default";
   const activities = listTicketActivities(tenantSlug, context.params.ticketId);
   return NextResponse.json({ activities });
 }
 
-export async function POST(request: NextRequest, context: RouteContext) {
+export async function POST(request: NextRequest, context: any) {
   const body = (await request.json()) as {
     tenantSlug?: string;
     activityType?: string;

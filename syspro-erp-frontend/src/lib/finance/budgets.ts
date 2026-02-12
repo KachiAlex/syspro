@@ -3,62 +3,62 @@ import { z } from "zod";
 /**
  * Budget Types - Define the scope of the budget
  */
-export type BudgetType = "DEPARTMENT" | "PROJECT" | "BRANCH" | "ACCOUNT_CATEGORY";
-export const BUDGET_TYPES: BudgetType[] = ["DEPARTMENT", "PROJECT", "BRANCH", "ACCOUNT_CATEGORY"];
+export const BUDGET_TYPES = ["DEPARTMENT", "PROJECT", "BRANCH", "ACCOUNT_CATEGORY"] as const;
+export type BudgetType = typeof BUDGET_TYPES[number];
 
 /**
  * Budget Period Types
  */
-export type BudgetPeriodType = "ANNUAL" | "QUARTERLY" | "MONTHLY";
-export const BUDGET_PERIOD_TYPES: BudgetPeriodType[] = ["ANNUAL", "QUARTERLY", "MONTHLY"];
+export const BUDGET_PERIOD_TYPES = ["ANNUAL", "QUARTERLY", "MONTHLY"] as const;
+export type BudgetPeriodType = typeof BUDGET_PERIOD_TYPES[number];
 
 /**
  * Budget Status
  */
-export type BudgetStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "ACTIVE" | "CLOSED" | "ARCHIVED";
-export const BUDGET_STATUSES: BudgetStatus[] = ["DRAFT", "SUBMITTED", "APPROVED", "ACTIVE", "CLOSED", "ARCHIVED"];
+export const BUDGET_STATUSES = ["DRAFT", "SUBMITTED", "APPROVED", "ACTIVE", "CLOSED", "ARCHIVED"] as const;
+export type BudgetStatus = typeof BUDGET_STATUSES[number];
 
 /**
  * Enforcement Mode - How strictly budgets are enforced
  */
-export type EnforcementMode = "SOFT_WARNING" | "HARD_BLOCK" | "AUDIT_ONLY";
-export const ENFORCEMENT_MODES: EnforcementMode[] = ["SOFT_WARNING", "HARD_BLOCK", "AUDIT_ONLY"];
+export const ENFORCEMENT_MODES = ["SOFT_WARNING", "HARD_BLOCK", "AUDIT_ONLY"] as const;
+export type EnforcementMode = typeof ENFORCEMENT_MODES[number];
 
 /**
  * Actual Type - Source of actual expenditure
  */
-export type ActualType = "EXPENSE" | "INVOICE" | "PURCHASE_ORDER" | "PAYMENT";
-export const ACTUAL_TYPES: ActualType[] = ["EXPENSE", "INVOICE", "PURCHASE_ORDER", "PAYMENT"];
+export const ACTUAL_TYPES = ["EXPENSE", "INVOICE", "PURCHASE_ORDER", "PAYMENT"] as const;
+export type ActualType = typeof ACTUAL_TYPES[number];
 
 /**
  * Variance Type
  */
-export type VarianceType = "OVER_BUDGET" | "UNDER_BUDGET" | "THRESHOLD_WARNING";
-export const VARIANCE_TYPES: VarianceType[] = ["OVER_BUDGET", "UNDER_BUDGET", "THRESHOLD_WARNING"];
+export const VARIANCE_TYPES = ["OVER_BUDGET", "UNDER_BUDGET", "THRESHOLD_WARNING"] as const;
+export type VarianceType = typeof VARIANCE_TYPES[number];
 
 /**
  * Alert Level
  */
-export type AlertLevel = "INFO" | "WARNING" | "CRITICAL";
-export const ALERT_LEVELS: AlertLevel[] = ["INFO", "WARNING", "CRITICAL"];
+export const ALERT_LEVELS = ["INFO", "WARNING", "CRITICAL"] as const;
+export type AlertLevel = typeof ALERT_LEVELS[number];
 
 /**
  * Forecast Type
  */
-export type ForecastType = "ROLLING" | "TREND_BASED" | "SCENARIO";
-export const FORECAST_TYPES: ForecastType[] = ["ROLLING", "TREND_BASED", "SCENARIO"];
+export const FORECAST_TYPES = ["ROLLING", "TREND_BASED", "SCENARIO"] as const;
+export type ForecastType = typeof FORECAST_TYPES[number];
 
 /**
  * Confidence Level for Forecasts
  */
-export type ConfidenceLevel = "HIGH" | "MEDIUM" | "LOW";
-export const CONFIDENCE_LEVELS: ConfidenceLevel[] = ["HIGH", "MEDIUM", "LOW"];
+export const CONFIDENCE_LEVELS = ["HIGH", "MEDIUM", "LOW"] as const;
+export type ConfidenceLevel = typeof CONFIDENCE_LEVELS[number];
 
 /**
  * Variance Methodology
  */
-export type ForecastMethodology = "avg_of_last_n_periods" | "trend_projection" | "custom_upload";
-export const FORECAST_METHODOLOGIES: ForecastMethodology[] = ["avg_of_last_n_periods", "trend_projection", "custom_upload"];
+export const FORECAST_METHODOLOGIES = ["avg_of_last_n_periods", "trend_projection", "custom_upload"] as const;
+export type ForecastMethodology = typeof FORECAST_METHODOLOGIES[number];
 
 /**
  * Budget Line Interface
@@ -275,15 +275,15 @@ export const budgetCreateSchema = z.object({
   code: z.string().min(1).max(50),
   name: z.string().min(1).max(255),
   description: z.string().optional(),
-  budgetType: z.enum(BUDGET_TYPES),
+  budgetType: z.enum(BUDGET_TYPES as unknown as [string, ...string[]]),
   scopeEntityId: z.bigint().optional(),
   scopeEntityName: z.string().optional(),
-  periodType: z.enum(BUDGET_PERIOD_TYPES),
+  periodType: z.enum(BUDGET_PERIOD_TYPES as unknown as [string, ...string[]]),
   fiscalYear: z.number().int().min(2000).max(2100),
   quarterNum: z.number().int().min(1).max(4).optional(),
   monthNum: z.number().int().min(1).max(12).optional(),
   totalBudgetAmount: z.number().nonnegative(),
-  enforcementMode: z.enum(ENFORCEMENT_MODES).default("SOFT_WARNING"),
+  enforcementMode: z.enum(ENFORCEMENT_MODES as unknown as [string, ...string[]]).default("SOFT_WARNING"),
   allowOverrun: z.boolean().optional(),
   overrunThresholdPercent: z.number().min(100).max(500).optional(),
   notes: z.string().optional(),
@@ -294,7 +294,7 @@ export const budgetUpdateSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   description: z.string().optional(),
   totalBudgetAmount: z.number().nonnegative().optional(),
-  enforcementMode: z.enum(ENFORCEMENT_MODES).optional(),
+  enforcementMode: z.enum(ENFORCEMENT_MODES as unknown as [string, ...string[]]).optional(),
   allowOverrun: z.boolean().optional(),
   overrunThresholdPercent: z.number().min(100).max(500).optional(),
   notes: z.string().optional(),
@@ -315,7 +315,7 @@ export const budgetActualSchema = z.object({
   budgetId: z.bigint(),
   budgetLineId: z.bigint().optional(),
   tenantId: z.bigint(),
-  actualType: z.enum(ACTUAL_TYPES),
+  actualType: z.enum(ACTUAL_TYPES as unknown as [string, ...string[]]),
   transactionId: z.bigint().optional(),
   transactionCode: z.string().optional(),
   actualAmount: z.number().nonnegative(),
@@ -331,21 +331,21 @@ export const budgetActualSchema = z.object({
 export const budgetForecastLineSchema = z.object({
   budgetLineId: z.bigint(),
   forecastedAmount: z.number().nonnegative(),
-  confidenceLevel: z.enum(CONFIDENCE_LEVELS).optional(),
+  confidenceLevel: z.enum(CONFIDENCE_LEVELS as unknown as [string, ...string[]]).optional(),
 });
 
 export const budgetForecastCreateSchema = z.object({
   budgetId: z.bigint(),
   tenantId: z.bigint(),
-  forecastType: z.enum(FORECAST_TYPES),
+  forecastType: z.enum(FORECAST_TYPES as unknown as [string, ...string[]]),
   forecastPeriodStart: z.date().optional(),
   forecastPeriodEnd: z.date().optional(),
   forecastLines: z.array(budgetForecastLineSchema),
   scenarioName: z.string().optional(),
   scenarioDescription: z.string().optional(),
-  methodology: z.enum(FORECAST_METHODOLOGIES).optional(),
+  methodology: z.enum(FORECAST_METHODOLOGIES as unknown as [string, ...string[]]).optional(),
   basePeriods: z.number().int().positive().optional(),
-  confidenceLevel: z.enum(CONFIDENCE_LEVELS).optional(),
+  confidenceLevel: z.enum(CONFIDENCE_LEVELS as unknown as [string, ...string[]]).optional(),
   variancePercent: z.number().min(0).max(100).optional(),
 });
 

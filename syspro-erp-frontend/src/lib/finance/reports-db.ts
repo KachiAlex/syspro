@@ -1,6 +1,4 @@
-import { getSql } from "@/lib/db";
-
-const db = getSql();
+import { db } from "../sql-client";
 import {
   PnLReport,
   PnLReportLine,

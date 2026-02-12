@@ -35,7 +35,7 @@ export async function POST(
     // Note: In production, get actual submitter email from user database
     const submitterEmail = expenseBefore.createdBy + "@company.com";
     
-    if (parsed.data.action === "approved") {
+    if (parsed.data.action === "APPROVED") {
       // Send approval email
       await notifyExpenseApproved(
         {
@@ -44,17 +44,17 @@ export async function POST(
           amount: expense.amount,
           totalAmount: expense.totalAmount,
           taxAmount: expense.taxAmount || 0,
-          category: expense.category?.name || "Unknown",
           createdBy: expense.createdBy,
           createdAt: expense.createdAt,
           approvalStatus: expense.approvalStatus,
-          vendor: expense.vendorName,
+          category: typeof expense.category === 'string' ? expense.category : (expense.category?.name ?? "Unknown"),
+          vendor: (expense.vendor as string) || undefined,
         },
         submitterEmail,
         parsed.data.approverName,
         parsed.data.reason
       );
-    } else if (parsed.data.action === "rejected") {
+    } else if (parsed.data.action === "REJECTED") {
       // Send rejection email
       await notifyExpenseRejected(
         {
@@ -63,11 +63,11 @@ export async function POST(
           amount: expense.amount,
           totalAmount: expense.totalAmount,
           taxAmount: expense.taxAmount || 0,
-          category: expense.category?.name || "Unknown",
           createdBy: expense.createdBy,
           createdAt: expense.createdAt,
           approvalStatus: expense.approvalStatus,
-          vendor: expense.vendorName,
+          category: typeof expense.category === 'string' ? expense.category : (expense.category?.name ?? "Unknown"),
+          vendor: (expense.vendor as string) || undefined,
         },
         submitterEmail,
         parsed.data.approverName,

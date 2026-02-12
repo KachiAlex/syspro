@@ -6,8 +6,9 @@ import { getExpense, approveExpense } from "@/lib/finance/db";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: any
 ) {
+  const { params } = context;
   const tenantSlug = new URL(request.url).searchParams.get("tenantSlug");
 
   if (!tenantSlug) {

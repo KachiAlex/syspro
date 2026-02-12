@@ -3,7 +3,7 @@
  * Provides comprehensive reporting for vendor spend, aging, risk analysis, etc.
  */
 
-import { getSql } from "@/lib/db";
+import { db, sql as SQL } from "../sql-client";
 
 export interface VendorSpendReport {
   vendorId: string;
@@ -67,7 +67,7 @@ export interface TaxReport {
   complianceStatus: "compliant" | "pending" | "non_compliant";
 }
 
-const SQL = getSql();
+/* using imported SQL */
 
 export async function getVendorSpendReport(
   tenantSlug: string,
@@ -80,39 +80,46 @@ export async function getVendorSpendReport(
 ): Promise<VendorSpendReport[]> {
   const sql = SQL;
 
-  const whereConditions: any[] = [];
-  whereConditions.push(sql`b.tenant_slug = ${tenantSlug}`);
-  
+  const params: any[] = [];
+  let idx = 1;
+  // bills filters
+  let billWhere = `b.tenant_slug = $${idx}`;
+  params.push(tenantSlug);
+  idx++;
   if (filters?.vendorId) {
-    whereConditions.push(sql`b.vendor_id = ${filters.vendorId}`);
+    billWhere += ` and b.vendor_id = $${idx}`;
+    params.push(filters.vendorId);
+    idx++;
   }
-  
   if (filters?.dateFrom) {
-    whereConditions.push(sql`b.bill_date >= ${filters.dateFrom}`);
+    billWhere += ` and b.bill_date >= $${idx}`;
+    params.push(filters.dateFrom);
+    idx++;
   }
-  
   if (filters?.dateTo) {
-    whereConditions.push(sql`b.bill_date <= ${filters.dateTo}`);
+    billWhere += ` and b.bill_date <= $${idx}`;
+    params.push(filters.dateTo);
+    idx++;
   }
 
-  const whereClause = whereConditions.length > 0 
-    ? sql`where ${sql.join(whereConditions, sql` and `)}`
-    : sql``;
+  // payment_stats filters (reuse tenant and optional vendorId)
+  const paymentWhere = filters?.vendorId ? `vp.tenant_slug = $1 and vp.vendor_id = $2` : `vp.tenant_slug = $1`;
 
-  const limitClause = filters?.limit ? sql`limit ${filters.limit}` : sql``;
+  // monthly_trend filters (tenantSlug + optional vendor)
+  const monthlyWhere = filters?.vendorId ? `b.tenant_slug = $1 and b.bill_date >= date_trunc('month', current_date - interval '11 months') and b.vendor_id = $2` : `b.tenant_slug = $1 and b.bill_date >= date_trunc('month', current_date - interval '11 months')`;
 
-  const results = (await sql`
-    with vendor_spend as (
+  const limitClause = filters?.limit ? `limit ${Number(filters.limit)}` : "";
+
+  const queryText = `with vendor_spend as (
       select 
         b.vendor_id,
         v.legal_name as vendor_name,
         sum(b.total) as total_spend,
         count(b.id) as bill_count,
-        avg(b.total) as avg_bill_amount,
         max(b.bill_date) as last_bill_date
       from bills b
       join vendors v on b.vendor_id = v.id
-      ${whereClause}
+      where ${billWhere}
       group by b.vendor_id, v.legal_name
     ),
     payment_stats as (
@@ -121,8 +128,7 @@ export async function getVendorSpendReport(
         count(vp.id) as payment_count,
         max(vp.payment_date) as last_payment_date
       from vendor_payments vp
-      where vp.tenant_slug = ${tenantSlug}
-      ${filters?.vendorId ? sql`and vp.vendor_id = ${filters.vendorId}` : sql``}
+      where ${paymentWhere}
       group by vp.vendor_id
     ),
     monthly_trend as (
@@ -131,9 +137,7 @@ export async function getVendorSpendReport(
         date_trunc('month', b.bill_date)::text as period,
         sum(b.total) as amount
       from bills b
-      where b.tenant_slug = ${tenantSlug}
-        and b.bill_date >= date_trunc('month', current_date - interval '11 months')
-      ${filters?.vendorId ? sql`and b.vendor_id = ${filters.vendorId}` : sql``}
+      where ${monthlyWhere}
       group by b.vendor_id, date_trunc('month', b.bill_date)
       order by period
     )
@@ -158,8 +162,9 @@ export async function getVendorSpendReport(
     from vendor_spend vs
     left join payment_stats ps on vs.vendor_id = ps.vendor_id
     order by vs.total_spend desc
-    ${limitClause}
-  `) as any[];
+    ${limitClause}`;
+
+  const results = (await db.query<any>(queryText, params)).rows;
 
   return results.map(row => ({
     vendorId: row.vendor_id,
@@ -182,23 +187,17 @@ export async function getVendorAgingReport(
 ): Promise<VendorAgingReport[]> {
   const sql = SQL;
 
-  const whereConditions: any[] = [];
-  whereConditions.push(sql`b.tenant_slug = ${tenantSlug}`);
-  
+  const params: any[] = [tenantSlug];
+  let whereText = `b.tenant_slug = $1`;
   if (filters?.vendorId) {
-    whereConditions.push(sql`b.vendor_id = ${filters.vendorId}`);
+    params.push(filters.vendorId);
+    whereText += ` and b.vendor_id = $2`;
   }
-  
   if (!filters?.includePaid) {
-    whereConditions.push(sql`b.balance_due > 0`);
+    whereText += ` and b.balance_due > 0`;
   }
 
-  const whereClause = whereConditions.length > 0 
-    ? sql`where ${sql.join(whereConditions, sql` and `)}`
-    : sql``;
-
-  const results = (await sql`
-    with aging_buckets as (
+  const queryText = `with aging_buckets as (
       select 
         b.vendor_id,
         v.legal_name as vendor_name,
@@ -225,7 +224,7 @@ export async function getVendorAgingReport(
         b.bill_date
       from bills b
       join vendors v on b.vendor_id = v.id
-      ${whereClause}
+      where ${whereText}
     ),
     aging_summary as (
       select 
@@ -250,8 +249,9 @@ export async function getVendorAgingReport(
       coalesce(total, 0) as total,
       coalesce(oldest_overdue_days, 0) as oldest_overdue_days
     from aging_summary
-    order by total desc
-  `) as any[];
+    order by total desc`;
+
+  const results = (await db.query<any>(queryText, params)).rows;
 
   return results.map(row => ({
     vendorId: row.vendor_id,
@@ -408,7 +408,7 @@ export async function getTaxReport(
   }
 
   const whereClause = whereConditions.length > 0 
-    ? sql`where ${sql.join(whereConditions, sql` and `)}`
+    ? SQL`where ${db.join(whereConditions, ' and ')}`
     : sql``;
 
   const results = (await sql`

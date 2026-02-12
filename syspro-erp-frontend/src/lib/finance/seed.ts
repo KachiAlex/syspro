@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
 
-import { getSql } from "@/lib/db";
+import { db, sql as SQL } from "../sql-client";
 import { ensureFinanceTables } from "@/lib/finance/db";
 import type { FinanceFilters } from "@/lib/finance/types";
 import { FINANCE_TIMEFRAMES } from "@/lib/finance/types";
 
-const SQL = getSql();
+/* using imported SQL */
 
 const BASELINE_ACCOUNTS = [
   { name: "Zenith Treasury", type: "bank" as const, balance: 312_400_000, changeValue: 8_200_000, changePeriod: "last week", trend: "up" as const },
@@ -43,9 +43,9 @@ export async function ensureFinanceSeedForTenant(filters: FinanceFilters) {
   await ensureFinanceTables(sql);
 
   const tenantSlug = filters.tenantSlug;
-  const existing = (await sql<{ count: number }[]>`
+  const existing = ((await sql`
     select count(1)::int as count from finance_accounts where tenant_slug = ${tenantSlug}
-  `)[0];
+  `) as { count: number }[])[0];
 
   if ((existing?.count ?? 0) > 0) {
     return;
@@ -58,7 +58,7 @@ export async function ensureFinanceSeedForTenant(filters: FinanceFilters) {
   await seedTrendPoints(sql, tenantSlug);
 }
 
-async function seedAccounts(sql: ReturnType<typeof getSql>, tenantSlug: string) {
+async function seedAccounts(sql: any, tenantSlug: string) {
   for (const account of BASELINE_ACCOUNTS) {
     await sql`
       insert into finance_accounts (
@@ -72,7 +72,7 @@ async function seedAccounts(sql: ReturnType<typeof getSql>, tenantSlug: string) 
 }
 
 async function seedSchedules(
-  sql: ReturnType<typeof getSql>,
+  sql: any,
   tenantSlug: string,
   documentType: "receivable" | "payable",
   data: Array<{ entity: string; amount: number; dueInDays: number; status: "current" | "due_soon" | "overdue" }>
@@ -95,7 +95,7 @@ async function seedSchedules(
   }
 }
 
-async function seedExpenses(sql: ReturnType<typeof getSql>, tenantSlug: string) {
+async function seedExpenses(sql: any, tenantSlug: string) {
   for (const category of BASELINE_EXPENSES) {
     await sql`
       insert into finance_expense_categories (
@@ -112,7 +112,7 @@ async function seedExpenses(sql: ReturnType<typeof getSql>, tenantSlug: string) 
   }
 }
 
-async function seedTrendPoints(sql: ReturnType<typeof getSql>, tenantSlug: string) {
+async function seedTrendPoints(sql: any, tenantSlug: string) {
   for (const timeframe of FINANCE_TIMEFRAMES) {
     for (let index = 0; index < TREND_LABELS.length; index += 1) {
       await sql`
