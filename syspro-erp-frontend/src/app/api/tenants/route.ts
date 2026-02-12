@@ -204,6 +204,8 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("Tenant creation failed", error);
-    return NextResponse.json({ error: "Unable to create tenant" }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    // Return the error message to the client to aid debugging (safe in dev).
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
