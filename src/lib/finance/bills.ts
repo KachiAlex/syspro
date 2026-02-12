@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import { createBillJournalEntry } from "./accounting";
 
 export interface BillItem {
@@ -81,7 +81,7 @@ export interface AgingReport {
   total: number;
 }
 
-const SQL = getSql();
+// using imported SQL from sql-client
 
 export async function ensureBillTables(sql = SQL) {
   // Tables should already exist from migration, but ensure for development
@@ -161,7 +161,7 @@ export async function listBills(filters: {
   }
 
   const whereClause = whereConditions.length > 0 
-    ? sql`where ${sql.join(whereConditions, sql` and `)}`
+    ? sql`where ${db.join(whereConditions, ' and ')}`
     : sql``;
 
   const records = (await sql`
@@ -314,7 +314,7 @@ export async function deleteBill(billId: string): Promise<boolean> {
   const sql = SQL;
   await ensureBillTables(sql);
 
-  const result = await sql`delete from bills where id = ${billId}`;
+  const result = await db.query<{ count: number }>(`delete from bills where id = $1`, [billId]);
   return result.count > 0;
 }
 
@@ -438,5 +438,20 @@ export async function updateBillStatuses(tenantSlug: string): Promise<number> {
     and status in ('open', 'partially_paid')
   `;
 
-  return result.count;
+  // `sql` returns rows; use db.query to get affected row count
+  const r = await db.query(
+    `update bills 
+     set status = case 
+       when balance_due <= 0 then 'paid'
+       when balance_due < total then 'partially_paid'
+       when due_date < current_date and balance_due > 0 then 'overdue'
+       else status
+     end,
+     updated_at = now()
+     where tenant_slug = $1
+     and status in ('open', 'partially_paid')`,
+    [tenantSlug]
+  );
+
+  return r.rowCount;
 }

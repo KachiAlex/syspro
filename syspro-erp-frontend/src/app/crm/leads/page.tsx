@@ -22,6 +22,7 @@ export default function LeadsPage({ tenantSlug }: { tenantSlug?: string | null }
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(12);
   const [total, setTotal] = useState<number | null>(null);
+  const [showNew, setShowNew] = useState(false);
   const totalPages = total !== null ? Math.max(1, Math.ceil(total / pageSize)) : null;
 
   const loadLeads = (p = page, size = pageSize) => {

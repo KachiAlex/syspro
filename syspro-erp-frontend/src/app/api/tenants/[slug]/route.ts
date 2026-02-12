@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import { ensureTenantTable, mapTenantRow, TenantRow } from "../route";
 
 const actionSchema = z.object({
@@ -24,12 +24,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const sql = getSql();
+    const sql = SQL;
     await ensureTenantTable(sql);
 
     const status = parsed.data.action === "suspend" ? "Suspended" : "Live";
 
-    const rows = (await sql(
+    const rows = (await db.query(
       `
         update tenants
         set status = $1, "updatedAt" = now()
@@ -37,7 +37,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         returning name, slug, region, status, ledger_delta, seats
       `,
       [status, slug]
-    )) as TenantRow[];
+    )).rows as TenantRow[];
 
     if (rows.length === 0) {
       return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
@@ -58,17 +58,17 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
   }
 
   try {
-    const sql = getSql();
+    const sql = SQL;
     await ensureTenantTable(sql);
 
-    const rows = (await sql(
+    const rows = (await db.query(
       `
         delete from tenants
         where slug = $1
         returning name, slug, region, status, ledger_delta, seats
       `,
       [slug]
-    )) as TenantRow[];
+    )).rows as TenantRow[];
 
     if (rows.length === 0) {
       return NextResponse.json({ error: "Tenant not found" }, { status: 404 });

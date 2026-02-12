@@ -4,61 +4,61 @@ import { z } from "zod";
  * Budget Types - Define the scope of the budget
  */
 export type BudgetType = "DEPARTMENT" | "PROJECT" | "BRANCH" | "ACCOUNT_CATEGORY";
-export const BUDGET_TYPES: BudgetType[] = ["DEPARTMENT", "PROJECT", "BRANCH", "ACCOUNT_CATEGORY"];
+export const BUDGET_TYPES = ["DEPARTMENT", "PROJECT", "BRANCH", "ACCOUNT_CATEGORY"] as const;
 
 /**
  * Budget Period Types
  */
 export type BudgetPeriodType = "ANNUAL" | "QUARTERLY" | "MONTHLY";
-export const BUDGET_PERIOD_TYPES: BudgetPeriodType[] = ["ANNUAL", "QUARTERLY", "MONTHLY"];
+export const BUDGET_PERIOD_TYPES = ["ANNUAL", "QUARTERLY", "MONTHLY"] as const;
 
 /**
  * Budget Status
  */
 export type BudgetStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "ACTIVE" | "CLOSED" | "ARCHIVED";
-export const BUDGET_STATUSES: BudgetStatus[] = ["DRAFT", "SUBMITTED", "APPROVED", "ACTIVE", "CLOSED", "ARCHIVED"];
+export const BUDGET_STATUSES = ["DRAFT", "SUBMITTED", "APPROVED", "ACTIVE", "CLOSED", "ARCHIVED"] as const;
 
 /**
  * Enforcement Mode - How strictly budgets are enforced
  */
 export type EnforcementMode = "SOFT_WARNING" | "HARD_BLOCK" | "AUDIT_ONLY";
-export const ENFORCEMENT_MODES: EnforcementMode[] = ["SOFT_WARNING", "HARD_BLOCK", "AUDIT_ONLY"];
+export const ENFORCEMENT_MODES = ["SOFT_WARNING", "HARD_BLOCK", "AUDIT_ONLY"] as const;
 
 /**
  * Actual Type - Source of actual expenditure
  */
 export type ActualType = "EXPENSE" | "INVOICE" | "PURCHASE_ORDER" | "PAYMENT";
-export const ACTUAL_TYPES: ActualType[] = ["EXPENSE", "INVOICE", "PURCHASE_ORDER", "PAYMENT"];
+export const ACTUAL_TYPES = ["EXPENSE", "INVOICE", "PURCHASE_ORDER", "PAYMENT"] as const;
 
 /**
  * Variance Type
  */
 export type VarianceType = "OVER_BUDGET" | "UNDER_BUDGET" | "THRESHOLD_WARNING";
-export const VARIANCE_TYPES: VarianceType[] = ["OVER_BUDGET", "UNDER_BUDGET", "THRESHOLD_WARNING"];
+export const VARIANCE_TYPES = ["OVER_BUDGET", "UNDER_BUDGET", "THRESHOLD_WARNING"] as const;
 
 /**
  * Alert Level
  */
 export type AlertLevel = "INFO" | "WARNING" | "CRITICAL";
-export const ALERT_LEVELS: AlertLevel[] = ["INFO", "WARNING", "CRITICAL"];
+export const ALERT_LEVELS = ["INFO", "WARNING", "CRITICAL"] as const;
 
 /**
  * Forecast Type
  */
 export type ForecastType = "ROLLING" | "TREND_BASED" | "SCENARIO";
-export const FORECAST_TYPES: ForecastType[] = ["ROLLING", "TREND_BASED", "SCENARIO"];
+export const FORECAST_TYPES = ["ROLLING", "TREND_BASED", "SCENARIO"] as const;
 
 /**
  * Confidence Level for Forecasts
  */
 export type ConfidenceLevel = "HIGH" | "MEDIUM" | "LOW";
-export const CONFIDENCE_LEVELS: ConfidenceLevel[] = ["HIGH", "MEDIUM", "LOW"];
+export const CONFIDENCE_LEVELS = ["HIGH", "MEDIUM", "LOW"] as const;
 
 /**
  * Variance Methodology
  */
 export type ForecastMethodology = "avg_of_last_n_periods" | "trend_projection" | "custom_upload";
-export const FORECAST_METHODOLOGIES: ForecastMethodology[] = ["avg_of_last_n_periods", "trend_projection", "custom_upload"];
+export const FORECAST_METHODOLOGIES = ["avg_of_last_n_periods", "trend_projection", "custom_upload"] as const;
 
 /**
  * Budget Line Interface

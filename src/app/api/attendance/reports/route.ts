@@ -152,20 +152,21 @@ function calculatePeriodSummary(records: any[], timesheetEntries: any[], periodC
   let totalBreakTime = 0;
 
   // Group timesheet entries by date
-  const entriesByDate = timesheetEntries.reduce((acc, entry) => {
+  const entriesByDate = (timesheetEntries as any[]).reduce((acc, entry) => {
     if (!acc[entry.workDate]) acc[entry.workDate] = [];
     acc[entry.workDate].push(entry);
     return acc;
   }, {} as Record<string, any[]>);
 
-  Object.values(entriesByDate).forEach(dayEntries => {
-    const sortedEntries = dayEntries.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  Object.values(entriesByDate).forEach((dayEntries) => {
+    const dayEntriesArr = dayEntries as any[];
+    const sortedEntries = dayEntriesArr.sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
     let checkInTime: Date | null = null;
     let breakStartTime: Date | null = null;
     let dayBreakTime = 0;
 
-    sortedEntries.forEach(entry => {
+    sortedEntries.forEach((entry: any) => {
       const entryTime = new Date(entry.timestamp);
 
       switch (entry.entryType) {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 
 export type TenantRow = {
   name: string;
@@ -29,7 +29,7 @@ const payloadSchema = z.object({
   adminNotes: z.string().optional().default(""),
 });
 
-export async function ensureTenantTable(sql: ReturnType<typeof getSql>) {
+export async function ensureTenantTable(sql: SqlClient) {
   await sql`
     create table if not exists tenants (
       id uuid primary key,
@@ -60,7 +60,7 @@ export async function ensureTenantTable(sql: ReturnType<typeof getSql>) {
 
 export async function GET() {
   try {
-    const sql = getSql();
+    const sql = SQL;
     await ensureTenantTable(sql);
 
     const rows = (await sql`
@@ -86,7 +86,7 @@ export function mapTenantRow(row: TenantRow) {
   };
 }
 
-async function generateUniqueTenantCode(sql: ReturnType<typeof getSql>, slug: string) {
+async function generateUniqueTenantCode(sql: SqlClient, slug: string) {
   const base = slug.toUpperCase();
   let candidate = base;
   let counter = 1;
@@ -131,69 +131,67 @@ export async function POST(request: Request) {
     const payload = parsed.data;
     const computedDomain = `${payload.companySlug}.syspro.local`;
     const computedSchema = `${payload.companySlug.replace(/-/g, "_")}_schema`;
-    const sql = getSql();
+    const sql = SQL;
     await ensureTenantTable(sql);
     const computedCode = await generateUniqueTenantCode(sql, payload.companySlug);
 
     const tenantId = randomUUID();
     const passwordHash = await bcrypt.hash(payload.adminPassword, 12);
 
-    const tenantRows = (await sql(
-      `
-        insert into tenants (
-          id,
-          name,
-          slug,
-          code,
-          domain,
-          "isActive",
-          settings,
-          "schemaName",
-          region,
-          industry,
-          seats,
-          admin_name,
-          admin_email,
-          admin_password_hash,
-          admin_notes
-        )
-        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-        on conflict (slug) do update set
-          name = excluded.name,
-          code = excluded.code,
-          domain = excluded.domain,
-          "isActive" = excluded."isActive",
-          settings = excluded.settings,
-          "schemaName" = excluded."schemaName",
-          region = excluded.region,
-          industry = excluded.industry,
-          seats = excluded.seats,
-          admin_name = excluded.admin_name,
-          admin_email = excluded.admin_email,
-          admin_password_hash = excluded.admin_password_hash,
-          admin_notes = excluded.admin_notes
-        returning name, slug, region, status, ledger_delta, seats
-      `,
-      [
-        tenantId,
-        payload.companyName,
-        payload.companySlug,
-        computedCode,
-        computedDomain,
-        false,
-        JSON.stringify({}),
-        computedSchema,
-        payload.region,
-        payload.industry,
-        payload.seats ?? null,
-        payload.adminName,
-        payload.adminEmail.toLowerCase(),
-        passwordHash,
-        payload.adminNotes ?? "",
-      ]
-    )) as TenantRow[];
+    const tenantRes = await SQL`
+      insert into tenants (
+        id,
+        name,
+        slug,
+        code,
+        domain,
+        "isActive",
+        settings,
+        "schemaName",
+        region,
+        industry,
+        seats,
+        admin_name,
+        admin_email,
+        admin_password_hash,
+        admin_notes
+      )
+      values (
+        ${tenantId},
+        ${payload.companyName},
+        ${payload.companySlug},
+        ${computedCode},
+        ${computedDomain},
+        ${false},
+        ${JSON.stringify({})},
+        ${computedSchema},
+        ${payload.region},
+        ${payload.industry},
+        ${payload.seats ?? null},
+        ${payload.adminName},
+        ${payload.adminEmail.toLowerCase()},
+        ${passwordHash},
+        ${payload.adminNotes ?? ""}
+      )
+      on conflict (slug) do update set
+        name = excluded.name,
+        code = excluded.code,
+        domain = excluded.domain,
+        "isActive" = excluded."isActive",
+        settings = excluded.settings,
+        "schemaName" = excluded."schemaName",
+        region = excluded.region,
+        industry = excluded.industry,
+        seats = excluded.seats,
+        admin_name = excluded.admin_name,
+        admin_email = excluded.admin_email,
+        admin_password_hash = excluded.admin_password_hash,
+        admin_notes = excluded.admin_notes
+      returning name, slug, region, status, ledger_delta, seats
+    `;
 
-    const tenantSummary = mapTenantRow(tenantRows[0]);
+    const returnedRows = Array.isArray(tenantRes) ? tenantRes : (tenantRes.rows ?? []);
+    const tenantSummary = mapTenantRow(returnedRows[0]);
 
     return NextResponse.json(
       {
@@ -204,6 +202,9 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("Tenant creation failed", error);
-    return NextResponse.json({ error: "Unable to create tenant" }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
+    // Return the error message and stack to the client to aid debugging (dev only).
+    return NextResponse.json({ error: message, stack }, { status: 500 });
   }
 }

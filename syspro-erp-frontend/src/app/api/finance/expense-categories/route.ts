@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 
 const categoryCreateSchema = z.object({
   code: z.string().min(1),
@@ -12,7 +12,7 @@ const categoryCreateSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const sql = getSql();
+    const sql = SQL;
     const categories = await sql`
       SELECT id, code, name, account_id, requires_vendor, requires_receipt
       FROM expense_categories
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const sql = getSql();
+    const sql = SQL;
     const { code, name, accountId, requiresVendor, requiresReceipt } = parsed.data;
     const id = `cat_${code.toLowerCase()}`;
 

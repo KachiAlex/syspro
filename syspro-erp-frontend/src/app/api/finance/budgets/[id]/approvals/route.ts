@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { approveBudget, getBudgetApprovals } from "@/lib/finance/budgets-db";
+import { db } from "@/lib/sql-client";
 import { budgetApproveSchema } from "@/lib/finance/budgets";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: any
 ) {
+  const { params } = context;
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
 
@@ -43,8 +45,9 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: any
 ) {
+  const { params } = context;
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
     const body = await request.json();

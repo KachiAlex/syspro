@@ -2,14 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { listCampaignCosts, recordCampaignCost } from "@/lib/revops-data";
 
-export async function GET(request: NextRequest, { params }: { params: { campaignId: string } }) {
+export async function GET(request: NextRequest, context: any) {
+  const { params } = context;
   const { searchParams } = new URL(request.url);
   const tenantSlug = searchParams.get("tenantSlug")?.trim() || "default";
   const costs = listCampaignCosts(tenantSlug, params.campaignId);
   return NextResponse.json({ costs });
 }
 
-export async function POST(request: NextRequest, { params }: { params: { campaignId: string } }) {
+export async function POST(request: NextRequest, context: any) {
+  const { params } = context;
   const body = await request.json().catch(() => ({}));
   const requiredFields = [
     "tenantSlug",

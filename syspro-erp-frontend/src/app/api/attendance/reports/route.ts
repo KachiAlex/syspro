@@ -158,14 +158,14 @@ function calculatePeriodSummary(records: any[], timesheetEntries: any[], periodC
     return acc;
   }, {} as Record<string, any[]>);
 
-  Object.values(entriesByDate).forEach(dayEntries => {
-    const sortedEntries = dayEntries.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  (Object.values(entriesByDate) as any[]).forEach((dayEntries: any[]) => {
+    const sortedEntries = dayEntries.sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
     let checkInTime: Date | null = null;
     let breakStartTime: Date | null = null;
     let dayBreakTime = 0;
 
-    sortedEntries.forEach(entry => {
+    sortedEntries.forEach((entry: any) => {
       const entryTime = new Date(entry.timestamp);
 
       switch (entry.entryType) {

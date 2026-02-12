@@ -31,8 +31,9 @@ export async function POST(request: NextRequest) {
     }
 
     await ensureAdminTables();
-    const id = await insertRole({ tenantSlug, name: validation.data.name, scope: validation.data.scope, permissions: validation.data.permissions });
-    return NextResponse.json({ role: { id, tenantSlug, ...validation.data, createdAt: new Date().toISOString() } }, { status: 201 });
+    const data = validation.data;
+    const id = await insertRole({ tenantSlug, name: data.name, scope: data.scope ?? "tenant", permissions: data.permissions ?? [] });
+    return NextResponse.json({ role: { id, tenantSlug, name: data.name, scope: data.scope ?? "tenant", permissions: data.permissions ?? [], createdAt: new Date().toISOString() } }, { status: 201 });
   } catch (error) {
     console.error("Role create failed", error);
     const message = error instanceof Error ? error.message : "Unable to create role";
@@ -56,7 +57,8 @@ export async function PATCH(request: NextRequest) {
     }
 
     await ensureAdminTables();
-    await updateRole(id, tenantSlug, validation.data);
+    const data = validation.data;
+    await updateRole(id, tenantSlug, data);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Role patch failed", error);

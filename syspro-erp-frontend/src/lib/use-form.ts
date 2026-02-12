@@ -22,6 +22,7 @@ export interface UseFormReturn<T> {
 
   // Methods
   setValue: <K extends keyof T>(field: K, value: T[K]) => void;
+  setFieldValue: <K extends keyof T>(field: K, value: T[K]) => void;
   setValues: (values: Partial<T>) => void;
   setFieldError: (field: string, message: string) => void;
   setFieldTouched: (field: string, touched?: boolean) => void;
@@ -36,9 +37,9 @@ export interface UseFormReturn<T> {
   ) => void;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   getFieldProps: (field: keyof T) => {
-    value: T[keyof T];
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    onBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
+    value: string | T[keyof T];
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+    onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
     "aria-invalid": boolean;
   };
 }
@@ -59,6 +60,9 @@ export function useForm<T extends Record<string, any>>(
   const setValue = useCallback(<K extends keyof T>(field: K, value: T[K]) => {
     setValues((prev) => ({ ...prev, [field]: value }));
   }, []);
+
+  // alias for compatibility
+  const setFieldValue = setValue;
 
   const setFieldValues = useCallback((newValues: Partial<T>) => {
     setValues((prev) => ({ ...prev, ...newValues }));
@@ -180,6 +184,7 @@ export function useForm<T extends Record<string, any>>(
     isDirty,
     errorMap,
     setValue,
+    setFieldValue,
     setValues: setFieldValues,
     setFieldError,
     setFieldTouched,

@@ -5,6 +5,7 @@ import {
   deleteBudget,
   changeBudgetStatus,
 } from "@/lib/finance/budgets-db";
+import { db } from "@/lib/sql-client";
 import { budgetUpdateSchema } from "@/lib/finance/budgets";
 
 export async function GET(

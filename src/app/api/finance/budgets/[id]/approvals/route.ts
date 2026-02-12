@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/sql-client";
 import { approveBudget, getBudgetApprovals } from "@/lib/finance/budgets-db";
 import { budgetApproveSchema } from "@/lib/finance/budgets";
 

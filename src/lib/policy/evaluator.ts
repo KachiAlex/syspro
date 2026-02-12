@@ -1,8 +1,6 @@
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import { Condition } from "@/lib/automation/types";
 import { ensurePolicyTables } from "@/lib/policy/db";
-
-const SQL = getSql();
 
 type PolicyDecision = { allowed: boolean; reason?: string };
 
@@ -86,7 +84,7 @@ async function fetchLatestPolicy(tenantSlug: string, policyKey: string, sql = SQ
   return rows[0] as PolicyRecord;
 }
 
-export async function evaluatePolicyDecision(input: { tenantSlug: string; policyKey: string; context: any; sql?: ReturnType<typeof getSql> }): Promise<PolicyDecision> {
+export async function evaluatePolicyDecision(input: { tenantSlug: string; policyKey: string; context: any; sql?: SqlClient }): Promise<PolicyDecision> {
   const sql = input.sql ?? SQL;
   const policy = await fetchLatestPolicy(input.tenantSlug, input.policyKey, sql);
   if (!policy) return { allowed: true, reason: "no policy found" };

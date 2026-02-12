@@ -100,15 +100,15 @@ export async function GET(request: NextRequest) {
     }
 
     const payments = await listVendorPayments(parsed.data).catch((err) => {
-      console.error("Database error in listVendorPayments:", err);
+      console.error("Database error in listVendorPayments:", (err as any));
       return [];
     });
     return NextResponse.json({ data: payments, payments });
 
   } catch (error) {
-    console.error("Vendor Payments GET error:", error?.stack || error);
+    console.error("Vendor Payments GET error:", (error as any)?.stack || error);
     return NextResponse.json(
-      { error: "Internal server error", details: String(error?.message || error) },
+      { error: "Internal server error", details: String((error as any)?.message || error) },
       { status: 500 }
     );
   }
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ payment });
       } catch (applyError) {
         return NextResponse.json(
-          { error: "Payment application failed", details: String(applyError?.message || applyError) },
+          { error: "Payment application failed", details: String((applyError as any)?.message || applyError) },
           { status: 400 }
         );
       }
@@ -163,15 +163,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ payment }, { status: 201 });
     } catch (createError) {
       return NextResponse.json(
-        { error: "Payment creation failed", details: String(createError?.message || createError) },
+        { error: "Payment creation failed", details: String((createError as any)?.message || createError) },
         { status: 400 }
       );
     }
 
   } catch (error) {
-    console.error("Vendor Payments POST error:", error?.stack || error);
+    console.error("Vendor Payments POST error:", (error as any)?.stack || error);
     return NextResponse.json(
-      { error: "Internal server error", details: String(error?.message || error) },
+      { error: "Internal server error", details: String((error as any)?.message || error) },
       { status: 500 }
     );
   }
@@ -213,9 +213,9 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ payment });
 
   } catch (error) {
-    console.error("Vendor Payments PUT error:", error?.stack || error);
+    console.error("Vendor Payments PUT error:", (error as any)?.stack || error);
     return NextResponse.json(
-      { error: "Internal server error", details: String(error?.message || error) },
+      { error: "Internal server error", details: String((error as any)?.message || error) },
       { status: 500 }
     );
   }
@@ -247,9 +247,9 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true });
 
   } catch (error) {
-    console.error("Vendor Payments DELETE error:", error?.stack || error);
+    console.error("Vendor Payments DELETE error:", (error as any)?.stack || error);
     return NextResponse.json(
-      { error: "Internal server error", details: String(error?.message || error) },
+      { error: "Internal server error", details: String((error as any)?.message || error) },
       { status: 500 }
     );
   }

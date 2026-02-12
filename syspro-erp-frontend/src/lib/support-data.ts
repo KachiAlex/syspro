@@ -568,7 +568,7 @@ export function updateTicket(tenantSlug: string, ticketId: string, updates: Upda
     };
     const field = statusFieldMap[updates.status];
     if (field) {
-      (ticket as Record<string, unknown>)[field] = now;
+      (ticket as unknown as Record<string, unknown>)[field] = now;
     }
     if (updates.status === "acknowledged" && !ticket.firstResponseAt) {
       ticket.firstResponseAt = now;

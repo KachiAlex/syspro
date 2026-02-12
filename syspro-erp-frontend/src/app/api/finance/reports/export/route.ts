@@ -13,16 +13,18 @@ export async function GET(request: NextRequest) {
     let mimeType: string;
     let filename: string;
 
+    const safeStart = startDate ?? "all";
+    const safeEnd = endDate ?? "all";
     if (format === "excel") {
       // Generate simple CSV/Excel format
-      content = generateExcelContent(type, startDate, endDate);
+      content = generateExcelContent(type, startDate || undefined, endDate || undefined);
       mimeType = "text/csv";
-      filename = `${type}-report-${startDate}-to-${endDate}.csv`;
+      filename = `${type}-report-${safeStart}-to-${safeEnd}.csv`;
     } else {
       // Generate simple text format (PDF simulation)
-      content = generatePDFContent(type, startDate, endDate);
+      content = generatePDFContent(type, startDate || undefined, endDate || undefined);
       mimeType = "text/plain";
-      filename = `${type}-report-${startDate}-to-${endDate}.txt`;
+      filename = `${type}-report-${safeStart}-to-${safeEnd}.txt`;
     }
 
     return new NextResponse(content, {

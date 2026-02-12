@@ -1,8 +1,6 @@
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 
-const SQL = getSql();
-
-type SqlClient = ReturnType<typeof getSql>;
+/* using imported SQL */
 
 export async function ensurePolicyTables(sql: SqlClient = SQL) {
   await sql`create extension if not exists "pgcrypto"`;
@@ -48,17 +46,18 @@ export async function ensurePolicyTables(sql: SqlClient = SQL) {
 
 export async function listPolicies(tenantSlug: string, sql: SqlClient = SQL) {
   await ensurePolicyTables(sql);
-  const policies = await sql`select * from policies where tenant_slug = ${tenantSlug} order by created_at desc`;
-  const versions = await sql`
+  const policies = (await sql`select * from policies where tenant_slug = ${tenantSlug} order by created_at desc`) as any[];
+  const versions = (await sql`
     select pv.* from policy_versions pv
     join policies p on p.id = pv.policy_id
     where p.tenant_slug = ${tenantSlug}
-  `;
-  const versionsByPolicy = versions.reduce<Record<string, any[]>>((acc, row) => {
+  `) as any[];
+  const versionsArr = versions as any[];
+  const versionsByPolicy = versionsArr.reduce<Record<string, any[]>>((acc: Record<string, any[]>, row: any) => {
     acc[row.policy_id] = acc[row.policy_id] || [];
     acc[row.policy_id].push(row);
     return acc;
-  }, {});
+  }, {} as Record<string, any[]>);
   return policies.map((p: any) => ({
     id: p.id,
     tenantSlug: p.tenant_slug,
@@ -69,7 +68,7 @@ export async function listPolicies(tenantSlug: string, sql: SqlClient = SQL) {
     status: p.status,
     createdAt: p.created_at?.toISOString?.() ?? p.created_at,
     updatedAt: p.updated_at?.toISOString?.() ?? p.updated_at,
-    versions: (versionsByPolicy[p.id] || []).map((v) => ({
+    versions: (versionsByPolicy[p.id] || []).map((v: any) => ({
       id: v.id,
       version: v.version,
       document: v.document,

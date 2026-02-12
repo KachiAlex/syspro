@@ -5,11 +5,13 @@ import {
   updateBudgetLine,
   deleteBudgetLine,
 } from "@/lib/finance/budgets-db";
+import { db } from "@/lib/sql-client";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: any
 ) {
+  const { params } = context;
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
     const withVariance = request.nextUrl.searchParams.get("withVariance");

@@ -5,7 +5,7 @@
  */
 
 import { NextRequest } from "next/server";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import { verifySession, signSession, cookieOptions } from '@/lib/session';
 
 export interface SessionUser {
@@ -33,12 +33,12 @@ export function getCurrentUser(request: NextRequest): SessionUser | null {
   const tenantSlug = request.headers.get("X-Tenant-Slug") || undefined;
   const roleId = request.headers.get("X-Role-Id") || "viewer";
 
-  if (userId) {
+    if (userId) {
     return {
       id: userId,
       email: userEmail,
       name: request.headers.get("X-User-Name") || undefined,
-      tenantSlug,
+        tenantSlug: tenantSlug ?? "",
       roleId,
     };
   }
@@ -47,15 +47,15 @@ export function getCurrentUser(request: NextRequest): SessionUser | null {
     const cookie = request.cookies.get('session')?.value || request.cookies.get('syspro_session')?.value;
     if (cookie) {
       const payload = verifySession(cookie);
-      if (payload && typeof payload === 'object') {
-        if ((payload as any).exp && Date.now() > (payload as any).exp) return null;
-        return {
-          id: (payload as any).id,
-          email: (payload as any).email,
-          name: (payload as any).name,
-          tenantSlug: (payload as any).tenantSlug,
-          roleId: (payload as any).roleId || 'viewer',
-        };
+        if (payload && typeof payload === 'object') {
+          if ((payload as any).exp && Date.now() > (payload as any).exp) return null;
+          return {
+            id: (payload as any).id,
+            email: (payload as any).email,
+            name: (payload as any).name,
+            tenantSlug: (payload as any).tenantSlug ?? "",
+            roleId: (payload as any).roleId || 'viewer',
+          };
       }
     }
   } catch (e) {
@@ -83,7 +83,7 @@ export async function validateTenantAccess(user: SessionUser, requestedTenantSlu
 
   // Otherwise, check the database for tenant membership/role assignment.
   try {
-    const sql = getSql();
+    const sql = SQL;
 
     // Check tenant_user_roles first (role assignment table)
     const roleRows = await sql`

@@ -1,4 +1,4 @@
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import { AutomationRule, Action } from "./types";
 
 export type AutomationSummary = {
@@ -7,9 +7,7 @@ export type AutomationSummary = {
   audits: { total: number; matched: number; unmatched: number; lastEvent: string | null; lastRule: string | null; lastOutcome: string | null; lastCreatedAt: string | null };
 };
 
-const SQL = getSql();
-
-type SqlClient = ReturnType<typeof getSql>;
+// using SQL and db from sql-client
 
 export async function ensureAutomationTables(sql: SqlClient = SQL) {
   await sql`create extension if not exists "pgcrypto"`;

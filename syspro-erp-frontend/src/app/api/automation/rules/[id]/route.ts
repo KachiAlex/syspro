@@ -3,7 +3,8 @@ import { extractAuthContext, requirePermission, validateTenant } from "@/lib/aut
 import { UpdateRuleSchema, safeParse } from "@/lib/validation";
 import { deleteAutomationRule, getAutomationRule, updateAutomationRule } from "@/lib/automation/db";
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: any) {
+  const { params } = context;
   try {
     const auth = extractAuthContext(request);
     const tenantSlug = validateTenant(auth.tenantSlug);
@@ -24,7 +25,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, context: any) {
+  const { params } = context;
   try {
     const auth = extractAuthContext(request);
     const tenantSlug = validateTenant(auth.tenantSlug);

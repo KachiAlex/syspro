@@ -1,11 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import { ensureAdminTables, insertRole, insertDepartment, insertApprovalRoute, insertAccessControl, insertWorkflow } from "@/lib/admin/db";
 import { ensureCrmTables, insertLead, insertContact } from "@/lib/crm/db";
 import { ensureFinanceTables, insertFinanceAccount, insertFinanceInvoice } from "@/lib/finance/db";
-import { ensureTenantOrgStructureTable } from "@/lib/org-tree";
-
-const SQL = getSql();
+// note: tenant org structure helper not required for seeding here
 const DEFAULT_TENANT = "kreatix-default";
 const REGIONS = ["Global HQ", "Americas", "EMEA", "APAC"];
 const BRANCHES = ["New York", "London", "Singapore", "São Paulo"];
@@ -217,7 +215,7 @@ async function seedLeads(tenantSlug: string) {
 
   for (const company of companies) {
     try {
-      await insertLead(SQL, {
+      await insertLead({
         tenantSlug,
         regionId: REGIONS[Math.floor(Math.random() * REGIONS.length)],
         branchId: BRANCHES[Math.floor(Math.random() * BRANCHES.length)],
@@ -249,7 +247,7 @@ async function seedContacts(tenantSlug: string) {
     const company = companies[Math.floor(Math.random() * companies.length)];
 
     try {
-      await insertContact(SQL, {
+      await insertContact({
         tenantSlug,
         company: `${company} Inc`,
         contactName: `${firstName} ${lastName}`,
@@ -278,16 +276,16 @@ async function seedFinanceAccounts(tenantSlug: string) {
   for (let i = 0; i < 24; i++) {
     try {
       const balance = Math.floor(Math.random() * 2000000) + 50000;
-      await insertFinanceAccount(SQL, {
-        tenantSlug,
-        regionId: REGIONS[Math.floor(Math.random() * REGIONS.length)],
-        branchId: BRANCHES[Math.floor(Math.random() * BRANCHES.length)],
-        accountNumber: `ACC-${Date.now()}-${i}-${Math.random().toString(36).substring(7).toUpperCase()}`,
-        accountName: `${accountTypes[Math.floor(Math.random() * accountTypes.length)]} account - ${REGIONS[i % 4]}`,
-        balance,
-        currency: currencies[Math.floor(Math.random() * currencies.length)],
-        metadata: { accountType: "operational", created: new Date().toISOString() },
-      });
+        await insertFinanceAccount({
+          tenantSlug,
+          regionId: REGIONS[Math.floor(Math.random() * REGIONS.length)],
+          branchId: BRANCHES[Math.floor(Math.random() * BRANCHES.length)],
+          name: `${accountTypes[Math.floor(Math.random() * accountTypes.length)]} account - ${REGIONS[i % 4]}`,
+          type: "bank",
+          balance,
+          currency: currencies[Math.floor(Math.random() * currencies.length)],
+          trend: "up",
+        });
     } catch (e) {
       // Account may already exist
     }
@@ -309,7 +307,7 @@ async function seedFinanceInvoices(tenantSlug: string) {
       const daysAgo = Math.floor(Math.random() * 365);
       const status = daysAgo < 30 ? "issued" : daysAgo < 90 ? "draft" : "paid";
 
-      await insertFinanceInvoice(SQL, {
+      await insertFinanceInvoice({
         tenantSlug,
         regionId: REGIONS[Math.floor(Math.random() * REGIONS.length)],
         branchId: BRANCHES[Math.floor(Math.random() * BRANCHES.length)],
@@ -325,6 +323,15 @@ async function seedFinanceInvoices(tenantSlug: string) {
         paymentTerms: ["Net 30", "Net 60", "Net 90"][Math.floor(Math.random() * 3)],
         notes: `Invoice for services rendered. Amount: $${amount.toLocaleString()}`,
         metadata: { source: "seed", test: true, daysOverdue: Math.max(0, daysAgo - 30) },
+        // minimal required invoice line items for schema
+        lineItems: [
+          {
+            description: "Seed invoice item",
+            quantity: 1,
+            unitPrice: amount,
+            amount,
+          },
+        ],
       });
     } catch (e) {
       // Invoice may already exist

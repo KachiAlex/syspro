@@ -4,10 +4,8 @@ import { expenseApproveSchema } from "@/lib/finance/types";
 import { approveExpense, getExpense } from "@/lib/finance/db";
 import { notifyExpenseApproved, notifyExpenseRejected } from "@/lib/finance/email";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, context: any) {
+  const { params } = context;
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -35,7 +33,7 @@ export async function POST(
     // Note: In production, get actual submitter email from user database
     const submitterEmail = expenseBefore.createdBy + "@company.com";
     
-    if (parsed.data.action === "approved") {
+    if (parsed.data.action === "APPROVED") {
       // Send approval email
       await notifyExpenseApproved(
         {
@@ -44,17 +42,16 @@ export async function POST(
           amount: expense.amount,
           totalAmount: expense.totalAmount,
           taxAmount: expense.taxAmount || 0,
-          category: expense.category?.name || "Unknown",
           createdBy: expense.createdBy,
           createdAt: expense.createdAt,
           approvalStatus: expense.approvalStatus,
-          vendor: expense.vendorName,
+          category: (expense as any).category?.name || (expense as any).category || "Unknown",
         },
         submitterEmail,
         parsed.data.approverName,
         parsed.data.reason
       );
-    } else if (parsed.data.action === "rejected") {
+    } else if (parsed.data.action === "REJECTED") {
       // Send rejection email
       await notifyExpenseRejected(
         {
@@ -63,11 +60,11 @@ export async function POST(
           amount: expense.amount,
           totalAmount: expense.totalAmount,
           taxAmount: expense.taxAmount || 0,
-          category: expense.category?.name || "Unknown",
           createdBy: expense.createdBy,
           createdAt: expense.createdAt,
           approvalStatus: expense.approvalStatus,
-          vendor: expense.vendorName,
+          category: (expense as any).category?.name || (expense as any).category || "Unknown",
+          vendor: (expense as any).vendorName || (expense as any).vendor || "Unknown",
         },
         submitterEmail,
         parsed.data.approverName,

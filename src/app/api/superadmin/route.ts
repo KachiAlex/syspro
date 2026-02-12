@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 
 const payloadSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -11,7 +11,7 @@ const payloadSchema = z.object({
   bootstrapKey: z.string().min(1, "Bootstrap key is required"),
 });
 
-async function ensureTable(sql: ReturnType<typeof getSql>) {
+async function ensureTable(sql: any) {
   await sql`
     create table if not exists superadmins (
       id uuid primary key,
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid bootstrap key" }, { status: 401 });
     }
 
-    const sql = getSql();
+    const sql = SQL;
     await ensureTable(sql);
 
     const passwordHash = await bcrypt.hash(password, 12);

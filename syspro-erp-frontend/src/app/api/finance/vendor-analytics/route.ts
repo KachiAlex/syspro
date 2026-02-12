@@ -76,7 +76,12 @@ export async function GET(request: NextRequest) {
           );
         }
 
-        const spendReport = await getVendorSpendReport(spendParsed.data);
+        const spendReport = await getVendorSpendReport(spendParsed.data.tenantSlug, {
+          vendorId: spendParsed.data.vendorId,
+          dateFrom: spendParsed.data.dateFrom,
+          dateTo: spendParsed.data.dateTo,
+          limit: spendParsed.data.limit,
+        });
         return NextResponse.json({ report: spendReport });
 
       case "aging":
@@ -93,7 +98,10 @@ export async function GET(request: NextRequest) {
           );
         }
 
-        const agingReport = await getVendorAgingReport(agingParsed.data);
+        const agingReport = await getVendorAgingReport(agingParsed.data.tenantSlug, {
+          vendorId: agingParsed.data.vendorId,
+          includePaid: agingParsed.data.includePaid,
+        });
         return NextResponse.json({ report: agingReport });
 
       case "risk":
@@ -109,7 +117,9 @@ export async function GET(request: NextRequest) {
           );
         }
 
-        const riskReport = await getVendorRiskScores(riskParsed.data);
+        const riskReport = await getVendorRiskScores(riskParsed.data.tenantSlug, {
+          vendorId: riskParsed.data.vendorId,
+        });
         return NextResponse.json({ report: riskReport });
 
       case "tax":
@@ -126,7 +136,10 @@ export async function GET(request: NextRequest) {
           );
         }
 
-        const taxReport = await getTaxReport(taxParsed.data);
+        const taxReport = await getTaxReport(taxParsed.data.tenantSlug, {
+          vendorId: taxParsed.data.vendorId,
+          period: taxParsed.data.period,
+        });
         return NextResponse.json({ report: taxReport });
 
       case "dashboard":
@@ -139,7 +152,7 @@ export async function GET(request: NextRequest) {
           );
         }
 
-        const dashboardData = await getDashboardAnalytics(dashboardParsed.data);
+        const dashboardData = await getDashboardAnalytics(dashboardParsed.data.tenantSlug);
         return NextResponse.json({ dashboard: dashboardData });
 
       default:
@@ -150,9 +163,9 @@ export async function GET(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error("Vendor Analytics GET error:", error?.stack || error);
+    console.error("Vendor Analytics GET error:", (error as any)?.stack || error);
     return NextResponse.json(
-      { error: "Internal server error", details: String(error?.message || error) },
+      { error: "Internal server error", details: String((error as any)?.message ?? error) },
       { status: 500 }
     );
   }

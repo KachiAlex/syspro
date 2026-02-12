@@ -8,9 +8,7 @@ import {
   type FinanceTrendPointRecord,
 } from "@/lib/finance/db";
 import { ensureFinanceSeedForTenant } from "@/lib/finance/seed";
-import { getSql } from "@/lib/db";
-
-const SQL = getSql();
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 const DEFAULT_CURRENCY = "₦";
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -33,7 +31,7 @@ export async function getFinanceDashboardSnapshot(filters: FinanceFilters): Prom
     data = await fetchFinanceData(filters);
   }
 
-  const mappedTrend = data.trendPoints.length ? mapTrendSeries(data.trendPoints) : [];
+  const mappedTrend = mapTrendSeries(data.trendPoints);
 
   return {
     metrics: buildFinanceMetrics({ accounts: data.accounts, receivables: data.receivables, trend: mappedTrend }),
@@ -48,7 +46,7 @@ export async function getFinanceDashboardSnapshot(filters: FinanceFilters): Prom
 async function fetchFinanceData(filters: FinanceFilters): Promise<FinanceDataSets> {
   const sql = SQL;
   const [accounts, receivables, payables, expenses, trendPoints] = await Promise.all([
-    sql<FinanceAccountRecord[]>`
+    sql<FinanceAccountRecord>`
       select *
       from finance_accounts
       where tenant_slug = ${filters.tenantSlug}
@@ -56,7 +54,7 @@ async function fetchFinanceData(filters: FinanceFilters): Promise<FinanceDataSet
       ${filters.branchId ? sql`and (branch_id is null or branch_id = ${filters.branchId})` : sql``}
       order by balance desc
     `,
-    sql<FinanceScheduleRecord[]>`
+    sql<FinanceScheduleRecord>`
       select *
       from finance_schedules
       where tenant_slug = ${filters.tenantSlug}
@@ -66,7 +64,7 @@ async function fetchFinanceData(filters: FinanceFilters): Promise<FinanceDataSet
       order by due_date asc
       limit 12
     `,
-    sql<FinanceScheduleRecord[]>`
+    sql<FinanceScheduleRecord>`
       select *
       from finance_schedules
       where tenant_slug = ${filters.tenantSlug}
@@ -76,7 +74,7 @@ async function fetchFinanceData(filters: FinanceFilters): Promise<FinanceDataSet
       order by due_date asc
       limit 12
     `,
-    sql<FinanceExpenseCategoryRecord[]>`
+    sql<FinanceExpenseCategoryRecord>`
       select *
       from finance_expense_categories
       where tenant_slug = ${filters.tenantSlug}
@@ -85,7 +83,7 @@ async function fetchFinanceData(filters: FinanceFilters): Promise<FinanceDataSet
       order by amount desc
       limit 10
     `,
-    sql<FinanceTrendPointRecord[]>`
+    sql<FinanceTrendPointRecord>`
       select *
       from finance_trend_points
       where tenant_slug = ${filters.tenantSlug}

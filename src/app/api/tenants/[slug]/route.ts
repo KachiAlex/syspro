@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import { ensureTenantTable, mapTenantRow, TenantRow } from "../route";
 
 const actionSchema = z.object({
@@ -18,7 +18,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
   try {
     const body = await request.json().catch(() => null);
-    const sql = getSql();
+    const sql = SQL;
     await ensureTenantTable(sql);
 
     // If body contains action (suspend/activate) handle status change
@@ -26,10 +26,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       const parsed = actionSchema.safeParse(body);
       if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
       const status = parsed.data.action === 'suspend' ? 'Suspended' : 'Live';
-      const rows = (await sql(
+      const rowsRes = await db.query<TenantRow>(
         `update tenants set status = $1, "updatedAt" = now() where slug = $2 returning name, slug, region, status, ledger_delta, seats, admin_email`,
         [status, slug]
-      )) as TenantRow[];
+      );
+      const rows = rowsRes.rows;
       if (rows.length === 0) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
       return NextResponse.json({ tenantSummary: mapTenantRow(rows[0]) });
     }
@@ -51,7 +52,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       if (updates.length === 0) return NextResponse.json({ error: 'nothing_to_update' }, { status: 400 });
       const sqlText = `update tenants set ${updates.join(', ')}, "updatedAt" = now() where slug = $${idx} returning name, slug, region, status, ledger_delta, seats, admin_email`;
       values.push(slug);
-      const rows = (await sql(sqlText, values)) as TenantRow[];
+      const rowsRes = await db.query<TenantRow>(sqlText, values);
+      const rows = rowsRes.rows;
       if (rows.length === 0) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
       return NextResponse.json({ tenantSummary: mapTenantRow(rows[0]) });
     }
@@ -71,17 +73,18 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
   }
 
   try {
-    const sql = getSql();
+    const sql = SQL;
     await ensureTenantTable(sql);
 
-    const rows = (await sql(
+    const rowsRes = await db.query<TenantRow>(
       `
         delete from tenants
         where slug = $1
         returning name, slug, region, status, ledger_delta, seats
       `,
       [slug]
-    )) as TenantRow[];
+    );
+    const rows = rowsRes.rows;
 
     if (rows.length === 0) {
       return NextResponse.json({ error: "Tenant not found" }, { status: 404 });

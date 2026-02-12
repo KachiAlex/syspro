@@ -1,9 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { getSql } from "@/lib/db";
-
-const SQL = getSql();
-
-type SqlClient = ReturnType<typeof getSql>;
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 
 export async function ensureAdminTables(sql: SqlClient = SQL) {
   // Departments table

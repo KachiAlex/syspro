@@ -5,11 +5,13 @@ import {
   generateRollingForecast,
 } from "@/lib/finance/budgets-db";
 import { budgetForecastCreateSchema } from "@/lib/finance/budgets";
+import { db } from "@/lib/sql-client";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: any
 ) {
+  const { params } = context;
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
     const forecastType = request.nextUrl.searchParams.get("forecastType");
@@ -52,8 +54,9 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: any
 ) {
+  const { params } = context;
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
     const body = await request.json();

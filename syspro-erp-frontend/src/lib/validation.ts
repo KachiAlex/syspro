@@ -198,7 +198,7 @@ export const UpdateReportSchema = z.object({
 /**
  * Safe parsing wrapper that returns error or data.
  */
-export function safeParse<T>(schema: z.ZodSchema, data: unknown): { success: true; data: T } | { success: false; error: z.ZodError } {
+export function safeParse<T>(schema: z.ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; error: z.ZodError } {
   const result = schema.safeParse(data);
   return result.success ? { success: true, data: result.data as T } : { success: false, error: result.error };
 }

@@ -120,6 +120,8 @@ export default function StaffReportsViewer({
     }
   };
 
+  const filteredReports = reports.filter((r) => filter === 'all' || r.status === filter);
+
   const updateReportStatus = async (reportId: string, newStatus: 'reviewed' | 'approved') => {
     try {
       const response = await fetch('/api/hr/staff-reports', {

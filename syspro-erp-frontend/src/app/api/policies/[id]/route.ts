@@ -3,7 +3,8 @@ import { extractAuthContext, requirePermission, validateTenant } from "@/lib/aut
 import { PolicyOverrideSchema, UpdatePolicySchema, safeParse } from "@/lib/validation";
 import { addPolicyOverride, addPolicyVersion, getPolicyWithVersions, updatePolicyStatus } from "@/lib/policy/db";
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: any) {
+  const { params } = context;
   try {
     const auth = extractAuthContext(request);
     const tenantSlug = validateTenant(auth.tenantSlug);
@@ -35,7 +36,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, context: any) {
+  const { params } = context;
   // POST here handles overrides creation
   try {
     const auth = extractAuthContext(request);

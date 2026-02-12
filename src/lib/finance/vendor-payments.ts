@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import { createPaymentJournalEntry } from "./accounting";
 
 export interface VendorPayment {
@@ -58,8 +58,7 @@ export interface PaymentApplicationRecord {
   created_at: string;
 }
 
-const SQL = getSql();
-
+ 
 export async function ensurePaymentTables(sql = SQL) {
   try {
     await sql`select 1 from vendor_payments limit 1`;
@@ -96,7 +95,7 @@ function normalizePayment(record: VendorPaymentRecord, applications: PaymentAppl
 }
 
 export async function listVendorPayments(filters: {
-  tenantSlug: string;
+  tenantSlug?: string;
   vendorId?: string;
   status?: string;
   method?: string;
@@ -110,7 +109,9 @@ export async function listVendorPayments(filters: {
   const offset = Math.max(filters.offset ?? 0, 0);
 
   const whereConditions: any[] = [];
-  whereConditions.push(sql`tenant_slug = ${filters.tenantSlug}`);
+  if (filters.tenantSlug) {
+    whereConditions.push(sql`tenant_slug = ${filters.tenantSlug}`);
+  }
   
   if (filters.vendorId) {
     whereConditions.push(sql`vendor_id = ${filters.vendorId}`);
@@ -124,9 +125,9 @@ export async function listVendorPayments(filters: {
     whereConditions.push(sql`method = ${filters.method}`);
   }
 
-  const whereClause = whereConditions.length > 0 
-    ? sql`where ${sql.join(whereConditions, sql` and `)}`
-    : sql``;
+    const whereClause = whereConditions.length > 0 
+      ? sql`where ${db.join(whereConditions, ' and ')}`
+      : sql``;
 
   const records = (await sql`
     select * from vendor_payments 
@@ -296,8 +297,8 @@ export async function deleteVendorPayment(paymentId: string): Promise<boolean> {
   }));
 
   // Delete payment (cascade will delete applications)
-  const result = await sql`delete from vendor_payments where id = ${paymentId}`;
-  return result.count > 0;
+  const result = await db.query(`delete from vendor_payments where id = $1`, [paymentId]);
+  return result.rowCount > 0;
 }
 
 export async function applyPaymentToBill(paymentId: string, billId: string, appliedAmount: number): Promise<VendorPayment | null> {
@@ -325,7 +326,7 @@ export async function applyPaymentToBill(paymentId: string, billId: string, appl
     throw new Error("Applied amount exceeds unapplied payment amount");
   }
 
-  if (appliedAmount > Number(balance_due)) {
+  if (appliedAmount > Number(bill.balance_due || 0)) {
     throw new Error("Applied amount exceeds bill balance due");
   }
 

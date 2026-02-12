@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { CRM_LEAD_STAGES } from "@/lib/crm/types";
-import { updateLead } from "@/lib/crm/db";
+import { updateLead, getLead } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
 
 const patchSchema = z.object({

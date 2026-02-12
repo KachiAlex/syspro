@@ -154,6 +154,10 @@ export default function StaffReportsViewer({
     }
   };
 
+  const filteredReports: StaffReport[] = reports.filter((r) =>
+    filter === 'all' ? true : r.status === filter
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">

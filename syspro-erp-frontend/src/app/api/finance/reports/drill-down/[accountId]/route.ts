@@ -6,8 +6,9 @@ import { ReportFilters } from "@/lib/finance/assets-reports";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { accountId: string } }
+  context: any
 ) {
+  const { params } = context;
   try {
     const searchParams = request.nextUrl.searchParams;
     

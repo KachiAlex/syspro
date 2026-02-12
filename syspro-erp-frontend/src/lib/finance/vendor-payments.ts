@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL } from "../sql-client";
 import { createPaymentJournalEntry } from "./accounting";
 
 export interface VendorPayment {
@@ -58,7 +58,7 @@ export interface PaymentApplicationRecord {
   created_at: string;
 }
 
-const SQL = getSql();
+/* using imported SQL */
 
 export async function ensurePaymentTables(sql = SQL) {
   try {
@@ -96,7 +96,7 @@ function normalizePayment(record: VendorPaymentRecord, applications: PaymentAppl
 }
 
 export async function listVendorPayments(filters: {
-  tenantSlug: string;
+  tenantSlug?: string;
   vendorId?: string;
   status?: string;
   method?: string;
@@ -110,7 +110,9 @@ export async function listVendorPayments(filters: {
   const offset = Math.max(filters.offset ?? 0, 0);
 
   const whereConditions: any[] = [];
-  whereConditions.push(sql`tenant_slug = ${filters.tenantSlug}`);
+  if (filters.tenantSlug) {
+    whereConditions.push(sql`tenant_slug = ${filters.tenantSlug}`);
+  }
   
   if (filters.vendorId) {
     whereConditions.push(sql`vendor_id = ${filters.vendorId}`);
@@ -124,24 +126,42 @@ export async function listVendorPayments(filters: {
     whereConditions.push(sql`method = ${filters.method}`);
   }
 
-  const whereClause = whereConditions.length > 0 
-    ? sql`where ${sql.join(whereConditions, sql` and `)}`
-    : sql``;
+  // Build parameterized query to avoid template-tag nested-array typing
+  const params: any[] = [];
+  let idx = 1;
+  let whereText = "";
+  if (filters.tenantSlug) {
+    params.push(filters.tenantSlug);
+    whereText += `tenant_slug = $${idx}`;
+    idx++;
+  }
+  if (filters.vendorId) {
+    params.push(filters.vendorId);
+    whereText += (whereText ? " and " : "") + `vendor_id = $${idx}`;
+    idx++;
+  }
+  if (filters.status) {
+    params.push(filters.status);
+    whereText += (whereText ? " and " : "") + `status = $${idx}`;
+    idx++;
+  }
+  if (filters.method) {
+    params.push(filters.method);
+    whereText += (whereText ? " and " : "") + `method = $${idx}`;
+    idx++;
+  }
 
-  const records = (await sql`
-    select * from vendor_payments 
-    ${whereClause}
-    order by payment_date desc, created_at desc
-    limit ${limit} offset ${offset}
-  `) as VendorPaymentRecord[];
+  const baseWhere = whereText ? `where ${whereText} and ` : `where `;
+  const queryText = `select * from vendor_payments ${whereText ? `where ${whereText}` : "where true"} order by payment_date desc, created_at desc limit $${idx} offset $${idx + 1}`;
+  params.push(limit, offset);
+  const records = (await db.query<VendorPaymentRecord>(queryText, params)).rows;
 
   if (!records.length) return [];
 
-  const applications = (await sql`
-    select * from vendor_payment_applications 
-    where payment_id = any(${records.map(r => r.id)})
-    order by created_at
-  `) as PaymentApplicationRecord[];
+  const paymentIds = records.map(r => r.id);
+  const applications = paymentIds.length
+    ? (await db.query<PaymentApplicationRecord>(`select * from vendor_payment_applications where payment_id = any($1) order by created_at`, [paymentIds])).rows
+    : [];
 
   const applicationsByPayment: Record<string, PaymentApplicationRecord[]> = {};
   applications.forEach(app => {
@@ -156,15 +176,11 @@ export async function getVendorPayment(paymentId: string): Promise<VendorPayment
   const sql = SQL;
   await ensurePaymentTables(sql);
 
-  const records = (await sql`
-    select * from vendor_payments where id = ${paymentId} limit 1
-  `) as VendorPaymentRecord[];
+  const records = (await db.query<VendorPaymentRecord>(`select * from vendor_payments where id = $1 limit 1`, [paymentId])).rows;
 
   if (!records.length) return null;
 
-  const applications = (await sql`
-    select * from vendor_payment_applications where payment_id = ${paymentId} order by created_at
-  `) as PaymentApplicationRecord[];
+  const applications = (await db.query<PaymentApplicationRecord>(`select * from vendor_payment_applications where payment_id = $1 order by created_at`, [paymentId])).rows;
 
   return normalizePayment(records[0], applications);
 }
@@ -296,8 +312,8 @@ export async function deleteVendorPayment(paymentId: string): Promise<boolean> {
   }));
 
   // Delete payment (cascade will delete applications)
-  const result = await sql`delete from vendor_payments where id = ${paymentId}`;
-  return result.count > 0;
+  const result = await db.query(`delete from vendor_payments where id = $1`, [paymentId]);
+  return result.rowCount > 0;
 }
 
 export async function applyPaymentToBill(paymentId: string, billId: string, appliedAmount: number): Promise<VendorPayment | null> {
@@ -310,9 +326,7 @@ export async function applyPaymentToBill(paymentId: string, billId: string, appl
     throw new Error("Payment not found");
   }
 
-  const billRecords = (await sql`
-    select * from bills where id = ${billId} limit 1
-  `) as any[];
+  const billRecords = (await db.query<any>(`select * from bills where id = $1 limit 1`, [billId])).rows;
 
   if (!billRecords.length) {
     throw new Error("Bill not found");
@@ -325,18 +339,13 @@ export async function applyPaymentToBill(paymentId: string, billId: string, appl
     throw new Error("Applied amount exceeds unapplied payment amount");
   }
 
-  if (appliedAmount > Number(balance_due)) {
+  const billBalance = Number(bill.balance_due ?? bill.balanceDue ?? 0);
+  if (appliedAmount > billBalance) {
     throw new Error("Applied amount exceeds bill balance due");
   }
 
   // Create application
-  const [appRecord] = (await sql`
-    insert into vendor_payment_applications (
-      id, payment_id, bill_id, applied_amount, created_at
-    ) values (
-      ${randomUUID()}, ${paymentId}, ${billId}, ${appliedAmount}, now()
-    ) returning *
-  `) as PaymentApplicationRecord[];
+  const [appRecord] = (await db.query<PaymentApplicationRecord>(`insert into vendor_payment_applications (id, payment_id, bill_id, applied_amount, created_at) values ($1, $2, $3, $4, now()) returning *`, [randomUUID(), paymentId, billId, appliedAmount])).rows as PaymentApplicationRecord[];
 
   // Update payment applied amounts
   const newAppliedAmount = payment.appliedAmount + appliedAmount;
@@ -374,18 +383,19 @@ export async function getVendorPaymentSummary(tenantSlug: string, vendorId?: str
     ? sql`where tenant_slug = ${tenantSlug} and vendor_id = ${vendorId}`
     : sql`where tenant_slug = ${tenantSlug}`;
 
-  const results = (await sql`
-    select 
-      sum(amount) as total_payments,
-      sum(applied_amount) as total_applied,
-      sum(unapplied_amount) as total_unapplied,
-      count(*) as payment_count
-    from vendor_payments
-    ${whereClause}
-    and status != 'cancelled'
-  `) as any[];
-
-  const result = results[0];
+  const summaryParams: any[] = [];
+  let summaryWhere = "";
+  let sidx = 1;
+  if (vendorId) {
+    summaryParams.push(tenantSlug, vendorId);
+    summaryWhere = `where tenant_slug = $1 and vendor_id = $2 and status != 'cancelled'`;
+  } else {
+    summaryParams.push(tenantSlug);
+    summaryWhere = `where tenant_slug = $1 and status != 'cancelled'`;
+  }
+  const summaryQ = `select sum(amount) as total_payments, sum(applied_amount) as total_applied, sum(unapplied_amount) as total_unapplied, count(*) as payment_count from vendor_payments ${summaryWhere}`;
+  const summaryRows = (await db.query(summaryQ, summaryParams)).rows;
+  const result = summaryRows[0] || {};
   return {
     totalPayments: Number(result.total_payments || 0),
     totalApplied: Number(result.total_applied || 0),

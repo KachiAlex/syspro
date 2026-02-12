@@ -46,8 +46,9 @@ export async function POST(request: NextRequest) {
     }
 
     await ensureAdminTables();
-    const id = await insertModule({ tenantSlug, key: validation.data.key, name: validation.data.name, enabled: validation.data.enabled });
-    return NextResponse.json({ module: { id, tenantSlug, key: validation.data.key, name: validation.data.name, enabled: validation.data.enabled, regions: [], flags: {}, createdAt: new Date().toISOString() } }, { status: 201 });
+    const data = validation.data;
+    const id = await insertModule({ tenantSlug, key: data.key, name: data.name, enabled: data.enabled ?? false });
+    return NextResponse.json({ module: { id, tenantSlug, key: data.key, name: data.name, enabled: data.enabled ?? false, regions: [], flags: {}, createdAt: new Date().toISOString() } }, { status: 201 });
   } catch (error) {
     console.error("Module create failed", error);
     const message = error instanceof Error ? error.message : "Unable to create module";
@@ -75,7 +76,8 @@ export async function PATCH(request: NextRequest) {
     }
 
     await ensureAdminTables();
-    await updateModule(id, tenantSlug, { enabled: validation.data.enabled, flags: validation.data.flags });
+    const data = validation.data;
+    await updateModule(id, tenantSlug, { enabled: data.enabled, flags: data.flags });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Module patch failed", error);

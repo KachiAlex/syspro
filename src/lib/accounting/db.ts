@@ -1,5 +1,4 @@
-import { sql } from "@neondatabase/serverless";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import {
   ChartOfAccount,
   ChartOfAccountCreateInput,
@@ -18,7 +17,7 @@ import {
   JOURNAL_TYPES,
 } from "./types";
 
-const db = getSql();
+// using `db` imported from sql-client
 
 /**
  * ACCOUNTING CORE DATABASE SERVICE
@@ -33,7 +32,7 @@ export async function createChartOfAccount(
   input: ChartOfAccountCreateInput
 ): Promise<ChartOfAccount> {
   try {
-    const sql = getSql();
+    const sql = SQL;
     
     const result = await sql`
       INSERT INTO chart_of_accounts (
@@ -65,7 +64,7 @@ export async function getChartOfAccounts(
   filters?: { accountType?: string; branchId?: string; isActive?: boolean }
 ): Promise<ChartOfAccount[]> {
   try {
-    const sql = getSql();
+    const sql = SQL;
     
     // Build dynamic query based on filters
     let whereConditions = ["tenant_slug = $1"];
@@ -458,10 +457,10 @@ export async function reverseJournalEntry(
       accountId: line.accountId,
       debitAmount: line.creditAmount, // Swap debit/credit
       creditAmount: line.debitAmount,
-      branchId: line.branchId,
-      departmentId: line.departmentId,
-      projectId: line.projectId,
-      costCenterId: line.costCenterId,
+      branchId: line.branchId ?? undefined,
+      departmentId: line.departmentId ?? undefined,
+      projectId: line.projectId ?? undefined,
+      costCenterId: line.costCenterId ?? undefined,
       description: `Reversal: ${line.description || ""}`,
     })),
   };
@@ -787,8 +786,12 @@ export async function initializeDefaultChartOfAccounts(
       accountCode: acc.code,
       accountName: acc.name,
       accountType: acc.type as any,
+      currency: "NGN",
       isSystemAccount: acc.system,
       isActive: true,
+      allowManualPosting: true,
+      requireCostCenter: false,
+      isReconciliationAccount: false,
       createdBy,
     });
   }

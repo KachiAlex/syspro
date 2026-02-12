@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 
 export interface JournalEntry {
   id: string;
@@ -37,7 +37,7 @@ export interface ChartOfAccount {
   isActive: boolean;
 }
 
-const SQL = getSql();
+// using SQL imported from sql-client
 
 // Default chart of accounts for vendor transactions
 const DEFAULT_ACCOUNTS: Record<string, ChartOfAccount> = {
@@ -146,7 +146,7 @@ export async function ensureAccountingTables(sql = SQL) {
   }
 }
 
-async function seedDefaultAccounts(sql: ReturnType<typeof getSql>) {
+async function seedDefaultAccounts(sql: SqlClient) {
   for (const [key, account] of Object.entries(DEFAULT_ACCOUNTS)) {
     await sql`
       insert into chart_of_accounts (code, name, type, is_active)
@@ -377,7 +377,7 @@ export async function getJournalEntries(filters: {
   }
 
   const whereClause = whereConditions.length > 0 
-    ? sql`where ${sql.join(whereConditions, sql` and `)}`
+    ? sql`where ${db.join(whereConditions, ' and ')}`
     : sql``;
 
   const entries = (await sql`

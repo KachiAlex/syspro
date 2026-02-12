@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { getSql } from "@/lib/db";
+import { db, sql as SQL, SqlClient } from "../sql-client";
 
 export interface VendorRecord {
   id: string;
@@ -95,19 +95,15 @@ export async function lookupVendor(
 ): Promise<VendorLookupResult> {
   // Prefer DB-backed lookup when connection configured
   try {
-    const sql = getSql();
+    const sql = SQL;
     await sql`
       select 1
     `;
 
     const q = `%${query}%`;
-    const rows = (await sql`
-      select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
-      from vendors
-      where ${type === "name" ? sql`name ilike ${q}` : type === "code" ? sql`code ilike ${q}` : sql`email ilike ${q}`}
-      order by name asc
-      limit 10
-    `) as any[];
+    const whereField = type === "name" ? "name" : type === "code" ? "code" : "email";
+    const queryText = `select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at from vendors where ${whereField} ilike $1 order by name asc limit 10`;
+    const rows = (await db.query<any>(queryText, [q])).rows;
 
     if (rows.length === 0) {
       return { found: false };
@@ -220,7 +216,7 @@ export async function listVendors(
 ): Promise<VendorRecord[]> {
   // Try DB first
   try {
-    const sql = getSql();
+    const sql = SQL;
     await ensureVendorTables(sql);
 
     const whereClauses: Array<any> = [];
@@ -237,7 +233,7 @@ export async function listVendors(
     const rows = (await sql`
       select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
       from vendors
-      ${whereClauses.length ? sql`where ${sql.join(whereClauses, sql` and `)}` : sql``}
+      ${whereClauses.length ? sql`where ${(sql as any).join(whereClauses, sql` and `)}` : sql``}
       order by name asc
       limit 200
     `) as any[];
@@ -286,7 +282,7 @@ export async function listVendors(
  */
 export async function getVendor(vendorId: string): Promise<VendorRecord | null> {
   try {
-    const sql = getSql();
+    const sql = SQL;
     await ensureVendorTables(sql);
 
     const rows = (await sql`
@@ -325,7 +321,7 @@ export async function getVendor(vendorId: string): Promise<VendorRecord | null> 
 
 export async function createVendor(payload: Partial<VendorRecord>): Promise<VendorRecord> {
   try {
-    const sql = getSql();
+    const sql = SQL;
     await ensureVendorTables(sql);
 
     const id = payload.id ?? randomUUID();
@@ -388,31 +384,58 @@ export async function createVendor(payload: Partial<VendorRecord>): Promise<Vend
 
 export async function updateVendor(id: string, updates: Partial<VendorRecord>): Promise<VendorRecord | null> {
   try {
-    const sql = getSql();
+    const sql = SQL;
     await ensureVendorTables(sql);
 
-    const [row] = (await sql`
-      update vendors set
-        code = coalesce(${updates.code ?? null}, code),
-        name = coalesce(${updates.name ?? null}, name),
-        email = coalesce(${updates.email ?? null}, email),
-        phone = coalesce(${updates.phone ?? null}, phone),
-        address = coalesce(${updates.address ?? null}, address),
-        city = coalesce(${updates.city ?? null}, city),
-        state = coalesce(${updates.state ?? null}, state),
-        country = coalesce(${updates.country ?? null}, country),
-        tax_id = coalesce(${updates.taxId ?? null}, tax_id),
-        account_number = coalesce(${updates.accountNumber ?? null}, account_number),
-        bank_code = coalesce(${updates.bankCode ?? null}, bank_code),
-        bank_name = coalesce(${updates.bankName ?? null}, bank_name),
-        payment_terms = coalesce(${updates.paymentTerms ?? null}, payment_terms),
-        is_active = coalesce(${updates.isActive ?? null}, is_active),
-        updated_at = now()
-      where id = ${id}
-      returning *
-    `) as any[];
+    const params = [
+      updates.code ?? null,
+      updates.name ?? null,
+      updates.email ?? null,
+      updates.phone ?? null,
+      updates.address ?? null,
+      updates.city ?? null,
+      updates.state ?? null,
+      updates.country ?? null,
+      updates.taxId ?? null,
+      updates.accountNumber ?? null,
+      updates.bankCode ?? null,
+      updates.bankName ?? null,
+      updates.paymentTerms ?? null,
+      updates.isActive ?? null,
+      id,
+    ];
 
-    if (!row) return null;
+    const queryText = `update vendors set
+      code = coalesce($1, code),
+      name = coalesce($2, name),
+      email = coalesce($3, email),
+      phone = coalesce($4, phone),
+      address = coalesce($5, address),
+      city = coalesce($6, city),
+      state = coalesce($7, state),
+      country = coalesce($8, country),
+      tax_id = coalesce($9, tax_id),
+      account_number = coalesce($10, account_number),
+      bank_code = coalesce($11, bank_code),
+      bank_name = coalesce($12, bank_name),
+      payment_terms = coalesce($13, payment_terms),
+      is_active = coalesce($14, is_active),
+      updated_at = now()
+      where id = $15
+      returning *`;
+
+    const res = await db.query<any>(queryText, params);
+    const row = res.rows[0];
+
+    if (!row) {
+      // If DB update didn't find a row, fall back to in-memory SAMPLE_VENDORS
+      const idx = SAMPLE_VENDORS.findIndex((v) => v.id === id);
+      if (idx === -1) return null;
+      const existing = SAMPLE_VENDORS[idx];
+      const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() } as VendorRecord;
+      SAMPLE_VENDORS[idx] = updated;
+      return updated;
+    }
 
     return {
       id: row.id,
@@ -445,13 +468,10 @@ export async function updateVendor(id: string, updates: Partial<VendorRecord>): 
 
 export async function deleteVendor(id: string): Promise<boolean> {
   try {
-    const sql = getSql();
+    const sql = SQL;
     await ensureVendorTables(sql);
 
-    const res = await sql`
-      delete from vendors where id = ${id}
-    `;
-
+    const res = await db.query<{ count: number }>(`delete from vendors where id = $1`, [id]);
     return res.count > 0;
   } catch (err) {
     const idx = SAMPLE_VENDORS.findIndex((v) => v.id === id);
@@ -461,9 +481,9 @@ export async function deleteVendor(id: string): Promise<boolean> {
   }
 }
 
-async function ensureVendorTables(sql: ReturnType<typeof getSql>) {
+async function ensureVendorTables(sql: SqlClient) {
   try {
-    await sql`
+    const createTableSql = `
       create table if not exists vendors (
         id text primary key,
         code text,
@@ -485,11 +505,31 @@ async function ensureVendorTables(sql: ReturnType<typeof getSql>) {
       )
     `;
 
-    await sql`create index if not exists vendors_name_idx on vendors (name)`;
-    await sql`create index if not exists vendors_code_idx on vendors (code)`;
-    await sql`create index if not exists vendors_tenant_idx on vendors (country)`;
+    await db.query(createTableSql);
+
+    // Create indexes individually and tolerate missing-column errors (some DBs
+    // may have different schemas in CI/dev). Ignore undefined_column (42703).
+    const indexes = [
+      'create index if not exists vendors_name_idx on vendors (name)',
+      'create index if not exists vendors_code_idx on vendors (code)',
+      'create index if not exists vendors_tenant_idx on vendors (country)'
+    ];
+
+    for (const idxSql of indexes) {
+      try {
+        await db.query(idxSql);
+      } catch (e: any) {
+        const msg = (e && e.message) || String(e);
+        if ((e && e.code === '42703') || msg.includes('column "name" does not exist') || msg.includes('column "code" does not exist')) {
+          // Log and continue — schema mismatch in remote DB, fall back to in-memory store.
+          console.warn('ensureVendorTables: ignoring index error:', msg);
+          continue;
+        }
+        throw e;
+      }
+    }
   } catch (err) {
-    console.error("ensureVendorTables failed:", err);
+    console.error('ensureVendorTables failed:', err);
   }
 }
 /**

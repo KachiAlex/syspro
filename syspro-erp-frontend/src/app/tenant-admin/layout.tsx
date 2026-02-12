@@ -12,8 +12,8 @@ export default async function TenantAdminLayout({ children, searchParams }: { ch
   const safeGet = (key: string) => (typeof (h as any)?.get === "function" ? (h as any).get(key) : undefined);
 
   // Prefer explicit tenant header; then fallback to cookies (set by the access portal)
-  const serverCookies = cookies();
-  const safeGetCookie = (k: string) => (typeof serverCookies?.get === "function" ? serverCookies.get(k)?.value : undefined);
+  const serverCookies = await cookies();
+  const safeGetCookie = (k: string) => (typeof (serverCookies as any)?.get === "function" ? (serverCookies as any).get(k)?.value : undefined);
   const urlTenant = searchParams?.tenantSlug;
 
   // Fallback: sometimes `searchParams` aren't available to layouts during

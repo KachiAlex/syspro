@@ -45,13 +45,13 @@ export function hasPermission(
 ): boolean {
   const userLevel = permissions[module];
 
-  if (!userLevel || userLevel === "none") {
+  if (!userLevel) {
     return false;
   }
 
   if (required === "read") {
     // Can read if: read, write, or admin
-    return userLevel !== "none";
+    return userLevel === "read" || userLevel === "write" || userLevel === "admin";
   }
 
   if (required === "write") {
@@ -127,7 +127,7 @@ export async function enforcePermission(
   }
 
   // Step 3: Get role permissions
-  const permissions = getRolePermissionsFromDB(user.roleId);
+  const permissions = await getRolePermissionsFromDB(user.roleId);
 
   // Step 4: Check if user has required permission
   const allowed = hasPermission(user, module, permissions, required);

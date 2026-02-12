@@ -3,12 +3,14 @@ import {
   getBudgetActuals,
   recordBudgetActual,
 } from "@/lib/finance/budgets-db";
+import { db } from "@/lib/sql-client";
 import { budgetActualSchema } from "@/lib/finance/budgets";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: any
 ) {
+  const { params } = context;
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
     const actualType = request.nextUrl.searchParams.get("actualType");
@@ -55,8 +57,9 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: any
 ) {
+  const { params } = context;
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
 

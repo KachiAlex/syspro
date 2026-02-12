@@ -8,8 +8,9 @@ import { postJournalEntry, reverseJournalEntry, getJournalEntry } from "@/lib/ac
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: any
 ) {
+  const { params } = context;
   try {
     const body = await request.json();
     const parsed = journalEntryApproveSchema.safeParse(body);

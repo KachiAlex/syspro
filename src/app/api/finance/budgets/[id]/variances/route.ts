@@ -3,6 +3,7 @@ import {
   getBudgetVariances,
   acknowledgeBudgetVariance,
 } from "@/lib/finance/budgets-db";
+import { db } from "@/lib/sql-client";
 
 export async function GET(
   request: NextRequest,

@@ -8,25 +8,25 @@ import { z } from "zod";
  * Depreciation Methods
  */
 export type DepreciationMethod = "STRAIGHT_LINE" | "REDUCING_BALANCE";
-export const DEPRECIATION_METHODS: DepreciationMethod[] = ["STRAIGHT_LINE", "REDUCING_BALANCE"];
+export const DEPRECIATION_METHODS = ["STRAIGHT_LINE", "REDUCING_BALANCE"] as const;
 
 /**
  * Asset Status Lifecycle
  */
 export type AssetStatus = "ACQUIRED" | "IN_USE" | "UNDER_MAINTENANCE" | "REVALUED" | "DISPOSED";
-export const ASSET_STATUSES: AssetStatus[] = ["ACQUIRED", "IN_USE", "UNDER_MAINTENANCE", "REVALUED", "DISPOSED"];
+export const ASSET_STATUSES = ["ACQUIRED", "IN_USE", "UNDER_MAINTENANCE", "REVALUED", "DISPOSED"] as const;
 
 /**
  * Disposal Methods
  */
 export type DisposalMethod = "SCRAP" | "SALE" | "DONATION" | "EXCHANGE";
-export const DISPOSAL_METHODS: DisposalMethod[] = ["SCRAP", "SALE", "DONATION", "EXCHANGE"];
+export const DISPOSAL_METHODS = ["SCRAP", "SALE", "DONATION", "EXCHANGE"] as const;
 
 /**
  * Depreciation Schedule Status
  */
 export type DepreciationScheduleStatus = "DRAFT" | "CALCULATED" | "POSTED" | "REVERSED";
-export const DEPRECIATION_SCHEDULE_STATUSES: DepreciationScheduleStatus[] = ["DRAFT", "CALCULATED", "POSTED", "REVERSED"];
+export const DEPRECIATION_SCHEDULE_STATUSES = ["DRAFT", "CALCULATED", "POSTED", "REVERSED"] as const;
 
 /**
  * Asset Category Interface
@@ -258,10 +258,10 @@ export type AssetDisposalCreateInput = z.infer<typeof assetDisposalCreateSchema>
  */
 
 export type ReportType = "P_AND_L" | "BALANCE_SHEET" | "CASH_FLOW" | "AGED_RECEIVABLES" | "AGED_PAYABLES";
-export const REPORT_TYPES: ReportType[] = ["P_AND_L", "BALANCE_SHEET", "CASH_FLOW", "AGED_RECEIVABLES", "AGED_PAYABLES"];
+export const REPORT_TYPES = ["P_AND_L", "BALANCE_SHEET", "CASH_FLOW", "AGED_RECEIVABLES", "AGED_PAYABLES"] as const;
 
 export type ExportFormat = "PDF" | "EXCEL" | "CSV";
-export const EXPORT_FORMATS: ExportFormat[] = ["PDF", "EXCEL", "CSV"];
+export const EXPORT_FORMATS = ["PDF", "EXCEL", "CSV"] as const;
 
 /**
  * P&L Report Line

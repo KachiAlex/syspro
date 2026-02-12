@@ -110,9 +110,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ bills });
 
   } catch (error) {
-    console.error("Bills GET error:", error?.stack || error);
+    console.error("Bills GET error:", (error as any)?.stack || error);
     return NextResponse.json(
-      { error: "Internal server error", details: String(error?.message || error) },
+      { error: "Internal server error", details: String((error as any)?.message ?? error) },
       { status: 500 }
     );
   }
@@ -180,9 +180,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ bill }, { status: 201 });
 
   } catch (error) {
-    console.error("Bills POST error:", error?.stack || error);
+    console.error("Bills POST error:", (error as any)?.stack || error);
     return NextResponse.json(
-      { error: "Internal server error", details: String(error?.message || error) },
+      { error: "Internal server error", details: String((error as any)?.message ?? error) },
       { status: 500 }
     );
   }
@@ -224,9 +224,9 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ bill });
 
   } catch (error) {
-    console.error("Bills PUT error:", error?.stack || error);
+    console.error("Bills PUT error:", (error as any)?.stack || error);
     return NextResponse.json(
-      { error: "Internal server error", details: String(error?.message || error) },
+      { error: "Internal server error", details: String((error as any)?.message ?? error) },
       { status: 500 }
     );
   }
@@ -258,9 +258,9 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true });
 
   } catch (error) {
-    console.error("Bills DELETE error:", error?.stack || error);
+    console.error("Bills DELETE error:", (error as any)?.stack || error);
     return NextResponse.json(
-      { error: "Internal server error", details: String(error?.message || error) },
+      { error: "Internal server error", details: String((error as any)?.message ?? error) },
       { status: 500 }
     );
   }

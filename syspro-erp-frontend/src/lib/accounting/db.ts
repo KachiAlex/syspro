@@ -1,5 +1,4 @@
-import { sql } from "@neondatabase/serverless";
-import { getSql } from "@/lib/db";
+import { db, sql } from "../sql-client";
 import {
   ChartOfAccount,
   ChartOfAccountCreateInput,
@@ -18,7 +17,7 @@ import {
   JOURNAL_TYPES,
 } from "./types";
 
-const db = getSql();
+// using `db` and `sql` from sql-client
 
 /**
  * ACCOUNTING CORE DATABASE SERVICE
@@ -33,8 +32,7 @@ export async function createChartOfAccount(
   input: ChartOfAccountCreateInput
 ): Promise<ChartOfAccount> {
   try {
-    const sql = getSql();
-    
+    // use `sql` template from sql-client
     const result = await sql`
       INSERT INTO chart_of_accounts (
         tenant_slug, account_code, account_name, account_type, sub_type,
@@ -65,8 +63,7 @@ export async function getChartOfAccounts(
   filters?: { accountType?: string; branchId?: string; isActive?: boolean }
 ): Promise<ChartOfAccount[]> {
   try {
-    const sql = getSql();
-    
+    // use `sql` template from sql-client
     // Build dynamic query based on filters
     let whereConditions = ["tenant_slug = $1"];
     const params: any[] = [tenantSlug];
@@ -458,10 +455,10 @@ export async function reverseJournalEntry(
       accountId: line.accountId,
       debitAmount: line.creditAmount, // Swap debit/credit
       creditAmount: line.debitAmount,
-      branchId: line.branchId,
-      departmentId: line.departmentId,
-      projectId: line.projectId,
-      costCenterId: line.costCenterId,
+      branchId: line.branchId ?? undefined,
+      departmentId: line.departmentId ?? undefined,
+      projectId: line.projectId ?? undefined,
+      costCenterId: line.costCenterId ?? undefined,
       description: `Reversal: ${line.description || ""}`,
     })),
   };
@@ -789,6 +786,10 @@ export async function initializeDefaultChartOfAccounts(
       accountType: acc.type as any,
       isSystemAccount: acc.system,
       isActive: true,
+      currency: "NGN",
+      allowManualPosting: true,
+      requireCostCenter: false,
+      isReconciliationAccount: false,
       createdBy,
     });
   }
