@@ -26,6 +26,27 @@ export interface VendorRecord {
   updatedAt: string;
 }
 
+// DB row shape (snake_case) returned by SQL queries
+interface VendorRowDB {
+  id: string;
+  code: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  tax_id?: string;
+  account_number?: string;
+  bank_code?: string;
+  bank_name?: string;
+  payment_terms?: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 
 export interface VendorLookupResult {
   found: boolean;
@@ -103,7 +124,7 @@ export async function lookupVendor(
     const q = `%${query}%`;
     const whereField = type === "name" ? "name" : type === "code" ? "code" : "email";
     const queryText = `select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at from vendors where ${whereField} ilike $1 order by name asc limit 10`;
-    const rows = (await db.query<any>(queryText, [q])).rows;
+    const rows = (await db.query<VendorRowDB>(queryText, [q])).rows;
 
     if (rows.length === 0) {
       return { found: false };
@@ -230,13 +251,13 @@ export async function listVendors(
       whereClauses.push(sql`country = ${filters.country}`);
     }
 
-    const rows = (await sql`
+    const rows = await SQL<VendorRowDB>`
       select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
       from vendors
       ${whereClauses.length ? sql`where ${(sql as any).join(whereClauses, sql` and `)}` : sql``}
       order by name asc
       limit 200
-    `) as any[];
+    `;
 
     return rows.map((r) => ({
       id: r.id,
@@ -285,12 +306,12 @@ export async function getVendor(vendorId: string): Promise<VendorRecord | null> 
     const sql = SQL;
     await ensureVendorTables(sql);
 
-    const rows = (await sql`
+    const rows = await SQL<VendorRowDB>`
       select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
       from vendors
       where id = ${vendorId}
       limit 1
-    `) as any[];
+    `;
 
     if (!rows.length) return null;
 
@@ -327,13 +348,13 @@ export async function createVendor(payload: Partial<VendorRecord>): Promise<Vend
     const id = payload.id ?? randomUUID();
     const now = new Date().toISOString();
 
-    const [row] = (await sql`
+    const [row] = await SQL<VendorRowDB>`
       insert into vendors (
         id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
       ) values (
         ${id}, ${payload.code ?? null}, ${payload.name ?? null}, ${payload.email ?? null}, ${payload.phone ?? null}, ${payload.address ?? null}, ${payload.city ?? null}, ${payload.state ?? null}, ${payload.country ?? null}, ${payload.taxId ?? null}, ${payload.accountNumber ?? null}, ${payload.bankCode ?? null}, ${payload.bankName ?? null}, ${payload.paymentTerms ?? "net30"}, ${payload.isActive ?? true}, ${now}, ${now}
       ) returning *
-    `) as any[];
+    `;
 
     return {
       id: row.id,
@@ -424,7 +445,7 @@ export async function updateVendor(id: string, updates: Partial<VendorRecord>): 
       where id = $15
       returning *`;
 
-    const res = await db.query<any>(queryText, params);
+    const res = await db.query<VendorRowDB>(queryText, params);
     const row = res.rows[0];
 
     if (!row) {

@@ -280,7 +280,7 @@ export async function listFinanceAccounts(filters: {
   
   let rows: FinanceAccountRecord[];
   if (filters.regionId && filters.branchId) {
-    rows = (await sql`
+    rows = await SQL<FinanceAccountRecord>`
       select *
       from finance_accounts
       where tenant_slug = ${filters.tenantSlug}
@@ -289,9 +289,9 @@ export async function listFinanceAccounts(filters: {
       order by balance desc
       limit ${limit}
       offset ${offset}
-    `) as FinanceAccountRecord[];
+    `;
   } else if (filters.regionId) {
-    rows = (await sql`
+    rows = await SQL<FinanceAccountRecord>`
       select *
       from finance_accounts
       where tenant_slug = ${filters.tenantSlug}
@@ -299,9 +299,9 @@ export async function listFinanceAccounts(filters: {
       order by balance desc
       limit ${limit}
       offset ${offset}
-    `) as FinanceAccountRecord[];
+    `;
   } else if (filters.branchId) {
-    rows = (await sql`
+    rows = await SQL<FinanceAccountRecord>`
       select *
       from finance_accounts
       where tenant_slug = ${filters.tenantSlug}
@@ -309,16 +309,16 @@ export async function listFinanceAccounts(filters: {
       order by balance desc
       limit ${limit}
       offset ${offset}
-    `) as FinanceAccountRecord[];
+    `;
   } else {
-    rows = (await sql`
+    rows = await SQL<FinanceAccountRecord>`
       select *
       from finance_accounts
       where tenant_slug = ${filters.tenantSlug}
       order by balance desc
       limit ${limit}
       offset ${offset}
-    `) as FinanceAccountRecord[];
+    `;
   }
   return rows.map(normalizeFinanceAccountRow);
 }
@@ -327,7 +327,7 @@ export async function insertFinanceAccount(payload: FinanceAccountCreateInput): 
   const sql = SQL;
   await ensureFinanceTables(sql);
   const id = randomUUID();
-  const [inserted] = (await sql`
+  const [inserted] = await SQL<FinanceAccountRecord>`
     insert into finance_accounts (
       id,
       tenant_slug,
@@ -354,7 +354,7 @@ export async function insertFinanceAccount(payload: FinanceAccountCreateInput): 
       ${payload.trend ?? "up"}
     )
     returning *
-  `) as FinanceAccountRecord[];
+  `;
   return normalizeFinanceAccountRow(inserted);
 }
 
@@ -376,11 +376,11 @@ export async function updateFinanceAccount(
     updates.changePeriod === undefined &&
     updates.trend === undefined
   ) {
-    const existing = (await sql`select * from finance_accounts where id = ${id} limit 1`) as FinanceAccountRecord[];
+    const existing = await SQL<FinanceAccountRecord>`select * from finance_accounts where id = ${id} limit 1`;
     return existing.length ? normalizeFinanceAccountRow(existing[0]) : null;
   }
 
-  const [updated] = (await sql`
+  const [updated] = await SQL<FinanceAccountRecord>`
     update finance_accounts
     set
       name = coalesce(${updates.name ?? null}, name),
@@ -395,7 +395,7 @@ export async function updateFinanceAccount(
       updated_at = now()
     where id = ${id}
     returning *
-  `) as FinanceAccountRecord[];
+  `;
 
   if (!updated) {
     return null;
@@ -548,11 +548,11 @@ export async function listFinanceInvoices(filters: InvoiceFilters): Promise<Fina
     return [];
   }
 
-  const lineRows = (await sql`
+  const lineRows = await SQL<FinanceInvoiceLineRecord>`
     select *
     from finance_invoice_lines
     where invoice_id = any(${rows.map((row) => row.id)})
-  `) as FinanceInvoiceLineRecord[];
+  `;
 
   const grouped = lineRows.reduce<Record<string, FinanceInvoiceLineRecord[]>>((acc, line) => {
     if (!acc[line.invoice_id]) {
@@ -571,7 +571,7 @@ export async function insertFinanceInvoice(payload: FinanceInvoiceCreateInput): 
   const invoiceId = randomUUID();
 
   // Insert invoice
-  const [invoiceRow] = (await sql`
+  const [invoiceRow] = await SQL<FinanceInvoiceRecord>`
     insert into finance_invoices (
       id,
       tenant_slug,
@@ -612,12 +612,12 @@ export async function insertFinanceInvoice(payload: FinanceInvoiceCreateInput): 
       ${payload.metadata ?? null}
     )
     returning *
-  `) as FinanceInvoiceRecord[];
+  `;
 
   // Insert line items
   const lineRows = await Promise.all(
     payload.lineItems.map(async (line) => {
-      const rows = await sql<FinanceInvoiceLineRecord>`
+      const rows = await SQL<FinanceInvoiceLineRecord>`
         insert into finance_invoice_lines (
           id,
           invoice_id,
@@ -653,7 +653,7 @@ export async function updateFinanceInvoice(
   const sql = SQL;
   await ensureFinanceTables(sql);
 
-  const [invoiceRow] = (await sql`
+  const [invoiceRow] = await SQL<FinanceInvoiceRecord>`
     update finance_invoices
     set
       customer_name = coalesce(${updates.customerName ?? null}, customer_name),
@@ -687,7 +687,7 @@ export async function updateFinanceInvoice(
     lineRows = (
       await Promise.all(
         updates.lineItems.map((line) =>
-          sql`
+          SQL<FinanceInvoiceLineRecord>`
             insert into finance_invoice_lines (
               id,
               invoice_id,
@@ -715,9 +715,9 @@ export async function updateFinanceInvoice(
   }
 
   if (!lineRows) {
-    lineRows = (await sql`
+    lineRows = await SQL<FinanceInvoiceLineRecord>`
       select * from finance_invoice_lines where invoice_id = ${id}
-    `) as FinanceInvoiceLineRecord[];
+    `;
   }
 
   return normalizeFinanceInvoiceRow(invoiceRow, lineRows);

@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import { AppShell } from "@/components/layout/app-shell";
 import "./globals.css";
 
-// Start the automation engine (server-side only). This imports the
-// `engine-start` module which registers a sample rule and starts the in-memory engine.
-import '../../../../src/lib/automation/engine-start';
+// Automation engine startup is intentionally disabled in the frontend build.
+// Server runtime should start the automation engine separately where appropriate.
 
 const BODY_FONT_STACK = "font-sans antialiased";
 

@@ -45,10 +45,10 @@ function getValue(payload: any, path?: string): any {
 
 function evaluateCondition(condition: Condition, context: any): boolean {
   if (condition.all && condition.all.length > 0) {
-    return condition.all.every((c) => evaluateCondition(c, context));
+    return condition.all.every((c: Condition) => evaluateCondition(c, context));
   }
   if (condition.any && condition.any.length > 0) {
-    return condition.any.some((c) => evaluateCondition(c, context));
+    return condition.any.some((c: Condition) => evaluateCondition(c, context));
   }
   const value = getValue(context, condition.field);
   return compare(condition.op, value, condition.value);

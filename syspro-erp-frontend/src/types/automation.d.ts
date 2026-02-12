@@ -1,4 +1,4 @@
-declare module '../../../../src/lib/automation/event-bus' {
+declare module '@/lib/automation/event-bus' {
   export type AutomationEvent = { type: string; payload?: any; receivedAt?: string };
   export const eventBus: {
     publish(event: AutomationEvent): void;
@@ -7,13 +7,13 @@ declare module '../../../../src/lib/automation/event-bus' {
   };
 }
 
-declare module '../../../../src/lib/automation/engine-start' {
+declare module '@/lib/automation/engine-start' {
   const engine: any;
   export default engine;
 }
 
-declare module '../../../../src/lib/automation' {
-  import { AutomationEvent, eventBus } from '../../../../src/lib/automation/event-bus';
+declare module '@/lib/automation' {
+  import { AutomationEvent, eventBus } from '@/lib/automation/event-bus';
   export type { AutomationEvent };
   export { eventBus };
   const engine: any;

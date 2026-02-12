@@ -46,13 +46,13 @@ export function calculateAttributionSummary(events: AttributionEvent[], model: A
     if (last.campaignId) totalsByCampaign[last.campaignId] = (totalsByCampaign[last.campaignId] || 0) + amt;
     if (last.leadSourceId) totalsByLeadSource[last.leadSourceId] = (totalsByLeadSource[last.leadSourceId] || 0) + amt;
   } else {
-    // linear: split across all events equally (by count), attributing each event's amount split equally among events
-    // For robustness, treat each event's amount separately then split it across the events present (commonly used when amount sits on the conversion)
+    // linear: split the overall total amount equally across the events (each event gets an equal share)
+    // then attribute each event's share to that event's campaign/lead source.
     const n = sorted.length;
+    const share = n > 0 ? totalAmount / n : 0;
     for (const e of sorted) {
-      const split = toNumber(e.amount) / n;
-      if (e.campaignId) totalsByCampaign[e.campaignId] = (totalsByCampaign[e.campaignId] || 0) + split;
-      if (e.leadSourceId) totalsByLeadSource[e.leadSourceId] = (totalsByLeadSource[e.leadSourceId] || 0) + split;
+      if (e.campaignId) totalsByCampaign[e.campaignId] = (totalsByCampaign[e.campaignId] || 0) + share;
+      if (e.leadSourceId) totalsByLeadSource[e.leadSourceId] = (totalsByLeadSource[e.leadSourceId] || 0) + share;
     }
   }
 

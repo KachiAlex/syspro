@@ -1,8 +1,16 @@
-// Engine starter shim — proxies to repo-root engine starter at runtime.
-// Use require() and ts-ignore so frontend TypeScript doesn't pull root sources.
-// @ts-ignore
-const remote = require('../../../../src/lib/automation/engine-start');
+// Frontend-local no-op engine starter to satisfy layout imports during build.
+if (typeof window === "undefined") {
+  const g = global as any;
+  if (!g.__syspro_automation_engine_started) {
+    g.__syspro_automation_engine_started = true;
+    try {
+      // Minimal log for server startup in the frontend package
+      // eslint-disable-next-line no-console
+      console.info("syspro-frontend: automation engine stub initialized");
+    } catch (e) {
+      // ignore
+    }
+  }
+}
 
-const engine = remote?.default ?? null;
-
-export default engine;
+export {};

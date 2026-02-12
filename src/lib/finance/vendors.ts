@@ -26,6 +26,26 @@ export interface VendorRecord {
   updatedAt: string;
 }
 
+interface VendorRowDB {
+  id: string;
+  code: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  tax_id?: string;
+  account_number?: string;
+  bank_code?: string;
+  bank_name?: string;
+  payment_terms?: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 
 export interface VendorLookupResult {
   found: boolean;
@@ -101,13 +121,13 @@ export async function lookupVendor(
     `;
 
     const q = `%${query}%`;
-    const rows = (await sql`
+    const rows = await SQL<VendorRowDB>`
       select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
       from vendors
       where ${type === "name" ? sql`name ilike ${q}` : type === "code" ? sql`code ilike ${q}` : sql`email ilike ${q}`}
       order by name asc
       limit 10
-    `) as any[];
+    `;
 
     if (rows.length === 0) {
       return { found: false };
@@ -136,10 +156,10 @@ export async function lookupVendor(
           accountNumber: exact.account_number,
           bankCode: exact.bank_code,
           bankName: exact.bank_name,
-          paymentTerms: exact.payment_terms,
-          isActive: exact.is_active,
-          createdAt: exact.created_at,
-          updatedAt: exact.updated_at,
+          paymentTerms: (exact.payment_terms as VendorRecord['paymentTerms']) ?? "net30",
+          isActive: exact.is_active ?? true,
+          createdAt: exact.created_at ?? new Date().toISOString(),
+          updatedAt: exact.updated_at ?? new Date().toISOString(),
         },
       };
     }
@@ -158,10 +178,10 @@ export async function lookupVendor(
       accountNumber: r.account_number,
       bankCode: r.bank_code,
       bankName: r.bank_name,
-      paymentTerms: r.payment_terms,
-      isActive: r.is_active,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
+      paymentTerms: (r.payment_terms as VendorRecord['paymentTerms']) ?? "net30",
+      isActive: r.is_active ?? true,
+      createdAt: r.created_at ?? new Date().toISOString(),
+      updatedAt: r.updated_at ?? new Date().toISOString(),
     }));
 
     return { found: false, similar };
@@ -234,13 +254,13 @@ export async function listVendors(
       whereClauses.push(sql`country = ${filters.country}`);
     }
 
-    const rows = (await sql`
+    const rows = await SQL<VendorRowDB>`
       select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
       from vendors
       ${whereClauses.length ? sql`where ${db.join(whereClauses, ' and ')}` : sql``}
       order by name asc
       limit 200
-    `) as any[];
+    `;
 
     return rows.map((r) => ({
       id: r.id,
@@ -256,10 +276,10 @@ export async function listVendors(
       accountNumber: r.account_number,
       bankCode: r.bank_code,
       bankName: r.bank_name,
-      paymentTerms: r.payment_terms,
-      isActive: r.is_active,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
+      paymentTerms: (r.payment_terms as VendorRecord['paymentTerms']) ?? "net30",
+      isActive: r.is_active ?? true,
+      createdAt: r.created_at ?? new Date().toISOString(),
+      updatedAt: r.updated_at ?? new Date().toISOString(),
     }));
   } catch (err) {
     // Fallback to samples
@@ -289,12 +309,12 @@ export async function getVendor(vendorId: string): Promise<VendorRecord | null> 
     const sql = SQL;
     await ensureVendorTables(sql);
 
-    const rows = (await sql`
+    const rows = await SQL<VendorRowDB>`
       select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
       from vendors
       where id = ${vendorId}
       limit 1
-    `) as any[];
+    `;
 
     if (!rows.length) return null;
 
@@ -331,13 +351,13 @@ export async function createVendor(payload: Partial<VendorRecord>): Promise<Vend
     const id = payload.id ?? randomUUID();
     const now = new Date().toISOString();
 
-    const [row] = (await sql`
+    const [row] = await SQL<VendorRowDB>`
       insert into vendors (
         id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
       ) values (
         ${id}, ${payload.code ?? null}, ${payload.name ?? null}, ${payload.email ?? null}, ${payload.phone ?? null}, ${payload.address ?? null}, ${payload.city ?? null}, ${payload.state ?? null}, ${payload.country ?? null}, ${payload.taxId ?? null}, ${payload.accountNumber ?? null}, ${payload.bankCode ?? null}, ${payload.bankName ?? null}, ${payload.paymentTerms ?? "net30"}, ${payload.isActive ?? true}, ${now}, ${now}
       ) returning *
-    `) as any[];
+    `;
 
     return {
       id: row.id,
@@ -391,7 +411,7 @@ export async function updateVendor(id: string, updates: Partial<VendorRecord>): 
     const sql = SQL;
     await ensureVendorTables(sql);
 
-    const [row] = (await sql`
+    const [row] = await SQL<VendorRowDB>`
       update vendors set
         code = coalesce(${updates.code ?? null}, code),
         name = coalesce(${updates.name ?? null}, name),
@@ -410,7 +430,7 @@ export async function updateVendor(id: string, updates: Partial<VendorRecord>): 
         updated_at = now()
       where id = ${id}
       returning *
-    `) as any[];
+    `;
 
     if (!row) return null;
 
@@ -448,11 +468,11 @@ export async function deleteVendor(id: string): Promise<boolean> {
     const sql = SQL;
     await ensureVendorTables(sql);
 
-    const res = await sql`
+    const res = await SQL<any>`
       delete from vendors where id = ${id}
     `;
 
-    return (res as any[]).length > 0;
+    return Array.isArray(res) ? res.length > 0 : (res && (res.rows?.length ?? 0) > 0);
   } catch (err) {
     const idx = SAMPLE_VENDORS.findIndex((v) => v.id === id);
     if (idx === -1) return false;

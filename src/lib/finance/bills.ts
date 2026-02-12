@@ -164,20 +164,20 @@ export async function listBills(filters: {
     ? sql`where ${db.join(whereConditions, ' and ')}`
     : sql``;
 
-  const records = (await sql`
+  const records = await SQL<BillRecord>`
     select * from bills 
     ${whereClause}
     order by bill_date desc, created_at desc
     limit ${limit} offset ${offset}
-  `) as BillRecord[];
+  `;
 
   if (!records.length) return [];
 
-  const items = (await sql`
+  const items = await SQL<BillItemRecord>`
     select * from bill_items 
     where bill_id = any(${records.map(r => r.id)})
     order by id
-  `) as BillItemRecord[];
+  `;
 
   const itemsByBill: Record<string, BillItemRecord[]> = {};
   items.forEach(item => {
@@ -192,15 +192,15 @@ export async function getBill(billId: string): Promise<Bill | null> {
   const sql = SQL;
   await ensureBillTables(sql);
 
-  const records = (await sql`
+  const records = await SQL<BillRecord>`
     select * from bills where id = ${billId} limit 1
-  `) as BillRecord[];
+  `;
 
   if (!records.length) return null;
 
-  const items = (await sql`
+  const items = await SQL<BillItemRecord>`
     select * from bill_items where bill_id = ${billId} order by id
-  `) as BillItemRecord[];
+  `;
 
   return normalizeBill(records[0], items);
 }
@@ -239,7 +239,7 @@ export async function createBill(payload: {
   }, 0);
   const total = subtotal + taxes;
 
-  const [record] = (await sql`
+  const [record] = await SQL<BillRecord>`
     insert into bills (
       id, tenant_slug, bill_number, vendor_id, po_id, branch_id,
       bill_date, due_date, currency, subtotal, taxes, total, balance_due,
@@ -259,7 +259,7 @@ export async function createBill(payload: {
     const taxAmount = item.taxRate ? lineAmount * (item.taxRate / 100) : 0;
     const totalLineAmount = lineAmount + taxAmount;
     
-    const [itemRecord] = (await sql`
+    const [itemRecord] = await SQL<BillItemRecord>`
       insert into bill_items (
         id, bill_id, description, quantity, unit_price, tax_rate,
         line_amount, account_code, metadata
@@ -268,7 +268,7 @@ export async function createBill(payload: {
         ${item.unitPrice}, ${item.taxRate || null}, ${totalLineAmount},
         ${item.accountCode || null}, null
       ) returning *
-    `) as BillItemRecord[];
+    `;
     
     return itemRecord;
   }));
@@ -290,7 +290,7 @@ export async function updateBill(billId: string, updates: Partial<Bill>): Promis
   const sql = SQL;
   await ensureBillTables(sql);
 
-  const [record] = (await sql`
+  const [record] = await SQL<BillRecord>`
     update bills set
       status = coalesce(${updates.status || null}, status),
       due_date = coalesce(${updates.dueDate || null}, due_date),
@@ -299,13 +299,13 @@ export async function updateBill(billId: string, updates: Partial<Bill>): Promis
       updated_at = now()
     where id = ${billId}
     returning *
-  `) as BillRecord[];
+  `;
 
   if (!record) return null;
 
-  const items = (await sql`
+  const items = await SQL<BillItemRecord>`
     select * from bill_items where bill_id = ${billId} order by id
-  `) as BillItemRecord[];
+  `;
 
   return normalizeBill(record, items);
 }
@@ -328,18 +328,18 @@ export async function convertPOToBill(poId: string, payload: {
   await ensureBillTables(sql);
 
   // Get PO details
-  const poRecords = (await sql`
+  const poRecords = await SQL<any>`
     select * from purchase_orders where id = ${poId} limit 1
-  `) as any[];
+  `;
 
   if (!poRecords.length) return null;
 
   const po = poRecords[0];
   
   // Get PO items
-  const poItems = (await sql`
+  const poItems = await SQL<any>`
     select * from purchase_order_items where po_id = ${poId}
-  `) as any[];
+  `;
 
   // Create bill from PO
   return createBill({
@@ -367,7 +367,7 @@ export async function getAgingReport(tenantSlug: string): Promise<AgingReport[]>
 
   const today = new Date().toISOString().split('T')[0];
   
-  const results = (await sql`
+  const results = await SQL<any>`
     with aging as (
       select 
         b.vendor_id,
@@ -408,7 +408,7 @@ export async function getAgingReport(tenantSlug: string): Promise<AgingReport[]>
     from aging
     group by vendor_id, vendor_name
     order by total desc
-  `) as any[];
+  `;
 
   return results.map(row => ({
     vendorId: row.vendor_id,
