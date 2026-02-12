@@ -138,60 +138,57 @@ export async function POST(request: Request) {
     const tenantId = randomUUID();
     const passwordHash = await bcrypt.hash(payload.adminPassword, 12);
 
-    const tenantRes = await db.query<TenantRow>(
-      `
-        insert into tenants (
-          id,
-          name,
-          slug,
-          code,
-          domain,
-          "isActive",
-          settings,
-          "schemaName",
-          region,
-          industry,
-          seats,
-          admin_name,
-          admin_email,
-          admin_password_hash,
-          admin_notes
-        )
-        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-        on conflict (slug) do update set
-          name = excluded.name,
-          code = excluded.code,
-          domain = excluded.domain,
-          "isActive" = excluded."isActive",
-          settings = excluded.settings,
-          "schemaName" = excluded."schemaName",
-          region = excluded.region,
-          industry = excluded.industry,
-          seats = excluded.seats,
-          admin_name = excluded.admin_name,
-          admin_email = excluded.admin_email,
-          admin_password_hash = excluded.admin_password_hash,
-          admin_notes = excluded.admin_notes
-        returning name, slug, region, status, ledger_delta, seats
-      `,
-      [
-        tenantId,
-        payload.companyName,
-        payload.companySlug,
-        computedCode,
-        computedDomain,
-        false,
-        JSON.stringify({}),
-        computedSchema,
-        payload.region,
-        payload.industry,
-        payload.seats ?? null,
-        payload.adminName,
-        payload.adminEmail.toLowerCase(),
-        passwordHash,
-        payload.adminNotes ?? "",
-      ]
-    );
+    const tenantRes = await SQL`
+      insert into tenants (
+        id,
+        name,
+        slug,
+        code,
+        domain,
+        "isActive",
+        settings,
+        "schemaName",
+        region,
+        industry,
+        seats,
+        admin_name,
+        admin_email,
+        admin_password_hash,
+        admin_notes
+      )
+      values (
+        ${tenantId},
+        ${payload.companyName},
+        ${payload.companySlug},
+        ${computedCode},
+        ${computedDomain},
+        ${false},
+        ${JSON.stringify({})},
+        ${computedSchema},
+        ${payload.region},
+        ${payload.industry},
+        ${payload.seats ?? null},
+        ${payload.adminName},
+        ${payload.adminEmail.toLowerCase()},
+        ${passwordHash},
+        ${payload.adminNotes ?? ""}
+      )
+      on conflict (slug) do update set
+        name = excluded.name,
+        code = excluded.code,
+        domain = excluded.domain,
+        "isActive" = excluded."isActive",
+        settings = excluded.settings,
+        "schemaName" = excluded."schemaName",
+        region = excluded.region,
+        industry = excluded.industry,
+        seats = excluded.seats,
+        admin_name = excluded.admin_name,
+        admin_email = excluded.admin_email,
+        admin_password_hash = excluded.admin_password_hash,
+        admin_notes = excluded.admin_notes
+      returning name, slug, region, status, ledger_delta, seats
+    `;
 
     const tenantSummary = mapTenantRow(tenantRes.rows[0]);
 
