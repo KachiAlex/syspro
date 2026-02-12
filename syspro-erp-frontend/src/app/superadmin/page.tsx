@@ -116,7 +116,8 @@ export default function SuperadminPage() {
   const enrichedTenants = useMemo(() => {
     return tenants.map((t, idx) => ({
       ...t,
-      email: `admin@${t.slug}.com`,
+      // Prefer the stored admin email when available, otherwise fall back to a generated address
+      email: (t as any).admin_email ?? `admin@${t.slug}.com`,
       plan: (
         idx % 3 === 0 ? 'enterprise' :
         idx % 3 === 1 ? 'professional' :
@@ -598,7 +599,7 @@ export default function SuperadminPage() {
                     value={formState.companyName}
                     onChange={handleFieldChange}
                     placeholder="Acme Corp"
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${isReadOnly ? 'bg-gray-50 border-gray-200' : 'border-gray-300 focus:ring-blue-600'}`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${isReadOnly ? 'bg-gray-50 border-gray-200' : 'border-gray-300 focus:ring-blue-600'}`}
                     required
                     readOnly={isReadOnly}
                   />
@@ -611,7 +612,7 @@ export default function SuperadminPage() {
                     value={formState.companySlug}
                     onChange={handleFieldChange}
                     placeholder="acme-corp"
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${isReadOnly ? 'bg-gray-50 border-gray-200' : 'border-gray-300 focus:ring-blue-600'}`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${isReadOnly ? 'bg-gray-50 border-gray-200' : 'border-gray-300 focus:ring-blue-600'}`}
                     required
                     readOnly={isReadOnly}
                   />
@@ -625,7 +626,7 @@ export default function SuperadminPage() {
                     name="region"
                     value={formState.region}
                     onChange={handleFieldChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none ${isReadOnly ? 'bg-gray-50 border-gray-200' : 'border-gray-300 focus:ring-2 focus:ring-blue-600'}`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none text-black ${isReadOnly ? 'bg-gray-50 border-gray-200' : 'border-gray-300 focus:ring-2 focus:ring-blue-600'}`}
                     required
                     disabled={isReadOnly}
                   >
@@ -643,7 +644,7 @@ export default function SuperadminPage() {
                     value={formState.industry}
                     onChange={handleFieldChange}
                     placeholder="Manufacturing"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-black"
                   />
                 </div>
               </div>
@@ -657,7 +658,7 @@ export default function SuperadminPage() {
                     value={formState.adminName}
                     onChange={handleFieldChange}
                     placeholder="John Doe"
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none ${isReadOnly ? 'bg-gray-50 border-gray-200' : 'border-gray-300 focus:ring-2 focus:ring-blue-600'}`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none text-black ${isReadOnly ? 'bg-gray-50 border-gray-200' : 'border-gray-300 focus:ring-2 focus:ring-blue-600'}`}
                     required
                     readOnly={isReadOnly}
                   />
@@ -670,7 +671,7 @@ export default function SuperadminPage() {
                     value={formState.adminEmail}
                     onChange={handleFieldChange}
                     placeholder="john@acme.com"
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none ${isReadOnly ? 'bg-gray-50 border-gray-200' : 'border-gray-300 focus:ring-2 focus:ring-blue-600'}`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none text-black ${isReadOnly ? 'bg-gray-50 border-gray-200' : 'border-gray-300 focus:ring-2 focus:ring-blue-600'}`}
                     required
                     readOnly={isReadOnly}
                   />
