@@ -136,7 +136,7 @@ export async function POST(request: Request) {
     const tenantId = randomUUID();
     const passwordHash = await bcrypt.hash(payload.adminPassword, 12);
 
-    const tenantRes = await db.query<TenantRow>(
+    const tenantRows = (await db.query(
       `
         insert into tenants (
           id,
@@ -189,9 +189,9 @@ export async function POST(request: Request) {
         passwordHash,
         payload.adminNotes ?? "",
       ]
-    );
+    ) as any[];
 
-    const tenantSummary = mapTenantRow((tenantRes.rows as any[])[0]);
+    const tenantSummary = mapTenantRow(tenantRows[0]);
 
     return NextResponse.json(
       {
