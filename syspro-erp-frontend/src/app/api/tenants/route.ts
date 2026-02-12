@@ -190,7 +190,8 @@ export async function POST(request: Request) {
       returning name, slug, region, status, ledger_delta, seats
     `;
 
-    const tenantSummary = mapTenantRow(tenantRes.rows[0]);
+    const returnedRows = Array.isArray(tenantRes) ? tenantRes : (tenantRes.rows ?? []);
+    const tenantSummary = mapTenantRow(returnedRows[0]);
 
     return NextResponse.json(
       {
