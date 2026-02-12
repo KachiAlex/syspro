@@ -43,7 +43,8 @@ export async function ensureReportingTables(sql: SqlClient = SQL) {
 
 export async function listReports(tenantSlug: string, sql: SqlClient = SQL) {
   await ensureReportingTables(sql);
-  const rows = (await db.query(`select * from reports where tenant_slug = $1 order by created_at desc`, [tenantSlug])).rows as any[];
+  const res = await db.query<any>(`select * from reports where tenant_slug = $1 order by created_at desc`, [tenantSlug]);
+  const rows = res.rows;
   return rows.map((r: any) => ({
     id: r.id,
     tenantSlug: r.tenant_slug,
@@ -99,15 +100,16 @@ export async function updateReport(id: string, tenantSlug: string, updates: Part
     return current ? mapReportRow(current) : null;
   }
   const query = `update reports set ${fields.join(", ")}, updated_at = now() where id = $${fields.length + 1} and tenant_slug = $${fields.length + 2} returning *`;
-  const [row] = (await db.query(query, [...values, id, tenantSlug])).rows as any[];
+  const res = await db.query<any>(query, [...values, id, tenantSlug]);
+  const row = res.rows[0];
   return row ? mapReportRow(row) : null;
 }
 
 export async function createReportJob(input: { reportId: string; tenantSlug: string; requestedBy?: string; filters?: any; status?: ReportStatus }, sql: SqlClient = SQL) {
   await ensureReportingTables(sql);
   const insertQ = `insert into report_jobs (report_id, tenant_slug, requested_by, status, filters, started_at) values ($1, $2, $3, $4, $5, now()) returning *`;
-  const [row] = (await db.query(insertQ, [input.reportId, input.tenantSlug, input.requestedBy || null, input.status || "queued", input.filters || null])).rows as any[];
-  return row;
+  const res = await db.query<any>(insertQ, [input.reportId, input.tenantSlug, input.requestedBy || null, input.status || "queued", input.filters || null]);
+  return res.rows[0];
 }
 
 export async function updateReportJobStatus(id: string, status: ReportStatus, output?: { location?: string; error?: string }, incrementAttempt = false, sql: SqlClient = SQL) {
@@ -115,15 +117,15 @@ export async function updateReportJobStatus(id: string, status: ReportStatus, ou
   const increment = incrementAttempt ? sql`attempt_count = attempt_count + 1,` : sql``;
   const query = `update report_jobs set ${increment ? "attempt_count = attempt_count + 1," : ""} status = $1, output_location = $2, error = $3, completed_at = case when $1 in ('succeeded','failed') then now() else completed_at end where id = $4 returning *`;
   const params = [status, output?.location || null, output?.error || null, id];
-  const [row] = (await db.query<any>(query, params)).rows as any[];
-  return row;
+  const res = await db.query<any>(query, params);
+  return res.rows[0];
 }
 
 export async function listReportJobs(tenantSlug: string, reportId?: string, sql: SqlClient = SQL) {
   await ensureReportingTables(sql);
   const rows = reportId
-    ? (await db.query(`select * from report_jobs where tenant_slug = $1 and report_id = $2 order by created_at desc`, [tenantSlug, reportId])).rows as any[]
-    : (await db.query(`select * from report_jobs where tenant_slug = $1 order by created_at desc`, [tenantSlug])).rows as any[];
+    ? (await db.query<any>(`select * from report_jobs where tenant_slug = $1 and report_id = $2 order by created_at desc`, [tenantSlug, reportId])).rows
+    : (await db.query<any>(`select * from report_jobs where tenant_slug = $1 order by created_at desc`, [tenantSlug])).rows;
   return rows.map((r: any) => ({
     id: r.id,
     reportId: r.report_id,
@@ -142,8 +144,8 @@ export async function listReportJobs(tenantSlug: string, reportId?: string, sql:
 export async function fetchQueuedReportJobs(limit = 25, tenantSlug?: string, maxAttempts = 3, sql: SqlClient = SQL) {
   await ensureReportingTables(sql);
   const rows = tenantSlug
-    ? (await db.query(`select * from report_jobs where status = 'queued' and tenant_slug = $1 and attempt_count < $2 order by created_at asc limit $3 for update skip locked`, [tenantSlug, maxAttempts, limit])).rows as any[]
-    : (await db.query(`select * from report_jobs where status = 'queued' and attempt_count < $1 order by created_at asc limit $2 for update skip locked`, [maxAttempts, limit])).rows as any[];
+    ? (await db.query<any>(`select * from report_jobs where status = 'queued' and tenant_slug = $1 and attempt_count < $2 order by created_at asc limit $3 for update skip locked`, [tenantSlug, maxAttempts, limit])).rows
+    : (await db.query<any>(`select * from report_jobs where status = 'queued' and attempt_count < $1 order by created_at asc limit $2 for update skip locked`, [maxAttempts, limit])).rows;
   return rows.map((r: any) => ({
     id: r.id,
     reportId: r.report_id,

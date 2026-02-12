@@ -1,3 +1,36 @@
+export type Json = any;
+
+export interface Automation {
+  id: string;
+  name: string;
+  description?: string;
+  ownerId?: string;
+  enabled: boolean;
+  metadata?: Json;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AutomationRule {
+  id: string;
+  automationId: string;
+  name: string;
+  conditions: Json[];
+  actions: Json[];
+  priority: number;
+  enabled: boolean;
+  metadata?: Json;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AutomationEventPayload = Record<string, any>;
+
+export interface AutomationEvent {
+  type: string;
+  payload: AutomationEventPayload;
+  receivedAt?: string;
+}
 export type Condition = {
   all?: Condition[];
   any?: Condition[];

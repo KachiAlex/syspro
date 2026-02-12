@@ -1,5 +1,5 @@
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
-import { AutomationRule, Action } from "./types";
+import { AutomationRule, Action } from "@/lib/automation";
 
 export type AutomationSummary = {
   rules: { total: number; enabled: number; simulationOnly: number };

@@ -1,5 +1,5 @@
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
-import { Condition } from "@/lib/automation/types";
+import { Condition } from "@/lib/automation";
 import { ensurePolicyTables } from "@/lib/policy/db";
 
 /* using imported SQL */
