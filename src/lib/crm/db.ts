@@ -269,7 +269,7 @@ export async function listContacts(filters: { tenantSlug: string; tag?: string |
     offset ${offset}
   `;
 
-  const rows = (await db.query<CrmContactRecord>(query, params)) as CrmContactRecord[];
+  const rows = (await db.query<CrmContactRecord>(query, params)) as unknown as CrmContactRecord[];
   return rows.map(normalizeContactRow);
 }
 

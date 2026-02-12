@@ -389,7 +389,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
           setMetrics(metricsPayload.metrics ?? metricsPayload ?? null);
 
           setSelectedTicketId((current) => {
-            if (current && list.some((ticket) => ticket.id === current)) {
+            if (current && list.some((ticket: any) => ticket.id === current)) {
               return current;
             }
             return list[0]?.id ?? null;
@@ -818,7 +818,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                             </div>
                             <span className="text-xs uppercase tracking-[0.2em] text-slate-400">{job.status.replace(/_/g, " ")}</span>
                           </div>
-                          <p className="mt-1 text-xs text-slate-500">Scheduled {formatClock(job.scheduledAt)} · {job.location?.region || "No region"}</p>
+                          <p className="mt-1 text-xs text-slate-500">Scheduled {formatClock(job.scheduledAt)} · {(job.location?.region as string) || "No region"}</p>
                         </div>
                       ))}
                     </div>

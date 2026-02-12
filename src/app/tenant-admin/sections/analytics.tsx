@@ -63,7 +63,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
       const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "report", ...reportForm }),
+        body: JSON.stringify({ ...reportForm, type: "report" }),
       });
       if (!res.ok) throw new Error("Failed to create report");
       setReportForm({ name: "", type: "" });
@@ -103,7 +103,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
       const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "export", ...exportForm }),
+        body: JSON.stringify({ ...exportForm, type: "export" }),
       });
       if (!res.ok) throw new Error("Failed to create export");
       setExportForm({ name: "", frequency: "daily", format: "csv" });

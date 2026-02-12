@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     await ensureAdminTables();
-    const id = await insertRole({ tenantSlug, name: validation.data.name, scope: validation.data.scope, permissions: validation.data.permissions });
+    const id = await insertRole({ tenantSlug, name: validation.data.name, scope: validation.data.scope || "", permissions: validation.data.permissions || [] });
     return NextResponse.json({ role: { id, tenantSlug, ...validation.data, createdAt: new Date().toISOString() } }, { status: 201 });
   } catch (error) {
     console.error("Role create failed", error);

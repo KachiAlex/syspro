@@ -276,15 +276,16 @@ async function seedFinanceAccounts(tenantSlug: string) {
   for (let i = 0; i < 24; i++) {
     try {
       const balance = Math.floor(Math.random() * 2000000) + 50000;
-      await insertFinanceAccount({
-        tenantSlug,
-        regionId: REGIONS[Math.floor(Math.random() * REGIONS.length)],
-        branchId: BRANCHES[Math.floor(Math.random() * BRANCHES.length)],
-        accountName: `${accountTypes[Math.floor(Math.random() * accountTypes.length)]} account - ${REGIONS[i % 4]}`,
-        balance,
-        currency: currencies[Math.floor(Math.random() * currencies.length)],
-        metadata: { accountType: "operational", created: new Date().toISOString() },
-      });
+        await insertFinanceAccount({
+          tenantSlug,
+          regionId: REGIONS[Math.floor(Math.random() * REGIONS.length)],
+          branchId: BRANCHES[Math.floor(Math.random() * BRANCHES.length)],
+          name: `${accountTypes[Math.floor(Math.random() * accountTypes.length)]} account - ${REGIONS[i % 4]}`,
+          type: "bank",
+          balance,
+          currency: currencies[Math.floor(Math.random() * currencies.length)],
+          trend: "up",
+        });
     } catch (e) {
       // Account may already exist
     }

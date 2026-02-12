@@ -45,13 +45,13 @@ export function hasPermission(
 ): boolean {
   const userLevel = permissions[module];
 
-  if (!userLevel || userLevel === "none") {
+  if (!userLevel) {
     return false;
   }
 
   if (required === "read") {
     // Can read if: read, write, or admin
-    return userLevel !== "none";
+    return userLevel === "read" || userLevel === "write" || userLevel === "admin";
   }
 
   if (required === "write") {

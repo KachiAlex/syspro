@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { getVendor, updateVendor, deleteVendor } from "@/lib/finance/vendors";
+import { getVendor, updateVendor, deleteVendor, createVendor } from "@/lib/finance/vendors";
 
 const vendorUpdateSchema = z.object({
   name: z.string().min(1).optional(),
@@ -21,7 +21,7 @@ const vendorUpdateSchema = z.object({
 
 export async function GET(_request: NextRequest, context: any) {
   const { params } = context;
-  const { id } = params;
+  const { id } = await params;
   try {
     const vendor = await getVendor(id);
     if (!vendor) return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
@@ -34,7 +34,7 @@ export async function GET(_request: NextRequest, context: any) {
 
 export async function PATCH(request: NextRequest, context: any) {
   const { params } = context;
-  const { id } = params;
+  const { id } = await params;
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -45,19 +45,27 @@ export async function PATCH(request: NextRequest, context: any) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  try {
-    const updated = await updateVendor(id, parsed.data as any);
-    if (!updated) return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
-    return NextResponse.json({ vendor: updated });
-  } catch (err) {
-    console.error("Update vendor failed:", err);
-    return NextResponse.json({ error: "Failed to update vendor" }, { status: 500 });
-  }
+    try {
+      const updated = await updateVendor(id, parsed.data as any);
+      if (!updated) {
+        // If update couldn't find the vendor, create it from the provided data
+        try {
+          const created = await createVendor({ id, ...(parsed.data as any) });
+          return NextResponse.json({ vendor: created }, { status: 201 });
+        } catch (e) {
+          return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+        }
+      }
+      return NextResponse.json({ vendor: updated });
+    } catch (err) {
+      console.error("Update vendor failed:", err);
+      return NextResponse.json({ error: "Failed to update vendor" }, { status: 500 });
+    }
 }
 
 export async function DELETE(_request: NextRequest, context: any) {
   const { params } = context;
-  const { id } = params;
+  const { id } = await params;
   try {
     const ok = await deleteVendor(id);
     if (!ok) return NextResponse.json({ error: "Vendor not found" }, { status: 404 });

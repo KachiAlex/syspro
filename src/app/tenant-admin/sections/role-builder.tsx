@@ -131,11 +131,10 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
   }, [ts]);
 
   function togglePerm(perm: string) {
-    form.setFieldValues({
-      permissions: form.values.permissions.includes(perm)
-        ? form.values.permissions.filter((p) => p !== perm)
-        : [...form.values.permissions, perm],
-    });
+    const newPerms = form.values.permissions.includes(perm)
+      ? form.values.permissions.filter((p) => p !== perm)
+      : [...form.values.permissions, perm];
+    form.setFieldValue("permissions", newPerms);
   }
 
   function toggleEditPerm(perm: string) {
@@ -308,18 +307,18 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
               {/* Admin Option */}
               <div className="mb-6 rounded-lg border-2 border-purple-200 bg-purple-50 p-4">
                 <label className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    checked={form.values.permissions.includes("all")}
-                    onChange={() => {
-                      if (form.values.permissions.includes("all")) {
-                        form.setFieldValues({ permissions: [] });
-                      } else {
-                        form.setFieldValues({ permissions: ["all"] });
-                      }
-                    }}
-                    className="mt-1 h-5 w-5 rounded border-slate-300"
-                  />
+                    <input
+                      type="checkbox"
+                      checked={form.values.permissions.includes("all")}
+                      onChange={() => {
+                        if (form.values.permissions.includes("all")) {
+                          form.setFieldValue("permissions", []);
+                        } else {
+                          form.setFieldValue("permissions", ["all"] as any);
+                        }
+                      }}
+                      className="mt-1 h-5 w-5 rounded border-slate-300"
+                    />
                   <div>
                     <p className="font-semibold text-purple-900">⚡ {ADMIN_PERMISSION.label}</p>
                     <p className="text-xs text-purple-700">{ADMIN_PERMISSION.description}</p>

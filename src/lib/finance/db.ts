@@ -1426,7 +1426,7 @@ export async function approveExpense(expenseId: string, tenantSlug: string, appr
     values (${randomUUID()}, ${expenseId}, 'APPROVAL_' || ${approval.action}, ${approval.approverId}, ${JSON.stringify({ approverRole: approval.approverRole, reason: approval.reason })})
   `;
 
-  return normalizeExpenseRecord(record, current.approvals);
+  return normalizeExpenseRecord(record, current.approvals as any);
 }
 
 export async function seedExpenseCategories(sql: SqlClient = SQL) {

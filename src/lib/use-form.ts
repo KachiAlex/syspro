@@ -37,8 +37,8 @@ export interface UseFormReturn<T> {
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   getFieldProps: (field: keyof T) => {
     value: T[keyof T];
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    onBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+    onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
     "aria-invalid": boolean;
   };
 }
@@ -164,7 +164,7 @@ export function useForm<T extends Record<string, any>>(
 
   const getFieldProps = useCallback(
     (field: keyof T) => ({
-      value: values[field] ?? "",
+      value: values[field] as T[keyof T],
       onChange: handleChange,
       onBlur: handleBlur,
       "aria-invalid": errorMap[field as string] ? true : false,

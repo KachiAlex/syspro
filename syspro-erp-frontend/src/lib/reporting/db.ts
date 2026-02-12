@@ -105,21 +105,17 @@ export async function updateReport(id: string, tenantSlug: string, updates: Part
 
 export async function createReportJob(input: { reportId: string; tenantSlug: string; requestedBy?: string; filters?: any; status?: ReportStatus }, sql: SqlClient = SQL) {
   await ensureReportingTables(sql);
-  const [row] = await sql`
-    insert into report_jobs (report_id, tenant_slug, requested_by, status, filters, started_at)
-    values (${input.reportId}, ${input.tenantSlug}, ${input.requestedBy || null}, ${input.status || "queued"}, ${input.filters || null}, now())
-    returning *
-  ` as any[];
+  const insertQ = `insert into report_jobs (report_id, tenant_slug, requested_by, status, filters, started_at) values ($1, $2, $3, $4, $5, now()) returning *`;
+  const [row] = (await db.query(insertQ, [input.reportId, input.tenantSlug, input.requestedBy || null, input.status || "queued", input.filters || null])).rows as any[];
   return row;
 }
 
 export async function updateReportJobStatus(id: string, status: ReportStatus, output?: { location?: string; error?: string }, incrementAttempt = false, sql: SqlClient = SQL) {
   await ensureReportingTables(sql);
   const increment = incrementAttempt ? sql`attempt_count = attempt_count + 1,` : sql``;
-  const [row] = await sql`
-    update report_jobs set ${increment} status = ${status}, output_location = ${output?.location || null}, error = ${output?.error || null}, completed_at = case when ${status} in ('succeeded','failed') then now() else completed_at end where id = ${id}
-    returning *
-  ` as any[];
+  const query = `update report_jobs set ${increment ? "attempt_count = attempt_count + 1," : ""} status = $1, output_location = $2, error = $3, completed_at = case when $1 in ('succeeded','failed') then now() else completed_at end where id = $4 returning *`;
+  const params = [status, output?.location || null, output?.error || null, id];
+  const [row] = (await db.query<any>(query, params)).rows as any[];
   return row;
 }
 

@@ -84,7 +84,7 @@ export function mapTenantRow(row: TenantRow) {
   };
 }
 
-async function generateUniqueTenantCode(sql: ReturnType<typeof getSql>, slug: string) {
+async function generateUniqueTenantCode(sql: any, slug: string) {
   const base = slug.toUpperCase();
   let candidate = base;
   let counter = 1;
@@ -191,7 +191,7 @@ export async function POST(request: Request) {
       ]
     );
 
-    const tenantSummary = mapTenantRow(tenantRows[0]);
+    const tenantSummary = mapTenantRow((tenantRes.rows as any[])[0]);
 
     return NextResponse.json(
       {

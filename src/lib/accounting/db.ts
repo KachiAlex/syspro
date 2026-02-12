@@ -786,8 +786,12 @@ export async function initializeDefaultChartOfAccounts(
       accountCode: acc.code,
       accountName: acc.name,
       accountType: acc.type as any,
+      currency: "NGN",
       isSystemAccount: acc.system,
       isActive: true,
+      allowManualPosting: true,
+      requireCostCenter: false,
+      isReconciliationAccount: false,
       createdBy,
     });
   }

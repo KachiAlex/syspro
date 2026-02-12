@@ -415,7 +415,8 @@ export async function createBudgetVersion(
     );
   } catch (err) {
     // If migrations not applied, don't fail type-checking or seed flows
-    console.warn("createBudgetVersion skipped (table may be missing):", err?.message || err);
+    const e = err as any;
+    console.warn("createBudgetVersion skipped (table may be missing):", e?.message || e);
   }
 }
 

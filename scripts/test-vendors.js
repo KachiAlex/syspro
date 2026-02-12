@@ -7,9 +7,29 @@ async function run() {
   console.log(`Testing vendors against ${BASE}`);
 
   try {
-    const listRes = await fetch(`${BASE}/api/finance/vendors`);
+    async function doFetch(url, opts, timeoutMs = 30000) {
+      try {
+        console.log('> REQUEST', opts?.method || 'GET', url, opts?.body ? `body=${opts.body}` : '');
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeoutMs);
+        const res = await fetch(url, { ...opts, signal: controller.signal });
+        clearTimeout(id);
+        console.log('< RESPONSE', res.status, res.statusText);
+        return res;
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          console.error('< FETCH ERROR', url, 'timeout');
+        } else {
+          console.error('< FETCH ERROR', url, e?.message || e);
+        }
+        throw e;
+      }
+    }
+
+    const listRes = await doFetch(`${BASE}/api/finance/vendors`);
     if (!listRes.ok) {
-      console.error('List vendors failed', listRes.status, await listRes.text());
+      const text = await listRes.text().catch(() => '<no body>');
+      console.error('List vendors failed', listRes.status, text);
       process.exit(2);
     }
 
@@ -18,22 +38,43 @@ async function run() {
     console.log('Found vendors:', vendors.length);
 
     if (!vendors.length) {
-      console.error('No vendors to test with.');
-      process.exit(2);
+      console.log('No vendors found — creating a test vendor');
+      const createRes = await doFetch(`${BASE}/api/finance/vendors`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Test Vendor ' + Date.now() }),
+      });
+
+      if (!createRes.ok) {
+        const text = await createRes.text().catch(() => '<no body>');
+        console.error('Create vendor failed', createRes.status, text);
+        process.exit(2);
+      }
+
+      const createBody = await createRes.json();
+      const v = createBody.vendor;
+      if (!v) {
+        console.error('Create vendor returned no vendor');
+        process.exit(2);
+      }
+      console.log('Created test vendor', v.id);
+      // continue with the created vendor
+      vendors.push(v);
     }
 
     const v = vendors[0];
     console.log('Using vendor id=', v.id, 'name=', v.name);
 
     // Get by ID via POST (route supports vendorId in body)
-    const getRes = await fetch(`${BASE}/api/finance/vendors`, {
+    const getRes = await doFetch(`${BASE}/api/finance/vendors`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ vendorId: v.id }),
     });
 
     if (!getRes.ok) {
-      console.error('Get vendor failed', getRes.status, await getRes.text());
+      const text = await getRes.text().catch(() => '<no body>');
+      console.error('Get vendor failed', getRes.status, text);
       process.exit(2);
     }
 
@@ -44,14 +85,15 @@ async function run() {
     const newName = originalName + ' (test)';
 
     // Patch name
-    const patchRes = await fetch(`${BASE}/api/finance/vendors/${v.id}`, {
+    const patchRes = await doFetch(`${BASE}/api/finance/vendors/${v.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newName }),
     });
 
     if (!patchRes.ok) {
-      console.error('Patch vendor failed', patchRes.status, await patchRes.text());
+      const text = await patchRes.text().catch(() => '<no body>');
+      console.error('Patch vendor failed', patchRes.status, text);
       process.exit(2);
     }
 
@@ -59,14 +101,15 @@ async function run() {
     console.log('Patched vendor name ->', patchBody.vendor?.name);
 
     // Restore original name
-    const restoreRes = await fetch(`${BASE}/api/finance/vendors/${v.id}`, {
+    const restoreRes = await doFetch(`${BASE}/api/finance/vendors/${v.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: originalName }),
     });
 
     if (!restoreRes.ok) {
-      console.error('Restore vendor failed', restoreRes.status, await restoreRes.text());
+      const text = await restoreRes.text().catch(() => '<no body>');
+      console.error('Restore vendor failed', restoreRes.status, text);
       process.exit(2);
     }
 

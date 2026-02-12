@@ -50,8 +50,8 @@ export async function GET(request: NextRequest) {
   // List endpoint: /api/finance/vendors
   const parsed = vendorListSchema.safeParse({
     isActive: url.searchParams.get("isActive"),
-    paymentTerms: url.searchParams.get("paymentTerms"),
-    country: url.searchParams.get("country"),
+    paymentTerms: url.searchParams.has("paymentTerms") ? url.searchParams.get("paymentTerms") : undefined,
+    country: url.searchParams.has("country") ? url.searchParams.get("country") : undefined,
   });
 
   if (!parsed.success) {
