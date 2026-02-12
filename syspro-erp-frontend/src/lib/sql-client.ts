@@ -121,7 +121,22 @@ class SQLFragment {
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null
   ) {
     const { text, values } = this.toSQL();
-    return db.query<any>(text, values).then((res) => (onfulfilled ? onfulfilled(res.rows) : (res.rows as any))).catch(onrejected as any);
+    // Execute against the underlying client directly to support both
+    // pg-style clients with `.query(text, params)` and template-tag
+    // style clients (e.g. neon) which expect the original template
+    // strings and interpolated args.
+    const client = getSql();
+    const execPromise = (client as any).query
+      ? (client as any).query(text, values)
+      : (client as any)(this.strings, ...this.args);
+
+    return Promise.resolve(execPromise)
+      .then((res: any) => {
+        // Normalize to rows for the caller
+        const rows = Array.isArray(res) ? res : res?.rows ?? res;
+        return onfulfilled ? onfulfilled(rows) : rows;
+      })
+      .catch(onrejected as any);
   }
 }
 
