@@ -9,6 +9,8 @@ import type { ReactNode } from "react";
 const opsLinks = [
   { label: "Planner", href: "/planner" },
   { label: "Suppliers", href: "/suppliers" },
+  { label: "Tenant Admin", href: "/admin/tenant-admin" },
+  { label: "People & Access", href: "/admin/people-access" },
   { label: "Superadmin", href: "/superadmin" },
 ];
 
