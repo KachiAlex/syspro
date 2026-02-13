@@ -1,3 +1,10 @@
+export function isEngineerOnDuty(engineerId: string): boolean {
+  // Minimal stub: rotate duty by hash of id for demo
+  const n = engineerId.split('').reduce((s, c) => s + c.charCodeAt(0), 0);
+  return (n % 2) === 0;
+}
+
+export default isEngineerOnDuty;
 
 import axios from 'axios';
 

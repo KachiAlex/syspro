@@ -1,3 +1,6 @@
+"use client";
+import { useEffect, useState, useRef } from 'react';
+
 function validateEmail(email: string) {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
 }
@@ -7,7 +10,6 @@ function validateEmail(email: string) {
     setNotif(msg);
     setTimeout(() => setNotif(null), 3000);
   }
-import { useEffect, useState, useRef } from 'react';
 import { Tabs } from '@radix-ui/react-tabs';
 function parseCSV(text: string): Array<{ email: string; name?: string }> {
   const lines = text.split(/\r?\n/).filter(Boolean);

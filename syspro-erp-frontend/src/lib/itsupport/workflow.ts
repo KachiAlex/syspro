@@ -1,3 +1,19 @@
+import type { Ticket } from './types';
+
+export function transitionTicket(ticket: Ticket, toStatus: string, actorId?: string) {
+  const now = new Date().toISOString();
+  const updated: Ticket = { ...ticket, status: toStatus, updatedAt: now } as Ticket;
+  const log = {
+    actor: actorId || 'system',
+    at: now,
+    from: ticket.status,
+    to: toStatus,
+    note: `Status changed to ${toStatus}`,
+  };
+  return { ticket: updated, log };
+}
+
+export default transitionTicket;
 // Ticket Workflow Engine for IT Support
 // Handles lifecycle transitions, audit logging, and time tracking
 import type { Ticket, TicketStatus, TicketActivityLog } from './types';

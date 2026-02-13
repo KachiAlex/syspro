@@ -64,8 +64,11 @@ export async function GET() {
     await ensureTenantTable(sql);
 
     const rows = (await sql`
-      select name, slug, region, status, ledger_delta, seats, admin_email from tenants order by "createdAt" desc nulls last
-    `) as TenantRow[];
+      select name, slug, region, status, ledger_delta, seats, admin_email, "isActive" as is_active, "schemaName" as schema_name
+      from tenants
+      where "deletedAt" is null
+      order by "createdAt" desc nulls last
+    `) as any[];
 
     return NextResponse.json({ tenants: rows.map(mapTenantRow) });
   } catch (error) {
@@ -79,10 +82,11 @@ export function mapTenantRow(row: TenantRow) {
     name: row.name as string,
     slug: row.slug as string,
     region: row.region as string,
-    status: row.status as string,
-    ledger: row.ledger_delta ?? "₦0",
-    seats: typeof row.seats === "number" ? row.seats : 0,
+    status: (row as any).status as string,
+    ledger: (row as any).ledger_delta ?? "₦0",
+    seats: typeof (row as any).seats === "number" ? (row as any).seats : 0,
     admin_email: (row as any).admin_email ?? null,
+    persisted: !!((row as any).is_active ?? (row as any).schema_name),
   };
 }
 
@@ -138,7 +142,7 @@ export async function POST(request: Request) {
     const tenantId = randomUUID();
     const passwordHash = await bcrypt.hash(payload.adminPassword, 12);
 
-    const returnedRows = await SQL<TenantRow>`
+    const returnedRows = await SQL<any>`
       insert into tenants (
         id,
         name,
@@ -187,10 +191,10 @@ export async function POST(request: Request) {
         admin_email = excluded.admin_email,
         admin_password_hash = excluded.admin_password_hash,
         admin_notes = excluded.admin_notes
-        returning name, slug, region, status, ledger_delta, seats, admin_email
+        returning name, slug, region, status, ledger_delta, seats, admin_email, "isActive" as is_active, "schemaName" as schema_name
     `;
 
-    const tenantSummary = mapTenantRow(returnedRows[0]);
+      const tenantSummary = mapTenantRow(returnedRows[0]);
 
     return NextResponse.json(
       {

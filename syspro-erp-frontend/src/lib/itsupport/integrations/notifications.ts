@@ -1,3 +1,11 @@
+export async function sendNotification(target: { type: 'user' | 'team'; id: string }, payload: any) {
+  // Demo: simply log to console in server environment
+  // eslint-disable-next-line no-console
+  console.log('sendNotification', target, payload);
+  return { ok: true };
+}
+
+export default sendNotification;
 
 import axios from 'axios';
 

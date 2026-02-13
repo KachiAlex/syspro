@@ -1,3 +1,14 @@
+export async function fetchCustomerInfo(customerId: string) {
+  // Demo stub: return lightweight customer info
+  return { id: customerId, name: `Customer ${customerId}`, accountStatus: 'active' };
+}
+
+export async function syncCustomerTicket(customerId: string, ticketId: string) {
+  // No-op stub for integration
+  return { ok: true, customerId, ticketId };
+}
+
+export default { fetchCustomerInfo, syncCustomerTicket };
 // CRM Integration Service Stub
 
 import axios from 'axios';

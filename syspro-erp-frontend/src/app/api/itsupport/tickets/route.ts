@@ -7,7 +7,7 @@ import { slas } from '../sla/route';
 import { findBestEngineer } from '../../../../lib/itsupport/assignment';
 import { engineers } from '../engineers/route';
 
-const tickets = new Map<string, Ticket>();
+export const tickets = new Map<string, Ticket>();
 
 export async function GET() {
   // List all tickets (stub)
