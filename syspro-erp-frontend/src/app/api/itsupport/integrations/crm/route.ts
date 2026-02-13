@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchCustomerInfo, syncCustomerTicket } from '../../../../lib/itsupport/integrations/crm';
+import { fetchCustomerInfo, syncCustomerTicket } from '../../../../../lib/itsupport/integrations/crm';
 
 export async function POST(request: Request) {
   const body = await request.json();
