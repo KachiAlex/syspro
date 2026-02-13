@@ -2262,38 +2262,55 @@ export default function TenantAdminPage() {
     return canRead(module);
   }, [activeNav, permissions, canRead]);
   const kpiMetrics = useMemo(() => {
-    if (activeNav === "crm") {
-      return crmSnapshot.metrics;
-    }
-    if (activeNav === "finance") {
-      return financeSnapshot.metrics;
-    }
+    // Explicit per-workspace KPIs
+    if (activeNav === "crm") return crmSnapshot.metrics;
+    if (activeNav === "finance") return financeSnapshot.metrics;
+
     if (activeNav === "revops" && revopsOverview) {
       return revopsOverview.metrics.map((metric) => {
-        const deltaValue =
-          typeof metric.delta === "number"
-            ? `${metric.delta > 0 ? "+" : ""}${metric.delta}%`
-            : "—";
-        const trend: "up" | "down" = metric.deltaDirection
-          ? metric.deltaDirection
-          : typeof metric.delta === "number" && metric.delta < 0
-          ? "down"
-          : "up";
-        const description =
-          typeof metric.delta === "number"
-            ? trend === "down"
-              ? "Decline vs prior period"
-              : "Improvement vs prior period"
-            : "RevOps telemetry indicator";
-        return {
-          label: metric.label,
-          value: metric.value,
-          delta: deltaValue,
-          trend,
-          description,
-        } satisfies KpiMetric;
+        const deltaValue = typeof metric.delta === "number" ? `${metric.delta > 0 ? "+" : ""}${metric.delta}%` : "—";
+        const trend: "up" | "down" = metric.deltaDirection ? metric.deltaDirection : typeof metric.delta === "number" && metric.delta < 0 ? "down" : "up";
+        const description = typeof metric.delta === "number" ? (trend === "down" ? "Decline vs prior period" : "Improvement vs prior period") : "RevOps telemetry indicator";
+        return { label: metric.label, value: metric.value, delta: deltaValue, trend, description } satisfies KpiMetric;
       });
     }
+
+    // Overview: compose a compact executive KPI set from available snapshots
+    if (activeNav === "overview") {
+      const composed: KpiMetric[] = [];
+
+      const pushMetrics = (arr: any[], mapper?: (m: any) => KpiMetric) => {
+        for (let i = 0; i < Math.min(2, arr.length); i++) {
+          const m = arr[i];
+          try {
+            composed.push(mapper ? mapper(m) : (m as KpiMetric));
+          } catch {
+            // ignore malformed metric
+          }
+        }
+      };
+
+      // CRM metrics (top 2)
+      pushMetrics(crmSnapshot.metrics);
+
+      // Finance metrics (top 2)
+      pushMetrics(financeSnapshot.metrics);
+
+      // RevOps metrics (top 2, map shape)
+      if (revopsOverview && Array.isArray(revopsOverview.metrics)) {
+        pushMetrics(revopsOverview.metrics, (metric: any) => {
+          const deltaValue = typeof metric.delta === "number" ? `${metric.delta > 0 ? "+" : ""}${metric.delta}%` : "—";
+          const trend: "up" | "down" = metric.deltaDirection ? metric.deltaDirection : typeof metric.delta === "number" && metric.delta < 0 ? "down" : "up";
+          const description = typeof metric.delta === "number" ? (trend === "down" ? "Decline vs prior period" : "Improvement vs prior period") : "RevOps telemetry indicator";
+          return { label: metric.label, value: metric.value, delta: deltaValue, trend, description } satisfies KpiMetric;
+        });
+      }
+
+      // Dev fallback: use baseline KPI_METRICS when nothing else present
+      if (composed.length === 0) return KPI_METRICS;
+      return composed;
+    }
+
     return KPI_METRICS;
   }, [activeNav, crmSnapshot.metrics, financeSnapshot.metrics, revopsOverview]);
 

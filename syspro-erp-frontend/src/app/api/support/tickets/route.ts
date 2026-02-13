@@ -3,12 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   createTicket,
   listTickets,
+  getTenantSupportData,
   type CreateTicketInput,
   type TicketFilters,
   type TicketStatus,
   type TicketType,
   type SupportTicket,
 } from "@/lib/support-data";
+import { autoTriageTicket } from '@/lib/itsupport/automation';
 
 function buildFilters(searchParams: URLSearchParams): TicketFilters {
   const filters: TicketFilters = {};
@@ -63,7 +65,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `Missing field: ${missingField}` }, { status: 400 });
   }
 
-  const ticket = createTicket({
+  let ticket = createTicket({
     tenantSlug,
     title: body.title!,
     description: body.description,
@@ -80,6 +82,10 @@ export async function POST(request: NextRequest) {
     tags: body.tags,
     createdBy: body.createdBy,
   });
+
+  // Auto-triage: classify and assign ticket
+  const engineers = getTenantSupportData(tenantSlug).engineers;
+  ticket = await autoTriageTicket(ticket, engineers);
 
   return NextResponse.json({ ticket, message: "Ticket created" }, { status: 201 });
 }

@@ -537,6 +537,10 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Incident to resolution</p>
           <h2 className="text-2xl font-semibold text-slate-900">IT Support control center</h2>
+          <div className="mt-1 flex items-center gap-2">
+            <span className="text-sm text-slate-500">Tenant:</span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm font-medium text-slate-700">{tenantKey}</span>
+          </div>
           <p className="text-sm text-slate-500">Live ticket queue, SLA heatmap, dispatch radar, and assignment intelligence.</p>
         </div>
         <div className="flex items-center gap-2">
@@ -818,7 +822,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                             </div>
                             <span className="text-xs uppercase tracking-[0.2em] text-slate-400">{job.status.replace(/_/g, " ")}</span>
                           </div>
-                          <p className="mt-1 text-xs text-slate-500">Scheduled {formatClock(job.scheduledAt)} · {(job.location?.region as string) || "No region"}</p>
+                          <p className="mt-1 text-xs text-slate-500">Scheduled {formatClock(job.scheduledAt)} · {typeof job.location?.region === "string" ? job.location.region : "No region"}</p>
                         </div>
                       ))}
                     </div>

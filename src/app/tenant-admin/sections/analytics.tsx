@@ -60,10 +60,11 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
       return;
     }
     try {
+      const payload = Object.assign({}, reportForm, { type: "report" });
       const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...reportForm, type: "report" }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Failed to create report");
       setReportForm({ name: "", type: "" });
@@ -100,10 +101,11 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
       return;
     }
     try {
+      const payload = Object.assign({}, exportForm, { type: "export" });
       const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...exportForm, type: "export" }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Failed to create export");
       setExportForm({ name: "", frequency: "daily", format: "csv" });

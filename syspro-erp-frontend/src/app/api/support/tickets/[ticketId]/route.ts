@@ -6,6 +6,7 @@ import {
   type TicketStatus,
   type SupportTicket,
 } from "@/lib/support-data";
+import { syncCustomerTicket } from '@/lib/itsupport/integrations/crm';
 
 type RouteContext = {
   params: { ticketId: string };
@@ -48,6 +49,14 @@ export async function PATCH(request: NextRequest, context: any) {
 
   if (!ticket) {
     return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
+  }
+
+  // Sync ticket update with CRM (ignore errors, log if needed)
+  try {
+    await syncCustomerTicket(ticket.id, ticket);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[CRM Sync] Failed to sync ticket update:', err);
   }
 
   return NextResponse.json({ ticket });

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 type Ticket = {
   id: string;
@@ -23,13 +23,54 @@ function getTimeLeft(iso: string) {
 export default function ITSupportAgentDashboard() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [polling, setPolling] = useState(true);
   useEffect(() => {
-    setLoading(true);
-    fetch('/api/itsupport/tickets')
-      .then((r) => r.json())
-      .then((d) => setTickets((d.data || []).filter((t: Ticket) => t.assignedTo === AGENT_ID)))
-      .finally(() => setLoading(false));
-  }, []);
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const r = await fetch('/api/itsupport/tickets');
+        const d = await r.json();
+        if (cancelled) return;
+        setTickets((d.data || []).filter((t: Ticket) => t.assignedTo === AGENT_ID));
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to load tickets', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    if (!polling) return () => { cancelled = true; };
+    const iv = setInterval(load, 15000);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, [polling]);
+
+  const statuses = useMemo(() => {
+    const map: Record<string, number> = {};
+    tickets.forEach((t) => { map[t.status] = (map[t.status] || 0) + 1; });
+    return Object.entries(map).map(([k, v]) => ({ status: k, count: v }));
+  }, [tickets]);
+
+  const filteredTickets = useMemo(() => tickets.filter(t => statusFilter === 'all' || t.status === statusFilter), [tickets, statusFilter]);
+
+  function StatusBarChart({data}:{data:{status:string;count:number}[]}){
+    const total = data.reduce((s,d)=>s+d.count,0) || 1;
+    return (
+      <svg width="100%" height={40} viewBox={`0 0 100 ${40}`} preserveAspectRatio="none">
+        {data.reduce((acc, d, i) => {
+          const prev = acc.sum;
+          const w = (d.count / total) * 100;
+          acc.elems.push(
+            <rect key={d.status} x={prev} y={5} width={w} height={30} fill={['#34D399','#60A5FA','#FBBF24','#F87171'][i%4]} />
+          );
+          acc.sum += w;
+          return acc;
+        }, {sum:0, elems:[] as any}).elems}
+      </svg>
+    );
+  }
 
   return (
     <div className="p-6">

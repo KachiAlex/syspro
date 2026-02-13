@@ -4,14 +4,15 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
+    alias: [
+      { find: '@', replacement: path.resolve(__dirname, './src') },
+      { find: '/src', replacement: path.resolve(__dirname, './src') },
+    ],
   },
   test: {
-    environment: 'jsdom',
+    environment: 'node',
     globals: true,
     include: ['src/__tests__/**/*.test.ts'],
-    pool: 'forks',
+    threads: false,
   },
 });
