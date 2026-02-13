@@ -1,6 +1,5 @@
-import { db, sql as SQL } from "@/lib/sql-client";
-import { calculateAttributionSummary } from "@/lib/revops/attribution";
-import { AttributionModel } from "@/lib/revops/attribution";
+import { db, sql as SQL } from "../sql-client";
+import { calculateAttributionSummary, AttributionModel } from "../revops/attribution";
 import { Opportunity, AttributionRecord } from "./types";
 
 export async function listCampaigns(tenantSlug: string) {
