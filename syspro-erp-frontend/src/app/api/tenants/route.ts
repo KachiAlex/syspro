@@ -104,7 +104,11 @@ export function mapTenantRow(row: TenantRow) {
     ledger: (row as any).ledger_delta ?? "₦0",
     seats: typeof (row as any).seats === "number" ? (row as any).seats : 0,
     admin_email: (row as any).admin_email ?? null,
-    persisted: !!((row as any).is_active ?? (row as any).schema_name),
+    // Consider a tenant persisted if it has an active flag OR a schema name.
+    // Use logical OR because `is_active` can be `false` while a created
+    // `schema_name` still indicates persistence (previous code used ??
+    // which preferred `false` over the schema name).
+    persisted: !!((row as any).is_active || (row as any).schema_name),
   };
 }
 
