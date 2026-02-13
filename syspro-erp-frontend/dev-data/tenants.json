@@ -1,0 +1,70 @@
+﻿{
+    "tenants":  [
+                    {
+                        "name":  "Acme Inc",
+                        "slug":  "acme-inc-unique-123",
+                        "region":  "EMEA",
+                        "status":  "Pending",
+                        "ledger":  "â¦0",
+                        "seats":  0,
+                        "admin_email":  "admin@acme.local",
+                        "persisted":  false
+                    },
+                    {
+                        "name":  "Acme EndToEnd",
+                        "slug":  "acme-e2e-df04e4",
+                        "region":  "EMEA",
+                        "status":  "Pending",
+                        "ledger":  "â¦0",
+                        "seats":  0,
+                        "admin_email":  "e2e@acme.local",
+                        "persisted":  false
+                    },
+                    {
+                        "name":  "Kreatix Technologies",
+                        "slug":  "kreatixtech",
+                        "region":  "Africa",
+                        "status":  "Live",
+                        "ledger":  "₦0",
+                        "seats":  50,
+                        "admin_email":  "akoma@kreatixtech.com",
+                        "persisted":  true,
+                        "admin": {
+                            "first_name": "Onyedikachi",
+                            "last_name": "Akoma",
+                            "email": "akoma@kreatixtech.com",
+                            "password": "dikaoliver2660"
+                        }
+                    },
+                    {
+                        "name":  "Kreatix Technologies",
+                        "slug":  "kreatix2",
+                        "region":  "Africa",
+                        "status":  "Pending",
+                        "ledger":  "â¦0",
+                        "seats":  10,
+                        "admin_email":  "akoma@kreatixtech.com",
+                        "persisted":  false
+                    },
+                    {
+                        "name":  "Kreatix Technologies",
+                        "slug":  "kreatix",
+                        "region":  "Africa",
+                        "status":  "Pending",
+                        "ledger":  "â¦0",
+                        "seats":  10,
+                        "admin_email":  "akoma@kreatixtech.com",
+                        "persisted":  false
+                    },
+                    {
+                        "name":  "Syscomptech",
+                        "slug":  "syscomptech",
+                        "region":  "WAF",
+                        "status":  "Pending",
+                        "ledger":  "â¦0",
+                        "seats":  0,
+                        "admin_email":  "akoma@kreatixtech.com",
+                        "persisted":  true
+                    }
+                ]
+}
