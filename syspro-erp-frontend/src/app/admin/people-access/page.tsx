@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
-import { Tabs } from '@radix-ui/react-tabs';
+import * as Tabs from '@radix-ui/react-tabs';
 
 function validateEmail(email: string) {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
