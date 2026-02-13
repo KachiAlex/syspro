@@ -1,4 +1,18 @@
 -- IT Support: Ticket Table
+-- Ensure branches table exists (dependency for IT support tables)
+CREATE TABLE IF NOT EXISTS branches (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id uuid NOT NULL,
+  name text NOT NULL,
+  code text,
+  base_currency text,
+  timezone text,
+  branch_admin_id uuid,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_branches_tenant ON branches(tenant_id);
+
 CREATE TABLE IF NOT EXISTS itsupport_ticket (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL,
@@ -30,8 +44,8 @@ CREATE TABLE IF NOT EXISTS itsupport_ticket (
   incident_id UUID,
   field_job_id UUID,
   tags TEXT[],
-  CONSTRAINT fk_tenant FOREIGN KEY (tenant_id) REFERENCES tenant(id),
-  CONSTRAINT fk_branch FOREIGN KEY (branch_id) REFERENCES branch(id)
+  CONSTRAINT fk_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+  CONSTRAINT fk_branch FOREIGN KEY (branch_id) REFERENCES branches(id)
 );
 
 -- IT Support: Ticket Comment
@@ -75,7 +89,7 @@ CREATE TABLE IF NOT EXISTS itsupport_engineer_profile (
   on_duty BOOLEAN NOT NULL DEFAULT false,
   workload INT NOT NULL DEFAULT 0,
   performance_score INT NOT NULL DEFAULT 0,
-  location GEOGRAPHY(POINT, 4326)
+  location point
 );
 
 -- IT Support: Field Job
@@ -87,8 +101,8 @@ CREATE TABLE IF NOT EXISTS itsupport_field_job (
   started_at TIMESTAMPTZ,
   arrived_at TIMESTAMPTZ,
   completed_at TIMESTAMPTZ,
-  gps_start GEOGRAPHY(POINT, 4326),
-  gps_arrive GEOGRAPHY(POINT, 4326),
+  gps_start point,
+  gps_arrive point,
   work_log TEXT,
   images TEXT[],
   customer_signoff BOOLEAN
