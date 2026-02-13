@@ -3,6 +3,8 @@ import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
+import fs from "fs";
+import path from "path";
 
 export type TenantRow = {
   name: string;
@@ -60,6 +62,22 @@ export async function ensureTenantTable(sql: SqlClient) {
 
 export async function GET() {
   try {
+    // If DATABASE_URL is not configured, use a lightweight file-backed
+    // dev fallback so created tenants persist across refreshes.
+    if (!process.env.DATABASE_URL) {
+      const devPath = path.join(process.cwd(), "dev-data");
+      const file = path.join(devPath, "tenants.json");
+      try {
+        await fs.promises.mkdir(devPath, { recursive: true });
+        const content = await fs.promises.readFile(file, "utf8").catch(() => "[]");
+        const rows = JSON.parse(content || "[]");
+        return NextResponse.json({ tenants: Array.isArray(rows) ? rows : [] });
+      } catch (e) {
+        console.error("Dev tenants read failed", e);
+        return NextResponse.json({ tenants: [] });
+      }
+    }
+
     const sql = SQL;
     await ensureTenantTable(sql);
 
@@ -135,6 +153,42 @@ export async function POST(request: Request) {
     const payload = parsed.data;
     const computedDomain = `${payload.companySlug}.syspro.local`;
     const computedSchema = `${payload.companySlug.replace(/-/g, "_")}_schema`;
+    // If no DATABASE_URL, persist tenants to a local dev JSON file so they
+    // survive page refreshes during development.
+    if (!process.env.DATABASE_URL) {
+      const devPath = path.join(process.cwd(), "dev-data");
+      const file = path.join(devPath, "tenants.json");
+      await fs.promises.mkdir(devPath, { recursive: true });
+      const current = await fs.promises.readFile(file, "utf8").catch(() => "[]");
+      const arr = Array.isArray(JSON.parse(current || "[]")) ? JSON.parse(current || "[]") : [];
+
+      // Upsert by slug
+      const existingIndex = arr.findIndex((t: any) => t.slug === payload.companySlug);
+      const tenantId = randomUUID();
+      const passwordHash = await bcrypt.hash(payload.adminPassword, 12);
+
+      const tenantSummary = {
+        name: payload.companyName,
+        slug: payload.companySlug,
+        region: payload.region,
+        status: "active",
+        ledger: "₦0",
+        seats: payload.seats ?? 0,
+        admin_email: payload.adminEmail.toLowerCase(),
+        persisted: true,
+      };
+
+      if (existingIndex >= 0) {
+        arr[existingIndex] = tenantSummary;
+      } else {
+        arr.unshift(tenantSummary);
+      }
+
+      await fs.promises.writeFile(file, JSON.stringify(arr, null, 2), "utf8");
+
+      return NextResponse.json({ tenantId, tenantSummary }, { status: 201 });
+    }
+
     const sql = SQL;
     await ensureTenantTable(sql);
     const computedCode = await generateUniqueTenantCode(sql, payload.companySlug);
