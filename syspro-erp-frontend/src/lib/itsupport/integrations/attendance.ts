@@ -1,11 +1,3 @@
-export function isEngineerOnDuty(engineerId: string): boolean {
-  // Minimal stub: rotate duty by hash of id for demo
-  const n = engineerId.split('').reduce((s, c) => s + c.charCodeAt(0), 0);
-  return (n % 2) === 0;
-}
-
-export default isEngineerOnDuty;
-
 import axios from 'axios';
 
 const ATTENDANCE_API_BASE_URL = process.env.NEXT_PUBLIC_ATTENDANCE_API_BASE_URL || '';
@@ -19,15 +11,17 @@ function logError(context: string, error: any) {
 
 export async function isEngineerOnDuty(engineerId: string) {
   try {
+    if (!ATTENDANCE_API_BASE_URL) return false; // safe fallback
     const response = await axios.get(`${ATTENDANCE_API_BASE_URL}/engineers/${engineerId}/duty`, {
       headers: {
         'Authorization': `Bearer ${ATTENDANCE_API_KEY}`,
         'Content-Type': 'application/json',
       },
     });
-    return response.data.onDuty;
+    return !!response.data?.onDuty;
   } catch (error) {
     logError('isEngineerOnDuty', error);
+    // On integration failure, surface a clear error for callers
     throw new Error('Failed to check engineer duty status');
   }
 }

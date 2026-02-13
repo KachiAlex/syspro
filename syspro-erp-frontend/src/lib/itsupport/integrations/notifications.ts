@@ -1,12 +1,3 @@
-export async function sendNotification(target: { type: 'user' | 'team'; id: string }, payload: any) {
-  // Demo: simply log to console in server environment
-  // eslint-disable-next-line no-console
-  console.log('sendNotification', target, payload);
-  return { ok: true };
-}
-
-export default sendNotification;
-
 import axios from 'axios';
 
 const NOTIFY_API_BASE_URL = process.env.NEXT_PUBLIC_NOTIFY_API_BASE_URL || '';
@@ -20,6 +11,13 @@ function logError(context: string, error: any) {
 
 export async function sendNotification({ to, subject, message }: { to: string; subject: string; message: string }) {
   try {
+    // Local/demo fallback: log and no-op if remote service not configured
+    if (!NOTIFY_API_BASE_URL) {
+      // eslint-disable-next-line no-console
+      console.log('Notify disabled — would send to', to, { subject, message });
+      return { ok: true };
+    }
+
     const response = await axios.post(
       `${NOTIFY_API_BASE_URL}/notify`,
       { to, subject, message },

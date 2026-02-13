@@ -1,16 +1,10 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
+import { Tabs } from '@radix-ui/react-tabs';
 
 function validateEmail(email: string) {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
 }
-  // Notification state
-  const [notif, setNotif] = useState<string | null>(null);
-  function notify(msg: string) {
-    setNotif(msg);
-    setTimeout(() => setNotif(null), 3000);
-  }
-import { Tabs } from '@radix-ui/react-tabs';
 function parseCSV(text: string): Array<{ email: string; name?: string }> {
   const lines = text.split(/\r?\n/).filter(Boolean);
   const [header, ...rows] = lines;
@@ -33,9 +27,16 @@ type User = {
 };
 
 export default function PeopleAccessPage() {
+  const [notif, setNotif] = useState<string | null>(null);
+  function notify(msg: string) {
+    setNotif(msg);
+    setTimeout(() => setNotif(null), 3000);
+  }
+
   const [tab, setTab] = useState('users');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     if (tab === 'users') {
       setLoading(true);
