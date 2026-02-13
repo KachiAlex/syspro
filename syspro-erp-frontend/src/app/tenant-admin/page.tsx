@@ -705,6 +705,8 @@ function CrmCustomersView({
   );
 }
 
+
+
 function CrmContactsView({
   contacts,
   importing,
@@ -3494,6 +3496,38 @@ export default function TenantAdminPage() {
     }
   }, [pageSuccess]);
 
+  // Populate Overview KPIs from support API (dev fallback)
+  const [supportKpiMetrics, setSupportKpiMetrics] = useState<KpiMetric[]>(() => []);
+  useEffect(() => {
+    let cancelled = false;
+    const slug = tenantSlug ?? (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tenantSlug") ?? "kreatix-default" : "kreatix-default");
+    (async () => {
+      try {
+        const res = await fetch(`/api/support/tickets?tenantSlug=${encodeURIComponent(slug)}`, { cache: "no-store" });
+        const payload = await res.json().catch(() => null);
+        const tickets = Array.isArray(payload?.tickets) ? payload.tickets : [];
+        const total = tickets.length;
+        const open = tickets.filter((t: any) => t.status === "open").length;
+        const inProgress = tickets.filter((t: any) => t.status === "in_progress" || t.status === "diagnosing").length;
+        const resolved = tickets.filter((t: any) => t.status === "resolved" || t.status === "closed").length;
+        const slaBreached = tickets.filter((t: any) => !!t.slaBreached).length;
+        const metrics: KpiMetric[] = [
+          { label: "Total tickets", value: `${total}`, delta: "0%", trend: "up", description: "All open and closed tickets" },
+          { label: "Open", value: `${open}`, delta: "0%", trend: open > 0 ? "up" : "down", description: "New / unassigned" },
+          { label: "In progress", value: `${inProgress}`, delta: "0%", trend: inProgress > 0 ? "up" : "down", description: "Work in progress" },
+          { label: "Resolved", value: `${resolved}`, delta: "0%", trend: resolved > 0 ? "up" : "down", description: "Recently resolved tickets" },
+          { label: "SLA breaches", value: `${slaBreached}`, delta: "0%", trend: slaBreached > 0 ? "down" : "up", description: "Tickets past SLA" },
+        ];
+        if (!cancelled) setSupportKpiMetrics(metrics);
+      } catch (err) {
+        console.warn("Failed to load support KPIs", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantSlug]);
+
   return (
     <div className="min-h-screen bg-[#e9eef5] text-slate-900">
       {pageError && (
@@ -3640,7 +3674,7 @@ export default function TenantAdminPage() {
 
             <section className="flex-1 overflow-y-auto px-8 py-10">
               <div className="space-y-10">
-                <KpiGrid metrics={kpiMetrics} />
+                <KpiGrid metrics={supportKpiMetrics} />
 
                 {/* Permission Denied Message */}
                 {!permissionsLoading && !hasAccessToNav && (
@@ -4641,6 +4675,150 @@ export default function TenantAdminPage() {
         className="hidden"
         onChange={handleImportFileChange}
       />
+    </div>
+  );
+}
+
+// Dev helper to read tenantSlug from URL in browser
+function getDevTenantSlug(): string | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  return params.get("tenantSlug")?.trim() ?? null;
+}
+
+function DevKpiGrid(): JSX.Element {
+  const [loading, setLoading] = useState(true);
+  const [metrics, setMetrics] = useState({ total: 0, open: 0, inProgress: 0, closed: 0, slaBreached: 0 });
+
+  useEffect(() => {
+    const slug = getDevTenantSlug() ?? "kreatix-default";
+    let cancelled = false;
+    setLoading(true);
+    fetch(`/api/support/tickets?tenantSlug=${encodeURIComponent(slug)}`)
+      .then((r) => r.json())
+      .then((payload) => {
+        if (cancelled) return;
+        const tickets = Array.isArray(payload?.tickets) ? payload.tickets : [];
+        const total = tickets.length;
+        const open = tickets.filter((t: any) => t.status === "open").length;
+        const inProgress = tickets.filter((t: any) => t.status === "in_progress").length;
+        const closed = tickets.filter((t: any) => t.status === "resolved" || t.status === "closed").length;
+        const slaBreached = tickets.filter((t: any) => t.slaBreached).length;
+        setMetrics({ total, open, inProgress, closed, slaBreached });
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (loading) return <div className="rounded-xl border bg-white p-4">Loading KPIs…</div>;
+
+  return (
+    <div className="rounded-xl border bg-white p-4 space-y-2">
+      <p className="text-sm text-slate-500">Support KPIs (dev)</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <div className="text-xs text-slate-500">Total</div>
+          <div className="text-xl font-semibold">{metrics.total}</div>
+        </div>
+        <div>
+          <div className="text-xs text-slate-500">Open</div>
+          <div className="text-xl font-semibold text-amber-600">{metrics.open}</div>
+        </div>
+        <div>
+          <div className="text-xs text-slate-500">In progress</div>
+          <div className="text-xl font-semibold text-blue-600">{metrics.inProgress}</div>
+        </div>
+        <div>
+          <div className="text-xs text-slate-500">SLA breaches</div>
+          <div className="text-xl font-semibold text-rose-600">{metrics.slaBreached}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DevActivityStream(): JSX.Element {
+  const [items, setItems] = useState<any[]>([]);
+  useEffect(() => {
+    const slug = getDevTenantSlug() ?? "kreatix-default";
+    let cancelled = false;
+    fetch(`/api/support/tickets?tenantSlug=${encodeURIComponent(slug)}`)
+      .then((r) => r.json())
+      .then((payload) => {
+        if (cancelled) return;
+        const tickets = Array.isArray(payload?.tickets) ? payload.tickets : [];
+        const activities = tickets
+          .map((t: any) => ({ id: t.id, title: t.title, subtitle: `#${t.id} • ${t.status}`, at: t.updatedAt || t.createdAt }))
+          .sort((a: any, b: any) => (a.at < b.at ? 1 : -1))
+          .slice(0, 12);
+        setItems(activities);
+      })
+      .catch(() => setItems([]));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <div className="rounded-2xl border bg-white p-4">
+      <h4 className="text-sm font-medium text-slate-700 mb-3">Activity (dev)</h4>
+      <ul className="space-y-3">
+        {items.length === 0 ? (
+          <li className="text-sm text-slate-500">No recent activity</li>
+        ) : (
+          items.map((it) => (
+            <li key={it.id} className="flex items-start gap-3">
+              <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">#{it.id.split("-").pop()}</div>
+              <div>
+                <div className="text-sm font-medium text-slate-900">{it.title}</div>
+                <div className="text-xs text-slate-500">{it.subtitle} • {new Date(it.at).toLocaleString()}</div>
+              </div>
+            </li>
+          ))
+        )}
+      </ul>
+    </div>
+  );
+}
+
+function DevRecentChanges(): JSX.Element {
+  const [items, setItems] = useState<any[]>([]);
+  useEffect(() => {
+    const slug = getDevTenantSlug() ?? "kreatix-default";
+    let cancelled = false;
+    fetch(`/api/support/tickets?tenantSlug=${encodeURIComponent(slug)}`)
+      .then((r) => r.json())
+      .then((payload) => {
+        if (cancelled) return;
+        const list = Array.isArray(payload?.tickets) ? payload.tickets : [];
+        setItems(list.slice(0, 8));
+      })
+      .catch(() => setItems([]));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <div className="rounded-2xl border bg-white p-4">
+      <h4 className="text-sm font-medium text-slate-700 mb-3">Recent changes (dev)</h4>
+      <ul className="space-y-2 text-sm text-slate-600">
+        {items.length === 0 ? (
+          <li className="text-slate-500">No recent changes</li>
+        ) : (
+          items.map((t) => (
+            <li key={t.id} className="flex items-center justify-between">
+              <div>{t.title}</div>
+              <div className="text-xs text-slate-400">{new Date(t.updatedAt || t.createdAt).toLocaleDateString()}</div>
+            </li>
+          ))
+        )}
+      </ul>
     </div>
   );
 }

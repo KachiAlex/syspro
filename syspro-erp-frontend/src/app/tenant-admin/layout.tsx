@@ -5,7 +5,8 @@ import { getCurrentUser, validateTenantAccess } from "@/lib/auth-helpers";
 import TenantAdminShell from "@/components/layout/tenant-admin-shell";
 
 export default async function TenantAdminLayout({ children, searchParams }: { children: React.ReactNode; searchParams?: Record<string, string> }) {
-  const h = headers();
+  // `headers()` is async in some Next runtimes; await to avoid sync access
+  const h = await headers();
 
   // headers() may not always expose a callable `.get` in some runtimes,
   // guard before calling to avoid `h.get is not a function` errors.
@@ -35,7 +36,9 @@ export default async function TenantAdminLayout({ children, searchParams }: { ch
     // noop
   }
 
-  const tenantSlug = urlTenant || refTenant || safeGet("X-Tenant-Slug") || safeGet("tenantSlug") || safeGetCookie("tenantSlug") || null;
+  // In development, fall back to a reasonable demo tenant so the UI renders
+  // without requiring a full auth flow on local machines.
+  const tenantSlug = urlTenant || refTenant || safeGet("X-Tenant-Slug") || safeGet("tenantSlug") || safeGetCookie("tenantSlug") || (process.env.NODE_ENV !== "production" ? "kreatix-default" : null);
 
   // Adapt headers to the shape expected by getCurrentUser (it expects a NextRequest-like object)
   const fakeReq = {

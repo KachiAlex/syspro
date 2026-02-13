@@ -1,3 +1,20 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { randomUUID } from 'node:crypto';
+
+export async function GET() {
+  return NextResponse.json({ accounts: [] });
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const account = { ...body, id: randomUUID() };
+    return NextResponse.json({ account }, { status: 201 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || String(err) }, { status: 400 });
+  }
+}
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 

@@ -1,3 +1,29 @@
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { checkPermission } from "@/lib/api-permission-enforcer";
+import { approveExpense as serviceApproveExpense } from "@/lib/finance/service";
+
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const tenant = new URL(request.url).searchParams.get("tenantSlug") || undefined;
+    if (!tenant) {
+      return NextResponse.json({ error: "tenantSlug required" }, { status: 400 });
+    }
+
+    // Enforce permissions (requires at least write access to finance)
+    await checkPermission(request, "finance", "write", tenant);
+
+    const body = await request.json();
+    const result = await serviceApproveExpense(tenant, params.id, body);
+    if (!result) {
+      return NextResponse.json({ error: "Expense not found" }, { status: 404 });
+    }
+    return NextResponse.json({ expense: result });
+  } catch (err: any) {
+    const status = err?.status || 400;
+    return NextResponse.json({ error: err?.message || String(err) }, { status });
+  }
+}
 import { NextRequest, NextResponse } from "next/server";
 
 import { expenseApproveSchema } from "@/lib/finance/types";

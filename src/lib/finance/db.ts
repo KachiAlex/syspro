@@ -653,7 +653,7 @@ export async function updateFinanceInvoice(
   const sql = SQL;
   await ensureFinanceTables(sql);
 
-  const [invoiceRow] = await SQL<FinanceInvoiceRecord>`
+  const [invoiceRow] = (await SQL`
     update finance_invoices
     set
       customer_name = coalesce(${updates.customerName ?? null}, customer_name),
@@ -687,7 +687,7 @@ export async function updateFinanceInvoice(
     lineRows = (
       await Promise.all(
         updates.lineItems.map((line) =>
-          SQL<FinanceInvoiceLineRecord>`
+          SQL`
             insert into finance_invoice_lines (
               id,
               invoice_id,
@@ -711,7 +711,7 @@ export async function updateFinanceInvoice(
           `
         )
       )
-    ).flat();
+    ).flat() as FinanceInvoiceLineRecord[];
   }
 
   if (!lineRows) {

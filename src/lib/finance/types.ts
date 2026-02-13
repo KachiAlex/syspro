@@ -1,3 +1,65 @@
+export type TenantId = string;
+
+export type AccountType = 'asset' | 'liability' | 'equity' | 'income' | 'expense';
+
+export interface ChartOfAccount {
+  id: string;
+  tenant_id: TenantId;
+  code: string;
+  name: string;
+  type: AccountType;
+  parent_id?: string | null;
+  metadata?: Record<string, any> | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface JournalLine {
+  id?: string;
+  journal_entry_id?: string;
+  tenant_id: TenantId;
+  account_id: string;
+  amount: number; // positive value
+  side: 'debit' | 'credit';
+  description?: string | null;
+}
+
+export interface JournalEntry {
+  id?: string;
+  tenant_id: TenantId;
+  reference?: string | null;
+  description?: string | null;
+  posted_at?: string | null;
+  status?: 'draft' | 'posted' | 'reversed';
+  source?: string | null;
+  metadata?: Record<string, any> | null;
+  created_by?: string | null;
+  created_at?: string | null;
+  lines?: JournalLine[];
+}
+
+export interface Invoice {
+  id?: string;
+  tenant_id: TenantId;
+  number?: string;
+  customer_id?: string;
+  amount_total: number;
+  amount_due: number;
+  status?: 'draft' | 'open' | 'paid' | 'void';
+  due_date?: string | null;
+  metadata?: Record<string, any> | null;
+}
+
+export interface Payment {
+  id?: string;
+  tenant_id: TenantId;
+  invoice_id?: string | null;
+  amount: number;
+  method?: string | null;
+  reference?: string | null;
+  processed_at?: string | null;
+  metadata?: Record<string, any> | null;
+}
 import { z } from "zod";
 
 export const FINANCE_TIMEFRAMES = ["last_24_hours", "last_7_days", "last_30_days", "quarter_to_date"] as const;

@@ -1,3 +1,64 @@
+import { JournalEntry, JournalLine } from './types';
+
+function makeId(prefix = 'je') {
+  try {
+    // node 14+ crypto
+    // @ts-ignore
+    const { randomUUID } = require('crypto');
+    return randomUUID();
+  } catch (e) {
+    return `${prefix}-${Date.now().toString(36)}`;
+  }
+}
+
+export function validateJournalLines(lines: JournalLine[]) {
+  if (!lines || lines.length === 0) {
+    throw new Error('journal entry must have at least one line');
+  }
+
+  let totalDebit = 0;
+  let totalCredit = 0;
+
+  for (const l of lines) {
+    if (l.amount == null || isNaN(l.amount)) throw new Error('invalid line amount');
+    if (l.amount < 0) throw new Error('line amount must be positive');
+    if (l.side === 'debit') totalDebit += Number(l.amount);
+    else if (l.side === 'credit') totalCredit += Number(l.amount);
+    else throw new Error('line side must be debit or credit');
+  }
+
+  // allow small rounding tolerance
+  const eps = 1e-6;
+  if (Math.abs(totalDebit - totalCredit) > eps) {
+    throw new Error(`unbalanced journal lines: debits=${totalDebit} credits=${totalCredit}`);
+  }
+  return true;
+}
+
+export function createJournalEntry(entry: JournalEntry): JournalEntry {
+  const lines = entry.lines || [];
+  validateJournalLines(lines);
+
+  const id = makeId('je');
+  const now = new Date().toISOString();
+
+  const created: JournalEntry = {
+    ...entry,
+    id,
+    status: entry.status || 'draft',
+    created_at: entry.created_at || now,
+    lines: lines.map((l) => ({ ...l, id: l.id || `${id}-l-${Math.random().toString(36).slice(2,8)}`, journal_entry_id: id })),
+  };
+
+  return created;
+}
+
+export function postJournalEntry(entry: JournalEntry) {
+  const now = new Date().toISOString();
+  if (!entry.id) throw new Error('entry must have id');
+  // in real impl: persist entry and lines, enforce RBAC, create audit log
+  return { ...entry, status: 'posted', posted_at: now } as JournalEntry;
+}
 
 import type { FinanceDashboardSnapshot, FinanceFilters } from "@/lib/finance/types";
 import {
@@ -11,6 +72,14 @@ import { ensureFinanceSeedForTenant } from "@/lib/finance/seed";
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 const DEFAULT_CURRENCY = "₦";
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+import {
+  listFinanceAccounts,
+  insertFinanceAccount,
+  insertFinanceInvoice,
+  createPayment as dbCreatePayment,
+  approveExpense as dbApproveExpense,
+} from "@/lib/finance/db";
 
 type FinanceDataSets = {
   accounts: FinanceAccountRecord[];
@@ -41,6 +110,38 @@ export async function getFinanceDashboardSnapshot(filters: FinanceFilters): Prom
     cashAccounts: data.accounts.length ? data.accounts.map(mapAccountRow) : [],
     expenseBreakdown: data.expenses.length ? data.expenses.map(mapExpenseRow) : [],
   };
+}
+
+// Persistence-wrappers
+export async function listAccounts(filters: { tenantSlug: string; regionId?: string; branchId?: string }) {
+  const sql = SQL;
+  await ensureFinanceTables(sql);
+  return listFinanceAccounts(filters);
+}
+
+export async function createAccount(payload: any) {
+  const sql = SQL;
+  await ensureFinanceTables(sql);
+  return insertFinanceAccount(payload);
+}
+
+export async function createInvoice(payload: any) {
+  const sql = SQL;
+  await ensureFinanceTables(sql);
+  return insertFinanceInvoice(payload);
+}
+
+export async function createPayment(payload: any) {
+  const sql = SQL;
+  await ensureFinanceTables(sql);
+  return dbCreatePayment(payload);
+}
+
+export async function approveExpense(tenantSlug: string, expenseId: string, approval: any) {
+  const sql = SQL;
+  await ensureFinanceTables(sql);
+  // forward to db implementation which contains approval rules and audit
+  return dbApproveExpense(expenseId, tenantSlug, approval as any);
 }
 
 async function fetchFinanceData(filters: FinanceFilters): Promise<FinanceDataSets> {

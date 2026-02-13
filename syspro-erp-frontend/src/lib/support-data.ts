@@ -400,7 +400,7 @@ function seedTenant(tenantSlug: string): TenantSupportData {
   return store[tenantSlug];
 }
 
-function getTenantSupportData(tenantSlug: string): TenantSupportData {
+export function getTenantSupportData(tenantSlug: string): TenantSupportData {
   return store[tenantSlug] || seedTenant(tenantSlug);
 }
 
