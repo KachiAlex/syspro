@@ -24,30 +24,47 @@ interface RoleHistoryEntry {
   assignedByEmail: string | null;
 }
 
-const ROLES = [
+interface Role {
+  id: string;
+  name: string;
+  scope: string;
+  permissions: string[];
+  description?: string;
+  color?: string;
+}
+
+const DEFAULT_ROLES = [
   {
     id: "admin",
     name: "Administrator",
     description: "Full system access",
     color: "bg-red-50 border-red-200 text-red-900",
+    scope: "tenant",
+    permissions: [],
   },
   {
     id: "manager",
     name: "Manager",
     description: "Write access to most modules",
     color: "bg-purple-50 border-purple-200 text-purple-900",
+    scope: "tenant",
+    permissions: [],
   },
   {
     id: "editor",
     name: "Editor",
     description: "Write access with restrictions",
     color: "bg-green-50 border-green-200 text-green-900",
+    scope: "tenant",
+    permissions: [],
   },
   {
     id: "viewer",
     name: "Viewer",
     description: "Read-only access",
     color: "bg-blue-50 border-blue-200 text-blue-900",
+    scope: "tenant",
+    permissions: [],
   },
 ];
 
@@ -59,7 +76,9 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
   const ts = tenantSlug ?? "kreatix-default";
 
   const [users, setUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState<Role[]>(DEFAULT_ROLES);
   const [loading, setLoading] = useState(true);
+  const [rolesLoading, setRolesLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
@@ -72,6 +91,7 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
   // Fetch users on mount
   useEffect(() => {
     fetchUsers();
+    fetchRoles();
   }, []);
 
   const fetchUsers = async () => {
@@ -92,6 +112,50 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRoles = async () => {
+    try {
+      setRolesLoading(true);
+      const response = await fetch(`/api/tenant/roles?tenantSlug=${ts}`);
+
+      if (!response.ok) {
+        // If API fails, keep default roles
+        console.warn("Failed to fetch custom roles, using defaults");
+        return;
+      }
+
+      const data = await response.json();
+      const customRoles = data.roles || [];
+      
+      // Merge custom roles with default roles, preferring custom roles
+      const mergedRoles = [...DEFAULT_ROLES];
+      customRoles.forEach((customRole: any) => {
+        const existingIndex = mergedRoles.findIndex(r => r.id === customRole.id);
+        if (existingIndex >= 0) {
+          // Replace default with custom
+          mergedRoles[existingIndex] = {
+            ...customRole,
+            description: customRole.name,
+            color: "bg-indigo-50 border-indigo-200 text-indigo-900", // Custom role color
+          };
+        } else {
+          // Add new custom role
+          mergedRoles.push({
+            ...customRole,
+            description: customRole.name,
+            color: "bg-indigo-50 border-indigo-200 text-indigo-900",
+          });
+        }
+      });
+      
+      setRoles(mergedRoles);
+    } catch (error) {
+      console.error("Failed to fetch roles:", error);
+      // Keep default roles on error
+    } finally {
+      setRolesLoading(false);
     }
   };
 
@@ -238,7 +302,7 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
                 Assign New Role
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {ROLES.map((role) => {
+                {roles.map((role) => {
                   const isSelected =
                     selectedRole === role.id;
                   const isCurrent =

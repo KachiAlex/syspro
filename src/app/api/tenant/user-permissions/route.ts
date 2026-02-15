@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Step 3: Get user's role permissions
-    const rolePermissions = await getRolePermissionsFromDB(user.roleId);
+    const rolePermissions = await getRolePermissionsFromDB(user.roleId, tenantSlug);
 
     // Step 4: Build the permissions object
     const permissions: UserPermissions = {

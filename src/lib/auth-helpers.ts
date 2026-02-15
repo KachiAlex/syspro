@@ -136,17 +136,39 @@ export async function getUserFromDB(userId: string, tenantSlug: string) {
 /**
  * Get role permissions from database
  */
-export async function getRolePermissionsFromDB(roleId: string) {
+export async function getRolePermissionsFromDB(roleId: string, tenantSlug?: string) {
   try {
-    // This is a placeholder - implement with your database client
-    // const pool = await getDbConnection();
-    // const result = await pool.query(
-    //   'SELECT permissions FROM roles WHERE id = $1',
-    //   [roleId]
-    // );
-    // return result.rows[0]?.permissions || getDefaultRolePermissions(roleId);
+    // First try to get custom role from database
+    if (tenantSlug) {
+      const { getRoles } = await import("@/lib/admin/db");
+      const { SQL } = await import("@/lib/sql-client");
+      
+      const roles = await getRoles(tenantSlug, SQL);
+      const customRole = roles.find((role: any) => role.id === roleId);
+      
+      if (customRole && customRole.permissions) {
+        // Convert permissions array to module permissions object
+        const modulePermissions: Record<string, "none" | "read" | "write" | "admin"> = {};
+        
+        // Map permission strings to module permissions
+        customRole.permissions.forEach((perm: string) => {
+          if (perm.endsWith('.read')) {
+            const module = perm.replace('.read', '');
+            modulePermissions[module] = 'read';
+          } else if (perm.endsWith('.write')) {
+            const module = perm.replace('.write', '');
+            modulePermissions[module] = 'write';
+          } else if (perm.endsWith('.admin')) {
+            const module = perm.replace('.admin', '');
+            modulePermissions[module] = 'admin';
+          }
+        });
+        
+        return modulePermissions;
+      }
+    }
 
-    // For now, return default permissions based on role
+    // Fall back to default permissions
     return getDefaultRolePermissions(roleId);
   } catch (error) {
     console.error("Failed to get role permissions from DB:", error);
