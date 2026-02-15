@@ -74,8 +74,7 @@ export function getCurrentUser(request: NextRequest): SessionUser | null {
 export async function validateTenantAccess(user: SessionUser, requestedTenantSlug: string): Promise<boolean> {
   if (!requestedTenantSlug) return false;
 
-  // Super-admins (global admins) may have access across tenants.
-  if (user.roleId === "superadmin") return true;
+  // Global admin roles are handled via RBAC; no hardcoded global role.
 
   // If the user's session already includes a tenant slug that matches,
   // allow access immediately (fast path).

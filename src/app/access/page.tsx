@@ -28,7 +28,7 @@ export default function AccessPage() {
                 Tenant Sign In
                 <ArrowRight />
               </Link>
-              {/* Superadmin intentionally removed */}
+              
             </div>
           </div>
 

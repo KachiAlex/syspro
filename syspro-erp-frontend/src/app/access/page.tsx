@@ -23,14 +23,14 @@ export default function AccessPage() {
           <div>
             <div className="inline-block mb-4 px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm">Access Portal</div>
             <h1 className="text-4xl font-bold text-gray-900 mb-4">Sign in to your workspace</h1>
-            <p className="text-lg text-gray-600 mb-6">Enter your tenant or superadmin credentials to access your workspace. If you don't have access, request a demo or contact support.</p>
+            <p className="text-lg text-gray-600 mb-6">Enter your tenant credentials to access your workspace. If you don't have access, request a demo or contact support.</p>
 
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/tenant-admin" className="bg-blue-600 text-white px-6 py-3 rounded-lg inline-flex items-center gap-2">
                 Tenant Sign In
                 <ArrowRight />
               </Link>
-              {/* Superadmin removed */}
+              
             </div>
           </div>
 
