@@ -65,15 +65,4 @@ export async function DELETE() {
     return NextResponse.json({ error: "Failed to remove file" }, { status: 500 });
   }
 }
-import { NextResponse } from "next/server";
-
-export async function POST(request: Request) {
-  try {
-    const url = new URL(request.url);
-    const tenant = url.searchParams.get("tenantSlug") || "kreatix-default";
-
-    if (!process.env.DATABASE_URL) {
-      console.error("DATABASE_URL not set — cannot seed database");
-      return NextResponse.json({ error: "DATABASE_URL not set on server" }, { status: 500 });
-    }
 
