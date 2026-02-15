@@ -11,10 +11,6 @@ export default function AccessPage() {
             <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold">S</span>
             </div>
-            <span className="font-bold text-gray-900">Syspro</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-gray-700 hover:text-blue-600">Home</Link>
             <Link href="/" className="bg-blue-600 text-white px-4 py-2 rounded-lg">Request Demo</Link>
           </div>
         </div>
@@ -25,17 +21,14 @@ export default function AccessPage() {
           <div>
             <div className="inline-block mb-4 px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm">Access Portal</div>
             <h1 className="text-4xl font-bold text-gray-900 mb-4">Sign in to your workspace</h1>
-            <p className="text-lg text-gray-600 mb-6">Enter your tenant or superadmin credentials to access your workspace. If you don't have access, request a demo or contact support.</p>
+            <p className="text-lg text-gray-600 mb-6">Enter your tenant credentials to access your workspace. If you don't have access, request a demo or contact support.</p>
 
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/tenant-admin" className="bg-blue-600 text-white px-6 py-3 rounded-lg inline-flex items-center gap-2">
                 Tenant Sign In
                 <ArrowRight />
               </Link>
-              <Link href="/superadmin" className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg inline-flex items-center gap-2">
-                Superadmin
-                <ArrowRight />
-              </Link>
+              {/* Superadmin intentionally removed */}
             </div>
           </div>
 

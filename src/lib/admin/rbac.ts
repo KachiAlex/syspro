@@ -2,7 +2,6 @@ import type { Permission } from './types';
 
 // Predefined role -> permission keys (expandable)
 export const predefinedRolePermissions: Record<string, string[]> = {
-  'Super Admin': ['superadmin:*'],
   'Admin': ['tenant.admin:users:view', 'tenant.admin:users:create', 'tenant.admin:users:edit', 'tenant.admin:roles:manage'],
   'Finance Manager': ['tenant.finance:*'],
   'HR Manager': ['tenant.hr:*'],

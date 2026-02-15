@@ -9,7 +9,6 @@ import type { ReactNode } from "react";
 const opsLinks = [
   { label: "Planner", href: "/planner" },
   { label: "Suppliers", href: "/suppliers" },
-  { label: "Superadmin", href: "/superadmin" },
 ];
 
 const marketingLinks = [
