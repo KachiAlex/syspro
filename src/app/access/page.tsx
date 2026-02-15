@@ -3,17 +3,53 @@ import { ArrowRight } from "lucide-react";
 
 export default function AccessPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-[#05060a] text-white">
-      <div className="text-center p-8">
-        <h1 className="text-3xl font-semibold">Work in progress</h1>
-        <p className="mt-3 text-sm text-white/70">The access portal is temporarily disabled while we improve multi-tenant workflows.</p>
-        <div className="mt-6">
-          <Link href="/" className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white/80 hover:text-white">
-            Return to site
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold">S</span>
+            </div>
+            <span className="font-bold text-gray-900">Syspro</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="text-gray-700 hover:text-blue-600">Home</Link>
+            <Link href="/" className="bg-blue-600 text-white px-4 py-2 rounded-lg">Request Demo</Link>
+          </div>
         </div>
-      </div>
-    </main>
+      </header>
+
+      <main className="pt-28">
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <div className="inline-block mb-4 px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm">Access Portal</div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">Sign in to your workspace</h1>
+            <p className="text-lg text-gray-600 mb-6">Enter your tenant or superadmin credentials to access your workspace. If you don't have access, request a demo or contact support.</p>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link href="/tenant-admin" className="bg-blue-600 text-white px-6 py-3 rounded-lg inline-flex items-center gap-2">
+                Tenant Sign In
+                <ArrowRight />
+              </Link>
+              <Link href="/superadmin" className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg inline-flex items-center gap-2">
+                Superadmin
+                <ArrowRight />
+              </Link>
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="rounded-2xl overflow-hidden shadow-2xl">
+              <ImageWithFallback
+                src="https://images.unsplash.com/photo-1608222351212-18fe0ec7b13b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
+                alt="Dashboard preview"
+                className="w-full h-auto"
+              />
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
   );
 }
