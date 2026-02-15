@@ -1,4 +1,71 @@
 import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
+
+const DEV_DIR = path.join(process.cwd(), "dev-data");
+const TENANTS_FILE = path.join(DEV_DIR, "tenants.json");
+
+async function readTenantsFile() {
+  try {
+    const content = await fs.promises.readFile(TENANTS_FILE, "utf8");
+    return JSON.parse(content || "{}");
+  } catch (e) {
+    return { tenants: [] };
+  }
+}
+
+export async function GET() {
+  const data = await readTenantsFile();
+  return NextResponse.json(data);
+}
+
+export async function POST() {
+  // deterministic seed data for local/dev testing
+  const seed = {
+    tenants: [
+      {
+        name: "Acme Inc",
+        slug: "acme-inc",
+        region: "EMEA",
+        status: "Pending",
+        ledger: "₦0",
+        seats: 10,
+        admin_email: "admin@acme.local",
+        persisted: true,
+      },
+      {
+        name: "Kreatix Default",
+        slug: "kreatix-default",
+        region: "Africa",
+        status: "Live",
+        ledger: "₦0",
+        seats: 5,
+        admin_email: "dev@local",
+        persisted: true,
+      },
+    ],
+  };
+
+  try {
+    await fs.promises.mkdir(DEV_DIR, { recursive: true });
+    await fs.promises.writeFile(TENANTS_FILE, JSON.stringify(seed, null, 2), "utf8");
+    return NextResponse.json(seed, { status: 201 });
+  } catch (err) {
+    console.error("Dev seed write failed", err);
+    return NextResponse.json({ error: "Unable to write dev seed" }, { status: 500 });
+  }
+}
+
+export async function DELETE() {
+  try {
+    await fs.promises.rm(TENANTS_FILE, { force: true });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("Failed to remove dev tenants file", err);
+    return NextResponse.json({ error: "Failed to remove file" }, { status: 500 });
+  }
+}
+import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
@@ -10,19 +77,3 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "DATABASE_URL not set on server" }, { status: 500 });
     }
 
-    // Dynamically import the seeder to avoid loading it in production code paths
-    const mod = await import("@/lib/seed");
-    if (!mod || typeof mod.seedDatabaseForTenant !== "function") {
-      console.error("Seeder not found at @/lib/seed");
-      return NextResponse.json({ error: "Seeder not available" }, { status: 500 });
-    }
-
-    console.log(`Dev seed request received for tenant: ${tenant}`);
-    await mod.seedDatabaseForTenant(tenant);
-
-    return NextResponse.json({ ok: true, tenant });
-  } catch (error) {
-    console.error("Dev seed failed", error);
-    return NextResponse.json({ error: "Dev seed failed" }, { status: 500 });
-  }
-}
