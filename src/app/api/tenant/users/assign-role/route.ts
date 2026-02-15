@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getRoles } from "@/lib/admin/db";
-import { SQL } from "@/lib/sql-client";
+import { sql } from "@/lib/sql-client";
 
 interface AssignRoleRequest {
   userId: string;
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get all available roles for this tenant
-    const tenantRoles = await getRoles(tenantSlug, SQL);
+    const tenantRoles = await getRoles(tenantSlug, sql);
     const validRoleIds = tenantRoles.map((role: any) => role.id);
     
     // Also include default roles that might not be in the database yet
