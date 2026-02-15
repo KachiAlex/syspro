@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { ImageWithFallback } from '@/components/ImageWithFallback';
 
 export default function AccessPage() {
   return (
@@ -50,6 +51,5 @@ export default function AccessPage() {
         </section>
       </main>
     </div>
-  );
   );
 }
