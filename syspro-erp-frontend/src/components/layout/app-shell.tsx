@@ -11,7 +11,7 @@ const opsLinks = [
   { label: "Suppliers", href: "/suppliers" },
   { label: "Tenant Admin", href: "/admin/tenant-admin" },
   { label: "People & Access", href: "/admin/people-access" },
-  { label: "Superadmin", href: "/superadmin" },
+  
 ];
 
 const marketingLinks = [

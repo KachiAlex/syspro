@@ -34,10 +34,7 @@ export default function AccessPage() {
                 Tenant Sign In
                 <ArrowRight />
               </Link>
-              <Link href="/superadmin" className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg inline-flex items-center gap-2">
-                Superadmin
-                <ArrowRight />
-              </Link>
+              {/* Superadmin removed */}
             </div>
           </div>
 
