@@ -1,3 +1,6 @@
+export async function GET() {
+  return NextResponse.json({ status: 'ok', message: 'Superadmin login API route is deployed and reachable.' });
+}
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getSql } from '@/lib/db';
