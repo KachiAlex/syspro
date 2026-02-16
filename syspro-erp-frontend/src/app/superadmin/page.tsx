@@ -267,60 +267,60 @@ export default function SuperadminPage() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-200 text-lg font-semibold text-blue-700">Loading...</div>;
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Superadmin Portal</h1>
-        <div className="flex gap-4">
-          {activeTab === 'tenants' && (
-            <Button onClick={() => setShowTenantModal(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Tenant
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-200">
+      <div className="bg-white rounded-2xl shadow-xl p-10 max-w-5xl w-full">
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-4">
+            <img src="/logo.png" alt="Syspro Logo" className="w-12 h-12" />
+            <h1 className="text-3xl font-bold text-blue-700">Superadmin Portal</h1>
+          </div>
+          <div className="flex gap-4">
+            {activeTab === 'tenants' && (
+              <Button onClick={() => setShowTenantModal(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold text-lg hover:bg-blue-700 transition">
+                <Plus className="w-5 h-5 mr-2" /> Add Tenant
+              </Button>
+            )}
+            {activeTab === 'licenses' && (
+              <Button onClick={() => setShowLicenseModal(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold text-lg hover:bg-blue-700 transition">
+                <Plus className="w-5 h-5 mr-2" /> Add License
+              </Button>
+            )}
+            {activeTab === 'admins' && (
+              <Button onClick={() => setShowAdminModal(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold text-lg hover:bg-blue-700 transition">
+                <Plus className="w-5 h-5 mr-2" /> Add Admin
+              </Button>
+            )}
+            <Button variant="outline" onClick={handleLogout} className="px-6 py-3 rounded-lg font-semibold text-lg border border-blue-600 text-blue-700 hover:bg-blue-50 transition">
+              <LogOut className="w-5 h-5 mr-2" /> Logout
             </Button>
-          )}
-          {activeTab === 'licenses' && (
-            <Button onClick={() => setShowLicenseModal(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add License
-            </Button>
-          )}
-          {activeTab === 'admins' && (
-            <Button onClick={() => setShowAdminModal(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Admin
-            </Button>
-          )}
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
+          </div>
         </div>
-      </div>
 
-      <div className="mb-6">
-        <div className="flex space-x-4">
-          <button
-            onClick={() => setActiveTab('tenants')}
-            className={`px-4 py-2 rounded-md ${activeTab === 'tenants' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-          >
-            Tenants
-          </button>
-          <button
-            onClick={() => setActiveTab('licenses')}
-            className={`px-4 py-2 rounded-md ${activeTab === 'licenses' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-          >
-            Licenses
-          </button>
-          <button
-            onClick={() => setActiveTab('admins')}
-            className={`px-4 py-2 rounded-md ${activeTab === 'admins' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-          >
-            Tenant Admins
-          </button>
+        <div className="mb-8">
+          <div className="flex space-x-4">
+            <button
+              onClick={() => setActiveTab('tenants')}
+              className={`px-6 py-3 rounded-lg font-semibold text-lg ${activeTab === 'tenants' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-blue-50 transition'}`}
+            >
+              Tenants
+            </button>
+            <button
+              onClick={() => setActiveTab('licenses')}
+              className={`px-6 py-3 rounded-lg font-semibold text-lg ${activeTab === 'licenses' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-blue-50 transition'}`}
+            >
+              Licenses
+            </button>
+            <button
+              onClick={() => setActiveTab('admins')}
+              className={`px-6 py-3 rounded-lg font-semibold text-lg ${activeTab === 'admins' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-blue-50 transition'}`}
+            >
+              Tenant Admins
+            </button>
+          </div>
         </div>
-      </div>
 
       {activeTab === 'tenants' && (
         <div className="bg-white rounded-lg shadow">

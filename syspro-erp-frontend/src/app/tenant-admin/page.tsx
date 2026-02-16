@@ -3610,7 +3610,8 @@ export default function TenantAdminPage() {
           <main className="flex flex-1 flex-col overflow-y-auto">
             <header className="border-b border-slate-200 bg-white/90 px-8 py-6">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div>
+                <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-200">
+                  <div className="bg-white rounded-2xl shadow-xl p-10 max-w-6xl w-full">
                   <p className="text-sm uppercase tracking-[0.2em] text-slate-400">{selectedRegion}</p>
                   <h1 className="text-2xl font-semibold text-slate-900">{headline}</h1>
                   <p className="text-sm text-slate-500">Holistic view into finance + ops health</p>
@@ -10485,56 +10486,56 @@ function ProjectsWorkspace({
       )}
 
       {currentView === "profitability" && (
-        <div className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-3 mb-6">
-            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Revenue</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">₦{profitability.reduce((sum, p) => sum + p.revenue, 0).toLocaleString()}</p>
+        <div className="space-y-8">
+          <div className="grid gap-8 lg:grid-cols-3 mb-8">
+            <div className="rounded-3xl border border-blue-100 bg-blue-50 p-8 shadow-md">
+              <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Total Revenue</p>
+              <p className="text-4xl font-bold text-blue-700 mt-2">₦{profitability.reduce((sum, p) => sum + p.revenue, 0).toLocaleString()}</p>
             </div>
-            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Costs</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">₦{profitability.reduce((sum, p) => sum + p.costs, 0).toLocaleString()}</p>
+            <div className="rounded-3xl border border-blue-100 bg-blue-50 p-8 shadow-md">
+              <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Total Costs</p>
+              <p className="text-4xl font-bold text-blue-700 mt-2">₦{profitability.reduce((sum, p) => sum + p.costs, 0).toLocaleString()}</p>
             </div>
-            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Total Profit</p>
-              <p className="text-3xl font-bold text-emerald-600 mt-2">₦{profitability.reduce((sum, p) => sum + p.margin, 0).toLocaleString()}</p>
+            <div className="rounded-3xl border border-blue-100 bg-blue-50 p-8 shadow-md">
+              <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Total Profit</p>
+              <p className="text-4xl font-bold text-emerald-600 mt-2">₦{profitability.reduce((sum, p) => sum + p.margin, 0).toLocaleString()}</p>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
+          <div className="rounded-3xl border border-blue-100 bg-white p-8 shadow-md">
+            <div className="flex items-center justify-between mb-8">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Project Analysis</p>
-                <h3 className="text-lg font-semibold text-slate-900">Profitability by Project</h3>
+                <p className="text-xs uppercase tracking-[0.3em] text-blue-400">Project Analysis</p>
+                <h3 className="text-2xl font-semibold text-blue-700">Profitability by Project</h3>
               </div>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200">
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Project</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Revenue</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Costs</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Profit</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">Margin %</th>
+                  <tr className="border-b border-blue-200">
+                    <th className="px-6 py-4 text-left text-lg font-semibold text-blue-700">Project</th>
+                    <th className="px-6 py-4 text-left text-lg font-semibold text-blue-700">Revenue</th>
+                    <th className="px-6 py-4 text-left text-lg font-semibold text-blue-700">Costs</th>
+                    <th className="px-6 py-4 text-left text-lg font-semibold text-blue-700">Profit</th>
+                    <th className="px-6 py-4 text-left text-lg font-semibold text-blue-700">Margin %</th>
                   </tr>
                 </thead>
                 <tbody>
                   {profitability.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-slate-500">No profitability data yet</td>
+                      <td colSpan={5} className="px-6 py-12 text-center text-blue-400 text-lg">No profitability data yet</td>
                     </tr>
                   ) : (
                     profitability.map((proj) => (
-                      <tr key={proj.id} className="border-b border-slate-100 hover:bg-slate-50">
-                        <td className="px-4 py-3 text-sm text-slate-900 font-medium">{proj.projectName}</td>
-                        <td className="px-4 py-3 text-sm text-slate-500">₦{proj.revenue.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-sm text-slate-500">₦{proj.costs.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-sm font-medium" style={{ color: proj.margin >= 0 ? '#059669' : '#dc2626' }}>₦{proj.margin.toLocaleString()}</td>
-                        <td className="px-4 py-3">
+                      <tr key={proj.id} className="border-b border-blue-100 hover:bg-blue-50">
+                        <td className="px-6 py-4 text-lg text-blue-700 font-medium">{proj.projectName}</td>
+                        <td className="px-6 py-4 text-lg text-blue-500">₦{proj.revenue.toLocaleString()}</td>
+                        <td className="px-6 py-4 text-lg text-blue-500">₦{proj.costs.toLocaleString()}</td>
+                        <td className="px-6 py-4 text-lg font-medium" style={{ color: proj.margin >= 0 ? '#059669' : '#dc2626' }}>₦{proj.margin.toLocaleString()}</td>
+                        <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
-                            <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            <div className={`inline-flex items-center px-3 py-1 rounded-full text-lg font-medium ${
                               proj.marginPercent >= 30 ? 'bg-emerald-50 text-emerald-700' :
                               proj.marginPercent >= 15 ? 'bg-blue-50 text-blue-700' :
                               proj.marginPercent >= 0 ? 'bg-amber-50 text-amber-700' :
@@ -10555,9 +10556,9 @@ function ProjectsWorkspace({
       )}
 
       {toast && (
-        <div className="fixed bottom-4 right-4 rounded-lg bg-slate-900 px-4 py-3 text-sm text-white shadow-lg">
+        <div className="fixed bottom-4 right-4 rounded-lg bg-blue-700 px-6 py-4 text-lg text-white shadow-xl">
           {toast}
-          <button onClick={onToastDismiss} className="ml-4 text-slate-300 hover:text-white">✕</button>
+          <button onClick={onToastDismiss} className="ml-6 text-blue-200 hover:text-white text-xl">✕</button>
         </div>
       )}
     </div>
