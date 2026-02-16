@@ -117,7 +117,7 @@ export default async function TenantAdminLayout({ children, searchParams }: { ch
         </div>
       );
     }
-    redirect("/access?error=auth_required");
+    redirect("/tenant-admin/tenant-signin?error=auth_required");
   }
 
   // In local development, when a dev cookie/session is present, allow access
