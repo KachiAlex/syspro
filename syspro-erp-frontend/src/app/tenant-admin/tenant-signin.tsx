@@ -30,33 +30,8 @@ export default function TenantSignIn() {
 
   return (
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded shadow">
-      <h2 className="text-xl font-bold mb-4">Tenant Sign In</h2>
-      <form onSubmit={handleSubmit}>
-        <label className="block mb-2">Email</label>
-        <input
-          type="email"
-          className="w-full mb-4 p-2 border rounded"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          required
-        />
-        <label className="block mb-2">Password</label>
-        <input
-          type="password"
-          className="w-full mb-4 p-2 border rounded"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
-        />
-        {error && <div className="text-red-500 mb-2">{error}</div>}
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded"
-          disabled={loading}
-        >
-          {loading ? "Signing in..." : "Sign In"}
-        </button>
-      </form>
+      <h2 className="text-xl font-bold mb-4">Tenant Sign In Portal Disabled</h2>
+      <p className="text-slate-600">Sign in functionality has been removed.</p>
     </div>
   );
 }
