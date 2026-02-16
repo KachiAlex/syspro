@@ -232,7 +232,8 @@ describeIfDb("Superadmin Portal - Database Integration", () => {
       expect(license.tenant_id).toBe(testTenant.id);
       expect(license.type).toBe(licenseData.type);
       expect(license.seats).toBe(licenseData.seats);
-      expect(license.expiry).toBe(licenseData.expiry);
+      // Compare only the date part to avoid timezone issues
+      expect(new Date(license.expiry).toISOString().slice(0, 10)).toBe(licenseData.expiry);
 
       testLicense = license;
     });
@@ -291,7 +292,8 @@ describeIfDb("Superadmin Portal - Database Integration", () => {
 
       expect(updatedLicense.type).toBe(updateData.type);
       expect(updatedLicense.seats).toBe(updateData.seats);
-      expect(updatedLicense.expiry).toBe(updateData.expiry);
+      // Compare only the date part to avoid timezone issues
+      expect(new Date(updatedLicense.expiry).toISOString().slice(0, 10)).toBe(updateData.expiry);
 
       testLicense = license;
     });
