@@ -21,8 +21,12 @@ export default function AccessPage() {
                 Tenant Admin Dashboard
                 <ArrowRight />
               </Link>
-              <Link href="/superadmin" className="bg-gray-900 text-white px-6 py-3 rounded-lg inline-flex items-center gap-2 shadow-md hover:bg-gray-800 transition">
-                Superadmin Portal
+              <Link href="/superadmin/login" className="bg-gray-900 text-white px-6 py-3 rounded-lg inline-flex items-center gap-2 shadow-md hover:bg-gray-800 transition">
+                Superadmin Portal Sign In
+                <ArrowRight />
+              </Link>
+              <Link href="/superadmin" className="bg-gray-700 text-white px-6 py-3 rounded-lg inline-flex items-center gap-2 shadow-md hover:bg-gray-800 transition">
+                Superadmin Dashboard
                 <ArrowRight />
               </Link>
               <Link href="/" className="bg-white border border-blue-600 text-blue-700 px-6 py-3 rounded-lg inline-flex items-center gap-2 shadow-md hover:bg-blue-50 transition">
