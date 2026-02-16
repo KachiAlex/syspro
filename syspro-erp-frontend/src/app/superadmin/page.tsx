@@ -36,6 +36,30 @@ interface TenantAdmin {
 }
 
 export default function SuperadminPage() {
+    // Tenant status management
+    const handleSuspendTenant = async (slug: string) => {
+      if (!confirm('Suspend this tenant?')) return;
+      try {
+        const response = await fetch(`/api/superadmin/tenants/${slug}/suspend`, { method: 'POST' });
+        if (response.ok) {
+          fetchTenants();
+        }
+      } catch (error) {
+        console.error('Failed to suspend tenant:', error);
+      }
+    };
+
+    const handleActivateTenant = async (slug: string) => {
+      if (!confirm('Activate this tenant?')) return;
+      try {
+        const response = await fetch(`/api/superadmin/tenants/${slug}/activate`, { method: 'POST' });
+        if (response.ok) {
+          fetchTenants();
+        }
+      } catch (error) {
+        console.error('Failed to activate tenant:', error);
+      }
+    };
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [licenses, setLicenses] = useState<License[]>([]);
   const [tenantAdmins, setTenantAdmins] = useState<TenantAdmin[]>([]);
@@ -335,19 +359,21 @@ export default function SuperadminPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(tenant.created_at).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex gap-2">
                     <Button variant="ghost" size="sm" onClick={() => handleViewDetails(tenant)}>
                       <Eye className="w-4 h-4" />
                     </Button>
                     <Button variant="ghost" size="sm">
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteTenant(tenant.slug)}
-                    >
-                      <Trash2 className="w-4 h-4" />
+                    <Button variant="ghost" size="sm" onClick={() => handleSuspendTenant(tenant.slug)}>
+                      <X className="w-4 h-4 text-orange-600" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleActivateTenant(tenant.slug)}>
+                      <Eye className="w-4 h-4 text-green-600" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDeleteTenant(tenant.slug)}>
+                      <Trash2 className="w-4 h-4 text-red-600" />
                     </Button>
                   </td>
                 </tr>
