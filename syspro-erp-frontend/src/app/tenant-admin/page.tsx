@@ -1,21 +1,106 @@
 "use client";
 
-type CrmLeadRecord = {
-  id: string;
-  tenantSlug: string;
-  regionId: string;
-  branchId: string;
-  companyName: string;
-  contactName: string;
-  contactEmail?: string | null;
-  contactPhone?: string | null;
-  source: string;
-  stage: string;
-  assignedOfficerId?: string | null;
-  expectedValue?: number | null;
-  currency?: string | null;
-  notes?: string | null;
-};
+import React, { useState } from "react";
+
+/**
+ * Minimal, robust Tenant Admin page replacement.
+ * - Small, self-contained component to prevent parser/build flakiness
+ * - Reintroduce features incrementally from this stable base
+ */
+
+type NavKey = "overview" | "crm" | "finance" | "inventory" | "hr" | "settings";
+
+export default function TenantAdminPage() {
+  const [activeNav, setActiveNav] = useState<NavKey>("overview");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showNewProductModal, setShowNewProductModal] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="max-w-7xl mx-auto p-6">
+        <header className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">Tenant Admin — Simplified</h1>
+          <div className="flex items-center gap-3">
+            <button
+              className="rounded-full bg-slate-900 px-4 py-2 text-white"
+              onClick={() => setShowNewProductModal(true)}
+            >
+              Add product
+            </button>
+            <button
+              className="rounded-full border px-4 py-2 text-sm"
+              onClick={() => setSidebarCollapsed((s) => !s)}
+            >
+              {sidebarCollapsed ? "Expand" : "Collapse"}
+            </button>
+          </div>
+        </header>
+
+        <div className="grid gap-6 md:grid-cols-4">
+          <aside className={`rounded-lg border bg-white p-4 ${sidebarCollapsed ? "md:col-span-1" : "md:col-span-1"}`}>
+            <nav className="space-y-2 text-sm">
+              {(["overview", "crm", "finance", "inventory", "hr", "settings"] as NavKey[]).map((k) => (
+                <button
+                  key={k}
+                  className={`block w-full text-left rounded px-3 py-2 ${activeNav === k ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-50"}`}
+                  onClick={() => setActiveNav(k)}
+                >
+                  {k.charAt(0).toUpperCase() + k.slice(1)}
+                </button>
+              ))}
+            </nav>
+          </aside>
+
+          <main className="md:col-span-3 space-y-6">
+            <section className="rounded-lg border bg-white p-6">
+              <h2 className="text-lg font-semibold">{activeNav.toUpperCase()}</h2>
+              <p className="mt-2 text-sm text-slate-600">This is a safe, minimal replacement of the tenant admin page. Re-add features incrementally.</p>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-3">
+                <div className="rounded-lg border p-4">Quick KPI</div>
+                <div className="rounded-lg border p-4">Actions</div>
+                <div className="rounded-lg border p-4">Recent activity</div>
+              </div>
+            </section>
+
+            <section className="rounded-lg border bg-white p-6">
+              <h3 className="text-sm font-semibold text-slate-700">Inventory</h3>
+              <div className="mt-4 text-sm text-slate-600">Products: 0 · Stock alerts: 0</div>
+            </section>
+          </main>
+        </div>
+
+        {toast && (
+          <div className="fixed bottom-6 right-6 rounded bg-emerald-600 px-4 py-2 text-white shadow">{toast}</div>
+        )}
+
+        {showNewProductModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="w-full max-w-md rounded bg-white p-6 shadow">
+              <h4 className="text-lg font-semibold">Add product</h4>
+              <p className="mt-2 text-sm text-slate-600">Simple modal — no back-end operations in this minimal replacement.</p>
+              <div className="mt-4 flex justify-end gap-2">
+                <button onClick={() => setShowNewProductModal(false)} className="rounded border px-4 py-2">Cancel</button>
+                <button
+                  onClick={() => {
+                    setToast("Product added (simulated)");
+                    setShowNewProductModal(false);
+                    setTimeout(() => setToast(null), 2200);
+                  }}
+                  className="rounded bg-slate-900 px-4 py-2 text-white"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 
 type CrmCustomerRecordNormalized = {
   id: string;
