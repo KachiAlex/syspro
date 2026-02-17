@@ -3671,7 +3671,7 @@ export default function TenantAdminPage() {
                   </Link>
                 </div>
               </div>
-            </header>
+            {/* </header> removed: fixed stray closing tag */}
 
             <section className="flex-1 overflow-y-auto px-8 py-10">
               <div className="space-y-10">
