@@ -3,9 +3,7 @@
 import React, { useState } from "react";
 
 /**
- * Minimal, robust Tenant Admin page replacement.
- * - Small, self-contained component to prevent parser/build flakiness
- * - Reintroduce features incrementally from this stable base
+ * Minimal Tenant Admin page — legacy implementation removed to fix Turbopack parse errors.
  */
 
 type NavKey = "overview" | "crm" | "finance" | "inventory" | "hr" | "settings";
@@ -13,28 +11,13 @@ type NavKey = "overview" | "crm" | "finance" | "inventory" | "hr" | "settings";
 export default function TenantAdminPage() {
   const [activeNav, setActiveNav] = useState<NavKey>("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [showNewProductModal, setShowNewProductModal] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <div className="max-w-7xl mx-auto p-6">
         <header className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Tenant Admin — Simplified</h1>
-          <div className="flex items-center gap-3">
-            <button
-              className="rounded-full bg-slate-900 px-4 py-2 text-white"
-              onClick={() => setShowNewProductModal(true)}
-            >
-              Add product
-            </button>
-            <button
-              className="rounded-full border px-4 py-2 text-sm"
-              onClick={() => setSidebarCollapsed((s) => !s)}
-            >
-              {sidebarCollapsed ? "Expand" : "Collapse"}
-            </button>
-          </div>
+          <h1 className="text-2xl font-semibold">Tenant Admin — Clean</h1>
+          <div className="text-sm text-slate-500">Legacy tenant-admin implementation removed</div>
         </header>
 
         <div className="grid gap-6 md:grid-cols-4">
@@ -55,299 +38,13 @@ export default function TenantAdminPage() {
           <main className="md:col-span-3 space-y-6">
             <section className="rounded-lg border bg-white p-6">
               <h2 className="text-lg font-semibold">{activeNav.toUpperCase()}</h2>
-              <p className="mt-2 text-sm text-slate-600">This is a safe, minimal replacement of the tenant admin page. Re-add features incrementally.</p>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
-                <div className="rounded-lg border p-4">Quick KPI</div>
-                <div className="rounded-lg border p-4">Actions</div>
-                <div className="rounded-lg border p-4">Recent activity</div>
-              </div>
-            </section>
-
-            <section className="rounded-lg border bg-white p-6">
-              <h3 className="text-sm font-semibold text-slate-700">Inventory</h3>
-              <div className="mt-4 text-sm text-slate-600">Products: 0 · Stock alerts: 0</div>
+              <p className="mt-2 text-sm text-slate-600">This is a minimal, safe replacement. Reintroduce features from smaller modules if needed.</p>
             </section>
           </main>
         </div>
-
-        {toast && (
-          <div className="fixed bottom-6 right-6 rounded bg-emerald-600 px-4 py-2 text-white shadow">{toast}</div>
-        )}
-
-        {showNewProductModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="w-full max-w-md rounded bg-white p-6 shadow">
-              <h4 className="text-lg font-semibold">Add product</h4>
-              <p className="mt-2 text-sm text-slate-600">Simple modal — no back-end operations in this minimal replacement.</p>
-              <div className="mt-4 flex justify-end gap-2">
-                <button onClick={() => setShowNewProductModal(false)} className="rounded border px-4 py-2">Cancel</button>
-                <button
-                  onClick={() => {
-                    setToast("Product added (simulated)");
-                    setShowNewProductModal(false);
-                    setTimeout(() => setToast(null), 2200);
-                  }}
-                  className="rounded bg-slate-900 px-4 py-2 text-white"
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
-}
-
-
-/* type CrmCustomerRecordNormalized = {
-  id: string;
-  tenantSlug: string;
-  regionId: string;
-  branchId: string;
-  regionName?: string;
-  branchName?: string;
-  name: string;
-  primaryContact?: {
-    name?: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    phone?: string;
-    owner?: string;
-  } | null;
-  status?: string | null;
-};
-
-
-import Link from "next/link";
-import { Component, Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ChangeEvent, ComponentType, FormEvent } from "react";
-import { FormAlert } from "@/components/form";
-import { usePermissions } from "@/lib/use-permissions";
-import OrgStructureManager from "@/app/tenant-admin/sections/org-structure";
-import RoleBuilder from "@/app/tenant-admin/sections/role-builder";
-import ApprovalDesigner from "@/app/tenant-admin/sections/approval-designer";
-import EmployeeConsole from "@/app/tenant-admin/sections/employee-console";
-import EmployeeAttendanceDashboard from "@/components/employee-attendance-dashboard";
-import AttendanceReports from "@/components/attendance-reports";
-import StaffReports from "@/components/staff-reports";
-import { listExpenses, createExpense, approveExpense, deleteExpense } from "@/lib/api/expenses";
-import AccessControlPanel from "@/app/tenant-admin/sections/access-control";
-import RoleAssignmentPanel from "@/app/tenant-admin/sections/role-assignment";
-import AdminControlCenter from "@/app/tenant-admin/sections/admin-control-center";
-import AdminRestrictions from "@/app/tenant-admin/sections/admin-restrictions";
-import LifecycleWorkflows from "@/app/tenant-admin/sections/workflows";
-import ModuleRegistry from "@/app/tenant-admin/sections/module-registry";
-import BillingSection from "@/app/tenant-admin/sections/billing";
-import IntegrationsSection from "@/app/tenant-admin/sections/integrations";
-import AnalyticsSection from "@/app/tenant-admin/sections/analytics";
-import SecuritySection from "@/app/tenant-admin/sections/security";
-import CostAllocationSection from "@/app/tenant-admin/sections/cost-allocation";
-import ItSupportWorkspace from "@/app/tenant-admin/sections/it-support-workspace";
-import RevOpsWorkspace from "@/app/tenant-admin/sections/revops-workspace";
-import type { RevOpsOverviewSnapshot } from "@/lib/revops-data";
-import AutomationRules from "@/app/tenant-admin/sections/automation-rules";
-import AutomationDashboard from "@/app/tenant-admin/sections/automation-dashboard";
-import PoliciesSection from "@/app/tenant-admin/sections/policies";
-import ReportsSection from "@/app/tenant-admin/sections/reports";
-
-type NavigationLink = {
-  label: string;
-  key: string;
-  icon: ComponentType<{ className?: string }>;
-  badge?: string;
-};
-
-const CRM_METRICS = [];
-
-const CRM_LEADS = [];
-
-const CRM_TASKS = [];
-
-const CRM_ENGAGEMENTS = [];
-
-const CRM_STATUS_META: Record<string, { label: string; chip: string; dot: string }> = {};
-
-const CRM_REMINDERS = [];
-
-const CRM_CUSTOMERS = [];
-
-const CRM_CHARTS_BASELINE = [];
-
-const CRM_BASELINE_SNAPSHOT: CrmSnapshot = {
-  metrics: [],
-  leads: [],
-  tasks: [],
-  engagements: [],
-  reminders: [],
-  charts: {
-    funnel: [],
-    revenueByOfficer: [],
-    lostReasons: [],
-  },
-  customers: [],
-};
-
-const FINANCE_TREND_BASELINE = [];
-
-const FINANCE_RECEIVABLES_BASELINE = [];
-
-const FINANCE_PAYABLES_BASELINE = [];
-
-type FinanceExpenseItem = {
-  id: string;
-  description: string;
-  category: string;
-  amount: string;
-  submittedBy: string;
-  submittedDate: string;
-  status: "pending" | "approved" | "rejected" | "paid";
-  branch: string;
-};
-
-const FINANCE_EXPENSES_BASELINE = [];
-
-type PaymentRecord = {
-  id: string;
-  payableId: string;
-  customerId?: string;
-  invoiceId?: string;
-  method: "bank_transfer" | "check" | "cash" | "pos" | "mobile_money" | "wire" | "paystack" | "flutterwave" | "stripe";
-  grossAmount: number | string;
-  fees: number | string;
-  netAmount: number | string;
-  currency: string;
-  paymentDate: string;
-  settlementDate?: string;
-  referenceNumber: string;
-  reference?: string;
-  gatewayReference?: string;
-  confirmationDetails: string;
-  status: "pending" | "successful" | "failed" | "reversed" | "settled";
-  gateway?: "paystack" | "flutterwave" | "stripe" | "manual";
-  linkedInvoices: string[]; // Invoice IDs
-  recordedBy: string;
-  recordedDate: string;
-  auditTrail: {
-    action: string;
-    timestamp: string;
-    user: string;
-  }[];
-};
-
-const PAYMENT_RECORDS_BASELINE = [];
-
-// Expense Types
-type ExpenseCategory = {
-  id: string;
-  code: string;
-  name: string;
-  accountId: string;
-  requiresVendor: boolean;
-  requiresReceipt: boolean;
-  categoryLimit?: number;
-  policyDescription: string;
-};
-
-type Approval = {
-  id: string;
-  expenseId: string;
-  approverRole: "manager" | "finance" | "executive";
-  approverId: string;
-  approverName: string;
-  action: "approved" | "rejected" | "clarification_requested";
-  reason?: string;
-  timestamp: string;
-  amountThreshold: number;
-};
-
-type AuditLog = {
-  id: string;
-  action: string;
-  timestamp: string;
-  user: string;
-  details: Record<string, any>;
-};
-
-type Expense = {
-  id: string;
-  tenantId: string;
-  expenseDate: string;
-  recordedDate: string;
-  amount: number;
-  taxType: "none" | "vat" | "wht";
-  taxRate: number;
-  taxAmount: number;
-  totalAmount: number;
-  category: ExpenseCategory;
-  type: "vendor" | "employee_reimbursement" | "cash" | "prepaid";
-  description: string;
-  vendorId?: string;
-  vendorName?: string;
-  employeeId?: string;
-  departmentId: string;
-  projectId?: string;
-  costCenterId?: string;
-  paymentStatus: "unpaid" | "paid" | "reimbursed" | "pending_payment";
-  approvalStatus: "draft" | "pending" | "approved" | "rejected";
-  paymentMethod: "bank_transfer" | "cash" | "corporate_card" | "mobile_money" | "check";
-  linkedPaymentId?: string;
-  linkedInvoiceId?: string;
-  notes: string;
-  receiptUrls: string[];
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  approvedBy?: string;
-  approvedAt?: string;
-  rejectionReason?: string;
-  journalEntryId?: string;
-  accountId: string;
-  vatInputAccountId?: string;
-  whtPayableAccountId?: string;
-  approvals: Approval[];
-  auditTrail: AuditLog[];
-};
-
-const EXPENSE_CATEGORIES_BASELINE = [];
-
-const EXPENSE_RECORDS_BASELINE = [];
-
-const DEFAULT_FINANCE_CURRENCY = "₦";
-
-const FINANCE_CASH_ACCOUNTS_BASELINE = [];
-
-const FINANCE_EXPENSE_BREAKDOWN_BASELINE = [];
-
-const MOCK_INVOICES = [];
-
-const FINANCE_BASELINE_SNAPSHOT: FinanceSnapshot = {
-  metrics: [],
-  trend: {
-    labels: [],
-    revenue: [],
-    expenses: [],
-  },
-  receivables: [],
-  payables: [],
-  cashAccounts: [],
-  expenseBreakdown: [],
-};
-
-const FINANCE_SCHEDULE_STATUS_META: Record<FinanceScheduleItem["status"], { label: string; chip: string }> = {
-  current: { label: "Current", chip: "bg-emerald-50 text-emerald-600" },
-  due_soon: { label: "Due soon", chip: "bg-amber-50 text-amber-600" },
-  overdue: { label: "Overdue", chip: "bg-rose-50 text-rose-600" },
-};
-
-function normalizeFinanceScheduleStatus(value: unknown): FinanceScheduleItem["status"] {
-  if (value === "due_soon" || value === "overdue" || value === "current") {
-    return value;
-  }
-  return "current";
 }
 
 function mapFinanceSnapshotPayload(payload: unknown): FinanceSnapshot {
@@ -719,7 +416,7 @@ function CrmCustomersView({
             </div>
           )}
 
-          {/* Loading state handled in CrmContactsView; customers list currently static */}
+          
         </div>
 
         <div className="space-y-6">
@@ -5747,7 +5444,7 @@ function FinanceWorkspace({
                     }}
                     className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:border-slate-300"
                     type="button"
-                  >"
+                  >
                 <Icon className="h-4 w-4" />
                 <div className="text-left">
                   <p className="font-semibold leading-none">{action.label}</p>
