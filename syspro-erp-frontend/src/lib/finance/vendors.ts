@@ -115,78 +115,8 @@ export async function lookupVendor(
   type: "name" | "code" | "email" = "name"
 ): Promise<VendorLookupResult> {
   // Prefer DB-backed lookup when connection configured
-  try {
-    const sql = SQL;
-    await sql`
-      select 1
-    `;
-
-    const q = `%${query}%`;
-    const whereField = type === "name" ? "name" : type === "code" ? "code" : "email";
-    const queryText = `select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at from vendors where ${whereField} ilike $1 order by name asc limit 10`;
-    const rows = (await db.query<VendorRowDB>(queryText, [q])).rows;
-
-    if (rows.length === 0) {
-      return { found: false };
-    }
-
-    // exact match check
-    const exact = rows.find((r) => {
-      const val = (type === "name" ? r.name : type === "code" ? r.code : r.email) || "";
-      return val.toLowerCase() === query.toLowerCase();
-    });
-
-    if (exact) {
-      return {
-        found: true,
-        vendor: {
-          id: exact.id,
-          code: exact.code,
-          name: exact.name,
-          email: exact.email,
-          phone: exact.phone,
-          address: exact.address,
-          city: exact.city,
-          state: exact.state,
-          country: exact.country,
-          taxId: exact.tax_id,
-          accountNumber: exact.account_number,
-          bankCode: exact.bank_code,
-          bankName: exact.bank_name,
-          paymentTerms: exact.payment_terms,
-          isActive: exact.is_active ?? true,
-          createdAt: exact.created_at ?? new Date().toISOString(),
-          updatedAt: exact.updated_at ?? new Date().toISOString(),
-        },
-      };
-    }
-
-    const similar = rows.map((r) => ({
-      id: r.id,
-      code: r.code,
-      name: r.name,
-      email: r.email,
-      phone: r.phone,
-      address: r.address,
-      city: r.city,
-      state: r.state,
-      country: r.country,
-      taxId: r.tax_id,
-      accountNumber: r.account_number,
-      bankCode: r.bank_code,
-      bankName: r.bank_name,
-      paymentTerms: r.payment_terms,
-      isActive: r.is_active ?? true,
-      createdAt: r.created_at ?? new Date().toISOString(),
-      updatedAt: r.updated_at ?? new Date().toISOString(),
-    }));
-
-    return { found: false, similar };
-  } catch (err) {
-    // Fallback to sample vendor data if DB unavailable
     try {
       const lowerQuery = query.toLowerCase();
-
       // Exact match
       let vendor = SAMPLE_VENDORS.find((v) => {
         switch (type) {
@@ -199,11 +129,9 @@ export async function lookupVendor(
             return v.name.toLowerCase() === lowerQuery;
         }
       });
-
       if (vendor) {
         return { found: true, vendor };
       }
-
       // Fuzzy match
       const similar = SAMPLE_VENDORS.filter((v) => {
         switch (type) {
@@ -216,13 +144,11 @@ export async function lookupVendor(
             return v.name.toLowerCase().includes(lowerQuery);
         }
       }).slice(0, 5);
-
       return { found: false, similar: similar.length > 0 ? similar : undefined };
     } catch (error) {
       console.error("Vendor lookup failed:", error);
       return { found: false };
     }
-  }
 }
 
 /**
@@ -273,10 +199,10 @@ export async function listVendors(
       accountNumber: r.account_number,
       bankCode: r.bank_code,
       bankName: r.bank_name,
-      paymentTerms: r.payment_terms,
-      isActive: r.is_active,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
+      paymentTerms: (r.payment_terms as VendorRecord['paymentTerms']) ?? 'net30',
+      isActive: r.is_active ?? true,
+      createdAt: r.created_at ?? new Date().toISOString(),
+      updatedAt: r.updated_at ?? new Date().toISOString(),
     }));
   } catch (err) {
     // Fallback to samples
@@ -314,7 +240,6 @@ export async function getVendor(vendorId: string): Promise<VendorRecord | null> 
     `;
 
     if (!rows.length) return null;
-
     const r = rows[0];
     return {
       id: r.id,
@@ -330,10 +255,10 @@ export async function getVendor(vendorId: string): Promise<VendorRecord | null> 
       accountNumber: r.account_number,
       bankCode: r.bank_code,
       bankName: r.bank_name,
-      paymentTerms: r.payment_terms,
-      isActive: r.is_active,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
+      paymentTerms: (r.payment_terms as VendorRecord['paymentTerms']) ?? 'net30',
+      isActive: r.is_active ?? true,
+      createdAt: r.created_at ?? new Date().toISOString(),
+      updatedAt: r.updated_at ?? new Date().toISOString(),
     };
   } catch (err) {
     return SAMPLE_VENDORS.find((v) => v.id === vendorId) || null;
@@ -353,9 +278,9 @@ export async function createVendor(payload: Partial<VendorRecord>): Promise<Vend
         id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
       ) values (
         ${id}, ${payload.code ?? null}, ${payload.name ?? null}, ${payload.email ?? null}, ${payload.phone ?? null}, ${payload.address ?? null}, ${payload.city ?? null}, ${payload.state ?? null}, ${payload.country ?? null}, ${payload.taxId ?? null}, ${payload.accountNumber ?? null}, ${payload.bankCode ?? null}, ${payload.bankName ?? null}, ${payload.paymentTerms ?? "net30"}, ${payload.isActive ?? true}, ${now}, ${now}
-      ) returning *
+      )
+      returning *
     `;
-
     return {
       id: row.id,
       code: row.code,
@@ -370,7 +295,7 @@ export async function createVendor(payload: Partial<VendorRecord>): Promise<Vend
       accountNumber: row.account_number,
       bankCode: row.bank_code,
       bankName: row.bank_name,
-      paymentTerms: row.payment_terms,
+      paymentTerms: (row.payment_terms as VendorRecord['paymentTerms']) ?? 'net30',
       isActive: row.is_active ?? true,
       createdAt: row.created_at ?? new Date().toISOString(),
       updatedAt: row.updated_at ?? new Date().toISOString(),
@@ -472,10 +397,10 @@ export async function updateVendor(id: string, updates: Partial<VendorRecord>): 
       accountNumber: row.account_number,
       bankCode: row.bank_code,
       bankName: row.bank_name,
-      paymentTerms: row.payment_terms,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
+      paymentTerms: (row.payment_terms as VendorRecord['paymentTerms']) ?? 'net30',
+      isActive: row.is_active ?? true,
+      createdAt: row.created_at ?? new Date().toISOString(),
+      updatedAt: row.updated_at ?? new Date().toISOString(),
     };
   } catch (err) {
     const idx = SAMPLE_VENDORS.findIndex((v) => v.id === id);

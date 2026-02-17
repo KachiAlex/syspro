@@ -1,3 +1,4 @@
+export type { Action, AutomationRule };
 // Inline commonly-used automation types to avoid file/folder name resolution
 // conflicts on environments where `lib/automation.ts` and `lib/automation/` both exist.
 export type Condition = {
