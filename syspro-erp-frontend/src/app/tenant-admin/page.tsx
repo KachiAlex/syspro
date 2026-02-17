@@ -2136,48 +2136,6 @@ export default function TenantAdminPage() {
   const [revopsOverviewError, setRevopsOverviewError] = useState<string | null>(null);
   const [revopsOverviewVersion, setRevopsOverviewVersion] = useState(0);
 
-  return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="flex min-h-screen">
-        <Sidebar ... />
-        <div className="flex-1">
-          <main ...>
-            <section ...>
-              <div ...>
-                {/* ...existing code... */}
-                {/* Inventory Modals */}
-                {showNewProductModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"> ... </div>
-                )}
-                {showStockTransferModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"> ... </div>
-                )}
-                {/* Procurement Modals */}
-                {showNewVendorModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"> ... </div>
-                )}
-                {showNewPOModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"> ... </div>
-                )}
-                {showAddEmployeeModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"> ... </div>
-                )}
-                {showAddDepartmentModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"> ... </div>
-                )}
-                {showCreateProjectModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"> ... </div>
-                )}
-                {toast && (
-                  <div className="fixed bottom-4 right-4 rounded-lg bg-blue-700 px-6 py-4 text-lg text-white shadow-xl"> ... </div>
-                )}
-              </div>
-            </section>
-          </main>
-        </div>
-      </div>
-    </div>
-  );
   const [projectsBudgets, setProjectsBudgets] = useState<Array<{ id: string; projectId: string; totalBudget: number; spent: number; remaining: number }>>([]);
   const [projectsInvoices, setProjectsInvoices] = useState<Array<{ id: string; projectId: string; invoiceNumber: string; amount: number; status: "draft" | "sent" | "paid"; dueDate: string }>>([]);
   const [projectsProfitability, setProjectsProfitability] = useState<Array<{ id: string; projectId: string; projectName: string; revenue: number; costs: number; margin: number; marginPercent: number }>>([]);
