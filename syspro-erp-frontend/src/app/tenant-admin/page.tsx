@@ -542,7 +542,6 @@ function CrmReportsView({ snapshot }: { snapshot: CrmSnapshot }) {
               </div>
             </div>
           ))}
-        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]">
