@@ -102,7 +102,7 @@ export default function TenantAdminPage() {
 }
 
 
-type CrmCustomerRecordNormalized = {
+/* type CrmCustomerRecordNormalized = {
   id: string;
   tenantSlug: string;
   regionId: string;
@@ -121,65 +121,7 @@ type CrmCustomerRecordNormalized = {
   status?: string | null;
 };
 
-import {
-  Activity,
-  AlertTriangle,
-  Banknote,
-  ArrowUpRight,
-  BarChart3,
-  Bell,
-  Bot,
-  Building2,
-  ClipboardList,
-  CalendarClock,
-  CheckCircle2,
-  ChevronDown,
-  ChevronRight,
-  Command,
-  Clock,
-  DollarSign,
-  Download,
-  CreditCard,
-  Edit,
-  FileSpreadsheet,
-  FileText,
-  Gauge,
-  Loader2,
-  GitBranch,
-  LineChart,
-  Handshake,
-  Headphones,
-  RefreshCcw,
-  KanbanSquare,
-  PieChart,
-  Layers3,
-  LayoutDashboard,
-  Mail,
-  MessageSquare,
-  MoreVertical,
-  Package,
-  Receipt,
-  Megaphone,
-  Menu,
-  PhoneCall,
-  PiggyBank,
-  PlugZap,
-  ScrollText,
-  Search,
-  Send,
-  Settings,
-  ShieldCheck,
-  TrendingDown,
-  TrendingUp,
-  Truck,
-  Users,
-  Users2,
-  Wallet,
-  Workflow,
-  XCircle,
-  Zap,
-  X,
-} from "lucide-react";
+
 import Link from "next/link";
 import { Component, Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, ComponentType, FormEvent } from "react";
@@ -3880,7 +3822,6 @@ nst [crmContacts, setCrmContacts] = useState<CrmContact[]>([]);
                       <ActivityStream />
                     </div>
                   </div>
-                )
                 ) : null}
               </div>
             </section>
