@@ -732,6 +732,8 @@ function CrmCustomersView({
 
 
 
+*/
+
 function CrmContactsView({
   contacts,
   importing,
@@ -2133,7 +2135,7 @@ const TIMEFRAME_MAP: Record<string, string> = {
   "Last 30 days": "last_30_days",
 };
 
-export default function TenantAdminPage() {
+/* export default function TenantAdminPage() {
   const [activeNav, setActiveNav] = useState("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState("Axiom Labs");
