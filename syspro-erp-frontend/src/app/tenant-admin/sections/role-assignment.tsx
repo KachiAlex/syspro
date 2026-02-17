@@ -251,12 +251,12 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
   };
 
   const getRoleLabel = (roleId: string) => {
-    const role = ROLES.find((r) => r.id === roleId);
+    const role = roles.find((r: Role) => r.id === roleId);
     return role?.name || roleId;
   };
 
   const getRoleColor = (roleId: string) => {
-    const role = ROLES.find((r) => r.id === roleId);
+    const role = roles.find((r: Role) => r.id === roleId);
     return role?.color || "bg-gray-50 border-gray-200";
   };
 

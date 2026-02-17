@@ -154,9 +154,9 @@ export async function lookupVendor(
           bankCode: exact.bank_code,
           bankName: exact.bank_name,
           paymentTerms: exact.payment_terms,
-          isActive: exact.is_active,
-          createdAt: exact.created_at,
-          updatedAt: exact.updated_at,
+          isActive: exact.is_active ?? true,
+          createdAt: exact.created_at ?? new Date().toISOString(),
+          updatedAt: exact.updated_at ?? new Date().toISOString(),
         },
       };
     }
@@ -176,9 +176,9 @@ export async function lookupVendor(
       bankCode: r.bank_code,
       bankName: r.bank_name,
       paymentTerms: r.payment_terms,
-      isActive: r.is_active,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
+      isActive: r.is_active ?? true,
+      createdAt: r.created_at ?? new Date().toISOString(),
+      updatedAt: r.updated_at ?? new Date().toISOString(),
     }));
 
     return { found: false, similar };
@@ -371,9 +371,9 @@ export async function createVendor(payload: Partial<VendorRecord>): Promise<Vend
       bankCode: row.bank_code,
       bankName: row.bank_name,
       paymentTerms: row.payment_terms,
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
+      isActive: row.is_active ?? true,
+      createdAt: row.created_at ?? new Date().toISOString(),
+      updatedAt: row.updated_at ?? new Date().toISOString(),
     };
   } catch (err) {
     // Fallback: return sample created object

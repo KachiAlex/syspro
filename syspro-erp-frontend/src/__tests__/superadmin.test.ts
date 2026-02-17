@@ -236,7 +236,7 @@ describeIfDb("Superadmin Portal - Database Integration", () => {
         const actualDate = new Date(license.expiry);
         const expectedDate = new Date(licenseData.expiry);
         const diffDays = Math.abs(
-          Math.floor((actualDate - expectedDate) / (1000 * 60 * 60 * 24))
+          Math.floor((actualDate.getTime() - expectedDate.getTime()) / (1000 * 60 * 60 * 24))
         );
         expect(diffDays).toBeLessThanOrEqual(1);
 
@@ -301,7 +301,7 @@ describeIfDb("Superadmin Portal - Database Integration", () => {
         const actualUpdatedDate = new Date(updatedLicense.expiry);
         const expectedUpdatedDate = new Date(updateData.expiry);
         const diffUpdatedDays = Math.abs(
-          Math.floor((actualUpdatedDate - expectedUpdatedDate) / (1000 * 60 * 60 * 24))
+          Math.floor((actualUpdatedDate.getTime() - expectedUpdatedDate.getTime()) / (1000 * 60 * 60 * 24))
         );
         expect(diffUpdatedDays).toBeLessThanOrEqual(1);
 
