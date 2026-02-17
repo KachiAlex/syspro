@@ -2135,49 +2135,7 @@ export default function TenantAdminPage() {
   const [revopsOverviewLoading, setRevopsOverviewLoading] = useState(false);
   const [revopsOverviewError, setRevopsOverviewError] = useState<string | null>(null);
   const [revopsOverviewVersion, setRevopsOverviewVersion] = useState(0);
-
-  const [projectsBudgets, setProjectsBudgets] = useState<Array<{ id: string; projectId: string; totalBudget: number; spent: number; remaining: number }>>([]);
-  const [projectsInvoices, setProjectsInvoices] = useState<Array<{ id: string; projectId: string; invoiceNumber: string; amount: number; status: "draft" | "sent" | "paid"; dueDate: string }>>([]);
-  const [projectsProfitability, setProjectsProfitability] = useState<Array<{ id: string; projectId: string; projectName: string; revenue: number; costs: number; margin: number; marginPercent: number }>>([]);
-  const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
-  const [showLogTimeModal, setShowLogTimeModal] = useState(false);
-  const [projectsLoading, setProjectsLoading] = useState(false);
-  const [projectsError, setProjectsError] = useState<string | null>(null);
-  const [projectsToast, setProjectsToast] = useState<string | null>(null);
-
-  const [crmActionType, setCrmActionType] = useState<CrmActionType | null>(null);
-  const [crmActionToast, setCrmActionToast] = useState<string | null>(null);
-  const [crmView, setCrmView] = useState<CrmView>("dashboard");
-  const [financeView, setFinanceView] = useState<FinanceView>("overview");
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [isImportingContacts, setIsImportingContacts] = useState(false);
-  const [contactImportSample, setContactImportSample] = useState<CrmContactImportSampleState>(defaultContactImportSample());
-  const [importedContacts, setImportedContacts] = useState<CrmImportedContact[]>([]);
-  const [contactTagFilter, setContactTagFilter] = useState<string | null>(null);
-  const [contactsLoading, setContactsLoading] = useState(false);
-  const [contactsError, setContactsError] = useState<string | null>(null);
-
-  // Main page error/success state
-  const [pageError, setPageError] = useState<string | null>(null);
-  const [pageSuccess, setPageSuccess] = useState<string | null>(null);
-
-  // Finance quick actions state
-  const [showLogInvoiceModal, setShowLogInvoiceModal] = useState(false);
-  const [showSchedulePaymentModal, setShowSchedulePaymentModal] = useState(false);
-  const [showRecordExpenseModal, setShowRecordExpenseModal] = useState(false);
-  const [showPayoutModal, setShowPayoutModal] = useState(false);
-  const [quickActionToast, setQuickActionToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
-
-  // Invoice workspace state
-  const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
-  const [payments, setPayments] = useState<PaymentRecord[]>([]);
-  const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<InvoiceStatus | "all">("all");
-  const [invoiceBranchFilter, setInvoiceBranchFilter] = useState<string>("all");
-  const [invoiceSearchQuery, setInvoiceSearchQuery] = useState("");
-  const [showInvoiceDrawer, setShowInvoiceDrawer] = useState(false);
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
-  const [invoiceFormTab, setInvoiceFormTab] = useState<InvoiceFormTab>("details");
-  const [crmContacts, setCrmContacts] = useState<CrmContact[]>([]);
+nst [crmContacts, setCrmContacts] = useState<CrmContact[]>([]);
   const [savedLineItems, setSavedLineItems] = useState<SavedLineItem[]>([]);
 
   const entityOptions = ["Axiom Labs", "Nova Holdings", "Helix Metals"];
