@@ -2136,48 +2136,48 @@ export default function TenantAdminPage() {
   const [revopsOverviewError, setRevopsOverviewError] = useState<string | null>(null);
   const [revopsOverviewVersion, setRevopsOverviewVersion] = useState(0);
 
-  // Inventory state
-  const [inventoryView, setInventoryView] = useState<"products" | "stock" | "transfers" | "alerts">("products");
-  const [inventoryProducts, setInventoryProducts] = useState<Array<{ id: string; name: string; sku: string; category: string; currentStock: number; minStock: number; unitCost: number }>>([]);
-  const [showNewProductModal, setShowNewProductModal] = useState(false);
-  const [showStockTransferModal, setShowStockTransferModal] = useState(false);
-  const [inventoryLoading, setInventoryLoading] = useState(false);
-  const [inventoryError, setInventoryError] = useState<string | null>(null);
-  const [inventoryToast, setInventoryToast] = useState<string | null>(null);
-  const [newProductCategory, setNewProductCategory] = useState("");
-  const [productCategories, setProductCategories] = useState(["Electronics", "Furniture", "Office Supplies", "Equipment", "Other"]);
-
-  // Procurement state
-  const [procurementView, setProcurementView] = useState<"vendors" | "purchase-orders" | "invoices" | "approvals">("vendors");
-  const [procurementVendors, setProcurementVendors] = useState<Array<{ id: string; name: string; code: string; category: string; paymentTerms: string; status: "active" | "inactive" }>>([]);
-  const [showNewVendorModal, setShowNewVendorModal] = useState(false);
-  const [showNewPOModal, setShowNewPOModal] = useState(false);
-  const [procurementLoading, setProcurementLoading] = useState(false);
-  const [procurementError, setProcurementError] = useState<string | null>(null);
-  const [procurementToast, setProcurementToast] = useState<string | null>(null);
-  const [newVendorCategory, setNewVendorCategory] = useState("");
-  const [vendorCategories, setVendorCategories] = useState(["Raw Materials", "Office Supplies", "Equipment", "Services", "Other"]);
-
-  // HR state
-  const [hrView, setHrView] = useState<"employees" | "departments" | "attendance" | "payroll" | "benefits" | "performance-reviews" | "documents">("employees");
-  const [hrEmployees, setHrEmployees] = useState<Array<{ id: string; name: string; email: string; department: string; position: string; status: "active" | "inactive" }>>([]);
-  const [hrDepartments, setHrDepartments] = useState<Array<{ id: string; name: string; manager: string; headcount: number }>>([]);
-  const [hrAttendance, setHrAttendance] = useState<Array<{ id: string; employeeId: string; employeeName: string; date: string; status: "present" | "absent" | "late" | "leave" }>>([]);
-  const [hrPayrollRuns, setHrPayrollRuns] = useState<Array<{ id: string; period: string; status: "draft" | "approved" | "paid"; totalAmount: number; employeeCount: number }>>([]);
-  const [hrBenefits, setHrBenefits] = useState<Array<{ id: string; name: string; category: string; coverage: string; cost: number }>>([]);
-  const [hrPerformanceReviews, setHrPerformanceReviews] = useState<Array<{ id: string; employeeId: string; employeeName: string; reviewer: string; rating: number; date: string }>>([]);
-  const [hrDocuments, setHrDocuments] = useState<Array<{ id: string; name: string; type: string; uploadedBy: string; uploadedDate: string }>>([]);
-  const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
-  const [showAddDepartmentModal, setShowAddDepartmentModal] = useState(false);
-  const [hrLoading, setHrLoading] = useState(false);
-  const [hrError, setHrError] = useState<string | null>(null);
-  const [hrToast, setHrToast] = useState<string | null>(null);
-
-  // Projects state
-  const [projectsView, setProjectsView] = useState<"projects" | "tasks" | "time-tracking" | "billable-hours" | "budgets" | "invoicing" | "profitability">("projects");
-  const [projectsList, setProjectsList] = useState<Array<{ id: string; name: string; client: string; status: "active" | "completed" | "on-hold"; budget: number; spent: number; progress: number }>>([]);
-  const [projectsTasks, setProjectsTasks] = useState<Array<{ id: string; projectId: string; title: string; assignee: string; status: "todo" | "in-progress" | "done"; dueDate: string }>>([]);
-  const [projectsTimeEntries, setProjectsTimeEntries] = useState<Array<{ id: string; projectId: string; employeeName: string; hours: number; date: string; billable: boolean }>>([]);
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <div className="flex min-h-screen">
+        <Sidebar ... />
+        <div className="flex-1">
+          <main ...>
+            <section ...>
+              <div ...>
+                {/* ...existing code... */}
+                {/* Inventory Modals */}
+                {showNewProductModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"> ... </div>
+                )}
+                {showStockTransferModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"> ... </div>
+                )}
+                {/* Procurement Modals */}
+                {showNewVendorModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"> ... </div>
+                )}
+                {showNewPOModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"> ... </div>
+                )}
+                {showAddEmployeeModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"> ... </div>
+                )}
+                {showAddDepartmentModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"> ... </div>
+                )}
+                {showCreateProjectModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"> ... </div>
+                )}
+                {toast && (
+                  <div className="fixed bottom-4 right-4 rounded-lg bg-blue-700 px-6 py-4 text-lg text-white shadow-xl"> ... </div>
+                )}
+              </div>
+            </section>
+          </main>
+        </div>
+      </div>
+    </div>
+  );
   const [projectsBudgets, setProjectsBudgets] = useState<Array<{ id: string; projectId: string; totalBudget: number; spent: number; remaining: number }>>([]);
   const [projectsInvoices, setProjectsInvoices] = useState<Array<{ id: string; projectId: string; invoiceNumber: string; amount: number; status: "draft" | "sent" | "paid"; dueDate: string }>>([]);
   const [projectsProfitability, setProjectsProfitability] = useState<Array<{ id: string; projectId: string; projectName: string; revenue: number; costs: number; margin: number; marginPercent: number }>>([]);
