@@ -857,6 +857,7 @@ export default function SuperadminPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
