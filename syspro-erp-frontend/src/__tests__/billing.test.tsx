@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import BillingSection from "@/app/tenant-admin/sections/billing";
@@ -21,7 +21,9 @@ afterEach(() => {
 test("BillingSection renders heading and no-invoices fallback", async () => {
   render(<BillingSection tenantSlug={undefined} />);
 
-  // wait for loading -> resolved state
-  expect(await screen.findByText(/Recent Invoices/i)).toBeInTheDocument();
-  expect(await screen.findByText(/No invoices/i)).toBeInTheDocument();
+  // wait for the loading indicator to disappear and then assert the final UI
+  await waitFor(() => expect(screen.queryByText(/Loading billing information…/i)).not.toBeInTheDocument());
+
+  expect(screen.getByText(/Recent Invoices/i)).toBeInTheDocument();
+  expect(screen.getByText(/No invoices/i)).toBeInTheDocument();
 });
