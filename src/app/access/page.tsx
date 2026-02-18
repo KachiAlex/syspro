@@ -11,13 +11,7 @@ export default function AccessPage() {
             <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold">S</span>
             </div>
-            <Link href="/" className="bg-blue-600 text-white px-4 py-2 rounded-lg">Request Demo</Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="pt-28">
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 grid lg:grid-cols-2 gap-12 items-center">
+            <Link href="/" className="btn btn-blue px-4 py-2 rounded-lg">Request Demo</Link>
           <div>
             <div className="inline-block mb-4 px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm">Access Portal</div>
             <h1 className="text-4xl font-bold text-gray-900 mb-4">Sign in to your workspace</h1>

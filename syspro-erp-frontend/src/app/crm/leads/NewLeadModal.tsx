@@ -58,7 +58,7 @@ export default function NewLeadModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-overlay">
       <div className="bg-white rounded-lg w-full max-w-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">New Lead</h3>
@@ -137,8 +137,8 @@ export default function NewLeadModal({
           {error && <p className="text-red-600">{error}</p>}
 
           <div className="flex items-center justify-end gap-2">
-            <button type="button" onClick={onClose} className="px-3 py-1 border rounded">Cancel</button>
-            <button type="submit" disabled={submitting} className="px-3 py-1 bg-blue-600 text-white rounded">{submitting ? "Creating…" : "Create"}</button>
+            <button type="button" onClick={onClose} className="px-3 py-1 btn btn-ghost border rounded">Cancel</button>
+            <button type="submit" disabled={submitting} className="px-3 py-1 btn btn-blue rounded">{submitting ? "Creating…" : "Create"}</button>
           </div>
         </form>
       </div>

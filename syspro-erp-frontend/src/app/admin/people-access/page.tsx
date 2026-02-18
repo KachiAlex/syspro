@@ -74,13 +74,13 @@ export default function PeopleAccessPage() {
           )}
           <div className="flex gap-2 mb-4">
             <button
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              className="btn btn-blue px-4 py-2 rounded"
               onClick={() => setInviteOpen(true)}
             >
               Invite User
             </button>
             <button
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              className="btn btn-success px-4 py-2 rounded"
               onClick={() => setCsvOpen(true)}
             >
               Import CSV
@@ -142,7 +142,7 @@ export default function PeopleAccessPage() {
 
           {/* Invite User Dialog */}
           {inviteOpen && (
-            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="fixed inset-0 backdrop-overlay flex items-center justify-center z-50">
               <div className="bg-white rounded shadow-lg p-6 w-full max-w-sm">
                 <h2 className="text-lg font-bold mb-2">Invite User</h2>
                 <input
@@ -194,7 +194,7 @@ export default function PeopleAccessPage() {
 
           {/* CSV Import Dialog */}
           {csvOpen && (
-            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="fixed inset-0 backdrop-overlay flex items-center justify-center z-50">
               <div className="bg-white rounded shadow-lg p-6 w-full max-w-sm">
                 <h2 className="text-lg font-bold mb-2">Import Users from CSV</h2>
                 <input

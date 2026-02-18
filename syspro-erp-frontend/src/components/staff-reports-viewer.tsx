@@ -286,7 +286,7 @@ export default function StaffReportsViewer({
 
       {/* Report Detail Modal */}
       {selectedReport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-overlay backdrop-blur-sm">
           <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-8 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-semibold text-slate-900">
@@ -386,13 +386,13 @@ export default function StaffReportsViewer({
                   <>
                     <button
                       onClick={() => updateReportStatus(selectedReport.id, 'reviewed')}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      className="px-4 py-2 btn btn-blue rounded-lg"
                     >
                       Mark as Reviewed
                     </button>
                     <button
                       onClick={() => updateReportStatus(selectedReport.id, 'approved')}
-                      className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+                      className="px-4 py-2 btn btn-success rounded-lg"
                     >
                       Approve Report
                     </button>

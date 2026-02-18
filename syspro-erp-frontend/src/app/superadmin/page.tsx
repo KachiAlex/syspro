@@ -279,21 +279,21 @@ export default function SuperadminPage() {
           </div>
           <div className="flex gap-4">
             {activeTab === 'tenants' && (
-              <Button onClick={() => setShowTenantModal(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold text-lg hover:bg-blue-700 transition">
+              <Button onClick={() => setShowTenantModal(true)} className="btn btn-blue px-6 py-3 rounded-lg font-semibold text-lg transition">
                 <Plus className="w-5 h-5 mr-2" /> Add Tenant
               </Button>
             )}
             {activeTab === 'licenses' && (
-              <Button onClick={() => setShowLicenseModal(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold text-lg hover:bg-blue-700 transition">
+              <Button onClick={() => setShowLicenseModal(true)} className="btn btn-blue px-6 py-3 rounded-lg font-semibold text-lg transition">
                 <Plus className="w-5 h-5 mr-2" /> Add License
               </Button>
             )}
             {activeTab === 'admins' && (
-              <Button onClick={() => setShowAdminModal(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold text-lg hover:bg-blue-700 transition">
+              <Button onClick={() => setShowAdminModal(true)} className="btn btn-blue px-6 py-3 rounded-lg font-semibold text-lg transition">
                 <Plus className="w-5 h-5 mr-2" /> Add Admin
               </Button>
             )}
-            <Button variant="outline" onClick={handleLogout} className="px-6 py-3 rounded-lg font-semibold text-lg border border-blue-600 text-blue-700 hover:bg-blue-50 transition">
+            <Button variant="outline" onClick={handleLogout} className="btn btn-ghost px-6 py-3 rounded-lg font-semibold text-lg border border-[color:var(--accent)] text-[color:var(--accent)] transition">
               <LogOut className="w-5 h-5 mr-2" /> Logout
             </Button>
           </div>
@@ -303,7 +303,7 @@ export default function SuperadminPage() {
           <div className="flex space-x-4">
             <button
               onClick={() => setActiveTab('tenants')}
-              className={`px-6 py-3 rounded-lg font-semibold text-lg ${activeTab === 'tenants' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-blue-50 transition'}`}
+              className={`px-6 py-3 rounded-lg font-semibold text-lg ${activeTab === 'tenants' ? 'btn btn-blue' : 'bg-gray-200 text-gray-700 hover:bg-blue-50 transition'}`}
             >
               Tenants
             </button>

@@ -13,19 +13,19 @@ export default function AccessPage() {
           <h1 className="text-4xl font-bold text-blue-700 mb-2">Access Portal</h1>
           <p className="text-lg text-gray-500 mb-8">Choose your destination below. If you need access, request a demo or contact support.</p>
           <div className="flex flex-col gap-4">
-            <Link href="/tenant-admin" className="bg-blue-600 text-white px-6 py-4 rounded-lg inline-flex items-center gap-2 shadow-md hover:bg-blue-700 transition text-lg font-semibold">
+            <Link href="/tenant-admin" className="btn btn-blue px-6 py-4 rounded-lg inline-flex items-center gap-2 shadow-md transition text-lg font-semibold">
               Tenant Admin Dashboard
               <ArrowRight />
             </Link>
-            <Link href="/superadmin/login" className="bg-gray-900 text-white px-6 py-4 rounded-lg inline-flex items-center gap-2 shadow-md hover:bg-gray-800 transition text-lg font-semibold">
+            <Link href="/superadmin/login" className="btn btn-dark px-6 py-4 rounded-lg inline-flex items-center gap-2 shadow-md transition text-lg font-semibold">
               Superadmin Portal Sign In
               <ArrowRight />
             </Link>
-            <Link href="/superadmin" className="bg-gray-700 text-white px-6 py-4 rounded-lg inline-flex items-center gap-2 shadow-md hover:bg-gray-800 transition text-lg font-semibold">
+            <Link href="/superadmin" className="btn btn-dark px-6 py-4 rounded-lg inline-flex items-center gap-2 shadow-md transition text-lg font-semibold">
               Superadmin Dashboard
               <ArrowRight />
             </Link>
-            <Link href="/" className="bg-white border border-blue-600 text-blue-700 px-6 py-4 rounded-lg inline-flex items-center gap-2 shadow-md hover:bg-blue-50 transition text-lg font-semibold">
+            <Link href="/" className="btn btn-ghost border border-[color:var(--accent)] text-[color:var(--accent)] px-6 py-4 rounded-lg inline-flex items-center gap-2 shadow-md hover:bg-blue-50 transition text-lg font-semibold">
               Request Demo
               <ArrowRight />
             </Link>

@@ -50,7 +50,7 @@ function Header() {
                   <button className="text-gray-700 hover:text-blue-600 transition-colors" onClick={() => startLoginFlow()}>
                     Sign In
                   </button>
-            <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <button className="btn btn-blue px-6 py-2 rounded-lg transition-colors">
               Request Demo
             </button>
           </div>
@@ -111,11 +111,11 @@ function Hero() {
             
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <button className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl">
+              <button className="btn btn-blue px-8 py-3 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl">
                 Get Started Free
                 <ArrowRight size={20} />
               </button>
-              <button className="border-2 border-gray-300 text-gray-700 px-8 py-3 rounded-lg hover:border-gray-400 transition-all flex items-center justify-center gap-2">
+              <button className="btn btn-ghost border-2 border-gray-300 px-8 py-3 rounded-lg transition-all flex items-center justify-center gap-2">
                 <Play size={20} />
                 Watch Demo
               </button>
