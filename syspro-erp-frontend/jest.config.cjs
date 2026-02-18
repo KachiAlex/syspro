@@ -10,6 +10,7 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^/src/(.*)$': '<rootDir>/src/$1',
+    '^jest-axe$': '<rootDir>/src/test-utils/jest-axe-shim.ts',
     '^lucide-react$': '<rootDir>/__mocks__/lucide-react.js',
     '^lucide-react/(.*)$': '<rootDir>/__mocks__/lucide-react.js',
   },

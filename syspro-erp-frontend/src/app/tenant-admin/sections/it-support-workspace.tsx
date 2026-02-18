@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { FormAlert } from "@/components/form";
+import { Panel, PillButton, SectionHeading } from "@/components/ui/primitives";
 import type {
   FieldJob,
   KnowledgeBaseArticle,
@@ -175,6 +176,8 @@ function formatRelative(value?: string) {
   const days = Math.round(hours / 24);
   return days >= 0 ? `${days}d remaining` : `${Math.abs(days)}d ago`;
 }
+
+import { Panel, SectionHeading, PillButton } from "@/components/ui/primitives";
 
 export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?: string | null; region?: string }) {
   const tenantKey = tenantSlug?.trim() || "kreatix-default";
@@ -535,31 +538,19 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
     <div className="space-y-8">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Incident to resolution</p>
-          <h2 className="text-2xl font-semibold text-slate-900">IT Support control center</h2>
-          <div className="mt-1 flex items-center gap-2">
+          <SectionHeading eyebrow="Incident to resolution" title="IT Support control center" description="Live ticket queue, SLA heatmap, dispatch radar, and assignment intelligence." />
+          <div className="mt-2 flex items-center gap-2">
             <span className="text-sm text-slate-500">Tenant:</span>
             <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm font-medium text-slate-700">{tenantKey}</span>
           </div>
-          <p className="text-sm text-slate-500">Live ticket queue, SLA heatmap, dispatch radar, and assignment intelligence.</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-2 rounded-full border muted-border btn btn-dark px-4 py-2 text-sm font-semibold shadow-sm"
-          >
-            <Plus className="h-4 w-4" />
-            New ticket
-          </button>
-          <button
-            type="button"
-            onClick={() => setRefreshToken((prev) => prev + 1)}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 shadow-sm hover:border-slate-300"
-          >
-            <RefreshCcw className="h-4 w-4" />
-            Refresh data
-          </button>
+          <PillButton variant="primary" onClick={openCreateModal}>
+            <Plus className="h-4 w-4" /> New ticket
+          </PillButton>
+          <PillButton variant="secondary" onClick={() => setRefreshToken((prev) => prev + 1)}>
+            <RefreshCcw className="h-4 w-4" /> Refresh data
+          </PillButton>
         </div>
       </div>
 

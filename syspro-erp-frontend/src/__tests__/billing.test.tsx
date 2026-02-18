@@ -1,8 +1,11 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import { axe, toHaveNoViolations } from 'jest-axe';
 
 import BillingSection from "@/app/tenant-admin/sections/billing";
+
+expect.extend(toHaveNoViolations);
 
 beforeEach(() => {
   jest.spyOn(global, "fetch").mockImplementation((input: RequestInfo) => {
@@ -26,4 +29,7 @@ test("BillingSection renders heading and no-invoices fallback", async () => {
 
   expect(screen.getByText(/Recent Invoices/i)).toBeInTheDocument();
   expect(screen.getByText(/No invoices/i)).toBeInTheDocument();
+
+  const results = await axe(document.body);
+  expect(results).toHaveNoViolations();
 });

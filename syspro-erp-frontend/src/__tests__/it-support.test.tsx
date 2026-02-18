@@ -1,9 +1,12 @@
 import React from "react";
-import { render, screen, waitFor, act } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
+import { axe, toHaveNoViolations } from 'jest-axe';
 
 import ItSupportWorkspace from "@/app/tenant-admin/sections/it-support-workspace";
+
+expect.extend(toHaveNoViolations);
 
 beforeEach(() => {
   jest.spyOn(global, "fetch").mockImplementation((input: RequestInfo) => {
@@ -31,7 +34,7 @@ afterEach(() => {
 
 test("ItSupportWorkspace renders headings and opens the create-ticket modal", async () => {
   const user = userEvent.setup();
-  await act(async () => render(<ItSupportWorkspace tenantSlug={undefined} region={undefined} />));
+  render(<ItSupportWorkspace tenantSlug={undefined} region={undefined} />);
 
   // wait for initial workspace load to finish, then assert heading
   await waitFor(() => expect(screen.queryByText(/Loading queue.../i)).not.toBeInTheDocument());
@@ -41,4 +44,7 @@ test("ItSupportWorkspace renders headings and opens the create-ticket modal", as
   const newBtn = screen.getByRole("button", { name: /New ticket/i });
   await user.click(newBtn);
   expect(await screen.findByText(/Log a new support ticket/i)).toBeInTheDocument();
+
+  const results = await axe(document.body);
+  expect(results).toHaveNoViolations();
 });

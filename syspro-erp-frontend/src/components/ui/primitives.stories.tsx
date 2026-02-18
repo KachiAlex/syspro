@@ -31,3 +31,25 @@ export const Tags: StoryObj = {
     </div>
   ),
 };
+
+export const BillingSectionExample: StoryObj = {
+  render: () => (
+    <Panel>
+      <SectionHeading eyebrow="Billing" title="Active Subscriptions" description="Manage subscriptions and invoices" />
+      <div className="mt-4">
+        <PillButton variant="primary">New Invoice</PillButton>
+      </div>
+    </Panel>
+  )
+};
+
+export const ItSupportExample: StoryObj = {
+  render: () => (
+    <Panel>
+      <SectionHeading eyebrow="Support" title="IT Support control center" description="Manage tickets and field jobs" />
+      <div className="mt-4">
+        <PillButton variant="primary">New ticket</PillButton>
+      </div>
+    </Panel>
+  )
+};

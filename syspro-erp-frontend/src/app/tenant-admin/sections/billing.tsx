@@ -24,6 +24,8 @@ const STATUS_ICONS: Record<string, string> = {
   cancelled: "✕",
 };
 
+import { Panel, SectionHeading, PillButton } from "@/components/ui/primitives";
+
 export default function BillingSection({ tenantSlug }: { tenantSlug?: string | null }) {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
@@ -99,7 +101,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
   }
 
   return (
-    <div className="space-y-6">
+    <Panel>
       {error && (
         <FormAlert
           type="error"
@@ -117,12 +119,8 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
       )}
 
       {/* Subscriptions */}
-      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-        <div className="mb-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Billing</p>
-          <h2 className="text-lg font-semibold text-slate-900">Active Subscriptions</h2>
-          <p className="mt-1 text-sm text-slate-600">Manage your organization's subscriptions and plans</p>
-        </div>
+      <div>
+        <SectionHeading eyebrow="Billing" title="Active Subscriptions" description="Manage your organization's subscriptions and plans" />
 
         {(subscriptions ?? []).length === 0 ? (
           <div className="rounded-lg bg-blue-50 p-4 text-center text-sm">
@@ -156,12 +154,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleCancelSubscription(s.id)}
-                    className="rounded-full border border-rose-200 px-4 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50"
-                  >
-                    Cancel
-                  </button>
+                  <PillButton variant="secondary" onClick={() => handleCancelSubscription(s.id)}>Cancel</PillButton>
                 </div>
               </div>
             ))}
@@ -170,11 +163,9 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
       </div>
 
       {/* Invoices */}
-      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+      <Panel>
         <div className="mb-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Invoices</p>
-          <h2 className="text-lg font-semibold text-slate-900">Recent Invoices</h2>
-          <p className="mt-1 text-sm text-slate-600">View and manage your invoices</p>
+          <SectionHeading eyebrow="Invoices" title="Recent Invoices" description="View and manage your invoices" />
         </div>
 
         {(invoices ?? []).length === 0 ? (

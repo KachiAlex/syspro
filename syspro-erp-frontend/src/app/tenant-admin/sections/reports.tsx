@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Download, Loader2, Play, RefreshCcw } from "lucide-react";
+import { Panel, SectionHeading, PillButton } from "@/components/ui/primitives";
 
 type Report = {
   id: string;
@@ -88,16 +89,14 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+      <Panel>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Reports</p>
-            <h2 className="text-xl font-semibold text-slate-900">Operational, financial, and executive</h2>
-            <p className="mt-1 text-sm text-slate-500">Cross-module reporting with scheduling and exports.</p>
+            <SectionHeading eyebrow="Reports" title="Operational, financial, and executive" description="Cross-module reporting with scheduling and exports." />
           </div>
-          <button onClick={load} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50" disabled={loading}>
+          <PillButton variant="secondary" onClick={load} disabled={loading}>
             <RefreshCcw className="h-4 w-4" /> Refresh
-          </button>
+          </PillButton>
         </div>
 
         <form className="mt-4 space-y-3" onSubmit={handleCreate}>
