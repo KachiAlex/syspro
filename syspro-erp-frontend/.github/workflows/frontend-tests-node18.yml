@@ -1,0 +1,41 @@
+name: CI — Frontend tests (Node 18)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'syspro-erp-frontend/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'syspro-erp-frontend/**'
+
+jobs:
+  frontend-tests:
+    name: Frontend Jest (Node 18)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Cache frontend node_modules
+        uses: actions/cache@v4
+        with:
+          path: syspro-erp-frontend/node_modules
+          key: ${{ runner.os }}-node-frontend-${{ hashFiles('syspro-erp-frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-frontend-
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix ./syspro-erp-frontend
+
+      - name: Run frontend tests (Jest)
+        run: npm --prefix ./syspro-erp-frontend test --silent
+        env:
+          CI: true
