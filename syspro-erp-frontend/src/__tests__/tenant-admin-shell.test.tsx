@@ -17,12 +17,10 @@ test("TenantAdmin shell: overview renders and section buttons toggle active stat
   // switch to IT Support (wait for the dynamic module to load and settle)
   fireEvent.click(itButton);
   await screen.findByText(/IT Support control center/i);
-  await waitFor(() => expect(itButton).toHaveClass("bg-[color:var(--foreground)]"));
-  expect(itButton).toHaveClass("text-[color:var(--background)]");
+  await waitFor(() => expect(itButton).toHaveAttribute('aria-pressed', 'true'));
 
   // switch to Billing (wait for billing module load and settle)
   fireEvent.click(billingButton);
   await screen.findByText(/Recent Invoices/i);
-  await waitFor(() => expect(billingButton).toHaveClass("bg-[color:var(--foreground)]"));
-  expect(billingButton).toHaveClass("text-[color:var(--background)]");
+  await waitFor(() => expect(billingButton).toHaveAttribute('aria-pressed', 'true'));
 });

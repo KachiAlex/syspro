@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { Panel, PillButton } from '@/components/ui/primitives';
 import { Plus, Edit, Trash2, LogOut, X, Eye } from 'lucide-react';
 
 interface Tenant {
@@ -271,7 +272,7 @@ export default function SuperadminPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-200">
-      <div className="bg-white rounded-2xl shadow-xl p-10 max-w-5xl w-full">
+      <Panel className="p-10 max-w-5xl w-full">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-4">
             <img src="/logo.png" alt="Syspro Logo" className="w-12 h-12" />
@@ -300,30 +301,15 @@ export default function SuperadminPage() {
         </div>
 
         <div className="mb-8">
-          <div className="flex space-x-4">
-            <button
-              onClick={() => setActiveTab('tenants')}
-              className={`px-6 py-3 rounded-lg font-semibold text-lg ${activeTab === 'tenants' ? 'btn btn-blue' : 'bg-gray-200 text-gray-700 hover:bg-blue-50 transition'}`}
-            >
-              Tenants
-            </button>
-            <button
-              onClick={() => setActiveTab('licenses')}
-              className={`px-6 py-3 rounded-lg font-semibold text-lg ${activeTab === 'licenses' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-blue-50 transition'}`}
-            >
-              Licenses
-            </button>
-            <button
-              onClick={() => setActiveTab('admins')}
-              className={`px-6 py-3 rounded-lg font-semibold text-lg ${activeTab === 'admins' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-blue-50 transition'}`}
-            >
-              Tenant Admins
-            </button>
+          <div role="tablist" className="flex space-x-4" aria-label="Superadmin tabs">
+            <PillButton variant={activeTab === 'tenants' ? 'primary' : 'secondary'} onClick={() => setActiveTab('tenants')} aria-pressed={activeTab === 'tenants'}>Tenants</PillButton>
+            <PillButton variant={activeTab === 'licenses' ? 'primary' : 'secondary'} onClick={() => setActiveTab('licenses')} aria-pressed={activeTab === 'licenses'}>Licenses</PillButton>
+            <PillButton variant={activeTab === 'admins' ? 'primary' : 'secondary'} onClick={() => setActiveTab('admins')} aria-pressed={activeTab === 'admins'}>Tenant Admins</PillButton>
           </div>
         </div>
 
       {activeTab === 'tenants' && (
-        <div className="bg-white rounded-lg shadow">
+        <Panel className="p-0 overflow-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
@@ -384,7 +370,7 @@ export default function SuperadminPage() {
       )}
 
       {activeTab === 'licenses' && (
-        <div className="bg-white rounded-lg shadow">
+        <Panel className="p-0 overflow-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>

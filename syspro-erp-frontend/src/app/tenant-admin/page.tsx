@@ -2,6 +2,7 @@
 
 import React, { useState, type ComponentType } from "react";
 import dynamic from "next/dynamic";
+import { Panel, PillButton, SectionHeading } from "@/components/ui/primitives";
 
 // Dynamically import all available tenant-admin section components so the
 // UI can be restored incrementally without re-introducing a single huge file.
@@ -89,24 +90,22 @@ export default function TenantAdminPage() {
     <div className="min-h-screen bg-[color:var(--background)] p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Tenant Admin</h1>
-            <p className="text-sm text-slate-500">Restoring modules incrementally — pick a section to load.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
+          <SectionHeading eyebrow="Admin" title="Tenant Admin" description="Restoring modules incrementally — pick a section to load." />
+          <div className="flex flex-wrap gap-2" role="tablist" aria-label="Tenant admin sections">
             {sections.map((s) => (
-              <button
+              <PillButton
                 key={s.key}
+                variant={activeSection === s.key ? "primary" : "secondary"}
                 onClick={() => setActiveSection(s.key)}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${activeSection === s.key ? "bg-[color:var(--foreground)] text-[color:var(--background)]" : "bg-[color:var(--background)] border muted-border text-muted"}`}
+                aria-pressed={activeSection === s.key}
               >
                 {s.label}
-              </button>
+              </PillButton>
             ))}
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white border border-slate-100 p-6 shadow-sm">
+        <Panel>
           {activeSection === "overview" && (
             <div className="text-center py-12">
               <h2 className="text-lg font-semibold">Overview (placeholder)</h2>
@@ -137,7 +136,7 @@ export default function TenantAdminPage() {
           {activeSection === "admin-control" && <AdminControlCenter tenantSlug={undefined} />}
           {activeSection === "accounting-coa" && <AccountingCOA tenantSlug={undefined} />}
           {activeSection === "access-control" && <AccessControl tenantSlug={undefined} />}
-        </div>
+        </Panel>
       </div>
     </div>
   );
