@@ -12,7 +12,7 @@ on:
 
 jobs:
   frontend-tests:
-    name: Frontend Jest (Node 18)
+    name: Frontend checks (Node 18)
     runs-on: ubuntu-latest
 
     steps:
@@ -34,6 +34,16 @@ jobs:
 
       - name: Install frontend dependencies
         run: npm ci --prefix ./syspro-erp-frontend
+
+      - name: Lint (ESLint)
+        run: npm --prefix ./syspro-erp-frontend run lint --silent
+        env:
+          CI: true
+
+      - name: Build (Next.js)
+        run: npm --prefix ./syspro-erp-frontend run build --silent
+        env:
+          CI: true
 
       - name: Run frontend tests (Jest)
         run: npm --prefix ./syspro-erp-frontend test --silent
