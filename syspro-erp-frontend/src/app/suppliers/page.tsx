@@ -46,8 +46,8 @@ export default function SupplierPortalPage() {
             </div>
 
             <div className="mt-6 space-y-4">
-              <div className="flex items-center justify-center h-32 rounded-2xl border border-white/10 bg-black/30">
-                <p className="text-white/50">No worklist items yet</p>
+              <div className="flex items-center justify-center h-32 rounded-2xl muted-border glass">
+                <p className="text-muted">No worklist items yet</p>
               </div>
             </div>
           </Panel>

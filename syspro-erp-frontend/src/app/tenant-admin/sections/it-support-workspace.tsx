@@ -547,7 +547,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
           <button
             type="button"
             onClick={openCreateModal}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
+            className="inline-flex items-center gap-2 rounded-full border muted-border btn btn-dark px-4 py-2 text-sm font-semibold shadow-sm"
           >
             <Plus className="h-4 w-4" />
             New ticket
@@ -783,7 +783,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                             type="button"
                             onClick={handleCommentSubmit}
                             disabled={!commentBody.trim() || commentSubmitting}
-                            className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                            className="inline-flex items-center gap-2 rounded-full btn btn-dark px-4 py-2 text-sm font-semibold disabled:opacity-50"
                           >
                             {commentSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
                             Log update

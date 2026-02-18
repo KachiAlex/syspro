@@ -433,10 +433,10 @@ export default function PlannerPage() {
               <h2 className="mt-2 text-2xl font-semibold text-white">Department-Led Workstreams</h2>
             </div>
             <div className="flex flex-wrap gap-2 text-xs text-slate-300">
-              <button className="rounded-full border border-white/10 px-3 py-1">Dept</button>
-              <button className="rounded-full border border-white/10 px-3 py-1">Priority</button>
-              <button className="rounded-full border border-white/10 px-3 py-1">Status</button>
-              <button className="rounded-full border border-white/10 px-3 py-1">Owner</button>
+              <button className="rounded-full border muted-border px-3 py-1">Dept</button>
+              <button className="rounded-full border muted-border px-3 py-1">Priority</button>
+              <button className="rounded-full border muted-border px-3 py-1">Status</button>
+              <button className="rounded-full border muted-border px-3 py-1">Owner</button>
             </div>
           </div>
 

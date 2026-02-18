@@ -407,9 +407,9 @@ export default function PlannerPage() {
               <p className="mt-2 text-3xl font-semibold text-white">{portfolioStats.activeDepartments}</p>
               <p className="text-xs text-slate-400">Across {projects.length} projects</p>
             </div>
-            <div className="rounded-2xl border border-white/5 bg-white/5 p-4">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-300">Budget Coverage</p>
-              <p className="mt-2 text-3xl font-semibold text-white">
+            <div className="rounded-2xl muted-border glass p-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-muted">Budget Coverage</p>
+              <p className="mt-2 text-3xl font-semibold text-[color:var(--foreground)]">
                 {currency.format(portfolioStats.spentBudget)} / {currency.format(portfolioStats.approvedBudget)}
               </p>
               <p className="text-xs text-emerald-300">
@@ -433,10 +433,10 @@ export default function PlannerPage() {
               <h2 className="mt-2 text-2xl font-semibold text-white">Department-Led Workstreams</h2>
             </div>
             <div className="flex flex-wrap gap-2 text-xs text-slate-300">
-              <button className="rounded-full border border-white/10 px-3 py-1">Dept</button>
-              <button className="rounded-full border border-white/10 px-3 py-1">Priority</button>
-              <button className="rounded-full border border-white/10 px-3 py-1">Status</button>
-              <button className="rounded-full border border-white/10 px-3 py-1">Owner</button>
+              <button className="rounded-full border muted-border px-3 py-1">Dept</button>
+              <button className="rounded-full border muted-border px-3 py-1">Priority</button>
+              <button className="rounded-full border muted-border px-3 py-1">Status</button>
+              <button className="rounded-full border muted-border px-3 py-1">Owner</button>
             </div>
           </div>
 
@@ -570,7 +570,7 @@ export default function PlannerPage() {
                       <p className="text-xs uppercase tracking-[0.3em] text-slate-300">{status}</p>
                       <div className="mt-3 space-y-3">
                         {columnTasks.map((task) => (
-                          <div key={task.id} className="rounded-xl border border-white/10 bg-[#0a142b] p-3">
+                          <div key={task.id} className="rounded-xl border muted-border bg-[#0a142b] p-3">
                             <p className="text-sm font-semibold text-white">{task.title}</p>
                             <p className="text-xs text-slate-400">Due {task.dueDate}</p>
                             <p className="mt-1 text-xs text-slate-400">Effort: {task.effortHours}h</p>
