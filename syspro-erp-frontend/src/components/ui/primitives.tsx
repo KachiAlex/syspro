@@ -12,10 +12,10 @@ interface PanelProps {
 
 export function Panel({ children, className, variant = "card" }: PanelProps) {
   const baseStyles = {
-    card: "rounded-3xl muted-border glass p-6 backdrop-blur",
-    glass: "rounded-[32px] muted-border glass p-6 backdrop-blur-xl",
-    frost: "rounded-[28px] muted-border glass p-6 shadow-[0_30px_60px_rgba(0,0,0,0.35)]",
-    daylight: "rounded-3xl border border-slate-200 bg-[color:var(--background)] p-6 shadow-lg shadow-slate-900/5",
+    card: "card",
+    glass: "card glass muted-border backdrop-blur-xl",
+    frost: "card shadow-[0_30px_60px_rgba(0,0,0,0.12)]",
+    daylight: "card",
   };
 
   return <div className={cn(baseStyles[variant], className)}>{children}</div>;
@@ -82,12 +82,12 @@ interface PillButtonProps {
 
 export function PillButton({ children, variant = "secondary" }: PillButtonProps) {
   const variants: Record<PillButtonVariant, string> = {
-    primary: "bg-[color:var(--foreground)] text-[color:var(--background)] hover:opacity-95",
-    secondary: "border muted-border nav-muted hover:border-[color:var(--foreground)] hover:text-[color:var(--foreground)]",
+    primary: "btn btn-primary",
+    secondary: "btn btn-secondary",
   };
 
   return (
-    <button className={cn("group flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition", variants[variant])}>
+    <button className={cn("group flex items-center gap-2 text-sm transition", variants[variant])}>
       {children}
     </button>
   );

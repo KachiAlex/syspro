@@ -1,8 +1,28 @@
 @import "tailwindcss";
 
 :root {
+  /* Core UI tokens */
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0f1724; /* dark slate */
+
+  /* Palette (semantic) */
+  --color-primary: #334155; /* indigo-gray neutral for modern/neutral tone */
+  --color-primary-foreground: #ffffff;
+  --color-accent: #7c3aed; /* accent */
+  --color-muted: #f1f5f9;
+  --color-surface: #ffffff;
+  --color-border: #e6edf3;
+
+  /* Status colors */
+  --color-success: #16a34a;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  /* Typography & spacing tokens */
+  --radius-lg: 24px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --focus-ring: 0 0 0 4px rgba(99,102,241,0.15);
 }
 
 @theme inline {
@@ -14,8 +34,11 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0b1220;
+    --foreground: #e6eef8;
+    --color-muted: #0f1724;
+    --color-border: #0f1724;
+    --color-surface: #071026;
   }
 }
 
@@ -25,22 +48,71 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Ensure text inputs are always black text on white background for legibility */
+/* Semantic UI utility classes (used by primitives) */
+.card {
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: 1.5rem;
+  box-shadow: 0 6px 20px rgba(2,6,23,0.04);
+}
+
+.muted-border { border: 1px solid var(--color-border); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color .12s ease, color .12s ease, box-shadow .12s ease, opacity .12s ease;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  border: none;
+}
+
+.btn-primary:hover { opacity: 0.95; }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--color-border);
+}
+
+.input {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  padding: 0.5rem 0.75rem;
+  background: var(--color-surface);
+  color: var(--foreground);
+}
+
+.input:focus {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+/* Ensure text inputs are always black text on white background for legibility where needed */
 input,
 textarea,
 select,
 input[type=text],
 input[type=email],
 input[type=password],
-input[type=search],
-textarea,
-select {
-  color: #000000 !important;
-  background: #ffffff !important;
+input[type=search] {
+  color: inherit;
+  background: transparent;
 }
 
 /* Respect focus styles but keep legible */
 input:focus, textarea:focus, select:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+  box-shadow: var(--focus-ring);
 }
+
