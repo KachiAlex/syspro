@@ -86,7 +86,7 @@ export default function TenantAdminPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-8">
+    <div className="min-h-screen bg-[color:var(--background)] p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <div>
@@ -98,7 +98,7 @@ export default function TenantAdminPage() {
               <button
                 key={s.key}
                 onClick={() => setActiveSection(s.key)}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${activeSection === s.key ? "bg-slate-900 text-white" : "bg-white border border-slate-200 text-slate-700"}`}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${activeSection === s.key ? "bg-[color:var(--foreground)] text-[color:var(--background)]" : "bg-[color:var(--background)] border muted-border text-muted"}`}
               >
                 {s.label}
               </button>

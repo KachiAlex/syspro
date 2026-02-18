@@ -3,17 +3,17 @@ import { MetricStat, Panel, PillButton, SectionHeading, Tag } from "@/components
 
 export default function SupplierPortalPage() {
   return (
-    <div className="min-h-screen bg-[#05060a] text-white">
+    <div className="min-h-screen bg-[color:var(--background)] text-[color:var(--foreground)]">
       <div className="absolute inset-0 -z-10">
         <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-[#28fde0]/25 to-transparent" />
       </div>
 
       <main className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10 lg:px-10">
-        <header className="flex flex-col gap-6 rounded-[40px] border border-white/10 bg-white/5 p-8 backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between">
+        <header className="flex flex-col gap-6 rounded-[40px] muted-border glass p-8 backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between">
           <div>
             <Tag tone="indigo">Partner Surface</Tag>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight">Supplier Collaboration Hub</h1>
-            <p className="mt-3 max-w-3xl text-base text-white/70">
+            <p className="mt-3 max-w-3xl text-base text-muted">
               Real-time accountability, AI-authored briefs, and shared ledgers so every supplier stays in lock-step with production.
             </p>
           </div>
@@ -46,8 +46,8 @@ export default function SupplierPortalPage() {
             </div>
 
             <div className="mt-6 space-y-4">
-              <div className="flex items-center justify-center h-32 rounded-2xl border border-white/10 bg-black/30">
-                <p className="text-white/50">No worklist items yet</p>
+              <div className="flex items-center justify-center h-32 rounded-2xl muted-border glass">
+                <p className="text-muted">No worklist items yet</p>
               </div>
             </div>
           </Panel>
@@ -57,7 +57,7 @@ export default function SupplierPortalPage() {
               <SectionHeading eyebrow="Trust" title="Credential vault" description="One upload syncs to all buyers" />
               <ShieldCheck className="h-5 w-5 text-emerald-300" />
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
+            <div className="rounded-2xl muted-border glass p-4 text-sm text-muted">
               • ISO 9001 renewal auto-shared.<br />• Carbon disclosure synced to SYS carbon ledger.<br />• Insurance rider pending co-sign → remind legal.
             </div>
             <PillButton variant="primary">Upload attestation</PillButton>

@@ -1,4 +1,3 @@
-/* @vitest-environment happy-dom */
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
@@ -17,11 +16,11 @@ test("TenantAdmin shell: overview renders and section buttons toggle active stat
 
   // switch to IT Support
   fireEvent.click(itButton);
-  expect(itButton).toHaveClass("bg-slate-900");
-  expect(itButton).toHaveClass("text-white");
+  expect(itButton).toHaveClass("bg-[color:var(--foreground)]");
+  expect(itButton).toHaveClass("text-[color:var(--background)]");
 
   // switch to Billing
   fireEvent.click(billingButton);
-  expect(billingButton).toHaveClass("bg-slate-900");
-  expect(billingButton).toHaveClass("text-white");
+  expect(billingButton).toHaveClass("bg-[color:var(--foreground)]");
+  expect(billingButton).toHaveClass("text-[color:var(--background)]");
 });

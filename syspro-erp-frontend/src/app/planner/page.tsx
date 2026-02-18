@@ -357,9 +357,9 @@ export default function PlannerPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#030314] pb-20">
-        <div className="mx-auto flex max-w-4xl flex-col gap-4 px-6 pt-20 text-center text-white/70">
-          <Loader2 className="mx-auto h-10 w-10 animate-spin text-white" />
+      <div className="min-h-screen bg-[color:var(--background)] pb-20">
+        <div className="mx-auto flex max-w-4xl flex-col gap-4 px-6 pt-20 text-center text-muted">
+          <Loader2 className="mx-auto h-10 w-10 animate-spin text-[color:var(--foreground)]" />
           <p>Pulling live project telemetry…</p>
         </div>
       </div>
@@ -368,11 +368,11 @@ export default function PlannerPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#030314] pb-20">
-        <div className="mx-auto flex max-w-4xl flex-col gap-4 px-6 pt-20 text-center text-white/80">
+      <div className="min-h-screen bg-[color:var(--background)] pb-20">
+        <div className="mx-auto flex max-w-4xl flex-col gap-4 px-6 pt-20 text-center text-muted">
           <AlertTriangle className="mx-auto h-10 w-10 text-amber-300" />
           <p>{error}</p>
-          <p className="text-sm text-slate-400">Refresh the page to retry once connectivity stabilizes.</p>
+          <p className="text-sm text-muted">Refresh the page to retry once connectivity stabilizes.</p>
         </div>
       </div>
     );
@@ -381,7 +381,7 @@ export default function PlannerPage() {
   return (
     <div className="min-h-screen bg-[#030314] pb-20">
       <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 pt-10 lg:px-10">
-        <header className="rounded-3xl border border-white/5 bg-gradient-to-br from-[#0c1530] via-[#050a1d] to-[#0b1128] p-8">
+        <header className="rounded-3xl muted-border bg-gradient-to-br from-[#0c1530] via-[#050a1d] to-[#0b1128] p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-sky-200/80">Project Intelligence Mesh</p>
@@ -402,14 +402,14 @@ export default function PlannerPage() {
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl border border-white/5 bg-white/5 p-4">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-300">Active Departments</p>
-              <p className="mt-2 text-3xl font-semibold text-white">{portfolioStats.activeDepartments}</p>
-              <p className="text-xs text-slate-400">Across {projects.length} projects</p>
+            <div className="rounded-2xl muted-border glass p-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-muted">Active Departments</p>
+              <p className="mt-2 text-3xl font-semibold text-[color:var(--foreground)]">{portfolioStats.activeDepartments}</p>
+              <p className="text-xs text-muted">Across {projects.length} projects</p>
             </div>
-            <div className="rounded-2xl border border-white/5 bg-white/5 p-4">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-300">Budget Coverage</p>
-              <p className="mt-2 text-3xl font-semibold text-white">
+            <div className="rounded-2xl muted-border glass p-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-muted">Budget Coverage</p>
+              <p className="mt-2 text-3xl font-semibold text-[color:var(--foreground)]">
                 {currency.format(portfolioStats.spentBudget)} / {currency.format(portfolioStats.approvedBudget)}
               </p>
               <p className="text-xs text-emerald-300">
