@@ -17,7 +17,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${BODY_FONT_STACK} bg-[#05060a] text-white`}>
+      <body className={`${BODY_FONT_STACK}`}>
         <AppShell>{children}</AppShell>
       </body>
     </html>

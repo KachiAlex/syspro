@@ -1,45 +1,87 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
+  /* light theme tokens */
   --background: #ffffff;
+  --background-rgb: 255 255 255;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --foreground-rgb: 23 23 23;
+  --muted: rgba(23,23,23,0.56);
+  --accent: #06b6d4;
+  --accent-rgb: 6 182 212;
+  --glass: rgba(255,255,255,0.04);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
+    /* dark theme tokens */
     --background: #0a0a0a;
+    --background-rgb: 10 10 10;
     --foreground: #ededed;
+    --foreground-rgb: 237 237 237;
+    --muted: rgba(237,237,237,0.56);
+    --accent: #06b6d4;
+    --accent-rgb: 6 182 212;
+    --glass: rgba(0,0,0,0.5);
   }
+}
+
+/* Base page */
+html, body, #__next {
+  height: 100%;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }
 
-/* Ensure text inputs are always black text on white background for legibility */
+/* Utilities & tokens */
+.app-header {
+  background: var(--glass);
+  border-bottom: 1px solid rgba(var(--foreground-rgb), 0.08);
+  color: var(--foreground);
+}
+
+.text-muted { color: var(--muted); }
+.lead { color: rgba(var(--foreground-rgb), 0.9); font-size: 1.125rem; }
+.glass { background: var(--glass); }
+.muted-border { border-color: rgba(var(--foreground-rgb), 0.08); }
+
+.container { max-width: 1280px; margin-left: auto; margin-right: auto; padding-left: 1.5rem; padding-right: 1.5rem; }
+a { color: inherit; text-decoration: none; }
+a.primary { color: var(--accent); font-weight: 600; }
+
+img { max-width: 100%; height: auto; display: block; }
+
+/* Form controls — theme-aware, legible */
 input,
 textarea,
 select,
-input[type=text],
-input[type=email],
-input[type=password],
-input[type=search],
-textarea,
-select {
-  color: #000000 !important;
-  background: #ffffff !important;
+button {
+  color: var(--foreground);
+  background: transparent;
+  border: 1px solid rgba(var(--foreground-rgb), 0.06);
+  border-radius: .375rem;
+  padding: .5rem .6rem;
 }
-
 input:focus, textarea:focus, select:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.12);
 }
+
+/* Respect headings */
+h1, h2, h3, h4 { color: var(--foreground); }
+
+/* Small helpers used by header/nav */
+.badge-accent { background: rgba(var(--accent-rgb), 0.12); color: var(--accent); }
+.nav-muted { color: var(--muted); }
+
+/* keep legacy input rule for high-contrast form fields only when explicitly used */
+.form-plain-input { color: #000000 !important; background: #ffffff !important; }

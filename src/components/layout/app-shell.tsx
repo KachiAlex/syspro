@@ -24,30 +24,30 @@ export function AppShell({ children }: { children: ReactNode }) {
   const hideGlobalHeader = pathname?.startsWith("/tenant-admin");
 
   return (
-    <div className="text-white">
+    <div className="text-[color:var(--foreground)]">
       {!hideGlobalHeader && (
-        <div className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur-xl">
+        <div className="app-header fixed inset-x-0 top-0 z-50 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10">
             <div className="flex items-center gap-4">
-              <div className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold tracking-[0.4em] text-teal-200">
+              <div className="rounded-full badge-accent px-3 py-1 text-xs font-semibold tracking-[0.4em] text-[color:var(--accent)]">
                 SYS
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.5em] text-white/50">Neural ERP</p>
+                <p className="text-xs uppercase tracking-[0.5em] nav-muted">Neural ERP</p>
                 <p className="text-lg font-semibold">Command Mesh</p>
               </div>
             </div>
 
             {isMarketing ? (
-              <nav className="hidden items-center gap-6 text-sm text-white/70 lg:flex">
+              <nav className="hidden items-center gap-6 text-sm nav-muted lg:flex">
                 {marketingLinks.map((link) => (
-                  <a key={link.label} href={link.href} className="hover:text-white">
+                  <a key={link.label} href={link.href} className="hover:text-[color:var(--foreground)]">
                     {link.label}
                   </a>
                 ))}
               </nav>
             ) : (
-              <nav className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-sm lg:flex">
+              <nav className="hidden items-center gap-2 rounded-full border muted-border glass px-2 py-1 text-sm lg:flex">
                 {opsLinks.map((link) => {
                   const active = pathname === link.href;
                   return (
@@ -55,7 +55,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                       key={link.label}
                       href={link.href}
                       className={`rounded-full px-4 py-2 transition ${
-                        active ? "bg-white text-[#05060a]" : "text-white/70 hover:text-white"
+                        active ? "bg-[color:var(--foreground)] text-[color:var(--background)]" : "nav-muted hover:text-[color:var(--foreground)]"
                       }`}
                     >
                       {link.label}
@@ -75,7 +75,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <button className="rounded-full border border-white/15 p-2 text-white/70 hover:text-white lg:hidden">
                     <Menu className="h-4 w-4" />
                   </button>
-                  <div className="hidden items-center gap-3 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/70 lg:flex">
+                  <div className="hidden items-center gap-3 rounded-full border muted-border glass px-3 py-1 text-xs nav-muted lg:flex">
                     <ShieldCheck className="h-4 w-4 text-emerald-300" />
                     Multi-tenant secure
                   </div>
