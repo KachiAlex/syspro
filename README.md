@@ -1,3 +1,5 @@
+[![Frontend CI — Node 18](https://github.com/KachiAlex/syspro/actions/workflows/frontend-tests-node18.yml/badge.svg?branch=main)](https://github.com/KachiAlex/syspro/actions/workflows/frontend-tests-node18.yml)
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
