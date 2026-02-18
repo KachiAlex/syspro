@@ -125,7 +125,7 @@ export default function ApprovalsWorkspace() {
           <h1 className="text-2xl font-semibold text-slate-900">Approvals</h1>
           <p className="mt-1 text-sm text-slate-600">Review and authorize financial documents</p>
         </div>
-        <button className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">⚙️ Configure Rules</button>
+        <button className="whitespace-nowrap btn btn-blue px-4 py-2 text-sm font-medium rounded-full">⚙️ Configure Rules</button>
       </div>
 
       {/* Filters */}

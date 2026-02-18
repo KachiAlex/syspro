@@ -304,7 +304,7 @@ function CreatePaymentModal({ onClose, onSuccess, onError }: CreatePaymentModalP
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-overlay">
       <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-lg">
         <h3 className="mb-4 text-lg font-semibold text-slate-900">Create Vendor Payment</h3>
         

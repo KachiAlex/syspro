@@ -1,11 +1,11 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import TenantAdminPage from "@/app/tenant-admin/page";
 
 test("TenantAdmin shell: overview renders and section buttons toggle active state", async () => {
-  render(<TenantAdminPage />);
+  await act(async () => render(<TenantAdminPage />));
 
   // basic shell content
   expect(screen.getByText(/Tenant Admin/i)).toBeInTheDocument();

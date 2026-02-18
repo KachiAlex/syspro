@@ -182,7 +182,7 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
             </div>
           </div>
           <div className="flex gap-3">
-            <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-slate-800">
+            <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-full btn btn-dark px-4 py-2 text-sm font-medium shadow-sm">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />} Create rule
             </button>
             {error && <span className="text-sm text-rose-600">{error}</span>}

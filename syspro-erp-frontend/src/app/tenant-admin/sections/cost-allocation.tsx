@@ -119,7 +119,7 @@ export default function CostAllocationSection({ tenantSlug }: { tenantSlug?: str
               setShowCreateForm(!showCreateForm);
               form.resetForm();
             }}
-            className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="whitespace-nowrap btn btn-blue px-4 py-2 text-sm font-medium rounded-full"
           >
             {showCreateForm ? "Cancel" : "+ Create Cost Center"}
           </button>
@@ -187,7 +187,7 @@ export default function CostAllocationSection({ tenantSlug }: { tenantSlug?: str
                   setShowCreateForm(false);
                   form.resetForm();
                 }}
-                className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-full border muted-border px-4 py-2 text-sm font-medium text-muted hover:bg-[color:var(--background)]/5"
               >
                 Cancel
               </button>

@@ -206,7 +206,7 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
           <button 
             type="submit" 
             disabled={form.isSubmitting || !canCreate || permissions.loading} 
-            className="rounded-full bg-slate-900 px-4 py-2 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-full btn btn-dark px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
             title={!canCreate ? "You don't have permission to create employees" : undefined}
           >
             {form.isSubmitting ? "Adding..." : "Add employee"}

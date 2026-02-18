@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 
@@ -31,9 +31,10 @@ afterEach(() => {
 
 test("ItSupportWorkspace renders headings and opens the create-ticket modal", async () => {
   const user = userEvent.setup();
-  render(<ItSupportWorkspace tenantSlug={undefined} region={undefined} />);
+  await act(async () => render(<ItSupportWorkspace tenantSlug={undefined} region={undefined} />));
 
-  // visible heading
+  // wait for initial workspace load to finish, then assert heading
+  await waitFor(() => expect(screen.queryByText(/Loading queue.../i)).not.toBeInTheDocument());
   expect(screen.getByText(/IT Support control center/i)).toBeInTheDocument();
 
   // open the create modal and assert modal heading appears

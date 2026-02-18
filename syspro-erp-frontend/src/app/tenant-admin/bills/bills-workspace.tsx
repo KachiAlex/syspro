@@ -100,7 +100,7 @@ export default function BillsWorkspace() {
           <h1 className="text-2xl font-semibold text-slate-900">Bills & Payables</h1>
           <p className="mt-1 text-sm text-slate-600">Track and manage all vendor bills and payment schedules</p>
         </div>
-        <button className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+        <button className="whitespace-nowrap btn btn-blue px-4 py-2 text-sm font-medium rounded-full">
           + New Bill
         </button>
       </div>

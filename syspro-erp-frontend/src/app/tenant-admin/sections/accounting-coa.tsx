@@ -122,7 +122,7 @@ export default function ChartOfAccountsWorkspace({
               setFormData({ accountCode: "", accountName: "", accountType: "ASSET", description: "" });
               setShowForm(true);
             }}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg btn btn-blue px-4 py-2 text-sm font-semibold transition-colors"
           >
             <Plus className="h-4 w-4" />
             New Account

@@ -223,7 +223,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
       });
   }, [tickets, filterStatus, filterPriority, searchQuery]);
 
-  const slaAtRisk = metrics?.sla.atRisk ?? [];
+  const slaAtRisk = metrics?.sla?.atRisk ?? [];
   const workload = metrics?.workload ?? [];
 
   const openCreateModal = () => {
