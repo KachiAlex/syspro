@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { FormAlert } from "@/components/form";
+import { Panel, PillButton, SectionHeading } from "@/components/ui/primitives";
 
 type Report = { id: string; name: string; type: string; createdAt?: string; schedule?: string };
 type Export = { id: string; name: string; frequency: string; lastRun?: string; nextRun?: string; format: string };
@@ -145,19 +146,11 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Insights</p>
-            <h2 className="text-lg font-semibold text-slate-900">Reports</h2>
-            <p className="mt-1 text-sm text-slate-600">Create custom reports to analyze your business data</p>
+            <SectionHeading eyebrow="Insights" title="Reports" description="Create custom reports to analyze your business data" />
           </div>
-          <button
-            onClick={() => {
-              setShowNewReport(!showNewReport);
-              setReportForm({ name: "", type: "" });
-            }}
-            className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
+          <PillButton variant="primary" onClick={() => { setShowNewReport(!showNewReport); setReportForm({ name: "", type: "" }); }}>
             {showNewReport ? "Cancel" : "+ New Report"}
-          </button>
+          </PillButton>
         </div>
 
         {showNewReport && (
@@ -270,19 +263,11 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Automation</p>
-            <h2 className="text-lg font-semibold text-slate-900">Scheduled Exports</h2>
-            <p className="mt-1 text-sm text-slate-600">Automatically export data at regular intervals</p>
+            <SectionHeading eyebrow="Automation" title="Scheduled Exports" description="Automatically export data at regular intervals" />
           </div>
-          <button
-            onClick={() => {
-              setShowNewExport(!showNewExport);
-              setExportForm({ name: "", frequency: "daily", format: "csv" });
-            }}
-            className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
+          <PillButton variant="primary" onClick={() => { setShowNewExport(!showNewExport); setExportForm({ name: "", frequency: "daily", format: "csv" }); }}>
             {showNewExport ? "Cancel" : "+ Schedule Export"}
-          </button>
+          </PillButton>
         </div>
 
         {showNewExport && (

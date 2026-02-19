@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { FormAlert } from "@/components/form";
+import { Panel, PillButton, SectionHeading } from "@/components/ui/primitives";
 
 type ModuleItem = {
   id: string;
@@ -92,11 +93,7 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Modules</p>
-            <h2 className="text-2xl font-semibold text-slate-900">System Modules & Features</h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Enable or disable modules for your organization and configure feature flags per region.
-            </p>
+            <SectionHeading eyebrow="Modules" title="System Modules & Features" description="Enable or disable modules for your organization and configure feature flags per region." />
           </div>
           <div className="flex items-center gap-2">
             <select
@@ -110,12 +107,7 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
                 </option>
               ))}
             </select>
-            <button
-              onClick={load}
-              className="rounded-full border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Refresh
-            </button>
+            <PillButton variant="secondary" onClick={load}>Refresh</PillButton>
           </div>
         </div>
 

@@ -75,19 +75,19 @@ export function SectionHeading({ eyebrow, title, description, tone = "light" }: 
 
 type PillButtonVariant = "primary" | "secondary";
 
-interface PillButtonProps {
+interface PillButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   variant?: PillButtonVariant;
 }
 
-export function PillButton({ children, variant = "secondary" }: PillButtonProps) {
+export function PillButton({ children, variant = "secondary", className, ...props }: PillButtonProps) {
   const variants: Record<PillButtonVariant, string> = {
     primary: "btn btn-primary",
     secondary: "btn btn-secondary",
   };
 
   return (
-    <button className={cn("group flex items-center gap-2 text-sm transition", variants[variant])}>
+    <button {...props} className={cn("group flex items-center gap-2 text-sm transition", variants[variant], className)}>
       {children}
     </button>
   );

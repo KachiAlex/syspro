@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { FormAlert } from "@/components/form";
+import { Panel, PillButton, SectionHeading } from "@/components/ui/primitives";
 
 import type {
   AttributionModel,
@@ -368,16 +369,13 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
   };
 
   const SectionShell = ({ title, description, actions, children }: { title: string; description?: string; actions?: ReactNode; children: ReactNode }) => (
-    <div className="space-y-6 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+    <Panel className="space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div>
-          <h3 className="text-xl font-semibold text-slate-900">{title}</h3>
-          {description && <p className="text-sm text-slate-500">{description}</p>}
-        </div>
+        <SectionHeading eyebrow="RevOps" title={title} description={description} />
         {actions}
       </div>
       {children}
-    </div>
+    </Panel>
   );
 
   const renderOverview = () => (
@@ -473,28 +471,12 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
       description="RevOps defines demand programs, budgets, and approvals without owning CRM records."
       actions={
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setFormError(null);
-              setCampaignForm(DEFAULT_CAMPAIGN_FORM());
-              setCampaignModalOpen(true);
-            }}
-            className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-          >
+          <PillButton variant="primary" onClick={() => { setFormError(null); setCampaignForm(DEFAULT_CAMPAIGN_FORM()); setCampaignModalOpen(true); }}>
             <PlusIcon /> New campaign
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setFormError(null);
-              setLeadSourceForm(DEFAULT_LEAD_SOURCE_FORM());
-              setLeadSourceModalOpen(true);
-            }}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600"
-          >
+          </PillButton>
+          <PillButton variant="secondary" onClick={() => { setFormError(null); setLeadSourceForm(DEFAULT_LEAD_SOURCE_FORM()); setLeadSourceModalOpen(true); }}>
             Register source
-          </button>
+          </PillButton>
         </div>
       }
     >
@@ -547,17 +529,9 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
       title="Lead source registry"
       description="Defines where demand originates. CRM opportunities simply reference revops_lead_sources.id."
       actions={
-        <button
-          type="button"
-          onClick={() => {
-            setFormError(null);
-            setLeadSourceForm(DEFAULT_LEAD_SOURCE_FORM(campaigns[0]?.id));
-            setLeadSourceModalOpen(true);
-          }}
-          className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-        >
+        <PillButton variant="primary" onClick={() => { setFormError(null); setLeadSourceForm(DEFAULT_LEAD_SOURCE_FORM(campaigns[0]?.id)); setLeadSourceModalOpen(true); }}>
           <PlusIcon /> New source
-        </button>
+        </PillButton>
       }
     >
       <div className="overflow-x-auto">
@@ -727,17 +701,9 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
       title="Enablement hub"
       description="Version-controlled collateral that CRM references via secure links."
       actions={
-        <button
-          type="button"
-          onClick={() => {
-            setFormError(null);
-            setAssetForm(DEFAULT_ASSET_FORM());
-            setAssetModalOpen(true);
-          }}
-          className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-        >
+        <PillButton variant="primary" onClick={() => { setFormError(null); setAssetForm(DEFAULT_ASSET_FORM()); setAssetModalOpen(true); }}>
           <PlusIcon /> Publish asset
-        </button>
+        </PillButton>
       }
     >
       <div className="grid gap-4 md:grid-cols-2">
@@ -870,13 +836,9 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
           <p className="text-sm text-slate-500">Align demand, spend, and revenue without duplicating CRM data.</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleRefresh}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600"
-          >
+          <PillButton variant="secondary" onClick={handleRefresh}>
             <RefreshCcw className="h-4 w-4" /> Refresh data
-          </button>
+          </PillButton>
         </div>
       </div>
 
