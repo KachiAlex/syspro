@@ -177,8 +177,6 @@ function formatRelative(value?: string) {
   return days >= 0 ? `${days}d remaining` : `${Math.abs(days)}d ago`;
 }
 
-import { Panel, SectionHeading, PillButton } from "@/components/ui/primitives";
-
 export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?: string | null; region?: string }) {
   const tenantKey = tenantSlug?.trim() || "kreatix-default";
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
