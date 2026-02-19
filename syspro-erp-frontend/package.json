@@ -15,7 +15,9 @@
     "test:invoices": "node ./scripts/test-invoices.js",
     "test:vendors": "node ./scripts/test-vendors.js",
     "test:vendors:ci": "start-server-and-test \"npm run dev\" http://localhost:3000 \"npm run test:vendors\"",    "storybook": "start-storybook -p 6006 -s public",
-    "build-storybook": "build-storybook -s public",    "migrate": "node ./scripts/run-migrations.js"
+    "build-storybook": "build-storybook -s public",
+    "publish-storybook": "npx chromatic --exit-once-uploaded --project-token $CHROMATIC_PROJECT_TOKEN",
+    "migrate": "node ./scripts/run-migrations.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.2",

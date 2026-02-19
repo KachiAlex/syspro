@@ -1,0 +1,60 @@
+name: Storybook CI
+
+on:
+  pull_request:
+    branches: [ main, '**' ]
+  push:
+    branches: [ main ]
+
+jobs:
+  build-storybook:
+    name: Build Storybook
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./
+
+      - name: Build Storybook static
+        run: npm run build-storybook
+        working-directory: ./
+
+      - name: Upload Storybook artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: storybook-static
+          path: build-storybook
+
+  publish-chromatic:
+    name: Publish to Chromatic (optional)
+    needs: build-storybook
+    runs-on: ubuntu-latest
+    if: ${{ secrets.CHROMATIC_PROJECT_TOKEN != '' }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Publish to Chromatic
+        env:
+          CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+        run: npx chromatic --exit-once-uploaded --project-token $CHROMATIC_PROJECT_TOKEN
