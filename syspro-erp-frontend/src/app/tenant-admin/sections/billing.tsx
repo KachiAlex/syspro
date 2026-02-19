@@ -213,7 +213,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
             ))}
           </div>
         )}
-      </div>
-    </div>
+      </Panel>
+    </Panel>
   );
 }

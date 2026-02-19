@@ -125,7 +125,7 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
             {error && <span className="text-sm text-rose-600">{error}</span>}
           </div>
         </form>
-      </div>
+      </Panel>
 
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
