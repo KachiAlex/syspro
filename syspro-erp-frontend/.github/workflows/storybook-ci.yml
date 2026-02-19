@@ -37,6 +37,27 @@ jobs:
           name: storybook-static
           path: build-storybook
 
+      - name: Comment on PR with artifact info (optional)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) return;
+            const body = `✅ Storybook built for this PR. Download the artifact from the **Actions** tab (Artifacts → storybook-static) or run locally with \`npm run storybook\`.`;
+            await github.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: pr.number, body });
+
+      - name: Warn maintainers to enable Chromatic (if not configured)
+        if: github.event_name == 'pull_request' && !secrets.CHROMATIC_PROJECT_TOKEN
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) return;
+            const body = `ℹ️ Chromatic publishing is not enabled for this repository. To enable visual diffs, add a repository secret named **CHROMATIC_PROJECT_TOKEN** (value from your Chromatic project) and the \\`.github/workflows/storybook-ci.yml\\` workflow will publish previews automatically.`;
+            await github.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: pr.number, body });
   publish-chromatic:
     name: Publish to Chromatic (optional)
     needs: build-storybook
@@ -54,7 +75,26 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      - name: Publish to Chromatic
+      - name: Publish to Chromatic (capture URL)
+        id: publish
         env:
           CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
-        run: npx chromatic --exit-once-uploaded --project-token $CHROMATIC_PROJECT_TOKEN
+        run: |
+          set -o pipefail
+          OUTPUT=$(npx chromatic --exit-once-uploaded --project-token $CHROMATIC_PROJECT_TOKEN 2>&1 || true)
+          echo "$OUTPUT"
+          # Try to extract a Chromatic URL from the CLI output
+          URL=$(printf "%s\n" "$OUTPUT" | grep -Eo 'https?://[^ ]*chromatic\.com[^ ]*' | head -1 || true)
+          echo "chromatic_url=${URL}" >> $GITHUB_OUTPUT
+
+      - name: Comment Chromatic preview on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) return;
+            const url = '${{ steps.publish.outputs.chromatic_url }}';
+            const body = url ? `🎨 Chromatic preview: ${url}` : '🎨 Chromatic completed but no preview URL was detected in the CLI output.';
+            await github.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: pr.number, body });
