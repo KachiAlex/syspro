@@ -1,0 +1,75 @@
+name: PR Storybook Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, closed]
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-preview:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Storybook
+        run: npm run build-storybook
+
+      - name: Deploy Storybook to gh-pages/pr-<number>
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build-storybook
+          destination_dir: pr-${{ github.event.number }}
+          keep_files: true
+
+      - name: Comment PR with preview URL
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) return;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const number = pr.number;
+            const url = `https://${owner}.github.io/${repo}/pr-${number}/`;
+            const body = `🔎 Storybook PR preview available: ${url}\n\nIf the preview 404s, please ensure GitHub Pages is configured to serve from the \`gh-pages\` branch (Settings → Pages) or use the Chromatic preview in the CI comments.`;
+            await github.issues.createComment({ owner, repo, issue_number: number, body });
+
+  cleanup-preview:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Remove PR preview directory
+        if: ${{ github.event.pull_request.number }}
+        run: |
+          PR_DIR="pr-${{ github.event.pull_request.number }}"
+          if [ -d "$PR_DIR" ]; then
+            git rm -rf "$PR_DIR"
+            git commit -m "chore: remove Storybook PR preview $PR_DIR" || true
+            git push origin gh-pages || true
+          else
+            echo "No preview directory to remove: $PR_DIR"
+          fi
+        shell: bash
