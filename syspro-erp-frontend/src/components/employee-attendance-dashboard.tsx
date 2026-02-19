@@ -257,8 +257,7 @@ export default function EmployeeAttendanceDashboard({
       {/* Quick Actions Card */}
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Today's Attendance</h2>
-          <p className="text-sm text-slate-500">
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Today&rsquo;s Attendance</h2>
             {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
@@ -358,7 +357,7 @@ export default function EmployeeAttendanceDashboard({
       {/* Today's Activity */}
       {todayAttendance && (
         <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <p className="text-xs uppercase text-slate-400 font-medium mb-4">Today's Activity</p>
+          <p className="text-xs uppercase text-slate-400 font-medium mb-4">Today&rsquo;s Activity</p>
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
               <Activity size={20} className="text-blue-600" />

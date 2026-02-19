@@ -105,14 +105,14 @@ async function seedAccessControl(tenantSlug: string) {
   console.log("  → Seeding access controls...");
   const modules = ["crm", "finance", "people", "projects", "billing", "integrations"];
 
-  for (const module of modules) {
+  for (const mod of modules) {
     try {
       await insertAccessControl({
         tenantSlug,
         roleId: randomUUID(),
         roleName: "Default Role",
         moduleAccess: [
-          { module, read: true, write: ["crm", "finance"].includes(module), admin: false },
+          { module: mod, read: true, write: ["crm", "finance"].includes(mod), admin: false },
         ],
       });
     } catch (e) {

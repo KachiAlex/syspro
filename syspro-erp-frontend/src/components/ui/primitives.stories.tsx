@@ -1,6 +1,6 @@
 import React from 'react';
 import { Meta, StoryObj } from '@storybook/react';
-import { Panel, PillButton, Tag } from './primitives';
+import { Panel, PillButton, Tag, SectionHeading } from './primitives';
 
 const meta: Meta = {
   title: 'UI/Primitives',

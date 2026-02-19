@@ -391,7 +391,7 @@ function Testimonials() {
 
               {/* Content */}
               <p className="text-gray-700 mb-6 italic">
-                "{testimonial.content}"
+                &ldquo;{testimonial.content}&rdquo;
               </p>
 
               {/* Author */}
