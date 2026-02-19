@@ -7,7 +7,21 @@ module.exports = {
     './**/*.html',
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto'],
+      },
+      colors: {
+        accent: {
+          DEFAULT: '#2563eb',
+          600: '#1d4ed8',
+        },
+      },
+      container: {
+        center: true,
+        padding: '1rem',
+      },
+    },
   },
   plugins: [],
 };
