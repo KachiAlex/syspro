@@ -372,7 +372,7 @@ export default function SuperadminPage() {
               ))}
             </tbody>
           </table>
-        </div>
+        </Panel>
       )}
 
       {activeTab === 'licenses' && (
@@ -437,7 +437,7 @@ export default function SuperadminPage() {
               ))}
             </tbody>
           </table>
-        </div>
+        </Panel>
       )}
 
       {activeTab === 'admins' && (
@@ -849,7 +849,7 @@ export default function SuperadminPage() {
           </div>
         </div>
       )}
-      </div>
+      </Panel>
     </div>
   );
 }
