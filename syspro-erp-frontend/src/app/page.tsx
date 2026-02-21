@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Menu, X, ArrowRight, Play, Check, Star } from 'lucide-react';
+import { Menu, X, ArrowRight, Play, Check, Star, Clock, BarChart2 } from 'lucide-react';
 import {
   Users,
   DollarSign,
