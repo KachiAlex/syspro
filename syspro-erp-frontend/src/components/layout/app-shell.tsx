@@ -24,7 +24,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   const isMarketing = pathname === "/";
-  const hideGlobalHeader = pathname?.startsWith("/tenant-admin");
+  // Hide the global header on tenant admin pages and on the marketing home page
+  const hideGlobalHeader = pathname?.startsWith("/tenant-admin") || pathname === "/";
 
   return (
     <div className="text-[color:var(--foreground)]">
