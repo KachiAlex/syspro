@@ -12,146 +12,158 @@ import {
   Shield,
 } from 'lucide-react';
 import { ImageWithFallback } from '@/components/ImageWithFallback';
+import { PillButton } from '@/components/ui/primitives';
 
-// Header Component
 function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const startLoginFlow = () => { if (typeof window !== 'undefined') window.location.href = '/access'; };
 
-  // Trigger login flow (client-side redirect)
-  const startLoginFlow = () => {
-    // TODO: implement a modal or redirect to proper auth provider
-    if (typeof window !== 'undefined') window.location.href = '/access';
-  };
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">
-      <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm py-3">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
+          <div className="flex items-center gap-3">
+            <a href="/" aria-label="Syspro home" className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600 shadow-sm">
                 <span className="text-white font-bold text-lg">S</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">Syspro</span>
-            </div>
+              <span className="font-semibold text-gray-900 text-lg tracking-tight">Syspro</span>
+            </a>
+            <nav role="navigation" aria-label="Primary" className="hidden md:flex items-center gap-6 text-sm text-gray-600">
+              <a href="#features" className="hover:text-gray-900 px-2 py-1 rounded-md transition-colors">Product</a>
+              <a href="#solutions" className="hover:text-gray-900 px-2 py-1 rounded-md transition-colors">Solutions</a>
+              <a href="#pricing" className="hover:text-gray-900 px-2 py-1 rounded-md transition-colors">Pricing</a>
+              <a href="#resources" className="hover:text-gray-900 px-2 py-1 rounded-md transition-colors">Resources</a>
+            </nav>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-gray-700 hover:text-blue-600 transition-colors">Features</a>
-            <a href="#solutions" className="text-gray-700 hover:text-blue-600 transition-colors">Solutions</a>
-            <a href="#pricing" className="text-gray-700 hover:text-blue-600 transition-colors">Pricing</a>
-            <a href="#resources" className="text-gray-700 hover:text-blue-600 transition-colors">Resources</a>
-            <a href="#contact" className="text-gray-700 hover:text-blue-600 transition-colors">Contact</a>
-          </div>
-
-          {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-4">
-                  <button className="text-gray-700 hover:text-blue-600 transition-colors" onClick={() => startLoginFlow()}>
-                    Sign In
-                  </button>
-            <button className="btn btn-blue px-6 py-2 rounded-lg transition-colors">
-              Request Demo
-            </button>
+            <button onClick={startLoginFlow} className="text-sm text-gray-700 hover:text-gray-900">Sign in</button>
+            <PillButton variant="primary" className="px-4 py-2 shadow-md">Request demo</PillButton>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button 
-            className="md:hidden text-gray-700"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          <button className="md:hidden text-gray-700" onClick={() => setOpen(!open)} aria-label="Toggle menu" aria-expanded={open} aria-controls="mobile-menu">
+            {open ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
 
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200">
-            <div className="flex flex-col gap-4">
-              <a href="#features" className="text-gray-700 hover:text-blue-600 transition-colors">Features</a>
-              <a href="#solutions" className="text-gray-700 hover:text-blue-600 transition-colors">Solutions</a>
-              <a href="#pricing" className="text-gray-700 hover:text-blue-600 transition-colors">Pricing</a>
-              <a href="#resources" className="text-gray-700 hover:text-blue-600 transition-colors">Resources</a>
-              <a href="#contact" className="text-gray-700 hover:text-blue-600 transition-colors">Contact</a>
-              <div className="flex flex-col gap-2 pt-4 border-t border-gray-200">
-                  <button className="text-gray-700 hover:text-blue-600 transition-colors text-left" onClick={() => startLoginFlow()}>
-                        Sign In
-                      </button>
-                <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                  Request Demo
-                </button>
+        {open && (
+          <div id="mobile-menu" role="menu" aria-label="Mobile primary menu" className="md:hidden py-4 border-t border-gray-100">
+            <div className="flex flex-col gap-3">
+              <a role="menuitem" href="#features" className="px-2 py-2 rounded hover:bg-gray-50">Product</a>
+              <a role="menuitem" href="#solutions" className="px-2 py-2 rounded hover:bg-gray-50">Solutions</a>
+              <a role="menuitem" href="#pricing" className="px-2 py-2 rounded hover:bg-gray-50">Pricing</a>
+              <a role="menuitem" href="#resources" className="px-2 py-2 rounded hover:bg-gray-50">Resources</a>
+              <div className="pt-2 border-t border-gray-100 flex gap-2">
+                <button onClick={startLoginFlow} className="flex-1 text-left px-3 py-2">Sign in</button>
+                <PillButton variant="primary" className="flex-1">Request demo</PillButton>
               </div>
             </div>
           </div>
         )}
-      </nav>
+      </div>
     </header>
   );
 }
 
-// Hero Section
 function Hero() {
   return (
-    <section className="pt-24 pb-16 md:pt-32 md:pb-24 bg-gradient-to-b from-blue-50 to-white">
+    <section className="pt-32 pb-20 bg-gradient-to-b from-white via-slate-50 to-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left Content */}
-          <div className="max-w-2xl">
-            <div className="inline-block mb-4 px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm">
-              🚀 The Future of Enterprise Management
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              Unify Your Business Operations with{' '}
-              <span className="text-blue-600">Syspro</span>
+        <div className="grid lg:grid-cols-12 gap-12 items-center">
+          <div className="lg:col-span-6 max-w-2xl">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm font-medium mb-4">
+              <Clock size={14} /> 30‑day free trial — no credit card
+            </span>
+
+            <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold text-gray-900 leading-tight mb-6 hero-title">
+              One platform to run your entire business
             </h1>
-            <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
-              The all-in-one B2B ERP solution that streamlines CRM, Finance, HR, Projects, and more. 
-              Empower your team with intelligent automation and real-time insights.
+
+            <p className="text-xl text-gray-600 mb-8 max-w-xl">
+              Syspro combines CRM, Finance, HR and Projects into a single, modern ERP — built for speed, security and real-world scale. Launch faster, reduce manual work and make better decisions.
             </p>
-            
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <button className="btn btn-blue px-8 py-3 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl">
-                Get Started Free
-                <ArrowRight size={20} />
-              </button>
-              <button className="btn btn-ghost border-2 border-gray-300 px-8 py-3 rounded-lg transition-all flex items-center justify-center gap-2">
-                <Play size={20} />
-                Watch Demo
+
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <PillButton variant="primary" className="inline-flex items-center gap-3 px-5 py-3 shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600">
+                Start free trial
+                <ArrowRight size={18} />
+              </PillButton>
+              <button className="inline-flex items-center gap-2 px-5 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 text-sm">
+                <Play size={16} /> Watch walkthrough
               </button>
             </div>
 
-            {/* Trust Indicators */}
-            <div className="flex items-center gap-6 text-sm text-gray-600">
-              <div className="flex items-center gap-2">
-                <span className="text-green-600">✓</span>
-                <span>Free 30-day trial</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-green-600">✓</span>
-                <span>No credit card required</span>
+            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+              <div className="flex items-center gap-2"><span className="font-semibold text-gray-800">10k+</span><span>businesses</span></div>
+              <div className="flex items-center gap-2"><span className="font-semibold text-gray-800">99.9%</span><span>uptime</span></div>
+              <div className="flex items-center gap-2"><span className="font-semibold text-gray-800">24/7</span><span>support</span></div>
+            </div>
+
+            <div className="mt-8">
+              <h4 className="text-sm text-gray-500 mb-3">Popular modules</h4>
+              <div className="flex flex-wrap gap-3">
+                <span className="px-3 py-1 rounded-full bg-gray-100 text-sm">CRM</span>
+                <span className="px-3 py-1 rounded-full bg-gray-100 text-sm">Finance</span>
+                <span className="px-3 py-1 rounded-full bg-gray-100 text-sm">HR</span>
+                <span className="px-3 py-1 rounded-full bg-gray-100 text-sm">Projects</span>
+                <span className="px-3 py-1 rounded-full bg-gray-100 text-sm">Automation</span>
               </div>
             </div>
           </div>
 
-          {/* Right Image */}
-          <div className="relative">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-              <ImageWithFallback 
-                src="https://images.unsplash.com/photo-1608222351212-18fe0ec7b13b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMGFuYWx5dGljcyUyMGRhc2hib2FyZHxlbnwxfHx8fDE3NzAzNTg4ODV8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                alt="Syspro Dashboard" 
-                className="w-full h-auto"
-              />
-            </div>
-            {/* Floating Card */}
-            <div className="absolute -bottom-6 -left-6 bg-white rounded-lg shadow-xl p-4 max-w-xs hidden lg:block">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <span className="text-2xl">📈</span>
+          <div className="lg:col-span-6 relative">
+            <div className="rounded-2xl shadow-2xl bg-gradient-to-br from-white to-slate-50 border border-gray-100 overflow-hidden">
+              <div className="p-6 md:p-8">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <div className="text-xs text-gray-500">Overview</div>
+                    <div className="text-xl font-semibold text-gray-900">Company dashboard</div>
+                  </div>
+                  <div className="text-sm text-gray-500 flex items-center gap-2"><BarChart2 size={16}/> Real-time</div>
                 </div>
+
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="p-3 bg-white rounded-lg shadow-sm">
+                    <div className="text-xs text-gray-400">MRR</div>
+                    <div className="text-lg font-bold">$120.4k</div>
+                    <div className="text-xs text-emerald-600 mt-1">+6.1% MoM</div>
+                  </div>
+                  <div className="p-3 bg-white rounded-lg shadow-sm">
+                    <div className="text-xs text-gray-400">Receivables</div>
+                    <div className="text-lg font-bold">$38.2k</div>
+                    <div className="text-xs text-red-500 mt-1">-2.2% YoY</div>
+                  </div>
+                  <div className="p-3 bg-white rounded-lg shadow-sm">
+                    <div className="text-xs text-gray-400">Open tickets</div>
+                    <div className="text-lg font-bold">18</div>
+                    <div className="text-xs text-gray-500 mt-1">Priority support</div>
+                  </div>
+                </div>
+
+                <div className="h-36 bg-gradient-to-r from-indigo-500 to-sky-400 rounded-lg text-white p-4 flex items-end">
+                  <div className="w-full">
+                    <div className="w-full h-20 flex items-end gap-1">
+                      <div className="h-2/3 w-2 bg-white/70 rounded" />
+                      <div className="h-1/2 w-2 bg-white/60 rounded" />
+                      <div className="h-full w-2 bg-white rounded" />
+                      <div className="h-3/4 w-2 bg-white/80 rounded" />
+                      <div className="h-1/3 w-2 bg-white/50 rounded" />
+                      <div className="h-5/6 w-2 bg-white/90 rounded" />
+                      <div className="h-3/4 w-2 bg-white/70 rounded" />
+                    </div>
+                    <div className="text-xs mt-3 opacity-90">Revenue trend — last 30 days</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-lg p-4 border border-gray-100 hidden lg:block">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald-50 rounded flex items-center justify-center">📈</div>
                 <div>
-                  <p className="text-sm text-gray-600">Productivity Increase</p>
-                  <p className="text-2xl font-bold text-gray-900">+47%</p>
+                  <div className="text-xs text-gray-500">Saved time</div>
+                  <div className="font-semibold">Avg. 36% reduction</div>
                 </div>
               </div>
             </div>
@@ -162,27 +174,24 @@ function Hero() {
   );
 }
 
-// Stats Section
 function Stats() {
   const stats = [
-    { value: '10,000+', label: 'Active Businesses', icon: '🏢' },
-    { value: '99.9%', label: 'Uptime Guarantee', icon: '⚡' },
-    { value: '150+', label: 'Countries Worldwide', icon: '🌍' },
-    { value: '24/7', label: 'Customer Support', icon: '💬' },
+    { value: '10,000+', label: 'Active businesses', icon: '🏢' },
+    { value: '99.9%', label: 'Uptime SLA', icon: '⚡' },
+    { value: '150+', label: 'Countries', icon: '🌍' },
+    { value: '24/7', label: 'Support', icon: '💬' },
   ];
 
   return (
-    <section className="py-16 bg-gradient-to-br from-blue-600 to-blue-800">
+    <section className="-mt-10 relative z-10"> 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {stats.map((stat, index) => (
-            <div key={index} className="text-center">
-              <div className="text-4xl mb-2">{stat.icon}</div>
-              <div className="text-3xl md:text-4xl font-bold text-white mb-2">
-                {stat.value}
-              </div>
-              <div className="text-blue-100">
-                {stat.label}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {stats.map((s, i) => (
+            <div key={i} className="bg-white border rounded-xl p-6 shadow-md flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-gray-50 flex items-center justify-center text-2xl">{s.icon}</div>
+              <div>
+                <div className="text-sm text-gray-500">{s.label}</div>
+                <div className="text-2xl font-bold text-gray-900">{s.value}</div>
               </div>
             </div>
           ))}
@@ -391,7 +400,7 @@ function Testimonials() {
 
               {/* Content */}
               <p className="text-gray-700 mb-6 italic">
-                "{testimonial.content}"
+                &ldquo;{testimonial.content}&rdquo;
               </p>
 
               {/* Author */}
@@ -609,10 +618,19 @@ function Footer() {
 
 // Main Export
 export default function Home() {
+  const [designDebug, setDesignDebug] = useState(false);
+
   return (
     <div className="min-h-screen bg-white">
       <Header />
-      <main>
+
+      {designDebug && (
+        <div className="design-debug-banner" role="status" aria-live="polite">
+          Design debug: editing workspace detected — branch: feat/homepage-redesign
+        </div>
+      )}
+
+      <main id="main-content" tabIndex={-1} role="main">
         <Hero />
         <Stats />
         <Features />
@@ -621,6 +639,16 @@ export default function Home() {
         <CTA />
       </main>
       <Footer />
+
+      <button
+        id="design-debug-btn"
+        className="design-debug-btn"
+        aria-pressed={designDebug}
+        onClick={() => setDesignDebug((s) => !s)}
+        title="Toggle design debug banner"
+      >
+        Design
+      </button>
     </div>
   );
 }
