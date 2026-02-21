@@ -77,7 +77,7 @@ function Hero() {
             </span>
 
             <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold text-gray-900 leading-tight mb-6 hero-title">
-              One platform to run your entire business
+              Unify Your Business Operations with <span className="text-blue-600">Syspro</span>
             </h1>
 
             <p className="text-xl text-gray-600 mb-8 max-w-xl">
@@ -181,18 +181,15 @@ function Stats() {
     { value: '150+', label: 'Countries', icon: '🌍' },
     { value: '24/7', label: 'Support', icon: '💬' },
   ];
-
+  // Render a full-width blue stats band similar to the provided design screenshots
   return (
-    <section className="-mt-10 relative z-10"> 
+    <section className="pro-stats-band py-12">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 items-center text-center text-white">
           {stats.map((s, i) => (
-            <div key={i} className="bg-white border rounded-xl p-6 shadow-md flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-gray-50 flex items-center justify-center text-2xl">{s.icon}</div>
-              <div>
-                <div className="text-sm text-gray-500">{s.label}</div>
-                <div className="text-2xl font-bold text-gray-900">{s.value}</div>
-              </div>
+            <div key={i} className="py-6">
+              <div className="text-3xl md:text-4xl font-extrabold">{s.value}</div>
+              <div className="text-sm opacity-90 mt-2">{s.label}</div>
             </div>
           ))}
         </div>
@@ -618,19 +615,10 @@ function Footer() {
 
 // Main Export
 export default function Home() {
-  const [designDebug, setDesignDebug] = useState(false);
-
   return (
-    <div className="min-h-screen bg-white">
+    <>
       <Header />
-
-      {designDebug && (
-        <div className="design-debug-banner" role="status" aria-live="polite">
-          Design debug: editing workspace detected — branch: feat/homepage-redesign
-        </div>
-      )}
-
-      <main id="main-content" tabIndex={-1} role="main">
+      <main id="main-content">
         <Hero />
         <Stats />
         <Features />
@@ -639,16 +627,6 @@ export default function Home() {
         <CTA />
       </main>
       <Footer />
-
-      <button
-        id="design-debug-btn"
-        className="design-debug-btn"
-        aria-pressed={designDebug}
-        onClick={() => setDesignDebug((s) => !s)}
-        title="Toggle design debug banner"
-      >
-        Design
-      </button>
-    </div>
+    </>
   );
 }
