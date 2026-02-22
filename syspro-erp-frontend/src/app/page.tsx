@@ -1,66 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { Menu, X, ArrowRight, Play, Check, Star, Clock, BarChart2 } from 'lucide-react';
-import {
-  Users,
-  DollarSign,
-  UserCog,
-  FolderKanban,
-  Zap,
-  ShoppingCart,
-  Shield,
-} from 'lucide-react';
+import { Menu, X, ArrowRight, Play, Check, Star, Clock, BarChart2, Users, DollarSign, UserCog, FolderKanban, Zap, ShoppingCart, Shield } from 'lucide-react';
 import { ImageWithFallback } from '@/components/ImageWithFallback';
-import { PillButton } from '@/components/ui/primitives';
 
 function Header() {
-  const [open, setOpen] = useState(false);
-  const startLoginFlow = () => { if (typeof window !== 'undefined') window.location.href = '/access'; };
-
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm py-3">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-3">
-            <a href="/" aria-label="Syspro home" className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600 shadow-sm">
-                <span className="text-white font-bold text-lg">S</span>
-              </div>
-              <span className="font-semibold text-gray-900 text-lg tracking-tight">Syspro</span>
-            </a>
-            <nav role="navigation" aria-label="Primary" className="hidden md:flex items-center gap-6 text-sm text-gray-600">
-              <a href="#features" className="hover:text-gray-900 px-2 py-1 rounded-md transition-colors">Product</a>
-              <a href="#solutions" className="hover:text-gray-900 px-2 py-1 rounded-md transition-colors">Solutions</a>
-              <a href="#pricing" className="hover:text-gray-900 px-2 py-1 rounded-md transition-colors">Pricing</a>
-              <a href="#resources" className="hover:text-gray-900 px-2 py-1 rounded-md transition-colors">Resources</a>
-            </nav>
-          </div>
-
-          <div className="hidden md:flex items-center gap-4">
-            <button onClick={startLoginFlow} className="text-sm text-gray-700 hover:text-gray-900">Sign in</button>
-            <PillButton variant="primary" className="px-4 py-2 shadow-md">Request demo</PillButton>
-          </div>
-
-          <button className="md:hidden text-gray-700" onClick={() => setOpen(!open)} aria-label="Toggle menu" aria-expanded={open} aria-controls="mobile-menu">
-            {open ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
-
-        {open && (
-          <div id="mobile-menu" role="menu" aria-label="Mobile primary menu" className="md:hidden py-4 border-t border-gray-100">
-            <div className="flex flex-col gap-3">
-              <a role="menuitem" href="#features" className="px-2 py-2 rounded hover:bg-gray-50">Product</a>
-              <a role="menuitem" href="#solutions" className="px-2 py-2 rounded hover:bg-gray-50">Solutions</a>
-              <a role="menuitem" href="#pricing" className="px-2 py-2 rounded hover:bg-gray-50">Pricing</a>
-              <a role="menuitem" href="#resources" className="px-2 py-2 rounded hover:bg-gray-50">Resources</a>
-              <div className="pt-2 border-t border-gray-100 flex gap-2">
-                <button onClick={startLoginFlow} className="flex-1 text-left px-3 py-2">Sign in</button>
-                <PillButton variant="primary" className="flex-1">Request demo</PillButton>
-              </div>
-            </div>
-          </div>
-        )}
+    <header className="pro-header">
+      <div className="pro-header-logo">S <span>Syspro</span></div>
+      <nav className="pro-header-nav">
+        <a href="#features">Product</a>
+        <a href="#solutions">Solutions</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#resources">Resources</a>
+      </nav>
+      <div className="pro-header-actions">
+        <button className="pro-btn" onClick={() => window.location.href = '/access'}>Sign in</button>
+        <button className="pro-btn pro-btn-primary">Request demo</button>
       </div>
     </header>
   );
@@ -68,102 +24,33 @@ function Header() {
 
 function Hero() {
   return (
-    <section className="pt-32 pb-20 bg-gradient-to-b from-white via-slate-50 to-white">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-12 gap-12 items-center">
-          <div className="lg:col-span-6 max-w-2xl">
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm font-medium mb-4">
+    <section className="pro-hero">
+      <div className="container">
+        <div className="grid md:grid-cols-2 gap-8 items-center">
+          <div className="pro-hero-content">
+            <span className="pro-hero-badge">
               <Clock size={14} /> 30‑day free trial — no credit card
             </span>
-
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold text-gray-900 leading-tight mb-6 hero-title">
-              Unify Your Business Operations with <span className="text-blue-600">Syspro</span>
+            <h1 className="hero-title">
+              Unify Your Business Operations with <span style={{ color: '#2563eb' }}>Syspro</span>
             </h1>
-
-            <p className="text-xl text-gray-600 mb-8 max-w-xl">
-              Syspro combines CRM, Finance, HR and Projects into a single, modern ERP — built for speed, security and real-world scale. Launch faster, reduce manual work and make better decisions.
+            <p className="hero-desc">
+              Syspro combines CRM, Finance, HR and Projects into a single, modern ERP — built for speed, security and real-world scale.
             </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              <PillButton variant="primary" className="inline-flex items-center gap-3 px-5 py-3 shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600">
-                Start free trial
-                <ArrowRight size={18} />
-              </PillButton>
-              <button className="inline-flex items-center gap-2 px-5 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 text-sm">
-                <Play size={16} /> Watch walkthrough
-              </button>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-              <div className="flex items-center gap-2"><span className="font-semibold text-gray-800">10k+</span><span>businesses</span></div>
-              <div className="flex items-center gap-2"><span className="font-semibold text-gray-800">99.9%</span><span>uptime</span></div>
-              <div className="flex items-center gap-2"><span className="font-semibold text-gray-800">24/7</span><span>support</span></div>
-            </div>
-
-            <div className="mt-8">
-              <h4 className="text-sm text-gray-500 mb-3">Popular modules</h4>
-              <div className="flex flex-wrap gap-3">
-                <span className="px-3 py-1 rounded-full bg-gray-100 text-sm">CRM</span>
-                <span className="px-3 py-1 rounded-full bg-gray-100 text-sm">Finance</span>
-                <span className="px-3 py-1 rounded-full bg-gray-100 text-sm">HR</span>
-                <span className="px-3 py-1 rounded-full bg-gray-100 text-sm">Projects</span>
-                <span className="px-3 py-1 rounded-full bg-gray-100 text-sm">Automation</span>
-              </div>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+              <button className="pro-btn pro-btn-primary">Start free trial <ArrowRight size={18} /></button>
+              <button className="pro-btn"> <Play size={16} /> Watch walkthrough</button>
             </div>
           </div>
 
-          <div className="lg:col-span-6 relative">
+          <div className="relative">
             <div className="rounded-2xl shadow-2xl bg-gradient-to-br from-white to-slate-50 border border-gray-100 overflow-hidden">
               <div className="p-6 md:p-8">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <div className="text-xs text-gray-500">Overview</div>
-                    <div className="text-xl font-semibold text-gray-900">Company dashboard</div>
-                  </div>
-                  <div className="text-sm text-gray-500 flex items-center gap-2"><BarChart2 size={16}/> Real-time</div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="p-3 bg-white rounded-lg shadow-sm">
-                    <div className="text-xs text-gray-400">MRR</div>
-                    <div className="text-lg font-bold">$120.4k</div>
-                    <div className="text-xs text-emerald-600 mt-1">+6.1% MoM</div>
-                  </div>
-                  <div className="p-3 bg-white rounded-lg shadow-sm">
-                    <div className="text-xs text-gray-400">Receivables</div>
-                    <div className="text-lg font-bold">$38.2k</div>
-                    <div className="text-xs text-red-500 mt-1">-2.2% YoY</div>
-                  </div>
-                  <div className="p-3 bg-white rounded-lg shadow-sm">
-                    <div className="text-xs text-gray-400">Open tickets</div>
-                    <div className="text-lg font-bold">18</div>
-                    <div className="text-xs text-gray-500 mt-1">Priority support</div>
-                  </div>
-                </div>
-
-                <div className="h-36 bg-gradient-to-r from-indigo-500 to-sky-400 rounded-lg text-white p-4 flex items-end">
-                  <div className="w-full">
-                    <div className="w-full h-20 flex items-end gap-1">
-                      <div className="h-2/3 w-2 bg-white/70 rounded" />
-                      <div className="h-1/2 w-2 bg-white/60 rounded" />
-                      <div className="h-full w-2 bg-white rounded" />
-                      <div className="h-3/4 w-2 bg-white/80 rounded" />
-                      <div className="h-1/3 w-2 bg-white/50 rounded" />
-                      <div className="h-5/6 w-2 bg-white/90 rounded" />
-                      <div className="h-3/4 w-2 bg-white/70 rounded" />
-                    </div>
-                    <div className="text-xs mt-3 opacity-90">Revenue trend — last 30 days</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-lg p-4 border border-gray-100 hidden lg:block">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-50 rounded flex items-center justify-center">📈</div>
-                <div>
-                  <div className="text-xs text-gray-500">Saved time</div>
-                  <div className="font-semibold">Avg. 36% reduction</div>
+                <div className="text-xs text-gray-500">Overview</div>
+                <div className="text-xl font-semibold text-gray-900">Company dashboard</div>
+                <div className="mt-4 text-sm text-gray-500 flex items-center gap-2"><BarChart2 size={16}/> Real-time</div>
+                <div className="mt-6 h-36 bg-gradient-to-r from-indigo-500 to-sky-400 rounded-lg text-white p-4 flex items-end">
+                  <div className="w-full">Revenue trend — last 30 days</div>
                 </div>
               </div>
             </div>
