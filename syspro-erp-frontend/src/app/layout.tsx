@@ -20,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${BODY_FONT_STACK}`}>
+      <body className={`${BODY_FONT_STACK}`} suppressHydrationWarning>
         <a href="#main-content" className="skip-link">Skip to main content</a>
         <AppShell>{children}</AppShell>
       </body>
