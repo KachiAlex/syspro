@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Professional homepage redesign styles */
+.pro-home-root {
+  min-height: 100vh;
+  background: #f6f8fa;
+  font-family: 'Inter', sans-serif;
+  color: #1a202c;
+}
+.pro-home-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2.5rem;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+/* ...existing code... */
