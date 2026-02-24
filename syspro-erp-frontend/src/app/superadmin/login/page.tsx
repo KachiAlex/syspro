@@ -41,28 +41,6 @@ export default function SuperadminLoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
-      {/* Header */}
-      <header className="bg-gray-900/50 backdrop-blur-lg border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center text-white font-bold">
-                  S
-                </div>
-                <span className="text-white font-semibold">Syspro</span>
-              </div>
-              <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-red-900/30 border border-red-600/30 rounded-full">
-                <Shield size={14} className="text-red-400" />
-                <span className="text-red-400 text-sm font-medium">Super Admin Portal</span>
-              </div>
-            </div>
-            <Link href="/access" className="text-gray-400 hover:text-white transition-colors">
-              ← Back to Access
-            </Link>
-          </div>
-        </div>
-      </header>
 
       {/* Main Content */}
       <div className="min-h-screen flex items-center justify-center px-4">

@@ -18,21 +18,6 @@ export default function AccessPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
-      <header className="pro-header">
-        <div className="pro-header-logo">S <span>Syspro</span></div>
-        <nav className="pro-header-nav">
-          <a href="#features">Product</a>
-          <a href="#solutions">Solutions</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#resources">Resources</a>
-        </nav>
-        <div className="pro-header-actions">
-          <button className="pro-btn">Back to Home</button>
-          <button className="pro-btn pro-btn-primary">Request demo</button>
-        </div>
-      </header>
-
       {/* Hero Section */}
       <section className="pro-home-main" style={{ paddingTop: '4rem' }}>
         <div className="max-w-6xl mx-auto">
