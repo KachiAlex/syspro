@@ -24,78 +24,58 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   const isMarketing = pathname === "/";
-  // Hide the global header on all pages to provide cleaner UI
-  const hideGlobalHeader = true; // Hide header everywhere
+  const isAccess = pathname?.startsWith("/access");
+  const isSuperadmin = pathname?.startsWith("/superadmin");
+  
+  // Show minimalist header only on relevant pages
+  const showHeader = !isAccess && !isSuperadmin;
 
   return (
     <div className="text-[color:var(--foreground)]">
-      {!hideGlobalHeader && (
-        <div className="app-header fixed inset-x-0 top-0 z-50 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10">
-            <div className="flex items-center gap-4">
-              <div className="rounded-full badge-accent px-3 py-1 text-xs font-semibold tracking-[0.4em] text-[color:var(--accent)]">
-                SYS
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.5em] nav-muted">Neural ERP</p>
-                <p className="text-lg font-semibold">Command Mesh</p>
-              </div>
-            </div>
+      {showHeader && (
+        <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              {/* Logo */}
+              <Link href="/" className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                  S
+                </div>
+                <span className="text-gray-900 font-semibold">Syspro</span>
+              </Link>
 
-            {isMarketing ? (
-              <nav className="hidden items-center gap-6 text-sm nav-muted lg:flex">
-                {marketingLinks.map((link) => (
-                  <a key={link.label} href={link.href} className="hover:text-[color:var(--foreground)]">
-                    {link.label}
-                  </a>
-                ))}
+              {/* Navigation */}
+              <nav className="hidden md:flex items-center gap-8">
+                <Link 
+                  href="/" 
+                  className={`text-sm font-medium transition-colors ${
+                    pathname === "/" ? "text-blue-600" : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Home
+                </Link>
+                <Link 
+                  href="/access" 
+                  className={`text-sm font-medium transition-colors ${
+                    isAccess ? "text-blue-600" : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Login
+                </Link>
               </nav>
-            ) : (
-              <nav className="hidden items-center gap-2 rounded-full border muted-border glass px-2 py-1 text-sm lg:flex">
-                {opsLinks.map((link) => {
-                  const active = pathname === link.href;
-                  return (
-                    <Link
-                      key={link.label}
-                      href={link.href}
-                      className={`rounded-full px-4 py-2 transition ${
-                        active
-                          ? "bg-[color:var(--foreground)] text-[color:var(--background)]"
-                          : "nav-muted hover:text-[color:var(--foreground)]"
-                      }`}>
-                      {link.label}
-                    </Link>
-                  );
-                })}
-              </nav>
-            )}
 
-            <div className="flex items-center gap-3">
-              {!isMarketing && (
-                <>
-                  <Tag tone="indigo">Ops Persona</Tag>
-                  <button className="rounded-full border muted-border p-2 nav-muted hover:text-[color:var(--foreground)]">
-                    <Bell className="h-4 w-4" />
-                  </button>
-                  <button className="rounded-full border muted-border p-2 nav-muted hover:text-[color:var(--foreground)] lg:hidden">
-                    <Menu className="h-4 w-4" />
-                  </button>
-                  <div className="hidden items-center gap-3 rounded-full border muted-border glass px-3 py-1 text-xs nav-muted lg:flex">
-                    <ShieldCheck className="h-4 w-4 text-emerald-300" />
-                    Multi-tenant secure
-                  </div>
-                  <PillButton variant="secondary">Switch Persona</PillButton>
-                </>
-              )}
+              {/* CTA Button */}
               <Link href="/access">
-                <PillButton variant="primary">{isMarketing ? "Login" : "Access Portal"}</PillButton>
+                <button className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                  Sign In
+                </button>
               </Link>
             </div>
           </div>
-        </div>
+        </header>
       )}
 
-      <div className={hideGlobalHeader ? undefined : "pt-24"}>{children}</div>
+      <div className={showHeader ? "pt-16" : ""}>{children}</div>
     </div>
   );
 }

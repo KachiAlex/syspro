@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Trash2, LogOut, X, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, LogOut, X, Eye, CheckSquare, Square, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Tenant {
   id: number;
@@ -74,6 +74,12 @@ export default function SuperadminPage() {
   const [tenantFormData, setTenantFormData] = useState({ name: '', slug: '', seats: 1 });
   const [licenseFormData, setLicenseFormData] = useState({ tenantSlug: '', type: 'basic', seats: 1, expiry: '' });
   const [adminFormData, setAdminFormData] = useState({ tenantSlug: '', email: '', name: '', role: 'admin' });
+  
+  // Pagination and bulk selection state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedTenants, setSelectedTenants] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const tenantsPerPage = 20;
   const router = useRouter();
 
   useEffect(() => {
@@ -222,6 +228,7 @@ export default function SuperadminPage() {
       });
       if (response.ok) {
         setTenants(tenants.filter(t => t.slug !== slug));
+        setSelectedTenants(selectedTenants.filter(s => s !== slug));
       }
     } catch (error) {
       console.error('Failed to delete tenant:', error);
@@ -317,49 +324,94 @@ export default function SuperadminPage() {
               onClick={() => setActiveTab('admins')}
               className={`px-6 py-3 rounded-lg font-semibold text-lg ${activeTab === 'admins' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-blue-50 transition'}`}
             >
-              Tenant Admins
+              Delete
             </button>
           </div>
         </div>
+        <button
+          onClick={() => {
+            setSelectedTenants([]);
+            setSelectAll(false);
+          }}
+          className="text-blue-600 hover:text-blue-800 text-sm"
+        >
+          Clear selection
+        </button>
+      </div>
+    )}
 
-      {activeTab === 'tenants' && (
-        <div className="bg-white rounded-lg shadow">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Slug
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Seats
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Created
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {tenants.map((tenant) => (
-                <tr key={tenant.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {tenant.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {tenant.slug}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {tenant.seats}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(tenant.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex gap-2">
+    {/* Tenant Table */}
+    <div className="bg-white rounded-lg shadow overflow-hidden">
+      <table className="w-full">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+              #
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+              <button
+                onClick={handleSelectAll}
+                className="flex items-center justify-center"
+              >
+                {selectAll ? (
+                  <CheckSquare className="w-4 h-4 text-blue-600" />
+                ) : (
+                  <Square className="w-4 h-4 text-gray-400" />
+                )}
+              </button>
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Name
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Slug
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Seats
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Created
+            </th>
+            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {getPaginatedTenants().map((tenant, index) => {
+            const globalIndex = (currentPage - 1) * tenantsPerPage + index + 1;
+            const isSelected = selectedTenants.includes(tenant.slug);
+            return (
+              <tr key={tenant.id} className={isSelected ? 'bg-blue-50' : ''}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {globalIndex}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <button
+                    onClick={() => handleSelectTenant(tenant.slug)}
+                    className="flex items-center justify-center"
+                  >
+                    {isSelected ? (
+                      <CheckSquare className="w-4 h-4 text-blue-600" />
+                    ) : (
+                      <Square className="w-4 h-4 text-gray-400" />
+                    )}
+                  </button>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {tenant.name}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {tenant.slug}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {tenant.seats}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {new Date(tenant.created_at).toLocaleDateString()}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div className="flex items-center justify-end gap-2">
                     <Button variant="ghost" size="sm" onClick={() => handleViewDetails(tenant)}>
                       <Eye className="w-4 h-4" />
                     </Button>
@@ -375,17 +427,8 @@ export default function SuperadminPage() {
                     <Button variant="ghost" size="sm" onClick={() => handleDeleteTenant(tenant.slug)}>
                       <Trash2 className="w-4 h-4 text-red-600" />
                     </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {activeTab === 'licenses' && (
-        <div className="bg-white rounded-lg shadow">
-          <table className="w-full">
+                  </div>
+                </td>
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
