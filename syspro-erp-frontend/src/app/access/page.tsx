@@ -9,7 +9,11 @@ export default function AccessPage() {
     <div className="access-root">
       <div className="access-card">
         <div className="access-left">
-          <img src="/logo.png" alt="Syspro Logo" className="access-logo" />
+          <div className="access-logo">
+            <div className="w-14 h-14 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+              SYS
+            </div>
+          </div>
           <h1 className="access-title">Access Portal</h1>
           <p className="access-desc">Choose your destination below. If you need access, request a demo or contact support.</p>
           <div className="access-links">
