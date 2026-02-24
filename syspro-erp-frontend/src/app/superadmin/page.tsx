@@ -99,7 +99,7 @@ export default function SuperadminPage() {
       console.error('Failed to fetch tenants:', error);
     } finally {
       setLoading(false);
-    }
+    )}
   };
 
   const fetchLicenses = async () => {
@@ -111,7 +111,7 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to fetch licenses:', error);
-    }
+    )}
   };
 
   const fetchTenantAdmins = async () => {
@@ -127,13 +127,13 @@ export default function SuperadminPage() {
       setTenantAdmins(allAdmins);
     } catch (error) {
       console.error('Failed to fetch tenant admins:', error);
-    }
+    )}
   };
 
   useEffect(() => {
     if (tenants.length > 0) {
       fetchTenantAdmins();
-    }
+    )}
   }, [tenants]);
 
   const handleViewDetails = async (tenant: Tenant | string) => {
@@ -154,7 +154,7 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to fetch tenant details:', error);
-    }
+    )}
   };
 
   const handleCreateTenant = async (e: React.FormEvent) => {
@@ -173,7 +173,7 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to create tenant:', error);
-    }
+    )}
   };
 
   const handleCreateLicense = async (e: React.FormEvent) => {
@@ -192,7 +192,7 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to create license:', error);
-    }
+    )}
   };
 
   const handleCreateAdmin = async (e: React.FormEvent) => {
@@ -216,7 +216,7 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to create tenant admin:', error);
-    }
+    )}
   };
 
   const handleDeleteTenant = async (slug: string) => {
@@ -232,7 +232,7 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to delete tenant:', error);
-    }
+    )}
   };
 
   const handleDeleteLicense = async (id: number) => {
@@ -247,7 +247,7 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to delete license:', error);
-    }
+    )}
   };
 
   const handleDeleteAdmin = async (tenantSlug: string, id: number) => {
@@ -262,7 +262,7 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to delete tenant admin:', error);
-    }
+    )}
   };
 
   const handleLogout = async () => {
@@ -271,7 +271,7 @@ export default function SuperadminPage() {
       router.push('/superadmin/login');
     } catch (error) {
       console.error('Logout failed:', error);
-    }
+    )}
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-200 text-lg font-semibold text-blue-700">Loading...</div>;
@@ -324,7 +324,7 @@ export default function SuperadminPage() {
               onClick={() => setActiveTab('admins')}
               className={`px-6 py-3 rounded-lg font-semibold text-lg ${activeTab === 'admins' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-blue-50 transition'}`}
             >
-              Delete
+              Admins
             </button>
           </div>
         </div>
@@ -340,95 +340,188 @@ export default function SuperadminPage() {
       </div>
     )}
 
-    {/* Tenant Table */}
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <table className="w-full">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-              #
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-              <button
-                onClick={handleSelectAll}
-                className="flex items-center justify-center"
-              >
-                {selectAll ? (
-                  <CheckSquare className="w-4 h-4 text-blue-600" />
-                ) : (
-                  <Square className="w-4 h-4 text-gray-400" />
-                )}
-              </button>
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Name
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Slug
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Seats
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Created
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {getPaginatedTenants().map((tenant, index) => {
-            const globalIndex = (currentPage - 1) * tenantsPerPage + index + 1;
-            const isSelected = selectedTenants.includes(tenant.slug);
-            return (
-              <tr key={tenant.id} className={isSelected ? 'bg-blue-50' : ''}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {globalIndex}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
+    {activeTab === 'tenants' && (
+      <div>
+        {/* Bulk Actions Bar */}
+        {selectedTenants.length > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-blue-900">
+                {selectedTenants.length} tenant{selectedTenants.length !== 1 ? 's' : ''} selected
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleBulkActivate}
+                  className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                >
+                  Activate
+                </button>
+                <button
+                  onClick={handleBulkSuspend}
+                  className="px-3 py-1 bg-orange-600 text-white text-sm rounded hover:bg-orange-700 transition-colors"
+                >
+                  Suspend
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setSelectedTenants([]);
+                setSelectAll(false);
+              }}
+              className="text-blue-600 hover:text-blue-800 text-sm"
+            >
+              Clear selection
+            </button>
+          </div>
+        )}
+
+        {/* Tenant Table */}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                  #
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
                   <button
-                    onClick={() => handleSelectTenant(tenant.slug)}
+                    onClick={handleSelectAll}
                     className="flex items-center justify-center"
                   >
-                    {isSelected ? (
+                    {selectAll ? (
                       <CheckSquare className="w-4 h-4 text-blue-600" />
                     ) : (
                       <Square className="w-4 h-4 text-gray-400" />
                     )}
                   </button>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {tenant.name}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {tenant.slug}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {tenant.seats}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(tenant.created_at).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex items-center justify-end gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleViewDetails(tenant)}>
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleSuspendTenant(tenant.slug)}>
-                      <X className="w-4 h-4 text-orange-600" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleActivateTenant(tenant.slug)}>
-                      <Eye className="w-4 h-4 text-green-600" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDeleteTenant(tenant.slug)}>
-                      <Trash2 className="w-4 h-4 text-red-600" />
-                    </Button>
-                  </div>
-                </td>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Slug
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Seats
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Created
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {getPaginatedTenants().map((tenant: any, index: number) => {
+                const globalIndex = (currentPage - 1) * tenantsPerPage + index + 1;
+                const isSelected = selectedTenants.includes(tenant.slug);
+                return (
+                  <tr key={tenant.id} className={isSelected ? 'bg-blue-50' : ''}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {globalIndex}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button
+                        onClick={() => handleSelectTenant(tenant.slug)}
+                        className="flex items-center justify-center"
+                      >
+                        {isSelected ? (
+                          <CheckSquare className="w-4 h-4 text-blue-600" />
+                        ) : (
+                          <Square className="w-4 h-4 text-gray-400" />
+                        )}
+                      </button>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {tenant.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {tenant.slug}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {tenant.seats}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(tenant.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => handleViewDetails(tenant)}>
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleSuspendTenant(tenant.slug)}>
+                          <X className="w-4 h-4 text-orange-600" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleActivateTenant(tenant.slug)}>
+                          <Eye className="w-4 h-4 text-green-600" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteTenant(tenant.slug)}>
+                          <Trash2 className="w-4 h-4 text-red-600" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="bg-white rounded-lg shadow px-4 py-3 mt-4 flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Showing {((currentPage - 1) * tenantsPerPage) + 1} to{' '}
+              {Math.min(currentPage * tenantsPerPage, tenants.length)} of {tenants.length} tenants
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`px-3 py-1 rounded-lg text-sm ${
+                    currentPage === page
+                      ? 'bg-blue-600 text-white'
+                      : 'border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+      )}
+
+      {activeTab === 'licenses' && (
+        <div className="bg-white rounded-lg shadow">
+          <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
