@@ -21,7 +21,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   const isMarketing = pathname === "/";
-  const hideGlobalHeader = pathname?.startsWith("/tenant-admin");
+  const hideGlobalHeader = isMarketing || pathname?.startsWith("/tenant-admin");
 
   return (
     <div className="text-[color:var(--foreground)]">
