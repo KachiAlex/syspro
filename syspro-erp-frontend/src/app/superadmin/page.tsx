@@ -82,6 +82,61 @@ export default function SuperadminPage() {
   const tenantsPerPage = 20;
   const router = useRouter();
 
+  // Helper functions for bulk operations and pagination
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedTenants([]);
+    } else {
+      setSelectedTenants(getPaginatedTenants().map(t => t.slug));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const handleSelectTenant = (slug: string) => {
+    if (selectedTenants.includes(slug)) {
+      setSelectedTenants(selectedTenants.filter(s => s !== slug));
+    } else {
+      setSelectedTenants([...selectedTenants, slug]);
+    }
+  };
+
+  const handleBulkActivate = async () => {
+    for (const slug of selectedTenants) {
+      await handleActivateTenant(slug);
+    }
+    setSelectedTenants([]);
+    setSelectAll(false);
+  };
+
+  const handleBulkSuspend = async () => {
+    for (const slug of selectedTenants) {
+      await handleSuspendTenant(slug);
+    }
+    setSelectedTenants([]);
+    setSelectAll(false);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Are you sure you want to delete ${selectedTenants.length} tenants?`)) return;
+    for (const slug of selectedTenants) {
+      await handleDeleteTenant(slug);
+    }
+    setSelectedTenants([]);
+    setSelectAll(false);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const getPaginatedTenants = () => {
+    const startIndex = (currentPage - 1) * tenantsPerPage;
+    const endIndex = startIndex + tenantsPerPage;
+    return tenants.slice(startIndex, endIndex);
+  };
+
+  const totalPages = Math.ceil(tenants.length / tenantsPerPage);
+
   useEffect(() => {
     fetchTenants();
     fetchLicenses();
@@ -99,7 +154,7 @@ export default function SuperadminPage() {
       console.error('Failed to fetch tenants:', error);
     } finally {
       setLoading(false);
-    )}
+    }
   };
 
   const fetchLicenses = async () => {
@@ -111,7 +166,7 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to fetch licenses:', error);
-    )}
+    }
   };
 
   const fetchTenantAdmins = async () => {
@@ -127,13 +182,13 @@ export default function SuperadminPage() {
       setTenantAdmins(allAdmins);
     } catch (error) {
       console.error('Failed to fetch tenant admins:', error);
-    )}
+    }
   };
 
   useEffect(() => {
     if (tenants.length > 0) {
       fetchTenantAdmins();
-    )}
+    }
   }, [tenants]);
 
   const handleViewDetails = async (tenant: Tenant | string) => {
@@ -154,7 +209,7 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to fetch tenant details:', error);
-    )}
+    }
   };
 
   const handleCreateTenant = async (e: React.FormEvent) => {
@@ -173,7 +228,7 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to create tenant:', error);
-    )}
+    }
   };
 
   const handleCreateLicense = async (e: React.FormEvent) => {
@@ -192,7 +247,7 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to create license:', error);
-    )}
+    }
   };
 
   const handleCreateAdmin = async (e: React.FormEvent) => {
@@ -216,7 +271,7 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to create tenant admin:', error);
-    )}
+    }
   };
 
   const handleDeleteTenant = async (slug: string) => {
@@ -232,7 +287,7 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to delete tenant:', error);
-    )}
+    }
   };
 
   const handleDeleteLicense = async (id: number) => {
@@ -247,7 +302,7 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to delete license:', error);
-    )}
+    }
   };
 
   const handleDeleteAdmin = async (tenantSlug: string, id: number) => {
@@ -262,7 +317,7 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to delete tenant admin:', error);
-    )}
+    }
   };
 
   const handleLogout = async () => {
@@ -271,7 +326,7 @@ export default function SuperadminPage() {
       router.push('/superadmin/login');
     } catch (error) {
       console.error('Logout failed:', error);
-    )}
+    }
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-200 text-lg font-semibold text-blue-700">Loading...</div>;
@@ -338,7 +393,7 @@ export default function SuperadminPage() {
           Clear selection
         </button>
       </div>
-    )}
+    )
 
     {activeTab === 'tenants' && (
       <div>
@@ -517,9 +572,9 @@ export default function SuperadminPage() {
           </div>
         )}
       </div>
-      )}
+    )}
 
-      {activeTab === 'licenses' && (
+    {activeTab === 'licenses' && (
         <div className="bg-white rounded-lg shadow">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -993,7 +1048,6 @@ export default function SuperadminPage() {
           </div>
         </div>
       )}
-      </div>
     </div>
   );
 }
