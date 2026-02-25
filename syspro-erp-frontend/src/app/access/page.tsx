@@ -96,7 +96,16 @@ export default function AccessPage() {
                     type="submit"
                     className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                   >
-                    Sign In to Tenant Dashboard <ArrowRight size={18} />
+                    {loading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Signing in...
+                      </>
+                    ) : (
+                      <>
+                        Sign In to Tenant Dashboard <ArrowRight size={18} />
+                      </>
+                    )}
                   </button>
                 </form>
 
