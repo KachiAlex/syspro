@@ -29,7 +29,7 @@ interface Approval {
   createdAt: string;
 }
 
-export default function ApprovalsWorkspace() {
+export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (section: string) => void }) {
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -125,7 +125,9 @@ export default function ApprovalsWorkspace() {
           <h1 className="text-2xl font-semibold text-slate-900">Approvals</h1>
           <p className="mt-1 text-sm text-slate-600">Review and authorize financial documents</p>
         </div>
-        <button className="whitespace-nowrap btn btn-blue px-4 py-2 text-sm font-medium rounded-full">⚙️ Configure Rules</button>
+        <button 
+          onClick={() => onNavigateTo?.("approval-rules")}
+          className="whitespace-nowrap btn btn-blue px-4 py-2 text-sm font-medium rounded-full">⚙️ Configure Rules</button>
       </div>
 
       {/* Filters */}

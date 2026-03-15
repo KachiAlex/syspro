@@ -157,7 +157,30 @@ export default function VendorsWorkspace() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Vendors & Procurement</h1>
-        <button className="btn btn-primary">New Vendor</button>
+        <button
+          onClick={async () => {
+            const name = prompt("New vendor name:");
+            if (!name) return;
+            try {
+              setLoading(true);
+              const res = await fetch(`/api/finance/vendors?tenantSlug=${encodeURIComponent("demo-tenant")}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name }),
+              });
+              if (!res.ok) throw new Error("Failed to create vendor");
+              await loadVendors();
+            } catch (err) {
+              console.error(err);
+              alert("Failed to create vendor");
+            } finally {
+              setLoading(false);
+            }
+          }}
+          className="btn btn-primary"
+        >
+          New Vendor
+        </button>
       </div>
 
       <div className="grid grid-cols-4 gap-6">

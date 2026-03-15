@@ -1,127 +1,170 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ensureAdminTables, insertEmployee, getEmployees, updateEmployee, deleteEmployee } from "@/lib/admin/db";
-import { extractAuthContext, requirePermission, validateTenant } from "@/lib/auth-helper";
-import { CreateEmployeeSchema, UpdateEmployeeSchema, safeParse } from "@/lib/validation";
-import { enforcePermission } from "@/lib/api-permission-enforcer";
+import { EmployeeService } from "@/lib/tenant-admin/service";
+import { CreateEmployeeSchema, UpdateEmployeeSchema } from "@/lib/tenant-admin/validation";
+import {
+  validateTenantContext,
+  parseJsonRequest,
+  getPaginationParams,
+  getFilterParams,
+  getSortParams,
+  errorResponse,
+  handleTenantAdminError,
+  checkRateLimit,
+  asTenantSlug,
+  asResourceId,
+} from "@/lib/tenant-admin/utils";
+import { AuditService } from "@/lib/tenant-admin/service";
 
-// Helper to get tenantSlug from request
-function getTenantSlug(request: NextRequest): string {
-  return new URL(request.url).searchParams.get("tenantSlug") || "kreatix-default";
-}
-
+/**
+ * GET /api/tenant/employees
+ * Retrieve all employees for a tenant
+ */
 export async function GET(request: NextRequest) {
   try {
-    const tenantSlug = getTenantSlug(request);
-    
-    // Enforce read permission on people module
-    const check = await enforcePermission(request, "people", "read", tenantSlug);
-    if (!check.allowed) {
-      return check.response;
+    const context = validateTenantContext(request, "read");
+
+    if (!checkRateLimit(`emp-get-${context.tenantSlug}`, 100, 60000)) {
+      return errorResponse("Rate limit exceeded", 429);
     }
 
-    await ensureAdminTables();
-    const employees = await getEmployees(tenantSlug);
-    return NextResponse.json({ tenant: tenantSlug, employees });
+    const pagination = getPaginationParams(request);
+    const filters = getFilterParams(request);
+    const sort = getSortParams(request);
+
+    const service = new EmployeeService();
+    const employees = await service.getAll(asTenantSlug(context.tenantSlug));
+
+    return NextResponse.json({
+      success: true,
+      data: employees,
+      pagination: {
+        page: pagination.page,
+        limit: pagination.limit,
+        total: employees.length,
+      },
+    });
   } catch (error) {
-    console.error("Employee GET failed", error);
-    const message = error instanceof Error ? error.message : "Unable to fetch employees";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Employee GET error:", error);
+    return handleTenantAdminError(error);
   }
 }
 
+/**
+ * POST /api/tenant/employees
+ * Create a new employee
+ */
 export async function POST(request: NextRequest) {
   try {
-    const tenantSlug = getTenantSlug(request);
-    
-    // Enforce write permission on people module
-    const check = await enforcePermission(request, "people", "write", tenantSlug);
-    if (!check.allowed) {
-      return check.response;
-    }
-    
-    const body = await request.json().catch(() => ({}));
-    const validation = safeParse(CreateEmployeeSchema, body);
-    if (!validation.success) {
-      return NextResponse.json({ error: "Invalid request", details: validation.error.flatten() }, { status: 400 });
+    const context = validateTenantContext(request, "write");
+
+    const parsed = await parseJsonRequest(request, CreateEmployeeSchema);
+    if (!parsed.success) {
+      return errorResponse(parsed.error, 400, parsed.details);
     }
 
-    await ensureAdminTables();
-    const data = validation.data;
-    const id = await insertEmployee({
-      tenantSlug,
-      name: data.name,
-      email: data.email,
-      departmentId: data.department,
-      branchId: data.branch,
-      regionId: data.region,
-    });
-    return NextResponse.json({
-      employee: {
-        id,
-        tenantSlug,
-        name: data.name,
-        email: data.email,
-        department: data.department,
-        branch: data.branch,
-        region: data.region,
-        status: "active",
-        createdAt: new Date().toISOString(),
+    const service = new EmployeeService();
+    const employee = await service.create(asTenantSlug(context.tenantSlug), parsed.data);
+
+    const auditService = new AuditService();
+    await auditService.log(
+      asTenantSlug(context.tenantSlug),
+      context.userId,
+      "create",
+      "employee",
+      employee.id,
+      { after: employee }
+    );
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: employee,
+        message: "Employee created successfully",
       },
-    }, { status: 201 });
+      { status: 201 }
+    );
   } catch (error) {
-    console.error("Employee create failed", error);
-    const message = error instanceof Error ? error.message : "Unable to create employee";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Employee POST error:", error);
+    return handleTenantAdminError(error);
   }
 }
 
+/**
+ * PATCH /api/tenant/employees?id=<id>
+ * Update an employee
+ */
 export async function PATCH(request: NextRequest) {
   try {
-    const tenantSlug = getTenantSlug(request);
+    const context = validateTenantContext(request, "write");
     const id = new URL(request.url).searchParams.get("id");
-    
-    // Enforce write permission on people module
-    const check = await enforcePermission(request, "people", "write", tenantSlug);
-    if (!check.allowed) {
-      return check.response;
-    }
-    
-    if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
-    
-    const body = await request.json().catch(() => ({}));
-    const validation = safeParse(UpdateEmployeeSchema, body);
-    if (!validation.success) {
-      return NextResponse.json({ error: "Invalid request", details: validation.error.flatten() }, { status: 400 });
+
+    if (!id) {
+      return errorResponse("Employee ID is required", 400);
     }
 
-    await ensureAdminTables();
-    await updateEmployee(id, tenantSlug, { departmentId: validation.data.department, branchId: validation.data.branch, regionId: validation.data.region });
-    return NextResponse.json({ success: true });
+    const parsed = await parseJsonRequest(request, UpdateEmployeeSchema);
+    if (!parsed.success) {
+      return errorResponse(parsed.error, 400, parsed.details);
+    }
+
+    const service = new EmployeeService();
+    const existing = await service.getById(asTenantSlug(context.tenantSlug), asResourceId(id!));
+    const updated = await service.update(asTenantSlug(context.tenantSlug), asResourceId(id!), parsed.data);
+
+    const auditService = new AuditService();
+    await auditService.log(
+      asTenantSlug(context.tenantSlug),
+      context.userId,
+      "update",
+      "employee",
+      asResourceId(id!),
+      { before: existing, after: updated }
+    );
+
+    return NextResponse.json({
+      success: true,
+      data: updated,
+      message: "Employee updated successfully",
+    });
   } catch (error) {
-    console.error("Employee patch failed", error);
-    const message = error instanceof Error ? error.message : "Unable to update employee";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Employee PATCH error:", error);
+    return handleTenantAdminError(error);
   }
 }
 
+/**
+ * DELETE /api/tenant/employees?id=<id>
+ * Delete an employee
+ */
 export async function DELETE(request: NextRequest) {
   try {
-    const tenantSlug = getTenantSlug(request);
+    const context = validateTenantContext(request, "delete");
     const id = new URL(request.url).searchParams.get("id");
-    
-    // Enforce admin permission on people module
-    const check = await enforcePermission(request, "people", "admin", tenantSlug);
-    if (!check.allowed) {
-      return check.response;
+
+    if (!id) {
+      return errorResponse("Employee ID is required", 400);
     }
-    
-    if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
-    await ensureAdminTables();
-    await deleteEmployee(id, tenantSlug);
-    return NextResponse.json({ message: "deleted" }, { status: 200 });
+
+    const service = new EmployeeService();
+    const existing = await service.getById(asTenantSlug(context.tenantSlug), asResourceId(id!));
+    await service.delete(asTenantSlug(context.tenantSlug), asResourceId(id!));
+
+    const auditService = new AuditService();
+    await auditService.log(
+      asTenantSlug(context.tenantSlug),
+      context.userId,
+      "delete",
+      "employee",
+      asResourceId(id!),
+      { before: existing }
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: "Employee deleted successfully",
+    });
   } catch (error) {
-    console.error("Employee delete failed", error);
-    const message = error instanceof Error ? error.message : "Unable to delete employee";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Employee DELETE error:", error);
+    return handleTenantAdminError(error);
   }
 }

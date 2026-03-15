@@ -100,7 +100,41 @@ export default function BillsWorkspace() {
           <h1 className="text-2xl font-semibold text-slate-900">Bills & Payables</h1>
           <p className="mt-1 text-sm text-slate-600">Track and manage all vendor bills and payment schedules</p>
         </div>
-        <button className="whitespace-nowrap btn btn-blue px-4 py-2 text-sm font-medium rounded-full">
+        <button
+          onClick={async () => {
+            const vendorId = prompt("Vendor ID for new bill:");
+            if (!vendorId) return;
+            const billNumber = prompt("Bill number (optional):") || `BILL-${Date.now()}`;
+            const amount = prompt("Total amount:");
+            if (!amount) return;
+            try {
+              setLoading(true);
+              const payload = {
+                  tenantSlug: "demo-tenant",
+                  vendorId,
+                  billDate: new Date().toISOString(),
+                  currency: "NGN",
+                  items: [
+                    { description: billNumber || "Quick bill", quantity: 1, unitPrice: Number(amount) }
+                  ],
+                  metadata: { billNumber: billNumber }
+                };
+                const res = await fetch(`/api/finance/bills`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+              if (!res.ok) throw new Error("Failed to create bill");
+              await loadBills();
+            } catch (err) {
+              console.error(err);
+              alert("Failed to create bill");
+            } finally {
+              setLoading(false);
+            }
+          }}
+          className="whitespace-nowrap btn btn-blue px-4 py-2 text-sm font-medium rounded-full"
+        >
           + New Bill
         </button>
       </div>

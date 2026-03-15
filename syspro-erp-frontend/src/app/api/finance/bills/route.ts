@@ -10,6 +10,7 @@ import {
   getAgingReport,
   updateBillStatuses,
 } from "@/lib/finance/bills";
+import { validateTenantContext } from "@/lib/tenant-admin/utils";
 
 const billListSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -57,6 +58,8 @@ export async function GET(request: NextRequest) {
   console.log('API: GET /api/finance/bills called');
   
   try {
+    // enforce tenant context for bill read operations
+    validateTenantContext(request, "read");
     const url = new URL(request.url);
     
     // Get single bill by ID
@@ -122,6 +125,8 @@ export async function POST(request: NextRequest) {
   console.log('API: POST /api/finance/bills called');
   
   try {
+    // enforce tenant context for bill create/maintenance
+    validateTenantContext(request, "write");
     const body = await request.json();
     
     // Convert PO to Bill
@@ -192,6 +197,8 @@ export async function PUT(request: NextRequest) {
   console.log('API: PUT /api/finance/bills called');
   
   try {
+    // enforce tenant context for updates
+    validateTenantContext(request, "write");
     const url = new URL(request.url);
     const billId = url.searchParams.get("id");
     
@@ -236,6 +243,8 @@ export async function DELETE(request: NextRequest) {
   console.log('API: DELETE /api/finance/bills called');
   
   try {
+    // enforce tenant context for deletes
+    validateTenantContext(request, "delete");
     const url = new URL(request.url);
     const billId = url.searchParams.get("id");
     

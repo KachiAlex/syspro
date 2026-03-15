@@ -30,7 +30,7 @@ export default function TenantAdminShell({ children }: { children: React.ReactNo
   }
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
+    <div className="min-h-screen flex bg-white">
       <main className="flex-1 p-6">{children}</main>
     </div>
   );

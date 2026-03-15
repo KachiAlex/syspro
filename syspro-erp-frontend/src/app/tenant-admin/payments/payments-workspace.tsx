@@ -250,12 +250,13 @@ export default function VendorPaymentsWorkspace() {
 }
 
 interface CreatePaymentModalProps {
+  isOpen?: boolean;
   onClose: () => void;
   onSuccess: () => void;
   onError: (error: string) => void;
 }
 
-function CreatePaymentModal({ onClose, onSuccess, onError }: CreatePaymentModalProps) {
+export function CreatePaymentModal({ isOpen = true, onClose, onSuccess, onError }: CreatePaymentModalProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     vendorId: "",
@@ -303,9 +304,11 @@ function CreatePaymentModal({ onClose, onSuccess, onError }: CreatePaymentModalP
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-overlay">
-      <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-lg">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 pointer-events-auto" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl z-[10000] relative">
         <h3 className="mb-4 text-lg font-semibold text-slate-900">Create Vendor Payment</h3>
         
         <form onSubmit={handleSubmit} className="space-y-4">

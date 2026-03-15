@@ -23,35 +23,162 @@ function Header() {
 }
 
 function Hero() {
+  const [isPlaying, setIsPlaying] = useState(false);
+
   return (
     <section className="pro-hero">
       <div className="container">
-        <div className="grid md:grid-cols-2 gap-8 items-center">
+        <div className="grid md:grid-cols-2 gap-12 items-center">
           <div className="pro-hero-content">
-            <span className="pro-hero-badge">
-              <Clock size={14} /> 30‑day free trial — no credit card
-            </span>
+            <div className="flex items-center gap-2 mb-6">
+              <span className="pro-hero-badge">
+                <Zap size={14} className="text-yellow-400" />
+                <span>AI-Powered ERP • Trusted by 10,000+ businesses</span>
+              </span>
+            </div>
+            
             <h1 className="hero-title">
-              Unify Your Business Operations with <span style={{ color: '#2563eb' }}>Syspro</span>
+              Transform Your Business with <span style={{ color: '#2563eb' }}>Intelligent ERP</span>
             </h1>
+            
             <p className="hero-desc">
-              Syspro combines CRM, Finance, HR and Projects into a single, modern ERP — built for speed, security and real-world scale.
+              Experience the future of business management. Syspro AI combines CRM, Finance, HR, and Projects into one powerful platform that learns from your data and grows with your business.
             </p>
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-              <button className="pro-btn pro-btn-primary">Start free trial <ArrowRight size={18} /></button>
-              <button className="pro-btn"> <Play size={16} /> Watch walkthrough</button>
+            
+            <div className="hero-buttons">
+              <button 
+                className="pro-btn pro-btn-primary"
+                onClick={() => window.location.href = '/access'}
+              >
+                Start free trial <ArrowRight size={18} />
+              </button>
+              <button 
+                className="pro-btn pro-btn-secondary"
+                onClick={() => setIsPlaying(true)}
+              >
+                <Play size={16} /> Watch 2-min demo
+              </button>
+            </div>
+
+            <div className="hero-trust">
+              <div className="trust-text">
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={16} className="fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <span className="text-sm text-gray-600">4.9/5 from 2,000+ reviews</span>
+              </div>
+              <div className="trust-logos">
+                <span className="text-xs text-gray-500">Trusted by:</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center text-xs font-bold text-blue-600">A</div>
+                  <div className="w-8 h-8 bg-green-100 rounded flex items-center justify-center text-xs font-bold text-green-600">B</div>
+                  <div className="w-8 h-8 bg-purple-100 rounded flex items-center justify-center text-xs font-bold text-purple-600">C</div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="relative">
-            <div className="rounded-2xl shadow-2xl bg-gradient-to-br from-white to-slate-50 border border-gray-100 overflow-hidden">
-              <div className="p-6 md:p-8">
-                <div className="text-xs text-gray-500">Overview</div>
-                <div className="text-xl font-semibold text-gray-900">Company dashboard</div>
-                <div className="mt-4 text-sm text-gray-500 flex items-center gap-2"><BarChart2 size={16}/> Real-time</div>
-                <div className="mt-6 h-36 bg-gradient-to-r from-indigo-500 to-sky-400 rounded-lg text-white p-4 flex items-end">
-                  <div className="w-full">Revenue trend — last 30 days</div>
+          <div className="pro-hero-visual">
+            <div className="dashboard-preview">
+              <div className="dashboard-header">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                      <Shield size={20} className="text-white" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900">Syspro Dashboard</div>
+                      <div className="text-xs text-gray-500">Real-time insights</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs text-gray-500">Live</span>
+                  </div>
                 </div>
+              </div>
+
+              <div className="dashboard-metrics">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="metric-card">
+                    <div className="flex items-center gap-2">
+                      <DollarSign size={16} className="text-green-600" />
+                      <span className="text-xs text-gray-500">Revenue</span>
+                    </div>
+                    <div className="text-xl font-bold text-gray-900">$847K</div>
+                    <div className="text-xs text-green-600">+23% vs last month</div>
+                  </div>
+                  <div className="metric-card">
+                    <div className="flex items-center gap-2">
+                      <Users size={16} className="text-blue-600" />
+                      <span className="text-xs text-gray-500">Active Users</span>
+                    </div>
+                    <div className="text-xl font-bold text-gray-900">1,247</div>
+                    <div className="text-xs text-blue-600">+12% growth</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="dashboard-chart">
+                <div className="chart-header">
+                  <div className="text-sm font-medium text-gray-700">Performance Overview</div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  </div>
+                </div>
+                <div className="chart-content">
+                  <div className="flex items-end justify-between h-24 gap-2">
+                    {[40, 65, 45, 80, 60, 90, 75, 85, 95, 88, 92, 98].map((height, i) => (
+                      <div
+                        key={i}
+                        className="flex-1 bg-gradient-to-t from-blue-500 to-blue-400 rounded-t"
+                        style={{ height: `${height}%` }}
+                      ></div>
+                    ))}
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500 mt-2">
+                    <span>Jan</span>
+                    <span>Jun</span>
+                    <span>Dec</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="dashboard-actions">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
+                      <ShoppingCart size={12} className="text-orange-600" />
+                    </div>
+                    <div className="text-xs">
+                      <div className="font-medium text-gray-900">New Orders</div>
+                      <div className="text-gray-500">47 pending</div>
+                    </div>
+                  </div>
+                  <button className="text-xs bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700">
+                    View All
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Floating elements for visual interest */}
+            <div className="floating-elements">
+              <div className="floating-card floating-card-1">
+                <Check size={16} className="text-green-600" />
+                <span className="text-xs">Task Completed</span>
+              </div>
+              <div className="floating-card floating-card-2">
+                <BarChart2 size={16} className="text-blue-600" />
+                <span className="text-xs">Report Ready</span>
+              </div>
+              <div className="floating-card floating-card-3">
+                <UserCog size={16} className="text-purple-600" />
+                <span className="text-xs">User Added</span>
               </div>
             </div>
           </div>

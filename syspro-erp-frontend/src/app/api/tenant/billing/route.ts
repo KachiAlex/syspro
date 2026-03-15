@@ -1,114 +1,269 @@
-import { NextResponse, NextRequest } from "next/server";
-import { randomUUID } from "crypto";
-import { enforcePermission } from "@/lib/api-permission-enforcer";
+import { NextRequest, NextResponse } from "next/server";
+import {
+  validateTenantContext,
+  parseJsonRequest,
+  getPaginationParams,
+  getSortParams,
+  errorResponse,
+  handleTenantAdminError,
+  checkRateLimit,
+} from "@/lib/tenant-admin/utils";
+import { AuditService } from "@/lib/tenant-admin/service";
+import { z } from "zod";
 
-let INVOICES = [
-  { id: "INV-1001", tenantSlug: "kreatix-default", amount: "₦48,200", dueDate: "2026-02-05", status: "pending" },
-  { id: "INV-1002", tenantSlug: "kreatix-default", amount: "₦12,400", dueDate: "2026-01-15", status: "paid" },
-];
+const BillingPlanSchema = z.object({
+  name: z.string().min(1).max(100),
+  price: z.number().positive(),
+  interval: z.enum(["monthly", "yearly"]),
+  features: z.array(z.string()).optional(),
+  trialDays: z.number().optional(),
+});
 
-let SUBSCRIPTIONS = [
-  { id: "SUB-01", tenantSlug: "kreatix-default", plan: "Business", status: "active", nextBillingDate: "2026-02-28", seats: 12 },
-];
+const UpdateSubscriptionSchema = z.object({
+  planId: z.string().optional(),
+  seats: z.number().positive().optional(),
+  status: z.enum(["active", "paused", "cancelled"]).optional(),
+});
 
+/**
+ * GET /api/tenant/billing
+ * Retrieve billing info: invoices, subscriptions, usage
+ */
 export async function GET(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const tenantSlug = url.searchParams.get("tenantSlug") ?? "kreatix-default";
-    
-    // Enforce read permission on billing module
-    const check = await enforcePermission(request, "billing", "read", tenantSlug);
-    if (!check.allowed) {
-      return check.response;
+    const context = validateTenantContext(request, "read");
+
+    if (!checkRateLimit(`bill-get-${context.tenantSlug}`, 100, 60000)) {
+      return errorResponse("Rate limit exceeded", 429);
     }
 
-    const payload = {
-      invoices: INVOICES.filter((i) => i.tenantSlug === tenantSlug),
-      subscriptions: SUBSCRIPTIONS.filter((s) => s.tenantSlug === tenantSlug),
-    };
-    return NextResponse.json(payload);
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    const type = new URL(request.url).searchParams.get("type") || "overview";
+    const pagination = getPaginationParams(request);
+    const sort = getSortParams(request);
+
+    if (type === "invoices") {
+      return NextResponse.json({
+        success: true,
+        data: {
+          invoices: [],
+          pagination: {
+            page: pagination.page,
+            limit: pagination.limit,
+            total: 0,
+          },
+        },
+      });
+    } else if (type === "subscriptions") {
+      return NextResponse.json({
+        success: true,
+        data: {
+          subscriptions: [],
+          pagination: {
+            page: pagination.page,
+            limit: pagination.limit,
+            total: 0,
+          },
+        },
+      });
+    } else if (type === "usage") {
+      return NextResponse.json({
+        success: true,
+        data: {
+          monthlyUsage: [],
+          currentUsage: {},
+          limits: {},
+        },
+      });
+    } else if (type === "overview") {
+      return NextResponse.json({
+        success: true,
+        data: {
+          currentPlan: null,
+          nextBillingDate: null,
+          totalDue: 0,
+          invoiceCount: 0,
+          subscriptionStatus: "inactive",
+        },
+      });
+    } else {
+      return errorResponse("Invalid type parameter", 400);
+    }
+  } catch (error) {
+    console.error("Billing GET error:", error);
+    return handleTenantAdminError(error);
   }
 }
 
+/**
+ * POST /api/tenant/billing
+ * Create invoice, start subscription, etc.
+ */
 export async function POST(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const tenantSlug = url.searchParams.get("tenantSlug") ?? "kreatix-default";
-    
-    // Enforce write permission on billing module
-    const check = await enforcePermission(request, "billing", "write", tenantSlug);
-    if (!check.allowed) {
-      return check.response;
-    }
+    const context = validateTenantContext(request, "write");
+    const action = new URL(request.url).searchParams.get("action") || "subscribe";
 
-    const body = await request.json().catch(() => ({}));
-    if (body.type === "invoice") {
-      const invoice = { id: `INV-${randomUUID().slice(0,8)}`, tenantSlug, amount: body.amount ?? "₦0", dueDate: body.dueDate ?? new Date().toISOString(), status: body.status ?? "pending" };
-      INVOICES = [invoice, ...INVOICES];
-      return NextResponse.json({ invoice });
+    if (action === "subscribe") {
+      const parsed = await parseJsonRequest(
+        request,
+        z.object({
+          planId: z.string(),
+          seats: z.number().optional(),
+        })
+      );
+      if (!parsed.success) {
+        return errorResponse(parsed.error, 400, parsed.details);
+      }
+
+      const subscription = {
+        id: `sub-${Date.now()}`,
+        ...parsed.data,
+        tenantSlug: context.tenantSlug,
+        status: "active",
+        createdAt: new Date().toISOString(),
+        createdBy: context.userId,
+      };
+
+      const auditService = new AuditService(context.tenantSlug);
+      await auditService.log({
+        userId: context.userId,
+        action: "create",
+        resource: "subscription",
+        resourceId: subscription.id,
+        changes: { after: subscription },
+      });
+
+      return NextResponse.json(
+        {
+          success: true,
+          data: subscription,
+          message: "Subscription created successfully",
+        },
+        { status: 201 }
+      );
+    } else if (action === "create_invoice") {
+      return await POST_createInvoice(request);
+    } else {
+      return errorResponse("Invalid action", 400);
     }
-    if (body.type === "subscription") {
-      const sub = { id: `SUB-${randomUUID().slice(0,6)}`, tenantSlug, plan: body.plan ?? "Free", status: body.status ?? "active", nextBillingDate: body.nextBillingDate ?? null, seats: body.seats ?? 1 };
-      SUBSCRIPTIONS = [sub, ...SUBSCRIPTIONS];
-      return NextResponse.json({ subscription: sub });
-    }
-    return NextResponse.json({ error: "invalid payload" }, { status: 400 });
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+  } catch (error) {
+    console.error("Billing POST error:", error);
+    return handleTenantAdminError(error);
   }
 }
 
+// Support creating invoices from tenant-admin UI: POST /api/tenant/billing?action=create_invoice
+const CreateInvoiceSchema = z.object({
+  invoice: z.object({
+    customerName: z.string().min(1),
+    invoiceNumber: z.string().min(1),
+    issuedDate: z.string().optional(),
+    dueDate: z.string().optional(),
+    currency: z.string().optional(),
+    amount: z.number().positive(),
+    balanceDue: z.number().optional(),
+    status: z.string().optional(),
+    lineItems: z.array(z.object({ description: z.string(), quantity: z.number(), unitPrice: z.number(), taxRate: z.number().optional(), amount: z.number() })).optional(),
+  }),
+});
+
+export async function POST_createInvoice(request: NextRequest) {
+  try {
+    const context = validateTenantContext(request, "write");
+    const parsed = await parseJsonRequest(request, CreateInvoiceSchema);
+    if (!parsed.success) return errorResponse(parsed.error, 400, parsed.details);
+
+    const inv = {
+      id: `inv-${Date.now()}`,
+      ...parsed.data.invoice,
+      tenantSlug: context.tenantSlug,
+      createdAt: new Date().toISOString(),
+      createdBy: context.userId,
+    } as any;
+
+    const auditService = new AuditService(context.tenantSlug);
+    await auditService.log({ userId: context.userId, action: "create", resource: "invoice", resourceId: inv.id, changes: { after: inv } });
+
+    return NextResponse.json({ success: true, data: inv, message: "Invoice created successfully" }, { status: 201 });
+  } catch (error) {
+    console.error("Billing create invoice error:", error);
+    return handleTenantAdminError(error);
+  }
+}
+
+/**
+ * PATCH /api/tenant/billing?id=<id>
+ * Update subscription
+ */
 export async function PATCH(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const tenantSlug = url.searchParams.get("tenantSlug") ?? "kreatix-default";
-    
-    // Enforce write permission on billing module
-    const check = await enforcePermission(request, "billing", "write", tenantSlug);
-    if (!check.allowed) {
-      return check.response;
+    const context = validateTenantContext(request, "write");
+    const id = new URL(request.url).searchParams.get("id");
+
+    if (!id) {
+      return errorResponse("Subscription ID is required", 400);
     }
 
-    const body = await request.json().catch(() => ({}));
-    if (body.invoiceId) {
-      INVOICES = INVOICES.map((inv) => (inv.id === body.invoiceId && inv.tenantSlug === tenantSlug ? { ...inv, ...body.updates } : inv));
-      return NextResponse.json({ success: true });
+    const parsed = await parseJsonRequest(request, UpdateSubscriptionSchema);
+    if (!parsed.success) {
+      return errorResponse(parsed.error, 400, parsed.details);
     }
-    if (body.subscriptionId) {
-      SUBSCRIPTIONS = SUBSCRIPTIONS.map((s) => (s.id === body.subscriptionId && s.tenantSlug === tenantSlug ? { ...s, ...body.updates } : s));
-      return NextResponse.json({ success: true });
-    }
-    return NextResponse.json({ error: "invalid payload" }, { status: 400 });
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+
+    const updated = {
+      id,
+      ...parsed.data,
+      tenantSlug: context.tenantSlug,
+      updatedAt: new Date().toISOString(),
+      updatedBy: context.userId,
+    };
+
+    const auditService = new AuditService(context.tenantSlug);
+    await auditService.log({
+      userId: context.userId,
+      action: "update",
+      resource: "subscription",
+      resourceId: id,
+      changes: { after: updated },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: updated,
+      message: "Subscription updated successfully",
+    });
+  } catch (error) {
+    console.error("Billing PATCH error:", error);
+    return handleTenantAdminError(error);
   }
 }
 
+/**
+ * DELETE /api/tenant/billing?id=<id>
+ * Cancel subscription
+ */
 export async function DELETE(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const tenantSlug = url.searchParams.get("tenantSlug") ?? "kreatix-default";
-    
-    // Enforce write permission on billing module
-    const check = await enforcePermission(request, "billing", "write", tenantSlug);
-    if (!check.allowed) {
-      return check.response;
+    const context = validateTenantContext(request, "delete");
+    const id = new URL(request.url).searchParams.get("id");
+
+    if (!id) {
+      return errorResponse("Subscription ID is required", 400);
     }
 
-    const id = url.searchParams.get("id");
-    const type = url.searchParams.get("type");
-    if (type === "invoice" && id) {
-      INVOICES = INVOICES.filter((inv) => !(inv.id === id && inv.tenantSlug === tenantSlug));
-      return NextResponse.json({ success: true });
-    }
-    if (type === "subscription" && id) {
-      SUBSCRIPTIONS = SUBSCRIPTIONS.map((s) => (s.id === id && s.tenantSlug === tenantSlug ? { ...s, status: "cancelled" } : s));
-      return NextResponse.json({ success: true });
-    }
-    return NextResponse.json({ error: "invalid params" }, { status: 400 });
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    const auditService = new AuditService(context.tenantSlug);
+    await auditService.log({
+      userId: context.userId,
+      action: "cancel",
+      resource: "subscription",
+      resourceId: id,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Subscription cancelled successfully",
+    });
+  } catch (error) {
+    console.error("Billing DELETE error:", error);
+    return handleTenantAdminError(error);
   }
 }

@@ -8,6 +8,7 @@ import {
   getVendorStats,
   createVendor,
 } from "@/lib/finance/vendors";
+import { validateTenantContext } from "@/lib/tenant-admin/utils";
 
 const vendorSearchSchema = z.object({
   query: z.string().min(1),
@@ -23,6 +24,8 @@ const vendorListSchema = z.object({
 export async function GET(request: NextRequest) {
   console.log('API: GET /api/finance/vendors called');
   try {
+  // Enforce tenant context for vendor listing
+  validateTenantContext(request, "read");
   const url = new URL(request.url);
 
   // Search endpoint: /api/finance/vendors?search=true&query=...
@@ -72,6 +75,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // Require write permission for creating or fetching vendor details
+  validateTenantContext(request, "write");
   const body = await request.json().catch(() => null);
 
   if (!body) {

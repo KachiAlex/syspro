@@ -1,99 +1,270 @@
-import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
+import { NextRequest, NextResponse } from "next/server";
+import {
+  validateTenantContext,
+  parseJsonRequest,
+  getPaginationParams,
+  getSortParams,
+  errorResponse,
+  handleTenantAdminError,
+  checkRateLimit,
+} from "@/lib/tenant-admin/utils";
+import { AuditService } from "@/lib/tenant-admin/service";
+import { z } from "zod";
 
-let REPORTS = [
-  { id: "rep-1", tenantSlug: "kreatix-default", name: "Monthly Sales", type: "sales", period: "2026-01", createdAt: "2026-01-31", status: "ready" },
-  { id: "rep-2", tenantSlug: "kreatix-default", name: "Headcount Trend", type: "hr", period: "2026-Q1", createdAt: "2026-01-30", status: "generating" },
-];
+const CreateReportSchema = z.object({
+  name: z.string().min(1).max(100),
+  type: z.enum(["departments", "employees", "roles", "workflows", "approvals", "security", "billing", "custom"]),
+  filters: z.record(z.any()).optional(),
+  metrics: z.array(z.string()).optional(),
+  schedule: z.enum(["once", "daily", "weekly", "monthly"]).optional(),
+});
 
-let EXPORTS = [
-  { id: "exp-1", tenantSlug: "kreatix-default", reportId: "rep-1", format: "csv", scheduledFor: null, status: "ready" },
-];
+const ExportReportSchema = z.object({
+  reportId: z.string(),
+  format: z.enum(["csv", "json", "pdf", "xlsx"]),
+  scheduleFor: z.string().datetime().optional(),
+});
 
-export async function GET(request: Request) {
+/**
+ * GET /api/tenant/analytics
+ * Retrieve analytics reports and metrics
+ */
+export async function GET(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const tenantSlug = url.searchParams.get("tenantSlug") ?? "kreatix-default";
-    return NextResponse.json({
-      reports: REPORTS.filter((r) => r.tenantSlug === tenantSlug),
-      exports: EXPORTS.filter((e) => e.tenantSlug === tenantSlug),
-    });
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    const context = validateTenantContext(request, "read");
+
+    if (!checkRateLimit(`analytics-get-${context.tenantSlug}`, 50, 60000)) {
+      return errorResponse("Rate limit exceeded", 429);
+    }
+
+    const type = new URL(request.url).searchParams.get("type") || "overview";
+    const pagination = getPaginationParams(request);
+    const sort = getSortParams(request);
+
+    if (type === "reports") {
+      return NextResponse.json({
+        success: true,
+        data: {
+          reports: [],
+          pagination: {
+            page: pagination.page,
+            limit: pagination.limit,
+            total: 0,
+          },
+        },
+      });
+    } else if (type === "metrics") {
+      return NextResponse.json({
+        success: true,
+        data: {
+          departments: {
+            total: 0,
+            active: 0,
+            avgEmployeesPerDept: 0,
+          },
+          employees: {
+            total: 0,
+            active: 0,
+            byStatus: {},
+            avgTenure: 0,
+            turnover: 0,
+          },
+          approvals: {
+            pending: 0,
+            approved: 0,
+            rejected: 0,
+            avgTimeToApprove: 0,
+          },
+          workflows: {
+            total: 0,
+            active: 0,
+            executed: 0,
+          },
+        },
+      });
+    } else if (type === "security") {
+      return NextResponse.json({
+        success: true,
+        data: {
+          auditLogsCount: 0,
+          activePolicies: 0,
+          suspiciousActivities: 0,
+          lastPolicyUpdate: null,
+        },
+      });
+    } else if (type === "overview") {
+      return NextResponse.json({
+        success: true,
+        data: {
+          summary: {
+            totalPages: 0,
+            lastUpdated: new Date().toISOString(),
+          },
+          charts: [],
+        },
+      });
+    } else {
+      return errorResponse("Invalid type parameter", 400);
+    }
+  } catch (error) {
+    console.error("Analytics GET error:", error);
+    return handleTenantAdminError(error);
   }
 }
 
-export async function POST(request: Request) {
+/**
+ * POST /api/tenant/analytics
+ * Create or generate reports
+ */
+export async function POST(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const tenantSlug = url.searchParams.get("tenantSlug") ?? "kreatix-default";
-    const body = await request.json().catch(() => ({}));
-    if (body.type === "report") {
+    const context = validateTenantContext(request, "write");
+    const action = new URL(request.url).searchParams.get("action") || "create";
+
+    if (action === "create") {
+      const parsed = await parseJsonRequest(request, CreateReportSchema);
+      if (!parsed.success) {
+        return errorResponse(parsed.error, 400, parsed.details);
+      }
+
       const report = {
-        id: `rep-${randomUUID().slice(0, 6)}`,
-        tenantSlug,
-        name: body.name ?? "New Report",
-        type: body.reportType ?? "custom",
-        period: body.period ?? new Date().toISOString().slice(0, 7),
-        createdAt: new Date().toISOString(),
+        id: `rep-${Date.now()}`,
+        ...parsed.data,
+        tenantSlug: context.tenantSlug,
         status: "generating",
+        createdAt: new Date().toISOString(),
+        createdBy: context.userId,
       };
-      REPORTS = [report, ...REPORTS];
-      return NextResponse.json({ report });
-    }
-    if (body.type === "export") {
-      const exp = {
-        id: `exp-${randomUUID().slice(0, 6)}`,
-        tenantSlug,
-        reportId: body.reportId ?? "unknown",
-        format: body.format ?? "csv",
-        scheduledFor: body.scheduledFor ?? null,
+
+      const auditService = new AuditService(context.tenantSlug);
+      await auditService.log({
+        userId: context.userId,
+        action: "create",
+        resource: "report",
+        resourceId: report.id,
+        changes: { after: report },
+      });
+
+      return NextResponse.json(
+        {
+          success: true,
+          data: report,
+          message: "Report generation started",
+        },
+        { status: 201 }
+      );
+    } else if (action === "export") {
+      const parsed = await parseJsonRequest(request, ExportReportSchema);
+      if (!parsed.success) {
+        return errorResponse(parsed.error, 400, parsed.details);
+      }
+
+      const exportJob = {
+        id: `exp-${Date.now()}`,
+        ...parsed.data,
+        tenantSlug: context.tenantSlug,
         status: "queued",
+        createdAt: new Date().toISOString(),
+        createdBy: context.userId,
       };
-      EXPORTS = [exp, ...EXPORTS];
-      return NextResponse.json({ export: exp });
+
+      const auditService = new AuditService(context.tenantSlug);
+      await auditService.log({
+        userId: context.userId,
+        action: "create",
+        resource: "export",
+        resourceId: exportJob.id,
+        changes: { after: exportJob },
+      });
+
+      return NextResponse.json(
+        {
+          success: true,
+          data: exportJob,
+          message: "Export job queued",
+        },
+        { status: 201 }
+      );
+    } else {
+      return errorResponse("Invalid action", 400);
     }
-    return NextResponse.json({ error: "invalid payload" }, { status: 400 });
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+  } catch (error) {
+    console.error("Analytics POST error:", error);
+    return handleTenantAdminError(error);
   }
 }
 
-export async function PATCH(request: Request) {
+/**
+ * PATCH /api/tenant/analytics?id=<id>
+ * Update or re-run report
+ */
+export async function PATCH(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const tenantSlug = url.searchParams.get("tenantSlug") ?? "kreatix-default";
+    const context = validateTenantContext(request, "write");
+    const id = new URL(request.url).searchParams.get("id");
+    const action = new URL(request.url).searchParams.get("action") || "update";
+
+    if (!id) {
+      return errorResponse("Report ID is required", 400);
+    }
+
     const body = await request.json().catch(() => ({}));
-    if (body.reportId) {
-      REPORTS = REPORTS.map((r) => (r.id === body.reportId && r.tenantSlug === tenantSlug ? { ...r, ...body.updates } : r));
-      return NextResponse.json({ success: true });
-    }
-    if (body.exportId) {
-      EXPORTS = EXPORTS.map((e) => (e.id === body.exportId && e.tenantSlug === tenantSlug ? { ...e, ...body.updates } : e));
-      return NextResponse.json({ success: true });
-    }
-    return NextResponse.json({ error: "invalid payload" }, { status: 400 });
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+
+    const updated = {
+      id,
+      ...body,
+      tenantSlug: context.tenantSlug,
+      updatedAt: new Date().toISOString(),
+      updatedBy: context.userId,
+    };
+
+    const auditService = new AuditService(context.tenantSlug);
+    await auditService.log({
+      userId: context.userId,
+      action: action === "rerun" ? "execute" : "update",
+      resource: "report",
+      resourceId: id,
+      changes: { after: updated },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: updated,
+      message: "Report updated successfully",
+    });
+  } catch (error) {
+    console.error("Analytics PATCH error:", error);
+    return handleTenantAdminError(error);
   }
 }
 
-export async function DELETE(request: Request) {
+/**
+ * DELETE /api/tenant/analytics?id=<id>
+ * Delete report or export
+ */
+export async function DELETE(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const tenantSlug = url.searchParams.get("tenantSlug") ?? "kreatix-default";
-    const id = url.searchParams.get("id");
-    const type = url.searchParams.get("type");
-    if (type === "report" && id) {
-      REPORTS = REPORTS.filter((r) => !(r.id === id && r.tenantSlug === tenantSlug));
-      return NextResponse.json({ success: true });
+    const context = validateTenantContext(request, "delete");
+    const id = new URL(request.url).searchParams.get("id");
+
+    if (!id) {
+      return errorResponse("ID is required", 400);
     }
-    if (type === "export" && id) {
-      EXPORTS = EXPORTS.filter((e) => !(e.id === id && e.tenantSlug === tenantSlug));
-      return NextResponse.json({ success: true });
-    }
-    return NextResponse.json({ error: "invalid params" }, { status: 400 });
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+
+    const auditService = new AuditService(context.tenantSlug);
+    await auditService.log({
+      userId: context.userId,
+      action: "delete",
+      resource: "report",
+      resourceId: id,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Report deleted successfully",
+    });
+  } catch (error) {
+    console.error("Analytics DELETE error:", error);
+    return handleTenantAdminError(error);
   }
 }

@@ -251,7 +251,7 @@ export async function createBill(payload: {
       ${subtotal}, ${taxes}, ${total}, ${total},
       'open', ${payload.metadata || null}, now(), now()
     ) returning *
-  `) as BillRecord[];
+  `);
 
   // Insert bill items
   const itemRecords = await Promise.all(payload.items.map(async (item, index) => {

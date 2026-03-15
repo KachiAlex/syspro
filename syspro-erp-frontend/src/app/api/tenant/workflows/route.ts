@@ -1,105 +1,245 @@
 import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "node:crypto";
-import { extractAuthContext, requirePermission, validateTenant } from "@/lib/auth-helper";
-import { CreateWorkflowSchema, UpdateWorkflowSchema, safeParse } from "@/lib/validation";
+import { WorkflowService } from "@/lib/tenant-admin/service";
+import {
+  validateTenantContext,
+  parseJsonRequest,
+  getPaginationParams,
+  getFilterParams,
+  getSortParams,
+  errorResponse,
+  handleTenantAdminError,
+  checkRateLimit,
+} from "@/lib/tenant-admin/utils";
+import { AuditService } from "@/lib/tenant-admin/service";
+import { z } from "zod";
 
-type WorkflowType = "onboarding" | "transfer" | "promotion" | "exit";
-type WorkflowStep = { step: number; title: string; assignee?: string; daysAfter?: number };
-type WorkflowRecord = {
-  id: string;
-  tenantSlug: string;
-  name: string;
-  type: WorkflowType;
-  steps: WorkflowStep[];
-  createdAt: string;
-  updatedAt: string;
-};
+const WorkflowStepSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  order: z.number(),
+  triggerType: z.enum(["manual", "automatic", "scheduled"]).optional(),
+  actions: z.array(z.object({ type: z.string(), config: z.record(z.any()) })).optional(),
+});
 
-const databaseEnabled = Boolean(process.env.DATABASE_URL);
-type AdminDbModule = typeof import("@/lib/admin/db");
-let adminDbModulePromise: Promise<AdminDbModule> | null = null;
+const CreateWorkflowSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().max(500).optional(),
+  type: z.enum(["onboarding", "transfer", "promotion", "exit", "approval", "custom"]),
+  steps: z.array(WorkflowStepSchema).min(1),
+  isActive: z.boolean().optional(),
+  autoTrigger: z.boolean().optional(),
+});
 
-async function getAdminDbModule(): Promise<AdminDbModule> {
-  if (!adminDbModulePromise) {
-    adminDbModulePromise = import("@/lib/admin/db");
+const UpdateWorkflowSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  description: z.string().max(500).optional(),
+  steps: z.array(WorkflowStepSchema).optional(),
+  isActive: z.boolean().optional(),
+});
+
+const ExecuteWorkflowSchema = z.object({
+  resourceType: z.string(),
+  resourceId: z.string(),
+  variables: z.record(z.any()).optional(),
+});
+
+/**
+ * GET /api/tenant/workflows
+ * Retrieve workflows for a tenant
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const context = validateTenantContext(request, "read");
+
+    if (!checkRateLimit(`workflow-get-${context.tenantSlug}`, 100, 60000)) {
+      return errorResponse("Rate limit exceeded", 429);
+    }
+
+    const pagination = getPaginationParams(request);
+    const filters = getFilterParams(request);
+    const sort = getSortParams(request);
+
+    const service = new WorkflowService(context.tenantSlug);
+    const workflows = await service.list({
+      ...pagination,
+      ...filters,
+      sort: sort.sort,
+      order: sort.order,
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: workflows,
+      pagination: {
+        page: pagination.page,
+        limit: pagination.limit,
+        total: workflows.length,
+      },
+    });
+  } catch (error) {
+    console.error("Workflow GET error:", error);
+    return handleTenantAdminError(error);
   }
-  return adminDbModulePromise;
 }
 
-const fallbackWorkflows = new Map<string, WorkflowRecord[]>();
+/**
+ * POST /api/tenant/workflows
+ * Create a workflow or execute workflow
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const context = validateTenantContext(request, "write");
+    const action = new URL(request.url).searchParams.get("action") || "create";
 
-function seedFallbackWorkflows(tenantSlug: string): WorkflowRecord[] {
-  const now = new Date().toISOString();
-  return [
-    {
-      id: "wf-onboarding",
-      tenantSlug,
-      name: "New Hire Onboarding",
-      type: "onboarding",
-      steps: [
-        { step: 1, title: "Account provisioning", assignee: "IT", daysAfter: 0 },
-        { step: 2, title: "Equipment pickup", assignee: "Workplace", daysAfter: 1 },
-        { step: 3, title: "Manager welcome call", assignee: "People Ops", daysAfter: 2 },
-      ],
-      createdAt: now,
-      updatedAt: now,
-    },
-    {
-      id: "wf-exit",
-      tenantSlug,
-      name: "Employee Exit",
-      type: "exit",
-      steps: [
-        { step: 1, title: "Disable credentials", assignee: "Security", daysAfter: 0 },
-        { step: 2, title: "Asset return checklist", assignee: "Facilities", daysAfter: 1 },
-        { step: 3, title: "Knowledge capture", assignee: "Team Lead", daysAfter: 2 },
-      ],
-      createdAt: now,
-      updatedAt: now,
-    },
-  ];
-}
+    if (action === "create") {
+      const parsed = await parseJsonRequest(request, CreateWorkflowSchema);
+      if (!parsed.success) {
+        return errorResponse(parsed.error, 400, parsed.details);
+      }
 
-function getTenantWorkflows(tenantSlug: string): WorkflowRecord[] {
-  if (!fallbackWorkflows.has(tenantSlug)) {
-    fallbackWorkflows.set(tenantSlug, seedFallbackWorkflows(tenantSlug));
+      const service = new WorkflowService(context.tenantSlug);
+      const workflow = await service.create({
+        ...parsed.data,
+        createdBy: context.userId,
+      });
+
+      const auditService = new AuditService(context.tenantSlug);
+      await auditService.log({
+        userId: context.userId,
+        action: "create",
+        resource: "workflow",
+        resourceId: workflow.id,
+        changes: { after: workflow },
+      });
+
+      return NextResponse.json(
+        {
+          success: true,
+          data: workflow,
+          message: "Workflow created successfully",
+        },
+        { status: 201 }
+      );
+    } else if (action === "execute") {
+      const parsed = await parseJsonRequest(request, ExecuteWorkflowSchema);
+      if (!parsed.success) {
+        return errorResponse(parsed.error, 400, parsed.details);
+      }
+
+      const workflowId = new URL(request.url).searchParams.get("id");
+      if (!workflowId) {
+        return errorResponse("Workflow ID is required for execution", 400);
+      }
+
+      const service = new WorkflowService(context.tenantSlug);
+      const execution = await service.execute(workflowId, {
+        ...parsed.data,
+        executedBy: context.userId,
+        startedAt: new Date().toISOString(),
+      });
+
+      const auditService = new AuditService(context.tenantSlug);
+      await auditService.log({
+        userId: context.userId,
+        action: "execute",
+        resource: "workflow",
+        resourceId: workflowId,
+        changes: { after: execution },
+      });
+
+      return NextResponse.json(
+        {
+          success: true,
+          data: execution,
+          message: "Workflow execution started",
+        },
+        { status: 201 }
+      );
+    } else {
+      return errorResponse("Invalid action", 400);
+    }
+  } catch (error) {
+    console.error("Workflow POST error:", error);
+    return handleTenantAdminError(error);
   }
-  return fallbackWorkflows.get(tenantSlug)!;
 }
 
-function cloneWorkflow(workflow: WorkflowRecord): WorkflowRecord {
-  return {
-    ...workflow,
-    steps: workflow.steps.map((step) => ({ ...step })),
-  };
+/**
+ * PATCH /api/tenant/workflows?id=<id>
+ * Update a workflow
+ */
+export async function PATCH(request: NextRequest) {
+  try {
+    const context = validateTenantContext(request, "write");
+    const id = new URL(request.url).searchParams.get("id");
+
+    if (!id) {
+      return errorResponse("Workflow ID is required", 400);
+    }
+
+    const parsed = await parseJsonRequest(request, UpdateWorkflowSchema);
+    if (!parsed.success) {
+      return errorResponse(parsed.error, 400, parsed.details);
+    }
+
+    const service = new WorkflowService(context.tenantSlug);
+    const existing = await service.getById(id);
+    const updated = await service.update(id, parsed.data);
+
+    const auditService = new AuditService(context.tenantSlug);
+    await auditService.log({
+      userId: context.userId,
+      action: "update",
+      resource: "workflow",
+      resourceId: id,
+      changes: { before: existing, after: updated },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: updated,
+      message: "Workflow updated successfully",
+    });
+  } catch (error) {
+    console.error("Workflow PATCH error:", error);
+    return handleTenantAdminError(error);
+  }
 }
 
-function sanitizeSteps(input: WorkflowStep[]): WorkflowStep[] {
-  return input.map((step, index) => ({
-    step: step.step ?? index + 1,
-    title: step.title,
-    assignee: step.assignee,
-    daysAfter: step.daysAfter ?? 0,
-  }));
-}
+/**
+ * DELETE /api/tenant/workflows?id=<id>
+ * Delete a workflow
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const context = validateTenantContext(request, "delete");
+    const id = new URL(request.url).searchParams.get("id");
 
-function listFallbackWorkflows(tenantSlug: string): WorkflowRecord[] {
-  return getTenantWorkflows(tenantSlug).map(cloneWorkflow);
-}
+    if (!id) {
+      return errorResponse("Workflow ID is required", 400);
+    }
 
-function createFallbackWorkflow(tenantSlug: string, data: { name: string; type: WorkflowType; steps: WorkflowStep[] }) {
-  const workflow: WorkflowRecord = {
-    id: randomUUID(),
-    tenantSlug,
-    name: data.name,
-    type: data.type,
-    steps: sanitizeSteps(data.steps),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-  const store = getTenantWorkflows(tenantSlug);
-  store.unshift(workflow);
-  return cloneWorkflow(workflow);
+    const service = new WorkflowService(context.tenantSlug);
+    const existing = await service.getById(id);
+    await service.delete(id);
+
+    const auditService = new AuditService(context.tenantSlug);
+    await auditService.log({
+      userId: context.userId,
+      action: "delete",
+      resource: "workflow",
+      resourceId: id,
+      changes: { before: existing },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Workflow deleted successfully",
+    });
+  } catch (error) {
+    console.error("Workflow DELETE error:", error);
+    return handleTenantAdminError(error);
+  }
 }
 
 function updateFallbackWorkflow(tenantSlug: string, id: string, updates: { steps?: WorkflowStep[] }) {
@@ -125,106 +265,4 @@ function deleteFallbackWorkflow(tenantSlug: string, id: string) {
     throw new Error("Workflow not found");
   }
   store.splice(index, 1);
-}
-
-export async function GET(request: NextRequest) {
-  try {
-    const auth = extractAuthContext(request);
-    const tenantSlug = validateTenant(auth.tenantSlug);
-    requirePermission(auth.userRole, "read");
-    let workflows;
-    if (databaseEnabled) {
-      const { ensureAdminTables, getWorkflows } = await getAdminDbModule();
-      await ensureAdminTables();
-      workflows = await getWorkflows(tenantSlug);
-    } else {
-      workflows = listFallbackWorkflows(tenantSlug);
-    }
-    return NextResponse.json({ tenant: tenantSlug, workflows });
-  } catch (error) {
-    console.error("Workflow GET failed", error);
-    const message = error instanceof Error ? error.message : "Unable to fetch workflows";
-    return NextResponse.json({ error: message }, { status: message.includes("Unauthorized") ? 403 : 500 });
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const auth = extractAuthContext(request);
-    const tenantSlug = validateTenant(auth.tenantSlug);
-    requirePermission(auth.userRole, "write");
-    
-    const body = await request.json().catch(() => ({}));
-    const validation = safeParse(CreateWorkflowSchema, body);
-    if (!validation.success) {
-      return NextResponse.json({ error: "Invalid request", details: validation.error.flatten() }, { status: 400 });
-    }
-
-    if (databaseEnabled) {
-      const { ensureAdminTables, insertWorkflow } = await getAdminDbModule();
-      await ensureAdminTables();
-      const id = await insertWorkflow({ tenantSlug, name: validation.data.name, type: validation.data.type, steps: validation.data.steps });
-      return NextResponse.json({ workflow: { id, tenantSlug, name: validation.data.name, type: validation.data.type, steps: validation.data.steps, createdAt: new Date().toISOString() } }, { status: 201 });
-    }
-
-    const workflow = createFallbackWorkflow(tenantSlug, validation.data);
-    return NextResponse.json({ workflow }, { status: 201 });
-  } catch (error) {
-    console.error("Workflow create failed", error);
-    const message = error instanceof Error ? error.message : "Unable to create workflow";
-    return NextResponse.json({ error: message }, { status: message.includes("Unauthorized") ? 403 : 500 });
-  }
-}
-
-export async function PATCH(request: NextRequest) {
-  try {
-    const auth = extractAuthContext(request);
-    const tenantSlug = validateTenant(auth.tenantSlug);
-    const id = new URL(request.url).searchParams.get("id");
-    requirePermission(auth.userRole, "write");
-    
-    if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
-    
-    const body = await request.json().catch(() => ({}));
-    const validation = safeParse(UpdateWorkflowSchema, body);
-    if (!validation.success) {
-      return NextResponse.json({ error: "Invalid request", details: validation.error.flatten() }, { status: 400 });
-    }
-
-    if (databaseEnabled) {
-      const { ensureAdminTables, updateWorkflow } = await getAdminDbModule();
-      await ensureAdminTables();
-      await updateWorkflow(id, tenantSlug, { steps: validation.data.steps });
-    } else {
-      updateFallbackWorkflow(tenantSlug, id, { steps: validation.data.steps });
-    }
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Workflow patch failed", error);
-    const message = error instanceof Error ? error.message : "Unable to update workflow";
-    return NextResponse.json({ error: message }, { status: message.includes("Unauthorized") ? 403 : 500 });
-  }
-}
-
-export async function DELETE(request: NextRequest) {
-  try {
-    const auth = extractAuthContext(request);
-    const tenantSlug = validateTenant(auth.tenantSlug);
-    const id = new URL(request.url).searchParams.get("id");
-    requirePermission(auth.userRole, "delete");
-    
-    if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
-    if (databaseEnabled) {
-      const { ensureAdminTables, deleteWorkflow } = await getAdminDbModule();
-      await ensureAdminTables();
-      await deleteWorkflow(id, tenantSlug);
-    } else {
-      deleteFallbackWorkflow(tenantSlug, id);
-    }
-    return NextResponse.json({ message: "deleted" }, { status: 200 });
-  } catch (error) {
-    console.error("Workflow delete failed", error);
-    const message = error instanceof Error ? error.message : "Unable to delete workflow";
-    return NextResponse.json({ error: message }, { status: message.includes("Unauthorized") ? 403 : 500 });
-  }
 }
