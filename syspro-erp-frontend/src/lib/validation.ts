@@ -195,6 +195,57 @@ export const UpdateReportSchema = z.object({
   enabled: z.boolean().optional(),
 });
 
+// Superadmin tenant management schemas
+export const TenantPaginationSchema = z.object({
+  page: z.coerce.number().int().min(1, "Page must be >= 1").default(1),
+  limit: z.coerce.number().int().min(1).max(100, "Max 100 per page").default(20),
+  q: z.string().max(255, "Search query too long").optional(),
+});
+
+export const BulkTenantIdsSchema = z.object({
+  slugs: z.array(z.string().min(1, "Slug required").max(100)).min(1, "At least one slug").max(100, "Max 100 slugs per request"),
+});
+
+export const CreateTenantSchema = z.object({
+  name: z.string().min(1, "Name required").max(255, "Name too long"),
+  slug: z.string().min(1, "Slug required").max(100).regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers, and hyphens"),
+  seats: z.number().int().min(1, "At least 1 seat").max(100000, "Max 100k seats"),
+});
+
+export const UpdateTenantSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  seats: z.number().int().min(1).max(100000).optional(),
+});
+
+export const CreateLicenseSchema = z.object({
+  tenantSlug: z.string().min(1, "Tenant slug required").max(100),
+  type: z.enum(["basic", "premium", "enterprise"], { errorMap: () => ({ message: "Invalid license type" }) }),
+  seats: z.number().int().min(1).max(100000),
+  expiry: z.string().datetime("Invalid datetime").optional(),
+});
+
+export const CreateAdminSchema = z.object({
+  tenantSlug: z.string().min(1, "Tenant slug required").max(100),
+  email: z.string().email("Invalid email").max(255),
+  name: z.string().min(1, "Name required").max(255),
+  role: z.enum(["admin", "manager", "user"], { errorMap: () => ({ message: "Invalid role" }) }).default("manager"),
+});
+
+export const AuditLogsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  action: z.enum(["create", "activate", "suspend", "delete"]).optional(),
+  entitySlug: z.string().max(100).optional(),
+});
+
+export type TenantPaginationInput = z.infer<typeof TenantPaginationSchema>;
+export type BulkTenantIdsInput = z.infer<typeof BulkTenantIdsSchema>;
+export type CreateTenantInput = z.infer<typeof CreateTenantSchema>;
+export type UpdateTenantInput = z.infer<typeof UpdateTenantSchema>;
+export type CreateLicenseInput = z.infer<typeof CreateLicenseSchema>;
+export type CreateAdminInput = z.infer<typeof CreateAdminSchema>;
+export type AuditLogsQueryInput = z.infer<typeof AuditLogsQuerySchema>;
+
 /**
  * Safe parsing wrapper that returns error or data.
  */

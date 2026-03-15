@@ -1,0 +1,686 @@
+/**
+ * Projects Database Service Layer
+ * Handles all project-related database operations
+ */
+
+import { db } from "../sql-client";
+import {
+  Project,
+  Workstream,
+  Task,
+  TaskAssignment,
+  TimeLog,
+  CapacitySnapshot,
+  EmployeeSkill,
+  AssignmentRecommendation,
+  ProjectCreateInput,
+  ProjectUpdateInput,
+  WorkstreamCreateInput,
+  TaskCreateInput,
+  TaskAssignmentCreateInput,
+  TimeLogCreateInput,
+} from "./types";
+
+// ============================================================
+// PROJECT OPERATIONS
+// ============================================================
+
+export async function createProject(
+  tenantSlug: string,
+  input: ProjectCreateInput,
+  createdBy: string
+): Promise<Project | null> {
+  try {
+    const result = await db.query(
+      `
+      INSERT INTO projects (
+        tenant_slug, code, name, description, status, priority,
+        start_date, planned_end_date, budget_id, total_budget_amount,
+        scope_description, deliverables, project_manager_id, sponsor_id,
+        department_id, branch_id, approval_status, created_by
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+      RETURNING *
+      `,
+      [
+        tenantSlug,
+        input.code,
+        input.name,
+        input.description || null,
+        input.status || "PLANNING",
+        input.priority || "MEDIUM",
+        input.startDate || null,
+        input.plannedEndDate || null,
+        input.budgetId || null,
+        input.totalBudgetAmount || null,
+        input.scopeDescription || null,
+        input.deliverables || null,
+        input.projectManagerId || null,
+        input.sponsorId || null,
+        input.departmentId || null,
+        input.branchId || null,
+        "DRAFT",
+        createdBy,
+      ]
+    );
+
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error creating project:", error);
+    throw error;
+  }
+}
+
+export async function getProject(id: string, tenantSlug: string): Promise<Project | null> {
+  try {
+    const result = await db.query(
+      `SELECT * FROM projects WHERE id = $1 AND tenant_slug = $2`,
+      [id, tenantSlug]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error fetching project:", error);
+    throw error;
+  }
+}
+
+export async function getProjectsByStatus(
+  tenantSlug: string,
+  status: string,
+  limit = 50,
+  offset = 0
+): Promise<Project[]> {
+  try {
+    const result = await db.query(
+      `
+      SELECT * FROM projects 
+      WHERE tenant_slug = $1 AND status = $2
+      ORDER BY created_at DESC
+      LIMIT $3 OFFSET $4
+      `,
+      [tenantSlug, status, limit, offset]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching projects by status:", error);
+    throw error;
+  }
+}
+
+export async function getAllProjectsForTenant(
+  tenantSlug: string,
+  limit = 100,
+  offset = 0
+): Promise<Project[]> {
+  try {
+    const result = await db.query(
+      `
+      SELECT * FROM projects 
+      WHERE tenant_slug = $1
+      ORDER BY created_at DESC
+      LIMIT $2 OFFSET $3
+      `,
+      [tenantSlug, limit, offset]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching all projects:", error);
+    throw error;
+  }
+}
+
+export async function updateProject(
+  id: string,
+  tenantSlug: string,
+  input: ProjectUpdateInput
+): Promise<Project | null> {
+  try {
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
+
+    if (input.name) {
+      updates.push(`name = $${paramCount}`);
+      values.push(input.name);
+      paramCount++;
+    }
+    if (input.description) {
+      updates.push(`description = $${paramCount}`);
+      values.push(input.description);
+      paramCount++;
+    }
+    if (input.status) {
+      updates.push(`status = $${paramCount}`);
+      values.push(input.status);
+      paramCount++;
+    }
+    if (input.priority) {
+      updates.push(`priority = $${paramCount}`);
+      values.push(input.priority);
+      paramCount++;
+    }
+
+    updates.push("updated_at = CURRENT_TIMESTAMP");
+    values.push(id, tenantSlug);
+
+    if (updates.length === 1) return getProject(id, tenantSlug);
+
+    const result = await db.query(
+      `
+      UPDATE projects 
+      SET ${updates.join(", ")}
+      WHERE id = $${paramCount} AND tenant_slug = $${paramCount + 1}
+      RETURNING *
+      `,
+      values
+    );
+
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error updating project:", error);
+    throw error;
+  }
+}
+
+// ============================================================
+// WORKSTREAM OPERATIONS
+// ============================================================
+
+export async function createWorkstream(
+  tenantSlug: string,
+  input: WorkstreamCreateInput,
+  createdBy: string
+): Promise<Workstream | null> {
+  try {
+    const result = await db.query(
+      `
+      INSERT INTO workstreams (
+        project_id, tenant_slug, code, name, description,
+        planned_start_date, planned_end_date, allocated_budget,
+        status, priority, workstream_lead_id, owner_department_id, created_by
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      RETURNING *
+      `,
+      [
+        input.projectId,
+        tenantSlug,
+        input.code,
+        input.name,
+        input.description || null,
+        input.plannedStartDate || null,
+        input.plannedEndDate || null,
+        input.allocatedBudget || null,
+        input.status || "PLANNED",
+        input.priority || 100,
+        input.workstreamLeadId || null,
+        input.ownerDepartmentId || null,
+        createdBy,
+      ]
+    );
+
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error creating workstream:", error);
+    throw error;
+  }
+}
+
+export async function getWorkstreamsForProject(
+  projectId: string,
+  tenantSlug: string
+): Promise<Workstream[]> {
+  try {
+    const result = await db.query(
+      `
+      SELECT * FROM workstreams 
+      WHERE project_id = $1 AND tenant_slug = $2
+      ORDER BY priority ASC, created_at ASC
+      `,
+      [projectId, tenantSlug]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching workstreams:", error);
+    throw error;
+  }
+}
+
+// ============================================================
+// TASK OPERATIONS
+// ============================================================
+
+export async function createTask(
+  tenantSlug: string,
+  input: TaskCreateInput,
+  createdBy: string
+): Promise<Task | null> {
+  try {
+    const result = await db.query(
+      `
+      INSERT INTO tasks (
+        workstream_id, project_id, tenant_slug, code, title, description,
+        planned_start_date, planned_end_date, duration_days,
+        estimated_hours, estimated_cost, status, priority, percent_complete,
+        required_skills, created_by
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      RETURNING *
+      `,
+      [
+        input.workstreamId,
+        input.projectId,
+        tenantSlug,
+        input.code,
+        input.title,
+        input.description || null,
+        input.plannedStartDate || null,
+        input.plannedEndDate || null,
+        input.durationDays || null,
+        input.estimatedHours || null,
+        input.estimatedCost || null,
+        input.status || "NOT_STARTED",
+        input.priority || 100,
+        input.percentComplete || 0,
+        input.requiredSkills || [],
+        createdBy,
+      ]
+    );
+
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error creating task:", error);
+    throw error;
+  }
+}
+
+export async function getTasksForWorkstream(
+  workstreamId: string,
+  tenantSlug: string
+): Promise<Task[]> {
+  try {
+    const result = await db.query(
+      `
+      SELECT * FROM tasks 
+      WHERE workstream_id = $1 AND tenant_slug = $2
+      ORDER BY priority ASC, created_at ASC
+      `,
+      [workstreamId, tenantSlug]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+    throw error;
+  }
+}
+
+export async function getUnassignedTasks(
+  projectId: string,
+  tenantSlug: string
+): Promise<Task[]> {
+  try {
+    const result = await db.query(
+      `
+      SELECT * FROM tasks 
+      WHERE project_id = $1 AND tenant_slug = $2 AND is_assigned = false
+      ORDER BY priority DESC, created_at ASC
+      `,
+      [projectId, tenantSlug]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching unassigned tasks:", error);
+    throw error;
+  }
+}
+
+// ============================================================
+// TASK ASSIGNMENT OPERATIONS
+// ============================================================
+
+export async function createTaskAssignment(
+  tenantSlug: string,
+  input: TaskAssignmentCreateInput,
+  createdBy: string
+): Promise<TaskAssignment | null> {
+  try {
+    const result = await db.query(
+      `
+      INSERT INTO task_assignments (
+        task_id, project_id, tenant_slug, employee_id,
+        assigned_hours, assigned_percentage, assignment_start_date,
+        assignment_end_date, status, created_by
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING *
+      `,
+      [
+        input.taskId,
+        input.projectId,
+        tenantSlug,
+        input.employeeId,
+        input.assignedHours || null,
+        input.assignedPercentage || null,
+        input.assignmentStartDate,
+        input.assignmentEndDate || null,
+        input.status || "PROPOSED",
+        createdBy,
+      ]
+    );
+
+    // Mark task as assigned
+    await db.query(
+      `UPDATE tasks SET is_assigned = true WHERE id = $1`,
+      [input.taskId]
+    );
+
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error creating task assignment:", error);
+    throw error;
+  }
+}
+
+export async function getAssignmentsForEmployee(
+  employeeId: string,
+  tenantSlug: string
+): Promise<TaskAssignment[]> {
+  try {
+    const result = await db.query(
+      `
+      SELECT * FROM task_assignments 
+      WHERE employee_id = $1 AND tenant_slug = $2 AND status = 'ACCEPTED'
+      ORDER BY assignment_start_date ASC
+      `,
+      [employeeId, tenantSlug]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching assignments:", error);
+    throw error;
+  }
+}
+
+export async function approveTaskAssignment(
+  id: string,
+  tenantSlug: string,
+  approvedBy: string
+): Promise<TaskAssignment | null> {
+  try {
+    const result = await db.query(
+      `
+      UPDATE task_assignments 
+      SET status = 'ACCEPTED', approved_by = $1, approved_at = CURRENT_TIMESTAMP
+      WHERE id = $2 AND tenant_slug = $3
+      RETURNING *
+      `,
+      [approvedBy, id, tenantSlug]
+    );
+
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error approving assignment:", error);
+    throw error;
+  }
+}
+
+// ============================================================
+// TIME LOG OPERATIONS
+// ============================================================
+
+export async function logTime(
+  tenantSlug: string,
+  input: TimeLogCreateInput,
+  createdBy: string
+): Promise<TimeLog | null> {
+  try {
+    const result = await db.query(
+      `
+      INSERT INTO time_logs (
+        task_assignment_id, task_id, project_id, employee_id, tenant_slug,
+        log_date, hours_logged, description, activity_type, billable,
+        approval_status, created_by
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING *
+      `,
+      [
+        input.taskAssignmentId,
+        input.taskId,
+        input.projectId,
+        tenantSlug,
+        input.logDate,
+        input.hoursLogged,
+        input.description || null,
+        input.activityType || null,
+        input.billable || false,
+        input.createdBy || "SUBMITTED",
+      ]
+    );
+
+    // Update assignment's actual hours
+    await db.query(
+      `
+      UPDATE task_assignments 
+      SET actual_hours_logged = actual_hours_logged + $1
+      WHERE id = $2
+      `,
+      [input.hoursLogged, input.taskAssignmentId]
+    );
+
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error logging time:", error);
+    throw error;
+  }
+}
+
+export async function getTimeLogsForEmployee(
+  employeeId: string,
+  tenantSlug: string,
+  fromDate: Date,
+  toDate: Date
+): Promise<TimeLog[]> {
+  try {
+    const result = await db.query(
+      `
+      SELECT * FROM time_logs 
+      WHERE employee_id = $1 AND tenant_slug = $2 
+        AND log_date >= $3 AND log_date <= $4
+      ORDER BY log_date DESC
+      `,
+      [employeeId, tenantSlug, fromDate, toDate]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching time logs:", error);
+    throw error;
+  }
+}
+
+export async function approveTimeLog(
+  id: string,
+  tenantSlug: string,
+  approvedBy: string
+): Promise<TimeLog | null> {
+  try {
+    const result = await db.query(
+      `
+      UPDATE time_logs 
+      SET approval_status = 'APPROVED', approved_by = $1, approved_at = CURRENT_TIMESTAMP
+      WHERE id = $2 AND tenant_slug = $3
+      RETURNING *
+      `,
+      [approvedBy, id, tenantSlug]
+    );
+
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error approving time log:", error);
+    throw error;
+  }
+}
+
+// ============================================================
+// CAPACITY SNAPSHOT OPERATIONS
+// ============================================================
+
+export async function getLatestCapacitySnapshot(
+  employeeId: string,
+  tenantSlug: string
+): Promise<CapacitySnapshot | null> {
+  try {
+    const result = await db.query(
+      `
+      SELECT * FROM capacity_snapshots 
+      WHERE employee_id = $1 AND tenant_slug = $2
+      ORDER BY snapshot_date DESC
+      LIMIT 1
+      `,
+      [employeeId, tenantSlug]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error fetching capacity snapshot:", error);
+    throw error;
+  }
+}
+
+export async function createCapacitySnapshot(
+  tenantSlug: string,
+  employeeId: string,
+  data: Partial<CapacitySnapshot>
+): Promise<CapacitySnapshot | null> {
+  try {
+    const result = await db.query(
+      `
+      INSERT INTO capacity_snapshots (
+        tenant_slug, employee_id, snapshot_date,
+        total_available_hours, allocated_to_projects_hours,
+        allocated_to_maintenance_hours, available_capacity_hours,
+        utilization_percentage, forecasted_allocation_next_30days,
+        forecasted_allocation_next_90days, over_allocated_risk,
+        skill_gap_risk
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING *
+      `,
+      [
+        tenantSlug,
+        employeeId,
+        data.snapshotDate || new Date(),
+        data.totalAvailableHours || 160,
+        data.allocatedToProjectsHours || 0,
+        data.allocatedToMaintenanceHours || 0,
+        data.availableCapacityHours || 160,
+        data.utilizationPercentage || 0,
+        data.forecastedAllocationNext30Days || 0,
+        data.forecastedAllocationNext90Days || 0,
+        data.overAllocatedRisk || false,
+        data.skillGapRisk || false,
+      ]
+    );
+
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error creating capacity snapshot:", error);
+    throw error;
+  }
+}
+
+// ============================================================
+// SKILL OPERATIONS
+// ============================================================
+
+export async function getEmployeeSkills(
+  employeeId: string,
+  tenantSlug: string
+): Promise<EmployeeSkill[]> {
+  try {
+    const result = await db.query(
+      `
+      SELECT * FROM employee_skills 
+      WHERE employee_id = $1 AND tenant_slug = $2
+      ORDER BY proficiency_level DESC, years_of_experience DESC
+      `,
+      [employeeId, tenantSlug]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching employee skills:", error);
+    throw error;
+  }
+}
+
+// ============================================================
+// ASSIGNMENT RECOMMENDATION OPERATIONS
+// ============================================================
+
+export async function createAssignmentRecommendation(
+  tenantSlug: string,
+  taskId: string,
+  projectId: string,
+  recommendedEmployeeId: string,
+  data: {
+    fitScore?: number;
+    reason?: string;
+    skillsMatchScore?: number;
+    capacityScore?: number;
+    availabilityScore?: number;
+    performanceHistoryScore?: number;
+  },
+  createdBy: string
+): Promise<AssignmentRecommendation | null> {
+  try {
+    const result = await db.query(
+      `
+      INSERT INTO assignment_recommendations (
+        task_id, project_id, tenant_slug, recommended_employee_id,
+        fit_score, recommendation_reason,
+        skills_match_score, capacity_score, availability_score,
+        performance_history_score, created_by
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      RETURNING *
+      `,
+      [
+        taskId,
+        projectId,
+        tenantSlug,
+        recommendedEmployeeId,
+        data.fitScore || null,
+        data.reason || null,
+        data.skillsMatchScore || null,
+        data.capacityScore || null,
+        data.availabilityScore || null,
+        data.performanceHistoryScore || null,
+        createdBy,
+      ]
+    );
+
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error creating assignment recommendation:", error);
+    throw error;
+  }
+}
+
+export async function getAssignmentRecommendations(
+  taskId: string,
+  tenantSlug: string
+): Promise<AssignmentRecommendation[]> {
+  try {
+    const result = await db.query(
+      `
+      SELECT * FROM assignment_recommendations 
+      WHERE task_id = $1 AND tenant_slug = $2 AND status IN ('NEW', 'VIEWED')
+      ORDER BY fit_score DESC
+      `,
+      [taskId, tenantSlug]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching recommendations:", error);
+    throw error;
+  }
+}

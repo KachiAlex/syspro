@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Download, Loader2, Play, RefreshCcw } from "lucide-react";
+import { FixedSizeList as List, ListOnItemsRenderedProps } from "react-window";
+import ReportDefinitionModal from "@/components/ReportDefinitionModal";
 
 type Report = {
   id: string;
@@ -23,20 +25,29 @@ type Job = {
 
 export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
   const [reports, setReports] = useState<Report[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [jobs, setJobs] = useState<Record<string, Job[]>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", reportType: "operational", definition: '{"source":"projects"}', schedule: "" });
+  const [summary, setSummary] = useState<{ totalReports: number; queuedJobs: number; runsLast7: number; avgRunSecs?: number } | null>(null);
 
-  async function load() {
+  async function loadReports(cursorToLoad: string | null = null) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/reports?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+      const qp = cursorToLoad ? `cursor=${encodeURIComponent(cursorToLoad)}&` : `page=1&`;
+      const res = await fetch(`/api/reports?tenantSlug=${encodeURIComponent(tenantSlug)}&${qp}limit=20`);
       if (!res.ok) throw new Error("Unable to load reports");
       const json = await res.json();
-      setReports(json.reports || []);
+      const items: Report[] = json.reports || json.items || [];
+      const newNext = json.nextCursor ?? null;
+      setReports((prev) => (cursorToLoad ? [...prev, ...items] : items));
+      setHasMore(Boolean(newNext));
+      setNextCursor(newNext ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -44,9 +55,43 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
     }
   }
 
+  async function fetchSummary() {
+    try {
+      const res = await fetch(`/api/reports/summary?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+      if (!res.ok) return;
+      const json = await res.json();
+      if (!json.error) setSummary({ totalReports: json.totalReports || 0, queuedJobs: json.queuedJobs || 0, runsLast7: json.runsLast7 || 0, avgRunSecs: json.avgRunSecs });
+    } catch (e) {
+      // ignore summary failures
+    }
+  }
+
   useEffect(() => {
-    load();
+    fetchSummary();
+    const t = setTimeout(() => loadReports(), 600);
+    return () => clearTimeout(t);
   }, [tenantSlug]);
+
+  const listRef = useRef<List | null>(null);
+  const ITEM_SIZE = 140; // reduced height since definition moved to modal
+
+  const [defOpen, setDefOpen] = useState(false);
+  const [selectedDefinition, setSelectedDefinition] = useState<any>(null);
+
+  const handleItemsRendered = useCallback((props: ListOnItemsRenderedProps) => {
+    const { visibleStopIndex } = props as any;
+    if (visibleStopIndex >= reports.length - 3 && hasMore && !loading) {
+      awaitLoadMore();
+    }
+  }, [reports.length, hasMore, loading, page]);
+
+  const awaitLoadMore = useCallback(() => {
+    if (nextCursor) {
+      loadReports(nextCursor);
+    } else if (hasMore) {
+      loadReports(null);
+    }
+  }, [nextCursor, hasMore]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -62,7 +107,7 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
       });
       if (!res.ok) throw new Error("Create failed");
       setForm({ name: "", reportType: form.reportType, definition: form.definition, schedule: form.schedule });
-      await load();
+      await loadReports();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -88,6 +133,27 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
 
   return (
     <div className="space-y-6">
+      {/* Summary cards (fast, top-line metrics) */}
+      {summary && (
+        <div className="grid grid-cols-3 gap-4">
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 text-sm text-slate-700">
+            <div className="text-xs text-slate-400">Reports</div>
+            <div className="text-2xl font-semibold">{summary.totalReports}</div>
+            <div className="text-xs text-slate-500">Total saved reports</div>
+          </div>
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 text-sm text-slate-700">
+            <div className="text-xs text-slate-400">Queue</div>
+            <div className="text-2xl font-semibold">{summary.queuedJobs}</div>
+            <div className="text-xs text-slate-500">Jobs queued now</div>
+          </div>
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 text-sm text-slate-700">
+            <div className="text-xs text-slate-400">Recent</div>
+            <div className="text-2xl font-semibold">{summary.runsLast7}</div>
+            <div className="text-xs text-slate-500">Runs last 7 days</div>
+          </div>
+        </div>
+      )}
+
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
@@ -95,7 +161,7 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
             <h2 className="text-xl font-semibold text-slate-900">Operational, financial, and executive</h2>
             <p className="mt-1 text-sm text-slate-500">Cross-module reporting with scheduling and exports.</p>
           </div>
-          <button onClick={load} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50" disabled={loading}>
+          <button onClick={() => { fetchSummary(); loadReports(); }} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50" disabled={loading}>
             <RefreshCcw className="h-4 w-4" /> Refresh
           </button>
         </div>
@@ -135,51 +201,62 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
             <h3 className="text-lg font-semibold text-slate-900">Reports</h3>
           </div>
         </div>
-        {loading ? (
+          {loading ? (
           <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading reports…</div>
         ) : reports.length === 0 ? (
           <div className="text-sm text-slate-500">No reports yet. Create one above.</div>
         ) : (
-          <div className="space-y-3">
-            {reports.map((r) => (
-              <div key={r.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">{r.name}</p>
-                    <p className="text-xs text-slate-500">{r.reportType}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => runReport(r)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-white">
-                      <Play className="h-3 w-3" /> Run now
-                    </button>
-                    <button onClick={() => loadJobs(r.id)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-white">
-                      History
-                    </button>
-                  </div>
-                </div>
-                <div className="mt-2 grid gap-3 md:grid-cols-2">
-                  <div className="rounded-xl bg-white p-3 text-xs text-slate-700">
-                    <div className="mb-1 text-[11px] uppercase tracking-[0.2em] text-slate-400">Definition</div>
-                    <pre className="whitespace-pre-wrap break-all">{JSON.stringify(r.definition, null, 2)}</pre>
-                  </div>
-                  <div className="rounded-xl bg-white p-3 text-xs text-slate-700">
-                    <div className="mb-1 text-[11px] uppercase tracking-[0.2em] text-slate-400">Schedule</div>
-                    <div>{r.schedule || "On-demand"}</div>
-                  </div>
-                </div>
-                {jobs[r.id] && jobs[r.id].length > 0 && (
-                  <div className="mt-3 rounded-xl bg-white p-3 text-xs text-slate-700">
-                    <div className="mb-1 text-[11px] uppercase tracking-[0.2em] text-slate-400">Recent runs</div>
-                    {jobs[r.id].map((j) => (
-                      <div key={j.id} className="flex items-center justify-between border-b border-slate-100 py-1 last:border-0">
-                        <span className="capitalize">{j.status}</span>
-                        <span className="text-slate-500">{j.outputLocation || j.error || j.createdAt}</span>
+          <div className="">
+            <List
+              height={Math.min(600, reports.length * ITEM_SIZE)}
+              itemCount={reports.length}
+              itemSize={ITEM_SIZE}
+              width="100%"
+              onItemsRendered={handleItemsRendered}
+              ref={(r: List | null) => (listRef.current = r)}
+            >
+              {({ index, style }: { index: number; style: React.CSSProperties }) => {
+                const r = reports[index];
+                return (
+                  <div style={style} key={r.id} className="p-2">
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">{r.name}</p>
+                          <p className="text-xs text-slate-500">{r.reportType}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => runReport(r)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-white">
+                            <Play className="h-3 w-3" /> Run now
+                          </button>
+                          <button onClick={() => loadJobs(r.id)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-white">
+                            History
+                          </button>
+                        </div>
                       </div>
-                    ))}
+                      <div className="mt-3 flex items-center justify-between">
+                        <div className="text-xs text-slate-600">{r.schedule || "On-demand"}</div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => { setSelectedDefinition(r.definition); setDefOpen(true); }} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-white">View definition</button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                )}
+                );
+              }}
+            </List>
+            {hasMore && (
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={() => { if (nextCursor) loadReports(nextCursor); else loadReports(null); }}
+                  disabled={loading}
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-white"
+                >
+                  Load more
+                </button>
               </div>
-            ))}
+            )}
+            <ReportDefinitionModal open={defOpen} onClose={() => setDefOpen(false)} definition={selectedDefinition} />
           </div>
         )}
       </div>

@@ -38,32 +38,74 @@ interface TenantAdmin {
 export default function SuperadminPage() {
     // Tenant status management
     const handleSuspendTenant = async (slug: string) => {
-      if (!confirm('Suspend this tenant?')) return;
+      if (!confirm('Suspend this tenant? Users will lose access to all services.')) return;
+      
+      setActionLoading(slug);
+      setError(null);
+      setSuccess(null);
+      
       try {
-        const response = await fetch(`/api/superadmin/tenants/${slug}/suspend`, { method: 'POST' });
+        const response = await fetch(`/api/superadmin/tenants/${slug}/suspend`, { 
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
         if (response.ok) {
-          fetchTenants();
+          const result = await response.json();
+          setSuccess(`Tenant "${slug}" has been suspended successfully`);
+          fetchTenants(); // Refresh the list
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `Failed to suspend tenant: ${response.status}`);
         }
       } catch (error) {
         console.error('Failed to suspend tenant:', error);
+        setError(error instanceof Error ? error.message : 'Failed to suspend tenant');
+      } finally {
+        setActionLoading(null);
       }
     };
 
     const handleActivateTenant = async (slug: string) => {
-      if (!confirm('Activate this tenant?')) return;
+      if (!confirm('Activate this tenant? Users will regain access to all services.')) return;
+      
+      setActionLoading(slug);
+      setError(null);
+      setSuccess(null);
+      
       try {
-        const response = await fetch(`/api/superadmin/tenants/${slug}/activate`, { method: 'POST' });
+        const response = await fetch(`/api/superadmin/tenants/${slug}/activate`, { 
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
         if (response.ok) {
-          fetchTenants();
+          const result = await response.json();
+          setSuccess(`Tenant "${slug}" has been activated successfully`);
+          fetchTenants(); // Refresh the list
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `Failed to activate tenant: ${response.status}`);
         }
       } catch (error) {
         console.error('Failed to activate tenant:', error);
+        setError(error instanceof Error ? error.message : 'Failed to activate tenant');
+      } finally {
+        setActionLoading(null);
       }
     };
   const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [totalTenants, setTotalTenants] = useState(0);
   const [licenses, setLicenses] = useState<License[]>([]);
   const [tenantAdmins, setTenantAdmins] = useState<TenantAdmin[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'tenants' | 'licenses' | 'admins'>('tenants');
   const [showTenantModal, setShowTenantModal] = useState(false);
   const [showLicenseModal, setShowLicenseModal] = useState(false);
@@ -79,8 +121,21 @@ export default function SuperadminPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTenants, setSelectedTenants] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const tenantsPerPage = 20;
   const router = useRouter();
+
+  // Debounce search
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      if (activeTab === 'tenants') {
+        setCurrentPage(1); // Reset to first page on search
+        fetchTenants(1, searchQuery);
+      }
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery, activeTab]);
 
   // Helper functions for bulk operations and pagination
   const handleSelectAll = () => {
@@ -101,28 +156,62 @@ export default function SuperadminPage() {
   };
 
   const handleBulkActivate = async () => {
-    for (const slug of selectedTenants) {
-      await handleActivateTenant(slug);
+    if (selectedTenants.length === 0) return;
+    try {
+      const res = await fetch('/api/superadmin/tenants/bulk-activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slugs: selectedTenants }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTenants(prev => prev.map(t => data.updated.includes(t.slug) ? { ...t, status: 'active' } : t));
+        setSelectedTenants([]);
+        setSelectAll(false);
+      }
+    } catch (error) {
+      console.error('Bulk activate failed', error);
     }
-    setSelectedTenants([]);
-    setSelectAll(false);
   };
 
   const handleBulkSuspend = async () => {
-    for (const slug of selectedTenants) {
-      await handleSuspendTenant(slug);
+    if (selectedTenants.length === 0) return;
+    try {
+      const res = await fetch('/api/superadmin/tenants/bulk-suspend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slugs: selectedTenants }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTenants(prev => prev.map(t => data.updated.includes(t.slug) ? { ...t, status: 'suspended' } : t));
+        setSelectedTenants([]);
+        setSelectAll(false);
+      }
+    } catch (error) {
+      console.error('Bulk suspend failed', error);
     }
-    setSelectedTenants([]);
-    setSelectAll(false);
   };
 
   const handleBulkDelete = async () => {
+    if (selectedTenants.length === 0) return;
     if (!confirm(`Are you sure you want to delete ${selectedTenants.length} tenants?`)) return;
-    for (const slug of selectedTenants) {
-      await handleDeleteTenant(slug);
+    try {
+      const res = await fetch('/api/superadmin/tenants/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slugs: selectedTenants }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTenants(prev => prev.filter(t => !data.deleted.includes(t.slug)));
+        setSelectedTenants([]);
+        setSelectAll(false);
+        fetchTenants(currentPage);
+      }
+    } catch (error) {
+      console.error('Bulk delete failed', error);
     }
-    setSelectedTenants([]);
-    setSelectAll(false);
   };
 
   const handlePageChange = (page: number) => {
@@ -130,25 +219,32 @@ export default function SuperadminPage() {
   };
 
   const getPaginatedTenants = () => {
-    const startIndex = (currentPage - 1) * tenantsPerPage;
-    const endIndex = startIndex + tenantsPerPage;
-    return tenants.slice(startIndex, endIndex);
+    // server returns the current page of tenants already
+    return tenants;
   };
-
-  const totalPages = Math.ceil(tenants.length / tenantsPerPage);
+  const totalPages = Math.max(1, Math.ceil(totalTenants / tenantsPerPage));
 
   useEffect(() => {
-    fetchTenants();
+    fetchTenants(currentPage);
     fetchLicenses();
-    fetchTenantAdmins();
-  }, []);
+    // tenant admins will be fetched after tenants load (see tenants effect)
+  }, [currentPage]);
 
-  const fetchTenants = async () => {
+  const fetchTenants = async (page?: number, query?: string) => {
+    const usePage = page || currentPage;
+    const useQuery = query || searchQuery;
     try {
-      const response = await fetch('/api/superadmin/tenants');
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: usePage.toString(),
+        limit: tenantsPerPage.toString(),
+        ...(useQuery && { q: useQuery }),
+      });
+      const response = await fetch(`/api/superadmin/tenants?${params}`);
       if (response.ok) {
         const data = await response.json();
-        setTenants(data);
+        setTenants(data.items || []);
+        setTotalTenants(data.total || 0);
       }
     } catch (error) {
       console.error('Failed to fetch tenants:', error);
@@ -171,15 +267,17 @@ export default function SuperadminPage() {
 
   const fetchTenantAdmins = async () => {
     try {
-      const allAdmins: TenantAdmin[] = [];
-      for (const tenant of tenants) {
-        const response = await fetch(`/api/superadmin/tenants/${tenant.slug}/admins`);
-        if (response.ok) {
-          const admins = await response.json();
-          allAdmins.push(...admins.map((admin: any) => ({ ...admin, tenant_name: tenant.name, tenant_slug: tenant.slug })));
-        }
+      // Fetch admins for the visible tenants in one call to avoid N+1
+      const slugs = tenants.map(t => t.slug);
+      const response = await fetch('/api/superadmin/tenants/admins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slugs }),
+      });
+      if (response.ok) {
+        const admins = await response.json();
+        setTenantAdmins(admins.map((a: any) => ({ ...a })));
       }
-      setTenantAdmins(allAdmins);
     } catch (error) {
       console.error('Failed to fetch tenant admins:', error);
     }
@@ -222,9 +320,10 @@ export default function SuperadminPage() {
       });
       if (response.ok) {
         const newTenant = await response.json();
-        setTenants([...tenants, newTenant]);
         setShowTenantModal(false);
         setTenantFormData({ name: '', slug: '', seats: 1 });
+        // refresh page to include new tenant
+        fetchTenants(currentPage);
       }
     } catch (error) {
       console.error('Failed to create tenant:', error);
@@ -275,18 +374,35 @@ export default function SuperadminPage() {
   };
 
   const handleDeleteTenant = async (slug: string) => {
-    if (!confirm('Are you sure you want to delete this tenant?')) return;
+    if (!confirm(`Are you sure you want to delete tenant "${slug}"? This action cannot be undone and will delete all associated data.`)) return;
+
+    setActionLoading(slug);
+    setError(null);
+    setSuccess(null);
 
     try {
       const response = await fetch(`/api/superadmin/tenants/${slug}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
+      
       if (response.ok) {
-        setTenants(tenants.filter(t => t.slug !== slug));
+        const result = await response.json();
+        setSuccess(`Tenant "${slug}" has been deleted successfully`);
         setSelectedTenants(selectedTenants.filter(s => s !== slug));
+        // refresh the current page
+        fetchTenants(currentPage);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to delete tenant: ${response.status}`);
       }
     } catch (error) {
       console.error('Failed to delete tenant:', error);
+      setError(error instanceof Error ? error.message : 'Failed to delete tenant');
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -332,70 +448,110 @@ export default function SuperadminPage() {
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-200 text-lg font-semibold text-blue-700">Loading...</div>;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-200">
-      <div className="bg-white rounded-2xl shadow-xl p-10 max-w-5xl w-full">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
-            <img src="/logo.png" alt="Syspro Logo" className="w-12 h-12" />
-            <h1 className="text-3xl font-bold text-blue-700">Superadmin Portal</h1>
-          </div>
-          <div className="flex gap-4">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-4">
+              <img src="/logo.png" alt="Syspro Logo" className="w-8 h-8" />
+              <h1 className="text-2xl font-bold text-gray-900">Superadmin Portal</h1>
+            </div>
             {activeTab === 'tenants' && (
-              <Button onClick={() => setShowTenantModal(true)} className="btn btn-blue px-6 py-3 rounded-lg font-semibold text-lg transition">
-                <Plus className="w-5 h-5 mr-2" /> Add Tenant
-              </Button>
+              <input
+                type="text"
+                placeholder="Search tenants by name or slug..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             )}
-            {activeTab === 'licenses' && (
-              <Button onClick={() => setShowLicenseModal(true)} className="btn btn-blue px-6 py-3 rounded-lg font-semibold text-lg transition">
-                <Plus className="w-5 h-5 mr-2" /> Add License
+            <div className="flex items-center gap-3">
+              {activeTab === 'tenants' && (
+                <Button onClick={() => setShowTenantModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+                  <Plus className="w-4 h-4 mr-2" /> Add Tenant
+                </Button>
+              )}
+              {activeTab === 'licenses' && (
+                <Button onClick={() => setShowLicenseModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+                  <Plus className="w-4 h-4 mr-2" /> Add License
+                </Button>
+              )}
+              {activeTab === 'admins' && (
+                <Button onClick={() => setShowAdminModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+                  <Plus className="w-4 h-4 mr-2" /> Add Admin
+                </Button>
+              )}
+              <Button variant="outline" onClick={handleLogout} className="border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition">
+                <LogOut className="w-4 h-4 mr-2" /> Logout
               </Button>
-            )}
-            {activeTab === 'admins' && (
-              <Button onClick={() => setShowAdminModal(true)} className="btn btn-blue px-6 py-3 rounded-lg font-semibold text-lg transition">
-                <Plus className="w-5 h-5 mr-2" /> Add Admin
-              </Button>
-            )}
-            <Button variant="outline" onClick={handleLogout} className="btn btn-ghost px-6 py-3 rounded-lg font-semibold text-lg border border-[color:var(--accent)] text-[color:var(--accent)] transition">
-              <LogOut className="w-5 h-5 mr-2" /> Logout
-            </Button>
+            </div>
           </div>
         </div>
+      </header>
 
+      {/* Notifications */}
+      {error && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center justify-between">
+            <span>{error}</span>
+            <button onClick={() => setError(null)} className="text-red-500 hover:text-red-700">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {success && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center justify-between">
+            <span>{success}</span>
+            <button onClick={() => setSuccess(null)} className="text-green-500 hover:text-green-700">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Tab Navigation */}
         <div className="mb-8">
-          <div className="flex space-x-4">
+          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
             <button
               onClick={() => setActiveTab('tenants')}
-              className={`px-6 py-3 rounded-lg font-semibold text-lg ${activeTab === 'tenants' ? 'btn btn-blue' : 'bg-gray-200 text-gray-700 hover:bg-blue-50 transition'}`}
+              className={`px-4 py-2 rounded-md font-medium transition ${
+                activeTab === 'tenants' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
             >
               Tenants
             </button>
             <button
               onClick={() => setActiveTab('licenses')}
-              className={`px-6 py-3 rounded-lg font-semibold text-lg ${activeTab === 'licenses' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-blue-50 transition'}`}
+              className={`px-4 py-2 rounded-md font-medium transition ${
+                activeTab === 'licenses' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
             >
               Licenses
             </button>
             <button
               onClick={() => setActiveTab('admins')}
-              className={`px-6 py-3 rounded-lg font-semibold text-lg ${activeTab === 'admins' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-blue-50 transition'}`}
+              className={`px-4 py-2 rounded-md font-medium transition ${
+                activeTab === 'admins' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
             >
               Admins
             </button>
           </div>
         </div>
-        <button
-          onClick={() => {
-            setSelectedTenants([]);
-            setSelectAll(false);
-          }}
-          className="text-blue-600 hover:text-blue-800 text-sm"
-        >
-          Clear selection
-        </button>
-      </div>
-    )
 
-    {activeTab === 'tenants' && (
+        {activeTab === 'tenants' && (
       <div>
         {/* Bulk Actions Bar */}
         {selectedTenants.length > 0 && (
@@ -515,14 +671,44 @@ export default function SuperadminPage() {
                         <Button variant="ghost" size="sm">
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleSuspendTenant(tenant.slug)}>
-                          <X className="w-4 h-4 text-orange-600" />
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleSuspendTenant(tenant.slug)}
+                          disabled={actionLoading === tenant.slug}
+                          className="disabled:opacity-50"
+                        >
+                          {actionLoading === tenant.slug ? (
+                            <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <X className="w-4 h-4 text-orange-600" />
+                          )}
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleActivateTenant(tenant.slug)}>
-                          <Eye className="w-4 h-4 text-green-600" />
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleActivateTenant(tenant.slug)}
+                          disabled={actionLoading === tenant.slug}
+                          className="disabled:opacity-50"
+                        >
+                          {actionLoading === tenant.slug ? (
+                            <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <Eye className="w-4 h-4 text-green-600" />
+                          )}
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteTenant(tenant.slug)}>
-                          <Trash2 className="w-4 h-4 text-red-600" />
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleDeleteTenant(tenant.slug)}
+                          disabled={actionLoading === tenant.slug}
+                          className="disabled:opacity-50"
+                        >
+                          {actionLoading === tenant.slug ? (
+                            <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          )}
                         </Button>
                       </div>
                     </td>
@@ -538,7 +724,7 @@ export default function SuperadminPage() {
           <div className="bg-white rounded-lg shadow px-4 py-3 mt-4 flex items-center justify-between">
             <div className="text-sm text-gray-700">
               Showing {((currentPage - 1) * tenantsPerPage) + 1} to{' '}
-              {Math.min(currentPage * tenantsPerPage, tenants.length)} of {tenants.length} tenants
+              {Math.min(currentPage * tenantsPerPage, totalTenants)} of {totalTenants} tenants
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -796,32 +982,32 @@ export default function SuperadminPage() {
             </div>
             <form onSubmit={handleCreateTenant}>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <label className="block text-sm font-medium text-black">Name</label>
                 <input
                   type="text"
                   value={tenantFormData.name}
                   onChange={(e) => setTenantFormData({ ...tenantFormData, name: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
                   required
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Slug</label>
+                <label className="block text-sm font-medium text-black">Slug</label>
                 <input
                   type="text"
                   value={tenantFormData.slug}
                   onChange={(e) => setTenantFormData({ ...tenantFormData, slug: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
                   required
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Seats</label>
+                <label className="block text-sm font-medium text-black">Seats</label>
                 <input
                   type="number"
                   value={tenantFormData.seats}
                   onChange={(e) => setTenantFormData({ ...tenantFormData, seats: parseInt(e.target.value) || 1 })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
                   min="1"
                   required
                 />
@@ -848,11 +1034,11 @@ export default function SuperadminPage() {
             </div>
             <form onSubmit={handleCreateLicense}>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Tenant Slug</label>
+                <label className="block text-sm font-medium text-black">Tenant Slug</label>
                 <select
                   value={licenseFormData.tenantSlug}
                   onChange={(e) => setLicenseFormData({ ...licenseFormData, tenantSlug: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
                   required
                 >
                   <option value="">Select tenant</option>
@@ -864,11 +1050,11 @@ export default function SuperadminPage() {
                 </select>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Type</label>
+                <label className="block text-sm font-medium text-black">Type</label>
                 <select
                   value={licenseFormData.type}
                   onChange={(e) => setLicenseFormData({ ...licenseFormData, type: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
                   required
                 >
                   <option value="basic">Basic</option>
@@ -877,23 +1063,23 @@ export default function SuperadminPage() {
                 </select>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Seats</label>
+                <label className="block text-sm font-medium text-black">Seats</label>
                 <input
                   type="number"
                   value={licenseFormData.seats}
                   onChange={(e) => setLicenseFormData({ ...licenseFormData, seats: parseInt(e.target.value) || 1 })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
                   min="1"
                   required
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Expiry Date (optional)</label>
+                <label className="block text-sm font-medium text-black">Expiry Date (optional)</label>
                 <input
                   type="date"
                   value={licenseFormData.expiry}
                   onChange={(e) => setLicenseFormData({ ...licenseFormData, expiry: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
                 />
               </div>
               <div className="flex justify-end">
@@ -918,11 +1104,11 @@ export default function SuperadminPage() {
             </div>
             <form onSubmit={handleCreateAdmin}>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Tenant Slug</label>
+                <label className="block text-sm font-medium text-black">Tenant Slug</label>
                 <select
                   value={adminFormData.tenantSlug}
                   onChange={(e) => setAdminFormData({ ...adminFormData, tenantSlug: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
                   required
                 >
                   <option value="">Select tenant</option>
@@ -934,31 +1120,31 @@ export default function SuperadminPage() {
                 </select>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <label className="block text-sm font-medium text-black">Name</label>
                 <input
                   type="text"
                   value={adminFormData.name}
                   onChange={(e) => setAdminFormData({ ...adminFormData, name: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
                   required
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <label className="block text-sm font-medium text-black">Email</label>
                 <input
                   type="email"
                   value={adminFormData.email}
                   onChange={(e) => setAdminFormData({ ...adminFormData, email: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
                   required
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Role</label>
+                <label className="block text-sm font-medium text-black">Role</label>
                 <select
                   value={adminFormData.role}
                   onChange={(e) => setAdminFormData({ ...adminFormData, role: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
                   required
                 >
                   <option value="admin">Admin</option>
@@ -1048,6 +1234,7 @@ export default function SuperadminPage() {
           </div>
         </div>
       )}
+      </main>
     </div>
   );
 }

@@ -2,8 +2,33 @@
 
 import { useEffect, useState } from "react";
 import { FormAlert } from "@/components/form";
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  DollarSign, 
+  Users, 
+  ShoppingCart, 
+  Target,
+  Calendar,
+  Download,
+  Eye,
+  Play,
+  BarChart3,
+  PieChart,
+  Activity,
+  FileText,
+  AlertCircle,
+  CheckCircle,
+  Edit
+} from "lucide-react";
+import {
+  ViewReportModal,
+  EditReportModal,
+  RunExportNowModal,
+  EditExportModal,
+} from "./analytics-modals";
 
-type Report = { id: string; name: string; type: string; createdAt?: string; schedule?: string };
+type Report = { id: string; name: string; type: string; createdAt?: string; schedule?: string; rows?: number; dataPoints?: number };
 type Export = { id: string; name: string; frequency: string; lastRun?: string; nextRun?: string; format: string };
 
 const REPORT_TYPES: Record<string, { label: string; description: string; icon: string }> = {
@@ -30,6 +55,16 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
   const [showNewExport, setShowNewExport] = useState(false);
   const [reportForm, setReportForm] = useState({ name: "", type: "" });
   const [exportForm, setExportForm] = useState({ name: "", frequency: "daily", format: "csv" });
+  const [selectedPeriod, setSelectedPeriod] = useState("30d");
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [showViewReport, setShowViewReport] = useState(false);
+  const [showEditReport, setShowEditReport] = useState(false);
+  const [selectedExport, setSelectedExport] = useState<Export | null>(null);
+  const [showRunExport, setShowRunExport] = useState(false);
+  const [showEditExport, setShowEditExport] = useState(false);
+  const [updatingReport, setUpdatingReport] = useState(false);
+  const [updatingExport, setUpdatingExport] = useState(false);
+  const [runningExport, setRunningExport] = useState(false);
   const ts = tenantSlug ?? "kreatix-default";
 
   async function load() {
@@ -39,8 +74,9 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
       const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts)}`);
       const payload = await res.json().catch(() => null);
       if (res.ok && payload) {
-        setReports(payload.reports ?? []);
-        setExports(payload.exports ?? []);
+        const data = payload.data || payload;
+        setReports(data.reports ?? []);
+        setExports(data.exports ?? []);
       }
     } catch (err) {
       console.error(err);
@@ -136,10 +172,337 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
     }
   }
 
+  async function handleViewReport(report: Report) {
+    setSelectedReport(report);
+    setShowViewReport(true);
+  }
+
+  async function handleDownloadReport(format: string) {
+    if (!selectedReport) return;
+    try {
+      const res = await fetch(
+        `/api/tenant/analytics?action=download&reportId=${encodeURIComponent(selectedReport.id)}&format=${encodeURIComponent(format)}&tenantSlug=${encodeURIComponent(ts)}`
+      );
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${selectedReport.name.replace(/\s+/g, "-").toLowerCase()}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setSuccess("Report downloaded successfully");
+        setTimeout(() => setSuccess(null), 2000);
+      } else {
+        setError("Failed to download report");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Failed to download report");
+    }
+  }
+
+  async function handleEditReport(updates: { name?: string; schedule?: string }) {
+    if (!selectedReport) return;
+    setUpdatingReport(true);
+    try {
+      const res = await fetch(
+        `/api/tenant/analytics?id=${encodeURIComponent(selectedReport.id)}&type=report&tenantSlug=${encodeURIComponent(ts)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updates),
+        }
+      );
+      if (!res.ok) throw new Error("Failed to update report");
+      setSuccess("Report updated successfully");
+      setTimeout(() => setSuccess(null), 3000);
+      setShowEditReport(false);
+      setShowViewReport(false);
+      load();
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Failed to update report");
+    } finally {
+      setUpdatingReport(false);
+    }
+  }
+
+  async function handleRunExport(format?: string) {
+    if (!selectedExport) return;
+    setRunningExport(true);
+    try {
+      const res = await fetch(
+        `/api/tenant/analytics?action=run_export&exportId=${encodeURIComponent(selectedExport.id)}&format=${encodeURIComponent(format || selectedExport.format)}&tenantSlug=${encodeURIComponent(ts)}`,
+        { method: "POST" }
+      );
+      if (!res.ok) throw new Error("Failed to run export");
+      setSuccess("Export started successfully");
+      setTimeout(() => setSuccess(null), 3000);
+      setShowRunExport(false);
+      load();
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Failed to run export");
+    } finally {
+      setRunningExport(false);
+    }
+  }
+
+  async function handleEditExport(updates: { name?: string; frequency?: string; format?: string }) {
+    if (!selectedExport) return;
+    setUpdatingExport(true);
+    try {
+      const res = await fetch(
+        `/api/tenant/analytics?id=${encodeURIComponent(selectedExport.id)}&type=export&tenantSlug=${encodeURIComponent(ts)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updates),
+        }
+      );
+      if (!res.ok) throw new Error("Failed to update export");
+      setSuccess("Export updated successfully");
+      setTimeout(() => setSuccess(null), 3000);
+      setShowEditExport(false);
+      load();
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Failed to update export");
+    } finally {
+      setUpdatingExport(false);
+    }
+  }
+
+  // Mock analytics data for demonstration
+  const analyticsData = {
+    revenue: {
+      current: 245678,
+      previous: 198456,
+      growth: 23.8,
+      trend: "up"
+    },
+    customers: {
+      current: 1234,
+      previous: 1156,
+      growth: 6.7,
+      trend: "up"
+    },
+    orders: {
+      current: 3456,
+      previous: 3234,
+      growth: 6.9,
+      trend: "up"
+    },
+    conversion: {
+      current: 3.2,
+      previous: 2.8,
+      growth: 14.3,
+      trend: "up"
+    },
+    topProducts: [
+      { name: "Dell Latitude Laptop", sales: 234, revenue: 304866 },
+      { name: "27\" Monitor", sales: 189, revenue: 56511 },
+      { name: "Ergonomic Chair", sales: 156, revenue: 70200 },
+      { name: "Wireless Mouse", sales: 145, revenue: 7250 },
+      { name: "Mechanical Keyboard", sales: 123, revenue: 24600 }
+    ],
+    recentActivity: [
+      { type: "sale", description: "New order #1234", amount: "$1,299", time: "2 hours ago" },
+      { type: "customer", description: "New customer registered", amount: "", time: "3 hours ago" },
+      { type: "sale", description: "Order #1233 shipped", amount: "$450", time: "5 hours ago" },
+      { type: "alert", description: "Low stock alert", amount: "", time: "6 hours ago" }
+    ]
+  };
+
   return (
     <div className="space-y-6">
       {error && <FormAlert type="error" title="Error" message={error} onClose={() => setError(null)} />}
       {success && <FormAlert type="success" message={success} onClose={() => setSuccess(null)} />}
+
+      {/* Analytics Dashboard Header */}
+      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Dashboard</p>
+            <h2 className="text-lg font-semibold text-slate-900">Analytics Overview</h2>
+            <p className="mt-1 text-sm text-slate-600">Real-time insights and business metrics</p>
+          </div>
+          <div className="flex gap-2">
+            <select 
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            >
+              <option value="7d">Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+              <option value="90d">Last 90 days</option>
+              <option value="1y">Last year</option>
+            </select>
+            <button className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+              <Download className="w-4 h-4 mr-2 inline" />
+              Export
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          {
+            title: "Revenue",
+            value: `$${analyticsData.revenue.current.toLocaleString()}`,
+            change: analyticsData.revenue.growth,
+            trend: analyticsData.revenue.trend,
+            icon: DollarSign,
+            color: "text-green-600"
+          },
+          {
+            title: "Customers",
+            value: analyticsData.customers.current.toLocaleString(),
+            change: analyticsData.customers.growth,
+            trend: analyticsData.customers.trend,
+            icon: Users,
+            color: "text-blue-600"
+          },
+          {
+            title: "Orders",
+            value: analyticsData.orders.current.toLocaleString(),
+            change: analyticsData.orders.growth,
+            trend: analyticsData.orders.trend,
+            icon: ShoppingCart,
+            color: "text-purple-600"
+          },
+          {
+            title: "Conversion Rate",
+            value: `${analyticsData.conversion.current}%`,
+            change: analyticsData.conversion.growth,
+            trend: analyticsData.conversion.trend,
+            icon: Target,
+            color: "text-orange-600"
+          }
+        ].map((metric, index) => (
+          <div key={index} className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-600">{metric.title}</p>
+                <p className="text-2xl font-bold text-slate-900">{metric.value}</p>
+                <div className="flex items-center mt-2">
+                  {metric.trend === "up" ? (
+                    <TrendingUp className={`w-4 h-4 mr-1 ${metric.color}`} />
+                  ) : (
+                    <TrendingDown className={`w-4 h-4 mr-1 text-red-600`} />
+                  )}
+                  <span className={`text-sm font-medium ${metric.trend === "up" ? "text-green-600" : "text-red-600"}`}>
+                    {metric.change}%
+                  </span>
+                  <span className="text-sm text-slate-500 ml-1">vs last period</span>
+                </div>
+              </div>
+              <metric.icon className={`w-8 h-8 ${metric.color} opacity-20`} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Revenue Chart */}
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-slate-900">Revenue Trend</h3>
+            <BarChart3 className="w-5 h-5 text-slate-400" />
+          </div>
+          <div className="h-64 flex items-center justify-center bg-slate-50 rounded-lg">
+            <div className="text-center">
+              <BarChart3 className="w-12 h-12 text-slate-400 mx-auto mb-2" />
+              <p className="text-sm text-slate-600">Revenue chart visualization</p>
+              <p className="text-xs text-slate-500 mt-1">Interactive chart would render here</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Sales Distribution */}
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-slate-900">Sales Distribution</h3>
+            <PieChart className="w-5 h-5 text-slate-400" />
+          </div>
+          <div className="h-64 flex items-center justify-center bg-slate-50 rounded-lg">
+            <div className="text-center">
+              <PieChart className="w-12 h-12 text-slate-400 mx-auto mb-2" />
+              <p className="text-sm text-slate-600">Sales by category pie chart</p>
+              <p className="text-xs text-slate-500 mt-1">Interactive chart would render here</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Top Products and Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Products */}
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-slate-900">Top Products</h3>
+            <TrendingUp className="w-5 h-5 text-slate-400" />
+          </div>
+          <div className="space-y-3">
+            {analyticsData.topProducts.map((product, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-900">{product.name}</p>
+                    <p className="text-sm text-slate-600">{product.sales} units sold</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-slate-900">${product.revenue.toLocaleString()}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-slate-900">Recent Activity</h3>
+            <Activity className="w-5 h-5 text-slate-400" />
+          </div>
+          <div className="space-y-3">
+            {analyticsData.recentActivity.map((activity, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    activity.type === "sale" ? "bg-green-100 text-green-600" :
+                    activity.type === "customer" ? "bg-blue-100 text-blue-600" :
+                    "bg-orange-100 text-orange-600"
+                  }`}>
+                    {activity.type === "sale" ? <ShoppingCart className="w-4 h-4" /> :
+                     activity.type === "customer" ? <Users className="w-4 h-4" /> :
+                     <AlertCircle className="w-4 h-4" />}
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-900">{activity.description}</p>
+                    <p className="text-sm text-slate-600">{activity.time}</p>
+                  </div>
+                </div>
+                {activity.amount && (
+                  <div className="text-right">
+                    <p className="font-semibold text-slate-900">{activity.amount}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Reports */}
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
@@ -247,8 +610,22 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <button className="rounded-full border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50">
+                        <button
+                          onClick={() => handleViewReport(r)}
+                          className="rounded-full border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 flex items-center gap-1"
+                        >
+                          <Eye className="w-3 h-3" />
                           View
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedReport(r);
+                            setShowEditReport(true);
+                          }}
+                          className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-1"
+                        >
+                          <Edit className="w-3 h-3" />
+                          Edit
                         </button>
                         <button
                           onClick={() => deleteReport(r.id)}
@@ -370,6 +747,26 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
                       </div>
                     </div>
                     <button
+                      onClick={() => {
+                        setSelectedExport(e);
+                        setShowRunExport(true);
+                      }}
+                      className="rounded-full border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 flex items-center gap-1"
+                    >
+                      <Play className="w-3 h-3" />
+                      Run Now
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedExport(e);
+                        setShowEditExport(true);
+                      }}
+                      className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-1"
+                    >
+                      <Edit className="w-3 h-3" />
+                      Edit
+                    </button>
+                    <button
                       onClick={() => deleteExport(e.id)}
                       className="rounded-full border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50"
                     >
@@ -382,6 +779,57 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
           )}
         </div>
       </div>
+
+      {/* View Report Modal */}
+      <ViewReportModal
+        isOpen={showViewReport}
+        onClose={() => {
+          setShowViewReport(false);
+          setSelectedReport(null);
+        }}
+        report={selectedReport}
+        onDownload={handleDownloadReport}
+        onEdit={() => {
+          setShowViewReport(false);
+          setShowEditReport(true);
+        }}
+      />
+
+      {/* Edit Report Modal */}
+      <EditReportModal
+        isOpen={showEditReport}
+        onClose={() => {
+          setShowEditReport(false);
+          setSelectedReport(null);
+        }}
+        report={selectedReport}
+        onSave={handleEditReport}
+        isLoading={updatingReport}
+      />
+
+      {/* Run Export Now Modal */}
+      <RunExportNowModal
+        isOpen={showRunExport}
+        onClose={() => {
+          setShowRunExport(false);
+          setSelectedExport(null);
+        }}
+        exportJob={selectedExport}
+        onRun={handleRunExport}
+        isLoading={runningExport}
+      />
+
+      {/* Edit Export Modal */}
+      <EditExportModal
+        isOpen={showEditExport}
+        onClose={() => {
+          setShowEditExport(false);
+          setSelectedExport(null);
+        }}
+        exportJob={selectedExport}
+        onSave={handleEditExport}
+        isLoading={updatingExport}
+      />
     </div>
   );
 }

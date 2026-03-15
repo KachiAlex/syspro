@@ -1,10 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Download, Eye, TrendingUp } from "lucide-react";
 import { FormAlert } from "@/components/form";
+import CreateInvoiceModal from "../components/CreateInvoiceModal";
+import { CreatePaymentModal } from "../payments/payments-workspace";
+import {
+  ViewSubscriptionModal,
+  CancelSubscriptionModal,
+  UpgradeSubscriptionModal,
+  ViewInvoiceModal,
+} from "./billing-modals";
 
-type Invoice = { id: string; amount: string; dueDate: string; status: string };
-type Subscription = { id: string; plan: string; status: string; nextBillingDate?: string; seats?: number };
+type Invoice = { 
+  id: string; 
+  amount: string; 
+  dueDate: string; 
+  status: string;
+  issueDate?: string;
+  description?: string;
+  items?: Array<{ description: string; quantity: number; unitPrice: number }>;
+};
+type Subscription = { 
+  id: string; 
+  plan: string; 
+  status: string; 
+  nextBillingDate?: string; 
+  seats?: number;
+  price?: number;
+  features?: string[];
+};
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-green-100 text-green-900",
@@ -30,6 +55,17 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showCreateInvoice, setShowCreateInvoice] = useState(false);
+  const [showCreatePayment, setShowCreatePayment] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
+  const [showViewSubscription, setShowViewSubscription] = useState(false);
+  const [showCancelSubscription, setShowCancelSubscription] = useState(false);
+  const [showUpgradeSubscription, setShowUpgradeSubscription] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [showViewInvoice, setShowViewInvoice] = useState(false);
+  const [cancelingSubscription, setCancelingSubscription] = useState(false);
+  const [upgradingPlan, setUpgradingPlan] = useState(false);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
   const ts = tenantSlug ?? "kreatix-default";
 
   async function load() {
@@ -39,8 +75,10 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
       const res = await fetch(`/api/tenant/billing?tenantSlug=${encodeURIComponent(ts)}`);
       const payload = await res.json().catch(() => null);
       if (res.ok && payload) {
-        setInvoices(payload.invoices ?? []);
-        setSubscriptions(payload.subscriptions ?? []);
+        // API returns { success: true, data: {...} }
+        const data = payload.data || payload;
+        setInvoices(data.invoices ?? []);
+        setSubscriptions(data.subscriptions ?? []);
       }
     } catch (err) {
       console.error(err);
@@ -73,20 +111,100 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
   }
 
   async function handleCancelSubscription(id: string) {
-    if (!confirm("Are you sure? Your subscription will be cancelled at the end of the billing period.")) return;
+    setCancelingSubscription(true);
     try {
       const res = await fetch(`/api/tenant/billing?id=${encodeURIComponent(id)}&type=subscription&tenantSlug=${encodeURIComponent(ts)}`, {
         method: "DELETE",
       });
       if (res.ok) {
-        setSuccess("Subscription cancelled");
+        setSuccess("Subscription cancelled successfully");
         setTimeout(() => setSuccess(null), 3000);
+        setShowCancelSubscription(false);
         load();
+      } else {
+        setError("Failed to cancel subscription");
       }
     } catch (err) {
       console.error(err);
       setError("Failed to cancel subscription");
+    } finally {
+      setCancelingSubscription(false);
     }
+  }
+
+  async function handleDownloadInvoice(invoiceId: string) {
+    setDownloadingInvoice(true);
+    try {
+      const res = await fetch(
+        `/api/tenant/billing?action=download&invoiceId=${encodeURIComponent(invoiceId)}&tenantSlug=${encodeURIComponent(ts)}`
+      );
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `invoice-${invoiceId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        setError("Failed to download invoice");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Failed to download invoice");
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  }
+
+  async function handleUpgradeSubscription(newPlan: string) {
+    setUpgradingPlan(true);
+    try {
+      const res = await fetch(`/api/tenant/billing?action=upgrade&tenantSlug=${encodeURIComponent(ts)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subscriptionId: selectedSubscription?.id,
+          newPlan,
+        }),
+      });
+      if (res.ok) {
+        setSuccess(`Successfully upgraded to ${newPlan} plan`);
+        setTimeout(() => setSuccess(null), 3000);
+        setShowUpgradeSubscription(false);
+        load();
+      } else {
+        const payload = await res.json().catch(() => ({}));
+        setError(payload?.error || "Failed to upgrade subscription");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Failed to upgrade subscription");
+    } finally {
+      setUpgradingPlan(false);
+    }
+  }
+
+  function handleViewSubscription(subscription: Subscription) {
+    setSelectedSubscription(subscription);
+    setShowViewSubscription(true);
+  }
+
+  function handleOpenCancelModal(subscription: Subscription) {
+    setSelectedSubscription(subscription);
+    setShowCancelSubscription(true);
+  }
+
+  function handleOpenUpgradeModal(subscription: Subscription) {
+    setSelectedSubscription(subscription);
+    setShowUpgradeSubscription(true);
+  }
+
+  function handleViewInvoice(invoice: Invoice) {
+    setSelectedInvoice(invoice);
+    setShowViewInvoice(true);
   }
 
   if (loading) {
@@ -156,12 +274,28 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleCancelSubscription(s.id)}
-                    className="rounded-full border border-rose-200 px-4 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50"
-                  >
-                    Cancel
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleViewSubscription(s)}
+                      className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                    >
+                      <Eye className="w-4 h-4" />
+                      View
+                    </button>
+                    <button
+                      onClick={() => handleOpenUpgradeModal(s)}
+                      className="rounded-full border border-blue-200 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 flex items-center gap-2"
+                    >
+                      <TrendingUp className="w-4 h-4" />
+                      Upgrade
+                    </button>
+                    <button
+                      onClick={() => handleOpenCancelModal(s)}
+                      className="rounded-full border border-rose-200 px-4 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -175,6 +309,20 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Invoices</p>
           <h2 className="text-lg font-semibold text-slate-900">Recent Invoices</h2>
           <p className="mt-1 text-sm text-slate-600">View and manage your invoices</p>
+        </div>
+        <div className="flex justify-end gap-3 mb-3">
+          <button
+            onClick={() => setShowCreatePayment(true)}
+            className="whitespace-nowrap rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+          >
+            + New Payment
+          </button>
+          <button
+            onClick={() => setShowCreateInvoice(true)}
+            className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            + Create Invoice
+          </button>
         </div>
 
         {(invoices ?? []).length === 0 ? (
@@ -209,20 +357,131 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
                       </div>
                     </div>
                   </div>
-                  {inv.status.toLowerCase() !== "paid" && (
+                  <div className="flex gap-2">
                     <button
-                      onClick={() => handlePay(inv.id)}
-                      className="rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-900 hover:bg-green-200"
+                      onClick={() => handleViewInvoice(inv)}
+                      className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                     >
-                      Mark Paid
+                      <Eye className="w-4 h-4" />
+                      View
                     </button>
-                  )}
+                    <button
+                      onClick={() => handleDownloadInvoice(inv.id)}
+                      disabled={downloadingInvoice}
+                      className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 flex items-center gap-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download
+                    </button>
+                    {inv.status.toLowerCase() !== "paid" && (
+                      <button
+                        onClick={() => handlePay(inv.id)}
+                        className="rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-900 hover:bg-green-200"
+                      >
+                        Mark Paid
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      <CreateInvoiceModal
+        isOpen={showCreateInvoice}
+        onClose={() => setShowCreateInvoice(false)}
+        onSubmit={async (invoiceData: any) => {
+          try {
+            const res = await fetch(`/api/tenant/billing?action=create_invoice&tenantSlug=${encodeURIComponent(ts)}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "create_invoice", invoice: invoiceData }),
+            });
+            if (!res.ok) {
+              const payload = await res.json().catch(() => ({}));
+              setError(payload?.error || "Failed to create invoice");
+              return;
+            }
+            setSuccess("Invoice created");
+            setTimeout(() => setSuccess(null), 3000);
+            setShowCreateInvoice(false);
+            await load();
+          } catch (err) {
+            console.error(err);
+            setError("Failed to create invoice");
+          }
+        }}
+      />
+
+      <CreatePaymentModal
+        isOpen={showCreatePayment}
+        onClose={() => setShowCreatePayment(false)}
+        onSuccess={() => {
+          setSuccess("Payment created successfully");
+          setTimeout(() => setSuccess(null), 3000);
+          setShowCreatePayment(false);
+          load();
+        }}
+        onError={(err: string) => {
+          setError(err);
+          setTimeout(() => setError(null), 4000);
+        }}
+      />
+
+      {/* View Subscription Modal */}
+      <ViewSubscriptionModal
+        isOpen={showViewSubscription}
+        onClose={() => {
+          setShowViewSubscription(false);
+          setSelectedSubscription(null);
+        }}
+        subscription={selectedSubscription}
+      />
+
+      {/* Cancel Subscription Modal */}
+      <CancelSubscriptionModal
+        isOpen={showCancelSubscription}
+        onClose={() => {
+          setShowCancelSubscription(false);
+          setSelectedSubscription(null);
+        }}
+        onConfirm={() => {
+          if (selectedSubscription) {
+            handleCancelSubscription(selectedSubscription.id);
+          }
+        }}
+        subscription={selectedSubscription}
+        isLoading={cancelingSubscription}
+      />
+
+      {/* Upgrade Subscription Modal */}
+      <UpgradeSubscriptionModal
+        isOpen={showUpgradeSubscription}
+        onClose={() => {
+          setShowUpgradeSubscription(false);
+          setSelectedSubscription(null);
+        }}
+        onUpgrade={handleUpgradeSubscription}
+        currentPlan={selectedSubscription?.plan ?? ""}
+        isLoading={upgradingPlan}
+      />
+
+      {/* View Invoice Modal */}
+      <ViewInvoiceModal
+        isOpen={showViewInvoice}
+        onClose={() => {
+          setShowViewInvoice(false);
+          setSelectedInvoice(null);
+        }}
+        invoice={selectedInvoice}
+        onDownload={() => {
+          if (selectedInvoice) {
+            handleDownloadInvoice(selectedInvoice.id);
+          }
+        }}
+      />
     </div>
   );
 }

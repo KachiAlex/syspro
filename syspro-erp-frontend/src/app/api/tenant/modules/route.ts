@@ -1,109 +1,188 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ensureAdminTables, insertModule, getModules, updateModule, deleteModule } from "@/lib/admin/db";
-import { extractAuthContext, requirePermission, validateTenant } from "@/lib/auth-helper";
-import { CreateModuleSchema, UpdateModuleSchema, safeParse } from "@/lib/validation";
-import { enforcePermission } from "@/lib/api-permission-enforcer";
+import { ModuleService } from "@/lib/tenant-admin/service";
+import {
+  validateTenantContext,
+  parseJsonRequest,
+  getPaginationParams,
+  getSortParams,
+  errorResponse,
+  handleTenantAdminError,
+  checkRateLimit,
+} from "@/lib/tenant-admin/utils";
+import { AuditService } from "@/lib/tenant-admin/service";
+import { z } from "zod";
 
-// Helper to get tenantSlug from request
-function getTenantSlug(request: NextRequest): string {
-  return new URL(request.url).searchParams.get("tenantSlug") || "kreatix-default";
-}
+const CreateModuleSchema = z.object({
+  key: z.string().min(1).max(50),
+  name: z.string().min(1).max(100),
+  description: z.string().max(500).optional(),
+  icon: z.string().optional(),
+  enabled: z.boolean().optional(),
+  version: z.string().optional(),
+  permissions: z.array(z.string()).optional(),
+});
 
+const UpdateModuleSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  description: z.string().max(500).optional(),
+  enabled: z.boolean().optional(),
+  permissions: z.array(z.string()).optional(),
+  settings: z.record(z.any()).optional(),
+});
+
+/**
+ * GET /api/tenant/modules
+ * Retrieve all modules for a tenant
+ */
 export async function GET(request: NextRequest) {
   try {
-    const tenantSlug = getTenantSlug(request);
-    
-    // Enforce read permission on admin module
-    const check = await enforcePermission(request, "admin", "read", tenantSlug);
-    if (!check.allowed) {
-      return check.response;
+    const context = validateTenantContext(request, "read");
+
+    if (!checkRateLimit(`module-get-${context.tenantSlug}`, 100, 60000)) {
+      return errorResponse("Rate limit exceeded", 429);
     }
 
-    await ensureAdminTables();
-    const modules = await getModules(tenantSlug);
-    return NextResponse.json({ tenant: tenantSlug, modules });
+    const pagination = getPaginationParams(request);
+    const sort = getSortParams(request);
+
+    const service = new ModuleService(context.tenantSlug);
+    const modules = await service.list({
+      ...pagination,
+      sort: sort.sort,
+      order: sort.order,
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: modules,
+      pagination: {
+        page: pagination.page,
+        limit: pagination.limit,
+        total: modules.length,
+      },
+    });
   } catch (error) {
-    console.error("Module GET failed", error);
-    const message = error instanceof Error ? error.message : "Unable to fetch modules";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Module GET error:", error);
+    return handleTenantAdminError(error);
   }
 }
 
+/**
+ * POST /api/tenant/modules
+ * Create a new module
+ */
 export async function POST(request: NextRequest) {
   try {
-    const tenantSlug = getTenantSlug(request);
-    
-    // Enforce admin permission on admin module
-    const check = await enforcePermission(request, "admin", "admin", tenantSlug);
-    if (!check.allowed) {
-      return check.response;
-    }
-    
-    const body = await request.json().catch(() => ({}));
-    const validation = safeParse(CreateModuleSchema, body);
-    if (!validation.success) {
-      return NextResponse.json({ error: "Invalid request", details: validation.error.flatten() }, { status: 400 });
+    const context = validateTenantContext(request, "write");
+
+    const parsed = await parseJsonRequest(request, CreateModuleSchema);
+    if (!parsed.success) {
+      return errorResponse(parsed.error, 400, parsed.details);
     }
 
-    await ensureAdminTables();
-    const data = validation.data;
-    const id = await insertModule({ tenantSlug, key: data.key, name: data.name, enabled: data.enabled ?? false });
-    return NextResponse.json({ module: { id, tenantSlug, key: data.key, name: data.name, enabled: data.enabled ?? false, regions: [], flags: {}, createdAt: new Date().toISOString() } }, { status: 201 });
+    const service = new ModuleService(context.tenantSlug);
+    const module = await service.create({
+      ...parsed.data,
+      createdBy: context.userId,
+    });
+
+    const auditService = new AuditService(context.tenantSlug);
+    await auditService.log({
+      userId: context.userId,
+      action: "create",
+      resource: "module",
+      resourceId: module.id,
+      changes: { after: module },
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: module,
+        message: "Module created successfully",
+      },
+      { status: 201 }
+    );
   } catch (error) {
-    console.error("Module create failed", error);
-    const message = error instanceof Error ? error.message : "Unable to create module";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Module POST error:", error);
+    return handleTenantAdminError(error);
   }
 }
 
+/**
+ * PATCH /api/tenant/modules?id=<id>
+ * Update a module
+ */
 export async function PATCH(request: NextRequest) {
   try {
-    const tenantSlug = getTenantSlug(request);
+    const context = validateTenantContext(request, "write");
     const id = new URL(request.url).searchParams.get("id");
-    
-    // Enforce admin permission on admin module
-    const check = await enforcePermission(request, "admin", "admin", tenantSlug);
-    if (!check.allowed) {
-      return check.response;
-    }
-    
-    if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
-    
-    const body = await request.json().catch(() => ({}));
-    const validation = safeParse(UpdateModuleSchema, body);
-    if (!validation.success) {
-      return NextResponse.json({ error: "Invalid request", details: validation.error.flatten() }, { status: 400 });
+
+    if (!id) {
+      return errorResponse("Module ID is required", 400);
     }
 
-    await ensureAdminTables();
-    const data = validation.data;
-    await updateModule(id, tenantSlug, { enabled: data.enabled, flags: data.flags });
-    return NextResponse.json({ success: true });
+    const parsed = await parseJsonRequest(request, UpdateModuleSchema);
+    if (!parsed.success) {
+      return errorResponse(parsed.error, 400, parsed.details);
+    }
+
+    const service = new ModuleService(context.tenantSlug);
+    const existing = await service.getById(id);
+    const updated = await service.update(id, parsed.data);
+
+    const auditService = new AuditService(context.tenantSlug);
+    await auditService.log({
+      userId: context.userId,
+      action: "update",
+      resource: "module",
+      resourceId: id,
+      changes: { before: existing, after: updated },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: updated,
+      message: "Module updated successfully",
+    });
   } catch (error) {
-    console.error("Module patch failed", error);
-    const message = error instanceof Error ? error.message : "Unable to update module";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Module PATCH error:", error);
+    return handleTenantAdminError(error);
   }
 }
 
+/**
+ * DELETE /api/tenant/modules?id=<id>
+ * Delete a module
+ */
 export async function DELETE(request: NextRequest) {
   try {
-    const tenantSlug = getTenantSlug(request);
+    const context = validateTenantContext(request, "delete");
     const id = new URL(request.url).searchParams.get("id");
-    
-    // Enforce admin permission on admin module
-    const check = await enforcePermission(request, "admin", "admin", tenantSlug);
-    if (!check.allowed) {
-      return check.response;
+
+    if (!id) {
+      return errorResponse("Module ID is required", 400);
     }
-    
-    if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
-    await ensureAdminTables();
-    await deleteModule(id, tenantSlug);
-    return NextResponse.json({ message: "deleted" }, { status: 200 });
+
+    const service = new ModuleService(context.tenantSlug);
+    const existing = await service.getById(id);
+    await service.delete(id);
+
+    const auditService = new AuditService(context.tenantSlug);
+    await auditService.log({
+      userId: context.userId,
+      action: "delete",
+      resource: "module",
+      resourceId: id,
+      changes: { before: existing },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Module deleted successfully",
+    });
   } catch (error) {
-    console.error("Module delete failed", error);
-    const message = error instanceof Error ? error.message : "Unable to delete module";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Module DELETE error:", error);
+    return handleTenantAdminError(error);
   }
 }

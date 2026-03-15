@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractAuthContext, requirePermission, validateTenant } from "@/lib/auth-helper";
 import { CreateReportSchema, safeParse } from "@/lib/validation";
-import { createReport, listReports } from "@/lib/reporting/db";
+import { createReport, listReports, listReportsCursor } from "@/lib/reporting/db";
 
 export async function GET(request: NextRequest) {
   try {
     const auth = extractAuthContext(request);
     const tenantSlug = validateTenant(auth.tenantSlug);
     requirePermission(auth.userRole, "read");
-    const reports = await listReports(tenantSlug);
-    return NextResponse.json({ reports });
+    const url = new URL(request.url);
+    const cursor = url.searchParams.get("cursor");
+    const limit = Number(url.searchParams.get("limit") || "20");
+    if (cursor !== null) {
+      const { items, nextCursor } = await listReportsCursor(tenantSlug, cursor || null, limit);
+      return NextResponse.json({ reports: items, nextCursor, limit });
+    }
+
+    // fallback to page-based for older callers
+    const page = Number(url.searchParams.get("page") || "1");
+    const reports = await listReports(tenantSlug, page, limit);
+    return NextResponse.json({ reports, page, limit });
   } catch (error) {
     console.error("Reports GET failed", error);
     const message = error instanceof Error ? error.message : "Unable to fetch reports";

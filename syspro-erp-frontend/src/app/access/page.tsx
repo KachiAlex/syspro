@@ -1,19 +1,76 @@
 "use client";
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from "next/link";
 import { ArrowRight, Users, Building, Mail, Lock, Eye, EyeOff, ChevronRight, Star, Zap, Globe, Shield, CheckCircle } from "lucide-react";
 import { ImageWithFallback } from '@/components/ImageWithFallback';
 
 export default function AccessPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle tenant login logic here
-    console.log('Tenant login attempt:', { email, password });
+    setError('');
+    
+    // Basic validation
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      // Handle tenant login logic here
+      console.log('Tenant login attempt:', { email, password });
+      
+      // Simulate authentication - in production, this would be an API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+        // For demo purposes, accept any email/password
+        // In production, validate credentials with your API
+        if (email && password) {
+        console.log('Login successful, setting session and redirecting...');
+        
+        // Set session cookies for tenant admin authentication
+        // In production, these would come from your authentication API
+        const devId = 'dev-user-' + Date.now();
+        document.cookie = 'syspro_session=' + btoa(JSON.stringify({
+          id: devId,
+          email: email,
+          name: email.split('@')[0],
+          tenantSlug: 'kreatix-default',
+          roleId: 'admin',
+          iat: Date.now(),
+          exp: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
+        })) + '; path=/; max-age=' + (7 * 24 * 60 * 60) + '; SameSite=lax; ' + (process.env.NODE_ENV === 'production' ? 'Secure;' : '');
+
+        // Set tenant context cookie
+        document.cookie = 'tenantSlug=kreatix-default; path=/; max-age=' + (7 * 24 * 60 * 60) + '; SameSite=lax; ' + (process.env.NODE_ENV === 'production' ? 'Secure;' : '');
+
+        // Also set dev-friendly header-style cookies read by server helpers
+        // These ensure `getCurrentUser` and the tenant layout detect the session
+        document.cookie = 'X-User-Id=' + devId + '; path=/; max-age=' + (7 * 24 * 60 * 60) + '; SameSite=lax; ' + (process.env.NODE_ENV === 'production' ? 'Secure;' : '');
+        document.cookie = 'X-User-Email=' + encodeURIComponent(email) + '; path=/; max-age=' + (7 * 24 * 60 * 60) + '; SameSite=lax; ' + (process.env.NODE_ENV === 'production' ? 'Secure;' : '');
+        document.cookie = 'X-Role-Id=admin; path=/; max-age=' + (7 * 24 * 60 * 60) + '; SameSite=lax; ' + (process.env.NODE_ENV === 'production' ? 'Secure;' : '');
+        
+        // Redirect to tenant dashboard after successful login
+        router.push('/tenant-admin?tenantSlug=kreatix-default');
+      } else {
+        throw new Error('Invalid credentials');
+      }
+    } catch (err) {
+      console.error('Login failed:', err);
+      setError('Login failed. Please check your credentials and try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -40,6 +97,11 @@ export default function AccessPage() {
 
               {/* Login Form */}
               <div className="bg-white rounded-2xl shadow-xl p-8">
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{error}</p>
+                  </div>
+                )}
                 <form onSubmit={handleLogin} className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -94,7 +156,8 @@ export default function AccessPage() {
 
                   <button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? (
                       <>
