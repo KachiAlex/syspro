@@ -1,9 +1,8 @@
-import React from "react";
+﻿import React from "react";
 import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getCurrentUser, validateTenantAccess } from "@/lib/auth-helpers";
 import TenantAdminShell from "@/components/layout/tenant-admin-shell";
-import ServerSidebar from "@/components/layout/server-sidebar";
 
 export default async function TenantAdminLayout({ children, searchParams }: { children: React.ReactNode; searchParams?: Record<string, string> }) {
   // `headers()` is async in some Next runtimes; await to avoid sync access
@@ -157,18 +156,20 @@ export default async function TenantAdminLayout({ children, searchParams }: { ch
     NODE_ENV: process.env.NODE_ENV,
   };
 
-  // Return layout with a server-rendered sidebar (fallback) and the client shell
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Server render marker — used to verify server-side layout execution */}
-      <div id="server-render-marker" style={{ display: "none" }}>SERVER_RENDERED</div>
-      <div className="max-w-7xl mx-auto px-4 py-8 lg:flex lg:items-start lg:gap-6">
-        <aside className="w-full max-w-xs flex-shrink-0 hidden lg:block">
-          <ServerSidebar />
-        </aside>
+  // Also emit a server-side debug log so the dev server terminal captures this
+  try {
+    // eslint-disable-next-line no-console
+    console.log("TENANT_ADMIN_DEBUG:", JSON.stringify(debugInfo));
+  } catch (e) {
+    // ignore logging errors
+  }
 
-        <TenantAdminShell>{children}</TenantAdminShell>
+  return (
+    <>
+      <div style={{ background: '#222', color: '#fff', padding: 8, fontSize: 13, fontFamily: 'monospace', zIndex: 9999 }}>
+        <b>DEBUG:</b> tenantSlug={String(tenantSlug)} | urlTenant={String(urlTenant)} | refTenant={String(refTenant)} | cookieTenant={String(debugInfo.cookieTenant)} | headerTenant={String(debugInfo.headerTenant)} | user.id={String(effectiveUser?.id)} | user.tenantSlug={String(effectiveUser?.tenantSlug)} | NODE_ENV={String(debugInfo.NODE_ENV)}
       </div>
-    </div>
+      <TenantAdminShell>{children}</TenantAdminShell>
+    </>
   );
 }
