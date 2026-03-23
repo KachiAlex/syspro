@@ -1,0 +1,28 @@
+﻿npm : npm warn config optional Use `--omit=optional` to exclude optional 
+dependencies, or
+At line:1 char:35
++ cd D:\Syspro\syspro-erp-frontend; npm run build 2>&1 | Out-File -File ...
++                                   ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn config...ependencies, or 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm warn config `--include=optional` to include them.
+npm warn config
+npm warn config       Default value does install optional deps unless 
+otherwise omitted.
+npm warn config optional Use `--omit=optional` to exclude optional 
+dependencies, or
+npm warn config `--include=optional` to include them.
+npm warn config
+npm warn config       Default value does install optional deps unless 
+otherwise omitted.
+
+> syspro-erp-frontend@0.1.0 build
+> cross-env TAILWIND_DISABLE_LIGHTNINGCSS=1 next build
+
+   Γû▓ Next.js 15.5.12
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+Next.js build worker exited with code: 3221226505 and signal: null
