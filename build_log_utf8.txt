@@ -1,0 +1,241 @@
+﻿npm : npm warn config optional Use `--omit=optional` to exclude optional 
+dependencies, or
+At line:1 char:35
++ cd D:\Syspro\syspro-erp-frontend; npm run build 2>&1 | Out-File -File ...
++                                   ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn config...ependencies, or 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm warn config `--include=optional` to include them.
+npm warn config
+npm warn config       Default value does install optional deps unless 
+otherwise omitted.
+npm warn config optional Use `--omit=optional` to exclude optional 
+dependencies, or
+npm warn config `--include=optional` to include them.
+npm warn config
+npm warn config       Default value does install optional deps unless 
+otherwise omitted.
+
+> syspro-erp-frontend@0.1.0 build
+> cross-env TAILWIND_DISABLE_LIGHTNINGCSS=1 next build
+
+   Γû▓ Next.js 15.5.12
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully in 2.8min
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+ADMIN_PAGE_SERVER_RENDER: admin/tenant-admin executed on server
+   Generating static pages (0/150) ...
+   Generating static pages (37/150) 
+   Generating static pages (74/150) 
+   Generating static pages (112/150) 
+ Γ£ô Generating static pages (150/150)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                         Size  First Load JS
+Γöî Γùï /                                            7.33 kB         110 kB
+Γö£ Γùï /_not-found                                    999 B         103 kB
+Γö£ Γùï /access                                      4.11 kB         110 kB
+Γö£ Γùï /admin/people-access                          8.4 kB         111 kB
+Γö£ ╞Æ /admin/tenant-admin                            264 B         109 kB
+Γö£ ╞Æ /api/accounting/accounts                       520 B         103 kB
+Γö£ ╞Æ /api/accounting/journals                       520 B         103 kB
+Γö£ ╞Æ /api/accounting/journals/[id]/approve          520 B         103 kB
+Γö£ ╞Æ /api/accounting/periods                        520 B         103 kB
+Γö£ ╞Æ /api/accounting/reports/general-ledger         520 B         103 kB
+Γö£ ╞Æ /api/accounting/reports/trial-balance          520 B         103 kB
+Γö£ ╞Æ /api/admin/users                               520 B         103 kB
+Γö£ ╞Æ /api/admin/users/[id]                          520 B         103 kB
+Γö£ ╞Æ /api/admin/users/[id]/deactivate               520 B         103 kB
+Γö£ ╞Æ /api/attendance                                520 B         103 kB
+Γö£ ╞Æ /api/attendance/policies                       520 B         103 kB
+Γö£ ╞Æ /api/attendance/reports                        520 B         103 kB
+Γö£ ╞Æ /api/attendance/timesheet                      520 B         103 kB
+Γö£ ╞Æ /api/automation                                520 B         103 kB
+Γö£ ╞Æ /api/automation/audit                          520 B         103 kB
+Γö£ ╞Æ /api/automation/queue/process                  520 B         103 kB
+Γö£ ╞Æ /api/automation/rules                          520 B         103 kB
+Γö£ ╞Æ /api/automation/rules/[id]                     520 B         103 kB
+Γö£ ╞Æ /api/automation/rules/simulate                 520 B         103 kB
+Γö£ ╞Æ /api/automation/summary                        520 B         103 kB
+Γö£ ╞Æ /api/automation/triggers                       520 B         103 kB
+Γö£ ╞Æ /api/crm/contacts                              520 B         103 kB
+Γö£ ╞Æ /api/crm/contacts/[id]                         520 B         103 kB
+Γö£ ╞Æ /api/crm/customers                             520 B         103 kB
+Γö£ ╞Æ /api/crm/dashboard                             520 B         103 kB
+Γö£ ╞Æ /api/crm/deals                                 520 B         103 kB
+Γö£ ╞Æ /api/crm/deals/[id]                            520 B         103 kB
+Γö£ ╞Æ /api/crm/leads                                 520 B         103 kB
+Γö£ ╞Æ /api/crm/leads/[id]                            520 B         103 kB
+Γö£ ╞Æ /api/debug/server-info                         520 B         103 kB
+Γö£ ╞Æ /api/dev/seed                                  520 B         103 kB
+Γö£ ╞Æ /api/dev/session                               520 B         103 kB
+Γö£ ╞Æ /api/finance/accounts                          520 B         103 kB
+Γö£ ╞Æ /api/finance/accounts/[id]                     520 B         103 kB
+Γö£ ╞Æ /api/finance/approvals                         520 B         103 kB
+Γö£ ╞Æ /api/finance/bills                             520 B         103 kB
+Γö£ ╞Æ /api/finance/budgets                           520 B         103 kB
+Γö£ ╞Æ /api/finance/budgets/[id]                      520 B         103 kB
+Γö£ ╞Æ /api/finance/budgets/[id]/actuals              520 B         103 kB
+Γö£ ╞Æ /api/finance/budgets/[id]/approvals            520 B         103 kB
+Γö£ ╞Æ /api/finance/budgets/[id]/forecasts            520 B         103 kB
+Γö£ ╞Æ /api/finance/budgets/[id]/lines                520 B         103 kB
+Γö£ ╞Æ /api/finance/budgets/[id]/variances            520 B         103 kB
+Γö£ ╞Æ /api/finance/dashboard                         520 B         103 kB
+Γö£ ╞Æ /api/finance/expense-categories                520 B         103 kB
+Γö£ ╞Æ /api/finance/expenses                          520 B         103 kB
+Γö£ ╞Æ /api/finance/expenses/[id]                     520 B         103 kB
+Γö£ ╞Æ /api/finance/expenses/[id]/approve             520 B         103 kB
+Γö£ ╞Æ /api/finance/expenses/reports                  520 B         103 kB
+Γö£ ╞Æ /api/finance/expenses/upload                   520 B         103 kB
+Γö£ ╞Æ /api/finance/invoices                          520 B         103 kB
+Γö£ ╞Æ /api/finance/invoices/[id]                     520 B         103 kB
+Γö£ ╞Æ /api/finance/payments                          520 B         103 kB
+Γö£ ╞Æ /api/finance/payments/[id]                     520 B         103 kB
+Γö£ ╞Æ /api/finance/purchase-orders                   520 B         103 kB
+Γö£ ╞Æ /api/finance/purchase-orders/[id]              520 B         103 kB
+Γö£ ╞Æ /api/finance/reports                           520 B         103 kB
+Γö£ ╞Æ /api/finance/reports/aged-payables             520 B         103 kB
+Γö£ ╞Æ /api/finance/reports/aged-receivables          520 B         103 kB
+Γö£ ╞Æ /api/finance/reports/balance-sheet             520 B         103 kB
+Γö£ ╞Æ /api/finance/reports/cash-flow                 520 B         103 kB
+Γö£ ╞Æ /api/finance/reports/comparative-pnl           520 B         103 kB
+Γö£ ╞Æ /api/finance/reports/drill-down/[accountId]    520 B         103 kB
+Γö£ ╞Æ /api/finance/reports/export                    520 B         103 kB
+Γö£ ╞Æ /api/finance/reports/pnl                       520 B         103 kB
+Γö£ ╞Æ /api/finance/vendor-analytics                  520 B         103 kB
+Γö£ ╞Æ /api/finance/vendor-payments                   520 B         103 kB
+Γö£ ╞Æ /api/finance/vendors                           520 B         103 kB
+Γö£ ╞Æ /api/finance/vendors/[id]                      520 B         103 kB
+Γö£ ╞Æ /api/health                                    520 B         103 kB
+Γö£ ╞Æ /api/hr/attendance                             520 B         103 kB
+Γö£ ╞Æ /api/hr/departments                            520 B         103 kB
+Γö£ ╞Æ /api/hr/employees                              520 B         103 kB
+Γö£ ╞Æ /api/hr/staff-reports                          520 B         103 kB
+Γö£ ╞Æ /api/hr/staff-reports/ai-draft                 520 B         103 kB
+Γö£ ╞Æ /api/inventory/products                        520 B         103 kB
+Γö£ ╞Æ /api/inventory/stock-transfers                 520 B         103 kB
+Γö£ ╞Æ /api/itsupport/[...path]                       520 B         103 kB
+Γö£ ╞Æ /api/itsupport/engineers                       520 B         103 kB
+Γö£ ╞Æ /api/itsupport/fieldjobs                       520 B         103 kB
+Γö£ ╞Æ /api/itsupport/fieldjobs/[id]                  520 B         103 kB
+Γö£ ╞Æ /api/itsupport/incidents                       520 B         103 kB
+Γö£ ╞Æ /api/itsupport/integrations/attendance         520 B         103 kB
+Γö£ ╞Æ /api/itsupport/integrations/crm                520 B         103 kB
+Γö£ ╞Æ /api/itsupport/integrations/notify             520 B         103 kB
+Γö£ ╞Æ /api/itsupport/kb                              520 B         103 kB
+Γö£ ╞Æ /api/itsupport/kb/[id]                         520 B         103 kB
+Γö£ ╞Æ /api/itsupport/monitoring                      520 B         103 kB
+Γö£ ╞Æ /api/itsupport/sla                             520 B         103 kB
+Γö£ ╞Æ /api/itsupport/tickets                         520 B         103 kB
+Γö£ ╞Æ /api/itsupport/tickets/[id]                    520 B         103 kB
+Γö£ ╞Æ /api/itsupport/tickets/[id]/activity           520 B         103 kB
+Γö£ ╞Æ /api/itsupport/tickets/[id]/comments           520 B         103 kB
+Γö£ ╞Æ /api/itsupport/tickets/[id]/transition         520 B         103 kB
+Γö£ ╞Æ /api/policies                                  520 B         103 kB
+Γö£ ╞Æ /api/policies/[id]                             520 B         103 kB
+Γö£ ╞Æ /api/procurement/invoices                      520 B         103 kB
+Γö£ ╞Æ /api/procurement/purchase-orders               520 B         103 kB
+Γö£ ╞Æ /api/procurement/vendors                       520 B         103 kB
+Γö£ ╞Æ /api/projects                                  520 B         103 kB
+Γö£ ╞Æ /api/projects/assignments                      520 B         103 kB
+Γö£ ╞Æ /api/projects/budgets                          520 B         103 kB
+Γö£ ╞Æ /api/projects/capacity                         520 B         103 kB
+Γö£ ╞Æ /api/projects/invoices                         520 B         103 kB
+Γö£ ╞Æ /api/projects/tasks                            520 B         103 kB
+Γö£ ╞Æ /api/projects/time-entries                     520 B         103 kB
+Γö£ ╞Æ /api/projects/workstreams                      520 B         103 kB
+Γö£ ╞Æ /api/reports                                   520 B         103 kB
+Γö£ ╞Æ /api/reports/[id]                              520 B         103 kB
+Γö£ ╞Æ /api/reports/[id]/run                          520 B         103 kB
+Γö£ ╞Æ /api/reports/summary                           520 B         103 kB
+Γö£ ╞Æ /api/reports/summary/refresh                   520 B         103 kB
+Γö£ ╞Æ /api/revops/attribution                        520 B         103 kB
+Γö£ ╞Æ /api/revops/campaigns                          520 B         103 kB
+Γö£ ╞Æ /api/revops/campaigns/[campaignId]/costs       520 B         103 kB
+Γö£ ╞Æ /api/revops/enablement-assets                  520 B         103 kB
+Γö£ ╞Æ /api/revops/forecast                           520 B         103 kB
+Γö£ ╞Æ /api/revops/lead-sources                       520 B         103 kB
+Γö£ ╞Æ /api/revops/overview                           520 B         103 kB
+Γö£ ╞Æ /api/revops/sales-performance                  520 B         103 kB
+Γö£ ╞Æ /api/superadmin/accounts                       520 B         103 kB
+Γö£ ╞Æ /api/superadmin/audit-logs                     520 B         103 kB
+Γö£ ╞Æ /api/superadmin/auth/login                     520 B         103 kB
+Γö£ ╞Æ /api/superadmin/auth/logout                    520 B         103 kB
+Γö£ ╞Æ /api/superadmin/licenses                       520 B         103 kB
+Γö£ ╞Æ /api/superadmin/licenses/[id]                  520 B         103 kB
+Γö£ ╞Æ /api/superadmin/setup                          520 B         103 kB
+Γö£ ╞Æ /api/superadmin/tenants                        520 B         103 kB
+Γö£ ╞Æ /api/superadmin/tenants/[slug]                 520 B         103 kB
+Γö£ ╞Æ /api/superadmin/tenants/[slug]/admins          520 B         103 kB
+Γö£ ╞Æ /api/superadmin/tenants/[slug]/admins/[id]     520 B         103 kB
+Γö£ ╞Æ /api/superadmin/tenants/admins                 520 B         103 kB
+Γö£ ╞Æ /api/superadmin/tenants/admins-batch           520 B         103 kB
+Γö£ ╞Æ /api/superadmin/tenants/bulk                   520 B         103 kB
+Γö£ ╞Æ /api/superadmin/tenants/bulk-activate          520 B         103 kB
+Γö£ ╞Æ /api/superadmin/tenants/bulk-delete            520 B         103 kB
+Γö£ ╞Æ /api/superadmin/tenants/bulk-suspend           520 B         103 kB
+Γö£ ╞Æ /api/support/assign                            520 B         103 kB
+Γö£ ╞Æ /api/support/dashboard/metrics                 520 B         103 kB
+Γö£ ╞Æ /api/support/health                            520 B         103 kB
+Γö£ ╞Æ /api/support/incidents                         520 B         103 kB
+Γö£ ╞Æ /api/support/knowledge-base                    520 B         103 kB
+Γö£ ╞Æ /api/support/seed                              520 B         103 kB
+Γö£ ╞Æ /api/support/sla                               520 B         103 kB
+Γö£ ╞Æ /api/support/tickets                           520 B         103 kB
+Γö£ ╞Æ /api/support/tickets/[ticketId]                520 B         103 kB
+Γö£ ╞Æ /api/support/tickets/[ticketId]/activities     520 B         103 kB
+Γö£ ╞Æ /api/support/tickets/[ticketId]/comments       520 B         103 kB
+Γö£ ╞Æ /api/support/tickets/[ticketId]/field-jobs     520 B         103 kB
+Γö£ ╞Æ /api/tenant/access-control                     520 B         103 kB
+Γö£ ╞Æ /api/tenant/access-restrictions                520 B         103 kB
+Γö£ ╞Æ /api/tenant/analytics                          520 B         103 kB
+Γö£ ╞Æ /api/tenant/approvals                          520 B         103 kB
+Γö£ ╞Æ /api/tenant/billing                            520 B         103 kB
+Γö£ ╞Æ /api/tenant/cost-allocation                    520 B         103 kB
+Γö£ ╞Æ /api/tenant/departments                        520 B         103 kB
+Γö£ ╞Æ /api/tenant/employees                          520 B         103 kB
+Γö£ ╞Æ /api/tenant/integrations                       520 B         103 kB
+Γö£ ╞Æ /api/tenant/modules                            520 B         103 kB
+Γö£ ╞Æ /api/tenant/org-admins                         520 B         103 kB
+Γö£ ╞Æ /api/tenant/org-structure                      520 B         103 kB
+Γö£ ╞Æ /api/tenant/role-history                       520 B         103 kB
+Γö£ ╞Æ /api/tenant/roles                              520 B         103 kB
+Γö£ ╞Æ /api/tenant/security                           520 B         103 kB
+Γö£ ╞Æ /api/tenant/signin                             520 B         103 kB
+Γö£ ╞Æ /api/tenant/user-permissions                   520 B         103 kB
+Γö£ ╞Æ /api/tenant/users                              520 B         103 kB
+Γö£ ╞Æ /api/tenant/users/assign-role                  520 B         103 kB
+Γö£ ╞Æ /api/tenant/workflows                          520 B         103 kB
+Γö£ ╞Æ /api/tenants                                   520 B         103 kB
+Γö£ ╞Æ /api/tenants/[slug]                            520 B         103 kB
+Γö£ Γùï /crm/leads                                   2.45 kB         105 kB
+Γö£ Γùï /hr/staff-reports                            3.79 kB         106 kB
+Γö£ Γùï /itsupport/agent                             1.03 kB         103 kB
+Γö£ Γùï /itsupport/executive                           846 B         103 kB
+Γö£ Γùï /itsupport/field                             1.11 kB         103 kB
+Γö£ Γùï /itsupport/manager                           1.01 kB         103 kB
+Γö£ Γùï /planner                                     6.53 kB         109 kB
+Γö£ Γùï /superadmin                                  6.66 kB         118 kB
+Γö£ Γùï /superadmin/login                            3.28 kB         119 kB
+Γö£ Γùï /suppliers                                     520 B         103 kB
+Γö£ ╞Æ /tenant-admin                                  853 B         106 kB
+Γö£ ╞Æ /tenant-admin/tenant-signin                    424 B         103 kB
+Γöö ╞Æ /tenant-admin/vendors                        8.71 kB         111 kB
++ First Load JS shared by all                     102 kB
+  Γö£ chunks/1255-a390e12b70b4a9fb.js                46 kB
+  Γö£ chunks/4bd1b696-f785427dddbba9fb.js          54.2 kB
+  Γöö other shared chunks (total)                  2.02 kB
+
+
+╞Æ Middleware                                     34.2 kB
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+
