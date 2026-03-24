@@ -475,13 +475,22 @@ export async function insertLead(row: {
 }
 
 export async function updateLead(id: string, updates: Partial<{
+  companyName: string;
+  contactName: string;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  source: CrmLeadSource;
   stage: CrmLeadStage;
-  assignedOfficerId: string;
+  score: number;
+  assignedOfficerId: string | null;
+  expectedValue: number | null;
+  currency: string;
   notes: string;
 }>) {
   const sql = SQL;
   await ensureCrmTables(sql);
-  if (!updates.stage && updates.assignedOfficerId === undefined && updates.notes === undefined) {
+  const hasUpdates = Object.values(updates).some((v) => v !== undefined);
+  if (!hasUpdates) {
     const row = (await sql`select * from crm_leads where id = ${id} limit 1`) as Record<string, unknown>[];
     return row.length ? normalizeLeadRow(row[0]) : null;
   }
@@ -489,14 +498,29 @@ export async function updateLead(id: string, updates: Partial<{
   const updated = (await sql`
     update crm_leads
     set
+      company_name = coalesce(${updates.companyName ?? null}, company_name),
+      contact_name = coalesce(${updates.contactName ?? null}, contact_name),
+      contact_email = ${typeof updates.contactEmail !== "undefined" ? updates.contactEmail : null} ?? contact_email,
+      contact_phone = ${typeof updates.contactPhone !== "undefined" ? updates.contactPhone : null} ?? contact_phone,
+      source = coalesce(${updates.source ?? null}, source),
       stage = coalesce(${updates.stage ?? null}, stage),
-      assigned_officer_id = coalesce(${updates.assignedOfficerId ?? null}, assigned_officer_id),
+      score = coalesce(${updates.score ?? null}, score),
+      assigned_officer_id = ${typeof updates.assignedOfficerId !== "undefined" ? updates.assignedOfficerId : null} ?? assigned_officer_id,
+      expected_value = ${typeof updates.expectedValue !== "undefined" ? updates.expectedValue : null} ?? expected_value,
+      currency = coalesce(${updates.currency ?? null}, currency),
       notes = coalesce(${updates.notes ?? null}, notes),
       updated_at = now()
     where id = ${id}
     returning *
   `) as Record<string, unknown>[];
   return updated.length ? normalizeLeadRow(updated[0]) : null;
+}
+
+export async function deleteLead(id: string) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  const deleted = (await sql`delete from crm_leads where id = ${id} returning id`) as any[];
+  return deleted.length > 0;
 }
 
 export async function getLead(id: string) {

@@ -156,18 +156,8 @@ export default async function TenantAdminLayout({ children, searchParams }: { ch
     NODE_ENV: process.env.NODE_ENV,
   };
 
-  // Return layout with a client-rendered sidebar with icons and the shell
+  // Return layout with the tenant admin shell (which renders the sidebar)
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Server render marker — used to verify server-side layout execution */}
-      <div id="server-render-marker" style={{ display: "none" }}>SERVER_RENDERED</div>
-      <div className="max-w-7xl mx-auto px-4 py-8 lg:flex lg:items-start lg:gap-6">
-        <aside className="w-full max-w-xs flex-shrink-0 hidden lg:block">
-          <SidebarNav />
-        </aside>
-
-        <TenantAdminShell>{children}</TenantAdminShell>
-      </div>
-    </div>
+    <TenantAdminShell>{children}</TenantAdminShell>
   );
 }
