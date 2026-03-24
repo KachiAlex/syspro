@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { CRM_PIPELINE_STAGES } from "@/lib/crm/types";
-import { updateDeal } from "@/lib/crm/db";
+import { updateDeal, deleteDeal } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
 
 const patchSchema = z.object({
@@ -31,5 +31,19 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     return NextResponse.json({ deal });
   } catch (error) {
     return handleDatabaseError(error, "Deal update");
+  }
+}
+
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
+
+  try {
+    const deleted = await deleteDeal(params.id);
+    if (!deleted) {
+      return NextResponse.json({ error: "Deal not found" }, { status: 404 });
+    }
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return handleDatabaseError(error, "Deal deletion");
   }
 }

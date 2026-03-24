@@ -440,6 +440,13 @@ export async function countDeals(filters: Partial<{ tenantSlug: string; customer
   return rows.length ? Number(rows[0].cnt) : 0;
 }
 
+export async function deleteDeal(id: string) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  const deleted = (await sql`delete from crm_deals where id = ${id} returning id`) as any[];
+  return deleted.length > 0;
+}
+
 export async function insertLead(row: {
   tenantSlug: string;
   regionId: string;
