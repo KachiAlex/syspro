@@ -300,6 +300,3 @@ export default function PaymentsPage() {
     </div>
   );
 }
-    </div>
-  );
-}

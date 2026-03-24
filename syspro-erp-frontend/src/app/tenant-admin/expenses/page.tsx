@@ -271,8 +271,6 @@ export default function ExpensesPage() {
     </div>
   );
 }
-
-import React, { useState } from "react";
 import {
   DollarSign,
   Plus,
