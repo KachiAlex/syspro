@@ -3,7 +3,6 @@ import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getCurrentUser, validateTenantAccess } from "@/lib/auth-helpers";
 import TenantAdminShell from "@/components/layout/tenant-admin-shell";
-import SidebarNav from "@/components/layout/sidebar-nav";
 
 export default async function TenantAdminLayout({ children, searchParams }: { children: React.ReactNode; searchParams?: Record<string, string> }) {
   // `headers()` is async in some Next runtimes; await to avoid sync access
