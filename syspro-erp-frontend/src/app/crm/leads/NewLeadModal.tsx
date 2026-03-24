@@ -3,17 +3,19 @@ import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 export default function NewLeadModal({
+  isOpen,
   tenantSlug,
-  lead,
+  initialData,
   onClose,
-  onCreated,
+  onSuccess,
 }: {
+  isOpen: boolean;
   tenantSlug: string;
-  lead?: any;
+  initialData?: any;
   onClose: () => void;
-  onCreated: () => void;
+  onSuccess: () => void;
 }) {
-  const isEdit = !!lead;
+  const isEdit = !!initialData;
   const [companyName, setCompanyName] = useState("");
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
@@ -28,19 +30,19 @@ export default function NewLeadModal({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isEdit && lead) {
-      setCompanyName(lead.companyName || "");
-      setContactName(lead.contactName || "");
-      setContactEmail(lead.contactEmail || "");
-      setContactPhone(lead.contactPhone || "");
-      setStage(lead.stage || "new");
-      setSource(lead.source || "website");
-      setExpectedValue(lead.expectedValue || "");
-      setCurrency(lead.currency || "₦");
-      setRegionId(lead.regionId || "");
-      setBranchId(lead.branchId || "");
+    if (isEdit && initialData) {
+      setCompanyName(initialData.companyName || "");
+      setContactName(initialData.contactName || "");
+      setContactEmail(initialData.contactEmail || "");
+      setContactPhone(initialData.contactPhone || "");
+      setStage(initialData.stage || "new");
+      setSource(initialData.source || "website");
+      setExpectedValue(initialData.expectedValue || "");
+      setCurrency(initialData.currency || "₦");
+      setRegionId(initialData.regionId || "");
+      setBranchId(initialData.branchId || "");
     }
-  }, [lead, isEdit]);
+  }, [initialData, isEdit]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +63,7 @@ export default function NewLeadModal({
         currency,
       };
 
-      const url = isEdit ? `/api/crm/leads/${lead.id}?tenantSlug=${encodeURIComponent(tenantSlug)}` : "/api/crm/leads";
+      const url = isEdit ? `/api/crm/leads/${initialData.id}?tenantSlug=${encodeURIComponent(tenantSlug)}` : "/api/crm/leads";
       const method = isEdit ? "PATCH" : "POST";
 
       const res = await fetch(url, {
@@ -71,7 +73,7 @@ export default function NewLeadModal({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || `Failed to ${isEdit ? "update" : "create"} lead`);
-      onCreated();
+      onSuccess();
     } catch (err: any) {
       setError(err?.message ?? String(err));
     } finally {
@@ -80,8 +82,10 @@ export default function NewLeadModal({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-lg w-full max-w-lg p-6 shadow-lg">
+    <>
+      {isOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-[10000] bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-lg w-full max-w-lg p-6 shadow-2xl relative z-[10001]">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">{isEdit ? "Edit Lead" : "New Lead"}</h3>
           <button onClick={onClose} className="text-slate-600 hover:text-slate-900">
@@ -220,7 +224,9 @@ export default function NewLeadModal({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

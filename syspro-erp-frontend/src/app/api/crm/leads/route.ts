@@ -64,12 +64,15 @@ export async function GET(request: NextRequest) {
   const regionId = searchParams.get("regionId") || undefined;
   const branchId = searchParams.get("branchId") || undefined;
   const salesOfficerId = searchParams.get("salesOfficerId") || undefined;
+  const stage = searchParams.get("stage") || undefined;
+  const source = searchParams.get("source") || undefined;
+  const search = searchParams.get("search") || undefined;
   const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined;
   const offset = searchParams.get("offset") ? Number(searchParams.get("offset")) : undefined;
 
   try {
-    const leads = await listLeads({ tenantSlug, regionId, branchId, salesOfficerId, limit, offset } as any);
-    const total = await countLeads({ tenantSlug, regionId, branchId, salesOfficerId } as any);
+    const leads = await listLeads({ tenantSlug, regionId, branchId, salesOfficerId, stage, source, search, limit, offset } as any);
+    const total = await countLeads({ tenantSlug, regionId, branchId, salesOfficerId, stage, source, search } as any);
     return NextResponse.json({ leads, total });
   } catch (error) {
     return handleDatabaseError(error, "List leads");

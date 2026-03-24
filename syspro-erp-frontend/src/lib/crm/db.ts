@@ -530,7 +530,7 @@ export async function getLead(id: string) {
   return rows.length ? normalizeLeadRow(rows[0]) : null;
 }
 
-export async function listLeads(filters: Partial<{ tenantSlug: string; regionId: string; branchId: string; salesOfficerId: string; limit: number; offset: number }>) {
+export async function listLeads(filters: Partial<{ tenantSlug: string; regionId: string; branchId: string; salesOfficerId: string; stage: string; source: string; search: string; limit: number; offset: number }>) {
   const sql = SQL;
   await ensureCrmTables(sql);
   const params: any[] = [];
@@ -551,6 +551,22 @@ export async function listLeads(filters: Partial<{ tenantSlug: string; regionId:
   if (filters.salesOfficerId) {
     params.push(filters.salesOfficerId);
     where += ` and assigned_officer_id = $${idx++}`;
+  }
+  if (filters.stage) {
+    params.push(filters.stage);
+    where += ` and stage = $${idx++}`;
+  }
+  if (filters.source) {
+    params.push(filters.source);
+    where += ` and source = $${idx++}`;
+  }
+  if (filters.search) {
+    const searchPattern = `%${filters.search}%`;
+    params.push(searchPattern);
+    const searchIdx = idx++;
+    where += ` and (contact_name ilike $${searchIdx} or company_name ilike $${searchIdx} or contact_email ilike $${searchIdx})`;
+    params.push(searchPattern);
+    params.push(searchPattern);
   }
   const limit = Math.min(Math.max(filters.limit ?? 50, 1), 200);
   const offset = Math.max(filters.offset ?? 0, 0);
@@ -566,7 +582,7 @@ export async function listLeads(filters: Partial<{ tenantSlug: string; regionId:
   return rows.map(normalizeLeadRow);
 }
 
-export async function countLeads(filters: Partial<{ tenantSlug: string; regionId: string; branchId: string; salesOfficerId: string }>) {
+export async function countLeads(filters: Partial<{ tenantSlug: string; regionId: string; branchId: string; salesOfficerId: string; stage: string; source: string; search: string }>) {
   const sql = SQL;
   await ensureCrmTables(sql);
   const params: any[] = [];
@@ -587,6 +603,22 @@ export async function countLeads(filters: Partial<{ tenantSlug: string; regionId
   if (filters.salesOfficerId) {
     params.push(filters.salesOfficerId);
     where += ` and assigned_officer_id = $${idx++}`;
+  }
+  if (filters.stage) {
+    params.push(filters.stage);
+    where += ` and stage = $${idx++}`;
+  }
+  if (filters.source) {
+    params.push(filters.source);
+    where += ` and source = $${idx++}`;
+  }
+  if (filters.search) {
+    const searchPattern = `%${filters.search}%`;
+    params.push(searchPattern);
+    const searchIdx = idx++;
+    where += ` and (contact_name ilike $${searchIdx} or company_name ilike $${searchIdx} or contact_email ilike $${searchIdx})`;
+    params.push(searchPattern);
+    params.push(searchPattern);
   }
 
   const query = `select count(*)::int as cnt from crm_leads ${where}`;
