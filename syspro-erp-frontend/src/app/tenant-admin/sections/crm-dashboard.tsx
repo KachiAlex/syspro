@@ -49,6 +49,7 @@ interface LeadRow {
   companyName: string;
   contactName: string;
   contactEmail: string | null;
+  contactPhone: string | null;
   stage: LeadStage;
   score: number;
   source: LeadSource;
@@ -60,6 +61,7 @@ interface ContactRow {
   id: string;
   contactName: string;
   contactEmail: string | null;
+  contactPhone: string | null;
   company: string;
   status: string | null;
   source: string | null;
@@ -135,6 +137,50 @@ const DEFAULT_STATS: DashboardStats = {
   pipelineValue: 0,
 };
 
+type ModalMode = "create" | "edit" | "view";
+
+function toLeadRow(lead: LeadsResponse["leads"][number]): LeadRow {
+  return {
+    id: lead.id,
+    companyName: lead.companyName,
+    contactName: lead.contactName,
+    contactEmail: lead.contactEmail,
+    contactPhone: (lead as any).contactPhone ?? null,
+    stage: lead.stage,
+    score: lead.score,
+    source: lead.source,
+    assignedTo: lead.assignedOfficerId || "Unassigned",
+    createdAt: lead.createdAt,
+  };
+}
+
+function toContactRow(contact: ContactsResponse["contacts"][number]): ContactRow {
+  return {
+    id: contact.id,
+    company: contact.company,
+    contactName: contact.contactName,
+    contactEmail: contact.contactEmail,
+    contactPhone: (contact as any).contactPhone ?? null,
+    status: contact.status,
+    source: contact.source,
+    importedAt: contact.importedAt,
+  };
+}
+
+function toDealRow(deal: DealsResponse["deals"][number]): DealRow {
+  return {
+    id: deal.id,
+    name: deal.leadId || deal.customerId || `Deal ${deal.id.slice(0, 6)}`,
+    company: deal.customerId || "N/A",
+    amount: deal.value ?? 0,
+    currency: deal.currency ?? "₦",
+    stage: deal.stage,
+    probability: deal.probability,
+    closingDate: deal.expectedClose,
+    assignedTo: deal.assignedOfficerId || "Unassigned",
+  };
+}
+
 async function fetchLeads(params: { tenantSlug: string; regionId: string; branchId: string }) {
   const searchParams = new URLSearchParams({ tenantSlug: params.tenantSlug, limit: "50" });
   if (params.regionId) searchParams.set("regionId", params.regionId);
@@ -177,6 +223,24 @@ async function deleteLeadRequest(id: string, tenantSlug: string) {
   await apiClient.delete(`/api/crm/leads/${id}?tenantSlug=${tenantSlug}`);
 }
 
+async function updateLeadRequest(
+  id: string,
+  payload: {
+    tenantSlug: string;
+    companyName: string;
+    contactName: string;
+    contactEmail: string | null;
+    contactPhone: string | null;
+    stage: LeadStage;
+    source: LeadSource;
+    assignedOfficerId: string | null;
+    score: number;
+  }
+) {
+  const response = await apiClient.patch<{ lead: LeadsResponse["leads"][number] }>(`/api/crm/leads/${id}?tenantSlug=${payload.tenantSlug}`, payload);
+  return response.data.lead;
+}
+
 async function createContact(payload: {
   tenantSlug: string;
   company: string;
@@ -206,6 +270,22 @@ async function deleteContactRequest(id: string) {
   await apiClient.delete(`/api/crm/contacts/${id}`);
 }
 
+async function updateContactRequest(
+  id: string,
+  payload: {
+    tenantSlug: string;
+    company?: string;
+    contactName?: string;
+    contactEmail?: string | null;
+    contactPhone?: string | null;
+    source?: string;
+    status?: string;
+  }
+) {
+  const response = await apiClient.patch<{ contact: ContactsResponse["contacts"][number] }>(`/api/crm/contacts/${id}`, payload);
+  return response.data.contact;
+}
+
 async function createDeal(payload: {
   tenantSlug: string;
   customerId?: string;
@@ -223,6 +303,22 @@ async function createDeal(payload: {
 
 async function deleteDealRequest(id: string) {
   await apiClient.delete(`/api/crm/deals/${id}`);
+}
+
+async function updateDealRequest(
+  id: string,
+  payload: {
+    stage?: DealStage;
+    value?: number;
+    currency?: string;
+    probability?: number | null;
+    expectedClose?: string | null;
+    assignedOfficerId?: string;
+    status?: string;
+  }
+) {
+  const response = await apiClient.patch<{ deal: DealsResponse["deals"][number] }>(`/api/crm/deals/${id}`, payload);
+  return response.data.deal;
 }
 
 function formatCurrency(value: number, currencySymbol: string) {
@@ -245,21 +341,24 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
   const [leads, setLeads] = useState<LeadRow[]>([]);
   const [totalLeads, setTotalLeads] = useState(0);
   const [leadFilter, setLeadFilter] = useState<LeadFilterKey>("all");
-  const [showCreateLeadModal, setShowCreateLeadModal] = useState(false);
+  const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
+  const [leadModalMode, setLeadModalMode] = useState<ModalMode>("create");
   const [showDeleteLeadModal, setShowDeleteLeadModal] = useState(false);
   const [selectedLead, setSelectedLead] = useState<LeadRow | null>(null);
 
   const [contacts, setContacts] = useState<ContactRow[]>([]);
   const [totalContacts, setTotalContacts] = useState(0);
   const [contactFilter, setContactFilter] = useState<ContactFilterKey>("all");
-  const [showCreateContactModal, setShowCreateContactModal] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactModalMode, setContactModalMode] = useState<ModalMode>("create");
   const [showDeleteContactModal, setShowDeleteContactModal] = useState(false);
   const [selectedContact, setSelectedContact] = useState<ContactRow | null>(null);
 
   const [deals, setDeals] = useState<DealRow[]>([]);
   const [totalDeals, setTotalDeals] = useState(0);
   const [dealFilter, setDealFilter] = useState<DealFilterKey>("all");
-  const [showCreateDealModal, setShowCreateDealModal] = useState(false);
+  const [isDealModalOpen, setIsDealModalOpen] = useState(false);
+  const [dealModalMode, setDealModalMode] = useState<ModalMode>("create");
   const [showDeleteDealModal, setShowDeleteDealModal] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState<DealRow | null>(null);
 
@@ -277,39 +376,11 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
         fetchDeals({ tenantSlug: effectiveTenant }),
       ]);
 
-      const normalizedLeads: LeadRow[] = leadData.leads.map((lead) => ({
-        id: lead.id,
-        companyName: lead.companyName,
-        contactName: lead.contactName,
-        contactEmail: lead.contactEmail,
-        stage: lead.stage,
-        score: lead.score,
-        source: lead.source,
-        assignedTo: lead.assignedOfficerId || "Unassigned",
-        createdAt: lead.createdAt,
-      }));
+      const normalizedLeads: LeadRow[] = leadData.leads.map(toLeadRow);
 
-      const normalizedContacts: ContactRow[] = contactData.contacts.map((contact) => ({
-        id: contact.id,
-        company: contact.company,
-        contactName: contact.contactName,
-        contactEmail: contact.contactEmail,
-        status: contact.status,
-        source: contact.source,
-        importedAt: contact.importedAt,
-      }));
+      const normalizedContacts: ContactRow[] = contactData.contacts.map(toContactRow);
 
-      const normalizedDeals: DealRow[] = dealData.deals.map((deal) => ({
-        id: deal.id,
-        name: deal.leadId || deal.customerId || `Deal ${deal.id.slice(0, 6)}`,
-        company: deal.customerId || "N/A",
-        amount: deal.value ?? 0,
-        currency: deal.currency ?? "₦",
-        stage: deal.stage,
-        probability: deal.probability,
-        closingDate: deal.expectedClose,
-        assignedTo: deal.assignedOfficerId || "Unassigned",
-      }));
+      const normalizedDeals: DealRow[] = dealData.deals.map(toDealRow);
 
       setLeads(normalizedLeads);
       setTotalLeads(leadData.total);
@@ -375,6 +446,82 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
     [deals]
   );
 
+  const leadModalInitialData = useMemo(() => {
+    if (!selectedLead || leadModalMode === "create") return undefined;
+    return {
+      name: selectedLead.contactName,
+      email: selectedLead.contactEmail ?? "",
+      company: selectedLead.companyName,
+      phone: selectedLead.contactPhone ?? "",
+      status: selectedLead.stage,
+      source: selectedLead.source,
+      score: selectedLead.score,
+      assignedTo: selectedLead.assignedTo === "Unassigned" ? "" : selectedLead.assignedTo,
+    } satisfies Partial<LeadFormData>;
+  }, [selectedLead, leadModalMode]);
+
+  const contactModalInitialData = useMemo(() => {
+    if (!selectedContact || contactModalMode === "create") return undefined;
+    return {
+      name: selectedContact.contactName,
+      email: selectedContact.contactEmail ?? "",
+      company: selectedContact.company,
+      phone: selectedContact.contactPhone ?? "",
+      type: selectedContact.source ?? "Customer",
+      segment: selectedContact.status ?? "Standard",
+      notes: "",
+    } satisfies Partial<ContactFormData>;
+  }, [selectedContact, contactModalMode]);
+
+  const dealModalInitialData = useMemo(() => {
+    if (!selectedDeal || dealModalMode === "create") return undefined;
+    return {
+      name: selectedDeal.name,
+      company: selectedDeal.company === "N/A" ? "" : selectedDeal.company,
+      amount: selectedDeal.amount,
+      stage: selectedDeal.stage,
+      assignedTo: selectedDeal.assignedTo === "Unassigned" ? "" : selectedDeal.assignedTo,
+      closingDate: selectedDeal.closingDate ?? new Date().toISOString().split("T")[0],
+      probability: selectedDeal.probability ?? 0,
+    } satisfies Partial<DealFormData>;
+  }, [selectedDeal, dealModalMode]);
+
+  const openLeadModal = (mode: ModalMode, lead?: LeadRow) => {
+    setLeadModalMode(mode);
+    setSelectedLead(lead ?? null);
+    setIsLeadModalOpen(true);
+  };
+
+  const closeLeadModal = () => {
+    setIsLeadModalOpen(false);
+    setSelectedLead(null);
+    setLeadModalMode("create");
+  };
+
+  const openContactModal = (mode: ModalMode, contact?: ContactRow) => {
+    setContactModalMode(mode);
+    setSelectedContact(contact ?? null);
+    setIsContactModalOpen(true);
+  };
+
+  const closeContactModal = () => {
+    setIsContactModalOpen(false);
+    setSelectedContact(null);
+    setContactModalMode("create");
+  };
+
+  const openDealModal = (mode: ModalMode, deal?: DealRow) => {
+    setDealModalMode(mode);
+    setSelectedDeal(deal ?? null);
+    setIsDealModalOpen(true);
+  };
+
+  const closeDealModal = () => {
+    setIsDealModalOpen(false);
+    setSelectedDeal(null);
+    setDealModalMode("create");
+  };
+
   // Lead Handlers
   const handleCreateLead = async (data: LeadFormData) => {
     if (!effectiveTenant) return;
@@ -396,17 +543,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
         currency: "₦",
       });
 
-      const newLead: LeadRow = {
-        id: created.id,
-        companyName: created.companyName,
-        contactName: created.contactName,
-        contactEmail: created.contactEmail,
-        stage: created.stage,
-        score: created.score,
-        source: created.source,
-        assignedTo: created.assignedOfficerId || "Unassigned",
-        createdAt: created.createdAt,
-      };
+      const newLead: LeadRow = toLeadRow(created);
 
       setLeads((prev) => [newLead, ...prev]);
       setTotalLeads((prev) => prev + 1);
@@ -417,6 +554,45 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
       setErrorMessage(error instanceof Error ? error.message : "Failed to create lead");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateLead = async (data: LeadFormData) => {
+    if (!selectedLead || !effectiveTenant) return;
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    try {
+      const updated = await updateLeadRequest(selectedLead.id, {
+        tenantSlug: effectiveTenant,
+        companyName: data.company || data.name,
+        contactName: data.name,
+        contactEmail: data.email || null,
+        contactPhone: data.phone || null,
+        stage: data.status as LeadStage,
+        source: data.source as LeadSource,
+        assignedOfficerId: data.assignedTo || null,
+        score: data.score,
+      });
+
+      const updatedRow = toLeadRow(updated);
+      setLeads((prev) => prev.map((lead) => (lead.id === updatedRow.id ? updatedRow : lead)));
+      setSuccessMessage("Lead updated successfully!");
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to update lead");
+      throw error;
+    } finally {
+      setIsSubmitting(false);
+      setSelectedLead(null);
+      setLeadModalMode("create");
+    }
+  };
+
+  const handleLeadModalSubmit = async (data: LeadFormData) => {
+    if (leadModalMode === "edit" && selectedLead) {
+      await handleUpdateLead(data);
+    } else if (leadModalMode === "create") {
+      await handleCreateLead(data);
     }
   };
 
@@ -436,6 +612,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
     } finally {
       setIsSubmitting(false);
       setSelectedLead(null);
+      setLeadModalMode("create");
     }
   };
 
@@ -455,15 +632,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
         status: data.segment,
       });
 
-      const newContact: ContactRow = {
-        id: created.id,
-        company: created.company,
-        contactName: created.contactName,
-        contactEmail: created.contactEmail,
-        status: created.status,
-        source: created.source,
-        importedAt: created.importedAt,
-      };
+      const newContact: ContactRow = toContactRow(created);
 
       setContacts((prev) => [newContact, ...prev]);
       setTotalContacts((prev) => prev + 1);
@@ -474,6 +643,43 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
       setErrorMessage(error instanceof Error ? error.message : "Failed to create contact");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateContact = async (data: ContactFormData) => {
+    if (!selectedContact || !effectiveTenant) return;
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    try {
+      const updated = await updateContactRequest(selectedContact.id, {
+        tenantSlug: effectiveTenant,
+        company: data.company,
+        contactName: data.name,
+        contactEmail: data.email || null,
+        contactPhone: data.phone || null,
+        source: data.type,
+        status: data.segment,
+      });
+
+      const updatedRow = toContactRow(updated);
+      setContacts((prev) => prev.map((contact) => (contact.id === updatedRow.id ? updatedRow : contact)));
+      setSuccessMessage("Contact updated successfully!");
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to update contact");
+      throw error;
+    } finally {
+      setIsSubmitting(false);
+      setSelectedContact(null);
+      setContactModalMode("create");
+    }
+  };
+
+  const handleContactModalSubmit = async (data: ContactFormData) => {
+    if (contactModalMode === "edit" && selectedContact) {
+      await handleUpdateContact(data);
+    } else if (contactModalMode === "create") {
+      await handleCreateContact(data);
     }
   };
 
@@ -493,6 +699,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
     } finally {
       setIsSubmitting(false);
       setSelectedContact(null);
+      setContactModalMode("create");
     }
   };
 
@@ -513,17 +720,11 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
         customerId: data.company || undefined,
       });
 
-      const newDeal: DealRow = {
-        id: created.id,
-        name: data.name,
+      const newDeal = {
+        ...toDealRow(created),
+        name: data.name || created.leadId || created.customerId || `Deal ${created.id.slice(0, 6)}`,
         company: data.company || created.customerId || "N/A",
-        amount: created.value,
-        currency: created.currency ?? "₦",
-        stage: created.stage,
-        probability: created.probability,
-        closingDate: created.expectedClose,
-        assignedTo: created.assignedOfficerId || "Unassigned",
-      };
+      } satisfies DealRow;
 
       setDeals((prev) => [newDeal, ...prev]);
       setTotalDeals((prev) => prev + 1);
@@ -538,6 +739,53 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
       setErrorMessage(error instanceof Error ? error.message : "Failed to create deal");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateDeal = async (data: DealFormData) => {
+    if (!selectedDeal) return;
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    try {
+      const updated = await updateDealRequest(selectedDeal.id, {
+        stage: data.stage as DealStage,
+        value: data.amount,
+        currency: selectedDeal.currency,
+        probability: data.probability,
+        expectedClose: data.closingDate || null,
+        assignedOfficerId: data.assignedTo || undefined,
+      });
+
+      const updatedRow = {
+        ...toDealRow(updated),
+        name: data.name || selectedDeal.name,
+        company: data.company || updated.customerId || "N/A",
+      } satisfies DealRow;
+
+      setDeals((prev) =>
+        prev.map((deal) => (deal.id === updatedRow.id ? updatedRow : deal))
+      );
+      setStats((prev) => ({
+        ...prev,
+        pipelineValue: prev.pipelineValue - selectedDeal.amount + updatedRow.amount,
+      }));
+      setSuccessMessage("Deal updated successfully!");
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to update deal");
+      throw error;
+    } finally {
+      setIsSubmitting(false);
+      setSelectedDeal(null);
+      setDealModalMode("create");
+    }
+  };
+
+  const handleDealModalSubmit = async (data: DealFormData) => {
+    if (dealModalMode === "edit" && selectedDeal) {
+      await handleUpdateDeal(data);
+    } else if (dealModalMode === "create") {
+      await handleCreateDeal(data);
     }
   };
 
@@ -561,6 +809,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
     } finally {
       setIsSubmitting(false);
       setSelectedDeal(null);
+      setDealModalMode("create");
     }
   };
 
@@ -753,13 +1002,13 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
               <div className="flex flex-wrap gap-3">
                 <button
-                  onClick={() => setShowCreateLeadModal(true)}
+                  onClick={() => openLeadModal("create")}
                   className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-blue-50 text-gray-700 font-medium transition"
                 >
                   Add New Lead <ChevronRight className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => setShowCreateDealModal(true)}
+                  onClick={() => openDealModal("create")}
                   className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-blue-50 text-gray-700 font-medium transition"
                 >
                   Create Deal <ChevronRight className="w-4 h-4" />
@@ -785,7 +1034,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setShowCreateLeadModal(true)}
+                  onClick={() => openLeadModal("create")}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
                 >
                   <Plus className="w-4 h-4" /> Add Lead
@@ -857,10 +1106,16 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
                       <td className="px-6 py-4 text-gray-600">{lead.assignedTo}</td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <button className="p-1 hover:bg-gray-200 rounded transition">
+                          <button
+                            className="p-1 hover:bg-gray-200 rounded transition"
+                            onClick={() => openLeadModal("view", lead)}
+                          >
                             <Eye className="w-4 h-4 text-gray-600" />
                           </button>
-                          <button className="p-1 hover:bg-gray-200 rounded transition">
+                          <button
+                            className="p-1 hover:bg-gray-200 rounded transition"
+                            onClick={() => openLeadModal("edit", lead)}
+                          >
                             <Edit2 className="w-4 h-4 text-gray-600" />
                           </button>
                           <button
@@ -892,7 +1147,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setShowCreateContactModal(true)}
+                  onClick={() => openContactModal("create")}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
                 >
                   <Plus className="w-4 h-4" /> Add Contact
@@ -953,10 +1208,16 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
                       <td className="px-6 py-4 text-gray-600">{contact.source ?? "—"}</td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <button className="p-1 hover:bg-gray-200 rounded transition">
+                          <button
+                            className="p-1 hover:bg-gray-200 rounded transition"
+                            onClick={() => openContactModal("view", contact)}
+                          >
                             <Eye className="w-4 h-4 text-gray-600" />
                           </button>
-                          <button className="p-1 hover:bg-gray-200 rounded transition">
+                          <button
+                            className="p-1 hover:bg-gray-200 rounded transition"
+                            onClick={() => openContactModal("edit", contact)}
+                          >
                             <Edit2 className="w-4 h-4 text-gray-600" />
                           </button>
                           <button
@@ -988,7 +1249,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setShowCreateDealModal(true)}
+                  onClick={() => openDealModal("create")}
                   className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition"
                 >
                   <Plus className="w-4 h-4" /> Create Deal
@@ -1057,10 +1318,16 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
                       <td className="px-6 py-4 text-gray-600">{deal.closingDate ?? "—"}</td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <button className="p-1 hover:bg-gray-200 rounded transition">
+                          <button
+                            className="p-1 hover:bg-gray-200 rounded transition"
+                            onClick={() => openDealModal("view", deal)}
+                          >
                             <Eye className="w-4 h-4 text-gray-600" />
                           </button>
-                          <button className="p-1 hover:bg-gray-200 rounded transition">
+                          <button
+                            className="p-1 hover:bg-gray-200 rounded transition"
+                            onClick={() => openDealModal("edit", deal)}
+                          >
                             <Edit2 className="w-4 h-4 text-gray-600" />
                           </button>
                           <button
@@ -1098,23 +1365,29 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
 
       {/* Modals */}
       <CreateLeadModal
-        isOpen={showCreateLeadModal}
-        onClose={() => setShowCreateLeadModal(false)}
-        onSubmit={handleCreateLead}
+        isOpen={isLeadModalOpen}
+        mode={leadModalMode}
+        initialData={leadModalInitialData}
+        onClose={closeLeadModal}
+        onSubmit={handleLeadModalSubmit}
         isLoading={isSubmitting}
       />
 
       <CreateContactModal
-        isOpen={showCreateContactModal}
-        onClose={() => setShowCreateContactModal(false)}
-        onSubmit={handleCreateContact}
+        isOpen={isContactModalOpen}
+        mode={contactModalMode}
+        initialData={contactModalInitialData}
+        onClose={closeContactModal}
+        onSubmit={handleContactModalSubmit}
         isLoading={isSubmitting}
       />
 
       <CreateDealModal
-        isOpen={showCreateDealModal}
-        onClose={() => setShowCreateDealModal(false)}
-        onSubmit={handleCreateDeal}
+        isOpen={isDealModalOpen}
+        mode={dealModalMode}
+        initialData={dealModalInitialData}
+        onClose={closeDealModal}
+        onSubmit={handleDealModalSubmit}
         isLoading={isSubmitting}
       />
 

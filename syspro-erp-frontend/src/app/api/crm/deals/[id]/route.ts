@@ -9,6 +9,9 @@ const patchSchema = z.object({
   probability: z.number().min(0).max(100).optional(),
   assignedOfficerId: z.string().optional(),
   status: z.string().optional(),
+  value: z.number().min(0).optional(),
+  currency: z.string().min(1).max(8).optional(),
+  expectedClose: z.string().optional().or(z.literal("")),
 });
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -24,7 +27,15 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   }
 
   try {
-    const deal = await updateDeal(params.id, parsed.data);
+    const deal = await updateDeal(params.id, {
+      stage: parsed.data.stage,
+      probability: parsed.data.probability,
+      assignedOfficerId: parsed.data.assignedOfficerId,
+      status: parsed.data.status,
+      value: parsed.data.value,
+      currency: parsed.data.currency,
+      expectedClose: parsed.data.expectedClose === "" ? null : parsed.data.expectedClose,
+    });
     if (!deal) {
       return NextResponse.json({ error: "Deal not found" }, { status: 404 });
     }

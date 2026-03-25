@@ -301,16 +301,27 @@ export async function countContacts(filters: { tenantSlug: string; tag?: string 
 
 export async function updateContact(
   id: string,
-  updates: Partial<{ status: string | null; tags: string[]; contactEmail: string | null; contactPhone: string | null }>
+  updates: Partial<{
+    company: string;
+    contactName: string;
+    status: string | null;
+    tags: string[];
+    contactEmail: string | null;
+    contactPhone: string | null;
+    source: string | null;
+  }>
 ) {
   const sql = SQL;
   await ensureCrmTables(sql);
   const tagsLiteral = updates.tags ? serializeTextArray(updates.tags) : null;
   if (
+    updates.company === undefined &&
+    updates.contactName === undefined &&
     updates.status === undefined &&
     updates.tags === undefined &&
     updates.contactEmail === undefined &&
-    updates.contactPhone === undefined
+    updates.contactPhone === undefined &&
+    updates.source === undefined
   ) {
     const row = (await sql`select * from crm_contacts where id = ${id} limit 1`) as CrmContactRecord[];
     return row.length ? normalizeContactRow(row[0]) : null;
@@ -319,10 +330,13 @@ export async function updateContact(
   const updated = (await sql`
     update crm_contacts
     set
+      company = coalesce(${updates.company ?? null}, company),
+      contact_name = coalesce(${updates.contactName ?? null}, contact_name),
       status = coalesce(${updates.status ?? null}, status),
       tags = coalesce(${tagsLiteral ? sql`${tagsLiteral}::text[]` : null}, tags),
       contact_email = coalesce(${updates.contactEmail ?? null}, contact_email),
       contact_phone = coalesce(${updates.contactPhone ?? null}, contact_phone),
+      source = coalesce(${updates.source ?? null}, source),
       updated_at = now()
     where id = ${id}
     returning *
@@ -376,10 +390,14 @@ export async function updateDeal(id: string, updates: Partial<{
   probability: number;
   assignedOfficerId: string;
   status: string;
+  value: number;
+  currency: string;
+  expectedClose: string | null;
 }>) {
   const sql = SQL;
   await ensureCrmTables(sql);
-  if (!updates.stage && updates.probability === undefined && updates.assignedOfficerId === undefined && updates.status === undefined) {
+  const hasUpdates = Object.values(updates).some((v) => v !== undefined);
+  if (!hasUpdates) {
     const row = (await sql`select * from crm_deals where id = ${id} limit 1`) as Record<string, unknown>[];
     return row.length ? normalizeDealRow(row[0]) : null;
   }
@@ -391,6 +409,9 @@ export async function updateDeal(id: string, updates: Partial<{
       probability = coalesce(${updates.probability ?? null}, probability),
       assigned_officer_id = coalesce(${updates.assignedOfficerId ?? null}, assigned_officer_id),
       status = coalesce(${updates.status ?? null}, status),
+      value = coalesce(${updates.value ?? null}, value),
+      currency = coalesce(${updates.currency ?? null}, currency),
+      expected_close = ${typeof updates.expectedClose !== "undefined" ? updates.expectedClose : null} ?? expected_close,
       updated_at = now()
     where id = ${id}
     returning *

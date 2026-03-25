@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { X, AlertTriangle } from "lucide-react";
 
 export const LEAD_STAGE_OPTIONS = [
@@ -42,13 +42,19 @@ export interface LeadFormData {
   assignedTo?: string;
 }
 
+type LeadModalMode = "create" | "edit" | "view";
+
 export function CreateLeadModal({
   isOpen,
+  mode = "create",
+  initialData,
   onClose,
   onSubmit,
   isLoading,
 }: {
   isOpen: boolean;
+  mode?: LeadModalMode;
+  initialData?: Partial<LeadFormData>;
   onClose: () => void;
   onSubmit: (data: LeadFormData) => Promise<void>;
   isLoading: boolean;
@@ -66,9 +72,28 @@ export function CreateLeadModal({
   const [formData, setFormData] = useState<LeadFormData>(initialState);
   const [error, setError] = useState<string | null>(null);
 
+  const isViewMode = mode === "view";
+  const title = useMemo(() => {
+    switch (mode) {
+      case "edit":
+        return "Edit Lead";
+      case "view":
+        return "Lead Details";
+      default:
+        return "Add New Lead";
+    }
+  }, [mode]);
+
+  const submitLabel = mode === "edit" ? "Save Changes" : "Add Lead";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (isViewMode) {
+      onClose();
+      return;
+    }
 
     if (!formData.name.trim()) {
       setError("Lead name is required");
@@ -81,7 +106,9 @@ export function CreateLeadModal({
 
     try {
       await onSubmit(formData);
-      setFormData(initialState);
+      if (mode === "create") {
+        setFormData(initialState);
+      }
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create lead");
@@ -90,11 +117,32 @@ export function CreateLeadModal({
 
   if (!isOpen) return null;
 
+  useEffect(() => {
+    if (!isOpen) {
+      setError(null);
+      return;
+    }
+    if (mode === "create") {
+      setFormData(initialState);
+      return;
+    }
+    if (initialData) {
+      setFormData({
+        ...initialState,
+        ...initialData,
+        email: initialData.email ?? "",
+        company: initialData.company ?? "",
+        phone: initialData.phone ?? "",
+        assignedTo: initialData.assignedTo ?? "",
+      });
+    }
+  }, [isOpen, mode, initialData]);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Add New Lead</h2>
+          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
           <button
             onClick={onClose}
             className="p-1 hover:bg-gray-100 rounded-lg transition"
@@ -120,7 +168,7 @@ export function CreateLeadModal({
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="John Smith"
-              disabled={isLoading}
+              disabled={isLoading || isViewMode}
             />
           </div>
 
@@ -134,7 +182,7 @@ export function CreateLeadModal({
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="john@example.com"
-              disabled={isLoading}
+              disabled={isLoading || isViewMode}
             />
           </div>
 
@@ -148,7 +196,7 @@ export function CreateLeadModal({
               onChange={(e) => setFormData({ ...formData, company: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Tech Corp"
-              disabled={isLoading}
+              disabled={isLoading || isViewMode}
             />
           </div>
 
@@ -162,7 +210,7 @@ export function CreateLeadModal({
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="+1 (555) 000-0000"
-              disabled={isLoading}
+              disabled={isLoading || isViewMode}
             />
           </div>
 
@@ -175,7 +223,7 @@ export function CreateLeadModal({
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as (typeof LEAD_STAGE_OPTIONS)[number]["value"] })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                disabled={isLoading}
+                disabled={isLoading || isViewMode}
               >
                 {LEAD_STAGE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -192,7 +240,7 @@ export function CreateLeadModal({
                 value={formData.source}
                 onChange={(e) => setFormData({ ...formData, source: e.target.value as (typeof LEAD_SOURCE_OPTIONS)[number]["value"] })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                disabled={isLoading}
+                disabled={isLoading || isViewMode}
               >
                 {LEAD_SOURCE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -214,7 +262,7 @@ export function CreateLeadModal({
               value={formData.score}
               onChange={(e) => setFormData({ ...formData, score: +e.target.value })}
               className="w-full"
-              disabled={isLoading}
+              disabled={isLoading || isViewMode}
             />
             <div className="flex justify-between text-xs text-gray-600 mt-1">
               <span>Low</span>
@@ -230,15 +278,17 @@ export function CreateLeadModal({
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
               disabled={isLoading}
             >
-              Cancel
+              {isViewMode ? "Close" : "Cancel"}
             </button>
-            <button
-              type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
-              disabled={isLoading}
-            >
-              {isLoading ? "Adding..." : "Add Lead"}
-            </button>
+            {!isViewMode && (
+              <button
+                type="submit"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+                disabled={isLoading}
+              >
+                {isLoading ? (mode === "edit" ? "Saving..." : "Adding...") : submitLabel}
+              </button>
+            )}
           </div>
         </form>
       </div>
@@ -259,11 +309,15 @@ export interface ContactFormData {
 
 export function CreateContactModal({
   isOpen,
+  mode = "create",
+  initialData,
   onClose,
   onSubmit,
   isLoading,
 }: {
   isOpen: boolean;
+  mode?: "create" | "edit" | "view";
+  initialData?: Partial<ContactFormData>;
   onClose: () => void;
   onSubmit: (data: ContactFormData) => Promise<void>;
   isLoading: boolean;
@@ -279,9 +333,28 @@ export function CreateContactModal({
   });
   const [error, setError] = useState<string | null>(null);
 
+  const isViewMode = mode === "view";
+  const title = useMemo(() => {
+    switch (mode) {
+      case "edit":
+        return "Edit Contact";
+      case "view":
+        return "Contact Details";
+      default:
+        return "Add New Contact";
+    }
+  }, [mode]);
+
+  const submitLabel = mode === "edit" ? "Save Changes" : "Add Contact";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (isViewMode) {
+      onClose();
+      return;
+    }
 
     if (!formData.name.trim()) {
       setError("Contact name is required");
@@ -294,6 +367,31 @@ export function CreateContactModal({
 
     try {
       await onSubmit(formData);
+      if (mode === "create") {
+        setFormData({
+          name: "",
+          email: "",
+          company: "",
+          phone: "",
+          type: "Customer",
+          segment: "Standard",
+          notes: "",
+        });
+      }
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create contact");
+    }
+  };
+
+  if (!isOpen) return null;
+
+  useEffect(() => {
+    if (!isOpen) {
+      setError(null);
+      return;
+    }
+    if (mode === "create") {
       setFormData({
         name: "",
         email: "",
@@ -303,19 +401,26 @@ export function CreateContactModal({
         segment: "Standard",
         notes: "",
       });
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create contact");
+      return;
     }
-  };
-
-  if (!isOpen) return null;
+    if (initialData) {
+      setFormData({
+        name: initialData.name ?? "",
+        email: initialData.email ?? "",
+        company: initialData.company ?? "",
+        phone: initialData.phone ?? "",
+        type: initialData.type ?? "Customer",
+        segment: initialData.segment ?? "Standard",
+        notes: initialData.notes ?? "",
+      });
+    }
+  }, [isOpen, mode, initialData]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Add New Contact</h2>
+          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
           <button
             onClick={onClose}
             className="p-1 hover:bg-gray-100 rounded-lg transition"
@@ -341,7 +446,7 @@ export function CreateContactModal({
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Jane Doe"
-              disabled={isLoading}
+              disabled={isLoading || isViewMode}
             />
           </div>
 
@@ -355,7 +460,7 @@ export function CreateContactModal({
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="jane@example.com"
-              disabled={isLoading}
+              disabled={isLoading || isViewMode}
             />
           </div>
 
@@ -369,7 +474,7 @@ export function CreateContactModal({
               onChange={(e) => setFormData({ ...formData, company: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="ABC Corp"
-              disabled={isLoading}
+              disabled={isLoading || isViewMode}
             />
           </div>
 
@@ -383,7 +488,7 @@ export function CreateContactModal({
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="+1 (555) 000-0000"
-              disabled={isLoading}
+              disabled={isLoading || isViewMode}
             />
           </div>
 
@@ -396,7 +501,7 @@ export function CreateContactModal({
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                disabled={isLoading}
+                disabled={isLoading || isViewMode}
               >
                 <option>Customer</option>
                 <option>Prospect</option>
@@ -412,7 +517,7 @@ export function CreateContactModal({
                 value={formData.segment}
                 onChange={(e) => setFormData({ ...formData, segment: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                disabled={isLoading}
+                disabled={isLoading || isViewMode}
               >
                 <option>VIP</option>
                 <option>Premium</option>
@@ -429,15 +534,17 @@ export function CreateContactModal({
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
               disabled={isLoading}
             >
-              Cancel
+              {isViewMode ? "Close" : "Cancel"}
             </button>
-            <button
-              type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
-              disabled={isLoading}
-            >
-              {isLoading ? "Adding..." : "Add Contact"}
-            </button>
+            {!isViewMode && (
+              <button
+                type="submit"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+                disabled={isLoading}
+              >
+                {isLoading ? (mode === "edit" ? "Saving..." : "Adding...") : submitLabel}
+              </button>
+            )}
           </div>
         </form>
       </div>
@@ -458,11 +565,15 @@ export interface DealFormData {
 
 export function CreateDealModal({
   isOpen,
+  mode = "create",
+  initialData,
   onClose,
   onSubmit,
   isLoading,
 }: {
   isOpen: boolean;
+  mode?: "create" | "edit" | "view";
+  initialData?: Partial<DealFormData & { closingDate?: string }>;
   onClose: () => void;
   onSubmit: (data: DealFormData) => Promise<void>;
   isLoading: boolean;
@@ -479,9 +590,28 @@ export function CreateDealModal({
   const [formData, setFormData] = useState<DealFormData>(initialState);
   const [error, setError] = useState<string | null>(null);
 
+  const isViewMode = mode === "view";
+  const title = useMemo(() => {
+    switch (mode) {
+      case "edit":
+        return "Edit Deal";
+      case "view":
+        return "Deal Details";
+      default:
+        return "Create New Deal";
+    }
+  }, [mode]);
+
+  const submitLabel = mode === "edit" ? "Save Changes" : "Create Deal";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (isViewMode) {
+      onClose();
+      return;
+    }
 
     if (!formData.name.trim()) {
       setError("Deal name is required");
@@ -494,10 +624,12 @@ export function CreateDealModal({
 
     try {
       await onSubmit(formData);
-      setFormData({
-        ...initialState,
-        closingDate: new Date().toISOString().split("T")[0],
-      });
+      if (mode === "create") {
+        setFormData({
+          ...initialState,
+          closingDate: new Date().toISOString().split("T")[0],
+        });
+      }
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create deal");
@@ -506,11 +638,36 @@ export function CreateDealModal({
 
   if (!isOpen) return null;
 
+  useEffect(() => {
+    if (!isOpen) {
+      setError(null);
+      return;
+    }
+    if (mode === "create") {
+      setFormData({
+        ...initialState,
+        closingDate: new Date().toISOString().split("T")[0],
+      });
+      return;
+    }
+    if (initialData) {
+      setFormData({
+        name: initialData.name ?? "",
+        company: initialData.company ?? "",
+        amount: initialData.amount ?? initialState.amount,
+        stage: initialData.stage ?? initialState.stage,
+        assignedTo: initialData.assignedTo ?? "",
+        closingDate: initialData.closingDate ?? new Date().toISOString().split("T")[0],
+        probability: initialData.probability ?? initialState.probability,
+      });
+    }
+  }, [isOpen, mode, initialData]);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Create New Deal</h2>
+          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
           <button
             onClick={onClose}
             className="p-1 hover:bg-gray-100 rounded-lg transition"
@@ -536,7 +693,7 @@ export function CreateDealModal({
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enterprise Deal - ABC Corp"
-              disabled={isLoading}
+              disabled={isLoading || isViewMode}
             />
           </div>
 
@@ -550,7 +707,7 @@ export function CreateDealModal({
               onChange={(e) => setFormData({ ...formData, company: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="ABC Corporation"
-              disabled={isLoading}
+              disabled={isLoading || isViewMode}
             />
           </div>
 
@@ -565,7 +722,7 @@ export function CreateDealModal({
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="50000"
               min="1"
-              disabled={isLoading}
+              disabled={isLoading || isViewMode}
             />
           </div>
 
@@ -578,7 +735,7 @@ export function CreateDealModal({
                 value={formData.stage}
                 onChange={(e) => setFormData({ ...formData, stage: e.target.value as (typeof DEAL_STAGE_OPTIONS)[number]["value"] })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                disabled={isLoading}
+                disabled={isLoading || isViewMode}
               >
                 {DEAL_STAGE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -599,7 +756,7 @@ export function CreateDealModal({
                 value={formData.probability}
                 onChange={(e) => setFormData({ ...formData, probability: +e.target.value })}
                 className="w-full"
-                disabled={isLoading}
+                disabled={isLoading || isViewMode}
               />
             </div>
           </div>
@@ -613,7 +770,7 @@ export function CreateDealModal({
               value={formData.closingDate}
               onChange={(e) => setFormData({ ...formData, closingDate: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={isLoading}
+              disabled={isLoading || isViewMode}
             />
           </div>
 
@@ -624,15 +781,17 @@ export function CreateDealModal({
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
               disabled={isLoading}
             >
-              Cancel
+              {isViewMode ? "Close" : "Cancel"}
             </button>
-            <button
-              type="submit"
-              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50"
-              disabled={isLoading}
-            >
-              {isLoading ? "Creating..." : "Create Deal"}
-            </button>
+            {!isViewMode && (
+              <button
+                type="submit"
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50"
+                disabled={isLoading}
+              >
+                {isLoading ? (mode === "edit" ? "Saving..." : "Creating...") : submitLabel}
+              </button>
+            )}
           </div>
         </form>
       </div>
