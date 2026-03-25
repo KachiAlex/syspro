@@ -43,9 +43,12 @@ class ApiClient {
 
   constructor(config: Partial<ApiConfig> = {}) {
     const { baseURL, ...restConfig } = config;
+    const envBaseURL = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+    const normalizedEnvBaseURL = envBaseURL && envBaseURL.length > 0 ? envBaseURL : undefined;
+    const resolvedBaseURL = baseURL ?? normalizedEnvBaseURL ?? "/api";
 
     this.config = {
-      baseURL: baseURL ?? process.env.NEXT_PUBLIC_API_BASE_URL || "/api",
+      baseURL: resolvedBaseURL,
       timeout: 30000,
       retries: 3,
       retryDelay: 1000,
