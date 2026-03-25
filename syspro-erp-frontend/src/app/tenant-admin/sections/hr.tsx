@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Eye, Edit, Award, Download, Filter, Users, Target, DollarSign } from 'lucide-react';
-import { AddEmployeeModal, RunPayrollModal, PostJobModal, ViewEmployeeModal, TrainingModal } from './hr-modals';
+import { AddEmployeeModal, RunPayrollModal, PostJobModal, ViewEmployeeModal, TrainingModal, EditEmployeeModal, DeleteEmployeeModal } from './hr-modals';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { apiClient } from '@/lib/api-client';
 
@@ -13,10 +13,20 @@ const EMPLOYEE_STATUS_LABELS: Record<string, string> = {
   terminated: 'Terminated',
 };
 
+const STATUS_CODE_BY_LABEL = Object.entries(EMPLOYEE_STATUS_LABELS).reduce<Record<string, string>>((acc, [code, label]) => {
+  acc[label] = code;
+  return acc;
+}, {});
+
 function formatEmployeeStatus(status?: string | null) {
   if (!status) return 'Active';
   const normalized = status.toLowerCase();
   return EMPLOYEE_STATUS_LABELS[normalized] ?? status;
+}
+
+function normalizeStatusLabel(label: string) {
+  if (!label) return 'active';
+  return STATUS_CODE_BY_LABEL[label] ?? label.trim().toLowerCase().replace(/\s+/g, '-');
 }
 
 interface ApiEmployee {
@@ -54,6 +64,10 @@ interface AddEmployeeFormData {
   employmentType: string;
 }
 
+interface EditEmployeeFormData extends AddEmployeeFormData {
+  status: string;
+}
+
 const HRComponent: React.FC = () => {
   const { tenantSlug } = useTenantContext();
 
@@ -69,7 +83,10 @@ const HRComponent: React.FC = () => {
   const [showJobModal, setShowJobModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showTrainingModal, setShowTrainingModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
   const fetchEmployees = useCallback(async () => {
@@ -121,6 +138,49 @@ const HRComponent: React.FC = () => {
     });
   }, [employees, departmentFilter, statusFilter, searchQuery]);
 
+  const departmentDistribution = useMemo(() => {
+    if (employees.length === 0) return [] as { dept: string; count: number; pct: number }[];
+
+    const counts = employees.reduce<Record<string, number>>((acc, employee) => {
+      const key = employee.department || 'Unassigned';
+      acc[key] = (acc[key] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    const total = employees.length;
+
+    return Object.entries(counts)
+      .map(([dept, count]) => ({
+        dept,
+        count,
+        pct: Math.round((count / total) * 100),
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [employees]);
+
+  const statusSummary = useMemo(() => {
+    if (employees.length === 0) {
+      return {
+        active: 0,
+        onLeave: 0,
+        inactive: 0,
+        terminated: 0,
+      };
+    }
+
+    return employees.reduce(
+      (acc, employee) => {
+        const status = employee.status;
+        if (status === 'Active') acc.active += 1;
+        else if (status === 'On Leave') acc.onLeave += 1;
+        else if (status === 'Terminated') acc.terminated += 1;
+        else acc.inactive += 1;
+        return acc;
+      },
+      { active: 0, onLeave: 0, inactive: 0, terminated: 0 }
+    );
+  }, [employees]);
+
   const handleAddEmployee = async (data: AddEmployeeFormData) => {
     setAlert(null);
     try {
@@ -170,7 +230,112 @@ const HRComponent: React.FC = () => {
   };
 
   const handleEditEmployee = (emp: Employee) => {
-    setAlert({ type: 'info', message: 'Edit functionality would update employee details' });
+    setSelectedEmployee(emp);
+    setShowViewModal(false);
+    setShowEditModal(true);
+  };
+
+  const handleRequestDeleteEmployee = (emp: Employee) => {
+    setEmployeeToDelete(emp);
+    setShowViewModal(false);
+    setShowDeleteModal(true);
+  };
+
+  const handleUpdateEmployee = async (data: EditEmployeeFormData) => {
+    if (!selectedEmployee) {
+      throw new Error('No employee selected');
+    }
+
+    const fullName = `${data.firstName} ${data.lastName}`.trim();
+    const payload: Record<string, unknown> = {};
+
+    if (fullName && fullName !== selectedEmployee.name) {
+      payload.name = fullName;
+    }
+
+    if (data.department && data.department !== selectedEmployee.department) {
+      payload.departmentId = data.department;
+    }
+
+    if (data.position && data.position !== selectedEmployee.position) {
+      payload.jobTitle = data.position;
+    }
+
+    if (data.status) {
+      const normalizedStatus = normalizeStatusLabel(data.status);
+      if (normalizedStatus !== normalizeStatusLabel(selectedEmployee.status)) {
+        payload.status = normalizedStatus;
+      }
+    }
+
+    if (Object.keys(payload).length === 0) {
+      throw new Error('No changes to update');
+    }
+
+    const response = await apiClient.patch<{ success: boolean; data: ApiEmployee }>(
+      `/api/tenant/employees?id=${selectedEmployee.id}&tenantSlug=${tenantSlug}`,
+      payload
+    );
+
+    if (!response.data?.success) {
+      throw new Error('Failed to update employee');
+    }
+
+    const updated = response.data.data;
+
+    setEmployees(prev =>
+      prev.map(emp =>
+        emp.id === selectedEmployee.id
+          ? {
+              id: updated.id,
+              name: updated.name,
+              email: updated.email,
+              department: updated.departmentId || 'Unassigned',
+              position: updated.jobTitle || 'Not specified',
+              startDate: updated.hireDate ? new Date(updated.hireDate).toISOString().split('T')[0] : 'N/A',
+              status: updated.status ? formatEmployeeStatus(updated.status) : 'Active',
+              performance: emp.performance,
+              salary: emp.salary,
+            }
+          : emp
+      )
+    );
+
+    setSelectedEmployee(prev =>
+      prev && prev.id === updated.id
+        ? {
+            ...prev,
+            name: updated.name,
+            email: updated.email,
+            department: updated.departmentId || 'Unassigned',
+            position: updated.jobTitle || 'Not specified',
+            startDate: updated.hireDate ? new Date(updated.hireDate).toISOString().split('T')[0] : 'N/A',
+            status: updated.status ? formatEmployeeStatus(updated.status) : 'Active',
+          }
+        : prev
+    );
+
+    setAlert({ type: 'success', message: 'Employee updated successfully!' });
+  };
+
+  const handleConfirmDeleteEmployee = async () => {
+    if (!employeeToDelete) {
+      throw new Error('No employee selected');
+    }
+
+    const response = await apiClient.delete<{ success: boolean; message?: string }>(
+      `/api/tenant/employees?id=${employeeToDelete.id}&tenantSlug=${tenantSlug}`
+    );
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message ?? 'Failed to delete employee');
+    }
+
+    setEmployees(prev => prev.filter(emp => emp.id !== employeeToDelete.id));
+    setSelectedEmployee(prev => (prev && prev.id === employeeToDelete.id ? null : prev));
+    setAlert({ type: 'success', message: `${employeeToDelete.name} was removed` });
+    setShowDeleteModal(false);
+    setEmployeeToDelete(null);
   };
 
   const handleAwardEmployee = (emp: Employee) => {
@@ -214,8 +379,8 @@ const HRComponent: React.FC = () => {
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Open Positions</p>
-              <p className="text-xl font-bold text-gray-900">12</p>
+              <p className="text-sm text-gray-600">Active Employees</p>
+              <p className="text-xl font-bold text-gray-900">{statusSummary.active}</p>
             </div>
             <Target className="w-8 h-8 text-orange-600" />
           </div>
@@ -223,8 +388,8 @@ const HRComponent: React.FC = () => {
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Monthly Payroll</p>
-              <p className="text-xl font-bold text-gray-900">$456,789</p>
+              <p className="text-sm text-gray-600">On Leave</p>
+              <p className="text-xl font-bold text-gray-900">{statusSummary.onLeave}</p>
             </div>
             <DollarSign className="w-8 h-8 text-green-600" />
           </div>
@@ -232,8 +397,8 @@ const HRComponent: React.FC = () => {
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Avg. Performance</p>
-              <p className="text-xl font-bold text-gray-900">4.2/5</p>
+              <p className="text-sm text-gray-600">Terminated / Inactive</p>
+              <p className="text-xl font-bold text-gray-900">{statusSummary.terminated + statusSummary.inactive}</p>
             </div>
             <Award className="w-8 h-8 text-purple-600" />
           </div>
@@ -275,9 +440,10 @@ const HRComponent: React.FC = () => {
               <option>Finance</option>
             </select>
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option>All Status</option>
+              <option>All Statuses</option>
               <option>Active</option>
               <option>On Leave</option>
+              <option>Inactive</option>
               <option>Terminated</option>
             </select>
             <input 
@@ -388,23 +554,21 @@ const HRComponent: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Department Distribution</h3>
-          <div className="space-y-3">
-            {[
-              { dept: 'Engineering', count: 45, pct: 19 },
-              { dept: 'Sales', count: 38, pct: 16 },
-              { dept: 'Marketing', count: 28, pct: 12 },
-              { dept: 'Finance', count: 22, pct: 9 },
-              { dept: 'Operations', count: 86, pct: 38 }
-            ].map((d, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-900 w-24">{d.dept}</span>
-                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                  <div className="h-2 rounded-full bg-blue-500" style={{ width: `${d.pct}%` }}></div>
+          {departmentDistribution.length === 0 ? (
+            <p className="text-sm text-gray-500">Add employees to see department insights.</p>
+          ) : (
+            <div className="space-y-3">
+              {departmentDistribution.map((d) => (
+                <div key={d.dept} className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-gray-900 w-32 truncate">{d.dept}</span>
+                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div className="h-2 rounded-full bg-blue-500" style={{ width: `${Math.min(d.pct, 100)}%` }}></div>
+                  </div>
+                  <span className="text-sm text-gray-600 w-12 text-right">{d.count}</span>
                 </div>
-                <span className="text-sm text-gray-600 w-8 text-right">{d.count}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -462,7 +626,29 @@ const HRComponent: React.FC = () => {
       <AddEmployeeModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onSubmit={handleAddEmployee} />
       <RunPayrollModal isOpen={showPayrollModal} onClose={() => setShowPayrollModal(false)} onSubmit={() => setAlert({ type: 'success', message: 'Payroll run successfully completed!' })} />
       <PostJobModal isOpen={showJobModal} onClose={() => setShowJobModal(false)} onSubmit={() => setAlert({ type: 'success', message: 'Job posting created successfully!' })} />
-      <ViewEmployeeModal isOpen={showViewModal} onClose={() => setShowViewModal(false)} employee={selectedEmployee} onEdit={handleEditEmployee} onAward={handleAwardEmployee} />
+      <ViewEmployeeModal
+        isOpen={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        employee={selectedEmployee}
+        onEdit={handleEditEmployee}
+        onAward={handleAwardEmployee}
+        onDelete={handleRequestDeleteEmployee}
+      />
+      <EditEmployeeModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSubmit={handleUpdateEmployee}
+        employee={selectedEmployee}
+      />
+      <DeleteEmployeeModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setEmployeeToDelete(null);
+        }}
+        onConfirm={handleConfirmDeleteEmployee}
+        employeeName={employeeToDelete?.name}
+      />
       <TrainingModal isOpen={showTrainingModal} onClose={() => setShowTrainingModal(false)} onSubmit={() => setAlert({ type: 'success', message: 'Training session scheduled successfully!' })} />
 
       {/* Alert */}

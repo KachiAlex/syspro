@@ -114,7 +114,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
 interface EditEmployeeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: any) => Promise<void>;
   employee?: any;
 }
 
@@ -127,7 +127,8 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, on
     position: '',
     startDate: '',
     salary: '',
-    employmentType: 'Full-time'
+    employmentType: 'Full-time',
+    status: 'Active'
   });
   const [loading, setLoading] = React.useState(false);
   const [alert, setAlert] = React.useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
@@ -143,7 +144,8 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, on
         position: employee.position || '',
         startDate: employee.startDate || '',
         salary: employee.salary?.replace('$', '').replace(/,/g, '') || '',
-        employmentType: employee.employmentType || 'Full-time'
+        employmentType: employee.employmentType || 'Full-time',
+        status: employee.status || 'Active'
       });
     }
   }, [employee, isOpen]);
@@ -151,6 +153,7 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, on
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setAlert(null);
     
     if (!formData.firstName || !formData.email || !formData.department) {
       setAlert({ type: 'error', message: 'Please fill in all required fields' });
@@ -158,13 +161,17 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, on
       return;
     }
 
-    await new Promise(r => setTimeout(r, 1000));
-    onSubmit(formData);
-    setAlert({ type: 'success', message: 'Employee updated successfully!' });
-    setTimeout(() => {
-      onClose();
-    }, 1500);
-    setLoading(false);
+    try {
+      await onSubmit(formData);
+      setAlert({ type: 'success', message: 'Employee updated successfully!' });
+      setTimeout(() => {
+        onClose();
+      }, 1200);
+    } catch (error) {
+      setAlert({ type: 'error', message: error instanceof Error ? error.message : 'Failed to update employee' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -193,6 +200,12 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, on
             <option value="Full-time">Full-time</option>
             <option value="Part-time">Part-time</option>
             <option value="Contract">Contract</option>
+          </select>
+          <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="Active">Active</option>
+            <option value="On Leave">On Leave</option>
+            <option value="Inactive">Inactive</option>
+            <option value="Terminated">Terminated</option>
           </select>
           <div className="flex gap-3 pt-4">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancel</button>
@@ -352,9 +365,10 @@ interface ViewEmployeeModalProps {
   employee: any;
   onEdit: (employee: any) => void;
   onAward: (employee: any) => void;
+  onDelete: (employee: any) => void;
 }
 
-export const ViewEmployeeModal: React.FC<ViewEmployeeModalProps> = ({ isOpen, onClose, employee, onEdit, onAward }) => {
+export const ViewEmployeeModal: React.FC<ViewEmployeeModalProps> = ({ isOpen, onClose, employee, onEdit, onAward, onDelete }) => {
   const [loading, setLoading] = useState(false);
 
   const handleEdit = () => {
@@ -373,6 +387,10 @@ export const ViewEmployeeModal: React.FC<ViewEmployeeModalProps> = ({ isOpen, on
       setLoading(false);
       onClose();
     }, 800);
+  };
+
+  const handleDelete = () => {
+    onDelete(employee);
   };
 
   if (!isOpen || !employee) return null;
@@ -408,10 +426,68 @@ export const ViewEmployeeModal: React.FC<ViewEmployeeModalProps> = ({ isOpen, on
             }`}>{employee.performance}</span>
           </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <button onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Close</button>
           <button onClick={handleEdit} disabled={loading} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? '...' : 'Edit'}</button>
           <button onClick={handleAward} disabled={loading} className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">{loading ? '...' : 'Award'}</button>
+          <button onClick={handleDelete} disabled={loading} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">Delete</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface DeleteEmployeeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => Promise<void>;
+  employeeName?: string;
+}
+
+export const DeleteEmployeeModal: React.FC<DeleteEmployeeModalProps> = ({ isOpen, onClose, onConfirm, employeeName }) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!isOpen) return null;
+
+  const handleConfirm = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await onConfirm();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove employee');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 className="text-lg font-semibold text-gray-900 mb-3">Remove Employee</h3>
+        <p className="text-sm text-gray-600 mb-4">
+          Are you sure you want to remove{' '}
+          <span className="font-semibold text-gray-900">{employeeName}</span>{' '}
+          from your organization? This action cannot be undone.
+        </p>
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-4">
+            {error}
+          </div>
+        )}
+        <div className="flex gap-3">
+          <button onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={loading}
+            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+          >
+            {loading ? 'Removing...' : 'Delete' }
+          </button>
         </div>
       </div>
     </div>
