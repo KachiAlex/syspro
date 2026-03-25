@@ -746,14 +746,4 @@ export function createOptimizedRequest<T>(
   });
 }
 
-// Export utilities
-export {
-  debounce,
-  throttle,
-  memoize,
-  lazyLoad,
-  performanceCache,
-  performanceMonitor,
-  loadingStateManager,
-  imageOptimizer,
-};
+// Note: individual utilities are exported above to avoid duplicate exports.
