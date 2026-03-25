@@ -1,14 +1,38 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Eye, Edit, Award, Download, Filter, Users, Target, DollarSign } from 'lucide-react';
 import { AddEmployeeModal, RunPayrollModal, PostJobModal, ViewEmployeeModal, TrainingModal } from './hr-modals';
+import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { apiClient } from '@/lib/api-client';
 
-interface HR {
-  tenantSlug: string;
+const EMPLOYEE_STATUS_LABELS: Record<string, string> = {
+  active: 'Active',
+  inactive: 'Inactive',
+  'on-leave': 'On Leave',
+  terminated: 'Terminated',
+};
+
+function formatEmployeeStatus(status?: string | null) {
+  if (!status) return 'Active';
+  const normalized = status.toLowerCase();
+  return EMPLOYEE_STATUS_LABELS[normalized] ?? status;
+}
+
+interface ApiEmployee {
+  id: string;
+  name: string;
+  email: string;
+  departmentId: string;
+  jobTitle?: string | null;
+  status?: string | null;
+  hireDate?: string | null;
+  phone?: string | null;
+  costCenter?: string | null;
 }
 
 interface Employee {
+  id: string;
   name: string;
   email: string;
   department: string;
@@ -19,32 +43,25 @@ interface Employee {
   salary: string;
 }
 
-const HRComponent: React.FC<HR> = ({ tenantSlug }) => {
-  const [employees, setEmployees] = useState<Employee[]>([
-    {
-      name: 'Alex Johnson',
-      email: 'alex.johnson@company.com',
-      department: 'Engineering',
-      position: 'Senior Developer',
-      startDate: '2021-03-15',
-      status: 'Active',
-      performance: 'Excellent',
-      salary: '$95,000'
-    },
-    {
-      name: 'Sarah Williams',
-      email: 'sarah.williams@company.com',
-      department: 'Sales',
-      position: 'Sales Manager',
-      startDate: '2020-08-22',
-      status: 'Active',
-      performance: 'Good',
-      salary: '$85,000'
-    }
-  ]);
+interface AddEmployeeFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  department: string;
+  position: string;
+  startDate: string;
+  salary: string;
+  employmentType: string;
+}
 
-  const [departmentFilter, setDepartmentFilter] = useState('All');
-  const [statusFilter, setStatusFilter] = useState('All');
+const HRComponent: React.FC = () => {
+  const { tenantSlug } = useTenantContext();
+
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [departmentFilter, setDepartmentFilter] = useState('All Departments');
+  const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [searchQuery, setSearchQuery] = useState('');
   
   const [showAddModal, setShowAddModal] = useState(false);
@@ -55,27 +72,96 @@ const HRComponent: React.FC<HR> = ({ tenantSlug }) => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
-  const filteredEmployees = employees.filter(emp => {
-    if (departmentFilter !== 'All' && emp.department !== departmentFilter) return false;
-    if (statusFilter !== 'All' && emp.status !== statusFilter) return false;
-    if (searchQuery && !emp.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
-        !emp.email.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    return true;
-  });
+  const fetchEmployees = useCallback(async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      const response = await apiClient.get<{ success: boolean; data: ApiEmployee[] }>(
+        `/api/tenant/employees?tenantSlug=${tenantSlug}`,
+        { cacheKey: `tenant-${tenantSlug}-employees`, cacheTTL: 30_000 }
+      );
 
-  const handleAddEmployee = (data: any) => {
-    const newEmployee: Employee = {
-      name: `${data.firstName} ${data.lastName}`,
-      email: data.email,
-      department: data.department,
-      position: data.position,
-      startDate: data.startDate,
-      status: 'Active',
-      performance: 'Good',
-      salary: data.salary
-    };
-    setEmployees([...employees, newEmployee]);
-    setAlert({ type: 'success', message: 'Employee added successfully!' });
+      const normalized = (response.data?.data ?? []).map((employee): Employee => ({
+        id: employee.id,
+        name: employee.name,
+        email: employee.email,
+        department: employee.departmentId || 'Unassigned',
+        position: employee.jobTitle || 'Not specified',
+        startDate: employee.hireDate ? new Date(employee.hireDate).toISOString().split('T')[0] : 'N/A',
+        status: employee.status ? formatEmployeeStatus(employee.status) : 'Active',
+        performance: 'Good',
+        salary: '—',
+      }));
+
+      setEmployees(normalized);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to load employees');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [tenantSlug]);
+
+  useEffect(() => {
+    if (tenantSlug) {
+      fetchEmployees();
+    }
+  }, [fetchEmployees, tenantSlug]);
+
+  const filteredEmployees = useMemo(() => {
+    return employees.filter((emp) => {
+      if (departmentFilter !== 'All Departments' && emp.department !== departmentFilter) return false;
+      if (statusFilter !== 'All Statuses' && emp.status !== statusFilter) return false;
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        if (!emp.name.toLowerCase().includes(query) && !emp.email.toLowerCase().includes(query)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [employees, departmentFilter, statusFilter, searchQuery]);
+
+  const handleAddEmployee = async (data: AddEmployeeFormData) => {
+    setAlert(null);
+    try {
+      const payload = {
+        tenantSlug,
+        name: `${data.firstName} ${data.lastName}`.trim(),
+        email: data.email,
+        departmentId: data.department,
+        jobTitle: data.position || undefined,
+        hireDate: data.startDate ? new Date(data.startDate).toISOString() : undefined,
+      };
+
+      const response = await apiClient.post<{ success: boolean; data: ApiEmployee }>(
+        `/api/tenant/employees?tenantSlug=${tenantSlug}`,
+        payload
+      );
+
+      if (!response.data?.success) {
+        throw new Error('Failed to add employee');
+      }
+
+      const created = response.data.data;
+      const newEmployee: Employee = {
+        id: created.id,
+        name: created.name,
+        email: created.email,
+        department: created.departmentId || 'Unassigned',
+        position: created.jobTitle || 'Not specified',
+        startDate: created.hireDate ? new Date(created.hireDate).toISOString().split('T')[0] : 'N/A',
+        status: created.status ? formatEmployeeStatus(created.status) : 'Active',
+        performance: 'Good',
+        salary: data.salary || '—',
+      };
+
+      setEmployees(prev => [...prev, newEmployee]);
+      setAlert({ type: 'success', message: 'Employee added successfully!' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to add employee';
+      setAlert({ type: 'error', message });
+      throw error;
+    }
   };
 
   const handleViewEmployee = (emp: Employee) => {
@@ -220,65 +306,81 @@ const HRComponent: React.FC<HR> = ({ tenantSlug }) => {
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredEmployees.map((employee, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium mr-3">
-                        {employee.name.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{employee.name}</p>
-                        <p className="text-sm text-gray-500">{employee.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{employee.department}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{employee.position}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      employee.status === 'Active' ? 'bg-green-100 text-green-800' :
-                      employee.status === 'On Leave' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {employee.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      employee.performance === 'Excellent' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {employee.performance}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => handleViewEmployee(employee)} className="text-blue-600 hover:text-blue-800">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => handleEditEmployee(employee)} className="text-green-600 hover:text-green-800">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => handleAwardEmployee(employee)} className="text-purple-600 hover:text-purple-800">
-                        <Award className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+          {errorMessage ? (
+            <div className="p-6 text-center">
+              <p className="text-sm text-red-600">{errorMessage}</p>
+              <button
+                onClick={fetchEmployees}
+                className="mt-3 inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Retry
+              </button>
+            </div>
+          ) : isLoading ? (
+            <div className="p-6 text-center text-sm text-gray-500">Loading employees…</div>
+          ) : filteredEmployees.length === 0 ? (
+            <div className="p-6 text-center text-sm text-gray-500">No employees found for the selected filters.</div>
+          ) : (
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredEmployees.map((employee) => (
+                  <tr key={employee.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium mr-3">
+                          {employee.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{employee.name}</p>
+                          <p className="text-sm text-gray-500">{employee.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{employee.department}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{employee.position}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        employee.status === 'Active' ? 'bg-green-100 text-green-800' :
+                        employee.status === 'On Leave' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {employee.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        employee.performance === 'Excellent' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {employee.performance}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => handleViewEmployee(employee)} className="text-blue-600 hover:text-blue-800">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleEditEmployee(employee)} className="text-green-600 hover:text-green-800">
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleAwardEmployee(employee)} className="text-purple-600 hover:text-purple-800">
+                          <Award className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

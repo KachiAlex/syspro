@@ -32,7 +32,7 @@ const FormAlert: React.FC<FormAlertProps> = ({ type, message, onClose }) => {
 interface AddEmployeeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: any) => Promise<void>;
 }
 
 export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose, onSubmit }) => {
@@ -52,21 +52,26 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+    setAlert(null);
+
     if (!formData.firstName || !formData.email || !formData.department) {
       setAlert({ type: 'error', message: 'Please fill in all required fields' });
       setLoading(false);
       return;
     }
 
-    await new Promise(r => setTimeout(r, 1000));
-    onSubmit(formData);
-    setAlert({ type: 'success', message: 'Employee added successfully!' });
-    setTimeout(() => {
-      setFormData({ firstName: '', lastName: '', email: '', department: '', position: '', startDate: '', salary: '', employmentType: 'Full-time' });
-      onClose();
-    }, 1500);
-    setLoading(false);
+    try {
+      await onSubmit(formData);
+      setAlert({ type: 'success', message: 'Employee added successfully!' });
+      setTimeout(() => {
+        setFormData({ firstName: '', lastName: '', email: '', department: '', position: '', startDate: '', salary: '', employmentType: 'Full-time' });
+        onClose();
+      }, 1500);
+    } catch (error) {
+      setAlert({ type: 'error', message: error instanceof Error ? error.message : 'Failed to add employee' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
