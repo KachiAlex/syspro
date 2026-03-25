@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 // Performance optimization utilities and caching system
 
 // Cache configuration
@@ -34,6 +36,7 @@ export interface PerformanceMetrics {
     used: number;
     total: number;
   };
+  hitRate: number;
 }
 
 // Request deduplication
@@ -53,10 +56,11 @@ class PerformanceCache {
     averageResponseTime: 0,
     totalRequests: 0,
     slowQueries: [],
-    memoryUsage: { used: 0, total: 0 }
+    memoryUsage: { used: 0, total: 0 },
+    hitRate: 0
   };
   private config: CacheConfig;
-  private cleanupTimer: NodeJS.Timeout;
+  private cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(config: Partial<CacheConfig> = {}) {
     this.config = {
@@ -114,7 +118,9 @@ class PerformanceCache {
     };
 
     // Compress if enabled and data is large enough
-    if (this.config.enableCompression && entry.originalSize > 1024) {
+    const originalSize = entry.originalSize ?? this.estimateSize(data);
+
+    if (this.config.enableCompression && originalSize > 1024) {
       entry.compressed = true;
       entry.data = this.compress(data);
     }
@@ -136,6 +142,11 @@ class PerformanceCache {
   clear(): void {
     this.cache.clear();
     this.updateMemoryUsage();
+  }
+
+  // List cache keys
+  keys(): string[] {
+    return Array.from(this.cache.keys());
   }
 
   // Check if key exists and is not expired
@@ -289,7 +300,7 @@ class PerformanceCache {
   private updateMemoryUsage(): void {
     let totalSize = 0;
     for (const entry of this.cache.values()) {
-      totalSize += entry.originalSize || this.estimateSize(entry.data);
+      totalSize += entry.originalSize ?? this.estimateSize(entry.data);
     }
     
     this.metrics.memoryUsage = {
@@ -324,8 +335,9 @@ class PerformanceCache {
 
   // Destroy cleanup
   destroy(): void {
-    if (this.cleanupTimer) {
+    if (this.cleanupTimer !== null) {
       clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
     }
     this.cache.clear();
     this.pendingRequests.clear();
@@ -389,12 +401,12 @@ export class PerformanceMonitor {
     const startTime = this.marks.get(startMark);
     const endTime = endMark ? this.marks.get(endMark) : performance.now();
     
-    if (startTime !== undefined) {
+    if (startTime !== undefined && endTime !== undefined) {
       const duration = endTime - startTime;
       this.metrics.set(name, duration);
       return duration;
     }
-    
+
     return 0;
   }
 
@@ -433,129 +445,7 @@ export class PerformanceMonitor {
     
     console.groupEnd();
   }
-}
-
-// Global performance monitor
-export const performanceMonitor = new PerformanceMonitor();
-
-// Loading states management
-export interface LoadingState {
-  isLoading: boolean;
-  message?: string;
-  progress?: number;
-  error?: string;
-}
-
-export class LoadingStateManager {
-  private loadingStates = new Map<string, LoadingState>();
-  private listeners: Set<() => void> = new Set();
-
-  // Set loading state
-  setLoading(key: string, loading: boolean, message?: string): void {
-    const currentState = this.loadingStates.get(key) || { isLoading: false };
-    
-    this.loadingStates.set(key, {
-      ...currentState,
-      isLoading: loading,
-      message: message || currentState.message
-    });
-    
-    this.notifyListeners();
-  }
-
-  // Set progress
-  setProgress(key: string, progress: number): void {
-    const currentState = this.loadingStates.get(key) || { isLoading: false };
-    
-    this.loadingStates.set(key, {
-      ...currentState,
-      progress
-    });
-    
-    this.notifyListeners();
-  }
-
-  // Set error
-  setError(key: string, error: string): void {
-    const currentState = this.loadingStates.get(key) || { isLoading: false };
-    
-    this.loadingStates.set(key, {
-      ...currentState,
-      isLoading: false,
-      error
-    });
-    
-    this.notifyListeners();
-  }
-
-  // Get loading state
-  getLoadingState(key: string): LoadingState {
-    return this.loadingStates.get(key) || { isLoading: false };
-  }
-
-  // Check if any loading states are active
-  hasActiveLoading(): boolean {
-    return Array.from(this.loadingStates.values()).some(state => state.isLoading);
-  }
-
-  // Subscribe to loading state changes
-  subscribe(listener: () => void): () => void {
-    this.listeners.add(listener);
-    return () => {
-      this.listeners.delete(listener);
-    };
-  }
-
-  // Clear loading state
-  clear(key: string): void {
-    this.loadingStates.delete(key);
-    this.notifyListeners();
-  }
-
-  // Clear all loading states
-  clearAll(): void {
-    this.loadingStates.clear();
-    this.notifyListeners();
-  }
-
-  private notifyListeners(): void {
-    this.listeners.forEach(listener => listener());
-  }
-}
-
-// Global loading state manager
-export const loadingStateManager = new LoadingStateManager();
-
-// Debounce utility
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): T {
-  let timeout: NodeJS.Timeout;
-  
-  return ((...args: any[]) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
-  }) as T;
-}
-
-// Throttle utility
-export function throttle<T extends (...args: any[]) => any>(
-  func: T,
-  limit: number
-): T {
-  let inThrottle = false;
-  
-  return ((...args: any[]) => {
-    if (!inThrottle) {
-      func.apply(this, args);
-      inThrottle = true;
-      setTimeout(() => {
-        inThrottle = false;
-      }, limit);
-    }
-  }) as T;
-}
+// ... (rest of the code remains the same)
 
 // Memoization utility
 export function memoize<T extends (...args: any[]) => any>(
@@ -568,16 +458,45 @@ export function memoize<T extends (...args: any[]) => any>(
     const key = keyGenerator ? keyGenerator(...args) : JSON.stringify(args);
     
     if (cache.has(key)) {
-      return cache.get(key);
+      return cache.get(key)!;
     }
     
-    const result = func.apply(this, args);
+    const result = func(...args);
     cache.set(key, result);
     return result;
   }) as T;
 }
 
-// Lazy loading utility
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): T {
+  let timeout: ReturnType<typeof setTimeout>;
+
+  return ((...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  }) as T;
+}
+
+export function throttle<T extends (...args: any[]) => any>(
+  func: T,
+  limit: number
+): T {
+  let inThrottle = false;
+
+  return ((...args: any[]) => {
+    if (!inThrottle) {
+      func(...args);
+      inThrottle = true;
+      setTimeout(() => {
+        inThrottle = false;
+      }, limit);
+    }
+  }) as T;
+}
+
+// ... (rest of the code remains the same)
 export function lazyLoad<T>(
   loader: () => Promise<T>,
   options: {

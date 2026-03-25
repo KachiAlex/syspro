@@ -1,3 +1,4 @@
+import React from "react";
 import { performanceCache, createOptimizedRequest } from "./performance";
 
 // API configuration
@@ -144,32 +145,35 @@ class ApiClient {
         }
 
         return result;
-      } catch (error) {
+      } catch (error: unknown) {
         clearTimeout(timeoutId);
-        
-        if (error.name === "AbortError") {
+
+        const err = error instanceof Error ? error : new Error(String(error));
+
+        if (err.name === "AbortError") {
           throw new Error("Request timeout");
         }
-        
-        throw error;
+
+        throw err;
       }
     };
 
     // Implement retry logic
-    let lastError: Error;
+    let lastError: Error | null = null;
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
         return await makeRequest();
-      } catch (error) {
-        lastError = error as Error;
-        
+      } catch (error: unknown) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        lastError = err;
+
         if (attempt < retries) {
           await this.delay(this.config.retryDelay * Math.pow(2, attempt));
         }
       }
     }
 
-    throw lastError;
+    throw lastError ?? new Error("Request failed after retries");
   }
 
   // HTTP method helpers
@@ -301,10 +305,48 @@ class ApiClient {
 
   // Utility methods
   private buildUrl(url: string): string {
-    if (url.startsWith("http://") || url.startsWith("https://")) {
+    if (/^https?:\/\//.test(url)) {
       return url;
     }
-    return `${this.config.baseURL.replace(/\/$/, "")}/${url.replace(/^\//, "")}`;
+
+    const baseRaw = (this.config.baseURL ?? "").trim();
+    const tempUrl = new URL(url, "http://placeholder");
+    const suffix = `${tempUrl.search}${tempUrl.hash}`;
+
+    const normalize = (value: string) => value.replace(/^\/+|\/+$/g, "");
+    const buildPath = (basePath: string, requestPath: string) => {
+      if (!basePath && !requestPath) {
+        return "/";
+      }
+      if (!basePath) {
+        return `/${requestPath}`.replace(/\/{2,}/g, "/");
+      }
+      if (!requestPath) {
+        return `/${basePath}`.replace(/\/{2,}/g, "/");
+      }
+      if (requestPath === basePath || requestPath.startsWith(`${basePath}/`)) {
+        return `/${requestPath}`.replace(/\/{2,}/g, "/");
+      }
+      return `/${basePath}/${requestPath}`.replace(/\/{2,}/g, "/");
+    };
+
+    const requestPath = normalize(tempUrl.pathname);
+
+    if (!baseRaw) {
+      const path = buildPath("", requestPath);
+      return `${path}${suffix}`;
+    }
+
+    if (/^https?:\/\//.test(baseRaw)) {
+      const baseUrl = new URL(baseRaw);
+      const basePath = normalize(baseUrl.pathname);
+      const path = buildPath(basePath, requestPath);
+      return `${baseUrl.origin}${path}${suffix}`;
+    }
+
+    const basePath = normalize(baseRaw);
+    const path = buildPath(basePath, requestPath);
+    return `${path}${suffix}`;
   }
 
   private generateCacheKey(method: string, url: string, body?: any): string {
@@ -351,8 +393,7 @@ class ApiClient {
   clearCache(pattern?: string): void {
     if (pattern) {
       // Clear cache entries matching pattern
-      const keys = Array.from(performanceCache.getStats().cacheEntries || []);
-      keys.forEach(key => {
+      performanceCache.keys().forEach(key => {
         if (key.includes(pattern)) {
           performanceCache.delete(key);
         }

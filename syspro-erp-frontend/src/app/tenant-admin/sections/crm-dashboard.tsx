@@ -185,19 +185,19 @@ async function fetchLeads(params: { tenantSlug: string; regionId: string; branch
   const searchParams = new URLSearchParams({ tenantSlug: params.tenantSlug, limit: "50" });
   if (params.regionId) searchParams.set("regionId", params.regionId);
   if (params.branchId) searchParams.set("branchId", params.branchId);
-  const response = await apiClient.get<LeadsResponse>(`/api/crm/leads?${searchParams.toString()}`);
+  const response = await apiClient.get<LeadsResponse>(`/crm/leads?${searchParams.toString()}`);
   return response.data;
 }
 
 async function fetchContacts(params: { tenantSlug: string }) {
   const searchParams = new URLSearchParams({ tenantSlug: params.tenantSlug, limit: "50" });
-  const response = await apiClient.get<ContactsResponse>(`/api/crm/contacts?${searchParams.toString()}`);
+  const response = await apiClient.get<ContactsResponse>(`/crm/contacts?${searchParams.toString()}`);
   return response.data;
 }
 
 async function fetchDeals(params: { tenantSlug: string }) {
   const searchParams = new URLSearchParams({ tenantSlug: params.tenantSlug, limit: "50" });
-  const response = await apiClient.get<DealsResponse>(`/api/crm/deals?${searchParams.toString()}`);
+  const response = await apiClient.get<DealsResponse>(`/crm/deals?${searchParams.toString()}`);
   return response.data;
 }
 
@@ -215,12 +215,12 @@ async function createLead(payload: {
   expectedValue?: number;
   currency?: string;
 }) {
-  const response = await apiClient.post<{ lead: LeadsResponse["leads"][number] }>("/api/crm/leads", payload);
+  const response = await apiClient.post<{ lead: LeadsResponse["leads"][number] }>("/crm/leads", payload);
   return response.data.lead;
 }
 
 async function deleteLeadRequest(id: string, tenantSlug: string) {
-  await apiClient.delete(`/api/crm/leads/${id}?tenantSlug=${tenantSlug}`);
+  await apiClient.delete(`/crm/leads/${id}?tenantSlug=${tenantSlug}`);
 }
 
 async function updateLeadRequest(
@@ -237,7 +237,7 @@ async function updateLeadRequest(
     score: number;
   }
 ) {
-  const response = await apiClient.patch<{ lead: LeadsResponse["leads"][number] }>(`/api/crm/leads/${id}?tenantSlug=${payload.tenantSlug}`, payload);
+  const response = await apiClient.patch<{ lead: LeadsResponse["leads"][number] }>(`/crm/leads/${id}?tenantSlug=${payload.tenantSlug}`, payload);
   return response.data.lead;
 }
 
@@ -250,7 +250,7 @@ async function createContact(payload: {
   source?: string;
   status?: string;
 }) {
-  const response = await apiClient.post<{ contacts: ContactsResponse["contacts"] }>("/api/crm/contacts", {
+  const response = await apiClient.post<{ contacts: ContactsResponse["contacts"] }>("/crm/contacts", {
     tenantSlug: payload.tenantSlug,
     contacts: [
       {
@@ -267,7 +267,7 @@ async function createContact(payload: {
 }
 
 async function deleteContactRequest(id: string) {
-  await apiClient.delete(`/api/crm/contacts/${id}`);
+  await apiClient.delete(`/crm/contacts/${id}`);
 }
 
 async function updateContactRequest(
@@ -282,7 +282,7 @@ async function updateContactRequest(
     status?: string;
   }
 ) {
-  const response = await apiClient.patch<{ contact: ContactsResponse["contacts"][number] }>(`/api/crm/contacts/${id}`, payload);
+  const response = await apiClient.patch<{ contact: ContactsResponse["contacts"][number] }>(`/crm/contacts/${id}`, payload);
   return response.data.contact;
 }
 
@@ -297,12 +297,12 @@ async function createDeal(payload: {
   expectedClose?: string;
   assignedOfficerId?: string;
 }) {
-  const response = await apiClient.post<{ deal: DealsResponse["deals"][number] }>("/api/crm/deals", payload);
+  const response = await apiClient.post<{ deal: DealsResponse["deals"][number] }>("/crm/deals", payload);
   return response.data.deal;
 }
 
 async function deleteDealRequest(id: string) {
-  await apiClient.delete(`/api/crm/deals/${id}`);
+  await apiClient.delete(`/crm/deals/${id}`);
 }
 
 async function updateDealRequest(
@@ -317,7 +317,7 @@ async function updateDealRequest(
     status?: string;
   }
 ) {
-  const response = await apiClient.patch<{ deal: DealsResponse["deals"][number] }>(`/api/crm/deals/${id}`, payload);
+  const response = await apiClient.patch<{ deal: DealsResponse["deals"][number] }>(`/crm/deals/${id}`, payload);
   return response.data.deal;
 }
 
