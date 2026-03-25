@@ -330,6 +330,20 @@ export async function updateContact(
   return updated.length ? normalizeContactRow(updated[0]) : null;
 }
 
+export async function getContact(id: string) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  const rows = (await sql`select * from crm_contacts where id = ${id} limit 1`) as CrmContactRecord[];
+  return rows.length ? normalizeContactRow(rows[0]) : null;
+}
+
+export async function deleteContact(id: string) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  const deleted = (await sql`delete from crm_contacts where id = ${id} returning id`) as any[];
+  return deleted.length > 0;
+}
+
 export async function insertDeal(row: {
   tenantSlug: string;
   customerId?: string;

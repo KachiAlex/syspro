@@ -3,6 +3,9 @@ import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getCurrentUser, validateTenantAccess } from "@/lib/auth-helpers";
 import TenantAdminShell from "@/components/layout/tenant-admin-shell";
+import { TenantContextProvider } from "@/components/tenant-admin/tenant-context";
+import { ensureTenantTable } from "@/lib/tenant/tenant-table";
+import { sql as SQL } from "@/lib/sql-client";
 
 export default async function TenantAdminLayout({ children, searchParams }: { children: React.ReactNode; searchParams?: Record<string, string> }) {
   // `headers()` is async in some Next runtimes; await to avoid sync access
@@ -156,8 +159,46 @@ export default async function TenantAdminLayout({ children, searchParams }: { ch
     NODE_ENV: process.env.NODE_ENV,
   };
 
+  const sql = SQL;
+  await ensureTenantTable(sql);
+  let tenantMeta: {
+    default_region_id: string | null;
+    default_region_name: string | null;
+    default_branch_id: string | null;
+    default_branch_name: string | null;
+  } = {
+    default_region_id: null,
+    default_region_name: null,
+    default_branch_id: null,
+    default_branch_name: null,
+  };
+
+  try {
+    const tenantRows = await sql`
+      select default_region_id, default_region_name, default_branch_id, default_branch_name
+      from tenants
+      where slug = ${tenantSlug}
+      limit 1
+    `;
+    if (Array.isArray(tenantRows) && tenantRows.length > 0) {
+      tenantMeta = tenantRows[0] as typeof tenantMeta;
+    }
+  } catch (error) {
+    console.error("Failed to load tenant defaults", error);
+  }
+
+  const contextValue = {
+    tenantSlug: tenantSlug!,
+    regionId: tenantMeta.default_region_id || `${tenantSlug}-region-default`,
+    regionName: tenantMeta.default_region_name || "Primary Region",
+    branchId: tenantMeta.default_branch_id || `${tenantSlug}-branch-hq`,
+    branchName: tenantMeta.default_branch_name || "Headquarters",
+  };
+
   // Return layout with the tenant admin shell (which renders the sidebar)
   return (
-    <TenantAdminShell>{children}</TenantAdminShell>
+    <TenantContextProvider value={contextValue}>
+      <TenantAdminShell>{children}</TenantAdminShell>
+    </TenantContextProvider>
   );
 }

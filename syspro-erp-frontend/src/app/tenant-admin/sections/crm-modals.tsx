@@ -3,6 +3,33 @@
 import React, { useState, useEffect } from "react";
 import { X, AlertTriangle } from "lucide-react";
 
+export const LEAD_STAGE_OPTIONS = [
+  { value: "new", label: "New" },
+  { value: "contacted", label: "Contacted" },
+  { value: "qualified", label: "Qualified" },
+  { value: "proposal", label: "Proposal" },
+  { value: "negotiation", label: "Negotiation" },
+  { value: "converted", label: "Converted" },
+  { value: "lost", label: "Lost" },
+] as const;
+
+export const LEAD_SOURCE_OPTIONS = [
+  { value: "website", label: "Website" },
+  { value: "walk_in", label: "Walk-in" },
+  { value: "campaign", label: "Campaign" },
+  { value: "referral", label: "Referral" },
+  { value: "api_import", label: "API Import" },
+] as const;
+
+export const DEAL_STAGE_OPTIONS = [
+  { value: "prospecting", label: "Prospecting" },
+  { value: "qualification", label: "Qualification" },
+  { value: "proposal", label: "Proposal" },
+  { value: "negotiation", label: "Negotiation" },
+  { value: "closed_won", label: "Closed Won" },
+  { value: "closed_lost", label: "Closed Lost" },
+] as const;
+
 // Lead Modal Components
 export interface LeadFormData {
   name: string;
@@ -26,16 +53,17 @@ export function CreateLeadModal({
   onSubmit: (data: LeadFormData) => Promise<void>;
   isLoading: boolean;
 }) {
-  const [formData, setFormData] = useState<LeadFormData>({
+  const initialState: LeadFormData = {
     name: "",
     email: "",
     company: "",
     phone: "",
-    status: "New",
-    source: "Website",
+    status: "new",
+    source: "website",
     score: 50,
     assignedTo: "",
-  });
+  };
+  const [formData, setFormData] = useState<LeadFormData>(initialState);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,16 +81,7 @@ export function CreateLeadModal({
 
     try {
       await onSubmit(formData);
-      setFormData({
-        name: "",
-        email: "",
-        company: "",
-        phone: "",
-        status: "New",
-        source: "Website",
-        score: 50,
-        assignedTo: "",
-      });
+      setFormData(initialState);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create lead");
@@ -154,14 +173,15 @@ export function CreateLeadModal({
               </label>
               <select
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as (typeof LEAD_STAGE_OPTIONS)[number]["value"] })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 disabled={isLoading}
               >
-                <option>New</option>
-                <option>Contacted</option>
-                <option>Qualified</option>
-                <option>Converted</option>
+                {LEAD_STAGE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -170,15 +190,15 @@ export function CreateLeadModal({
               </label>
               <select
                 value={formData.source}
-                onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, source: e.target.value as (typeof LEAD_SOURCE_OPTIONS)[number]["value"] })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 disabled={isLoading}
               >
-                <option>Website</option>
-                <option>Email</option>
-                <option>Social Media</option>
-                <option>Referral</option>
-                <option>Cold Call</option>
+                {LEAD_SOURCE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -447,15 +467,16 @@ export function CreateDealModal({
   onSubmit: (data: DealFormData) => Promise<void>;
   isLoading: boolean;
 }) {
-  const [formData, setFormData] = useState<DealFormData>({
+  const initialState: DealFormData = {
     name: "",
     company: "",
     amount: 25000,
-    stage: "Lead",
+    stage: "prospecting",
     assignedTo: "",
     closingDate: new Date().toISOString().split("T")[0],
     probability: 50,
-  });
+  };
+  const [formData, setFormData] = useState<DealFormData>(initialState);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -474,13 +495,8 @@ export function CreateDealModal({
     try {
       await onSubmit(formData);
       setFormData({
-        name: "",
-        company: "",
-        amount: 25000,
-        stage: "Lead",
-        assignedTo: "",
+        ...initialState,
         closingDate: new Date().toISOString().split("T")[0],
-        probability: 50,
       });
       onClose();
     } catch (err) {
@@ -560,14 +576,15 @@ export function CreateDealModal({
               </label>
               <select
                 value={formData.stage}
-                onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, stage: e.target.value as (typeof DEAL_STAGE_OPTIONS)[number]["value"] })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 disabled={isLoading}
               >
-                <option>Lead</option>
-                <option>Qualified</option>
-                <option>Proposal</option>
-                <option>Negotiation</option>
+                {DEAL_STAGE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div>

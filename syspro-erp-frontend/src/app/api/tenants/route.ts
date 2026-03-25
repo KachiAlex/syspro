@@ -3,17 +3,22 @@ import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
+import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 import fs from "fs";
 import path from "path";
 
 export type TenantRow = {
   name: string;
   slug: string;
-  region: string;
+  region: string | null;
   status: string;
   ledger_delta: string;
   seats: number | null;
   admin_email?: string | null;
+  default_region_id?: string | null;
+  default_region_name?: string | null;
+  default_branch_id?: string | null;
+  default_branch_name?: string | null;
 };
 
 const payloadSchema = z.object({
@@ -29,36 +34,11 @@ const payloadSchema = z.object({
   adminEmail: z.string().email(),
   adminPassword: z.string().min(8, "Admin password must be at least 8 characters"),
   adminNotes: z.string().optional().default(""),
+  defaultRegionId: z.string().min(1).optional(),
+  defaultRegionName: z.string().min(1).optional(),
+  defaultBranchId: z.string().min(1).optional(),
+  defaultBranchName: z.string().min(1).optional(),
 });
-
-export async function ensureTenantTable(sql: SqlClient) {
-  await sql`
-    create table if not exists tenants (
-      id uuid primary key,
-      name text not null,
-      code text,
-      domain text,
-      "isActive" boolean default false,
-      settings jsonb,
-      "schemaName" text,
-      "createdAt" timestamptz default now(),
-      "updatedAt" timestamptz default now(),
-      "deletedAt" timestamptz
-    )
-  `;
-
-  await sql`alter table tenants add column if not exists slug text`;
-  await sql`alter table tenants add column if not exists region text`;
-  await sql`alter table tenants add column if not exists industry text`;
-  await sql`alter table tenants add column if not exists seats integer`;
-  await sql`alter table tenants add column if not exists status text default 'Pending'`;
-  await sql`alter table tenants add column if not exists ledger_delta text default '₦0'`;
-  await sql`alter table tenants add column if not exists admin_name text`;
-  await sql`alter table tenants add column if not exists admin_email text`;
-  await sql`alter table tenants add column if not exists admin_password_hash text`;
-  await sql`alter table tenants add column if not exists admin_notes text`;
-  await sql`create unique index if not exists tenants_slug_key on tenants(slug)`;
-}
 
 export async function GET() {
   try {
@@ -82,7 +62,9 @@ export async function GET() {
     await ensureTenantTable(sql);
 
     const rows = (await sql`
-      select name, slug, region, status, ledger_delta, seats, admin_email, "isActive" as is_active, "schemaName" as schema_name
+      select name, slug, region, status, ledger_delta, seats, admin_email,
+             default_region_id, default_region_name, default_branch_id, default_branch_name,
+             "isActive" as is_active, "schemaName" as schema_name
       from tenants
       where "deletedAt" is null
       order by "createdAt" desc nulls last
@@ -96,14 +78,20 @@ export async function GET() {
 }
 
 export function mapTenantRow(row: TenantRow) {
+  const fallbackRegionName = row.region || row.default_region_name || "Primary Region";
+  const fallbackBranchName = row.default_branch_name || "Headquarters";
   return {
     name: row.name as string,
     slug: row.slug as string,
-    region: row.region as string,
+    region: row.region as string | null,
     status: (row as any).status as string,
     ledger: (row as any).ledger_delta ?? "₦0",
     seats: typeof (row as any).seats === "number" ? (row as any).seats : 0,
     admin_email: (row as any).admin_email ?? null,
+    default_region_id: row.default_region_id ?? null,
+    default_region_name: row.default_region_name ?? fallbackRegionName,
+    default_branch_id: row.default_branch_id ?? null,
+    default_branch_name: fallbackBranchName,
     // Consider a tenant persisted if it has an active flag OR a schema name.
     // Use logical OR because `is_active` can be `false` while a created
     // `schema_name` still indicates persistence (previous code used ??
@@ -157,6 +145,10 @@ export async function POST(request: Request) {
     const payload = parsed.data;
     const computedDomain = `${payload.companySlug}.syspro.local`;
     const computedSchema = `${payload.companySlug.replace(/-/g, "_")}_schema`;
+    const defaultRegionId = payload.defaultRegionId || `${payload.companySlug}-region-default`;
+    const defaultRegionName = payload.defaultRegionName || payload.region;
+    const defaultBranchId = payload.defaultBranchId || `${payload.companySlug}-branch-hq`;
+    const defaultBranchName = payload.defaultBranchName || "Headquarters";
     // If no DATABASE_URL, persist tenants to a local dev JSON file so they
     // survive page refreshes during development.
     if (!process.env.DATABASE_URL) {
@@ -179,6 +171,10 @@ export async function POST(request: Request) {
         ledger: "₦0",
         seats: payload.seats ?? 0,
         admin_email: payload.adminEmail.toLowerCase(),
+        default_region_id: defaultRegionId,
+        default_region_name: defaultRegionName,
+        default_branch_id: defaultBranchId,
+        default_branch_name: defaultBranchName,
         persisted: true,
       };
 
@@ -216,7 +212,11 @@ export async function POST(request: Request) {
         admin_name,
         admin_email,
         admin_password_hash,
-        admin_notes
+        admin_notes,
+        default_region_id,
+        default_region_name,
+        default_branch_id,
+        default_branch_name
       )
       values (
         ${tenantId},
@@ -233,7 +233,11 @@ export async function POST(request: Request) {
         ${payload.adminName},
         ${payload.adminEmail.toLowerCase()},
         ${passwordHash},
-        ${payload.adminNotes ?? ""}
+        ${payload.adminNotes ?? ""},
+        ${defaultRegionId},
+        ${defaultRegionName},
+        ${defaultBranchId},
+        ${defaultBranchName}
       )
       on conflict (slug) do update set
         name = excluded.name,
@@ -248,8 +252,14 @@ export async function POST(request: Request) {
         admin_name = excluded.admin_name,
         admin_email = excluded.admin_email,
         admin_password_hash = excluded.admin_password_hash,
-        admin_notes = excluded.admin_notes
-        returning name, slug, region, status, ledger_delta, seats, admin_email, "isActive" as is_active, "schemaName" as schema_name
+        admin_notes = excluded.admin_notes,
+        default_region_id = excluded.default_region_id,
+        default_region_name = excluded.default_region_name,
+        default_branch_id = excluded.default_branch_id,
+        default_branch_name = excluded.default_branch_name
+        returning name, slug, region, status, ledger_delta, seats, admin_email,
+                  default_region_id, default_region_name, default_branch_id, default_branch_name,
+                  "isActive" as is_active, "schemaName" as schema_name
     `;
 
       const tenantSummary = mapTenantRow(returnedRows[0]);
