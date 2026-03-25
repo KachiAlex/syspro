@@ -42,8 +42,10 @@ class ApiClient {
   private defaultHeaders: Record<string, string>;
 
   constructor(config: Partial<ApiConfig> = {}) {
+    const { baseURL, ...restConfig } = config;
+
     this.config = {
-      baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "/api",
+      baseURL: baseURL ?? process.env.NEXT_PUBLIC_API_BASE_URL || "/api",
       timeout: 30000,
       retries: 3,
       retryDelay: 1000,
@@ -56,7 +58,7 @@ class ApiClient {
         enabled: true,
         threshold: 1024 // 1KB
       },
-      ...config
+      ...restConfig
     };
 
     this.defaultHeaders = {
