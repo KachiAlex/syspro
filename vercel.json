@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd syspro-erp-frontend && npm run build",
+  "outputDirectory": "syspro-erp-frontend/.next",
+  "installCommand": "cd syspro-erp-frontend && npm install",
+  "framework": "nextjs"
+}
