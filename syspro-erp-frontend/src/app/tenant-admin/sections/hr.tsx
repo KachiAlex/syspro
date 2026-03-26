@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus, Eye, Edit, Award, Download, Filter, Users, Target, DollarSign } from 'lucide-react';
+import { Plus, Eye, Edit, Award, Download, Filter, Users, Target, DollarSign, Briefcase } from 'lucide-react';
 import { AddEmployeeModal, RunPayrollModal, PostJobModal, ViewEmployeeModal, TrainingModal, EditEmployeeModal, DeleteEmployeeModal } from './hr-modals';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { apiClient } from '@/lib/api-client';
@@ -68,37 +68,150 @@ interface EditEmployeeFormData extends AddEmployeeFormData {
   status: string;
 }
 
+interface TrainingSession {
+  id: string;
+  title: string;
+  status: 'Upcoming' | 'In Progress' | 'Completed';
+  participants: number;
+  instructor: string;
+  startDate?: string;
+}
+
+const DEFAULT_TRAINING_SESSIONS: TrainingSession[] = [
+  { id: 'leadership', title: 'Leadership Excellence', participants: 12, status: 'Upcoming', instructor: 'Dr. Sarah Mitchell' },
+  { id: 'sales', title: 'Advanced Sales', participants: 25, status: 'In Progress', instructor: 'John Anderson' },
+  { id: 'security', title: 'Security Awareness', participants: 234, status: 'Completed', instructor: 'Security Team' }
+];
+
+interface PayrollMetrics {
+  monthly: number;
+  annual: number;
+  averageSalary: number;
+  benefits: number;
+}
+
+const DEFAULT_PAYROLL_METRICS: PayrollMetrics = {
+  monthly: 0,
+  annual: 0,
+  averageSalary: 0,
+  benefits: 0
+};
+
+const DEFAULT_DEPARTMENTS = ['Engineering', 'Sales', 'Marketing', 'HR', 'Finance'];
+const DEFAULT_STATUS_LABELS = ['Active', 'On Leave', 'Inactive', 'Terminated'];
+
 const HRComponent: React.FC = () => {
   const { tenantSlug } = useTenantContext();
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [departmentOptions, setDepartmentOptions] = useState<string[]>(['All Departments', ...DEFAULT_DEPARTMENTS]);
+  const [statusOptions, setStatusOptions] = useState<string[]>(['All Statuses', ...DEFAULT_STATUS_LABELS]);
+  const [departmentCatalog, setDepartmentCatalog] = useState<string[]>(DEFAULT_DEPARTMENTS);
+  const [statusCatalog, setStatusCatalog] = useState<string[]>(DEFAULT_STATUS_LABELS);
   const [departmentFilter, setDepartmentFilter] = useState('All Departments');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [searchQuery, setSearchQuery] = useState('');
-  
+  const [payrollMetrics, setPayrollMetrics] = useState<PayrollMetrics>(DEFAULT_PAYROLL_METRICS);
+  const [hasLivePayrollMetrics, setHasLivePayrollMetrics] = useState(false);
+  const [trainingSessions, setTrainingSessions] = useState<TrainingSession[]>(DEFAULT_TRAINING_SESSIONS);
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPayrollModal, setShowPayrollModal] = useState(false);
   const [showJobModal, setShowJobModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [showTrainingModal, setShowTrainingModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showTrainingModal, setShowTrainingModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+
+  const departmentOptionsForForms = departmentCatalog.filter((dept): dept is string => Boolean(dept));
+  const statusOptionsForForms = statusCatalog.filter((status): status is string => Boolean(status));
+
+  const updateFilterOptions = useCallback(
+    (list: Employee[], catalogs?: { departments?: string[]; statuses?: string[] }) => {
+      const normalizedDepartmentCatalog = (catalogs?.departments ?? [])
+        .map((dept) => dept?.toString().trim())
+        .filter((dept): dept is string => Boolean(dept));
+      const departmentSet = new Set<string>([
+        ...DEFAULT_DEPARTMENTS,
+        ...normalizedDepartmentCatalog,
+        ...list.map((employee) => employee.department).filter(Boolean),
+      ]);
+      const departmentCatalogList = Array.from(departmentSet).sort();
+      const departmentOptionList = ['All Departments', ...departmentCatalogList];
+      setDepartmentCatalog(departmentCatalogList);
+      setDepartmentOptions(departmentOptionList);
+      if (!departmentOptionList.includes(departmentFilter)) {
+        setDepartmentFilter('All Departments');
+      }
+
+      const normalizedStatusCatalog = (catalogs?.statuses ?? [])
+        .map((status) => formatEmployeeStatus(status))
+        .filter((status): status is string => Boolean(status));
+      const statusSet = new Set<string>([
+        ...DEFAULT_STATUS_LABELS,
+        ...normalizedStatusCatalog,
+        ...list.map((employee) => employee.status).filter(Boolean),
+      ]);
+      const statusCatalogList = Array.from(statusSet).sort();
+      const statusOptionList = ['All Statuses', ...statusCatalogList];
+      setStatusCatalog(statusCatalogList);
+      setStatusOptions(statusOptionList);
+      if (!statusOptionList.includes(statusFilter)) {
+        setStatusFilter('All Statuses');
+      }
+    },
+    [departmentFilter, statusFilter]
+  );
+
+  const recalcPayrollFromEmployees = useCallback((list: Employee[]) => {
+    if (list.length === 0) {
+      setPayrollMetrics(DEFAULT_PAYROLL_METRICS);
+      return;
+    }
+
+    const totalCompRaw = list.reduce((acc, employee) => {
+      const numericSalary = Number((employee.salary ?? '').toString().replace(/[^0-9.-]+/g, ''));
+      if (Number.isFinite(numericSalary)) {
+        return acc + numericSalary;
+      }
+      return acc;
+    }, 0);
+
+    const activeCount = list.filter((employee) => employee.status === 'Active').length;
+    const basis = totalCompRaw || activeCount * 150000;
+    const monthly = Math.round(basis);
+
+    setPayrollMetrics({
+      monthly,
+      annual: monthly * 12,
+      averageSalary: activeCount ? Math.round(basis / Math.max(activeCount, 1)) : 0,
+      benefits: Math.round(monthly * 0.35)
+    });
+  }, []);
 
   const fetchEmployees = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      const response = await apiClient.get<{ success: boolean; data: ApiEmployee[] }>(
+      const response = await apiClient.get<{
+        success: boolean;
+        data: ApiEmployee[];
+        departments?: string[];
+        statuses?: string[];
+        payroll?: PayrollMetrics;
+        training?: TrainingSession[];
+      }>(
         `/api/tenant/employees?tenantSlug=${tenantSlug}`,
         { cacheKey: `tenant-${tenantSlug}-employees`, cacheTTL: 30_000 }
       );
 
-      const normalized = (response.data?.data ?? []).map((employee): Employee => ({
+      const payload = response.data;
+      const normalized = (payload?.data ?? []).map((employee): Employee => ({
         id: employee.id,
         name: employee.name,
         email: employee.email,
@@ -111,12 +224,30 @@ const HRComponent: React.FC = () => {
       }));
 
       setEmployees(normalized);
+      updateFilterOptions(normalized, {
+        departments: payload?.departments,
+        statuses: payload?.statuses,
+      });
+
+      if (payload?.payroll) {
+        setPayrollMetrics(payload.payroll);
+        setHasLivePayrollMetrics(true);
+      } else {
+        setHasLivePayrollMetrics(false);
+        recalcPayrollFromEmployees(normalized);
+      }
+
+      if (payload && Array.isArray(payload.training)) {
+        setTrainingSessions(payload.training);
+      } else {
+        setTrainingSessions(DEFAULT_TRAINING_SESSIONS);
+      }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Failed to load employees');
     } finally {
       setIsLoading(false);
     }
-  }, [tenantSlug]);
+  }, [tenantSlug, recalcPayrollFromEmployees, updateFilterOptions]);
 
   useEffect(() => {
     if (tenantSlug) {
@@ -215,7 +346,14 @@ const HRComponent: React.FC = () => {
         salary: data.salary || '—',
       };
 
-      setEmployees(prev => [...prev, newEmployee]);
+      setEmployees((prev) => {
+        const next = [...prev, newEmployee];
+        updateFilterOptions(next);
+        if (!hasLivePayrollMetrics) {
+          recalcPayrollFromEmployees(next);
+        }
+        return next;
+      });
       setAlert({ type: 'success', message: 'Employee added successfully!' });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to add employee';
@@ -283,37 +421,28 @@ const HRComponent: React.FC = () => {
 
     const updated = response.data.data;
 
-    setEmployees(prev =>
-      prev.map(emp =>
-        emp.id === selectedEmployee.id
-          ? {
-              id: updated.id,
-              name: updated.name,
-              email: updated.email,
-              department: updated.departmentId || 'Unassigned',
-              position: updated.jobTitle || 'Not specified',
-              startDate: updated.hireDate ? new Date(updated.hireDate).toISOString().split('T')[0] : 'N/A',
-              status: updated.status ? formatEmployeeStatus(updated.status) : 'Active',
-              performance: emp.performance,
-              salary: emp.salary,
-            }
-          : emp
-      )
-    );
+    const updatedEmployee: Employee = {
+      id: updated.id,
+      name: updated.name,
+      email: updated.email,
+      department: updated.departmentId || 'Unassigned',
+      position: updated.jobTitle || 'Not specified',
+      startDate: updated.hireDate ? new Date(updated.hireDate).toISOString().split('T')[0] : 'N/A',
+      status: updated.status ? formatEmployeeStatus(updated.status) : 'Active',
+      performance: selectedEmployee.performance,
+      salary: selectedEmployee.salary,
+    };
 
-    setSelectedEmployee(prev =>
-      prev && prev.id === updated.id
-        ? {
-            ...prev,
-            name: updated.name,
-            email: updated.email,
-            department: updated.departmentId || 'Unassigned',
-            position: updated.jobTitle || 'Not specified',
-            startDate: updated.hireDate ? new Date(updated.hireDate).toISOString().split('T')[0] : 'N/A',
-            status: updated.status ? formatEmployeeStatus(updated.status) : 'Active',
-          }
-        : prev
-    );
+    setEmployees((prev) => {
+      const next = prev.map((emp) => (emp.id === selectedEmployee.id ? updatedEmployee : emp));
+      updateFilterOptions(next);
+      if (!hasLivePayrollMetrics) {
+        recalcPayrollFromEmployees(next);
+      }
+      return next;
+    });
+
+    setSelectedEmployee(updatedEmployee);
 
     setAlert({ type: 'success', message: 'Employee updated successfully!' });
   };
@@ -331,15 +460,30 @@ const HRComponent: React.FC = () => {
       throw new Error(response.data?.message ?? 'Failed to delete employee');
     }
 
-    setEmployees(prev => prev.filter(emp => emp.id !== employeeToDelete.id));
+    setEmployees((prev) => {
+      const next = prev.filter(emp => emp.id !== employeeToDelete.id);
+      updateFilterOptions(next);
+      if (!hasLivePayrollMetrics) {
+        recalcPayrollFromEmployees(next);
+      }
+      return next;
+    });
     setSelectedEmployee(prev => (prev && prev.id === employeeToDelete.id ? null : prev));
     setAlert({ type: 'success', message: `${employeeToDelete.name} was removed` });
     setShowDeleteModal(false);
     setEmployeeToDelete(null);
   };
 
-  const handleAwardEmployee = (emp: Employee) => {
-    setAlert({ type: 'success', message: `Award submitted for ${emp.name}!` });
+  const handleAwardEmployee = async (emp: Employee) => {
+    try {
+      await apiClient.post(`/api/tenant/employees/${emp.id}/awards`, {
+        tenantSlug,
+        awardedAt: new Date().toISOString()
+      });
+      setAlert({ type: 'success', message: `Award submitted for ${emp.name}!` });
+    } catch (error) {
+      setAlert({ type: 'error', message: error instanceof Error ? error.message : 'Failed to submit award' });
+    }
   };
 
   const handleExportReport = async () => {
@@ -356,6 +500,66 @@ const HRComponent: React.FC = () => {
     a.download = `hr-report-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
+  };
+
+  const handlePayrollSubmit = async (data: any) => {
+    try {
+      await apiClient.post('/api/tenant/payroll/run', {
+        tenantSlug,
+        ...data
+      });
+      setAlert({ type: 'success', message: 'Payroll run successfully completed!' });
+      const refresh = await apiClient.get<{ success: boolean; data?: PayrollMetrics }>(
+        `/api/tenant/payroll/summary?tenantSlug=${tenantSlug}`
+      );
+      if (refresh.data?.success && refresh.data.data) {
+        setPayrollMetrics(refresh.data.data);
+        setHasLivePayrollMetrics(true);
+      } else if (!hasLivePayrollMetrics) {
+        recalcPayrollFromEmployees(employees);
+      }
+    } catch (error) {
+      setAlert({ type: 'error', message: error instanceof Error ? error.message : 'Failed to run payroll' });
+    }
+  };
+
+  const handleJobSubmit = async (data: any) => {
+    try {
+      await apiClient.post('/api/tenant/jobs', {
+        tenantSlug,
+        ...data
+      });
+      setAlert({ type: 'success', message: 'Job posting created successfully!' });
+    } catch (error) {
+      setAlert({ type: 'error', message: error instanceof Error ? error.message : 'Failed to create job posting' });
+    }
+  };
+
+  const handleTrainingSubmit = async (data: any) => {
+    try {
+      const payload = {
+        tenantSlug,
+        ...data
+      };
+      const response = await apiClient.post<{ success: boolean; data: TrainingSession }>(
+        '/api/tenant/training',
+        payload
+      );
+
+      const session: TrainingSession = response.data?.data || {
+        id: crypto.randomUUID(),
+        title: data.title,
+        status: 'Upcoming',
+        participants: Number(data.maxParticipants) || 0,
+        instructor: data.instructor || 'TBD',
+        startDate: data.startDate
+      };
+
+      setTrainingSessions((prev) => [session, ...prev]);
+      setAlert({ type: 'success', message: 'Training session scheduled successfully!' });
+    } catch (error) {
+      setAlert({ type: 'error', message: error instanceof Error ? error.message : 'Failed to schedule training' });
+    }
   };
 
   return (
@@ -432,19 +636,18 @@ const HRComponent: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex flex-col md:flex-row gap-4">
             <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option>All Departments</option>
-              <option>Engineering</option>
-              <option>Sales</option>
-              <option>Marketing</option>
-              <option>HR</option>
-              <option>Finance</option>
+              {departmentOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
             </select>
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option>All Statuses</option>
-              <option>Active</option>
-              <option>On Leave</option>
-              <option>Inactive</option>
-              <option>Terminated</option>
+              {statusOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
             </select>
             <input 
               type="text" 
@@ -574,22 +777,32 @@ const HRComponent: React.FC = () => {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Payroll Summary</h3>
           <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <p className="text-2xl font-bold text-blue-600">$456,789</p>
-              <p className="text-sm text-gray-600">Monthly</p>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <p className="text-2xl font-bold text-green-600">$5.4M</p>
-              <p className="text-sm text-gray-600">Annual</p>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <p className="text-2xl font-bold text-purple-600">$1,952</p>
-              <p className="text-sm text-gray-600">Avg Salary</p>
-            </div>
-            <div className="text-center p-4 bg-orange-50 rounded-lg">
-              <p className="text-2xl font-bold text-orange-600">$234,567</p>
-              <p className="text-sm text-gray-600">Benefits</p>
-            </div>
+            {[{
+              label: 'Monthly',
+              value: payrollMetrics.monthly,
+              accent: 'bg-blue-50 text-blue-600'
+            }, {
+              label: 'Annual',
+              value: payrollMetrics.annual,
+              accent: 'bg-green-50 text-green-600'
+            }, {
+              label: 'Avg Salary',
+              value: payrollMetrics.averageSalary,
+              accent: 'bg-purple-50 text-purple-600'
+            }, {
+              label: 'Benefits',
+              value: payrollMetrics.benefits,
+              accent: 'bg-orange-50 text-orange-600'
+            }].map((metric) => (
+              <div key={metric.label} className={`text-center p-4 rounded-lg ${metric.accent}`}> 
+                <p className="text-2xl font-bold">
+                  {metric.value ? 
+                    metric.value.toLocaleString('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }) :
+                    '—' }
+                </p>
+                <p className="text-sm text-gray-600">{metric.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -601,31 +814,65 @@ const HRComponent: React.FC = () => {
           <button onClick={() => setShowTrainingModal(true)} className="text-sm text-blue-600 hover:text-blue-800">Schedule Training</button>
         </div>
         <div className="space-y-3">
-          {[
-            { title: 'Leadership Excellence', participants: 12, status: 'Upcoming', instructor: 'Dr. Sarah Mitchell' },
-            { title: 'Advanced Sales', participants: 25, status: 'In Progress', instructor: 'John Anderson' },
-            { title: 'Security Awareness', participants: 234, status: 'Completed', instructor: 'Security Team' }
-          ].map((t, i) => (
-            <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h4 className="font-medium text-gray-900">{t.title}</h4>
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    t.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                    t.status === 'In Progress' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'
-                  }`}>{t.status}</span>
+          {trainingSessions.length === 0 ? (
+            <p className="text-sm text-gray-500">Schedule a session to get started.</p>
+          ) : (
+            trainingSessions.map((session) => (
+              <div key={session.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h4 className="font-medium text-gray-900">{session.title}</h4>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      session.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                      session.status === 'In Progress' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {session.status}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    {session.participants} participants • Instructor: {session.instructor}
+                    {session.startDate ? ` • Starts ${new Date(session.startDate).toLocaleDateString()}` : ''}
+                  </p>
                 </div>
-                <p className="text-sm text-gray-600">{t.participants} participants • Instructor: {t.instructor}</p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={async () => {
+                      const nextStatus = session.status === 'Upcoming'
+                        ? 'In Progress'
+                        : session.status === 'In Progress'
+                          ? 'Completed'
+                          : 'Completed';
+                      try {
+                        await apiClient.patch(`/api/tenant/training/${session.id}`, {
+                          tenantSlug,
+                          status: nextStatus
+                        });
+                        setTrainingSessions((prev) =>
+                          prev.map((item) =>
+                            item.id === session.id ? { ...item, status: nextStatus } : item
+                          )
+                        );
+                        setAlert({ type: 'success', message: `Training marked as ${nextStatus}` });
+                      } catch (error) {
+                        setAlert({ type: 'error', message: error instanceof Error ? error.message : 'Unable to update training status' });
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    <Briefcase className="w-4 h-4" />
+                    Advance Status
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
       {/* Modals */}
       <AddEmployeeModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onSubmit={handleAddEmployee} />
-      <RunPayrollModal isOpen={showPayrollModal} onClose={() => setShowPayrollModal(false)} onSubmit={() => setAlert({ type: 'success', message: 'Payroll run successfully completed!' })} />
-      <PostJobModal isOpen={showJobModal} onClose={() => setShowJobModal(false)} onSubmit={() => setAlert({ type: 'success', message: 'Job posting created successfully!' })} />
+      <RunPayrollModal isOpen={showPayrollModal} onClose={() => setShowPayrollModal(false)} onSubmit={handlePayrollSubmit} />
+      <PostJobModal isOpen={showJobModal} onClose={() => setShowJobModal(false)} onSubmit={handleJobSubmit} />
       <ViewEmployeeModal
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
@@ -649,7 +896,7 @@ const HRComponent: React.FC = () => {
         onConfirm={handleConfirmDeleteEmployee}
         employeeName={employeeToDelete?.name}
       />
-      <TrainingModal isOpen={showTrainingModal} onClose={() => setShowTrainingModal(false)} onSubmit={() => setAlert({ type: 'success', message: 'Training session scheduled successfully!' })} />
+      <TrainingModal isOpen={showTrainingModal} onClose={() => setShowTrainingModal(false)} onSubmit={handleTrainingSubmit} />
 
       {/* Alert */}
       {alert && (

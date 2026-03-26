@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface FormAlertProps {
   type: 'success' | 'error' | 'info';
@@ -33,9 +33,10 @@ interface AddEmployeeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: any) => Promise<void>;
+  departments: string[];
 }
 
-export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose, onSubmit }) => {
+export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose, onSubmit, departments }) => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -85,13 +86,24 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
           <input type="text" placeholder="First Name *" value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required />
           <input type="text" placeholder="Last Name" value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
           <input type="email" placeholder="Email *" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-          <select value={formData.department} onChange={(e) => setFormData({...formData, department: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+          <select
+            value={formData.department}
+            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
             <option value="">Select Department *</option>
-            <option value="Engineering">Engineering</option>
-            <option value="Sales">Sales</option>
-            <option value="Marketing">Marketing</option>
-            <option value="HR">HR</option>
-            <option value="Finance">Finance</option>
+            {departments.length === 0 ? (
+              <option value="" disabled>
+                No departments available
+              </option>
+            ) : (
+              departments.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))
+            )}
           </select>
           <input type="text" placeholder="Position" value={formData.position} onChange={(e) => setFormData({...formData, position: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
           <input type="date" placeholder="Start Date" value={formData.startDate} onChange={(e) => setFormData({...formData, startDate: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -116,9 +128,11 @@ interface EditEmployeeModalProps {
   onClose: () => void;
   onSubmit: (data: any) => Promise<void>;
   employee?: any;
+  departments: string[];
+  statuses: string[];
 }
 
-export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, onSubmit, employee }) => {
+export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, onSubmit, employee, departments, statuses }) => {
   const [formData, setFormData] = React.useState({
     firstName: '',
     lastName: '',
@@ -185,13 +199,24 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, on
           <input type="text" placeholder="First Name *" value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required />
           <input type="text" placeholder="Last Name" value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
           <input type="email" placeholder="Email *" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-          <select value={formData.department} onChange={(e) => setFormData({...formData, department: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+          <select
+            value={formData.department}
+            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
             <option value="">Select Department *</option>
-            <option value="Engineering">Engineering</option>
-            <option value="Sales">Sales</option>
-            <option value="Marketing">Marketing</option>
-            <option value="HR">HR</option>
-            <option value="Finance">Finance</option>
+            {departments.length === 0 ? (
+              <option value="" disabled>
+                No departments available
+              </option>
+            ) : (
+              departments.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))
+            )}
           </select>
           <input type="text" placeholder="Position" value={formData.position} onChange={(e) => setFormData({...formData, position: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
           <input type="date" placeholder="Start Date" value={formData.startDate} onChange={(e) => setFormData({...formData, startDate: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -201,11 +226,20 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, on
             <option value="Part-time">Part-time</option>
             <option value="Contract">Contract</option>
           </select>
-          <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="Active">Active</option>
-            <option value="On Leave">On Leave</option>
-            <option value="Inactive">Inactive</option>
-            <option value="Terminated">Terminated</option>
+          <select
+            value={formData.status}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {statuses.length === 0 ? (
+              <option value="Active">Active</option>
+            ) : (
+              statuses.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))
+            )}
           </select>
           <div className="flex gap-3 pt-4">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancel</button>
@@ -220,7 +254,7 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, on
 interface RunPayrollModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: any) => Promise<void>;
 }
 
 export const RunPayrollModal: React.FC<RunPayrollModalProps> = ({ isOpen, onClose, onSubmit }) => {
@@ -243,13 +277,17 @@ export const RunPayrollModal: React.FC<RunPayrollModalProps> = ({ isOpen, onClos
       return;
     }
 
-    await new Promise(r => setTimeout(r, 1200));
-    onSubmit(formData);
-    setAlert({ type: 'success', message: 'Payroll run initiated successfully!' });
-    setTimeout(() => {
-      onClose();
-    }, 1500);
-    setLoading(false);
+    try {
+      await onSubmit(formData);
+      setAlert({ type: 'success', message: 'Payroll run initiated successfully!' });
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    } catch (error) {
+      setAlert({ type: 'error', message: error instanceof Error ? error.message : 'Failed to run payroll' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -289,10 +327,11 @@ export const RunPayrollModal: React.FC<RunPayrollModalProps> = ({ isOpen, onClos
 interface PostJobModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: any) => Promise<void>;
+  departments: string[];
 }
 
-export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onSubmit }) => {
+export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onSubmit, departments }) => {
   const [formData, setFormData] = useState({
     title: '',
     department: '',
@@ -314,14 +353,18 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
       return;
     }
 
-    await new Promise(r => setTimeout(r, 1000));
-    onSubmit(formData);
-    setAlert({ type: 'success', message: 'Job posting created successfully!' });
-    setTimeout(() => {
-      setFormData({ title: '', department: '', description: '', requirements: '', salaryRange: '', jobType: 'Full-time' });
-      onClose();
-    }, 1500);
-    setLoading(false);
+    try {
+      await onSubmit(formData);
+      setAlert({ type: 'success', message: 'Job posting created successfully!' });
+      setTimeout(() => {
+        setFormData({ title: '', department: '', description: '', requirements: '', salaryRange: '', jobType: 'Full-time' });
+        onClose();
+      }, 1500);
+    } catch (error) {
+      setAlert({ type: 'error', message: error instanceof Error ? error.message : 'Failed to create job posting' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -333,13 +376,24 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
         {alert && <FormAlert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />}
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="text" placeholder="Job Title *" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-          <select value={formData.department} onChange={(e) => setFormData({...formData, department: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+          <select
+            value={formData.department}
+            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
             <option value="">Select Department *</option>
-            <option value="Engineering">Engineering</option>
-            <option value="Sales">Sales</option>
-            <option value="Marketing">Marketing</option>
-            <option value="HR">HR</option>
-            <option value="Finance">Finance</option>
+            {departments.length === 0 ? (
+              <option value="" disabled>
+                No departments available
+              </option>
+            ) : (
+              departments.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))
+            )}
           </select>
           <textarea placeholder="Job Description *" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" rows={4} required />
           <textarea placeholder="Requirements" value={formData.requirements} onChange={(e) => setFormData({...formData, requirements: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" rows={3} />
@@ -497,7 +551,7 @@ export const DeleteEmployeeModal: React.FC<DeleteEmployeeModalProps> = ({ isOpen
 interface TrainingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: any) => Promise<void>;
 }
 
 export const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onSubmit }) => {
@@ -521,14 +575,18 @@ export const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, o
       return;
     }
 
-    await new Promise(r => setTimeout(r, 1000));
-    onSubmit(formData);
-    setAlert({ type: 'success', message: 'Training scheduled successfully!' });
-    setTimeout(() => {
-      setFormData({ title: '', startDate: '', duration: '', maxParticipants: '', instructor: '' });
-      onClose();
-    }, 1500);
-    setLoading(false);
+    try {
+      await onSubmit(formData);
+      setAlert({ type: 'success', message: 'Training scheduled successfully!' });
+      setTimeout(() => {
+        setFormData({ title: '', startDate: '', duration: '', maxParticipants: '', instructor: '' });
+        onClose();
+      }, 1500);
+    } catch (error) {
+      setAlert({ type: 'error', message: error instanceof Error ? error.message : 'Failed to schedule training' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;

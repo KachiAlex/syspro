@@ -115,8 +115,6 @@ export function CreateLeadModal({
     }
   };
 
-  if (!isOpen) return null;
-
   useEffect(() => {
     if (!isOpen) {
       setError(null);
@@ -137,6 +135,8 @@ export function CreateLeadModal({
       });
     }
   }, [isOpen, mode, initialData]);
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -384,8 +384,6 @@ export function CreateContactModal({
     }
   };
 
-  if (!isOpen) return null;
-
   useEffect(() => {
     if (!isOpen) {
       setError(null);
@@ -415,6 +413,8 @@ export function CreateContactModal({
       });
     }
   }, [isOpen, mode, initialData]);
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -636,8 +636,6 @@ export function CreateDealModal({
     }
   };
 
-  if (!isOpen) return null;
-
   useEffect(() => {
     if (!isOpen) {
       setError(null);
@@ -662,6 +660,8 @@ export function CreateDealModal({
       });
     }
   }, [isOpen, mode, initialData]);
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
