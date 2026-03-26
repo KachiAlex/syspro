@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
-import { ensureTenantTable, mapTenantRow, TenantRow } from "../route";
+import { ensureTenantTable } from "@/lib/tenant/tenant-table";
+import { mapTenantRow, TenantRow } from "../route";
 
 const actionSchema = z.object({
   action: z.enum(["suspend", "activate"]),

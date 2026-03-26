@@ -445,6 +445,8 @@ export class PerformanceMonitor {
     
     console.groupEnd();
   }
+}
+
 // ... (rest of the code remains the same)
 
 // Memoization utility
@@ -453,15 +455,14 @@ export function memoize<T extends (...args: any[]) => any>(
   keyGenerator?: (...args: Parameters<T>) => string
 ): T {
   const cache = new Map<string, ReturnType<T>>();
-  
+
   return ((...args: Parameters<T>) => {
     const key = keyGenerator ? keyGenerator(...args) : JSON.stringify(args);
-    
     if (cache.has(key)) {
-      return cache.get(key)!;
+      return cache.get(key) as ReturnType<T>;
     }
-    
-    const result = func(...args);
+
+    const result = func.apply(this, args);
     cache.set(key, result);
     return result;
   }) as T;
@@ -471,11 +472,11 @@ export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
 ): T {
-  let timeout: ReturnType<typeof setTimeout>;
+  let timeout: NodeJS.Timeout;
 
   return ((...args: any[]) => {
     clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
+    timeout = setTimeout(() => func.apply(this, args), wait);
   }) as T;
 }
 
@@ -487,7 +488,7 @@ export function throttle<T extends (...args: any[]) => any>(
 
   return ((...args: any[]) => {
     if (!inThrottle) {
-      func(...args);
+      func.apply(this, args);
       inThrottle = true;
       setTimeout(() => {
         inThrottle = false;
