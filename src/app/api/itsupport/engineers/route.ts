@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { EngineerProfile } from '../../../../lib/itsupport/types';
 
-export const engineers = new Map<string, EngineerProfile>();
+// Simple in-memory storage for demonstration
+const engineers = new Map<string, EngineerProfile>();
+
+export { engineers };
 
 export async function GET() {
   // List all engineers (stub)

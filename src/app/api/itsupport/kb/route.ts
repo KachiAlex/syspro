@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
+import { kbArticles } from '../../../../lib/itsupport/store';
 import type { KnowledgeBaseArticle } from '../../../../lib/itsupport/types';
-
-export const kbArticles = new Map<string, KnowledgeBaseArticle>();
 
 export async function GET() {
   // List all KB articles (stub)

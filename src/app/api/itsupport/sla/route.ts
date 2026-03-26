@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
+import { slas } from '../../../../lib/itsupport/store';
 import type { SLA } from '../../../../lib/itsupport/types';
-
-export const slas = new Map<string, SLA>();
 
 export async function GET() {
   // List all SLAs (stub)

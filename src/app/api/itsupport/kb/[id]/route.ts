@@ -19,5 +19,5 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
   if (!kbArticles.has(params.id)) return NextResponse.json({ error: 'not found' }, { status: 404 });
   kbArticles.delete(params.id);
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ success: true });
 }

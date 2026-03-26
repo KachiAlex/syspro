@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Compatibility proxy: forward /api/itsupport/* -> /api/support/* on same origin
-export async function handler(request: NextRequest, { params }: { params: { path: string[] } }) {
+export async function GET(request: NextRequest, { params }: { params: { path: string[] } }) {
   try {
     const path = params.path?.join('/') || '';
     const url = new URL(request.url);
@@ -27,4 +27,22 @@ export async function handler(request: NextRequest, { params }: { params: { path
   }
 }
 
-export { handler as GET, handler as POST, handler as PUT, handler as PATCH, handler as DELETE, handler as OPTIONS };
+export async function POST(request: NextRequest, { params }: { params: { path: string[] } }) {
+  return GET(request, { params });
+}
+
+export async function PUT(request: NextRequest, { params }: { params: { path: string[] } }) {
+  return GET(request, { params });
+}
+
+export async function PATCH(request: NextRequest, { params }: { params: { path: string[] } }) {
+  return GET(request, { params });
+}
+
+export async function DELETE(request: NextRequest, { params }: { params: { path: string[] } }) {
+  return GET(request, { params });
+}
+
+export async function OPTIONS(request: NextRequest, { params }: { params: { path: string[] } }) {
+  return GET(request, { params });
+}
