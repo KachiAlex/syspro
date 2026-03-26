@@ -39,6 +39,8 @@ interface ApiEmployee {
   hireDate?: string | null;
   phone?: string | null;
   costCenter?: string | null;
+  salary?: number | string | null;
+  employmentType?: string | null;
 }
 
 interface Employee {
@@ -220,7 +222,7 @@ const HRComponent: React.FC = () => {
         startDate: employee.hireDate ? new Date(employee.hireDate).toISOString().split('T')[0] : 'N/A',
         status: employee.status ? formatEmployeeStatus(employee.status) : 'Active',
         performance: 'Good',
-        salary: '—',
+        salary: typeof employee.salary === 'number' ? employee.salary.toString() : employee.salary?.toString() ?? '—',
       }));
 
       setEmployees(normalized);
@@ -430,7 +432,7 @@ const HRComponent: React.FC = () => {
       startDate: updated.hireDate ? new Date(updated.hireDate).toISOString().split('T')[0] : 'N/A',
       status: updated.status ? formatEmployeeStatus(updated.status) : 'Active',
       performance: selectedEmployee.performance,
-      salary: selectedEmployee.salary,
+      salary: typeof updated.salary === 'number' ? updated.salary.toString() : updated.salary?.toString() ?? selectedEmployee.salary,
     };
 
     setEmployees((prev) => {
@@ -870,9 +872,23 @@ const HRComponent: React.FC = () => {
       </div>
 
       {/* Modals */}
-      <AddEmployeeModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onSubmit={handleAddEmployee} />
-      <RunPayrollModal isOpen={showPayrollModal} onClose={() => setShowPayrollModal(false)} onSubmit={handlePayrollSubmit} />
-      <PostJobModal isOpen={showJobModal} onClose={() => setShowJobModal(false)} onSubmit={handleJobSubmit} />
+      <AddEmployeeModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddEmployee}
+        departments={departmentOptionsForForms}
+      />
+      <RunPayrollModal
+        isOpen={showPayrollModal}
+        onClose={() => setShowPayrollModal(false)}
+        onSubmit={handlePayrollSubmit}
+      />
+      <PostJobModal
+        isOpen={showJobModal}
+        onClose={() => setShowJobModal(false)}
+        onSubmit={handleJobSubmit}
+        departments={departmentOptionsForForms}
+      />
       <ViewEmployeeModal
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
@@ -886,6 +902,8 @@ const HRComponent: React.FC = () => {
         onClose={() => setShowEditModal(false)}
         onSubmit={handleUpdateEmployee}
         employee={selectedEmployee}
+        departments={departmentOptionsForForms}
+        statuses={statusOptionsForForms}
       />
       <DeleteEmployeeModal
         isOpen={showDeleteModal}
@@ -896,7 +914,11 @@ const HRComponent: React.FC = () => {
         onConfirm={handleConfirmDeleteEmployee}
         employeeName={employeeToDelete?.name}
       />
-      <TrainingModal isOpen={showTrainingModal} onClose={() => setShowTrainingModal(false)} onSubmit={handleTrainingSubmit} />
+      <TrainingModal
+        isOpen={showTrainingModal}
+        onClose={() => setShowTrainingModal(false)}
+        onSubmit={handleTrainingSubmit}
+      />
 
       {/* Alert */}
       {alert && (
