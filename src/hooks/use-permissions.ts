@@ -62,11 +62,6 @@ export function usePermissions() {
           cache: "no-store",
         }).catch(() => null);
 
-        if (res && res.status === 401 && typeof window !== "undefined") {
-          window.location.assign("/access?error=auth_required");
-          return;
-        }
-
         if (res && res.ok) {
           const data = await res.json();
           setPermissions({

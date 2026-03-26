@@ -191,7 +191,7 @@ export const assetCategoryCreateSchema = z.object({
   name: z.string().min(1).max(255),
   description: z.string().optional(),
   defaultUsefulLifeYears: z.number().int().positive().default(5),
-  defaultDepreciationMethod: z.enum(DEPRECIATION_METHODS as unknown as [string, ...string[]]),
+  defaultDepreciationMethod: z.enum(DEPRECIATION_METHODS),
   defaultResidualPercent: z.number().min(0).max(100).optional(),
   assetAccountId: z.bigint().optional(),
   accumulatedDepreciationAccountId: z.bigint().optional(),
@@ -210,7 +210,7 @@ export const assetCreateSchema = z.object({
   purchaseCost: z.number().nonnegative(),
   purchaseInvoiceId: z.bigint().optional(),
   usefulLifeYears: z.number().int().positive().default(5),
-  depreciationMethod: z.enum(DEPRECIATION_METHODS as unknown as [string, ...string[]]),
+  depreciationMethod: z.enum(DEPRECIATION_METHODS),
   residualValue: z.number().nonnegative().optional(),
 });
 
@@ -219,9 +219,9 @@ export const assetUpdateSchema = z.object({
   description: z.string().optional(),
   location: z.string().optional(),
   usefulLifeYears: z.number().int().positive().optional(),
-  depreciationMethod: z.enum(DEPRECIATION_METHODS as unknown as [string, ...string[]]).optional(),
+  depreciationMethod: z.enum(DEPRECIATION_METHODS).optional(),
   residualValue: z.number().nonnegative().optional(),
-  assetStatus: z.enum(ASSET_STATUSES as unknown as [string, ...string[]]).optional(),
+  assetStatus: z.enum(ASSET_STATUSES).optional(),
 });
 
 export const depreciationScheduleCreateSchema = z.object({
@@ -237,7 +237,7 @@ export const assetDisposalCreateSchema = z.object({
   tenantId: z.bigint(),
   assetId: z.bigint(),
   disposalDate: z.date(),
-  disposalMethod: z.enum(DISPOSAL_METHODS as unknown as [string, ...string[]]),
+  disposalMethod: z.enum(DISPOSAL_METHODS),
   salePrice: z.number().nonnegative().optional(),
   cashReceiptAccountId: z.bigint().optional(),
   gainLossAccountId: z.bigint().optional(),
@@ -258,10 +258,10 @@ export type AssetDisposalCreateInput = z.infer<typeof assetDisposalCreateSchema>
  */
 
 export type ReportType = "P_AND_L" | "BALANCE_SHEET" | "CASH_FLOW" | "AGED_RECEIVABLES" | "AGED_PAYABLES";
-export const REPORT_TYPES: ReportType[] = ["P_AND_L", "BALANCE_SHEET", "CASH_FLOW", "AGED_RECEIVABLES", "AGED_PAYABLES"];
+export const REPORT_TYPES = ["P_AND_L", "BALANCE_SHEET", "CASH_FLOW", "AGED_RECEIVABLES", "AGED_PAYABLES"] as const;
 
 export type ExportFormat = "PDF" | "EXCEL" | "CSV";
-export const EXPORT_FORMATS: ExportFormat[] = ["PDF", "EXCEL", "CSV"];
+export const EXPORT_FORMATS = ["PDF", "EXCEL", "CSV"] as const;
 
 /**
  * P&L Report Line

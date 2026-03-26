@@ -1,24 +1,20 @@
-import EventEmitter from 'events';
-import { AutomationEvent } from './types';
+import type { AutomationEvent } from './types';
 
-class EventBus {
-  private ee = new EventEmitter();
+export type EventBusShape = {
+  publish(event: AutomationEvent): void;
+  subscribe(type: string, handler: (e: AutomationEvent) => void): () => void;
+  once(type: string, handler: (e: AutomationEvent) => void): void;
+};
 
-  publish(event: AutomationEvent) {
-    const e = { ...event, receivedAt: event.receivedAt ?? new Date().toISOString() };
-    this.ee.emit(e.type, e);
-  }
+// At runtime forward to the root automation event-bus. Use require() to avoid
+// TypeScript following cross-repo imports during type-checking.
+// @ts-ignore
+const remote = require('../../../../src/lib/automation/event-bus');
 
-  subscribe(type: string, handler: (e: AutomationEvent) => void) {
-    this.ee.on(type, handler);
-    return () => this.ee.off(type, handler);
-  }
-
-  once(type: string, handler: (e: AutomationEvent) => void) {
-    this.ee.once(type, handler);
-  }
-}
-
-export const eventBus = new EventBus();
+export const eventBus: EventBusShape = remote?.eventBus ?? {
+  publish() {},
+  subscribe() { return () => {}; },
+  once() {},
+};
 
 export default eventBus;

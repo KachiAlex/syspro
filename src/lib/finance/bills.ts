@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
+import { db, sql as SQL } from "../sql-client";
 import { createBillJournalEntry } from "./accounting";
 
 export interface BillItem {
@@ -81,7 +81,7 @@ export interface AgingReport {
   total: number;
 }
 
-// using imported SQL from sql-client
+/* using imported SQL */
 
 export async function ensureBillTables(sql = SQL) {
   // Tables should already exist from migration, but ensure for development
@@ -161,23 +161,23 @@ export async function listBills(filters: {
   }
 
   const whereClause = whereConditions.length > 0 
-    ? sql`where ${db.join(whereConditions, ' and ')}`
+    ? SQL`where ${db.join(whereConditions, ' and ')}`
     : sql``;
 
-  const records = await SQL<BillRecord>`
+  const records = (await sql`
     select * from bills 
     ${whereClause}
     order by bill_date desc, created_at desc
     limit ${limit} offset ${offset}
-  `;
+  `) as BillRecord[];
 
   if (!records.length) return [];
 
-  const items = await SQL<BillItemRecord>`
+  const items = (await sql`
     select * from bill_items 
     where bill_id = any(${records.map(r => r.id)})
     order by id
-  `;
+  `) as BillItemRecord[];
 
   const itemsByBill: Record<string, BillItemRecord[]> = {};
   items.forEach(item => {
@@ -192,15 +192,15 @@ export async function getBill(billId: string): Promise<Bill | null> {
   const sql = SQL;
   await ensureBillTables(sql);
 
-  const records = await SQL<BillRecord>`
+  const records = (await sql`
     select * from bills where id = ${billId} limit 1
-  `;
+  `) as BillRecord[];
 
   if (!records.length) return null;
 
-  const items = await SQL<BillItemRecord>`
+  const items = (await sql`
     select * from bill_items where bill_id = ${billId} order by id
-  `;
+  `) as BillItemRecord[];
 
   return normalizeBill(records[0], items);
 }
@@ -239,7 +239,7 @@ export async function createBill(payload: {
   }, 0);
   const total = subtotal + taxes;
 
-  const [record] = await SQL<BillRecord>`
+  const [record] = (await sql`
     insert into bills (
       id, tenant_slug, bill_number, vendor_id, po_id, branch_id,
       bill_date, due_date, currency, subtotal, taxes, total, balance_due,
@@ -259,7 +259,7 @@ export async function createBill(payload: {
     const taxAmount = item.taxRate ? lineAmount * (item.taxRate / 100) : 0;
     const totalLineAmount = lineAmount + taxAmount;
     
-    const [itemRecord] = await SQL<BillItemRecord>`
+    const [itemRecord] = (await sql`
       insert into bill_items (
         id, bill_id, description, quantity, unit_price, tax_rate,
         line_amount, account_code, metadata
@@ -268,7 +268,7 @@ export async function createBill(payload: {
         ${item.unitPrice}, ${item.taxRate || null}, ${totalLineAmount},
         ${item.accountCode || null}, null
       ) returning *
-    `;
+    `) as BillItemRecord[];
     
     return itemRecord;
   }));
@@ -290,7 +290,7 @@ export async function updateBill(billId: string, updates: Partial<Bill>): Promis
   const sql = SQL;
   await ensureBillTables(sql);
 
-  const [record] = await SQL<BillRecord>`
+  const [record] = (await sql`
     update bills set
       status = coalesce(${updates.status || null}, status),
       due_date = coalesce(${updates.dueDate || null}, due_date),
@@ -299,13 +299,13 @@ export async function updateBill(billId: string, updates: Partial<Bill>): Promis
       updated_at = now()
     where id = ${billId}
     returning *
-  `;
+  `) as BillRecord[];
 
   if (!record) return null;
 
-  const items = await SQL<BillItemRecord>`
+  const items = (await sql`
     select * from bill_items where bill_id = ${billId} order by id
-  `;
+  `) as BillItemRecord[];
 
   return normalizeBill(record, items);
 }
@@ -328,18 +328,18 @@ export async function convertPOToBill(poId: string, payload: {
   await ensureBillTables(sql);
 
   // Get PO details
-  const poRecords = await SQL<any>`
+  const poRecords = (await sql`
     select * from purchase_orders where id = ${poId} limit 1
-  `;
+  `) as any[];
 
   if (!poRecords.length) return null;
 
   const po = poRecords[0];
   
   // Get PO items
-  const poItems = await SQL<any>`
+  const poItems = (await sql`
     select * from purchase_order_items where po_id = ${poId}
-  `;
+  `) as any[];
 
   // Create bill from PO
   return createBill({
@@ -367,7 +367,7 @@ export async function getAgingReport(tenantSlug: string): Promise<AgingReport[]>
 
   const today = new Date().toISOString().split('T')[0];
   
-  const results = await SQL<any>`
+  const results = (await sql`
     with aging as (
       select 
         b.vendor_id,
@@ -408,7 +408,7 @@ export async function getAgingReport(tenantSlug: string): Promise<AgingReport[]>
     from aging
     group by vendor_id, vendor_name
     order by total desc
-  `;
+  `) as any[];
 
   return results.map(row => ({
     vendorId: row.vendor_id,
@@ -425,33 +425,10 @@ export async function updateBillStatuses(tenantSlug: string): Promise<number> {
   const sql = SQL;
   await ensureBillTables(sql);
 
-  const result = await sql`
-    update bills 
-    set status = case 
-      when balance_due <= 0 then 'paid'
-      when balance_due < total then 'partially_paid'
-      when due_date < current_date and balance_due > 0 then 'overdue'
-      else status
-    end,
-    updated_at = now()
-    where tenant_slug = ${tenantSlug}
-    and status in ('open', 'partially_paid')
-  `;
-
-  // `sql` returns rows; use db.query to get affected row count
-  const r = await db.query(
-    `update bills 
-     set status = case 
-       when balance_due <= 0 then 'paid'
-       when balance_due < total then 'partially_paid'
-       when due_date < current_date and balance_due > 0 then 'overdue'
-       else status
-     end,
-     updated_at = now()
-     where tenant_slug = $1
-     and status in ('open', 'partially_paid')`,
+  const result = await db.query<{ count: number }>(
+    `update bills set status = case when balance_due <= 0 then 'paid' when balance_due < total then 'partially_paid' when due_date < current_date and balance_due > 0 then 'overdue' else status end, updated_at = now() where tenant_slug = $1 and status in ('open','partially_paid')`,
     [tenantSlug]
   );
 
-  return r.rowCount;
+  return result.count;
 }

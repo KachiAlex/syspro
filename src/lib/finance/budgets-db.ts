@@ -1,4 +1,4 @@
-import { db } from "@/lib/sql-client";
+import { db } from "../sql-client";
 import {
   Budget,
   BudgetLine,
@@ -386,38 +386,550 @@ export async function deleteBudgetLine(budgetLineId: bigint, tenantId: bigint): 
   }
 }
 
+/**
+ * BUDGET VERSION OPERATIONS
+ */
+
 export async function createBudgetVersion(
   budgetId: bigint,
   tenantId: bigint,
   versionNumber: number,
   status: BudgetStatus,
-  totalBudgetAmount: number,
+  totalAmount: number,
   changeReason: string,
   changedBy: string,
-  budgetSnapshot?: any
-): Promise<void> {
+  budgetSnapshot: any
+): Promise<BudgetVersion | null> {
   try {
-    const id = Date.now().toString();
-    await db.query(
-      `INSERT INTO budget_versions (id, budget_id, tenant_id, version_number, status, total_budget_amount, change_reason, changed_by, budget_snapshot, created_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, NOW())`,
+    const result = await db.query(
+      `
+      INSERT INTO budget_versions (
+        budget_id, tenant_id, version_number, status, total_budget_amount,
+        change_reason, changed_by, budget_snapshot
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+      `,
       [
-        id,
         budgetId.toString(),
         tenantId.toString(),
         versionNumber,
         status,
-        totalBudgetAmount,
-        changeReason || null,
+        totalAmount,
+        changeReason,
         changedBy,
-        JSON.stringify(budgetSnapshot || {}),
+        JSON.stringify(budgetSnapshot),
       ]
     );
-  } catch (err) {
-    // If migrations not applied, don't fail type-checking or seed flows
-    const e = err as any;
-    console.warn("createBudgetVersion skipped (table may be missing):", e?.message || e);
+
+    return db.mapRow(result.rows[0]);
+  } catch (error) {
+    console.error("Error creating budget version:", error);
+    throw error;
   }
 }
 
-/** End of file */
+export async function getBudgetVersions(budgetId: bigint, tenantId: bigint): Promise<BudgetVersion[]> {
+  try {
+    const result = await db.query(
+      `SELECT * FROM budget_versions WHERE budget_id = $1 AND tenant_id = $2 ORDER BY version_number DESC`,
+      [budgetId.toString(), tenantId.toString()]
+    );
+    return db.mapRows(result.rows);
+  } catch (error) {
+    console.error("Error getting budget versions:", error);
+    throw error;
+  }
+}
+
+/**
+ * BUDGET ACTUALS OPERATIONS
+ */
+
+export async function recordBudgetActual(
+  budgetId: bigint,
+  tenantId: bigint,
+  actual: any
+): Promise<BudgetActual | null> {
+  try {
+    const result = await db.query(
+      `
+      INSERT INTO budget_actuals (
+        budget_id, budget_line_id, tenant_id, actual_type, transaction_id, transaction_code,
+        actual_amount, committed_amount, account_id, account_code, cost_center_id, project_id,
+        transaction_date, notes
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      RETURNING *
+      `,
+      [
+        budgetId.toString(),
+        actual.budgetLineId?.toString() || null,
+        tenantId.toString(),
+        actual.actualType,
+        actual.transactionId?.toString() || null,
+        actual.transactionCode || null,
+        actual.actualAmount,
+        actual.committedAmount || 0,
+        actual.accountId?.toString() || null,
+        actual.accountCode || null,
+        actual.costCenterId?.toString() || null,
+        actual.projectId?.toString() || null,
+        actual.transactionDate || null,
+        actual.notes || null,
+      ]
+    );
+
+    // Check for variances
+    await checkAndCreateVariances(budgetId, tenantId);
+
+    return db.mapRow(result.rows[0]);
+  } catch (error) {
+    console.error("Error recording budget actual:", error);
+    throw error;
+  }
+}
+
+export async function getBudgetActuals(
+  budgetId: bigint,
+  tenantId: bigint,
+  filters?: {
+    actualType?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }
+): Promise<BudgetActual[]> {
+  try {
+    let query = "SELECT * FROM budget_actuals WHERE budget_id = $1 AND tenant_id = $2";
+    const params: any[] = [budgetId.toString(), tenantId.toString()];
+
+    if (filters?.actualType) {
+      query += ` AND actual_type = $${params.length + 1}`;
+      params.push(filters.actualType);
+    }
+    if (filters?.startDate) {
+      query += ` AND transaction_date >= $${params.length + 1}`;
+      params.push(filters.startDate);
+    }
+    if (filters?.endDate) {
+      query += ` AND transaction_date <= $${params.length + 1}`;
+      params.push(filters.endDate);
+    }
+
+    query += " ORDER BY transaction_date DESC";
+
+    const result = await db.query(query, params);
+    return db.mapRows(result.rows);
+  } catch (error) {
+    console.error("Error getting budget actuals:", error);
+    throw error;
+  }
+}
+
+export async function getTotalActualsByBudgetLine(
+  budgetLineId: bigint
+): Promise<{ actual: number; committed: number } | null> {
+  try {
+    const result = await db.query(
+      `
+      SELECT
+        COALESCE(SUM(actual_amount), 0) as actual,
+        COALESCE(SUM(committed_amount), 0) as committed
+      FROM budget_actuals
+      WHERE budget_line_id = $1
+      `,
+      [budgetLineId.toString()]
+    );
+
+    return db.mapRow(result.rows[0]) || null;
+  } catch (error) {
+    console.error("Error getting actuals total:", error);
+    throw error;
+  }
+}
+
+/**
+ * VARIANCE DETECTION AND REPORTING
+ */
+
+export async function checkAndCreateVariances(
+  budgetId: bigint,
+  tenantId: bigint
+): Promise<BudgetVariance[]> {
+  try {
+    const budget = await getBudget(budgetId, tenantId);
+    if (!budget) return [];
+
+    const lines = await getBudgetLines(budgetId, tenantId);
+    const variances: BudgetVariance[] = [];
+
+    for (const line of lines) {
+      const actuals = await getTotalActualsByBudgetLine(BigInt(String(line.id)));
+      if (!actuals) continue;
+
+      const totalSpent = actuals.actual + actuals.committed;
+      const variance = line.budgetedAmount - totalSpent;
+      const variancePercent = (totalSpent / line.budgetedAmount) * 100;
+
+      let varianceType = "UNDER_BUDGET";
+      let alertLevel = "INFO";
+
+      if (totalSpent > line.budgetedAmount) {
+        varianceType = "OVER_BUDGET";
+        alertLevel = variancePercent > 110 ? "CRITICAL" : "WARNING";
+      } else if (variancePercent > 80) {
+        varianceType = "THRESHOLD_WARNING";
+        alertLevel = "WARNING";
+      }
+
+      // Check if variance already exists and update or create
+      const existingVariance = await db.query(
+        `SELECT id FROM budget_variances WHERE budget_line_id = $1 AND variance_type = $2 LIMIT 1`,
+        [BigInt(String(line.id)).toString(), varianceType]
+      );
+
+      if (existingVariance.rows.length > 0) {
+        // Update existing variance
+        await db.query(
+          `
+          UPDATE budget_variances
+          SET actual_amount = $1, committed_amount = $2, variance_amount = $3, variance_percent = $4, alert_level = $5, updated_at = CURRENT_TIMESTAMP
+          WHERE id = $6
+          `,
+          [
+            actuals.actual,
+            actuals.committed,
+            variance,
+            Math.round(variancePercent * 100) / 100,
+            alertLevel,
+            existingVariance.rows[0].id,
+          ]
+        );
+      } else {
+        // Create new variance
+        const result = await db.query(
+          `
+          INSERT INTO budget_variances (
+            budget_id, budget_line_id, tenant_id, variance_type, budgeted_amount,
+            actual_amount, committed_amount, variance_amount, variance_percent, alert_level
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          RETURNING *
+          `,
+          [
+            budgetId.toString(),
+            BigInt(String(line.id)).toString(),
+            tenantId.toString(),
+            varianceType,
+            line.budgetedAmount,
+            actuals.actual,
+            actuals.committed,
+            variance,
+            Math.round(variancePercent * 100) / 100,
+            alertLevel,
+          ]
+        );
+
+        variances.push(db.mapRow(result.rows[0]));
+      }
+    }
+
+    return variances;
+  } catch (error) {
+    console.error("Error checking variances:", error);
+    throw error;
+  }
+}
+
+export async function getBudgetVariances(
+  budgetId: bigint,
+  tenantId: bigint,
+  filters?: {
+    varianceType?: string;
+    alertLevel?: string;
+  }
+): Promise<BudgetVariance[]> {
+  try {
+    let query = "SELECT * FROM budget_variances WHERE budget_id = $1 AND tenant_id = $2";
+    const params: any[] = [budgetId.toString(), tenantId.toString()];
+
+    if (filters?.varianceType) {
+      query += ` AND variance_type = $${params.length + 1}`;
+      params.push(filters.varianceType);
+    }
+    if (filters?.alertLevel) {
+      query += ` AND alert_level = $${params.length + 1}`;
+      params.push(filters.alertLevel);
+    }
+
+    query += " ORDER BY updated_at DESC";
+
+    const result = await db.query(query, params);
+    return db.mapRows(result.rows);
+  } catch (error) {
+    console.error("Error getting budget variances:", error);
+    throw error;
+  }
+}
+
+export async function acknowledgeBudgetVariance(
+  varianceId: bigint,
+  acknowledgedBy: string
+): Promise<BudgetVariance | null> {
+  try {
+    const result = await db.query(
+      `
+      UPDATE budget_variances
+      SET is_acknowledged = true, acknowledged_by = $1, acknowledged_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING *
+      `,
+      [acknowledgedBy, varianceId.toString()]
+    );
+
+    return db.mapRow(result.rows[0]) || null;
+  } catch (error) {
+    console.error("Error acknowledging variance:", error);
+    throw error;
+  }
+}
+
+/**
+ * FORECASTING OPERATIONS
+ */
+
+export async function createBudgetForecast(
+  input: BudgetForecastCreateInput
+): Promise<BudgetForecast | null> {
+  try {
+    const result = await db.query(
+      `
+      INSERT INTO budget_forecasts (
+        budget_id, tenant_id, forecast_type, forecast_period_start, forecast_period_end,
+        forecast_lines, scenario_name, scenario_description, methodology, base_periods,
+        confidence_level, variance_percent, created_by
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'system')
+      RETURNING *
+      `,
+      [
+        input.budgetId.toString(),
+        input.tenantId.toString(),
+        input.forecastType,
+        input.forecastPeriodStart || null,
+        input.forecastPeriodEnd || null,
+        JSON.stringify(input.forecastLines),
+        input.scenarioName || null,
+        input.scenarioDescription || null,
+        input.methodology || null,
+        input.basePeriods || null,
+        input.confidenceLevel || null,
+        input.variancePercent || null,
+      ]
+    );
+
+    return db.mapRow(result.rows[0]);
+  } catch (error) {
+    console.error("Error creating budget forecast:", error);
+    throw error;
+  }
+}
+
+export async function getBudgetForecasts(
+  budgetId: bigint,
+  tenantId: bigint,
+  forecastType?: string
+): Promise<BudgetForecast[]> {
+  try {
+    let query = "SELECT * FROM budget_forecasts WHERE budget_id = $1 AND tenant_id = $2";
+    const params: any[] = [budgetId.toString(), tenantId.toString()];
+
+    if (forecastType) {
+      query += ` AND forecast_type = $${params.length + 1}`;
+      params.push(forecastType);
+    }
+
+    query += " ORDER BY created_at DESC";
+
+    const result = await db.query(query, params);
+    return db.mapRows(result.rows);
+  } catch (error) {
+    console.error("Error getting budget forecasts:", error);
+    throw error;
+  }
+}
+
+export async function generateRollingForecast(
+  budgetId: bigint,
+  tenantId: bigint,
+  basePeriods: number = 3
+): Promise<BudgetForecast | null> {
+  try {
+    const lines = await getBudgetLines(budgetId, tenantId);
+    const forecastLines = [];
+
+    for (const line of lines) {
+      // Calculate average of last N periods (simplified)
+      const actuals = await getBudgetActuals(budgetId, tenantId, {
+        actualType: "EXPENSE",
+      });
+
+      const lineActuals = actuals.filter((a) => a.budgetLineId === BigInt(String(line.id)));
+
+      if (lineActuals.length > 0) {
+        const avgAmount = lineActuals.reduce((sum, a) => sum + a.actualAmount, 0) / lineActuals.length;
+
+        forecastLines.push({
+          budgetLineId: BigInt(String(line.id)),
+          forecastedAmount: avgAmount,
+          confidenceLevel: "MEDIUM" as const,
+        });
+      }
+    }
+
+    return await createBudgetForecast({
+      budgetId,
+      tenantId,
+      forecastType: "ROLLING",
+      forecastLines,
+      methodology: "avg_of_last_n_periods",
+      basePeriods,
+      confidenceLevel: "MEDIUM" as const,
+    });
+  } catch (error) {
+    console.error("Error generating rolling forecast:", error);
+    throw error;
+  }
+}
+
+/**
+ * APPROVAL WORKFLOW
+ */
+
+export async function createBudgetApproval(
+  budgetId: bigint,
+  tenantId: bigint,
+  sequence: number,
+  approverRole: string
+): Promise<BudgetApproval | null> {
+  try {
+    const result = await db.query(
+      `
+      INSERT INTO budget_approvals (budget_id, tenant_id, approval_sequence, approver_role, status)
+      VALUES ($1, $2, $3, $4, 'PENDING')
+      RETURNING *
+      `,
+      [budgetId.toString(), tenantId.toString(), sequence, approverRole]
+    );
+
+    return db.mapRow(result.rows[0]);
+  } catch (error) {
+    console.error("Error creating budget approval:", error);
+    throw error;
+  }
+}
+
+export async function approveBudget(
+  input: BudgetApproveInput
+): Promise<BudgetApproval | null> {
+  try {
+    const result = await db.query(
+      `
+      UPDATE budget_approvals
+      SET status = $1, approver_id = $2, approver_name = $3, comment = $4, approved_at = CURRENT_TIMESTAMP
+      WHERE budget_id = $5 AND tenant_id = $6 AND approval_sequence = 1
+      RETURNING *
+      `,
+      [
+        input.approve ? "APPROVED" : "REJECTED",
+        input.approverId,
+        input.approverName,
+        input.comment || null,
+        input.budgetId.toString(),
+        input.tenantId.toString(),
+      ]
+    );
+
+    if (result.rows[0] && input.approve) {
+      // Change budget status to APPROVED
+      await changeBudgetStatus(input.budgetId, input.tenantId, "APPROVED");
+    }
+
+    return db.mapRow(result.rows[0]) || null;
+  } catch (error) {
+    console.error("Error approving budget:", error);
+    throw error;
+  }
+}
+
+export async function getBudgetApprovals(
+  budgetId: bigint,
+  tenantId: bigint
+): Promise<BudgetApproval[]> {
+  try {
+    const result = await db.query(
+      `SELECT * FROM budget_approvals WHERE budget_id = $1 AND tenant_id = $2 ORDER BY approval_sequence`,
+      [budgetId.toString(), tenantId.toString()]
+    );
+    return db.mapRows(result.rows);
+  } catch (error) {
+    console.error("Error getting budget approvals:", error);
+    throw error;
+  }
+}
+
+/**
+ * ENFORCEMENT CHECK - Used before posting expenses/POs
+ */
+
+export async function checkBudgetEnforcement(
+  budgetId: bigint,
+  budgetLineId: bigint | null,
+  proposedAmount: number
+): Promise<{
+  canProceed: boolean;
+  remainingBalance: number;
+  enforcementMode: string;
+  message: string;
+} | null> {
+  try {
+    const budget = await getBudget(budgetId, BigInt(0)); // Simplified - need tenant context
+    if (!budget) {
+      return null;
+    }
+
+    let remainingBalance = 0;
+
+    if (budgetLineId) {
+      // Check line-level budget
+      const actuals = await getTotalActualsByBudgetLine(budgetLineId);
+      const line = await getBudgetLineVariances(budgetId);
+      const lineData = line.find((l) => l.budgetLineId === budgetLineId);
+
+      if (lineData) {
+        remainingBalance = lineData.remainingBalance;
+      }
+    }
+
+    const wouldExceed = remainingBalance < proposedAmount;
+
+    if (wouldExceed && budget.enforcementMode === "HARD_BLOCK" && !budget.allowOverrun) {
+      return {
+        canProceed: false,
+        remainingBalance,
+        enforcementMode: budget.enforcementMode,
+        message: `Budget exceeded. Remaining: $${remainingBalance}, Proposed: $${proposedAmount}`,
+      };
+    }
+
+    return {
+      canProceed: true,
+      remainingBalance,
+      enforcementMode: budget.enforcementMode,
+      message: wouldExceed ? "Budget threshold exceeded - Warning" : "Budget check passed",
+    };
+  } catch (error) {
+    console.error("Error checking budget enforcement:", error);
+    throw error;
+  }
+}

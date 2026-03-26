@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
+import { db, sql as SQL, SqlClient } from "../sql-client";
 
 export interface JournalEntry {
   id: string;
@@ -37,7 +37,7 @@ export interface ChartOfAccount {
   isActive: boolean;
 }
 
-// using SQL imported from sql-client
+/* using imported SQL */
 
 // Default chart of accounts for vendor transactions
 const DEFAULT_ACCOUNTS: Record<string, ChartOfAccount> = {
@@ -129,14 +129,12 @@ export async function ensureAccountingTables(sql = SQL) {
       )
     `;
 
-    // Create indexes
-    await Promise.all([
-      sql`create index if not exists journal_entries_tenant_idx on journal_entries (tenant_slug)`,
-      sql`create index if not exists journal_entries_reference_idx on journal_entries (reference_type, reference_id)`,
-      sql`create index if not exists journal_lines_entry_idx on journal_entry_lines (entry_id)`,
-      sql`create index if not exists journal_lines_account_idx on journal_entry_lines (account_code)`,
-      sql`create index if not exists coa_tenant_idx on chart_of_accounts (tenant_slug)`
-    ]);
+    // Create indexes (sequential to avoid nested-array typing from template-tag results)
+    await sql`create index if not exists journal_entries_tenant_idx on journal_entries (tenant_slug)`;
+    await sql`create index if not exists journal_entries_reference_idx on journal_entries (reference_type, reference_id)`;
+    await sql`create index if not exists journal_lines_entry_idx on journal_entry_lines (entry_id)`;
+    await sql`create index if not exists journal_lines_account_idx on journal_entry_lines (account_code)`;
+    await sql`create index if not exists coa_tenant_idx on chart_of_accounts (tenant_slug)`;
 
     // Seed default accounts if they don't exist
     await seedDefaultAccounts(sql);
@@ -377,7 +375,7 @@ export async function getJournalEntries(filters: {
   }
 
   const whereClause = whereConditions.length > 0 
-    ? sql`where ${db.join(whereConditions, ' and ')}`
+    ? SQL`where ${db.join(whereConditions, ' and ')}`
     : sql``;
 
   const entries = (await sql`

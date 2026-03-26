@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 
+/* using imported SQL */
+
 export async function ensureAdminTables(sql: SqlClient = SQL) {
   // Departments table
   await sql`

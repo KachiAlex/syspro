@@ -1,5 +1,7 @@
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 
+/* using imported SQL */
+
 export async function ensurePolicyTables(sql: SqlClient = SQL) {
   await sql`create extension if not exists "pgcrypto"`;
   await sql`
@@ -44,13 +46,14 @@ export async function ensurePolicyTables(sql: SqlClient = SQL) {
 
 export async function listPolicies(tenantSlug: string, sql: SqlClient = SQL) {
   await ensurePolicyTables(sql);
-  const policies = await sql`select * from policies where tenant_slug = ${tenantSlug} order by created_at desc`;
-  const versions = await sql`
+  const policies = (await sql`select * from policies where tenant_slug = ${tenantSlug} order by created_at desc`) as any[];
+  const versions = (await sql`
     select pv.* from policy_versions pv
     join policies p on p.id = pv.policy_id
     where p.tenant_slug = ${tenantSlug}
-  `;
-  const versionsByPolicy = versions.reduce((acc: Record<string, any[]>, row: any) => {
+  `) as any[];
+  const versionsArr = versions as any[];
+  const versionsByPolicy = versionsArr.reduce<Record<string, any[]>>((acc: Record<string, any[]>, row: any) => {
     acc[row.policy_id] = acc[row.policy_id] || [];
     acc[row.policy_id].push(row);
     return acc;

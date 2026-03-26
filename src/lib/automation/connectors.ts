@@ -1,4 +1,4 @@
-import { AutomationAction } from "@/lib/automation/types";
+import { AutomationAction } from "@/lib/automation";
 import { evaluatePolicyDecision } from "@/lib/policy/evaluator";
 
 type ActionHandlerResult = { status: "completed" | "failed"; error?: string };

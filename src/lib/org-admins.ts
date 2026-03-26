@@ -1,5 +1,7 @@
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 
+/* using imported SQL */
+
 export type OrgAdminScope = "global" | "continent" | "region" | "country" | "state" | "branch" | "department" | "team";
 
 export type OrgAdmin = {

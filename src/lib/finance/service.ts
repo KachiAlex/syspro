@@ -1,64 +1,3 @@
-import { JournalEntry, JournalLine } from './types';
-
-function makeId(prefix = 'je') {
-  try {
-    // node 14+ crypto
-    // @ts-ignore
-    const { randomUUID } = require('crypto');
-    return randomUUID();
-  } catch (e) {
-    return `${prefix}-${Date.now().toString(36)}`;
-  }
-}
-
-export function validateJournalLines(lines: JournalLine[]) {
-  if (!lines || lines.length === 0) {
-    throw new Error('journal entry must have at least one line');
-  }
-
-  let totalDebit = 0;
-  let totalCredit = 0;
-
-  for (const l of lines) {
-    if (l.amount == null || isNaN(l.amount)) throw new Error('invalid line amount');
-    if (l.amount < 0) throw new Error('line amount must be positive');
-    if (l.side === 'debit') totalDebit += Number(l.amount);
-    else if (l.side === 'credit') totalCredit += Number(l.amount);
-    else throw new Error('line side must be debit or credit');
-  }
-
-  // allow small rounding tolerance
-  const eps = 1e-6;
-  if (Math.abs(totalDebit - totalCredit) > eps) {
-    throw new Error(`unbalanced journal lines: debits=${totalDebit} credits=${totalCredit}`);
-  }
-  return true;
-}
-
-export function createJournalEntry(entry: JournalEntry): JournalEntry {
-  const lines = entry.lines || [];
-  validateJournalLines(lines);
-
-  const id = makeId('je');
-  const now = new Date().toISOString();
-
-  const created: JournalEntry = {
-    ...entry,
-    id,
-    status: entry.status || 'draft',
-    created_at: entry.created_at || now,
-    lines: lines.map((l) => ({ ...l, id: l.id || `${id}-l-${Math.random().toString(36).slice(2,8)}`, journal_entry_id: id })),
-  };
-
-  return created;
-}
-
-export function postJournalEntry(entry: JournalEntry) {
-  const now = new Date().toISOString();
-  if (!entry.id) throw new Error('entry must have id');
-  // in real impl: persist entry and lines, enforce RBAC, create audit log
-  return { ...entry, status: 'posted', posted_at: now } as JournalEntry;
-}
 
 import type { FinanceDashboardSnapshot, FinanceFilters } from "@/lib/finance/types";
 import {
@@ -69,17 +8,11 @@ import {
   type FinanceTrendPointRecord,
 } from "@/lib/finance/db";
 import { ensureFinanceSeedForTenant } from "@/lib/finance/seed";
-import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
+import { db, sql as SQL } from "../sql-client";
+
+/* using imported SQL */
 const DEFAULT_CURRENCY = "₦";
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-import {
-  listFinanceAccounts,
-  insertFinanceAccount,
-  insertFinanceInvoice,
-  createPayment as dbCreatePayment,
-  approveExpense as dbApproveExpense,
-} from "@/lib/finance/db";
 
 type FinanceDataSets = {
   accounts: FinanceAccountRecord[];
@@ -100,7 +33,7 @@ export async function getFinanceDashboardSnapshot(filters: FinanceFilters): Prom
     data = await fetchFinanceData(filters);
   }
 
-  const mappedTrend = mapTrendSeries(data.trendPoints);
+  const mappedTrend: FinanceDashboardSnapshot["trend"] = data.trendPoints.length ? mapTrendSeries(data.trendPoints) : { labels: [], revenue: [], expenses: [] };
 
   return {
     metrics: buildFinanceMetrics({ accounts: data.accounts, receivables: data.receivables, trend: mappedTrend }),
@@ -112,88 +45,88 @@ export async function getFinanceDashboardSnapshot(filters: FinanceFilters): Prom
   };
 }
 
-// Persistence-wrappers
-export async function listAccounts(filters: { tenantSlug: string; regionId?: string; branchId?: string }) {
-  const sql = SQL;
-  await ensureFinanceTables(sql);
-  return listFinanceAccounts(filters);
-}
-
-export async function createAccount(payload: any) {
-  const sql = SQL;
-  await ensureFinanceTables(sql);
-  return insertFinanceAccount(payload);
-}
-
-export async function createInvoice(payload: any) {
-  const sql = SQL;
-  await ensureFinanceTables(sql);
-  return insertFinanceInvoice(payload);
-}
-
-export async function createPayment(payload: any) {
-  const sql = SQL;
-  await ensureFinanceTables(sql);
-  return dbCreatePayment(payload);
-}
-
-export async function approveExpense(tenantSlug: string, expenseId: string, approval: any) {
-  const sql = SQL;
-  await ensureFinanceTables(sql);
-  // forward to db implementation which contains approval rules and audit
-  return dbApproveExpense(expenseId, tenantSlug, approval as any);
-}
-
 async function fetchFinanceData(filters: FinanceFilters): Promise<FinanceDataSets> {
-  const sql = SQL;
-  const [accounts, receivables, payables, expenses, trendPoints] = await Promise.all([
-    sql<FinanceAccountRecord>`
-      select *
-      from finance_accounts
-      where tenant_slug = ${filters.tenantSlug}
-      ${filters.regionId ? sql`and (region_id is null or region_id = ${filters.regionId})` : sql``}
-      ${filters.branchId ? sql`and (branch_id is null or branch_id = ${filters.branchId})` : sql``}
-      order by balance desc
-    `,
-    sql<FinanceScheduleRecord>`
-      select *
-      from finance_schedules
-      where tenant_slug = ${filters.tenantSlug}
-        and document_type = 'receivable'
-        ${filters.regionId ? sql`and (region_id is null or region_id = ${filters.regionId})` : sql``}
-        ${filters.branchId ? sql`and (branch_id is null or branch_id = ${filters.branchId})` : sql``}
-      order by due_date asc
-      limit 12
-    `,
-    sql<FinanceScheduleRecord>`
-      select *
-      from finance_schedules
-      where tenant_slug = ${filters.tenantSlug}
-        and document_type = 'payable'
-        ${filters.regionId ? sql`and (region_id is null or region_id = ${filters.regionId})` : sql``}
-        ${filters.branchId ? sql`and (branch_id is null or branch_id = ${filters.branchId})` : sql``}
-      order by due_date asc
-      limit 12
-    `,
-    sql<FinanceExpenseCategoryRecord>`
-      select *
-      from finance_expense_categories
-      where tenant_slug = ${filters.tenantSlug}
-        ${filters.regionId ? sql`and (region_id is null or region_id = ${filters.regionId})` : sql``}
-        ${filters.branchId ? sql`and (branch_id is null or branch_id = ${filters.branchId})` : sql``}
-      order by amount desc
-      limit 10
-    `,
-    sql<FinanceTrendPointRecord>`
-      select *
-      from finance_trend_points
-      where tenant_slug = ${filters.tenantSlug}
-        and timeframe = ${filters.timeframe}
-        ${filters.regionId ? sql`and (region_id is null or region_id = ${filters.regionId})` : sql``}
-        ${filters.branchId ? sql`and (branch_id is null or branch_id = ${filters.branchId})` : sql``}
-      order by created_at asc
-    `,
-  ]);
+  // Use parameterized queries via db.query to avoid template-tag nested-array typing
+  const paramsA: any[] = [filters.tenantSlug];
+  let idx = 1;
+  let whereExtra = "";
+  if (filters.regionId) {
+    idx++;
+    paramsA.push(filters.regionId);
+    whereExtra += ` and (region_id is null or region_id = $${idx})`;
+  }
+  if (filters.branchId) {
+    idx++;
+    paramsA.push(filters.branchId);
+    whereExtra += ` and (branch_id is null or branch_id = $${idx})`;
+  }
+
+  const accountsQ = `select * from finance_accounts where tenant_slug = $1 ${whereExtra} order by balance desc`;
+  const accounts = (await db.query<FinanceAccountRecord>(accountsQ, paramsA)).rows;
+
+  const paramsR: any[] = [filters.tenantSlug];
+  idx = 1;
+  let whereR = " and document_type = 'receivable'";
+  if (filters.regionId) {
+    idx++;
+    paramsR.push(filters.regionId);
+    whereR += ` and (region_id is null or region_id = $${idx})`;
+  }
+  if (filters.branchId) {
+    idx++;
+    paramsR.push(filters.branchId);
+    whereR += ` and (branch_id is null or branch_id = $${idx})`;
+  }
+  const receivablesQ = `select * from finance_schedules where tenant_slug = $1 ${whereR} order by due_date asc limit 12`;
+  const receivables = (await db.query<FinanceScheduleRecord>(receivablesQ, paramsR)).rows;
+
+  const paramsP: any[] = [filters.tenantSlug];
+  idx = 1;
+  let whereP = " and document_type = 'payable'";
+  if (filters.regionId) {
+    idx++;
+    paramsP.push(filters.regionId);
+    whereP += ` and (region_id is null or region_id = $${idx})`;
+  }
+  if (filters.branchId) {
+    idx++;
+    paramsP.push(filters.branchId);
+    whereP += ` and (branch_id is null or branch_id = $${idx})`;
+  }
+  const payablesQ = `select * from finance_schedules where tenant_slug = $1 ${whereP} order by due_date asc limit 12`;
+  const payables = (await db.query<FinanceScheduleRecord>(payablesQ, paramsP)).rows;
+
+  const paramsE: any[] = [filters.tenantSlug];
+  idx = 1;
+  let whereE = "";
+  if (filters.regionId) {
+    idx++;
+    paramsE.push(filters.regionId);
+    whereE += ` and (region_id is null or region_id = $${idx})`;
+  }
+  if (filters.branchId) {
+    idx++;
+    paramsE.push(filters.branchId);
+    whereE += ` and (branch_id is null or branch_id = $${idx})`;
+  }
+  const expensesQ = `select * from finance_expense_categories where tenant_slug = $1 ${whereE} order by amount desc limit 10`;
+  const expenses = (await db.query<FinanceExpenseCategoryRecord>(expensesQ, paramsE)).rows;
+
+  const paramsT: any[] = [filters.tenantSlug, filters.timeframe];
+  idx = 2;
+  let whereT = " and timeframe = $2";
+  if (filters.regionId) {
+    idx++;
+    paramsT.push(filters.regionId);
+    whereT += ` and (region_id is null or region_id = $${idx})`;
+  }
+  if (filters.branchId) {
+    idx++;
+    paramsT.push(filters.branchId);
+    whereT += ` and (branch_id is null or branch_id = $${idx})`;
+  }
+  const trendQ = `select * from finance_trend_points where tenant_slug = $1 ${whereT} order by created_at asc`;
+  const trendPoints = (await db.query<FinanceTrendPointRecord>(trendQ, paramsT)).rows;
 
   return { accounts, receivables, payables, expenses, trendPoints };
 }

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
+import { db, sql as SQL, SqlClient } from "../sql-client";
 
 export type POItemRecord = {
   id: string;
@@ -46,7 +46,8 @@ export type PurchaseOrder = {
   updatedAt: string;
 };
 
-// using SQL from sql-client
+/* using imported SQL */
+
 export async function ensurePurchaseOrderTables(sql = SQL) {
   await sql`
     create table if not exists purchase_orders (
@@ -80,11 +81,9 @@ export async function ensurePurchaseOrderTables(sql = SQL) {
     )
   `;
 
-  await Promise.all([
-    sql`create index if not exists purchase_orders_tenant_idx on purchase_orders (tenant_slug)`,
-    sql`create index if not exists purchase_orders_supplier_idx on purchase_orders (supplier_id)`,
-    sql`create index if not exists poi_order_idx on purchase_order_items (purchase_order_id)`,
-  ]);
+  await sql`create index if not exists purchase_orders_tenant_idx on purchase_orders (tenant_slug)`;
+  await sql`create index if not exists purchase_orders_supplier_idx on purchase_orders (supplier_id)`;
+  await sql`create index if not exists poi_order_idx on purchase_order_items (purchase_order_id)`;
 }
 
 function normalizePO(row: PurchaseOrderRecord, items: POItemRecord[]): PurchaseOrder {
@@ -112,7 +111,7 @@ export async function listPurchaseOrders(filters: { tenantSlug: string; supplier
   const limit = Math.min(Math.max(filters.limit ?? 50, 1), 200);
   const offset = Math.max(filters.offset ?? 0, 0);
 
-  let rows: PurchaseOrderRecord[];
+    let rows: PurchaseOrderRecord[] = [];
   if (filters.supplierId && filters.status) {
     rows = (await sql`
       select * from purchase_orders where tenant_slug = ${filters.tenantSlug} and supplier_id = ${filters.supplierId} and status = ${filters.status} order by issued_date desc limit ${limit} offset ${offset}
@@ -185,10 +184,10 @@ export async function createPurchaseOrder(payload: {
   `) as PurchaseOrderRecord[];
 
   const itemRows = await Promise.all(payload.items.map(async (it) => {
-    const rows = await sql<POItemRecord>`
-      insert into purchase_order_items (id, purchase_order_id, sku, description, quantity, unit_price, amount)
-      values (${randomUUID()}, ${id}, ${it.sku ?? null}, ${it.description}, ${it.quantity}, ${it.unitPrice}, ${it.quantity * it.unitPrice}) returning *
-    `;
+        const rows = (await sql`
+          insert into purchase_order_items (id, purchase_order_id, sku, description, quantity, unit_price, amount)
+          values (${randomUUID()}, ${id}, ${it.sku ?? null}, ${it.description}, ${it.quantity}, ${it.unitPrice}, ${it.quantity * it.unitPrice}) returning *
+        `) as POItemRecord[];
     return rows[0];
   })) as POItemRecord[];
 
@@ -212,9 +211,11 @@ export async function updatePurchaseOrder(id: string, updates: Partial<PurchaseO
 
   if (updates.items && Array.isArray(updates.items)) {
     await sql`delete from purchase_order_items where purchase_order_id = ${id}`;
-    await Promise.all((updates.items as POItemRecord[]).map((it) => sql`
-      insert into purchase_order_items (id, purchase_order_id, sku, description, quantity, unit_price, amount) values (${(it as any).id ?? randomUUID()}, ${id}, ${(it as any).sku ?? null}, ${(it as any).description}, ${(it as any).quantity}, ${(it as any).unit_price ?? (it as any).unitPrice}, ${(it as any).amount ?? (it as any).quantity * ((it as any).unit_price ?? (it as any).unitPrice)})
-    `));
+    await Promise.all((updates.items as POItemRecord[]).map(async (it) => {
+      await sql`
+        insert into purchase_order_items (id, purchase_order_id, sku, description, quantity, unit_price, amount) values (${(it as any).id ?? randomUUID()}, ${id}, ${(it as any).sku ?? null}, ${(it as any).description}, ${(it as any).quantity}, ${(it as any).unit_price ?? (it as any).unitPrice}, ${(it as any).amount ?? (it as any).quantity * ((it as any).unit_price ?? (it as any).unitPrice)})
+      `;
+    }));
   }
 
   const items = (await sql`

@@ -400,7 +400,7 @@ function seedTenant(tenantSlug: string): TenantSupportData {
   return store[tenantSlug];
 }
 
-function getTenantSupportData(tenantSlug: string): TenantSupportData {
+export function getTenantSupportData(tenantSlug: string): TenantSupportData {
   return store[tenantSlug] || seedTenant(tenantSlug);
 }
 
@@ -568,7 +568,7 @@ export function updateTicket(tenantSlug: string, ticketId: string, updates: Upda
     };
     const field = statusFieldMap[updates.status];
     if (field) {
-      (ticket as any)[field] = now;
+      (ticket as unknown as Record<string, unknown>)[field] = now;
     }
     if (updates.status === "acknowledged" && !ticket.firstResponseAt) {
       ticket.firstResponseAt = now;

@@ -24,10 +24,10 @@ export function FormButton({
   const baseClasses = "inline-flex items-center justify-center gap-2 font-medium rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variantClasses = {
-    primary: "bg-slate-900 text-white hover:bg-slate-800 disabled:hover:bg-slate-900",
-    secondary: "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50 disabled:hover:bg-white",
-    danger: "bg-rose-600 text-white hover:bg-rose-700 disabled:hover:bg-rose-600",
-    success: "bg-emerald-600 text-white hover:bg-emerald-700 disabled:hover:bg-emerald-600",
+    primary: "btn btn-dark",
+    secondary: "btn btn-ghost border border-slate-200 text-muted",
+    danger: "btn btn-rose",
+    success: "btn btn-success",
   };
 
   const sizeClasses = {

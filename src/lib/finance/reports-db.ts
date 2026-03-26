@@ -1,4 +1,4 @@
-import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
+import { db } from "../sql-client";
 import {
   PnLReport,
   PnLReportLine,

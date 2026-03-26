@@ -1,4 +1,4 @@
-import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
+import { db, sql } from "../sql-client";
 import {
   ChartOfAccount,
   ChartOfAccountCreateInput,
@@ -17,7 +17,7 @@ import {
   JOURNAL_TYPES,
 } from "./types";
 
-// using `db` imported from sql-client
+// using `db` and `sql` from sql-client
 
 /**
  * ACCOUNTING CORE DATABASE SERVICE
@@ -32,8 +32,7 @@ export async function createChartOfAccount(
   input: ChartOfAccountCreateInput
 ): Promise<ChartOfAccount> {
   try {
-    const sql = SQL;
-    
+    // use `sql` template from sql-client
     const result = await sql`
       INSERT INTO chart_of_accounts (
         tenant_slug, account_code, account_name, account_type, sub_type,
@@ -64,8 +63,7 @@ export async function getChartOfAccounts(
   filters?: { accountType?: string; branchId?: string; isActive?: boolean }
 ): Promise<ChartOfAccount[]> {
   try {
-    const sql = SQL;
-    
+    // use `sql` template from sql-client
     // Build dynamic query based on filters
     let whereConditions = ["tenant_slug = $1"];
     const params: any[] = [tenantSlug];
@@ -786,9 +784,9 @@ export async function initializeDefaultChartOfAccounts(
       accountCode: acc.code,
       accountName: acc.name,
       accountType: acc.type as any,
-      currency: "NGN",
       isSystemAccount: acc.system,
       isActive: true,
+      currency: "NGN",
       allowManualPosting: true,
       requireCostCenter: false,
       isReconciliationAccount: false,

@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
+import { db, sql as SQL } from "../sql-client";
 
 export interface ApprovalRule {
   id: string;
@@ -58,7 +58,7 @@ export interface ApprovalDecision {
   timestamp: string;
 }
 
-// using SQL imported from sql-client
+/* using imported SQL */
 
 export async function ensureApprovalTables(sql = SQL) {
   try {
@@ -156,8 +156,8 @@ export async function getApprovalRules(filters: {
     whereConditions.push(sql`is_active = ${filters.isActive}`);
   }
 
-    const whereClause = whereConditions.length > 0 
-      ? sql`where ${db.join(whereConditions, ' and ')}`
+  const whereClause = whereConditions.length > 0 
+    ? SQL`where ${db.join(whereConditions, ' and ')}`
     : sql``;
 
   const records = (await sql`
@@ -394,7 +394,7 @@ export async function getApprovals(filters: {
   }
 
   const whereClause = whereConditions.length > 0 
-    ? sql`where ${db.join(whereConditions, ' and ')}`
+    ? SQL`where ${db.join(whereConditions, ' and ')}`
     : sql``;
 
   const records = (await sql`

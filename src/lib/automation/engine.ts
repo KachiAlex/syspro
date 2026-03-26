@@ -1,4 +1,4 @@
-import { AutomationRule, Condition, RuleSimulationResult, Action } from "./types";
+import { AutomationRule, Condition, RuleSimulationResult, Action } from "@/lib/automation";
 import { insertAutomationAudit, enqueueAutomationActions } from "./db";
 
 function getValue(payload: any, path?: string): any {
@@ -35,13 +35,13 @@ function compare(op: Condition["op"], left: any, right: any): boolean {
 
 function evaluateCondition(condition: Condition, payload: any, results: Array<{ condition: Condition; result: boolean }>): boolean {
   if (condition.all && condition.all.length > 0) {
-    const childResults = condition.all.map((c) => evaluateCondition(c, payload, results));
+    const childResults = condition.all.map((c: Condition) => evaluateCondition(c, payload, results));
     const ok = childResults.every(Boolean);
     results.push({ condition, result: ok });
     return ok;
   }
   if (condition.any && condition.any.length > 0) {
-    const childResults = condition.any.map((c) => evaluateCondition(c, payload, results));
+    const childResults = condition.any.map((c: Condition) => evaluateCondition(c, payload, results));
     const ok = childResults.some(Boolean);
     results.push({ condition, result: ok });
     return ok;
@@ -78,7 +78,7 @@ export async function executeRule(rule: AutomationRule, event: { type: string; p
   if (!result.matched || simulation) return result;
 
   await enqueueAutomationActions(
-    result.actions.map((action) => ({
+    result.actions.map((action: Action) => ({
       ruleId: rule.id,
       tenantSlug: event.tenantSlug,
       actionType: action.type,

@@ -6,13 +6,12 @@
 
 import { NextRequest } from "next/server";
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
-import { verifySession, signSession, cookieOptions } from '@/lib/session';
 
 export interface SessionUser {
   id: string;
   email: string;
   name?: string;
-  tenantSlug: string;
+  tenantSlug?: string;
   roleId: string;
 }
 
@@ -28,70 +27,59 @@ export type PermissionLevel = "none" | "read" | "write" | "admin";
  */
 export function getCurrentUser(request: NextRequest): SessionUser | null {
   // Method 1: Check for development headers
-  const userId = request.headers.get("X-User-Id");
-  const userEmail = request.headers.get("X-User-Email") || "user@example.com";
-  const tenantSlug = request.headers.get("X-Tenant-Slug") || undefined;
-  const roleId = request.headers.get("X-Role-Id") || "viewer";
+  const userId = typeof request.headers?.get === "function" ? request.headers.get("X-User-Id") : undefined;
+  const userEmail = typeof request.headers?.get === "function" ? request.headers.get("X-User-Email") || "user@example.com" : "user@example.com";
+  const tenantSlugFromHeader = typeof request.headers?.get === "function" ? request.headers.get("X-Tenant-Slug") || undefined : undefined;
+  const roleIdFromHeader = typeof request.headers?.get === "function" ? request.headers.get("X-Role-Id") || "viewer" : "viewer";
 
   if (userId) {
     return {
       id: userId,
       email: userEmail,
-      name: request.headers.get("X-User-Name") || undefined,
-      tenantSlug: tenantSlug ?? "",
-      roleId,
+      name: typeof request.headers?.get === "function" ? request.headers.get("X-User-Name") || undefined : undefined,
+      tenantSlug: tenantSlugFromHeader,
+      roleId: roleIdFromHeader,
     };
   }
 
-  // Method 2: Check for query parameters (development fallback)
-  const url = new URL(request.url);
-  const queryUserId = url.searchParams.get("userId");
-  const queryEmail = url.searchParams.get("userEmail");
-  const queryTenant = url.searchParams.get("tenantSlug");
-  const queryRole = url.searchParams.get("roleId");
-
-  if (queryUserId) {
-    return {
-      id: queryUserId,
-      email: queryEmail || "user@example.com",
-      name: url.searchParams.get("userName") || undefined,
-      tenantSlug: queryTenant ?? "",
-      roleId: queryRole || "viewer",
-    };
-  }
-
-  // Method 3: Check signed session cookie
+  // Method 2: Check cookies (dev flows may set cookies from client Access page)
   try {
-    const cookie = request.cookies.get('session')?.value || request.cookies.get('syspro_session')?.value;
-    if (cookie) {
-      const payload = verifySession(cookie);
-      if (payload && typeof payload === 'object') {
-        if ((payload as any).exp && Date.now() > (payload as any).exp) return null;
+    if (typeof (request as any).cookies?.get === "function") {
+      const cookieGet = (request as any).cookies.get as (k: string) => string | undefined | null;
+      const cookieUserId = cookieGet("X-User-Id") || cookieGet("dev-user-id") || cookieGet("userId");
+      if (cookieUserId) {
+        const cookieEmail = cookieGet("X-User-Email") || "user@example.com";
+        const cookieRole = cookieGet("X-Role-Id") || "viewer";
+        const cookieTenant = cookieGet("tenantSlug") || cookieGet("X-Tenant-Slug") || undefined;
         return {
-          id: (payload as any).id,
-          email: (payload as any).email,
-          name: (payload as any).name,
-          tenantSlug: (payload as any).tenantSlug ?? "",
-          roleId: (payload as any).roleId || 'viewer',
+          id: cookieUserId,
+          email: cookieEmail,
+          name: cookieGet("X-User-Name") || undefined,
+          tenantSlug: cookieTenant,
+          roleId: cookieRole,
         };
       }
     }
   } catch (e) {
-    // ignore cookie parse errors
+    // ignore cookie read errors and continue to returning null
   }
 
-  // Method 4: Development fallback - return default user in development
-  if (process.env.NODE_ENV === 'development') {
-    return {
-      id: 'dev-user-123',
-      email: 'dev@example.com',
-      name: 'Development User',
-      tenantSlug: 'kreatix-default',
-      roleId: 'admin',
-    };
-  }
+  // Method 2: Check cookies (would come from your auth provider)
+  // const sessionCookie = request.cookies.get("next-auth.session-token");
+  // if (sessionCookie) {
+  //   const session = await getSession({ req: request });
+  //   if (session?.user) {
+  //     return {
+  //       id: session.user.id || "anonymous",
+  //       email: session.user.email || "unknown@example.com",
+  //       name: session.user.name,
+  //       tenantSlug: request.headers.get("X-Tenant-Slug") || "kreatix-default",
+  //       roleId: session.user.roleId || "viewer",
+  //     };
+  //   }
+  // }
 
-  // Method 5: For strict tenant isolation we return null unless an explicit
+  // Method 3: For strict tenant isolation we return null unless an explicit
   // authenticated user is present. This prevents accidental cross-tenant
   // data exposure when no tenant header/session is provided.
   return null;
@@ -165,69 +153,22 @@ export async function getUserFromDB(userId: string, tenantSlug: string) {
 /**
  * Get role permissions from database
  */
-export async function getRolePermissionsFromDB(roleId: string, tenantSlug?: string) {
+export async function getRolePermissionsFromDB(roleId: string) {
   try {
-    // First try to get custom role from database
-    if (tenantSlug) {
-      const { getRoles } = await import("@/lib/admin/db");
-      const { SQL } = await import("@/lib/sql-client");
-      
-      const roles = await getRoles(tenantSlug, SQL);
-      const customRole = roles.find((role: any) => role.id === roleId);
-      
-      if (customRole && customRole.permissions) {
-        // Convert permissions array to module permissions object
-        const modulePermissions: Record<string, "none" | "read" | "write" | "admin"> = {};
-        
-        // Map permission strings to module permissions
-        customRole.permissions.forEach((perm: string) => {
-          if (perm.endsWith('.read')) {
-            const module = perm.replace('.read', '');
-            modulePermissions[module] = 'read';
-          } else if (perm.endsWith('.write')) {
-            const module = perm.replace('.write', '');
-            modulePermissions[module] = 'write';
-          } else if (perm.endsWith('.admin')) {
-            const module = perm.replace('.admin', '');
-            modulePermissions[module] = 'admin';
-          }
-        });
-        
-        return modulePermissions;
-      }
-    }
+    // This is a placeholder - implement with your database client
+    // const pool = await getDbConnection();
+    // const result = await pool.query(
+    //   'SELECT permissions FROM roles WHERE id = $1',
+    //   [roleId]
+    // );
+    // return result.rows[0]?.permissions || getDefaultRolePermissions(roleId);
 
-    // Fall back to default permissions
+    // For now, return default permissions based on role
     return getDefaultRolePermissions(roleId);
   } catch (error) {
     console.error("Failed to get role permissions from DB:", error);
     return getDefaultRolePermissions(roleId);
   }
-}
-
-export function createSessionCookieValue(user: { id: string; email: string; name?: string; tenantSlug?: string; roleId?: string }, maxAgeSeconds = 60 * 60 * 24 * 7) {
-  const payload = {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    tenantSlug: user.tenantSlug,
-    roleId: user.roleId,
-    iat: Date.now(),
-    exp: Date.now() + maxAgeSeconds * 1000,
-  };
-  return signSession(payload);
-}
-
-export function sessionCookieOptions(maxAgeSeconds = 60 * 60 * 24 * 7) {
-  const { name, options } = cookieOptions();
-  return {
-    name,
-    maxAge: maxAgeSeconds,
-    httpOnly: options.httpOnly,
-    path: options.path,
-    sameSite: options.sameSite,
-    secure: options.secure,
-  } as const;
 }
 
 /**

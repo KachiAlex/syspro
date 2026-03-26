@@ -1,6 +1,8 @@
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
-import { Condition } from "@/lib/automation/types";
+import { Condition } from "@/lib/automation";
 import { ensurePolicyTables } from "@/lib/policy/db";
+
+/* using imported SQL */
 
 type PolicyDecision = { allowed: boolean; reason?: string };
 
@@ -45,10 +47,10 @@ function getValue(payload: any, path?: string): any {
 
 function evaluateCondition(condition: Condition, context: any): boolean {
   if (condition.all && condition.all.length > 0) {
-    return condition.all.every((c: Condition) => evaluateCondition(c, context));
+    return condition.all.every((c) => evaluateCondition(c, context));
   }
   if (condition.any && condition.any.length > 0) {
-    return condition.any.some((c: Condition) => evaluateCondition(c, context));
+    return condition.any.some((c) => evaluateCondition(c, context));
   }
   const value = getValue(context, condition.field);
   return compare(condition.op, value, condition.value);
@@ -70,7 +72,7 @@ function applyPolicyDocument(doc: any, context: any): PolicyDecision {
   return { allowed: defaultDecision === "allow", reason: `${defaultDecision} by default` };
 }
 
-async function fetchLatestPolicy(tenantSlug: string, policyKey: string, sql = SQL): Promise<PolicyRecord | null> {
+async function fetchLatestPolicy(tenantSlug: string, policyKey: string, sql: SqlClient = SQL): Promise<PolicyRecord | null> {
   await ensurePolicyTables(sql);
   const rows = await sql`
     select p.id, p.status, pv.document, pv.version

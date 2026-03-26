@@ -1,4 +1,4 @@
-import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
+import { db } from "../sql-client";
 import {
   Asset,
   AssetCategory,
@@ -112,7 +112,7 @@ export async function createAsset(input: AssetCreateInput): Promise<Asset | null
       ]
     );
 
-    const asset = db.mapRow(result.rows[0]);
+    const asset = result.rows[0];
 
     // Post acquisition journal entry
     await createAssetJournal({
@@ -138,7 +138,7 @@ export async function getAsset(assetId: bigint, tenantId: bigint): Promise<Asset
       `SELECT * FROM assets WHERE id = $1 AND tenant_id = $2`,
       [assetId.toString(), tenantId.toString()]
     );
-    return db.mapRow(result.rows[0]) || null;
+    return result.rows[0] || null;
   } catch (error) {
     console.error("Error getting asset:", error);
     throw error;
@@ -162,7 +162,7 @@ export async function getAssets(tenantId: bigint, filters?: any): Promise<Asset[
     query += " ORDER BY purchase_date DESC";
 
     const result = await db.query(query, params);
-    return db.mapRows(result.rows);
+    return result.rows;
   } catch (error) {
     console.error("Error getting assets:", error);
     throw error;
@@ -236,7 +236,7 @@ export async function updateAsset(
       params
     );
 
-    return db.mapRow(result.rows[0]) || null;
+    return result.rows[0] || null;
   } catch (error) {
     console.error("Error updating asset:", error);
     throw error;
@@ -270,7 +270,7 @@ export async function calculateAndCreateDepreciationSchedules(
 
     let openingNBV = asset.netBookValue || asset.purchaseCost;
     if (previousSchedule.rows.length > 0) {
-      openingNBV = db.mapRow(previousSchedule.rows[0]).closingNetBookValue;
+      openingNBV = previousSchedule.rows[0].closing_net_book_value;
     }
 
     // Calculate depreciation
@@ -309,7 +309,7 @@ export async function calculateAndCreateDepreciationSchedules(
       ]
     );
 
-    return db.mapRow(result.rows[0]);
+    return result.rows[0];
   } catch (error) {
     console.error("Error calculating depreciation schedule:", error);
     throw error;
@@ -325,7 +325,7 @@ export async function getDepreciationSchedules(
       `SELECT * FROM depreciation_schedules WHERE asset_id = $1 AND tenant_id = $2 ORDER BY period_year DESC, period_month DESC`,
       [assetId.toString(), tenantId.toString()]
     );
-    return db.mapRows(result.rows);
+    return result.rows;
   } catch (error) {
     console.error("Error getting depreciation schedules:", error);
     throw error;
@@ -345,7 +345,7 @@ export async function postDepreciationSchedule(
 
     if (scheduleResult.rows.length === 0) return null;
 
-    const schedule = db.mapRow(scheduleResult.rows[0]);
+    const schedule = scheduleResult.rows[0];
 
     // Update asset accumulated depreciation
     await db.query(
@@ -354,7 +354,7 @@ export async function postDepreciationSchedule(
         net_book_value = net_book_value - $1,
         last_depreciation_date = CURRENT_DATE
        WHERE id = $2`,
-      [schedule.depreciationAmount, schedule.assetId]
+      [schedule.depreciation_amount, schedule.asset_id]
     );
 
     // Update schedule status
@@ -364,7 +364,7 @@ export async function postDepreciationSchedule(
       [scheduleId.toString()]
     );
 
-    return db.mapRow(result.rows[0]);
+    return result.rows[0];
   } catch (error) {
     console.error("Error posting depreciation schedule:", error);
     throw error;
@@ -379,7 +379,7 @@ export async function getDepreciationSummaries(
       `SELECT * FROM depreciation_summary_view WHERE tenant_id = $1`,
       [tenantId.toString()]
     );
-    return db.mapRows(result.rows);
+    return result.rows;
   } catch (error) {
     console.error("Error getting depreciation summaries:", error);
     throw error;
@@ -413,7 +413,7 @@ export async function createAssetJournal(journal: any): Promise<AssetJournal | n
       ]
     );
 
-    return db.mapRow(result.rows[0]);
+    return result.rows[0];
   } catch (error) {
     console.error("Error creating asset journal:", error);
     throw error;
@@ -429,7 +429,7 @@ export async function getAssetJournals(
       `SELECT * FROM asset_journals WHERE asset_id = $1 AND tenant_id = $2 ORDER BY transaction_date DESC`,
       [assetId.toString(), tenantId.toString()]
     );
-    return db.mapRows(result.rows);
+    return result.rows;
   } catch (error) {
     console.error("Error getting asset journals:", error);
     throw error;
@@ -481,7 +481,7 @@ export async function createAssetDisposal(
       assetStatus: "DISPOSED",
     });
 
-    return db.mapRow(result.rows[0]);
+    return result.rows[0];
   } catch (error) {
     console.error("Error creating asset disposal:", error);
     throw error;
@@ -497,7 +497,7 @@ export async function getAssetDisposal(
       `SELECT * FROM asset_disposals WHERE id = $1 AND tenant_id = $2`,
       [disposalId.toString(), tenantId.toString()]
     );
-    return db.mapRow(result.rows[0]) || null;
+    return result.rows[0] || null;
   } catch (error) {
     console.error("Error getting asset disposal:", error);
     throw error;
@@ -543,9 +543,8 @@ export async function generateBatchDepreciation(
     const schedules: DepreciationSchedule[] = [];
 
     for (const asset of assets) {
-      if (!asset.id) continue;
       const schedule = await calculateAndCreateDepreciationSchedules(
-        asset.id,
+        BigInt(String(asset.id)),
         tenantId,
         year,
         month
@@ -599,7 +598,7 @@ export async function revalueAsset(
       [newValue, newValue, assetId.toString(), tenantId.toString()]
     );
 
-    return db.mapRow(result.rows[0]) || null;
+    return result.rows[0] || null;
   } catch (error) {
     console.error("Error revaluing asset:", error);
     throw error;
