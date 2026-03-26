@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import type { TicketActivityLog } from '../../../../../../lib/itsupport/types';
-
-export const activityLogs = new Map<string, TicketActivityLog[]>();
+import type { TicketActivityLog } from '@/lib/itsupport/types';
+import { activityLogs } from '@/lib/itsupport/store';
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   // List activity logs for a ticket

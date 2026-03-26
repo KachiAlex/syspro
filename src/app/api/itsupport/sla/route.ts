@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { slas } from '../../../../lib/itsupport/store';
-import type { SLA } from '../../../../lib/itsupport/types';
+import { slas } from '@/lib/itsupport/store';
+import type { SLA } from '@/lib/itsupport/types';
 
 export async function GET() {
   // List all SLAs (stub)

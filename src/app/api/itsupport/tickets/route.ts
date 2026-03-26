@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server';
 // TODO: Replace with real DB integration
-import type { Ticket } from '../../../../lib/itsupport/types';
-import type { SLA, EngineerProfile } from '../../../../lib/itsupport/types';
-import { getSLAForCategory, computeSLADueTimes } from '../../../../lib/itsupport/sla';
-import { slas } from '../sla/route';
-import { findBestEngineer } from '../../../../lib/itsupport/assignment';
-import { engineers } from '../engineers/route';
-
-export const tickets = new Map<string, Ticket>();
+import type { Ticket, SLA, EngineerProfile } from '@/lib/itsupport/types';
+import { computeSLADueTimes } from '@/lib/itsupport/sla';
+import { slas, tickets as ticketStore, engineers } from '@/lib/itsupport/store';
+import { findBestEngineer } from '@/lib/itsupport/assignment';
 
 export async function GET() {
   // List all tickets (stub)
-  return NextResponse.json({ data: Array.from(tickets.values()) });
+  return NextResponse.json({ data: Array.from(ticketStore.values()) });
 }
 
 export async function POST(request: Request) {
@@ -62,6 +58,6 @@ export async function POST(request: Request) {
     assignedTo: primary?.id,
     backupEngineerId: backup?.id,
   };
-  tickets.set(id, ticket);
+  ticketStore.set(id, ticket);
   return NextResponse.json({ data: ticket }, { status: 201 });
 }

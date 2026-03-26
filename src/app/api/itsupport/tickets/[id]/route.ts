@@ -1,19 +1,18 @@
 import { NextResponse } from 'next/server';
 
-import type { Ticket } from '../../../../../lib/itsupport/types';
-import { tickets } from '../route';
-import { transitionTicket } from '../../../../../lib/itsupport/workflow';
-import { activityLogs } from './activity/route';
-import { autoEscalate, detectSlaBreach } from '../../../../../lib/itsupport/automation';
+import type { Ticket } from '@/lib/itsupport/types';
+import { tickets as ticketStore, activityLogs } from '@/lib/itsupport/store';
+import { transitionTicket } from '@/lib/itsupport/workflow';
+import { autoEscalate, detectSlaBreach } from '@/lib/itsupport/automation';
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  const ticket = tickets.get(params.id);
+  const ticket = ticketStore.get(params.id);
   if (!ticket) return NextResponse.json({ error: 'not found' }, { status: 404 });
   return NextResponse.json({ data: ticket });
 }
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-  const ticket = tickets.get(params.id);
+  const ticket = ticketStore.get(params.id);
   if (!ticket) return NextResponse.json({ error: 'not found' }, { status: 404 });
   const body = await request.json();
   // If status is changing, use workflow engine
@@ -23,7 +22,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       // Automation: SLA breach detection and auto-escalate
       updated = await detectSlaBreach(updated);
       updated = await autoEscalate(updated);
-      tickets.set(params.id, updated);
+      ticketStore.set(params.id, updated);
       if (!activityLogs.has(params.id)) activityLogs.set(params.id, []);
       activityLogs.get(params.id)!.push(log);
       return NextResponse.json({ data: updated, log });
@@ -36,13 +35,13 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   // Automation: SLA breach detection and auto-escalate
   let updated = await detectSlaBreach(ticket);
   updated = await autoEscalate(updated);
-  tickets.set(params.id, updated);
+  ticketStore.set(params.id, updated);
   return NextResponse.json({ data: updated });
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  if (!tickets.has(params.id)) return NextResponse.json({ error: 'not found' }, { status: 404 });
-  tickets.delete(params.id);
+  if (!ticketStore.has(params.id)) return NextResponse.json({ error: 'not found' }, { status: 404 });
+  ticketStore.delete(params.id);
   activityLogs.delete(params.id);
   return NextResponse.json({ ok: true });
 }

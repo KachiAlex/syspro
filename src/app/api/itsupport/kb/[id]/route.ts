@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { kbArticles } from '../route';
+import { kbArticles } from '@/lib/itsupport/store';
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const article = kbArticles.get(params.id);

@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
         { status: 201 }
       );
     } else if (action === "create_invoice") {
-      return await POST_createInvoice(request);
+      return await createInvoice(request);
     } else {
       return errorResponse("Invalid action", 400);
     }
@@ -167,7 +167,8 @@ const CreateInvoiceSchema = z.object({
   }),
 });
 
-export async function POST_createInvoice(request: NextRequest) {
+// Helper function to create invoice (moved from named export)
+async function createInvoice(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
     const parsed = await parseJsonRequest(request, CreateInvoiceSchema);
