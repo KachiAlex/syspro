@@ -36,10 +36,32 @@ export function SubmitExpenseModal({
   const handleSubmit = async () => {
     if (!validateForm()) return;
     try {
-      await onSubmit(formData);
+      const response = await fetch('/api/finance/expenses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tenantSlug: 'default',
+          categoryId: formData.category,
+          amount: parseFloat(formData.amount),
+          description: formData.description,
+          expenseDate: formData.date,
+          receiptAttached: formData.receipt,
+          approvalStatus: 'submitted',
+          paymentStatus: 'pending',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit expense');
+      }
+
+      const result = await response.json();
+      await onSubmit(result.expense);
       setFormData({ category: "travel", amount: "", description: "", date: new Date().toISOString().split("T")[0], receipt: false });
-    } catch (_err) {
-      // Error handled by parent
+    } catch (err) {
+      console.error('Expense submission error:', err);
     }
   };
 

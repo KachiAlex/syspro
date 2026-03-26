@@ -36,10 +36,31 @@ export function CreatePaymentModalV2({
   const handleSubmit = async () => {
     if (!validateForm()) return;
     try {
-      await onSubmit(formData);
+      const response = await fetch('/api/finance/payments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tenantSlug: 'default',
+          reference: formData.reference,
+          grossAmount: parseFloat(formData.amount),
+          fees: 0,
+          method: formData.method,
+          paymentDate: formData.date,
+          confirmationDetails: formData.description || 'Payment transaction',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create payment');
+      }
+
+      const result = await response.json();
+      await onSubmit(result.payment);
       setFormData({ amount: "", method: "card", reference: "", description: "", date: new Date().toISOString().split("T")[0] });
-    } catch (_err) {
-      // Error handled by parent
+    } catch (err) {
+      console.error('Payment creation error:', err);
     }
   };
 

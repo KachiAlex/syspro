@@ -57,14 +57,42 @@ export const AddBillModal: React.FC<AddBillModalProps> = ({ isOpen, onClose, onS
       return;
     }
 
-    await new Promise(r => setTimeout(r, 1000));
-    onSubmit(formData);
-    setAlert({ type: 'success', message: 'Bill added successfully!' });
-    setTimeout(() => {
-      setFormData({ billNumber: '', vendor: '', billDate: '', dueDate: '', amount: '', description: '' });
-      onClose();
-    }, 1500);
-    setLoading(false);
+    try {
+      const response = await fetch('/api/finance/bills', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tenantSlug: 'default',
+          vendorId: formData.vendor,
+          billDate: formData.billDate || new Date().toISOString(),
+          dueDate: formData.dueDate,
+          currency: 'NGN',
+          items: [{
+            description: formData.description || 'Bill payment',
+            quantity: 1,
+            unitPrice: parseFloat(formData.amount),
+          }],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create bill');
+      }
+
+      const result = await response.json();
+      onSubmit(result.bill);
+      setAlert({ type: 'success', message: 'Bill added successfully!' });
+      setTimeout(() => {
+        setFormData({ billNumber: '', vendor: '', billDate: '', dueDate: '', amount: '', description: '' });
+        onClose();
+      }, 1500);
+    } catch (error) {
+      setAlert({ type: 'error', message: 'Failed to create bill. Please try again.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -123,13 +151,38 @@ export const MakePaymentModal: React.FC<MakePaymentModalProps> = ({ isOpen, onCl
       return;
     }
 
-    await new Promise(r => setTimeout(r, 1000));
-    onSubmit(formData);
-    setAlert({ type: 'success', message: 'Payment processed successfully!' });
-    setTimeout(() => {
-      onClose();
-    }, 1500);
-    setLoading(false);
+    try {
+      const response = await fetch('/api/finance/payments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tenantSlug: 'default',
+          reference: formData.billNumber,
+          grossAmount: parseFloat(formData.amount),
+          fees: 0,
+          method: formData.method === 'Bank Transfer' ? 'bank_transfer' : formData.method.toLowerCase(),
+          paymentDate: formData.paymentDate,
+          confirmationDetails: `Payment for bill ${formData.billNumber}`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to process payment');
+      }
+
+      const result = await response.json();
+      onSubmit(result.payment);
+      setAlert({ type: 'success', message: 'Payment processed successfully!' });
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    } catch (error) {
+      setAlert({ type: 'error', message: 'Failed to process payment. Please try again.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
