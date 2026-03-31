@@ -159,21 +159,22 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2 text-gray-600">Loading projects...</span>
+      <div className="flex flex-col items-center justify-center py-16">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+        <span className="text-gray-600">Loading projects...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-        <p className="text-red-600">{error}</p>
+      <div className="bg-white rounded-lg border border-gray-200 p-12 text-center shadow-sm">
+        <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Projects</h3>
+        <p className="text-red-600 mb-4">{error}</p>
         <button 
           onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center"
         >
           Retry
         </button>
@@ -182,15 +183,15 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="mb-6">
+    <div className="max-w-full">
+      <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Project Management</h2>
         <p className="text-gray-600">Create and manage projects, assign teams, and track progress</p>
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Projects</p>
@@ -199,7 +200,7 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
             <Briefcase className="w-8 h-8 text-blue-600" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Active Projects</p>
@@ -208,7 +209,7 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
             <TrendingUp className="w-8 h-8 text-green-600" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Budget</p>
@@ -217,7 +218,7 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
             <DollarSign className="w-8 h-8 text-purple-600" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Budget Spent</p>
@@ -229,32 +230,32 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
       </div>
 
       {/* Action Buttons */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm mb-6">
         <div className="flex flex-wrap gap-3">
           <button 
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
           >
-            <Plus className="w-4 h-4 mr-2 inline" />
+            <Plus className="w-4 h-4 mr-2" />
             Create Project
           </button>
           <button 
             onClick={handleExport}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
           >
-            <Download className="w-4 h-4 mr-2 inline" />
+            <Download className="w-4 h-4 mr-2" />
             Export
           </button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm mb-6">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <select 
             value={statusFilter} 
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           >
             <option value="">All Status</option>
             <option value="active">Active</option>
@@ -266,7 +267,7 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
           <select 
             value={priorityFilter} 
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           >
             <option value="">All Priorities</option>
             <option value="low">Low</option>
@@ -280,21 +281,21 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
             placeholder="Search by name or description..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           />
         </div>
       </div>
 
       {/* Projects Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredProjects.map(project => (
-          <div key={project.id} className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+          <div key={project.id} className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow shadow-sm">
             <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">{project.name}</h3>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">{project.name}</h3>
                 <p className="text-sm text-gray-600">{project.objective}</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-shrink-0">
                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(project.status)}`}>
                   {project.status}
                 </span>
@@ -305,29 +306,29 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
             </div>
 
             {project.description && (
-              <p className="text-sm text-gray-600 mb-4">{project.description}</p>
+              <p className="text-sm text-gray-600 mb-4 line-clamp-2">{project.description}</p>
             )}
 
-            <div className="grid grid-cols-2 gap-2 mb-4 text-sm">
+            <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
               <div>
-                <p className="text-gray-600">Start Date</p>
+                <p className="text-gray-600 text-xs mb-1">Start Date</p>
                 <p className="font-medium text-gray-900">{project.startDate}</p>
               </div>
               <div>
-                <p className="text-gray-600">End Date</p>
+                <p className="text-gray-600 text-xs mb-1">End Date</p>
                 <p className="font-medium text-gray-900">{project.endDate || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-gray-600">Budget</p>
+                <p className="text-gray-600 text-xs mb-1">Budget</p>
                 <p className="font-medium text-gray-900">${project.budgetApproved.toFixed(2)}</p>
               </div>
               <div>
-                <p className="text-gray-600">Owner</p>
+                <p className="text-gray-600 text-xs mb-1">Owner</p>
                 <p className="font-medium text-gray-900">{project.owner}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 text-sm text-gray-600 mb-4 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 p-3 bg-gray-50 rounded-lg">
               <DollarSign className="w-4 h-4" />
               <span>${project.budgetSpent.toFixed(2)} spent of ${project.budgetApproved.toFixed(2)}</span>
             </div>
@@ -335,28 +336,29 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
             <div className="flex gap-2">
               <button 
                 onClick={() => handleViewProject(project)}
-                className="flex-1 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
+                className="flex-1 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium flex items-center justify-center"
               >
-                <Eye className="w-4 h-4 mr-2 inline" />
+                <Eye className="w-4 h-4 mr-1" />
                 View
               </button>
               <button 
                 onClick={() => handleManageTasks(project)}
-                className="flex-1 px-3 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
+                className="flex-1 px-3 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium flex items-center justify-center"
               >
-                <Calendar className="w-4 h-4 mr-2 inline" />
+                <Calendar className="w-4 h-4 mr-1" />
                 Tasks
               </button>
               <button 
                 onClick={() => handleManageTeam(project)}
-                className="flex-1 px-3 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
+                className="flex-1 px-3 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium flex items-center justify-center"
               >
-                <Users className="w-4 h-4 mr-2 inline" />
+                <Users className="w-4 h-4 mr-1" />
                 Team
               </button>
               <button 
                 onClick={() => handleDeleteProject(project.id)}
-                className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center"
+                title="Delete Project"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -366,9 +368,23 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
       </div>
 
       {filteredProjects.length === 0 && (
-        <div className="text-center py-12">
-          <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">No projects found</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center shadow-sm">
+          <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No projects found</h3>
+          <p className="text-gray-600 mb-4">
+            {searchQuery || statusFilter || priorityFilter 
+              ? "Try adjusting your filters or search criteria" 
+              : "Get started by creating your first project"}
+          </p>
+          {!searchQuery && !statusFilter && !priorityFilter && (
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Your First Project
+            </button>
+          )}
         </div>
       )}
 
