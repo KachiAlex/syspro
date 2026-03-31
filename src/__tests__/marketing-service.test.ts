@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+/// <reference types="vitest" />
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { calculateAttributionSummary } from '../lib/revops/attribution';
 
 function makeEvent(id: string, campaignId: string | null, amount: number, t: string) {
@@ -26,7 +27,6 @@ describe('marketing service - attribution helper', () => {
     expect(Math.round(c1 + c2)).toBe(100);
   });
 });
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('../lib/sql-client', () => {
   const db = { query: vi.fn() } as any;

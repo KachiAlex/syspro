@@ -1,20 +1,21 @@
+/// <reference types="vitest" />
 import { describe, it, expect } from 'vitest';
 import { createJournalEntry, validateJournalLines, postJournalEntry } from '@/lib/finance/service';
-import type { JournalEntry } from '@/lib/finance/types';
+import type { JournalEntry } from '@/lib/finance/service';
 
 describe('finance service', () => {
   it('validates balanced journal lines', () => {
     const lines = [
-      { tenant_id: 't1', account_id: 'a1', amount: 100, side: 'debit' },
-      { tenant_id: 't1', account_id: 'a2', amount: 100, side: 'credit' },
+      { tenant_id: 't1', account_id: 'a1', amount: 100, side: 'debit' as const },
+      { tenant_id: 't1', account_id: 'a2', amount: 100, side: 'credit' as const },
     ];
     expect(validateJournalLines(lines)).toBe(true);
   });
 
   it('throws on unbalanced lines', () => {
     const lines = [
-      { tenant_id: 't1', account_id: 'a1', amount: 100, side: 'debit' },
-      { tenant_id: 't1', account_id: 'a2', amount: 50, side: 'credit' },
+      { tenant_id: 't1', account_id: 'a1', amount: 100, side: 'debit' as const },
+      { tenant_id: 't1', account_id: 'a2', amount: 50, side: 'credit' as const },
     ];
     expect(() => validateJournalLines(lines)).toThrow(/unbalanced/);
   });
@@ -24,8 +25,8 @@ describe('finance service', () => {
       tenant_id: 't1',
       description: 'Test entry',
       lines: [
-        { tenant_id: 't1', account_id: 'a1', amount: 25, side: 'debit' },
-        { tenant_id: 't1', account_id: 'a2', amount: 25, side: 'credit' },
+        { tenant_id: 't1', account_id: 'a1', amount: 25, side: 'debit' as const },
+        { tenant_id: 't1', account_id: 'a2', amount: 25, side: 'credit' as const },
       ],
     };
 

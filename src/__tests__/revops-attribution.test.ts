@@ -1,5 +1,6 @@
+/// <reference types="vitest" />
 import { describe, it, expect } from "vitest";
-import { calculateAttributionSummary } from "../../../src/lib/revops/attribution";
+import { calculateAttributionSummary } from "@/lib/revops/attribution";
 
 function makeEvent(id: string, campaignId: string | null, leadSourceId: string | null, amount: number, t: string) {
   return { id, campaignId, leadSourceId, amount, occurredAt: t } as any;

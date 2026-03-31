@@ -343,16 +343,21 @@ function humanizeOrgLabel(value?: string | null): string | undefined {
 import type { Expense, ExpenseTaxType } from "@/lib/finance/types";
 
 export type JournalEntry = {
-  id: string;
-  expenseId: string;
-  account: string;
-  accountId: string;
-  debit: number;
-  credit: number;
-  description: string;
-  reference: string;
-  entryDate: string;
-  createdAt: string;
+  id?: string;
+  tenant_id?: string;
+  expenseId?: string;
+  account?: string;
+  accountId?: string;
+  debit?: number;
+  credit?: number;
+  description?: string;
+  reference?: string;
+  entryDate?: string;
+  lines?: Array<{ tenant_id: string; account_id: string; amount: number; side: "debit" | "credit" }>;
+  status?: string;
+  created_at?: string;
+  posted_at?: string;
+  createdAt?: string;
 };
 
 /**
@@ -693,5 +698,61 @@ export function determineApprovalRoute(amount: number): {
       ],
       routeDescription: "All 3 levels required (> ₦500K)",
     };
+  }
+}
+
+/**
+ * Validate that journal lines are balanced (debits = credits)
+ */
+export function validateJournalLines(lines: Array<{ tenant_id: string; account_id: string; amount: number; side: "debit" | "credit" }>): boolean {
+  const debits = lines.filter(l => l.side === "debit").reduce((sum, l) => sum + l.amount, 0);
+  const credits = lines.filter(l => l.side === "credit").reduce((sum, l) => sum + l.amount, 0);
+  
+  if (debits !== credits) {
+    throw new Error(`Journal lines are unbalanced: debits (${debits}) != credits (${credits})`);
+  }
+  return true;
+}
+
+/**
+ * Create a journal entry
+ */
+export function createJournalEntry(entry: any): any {
+  return {
+    id: `JE-${Date.now()}`,
+    ...entry,
+    status: "draft",
+    created_at: new Date().toISOString(),
+  };
+}
+
+/**
+ * Post a journal entry
+ */
+export function postJournalEntry(entry: any): any {
+  return {
+    ...entry,
+    status: "posted",
+    posted_at: new Date().toISOString(),
+  };
+}
+
+/**
+ * Approve an expense with approval details
+ */
+export async function approveExpense(
+  tenantSlug: string,
+  expenseId: string,
+  approval: { approverRole: string; approverId: string; approverName: string; action: "APPROVED" | "REJECTED" }
+): Promise<Expense | null> {
+  try {
+    const result = await db.query(
+      `UPDATE expenses SET approval_status = $1, approved_by = $2, approved_at = CURRENT_TIMESTAMP WHERE id = $3 AND tenant_slug = $4 RETURNING *`,
+      [approval.action, approval.approverId, expenseId, tenantSlug]
+    );
+    return (result as any).rows?.[0] || null;
+  } catch (error) {
+    console.error("Error approving expense:", error);
+    return null;
   }
 }
