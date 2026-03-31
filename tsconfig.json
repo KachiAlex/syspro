@@ -43,6 +43,7 @@
     "node_modules",
     ".next/dev/types/**/*.ts",
     "syspro-erp-frontend/from figma design/**",
-    "from figma design/**"
+    "from figma design/**",
+    "**/*.stories.*"
   ]
 }

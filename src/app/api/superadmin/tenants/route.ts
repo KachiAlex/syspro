@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { page, limit, q } = validation.data;
-    const offset = (Math.max(page, 1) - 1) * limit;
+    const offset = (Math.max(page!, 1) - 1) * limit!;
 
     let items;
     if (q) {

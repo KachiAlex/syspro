@@ -1,4 +1,5 @@
 export * from './types';
+export * from '../automation';
 export { simulateRule, executeRule } from './engine';
 
 export const eventBus = {

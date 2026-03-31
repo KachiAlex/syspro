@@ -7,14 +7,14 @@ export interface JournalEntry {
   credit: string;
 }
 
-export interface FinancialMetrics {
+export interface FinancialMetricsData {
   totalRevenue: string;
   totalExpenses: string;
   netIncome: string;
   cashBalance: string;
 }
 
-export interface IncomeStatement {
+export interface IncomeStatementData {
   revenue: string;
   cogs: string;
   grossProfit: string;

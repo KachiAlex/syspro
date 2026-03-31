@@ -70,7 +70,7 @@ export function DataTable<T extends Record<string, any>>({
   className = "",
   emptyMessage = "No data available",
   onRowClick,
-  getRowId = (row, index) => `${index}`,
+  getRowId = (row) => JSON.stringify(row),
 }: DataTableProps<T>) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortColumn, setSortColumn] = useState<keyof T | null>(null);
@@ -356,7 +356,7 @@ export function DataTable<T extends Record<string, any>>({
               ) : (
                 paginatedData.map((row, index) => (
                   <tr
-                    key={getRowId(row, index)}
+                    key={getRowId(row)}
                     className={`hover:bg-slate-50 ${onRowClick ? "cursor-pointer" : ""}`}
                     onClick={() => onRowClick?.(row)}
                   >

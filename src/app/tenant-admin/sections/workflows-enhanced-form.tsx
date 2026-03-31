@@ -14,6 +14,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import { InlineErrorBoundary } from "@/components/ui/error-boundary";
 import { handleApiCall } from "@/lib/error-handling";
+import { Workflow, WorkflowStep, ResourceId, TenantSlug } from "@/lib/tenant-admin/types";
 import { 
   Play, 
   Pause, 
@@ -43,15 +44,24 @@ import {
   X
 } from "lucide-react";
 
-type Workflow = {
+type LocalWorkflowStep = {
+  id: string;
+  title: string;
+  type: string;
+  assignee?: string;
+  daysAfter?: number;
+  conditions?: any[];
+};
+
+type LocalWorkflow = {
   id: string;
   name: string;
   type: "onboarding" | "transfer" | "promotion" | "exit" | "approval" | "notification" | "automation";
-  steps: { step: number; title: string; assignee?: string; daysAfter?: number; status?: "pending" | "completed" | "failed" }[];
-  status: "active" | "paused" | "draft";
+  description?: string;
+  steps: LocalWorkflowStep[];
+  status: "draft" | "active" | "archived";
   createdAt: string;
-  lastRun?: string;
-  nextRun?: string;
+  updatedAt: string;
   executionCount?: number;
   successRate?: number;
 };
@@ -127,7 +137,7 @@ export default function EnhancedWorkflowForm({
       },
       type: commonValidationRules.required,
     },
-    onSubmit: async (values) => {
+    onSubmit: async (values: WorkflowFormData) => {
       setIsSubmitting(true);
       
       try {
@@ -432,7 +442,65 @@ export default function EnhancedWorkflowForm({
       <EnhancedForm
         initialValues={form.values}
         validationSchema={workflowSchema}
-        onSubmit={form.handleSubmit}
+        onSubmit={async (values: WorkflowFormData) => {
+          setIsSubmitting(true);
+          
+          try {
+            // Validate steps
+            const stepErrors = validateSteps();
+            if (stepErrors.length > 0) {
+              toast.error("Validation Error", "Please complete all required workflow steps");
+              setCurrentStep(0);
+              return;
+            }
+
+            const payload = {
+              ...values,
+              steps: steps.map((s, i) => ({ 
+                step: i + 1, 
+                title: s.title.trim(), 
+                assignee: s.assignee.trim() || undefined, 
+                daysAfter: s.daysAfter 
+              })),
+            };
+
+            // TODO: Replace with actual API call
+            console.log("Creating workflow:", payload);
+            
+            // Create a mock Workflow object for the success callback
+            const workflow: Workflow = {
+              id: `workflow-${Date.now()}` as ResourceId,
+              tenantSlug: tenantSlug as TenantSlug,
+              name: values.name,
+              type: values.type,
+              trigger: 'manual',
+              status: 'draft',
+              description: values.description,
+              isActive: false,
+              steps: steps.map((s, i) => ({
+                id: `step-${i + 1}`,
+                name: s.title,
+                type: 'manual',
+                action: { type: 'assign', assignee: s.assignee },
+                conditions: [],
+                nextStepId: i < steps.length - 1 ? `step-${i + 2}` : undefined,
+              })),
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            };
+            
+            toast.success("Workflow Created", "Workflow has been created successfully");
+            
+            if (onSuccess) {
+              onSuccess(workflow);
+            }
+          } catch (error) {
+            console.error("Workflow creation error:", error);
+            toast.error("Creation Failed", "Failed to create workflow. Please try again.");
+          } finally {
+            setIsSubmitting(false);
+          }
+        }}
         className="space-y-6"
       >
         {(formProps) => (

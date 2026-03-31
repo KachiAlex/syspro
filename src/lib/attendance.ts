@@ -45,9 +45,9 @@ async function getPolicyForTenant(tenantId?: string): Promise<AttendancePolicy> 
 
   try {
     const res = await pool.query("SELECT * FROM attendance_policies WHERE tenant_id = $1 LIMIT 1", [tenantId]);
-    if (res.rowCount > 0) return mapRowKeys(res.rows[0]) as AttendancePolicy;
+    if (res.rowCount && res.rowCount > 0) return mapRowKeys(res.rows[0]) as AttendancePolicy;
   } catch (err) {
-    console.warn("Could not load attendance policy:", err.message || err);
+    console.warn("Could not load attendance policy:", err instanceof Error ? err.message : err);
   }
 
   return {

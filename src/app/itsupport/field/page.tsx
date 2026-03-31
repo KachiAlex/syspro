@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 type FieldJob = {
   id: string;
   ticketId: string;
+  engineerId: string;
   assignedAt: string;
   startedAt?: string;
   arrivedAt?: string;

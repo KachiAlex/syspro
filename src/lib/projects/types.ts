@@ -220,6 +220,28 @@ export interface AssignmentRecommendation {
   expiresAt?: Date;
 }
 
+export interface TaskFitSuggestion {
+  employeeId: string;
+  taskId: string;
+  fitScore: number;
+  reasons: string[];
+  skillsMatch: number;
+  capacityAvailable: number;
+  availabilityScore: number;
+}
+
+export interface DetailedSuggestion {
+  employeeId: string;
+  taskId: string;
+  projectId: string;
+  fitScore: number;
+  recommendationReason?: string;
+  skillsMatchScore?: number;
+  capacityScore?: number;
+  availabilityScore?: number;
+  performanceHistoryScore?: number;
+}
+
 // ============================================================
 // VALIDATION SCHEMAS
 // ============================================================
@@ -271,7 +293,7 @@ export const taskCreateSchema = z.object({
   estimatedCost: z.number().optional(),
   status: z.enum(TASK_STATUSES).default("NOT_STARTED"),
   priority: z.number().default(100),
-  percentComplete: z.number().default(0).min(0).max(100),
+  percentComplete: z.number().min(0).max(100).default(0),
   requiredSkills: z.array(z.string()).default([]),
 });
 

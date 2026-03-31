@@ -1,6 +1,6 @@
 export type TenantScoped = { tenantSlug: string; subsidiary?: string; region?: string; branch?: string };
 
-export interface Campaign {
+export interface Campaign extends TenantScoped {
   id: string;
   tenantSlug: string;
   name: string;

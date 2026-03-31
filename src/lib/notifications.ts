@@ -260,7 +260,7 @@ class NotificationManager {
     if (options?.userId) {
       filtered = filtered.filter(a => 
         a.actor.id === options.userId || 
-        a.mentions?.includes(options.userId)
+        (a.mentions && a.mentions.includes(options.userId!))
       );
     }
 
@@ -457,7 +457,6 @@ export const createNotification = (
   message,
   priority: options?.priority || 'medium',
   category: options?.category || 'general',
-  read: false,
   ...options,
 });
 

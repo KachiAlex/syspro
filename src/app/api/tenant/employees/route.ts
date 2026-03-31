@@ -14,6 +14,7 @@ import {
   asResourceId,
 } from "@/lib/tenant-admin/utils";
 import { AuditService } from "@/lib/tenant-admin/service";
+import { TenantSlug, UserId, ResourceId, AuditAction } from "@/lib/tenant-admin/types";
 
 /**
  * GET /api/tenant/employees
@@ -63,15 +64,20 @@ export async function POST(request: NextRequest) {
     }
 
     const service = new EmployeeService();
-    const employee = await service.create(asTenantSlug(context.tenantSlug), parsed.data);
+    const employee = await service.create(asTenantSlug(context.tenantSlug), {
+      ...parsed.data,
+      departmentId: parsed.data.departmentId as ResourceId,
+      reportingManagerId: parsed.data.reportingManagerId as UserId | undefined,
+      hireDate: parsed.data.hireDate ? new Date(parsed.data.hireDate) : undefined,
+    });
 
     const auditService = new AuditService();
     await auditService.log(
       asTenantSlug(context.tenantSlug),
-      context.userId,
-      "create",
+      context.userId as UserId,
+      "create" as AuditAction,
       "employee",
-      employee.id,
+      employee.id as ResourceId,
       { after: employee }
     );
 
@@ -109,13 +115,17 @@ export async function PATCH(request: NextRequest) {
 
     const service = new EmployeeService();
     const existing = await service.getById(asTenantSlug(context.tenantSlug), asResourceId(id!));
-    const updated = await service.update(asTenantSlug(context.tenantSlug), asResourceId(id!), parsed.data);
+    const updated = await service.update(asTenantSlug(context.tenantSlug), asResourceId(id!), {
+      ...parsed.data,
+      departmentId: parsed.data.departmentId as ResourceId | undefined,
+      reportingManagerId: parsed.data.reportingManagerId as UserId | undefined,
+    });
 
     const auditService = new AuditService();
     await auditService.log(
       asTenantSlug(context.tenantSlug),
-      context.userId,
-      "update",
+      context.userId as UserId,
+      "update" as AuditAction,
       "employee",
       asResourceId(id!),
       { before: existing, after: updated }
@@ -152,8 +162,8 @@ export async function DELETE(request: NextRequest) {
     const auditService = new AuditService();
     await auditService.log(
       asTenantSlug(context.tenantSlug),
-      context.userId,
-      "delete",
+      context.userId as UserId,
+      "delete" as AuditAction,
       "employee",
       asResourceId(id!),
       { before: existing }

@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { MoreVertical, Trash2, Edit2, Eye, Grid3x3, Table2, Kanban, Filter, ChevronDown, X, Plus } from "lucide-react";
 import NewLeadModal from "./NewLeadModal";
 
@@ -57,8 +58,9 @@ function StageSelect({ value, onChange }: { value: string; onChange: (v: string)
   );
 }
 
-export default function LeadsPage({ tenantSlug }: { tenantSlug?: string | null }) {
-  const ts = tenantSlug ?? "kreatix-default";
+export default function LeadsPage() {
+  const searchParams = useSearchParams();
+  const ts = searchParams.get("tenantSlug") ?? "kreatix-default";
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -784,9 +786,10 @@ export default function LeadsPage({ tenantSlug }: { tenantSlug?: string | null }
       {/* New/Edit Lead Modal */}
       {showNew && (
         <NewLeadModal
+          isOpen={showNew}
           tenantSlug={ts}
           onClose={() => setShowNew(false)}
-          onCreated={() => {
+          onSuccess={() => {
             setShowNew(false);
             loadLeads();
           }}
@@ -795,13 +798,14 @@ export default function LeadsPage({ tenantSlug }: { tenantSlug?: string | null }
 
       {showEdit && editingLead && (
         <NewLeadModal
+          isOpen={showEdit}
           tenantSlug={ts}
-          lead={editingLead}
+          initialData={editingLead}
           onClose={() => {
             setShowEdit(false);
             setEditingLead(null);
           }}
-          onCreated={() => {
+          onSuccess={() => {
             setShowEdit(false);
             setEditingLead(null);
             loadLeads();

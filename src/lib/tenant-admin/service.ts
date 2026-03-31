@@ -26,7 +26,7 @@ import type {
   Integration,
   APIKey,
   AuditLog,
-  AuditAction,
+  AuditAction as AuditActionType,
   TenantSlug,
   ResourceId,
   UserId,
@@ -247,12 +247,13 @@ export class AccessControlService {
     expiresAt: Date,
     justification: string,
     approvedBy: UserId
-  ): Promise<void> {
-    const id = randomUUID();
+  ): Promise<ResourceId> {
+    const id = randomUUID() as ResourceId;
     await this.sql`
       insert into admin_temporary_access (id, tenant_slug, granted_to, module_key, permissions, expires_at, justification, approved_by, created_at)
       values (${id}, ${tenantSlug}, ${grantedTo}, ${moduleKey}, ${JSON.stringify(permissions)}, ${expiresAt}, ${justification}, ${approvedBy}, ${new Date()})
     `;
+    return id;
   }
 
   async revokeTemporaryAccess(tenantSlug: TenantSlug, accessId: string): Promise<void> {
@@ -267,6 +268,30 @@ export class AccessControlService {
       select * from admin_temporary_access
       where tenant_slug = ${tenantSlug} and granted_to = ${userId} and expires_at > now()
       order by expires_at asc
+    `;
+  }
+
+  async getAll(tenantSlug: TenantSlug): Promise<AccessAccount[]> {
+    return this.sql`
+      select * from admin_access_controls
+      where tenant_slug = ${tenantSlug}
+      order by role_id asc
+    `;
+  }
+
+  async getUserAccess(tenantSlug: TenantSlug, userId: UserId): Promise<AccessAccount[]> {
+    return this.sql`
+      select ac.* from admin_access_controls ac
+      join admin_user_roles ur on ac.role_id = ur.role_id
+      where ac.tenant_slug = ${tenantSlug} and ur.user_id = ${userId}
+      order by ac.role_id asc
+    `;
+  }
+
+  async revokeAccess(tenantSlug: TenantSlug, accessId: ResourceId): Promise<void> {
+    await this.sql`
+      delete from admin_access_controls
+      where id = ${accessId} and tenant_slug = ${tenantSlug}
     `;
   }
 }
@@ -360,6 +385,36 @@ export class ApprovalFlowService {
       where id = ${requestId} and tenant_slug = ${tenantSlug}
     `;
   }
+
+  async getById(tenantSlug: TenantSlug, id: ResourceId): Promise<ApprovalFlow | null> {
+    const results = await this.sql`
+      select * from admin_approval_flows
+      where id = ${id} and tenant_slug = ${tenantSlug}
+    `;
+    return results[0] || null;
+  }
+
+  async delete(tenantSlug: TenantSlug, id: ResourceId): Promise<void> {
+    await this.sql`
+      delete from admin_approval_flows
+      where id = ${id} and tenant_slug = ${tenantSlug}
+    `;
+  }
+
+  async getRequestById(tenantSlug: TenantSlug, id: ResourceId): Promise<ApprovalRequest | null> {
+    const results = await this.sql`
+      select * from admin_approval_requests
+      where id = ${id} and tenant_slug = ${tenantSlug}
+    `;
+    return results[0] || null;
+  }
+
+  async deleteRequest(tenantSlug: TenantSlug, id: ResourceId): Promise<void> {
+    await this.sql`
+      delete from admin_approval_requests
+      where id = ${id} and tenant_slug = ${tenantSlug}
+    `;
+  }
 }
 
 /**
@@ -399,6 +454,87 @@ export class WorkflowService {
       where id = ${executionId} and tenant_slug = ${tenantSlug}
     `;
   }
+
+  async list(tenantSlug: TenantSlug, options: {
+    page?: number;
+    limit?: number;
+    sort?: string;
+    order?: 'asc' | 'desc';
+    filters?: Record<string, any>;
+  }): Promise<Workflow[]> {
+    const { page = 1, limit = 50, sort = 'created_at', order = 'desc', filters = {} } = options;
+    
+    let query = this.sql`select * from admin_workflows where tenant_slug = ${tenantSlug}`;
+    
+    // Apply filters
+    if (filters.type) {
+      query = this.sql`select * from admin_workflows where tenant_slug = ${tenantSlug} and type = ${filters.type}`;
+    }
+    if (filters.status !== undefined) {
+      query = this.sql`select * from admin_workflows where tenant_slug = ${tenantSlug} and is_active = ${filters.status}`;
+    }
+    
+    // Apply sorting and pagination
+    query = this.sql`select * from admin_workflows where tenant_slug = ${tenantSlug} order by ${this.sql.raw(sort)} ${order} limit ${limit} offset ${(page - 1) * limit}`;
+    
+    return query;
+  }
+
+  async create(tenantSlug: TenantSlug, workflow: Partial<Workflow>): Promise<Workflow> {
+    const id = randomUUID() as ResourceId;
+    const now = new Date();
+    
+    const fullWorkflow: Workflow = {
+      id,
+      tenantSlug,
+      name: workflow.name!,
+      type: workflow.type!,
+      trigger: workflow.trigger ?? 'manual',
+      steps: workflow.steps ?? [],
+      status: 'draft',
+      description: workflow.description,
+      isActive: workflow.isActive ?? false,
+      createdAt: now,
+      updatedAt: now,
+      createdBy: workflow.createdBy,
+      updatedBy: workflow.updatedBy,
+    };
+
+    await this.sql`
+      insert into admin_workflows (id, tenant_slug, name, type, trigger, steps, status, is_active, description, created_at, updated_at, created_by, updated_by)
+      values (${id}, ${tenantSlug}, ${fullWorkflow.name}, ${fullWorkflow.type}, ${fullWorkflow.trigger}, ${JSON.stringify(fullWorkflow.steps)}, ${fullWorkflow.status}, ${fullWorkflow.isActive}, ${fullWorkflow.description || null}, ${now}, ${now}, ${fullWorkflow.createdBy || null}, ${fullWorkflow.updatedBy || null})
+    `;
+
+    return fullWorkflow;
+  }
+
+  async getById(tenantSlug: TenantSlug, id: ResourceId): Promise<Workflow | null> {
+    const results = await this.sql`
+      select * from admin_workflows
+      where id = ${id} and tenant_slug = ${tenantSlug}
+    `;
+    return results[0] || null;
+  }
+
+  async update(tenantSlug: TenantSlug, id: ResourceId, updates: Partial<Workflow>): Promise<Workflow> {
+    const now = new Date();
+    
+    await this.sql`
+      update admin_workflows
+      set name = ${updates.name}, steps = ${JSON.stringify(updates.steps || [])}, is_active = ${updates.isActive}, description = ${updates.description || null}, updated_at = ${now}, updated_by = ${updates.updatedBy}
+      where id = ${id} and tenant_slug = ${tenantSlug}
+    `;
+
+    const updated = await this.getById(tenantSlug, id);
+    return updated!;
+  }
+
+  async delete(tenantSlug: TenantSlug, id: ResourceId): Promise<void> {
+    await this.sql`
+      delete from admin_workflows
+      where id = ${id} and tenant_slug = ${tenantSlug}
+    `;
+  }
 }
 
 /**
@@ -431,6 +567,35 @@ export class ModuleService {
       where id = ${moduleId} and tenant_slug = ${tenantSlug}
     `;
   }
+
+  async create(tenantSlug: TenantSlug, module: Partial<Module>): Promise<Module> {
+    const id = randomUUID() as ResourceId;
+    const now = new Date();
+    
+    const fullModule: Module = {
+      id,
+      tenantSlug,
+      key: module.key!,
+      name: module.name!,
+      description: module.description,
+      enabled: module.enabled ?? true,
+      regions: module.regions,
+      branches: module.branches,
+      featureFlags: module.featureFlags ?? [],
+      requiredModules: module.requiredModules,
+      createdAt: now,
+      updatedAt: now,
+      createdBy: module.createdBy,
+      updatedBy: module.updatedBy,
+    };
+
+    await this.sql`
+      insert into admin_modules (id, tenant_slug, key, name, description, enabled, regions, branches, feature_flags, required_modules, created_at, updated_at, created_by, updated_by)
+      values (${id}, ${tenantSlug}, ${fullModule.key}, ${fullModule.name}, ${fullModule.description || null}, ${fullModule.enabled}, ${JSON.stringify(fullModule.regions || [])}, ${JSON.stringify(fullModule.branches || [])}, ${JSON.stringify(fullModule.featureFlags)}, ${JSON.stringify(fullModule.requiredModules || [])}, ${now}, ${now}, ${fullModule.createdBy || null}, ${fullModule.updatedBy || null})
+    `;
+
+    return fullModule;
+  }
 }
 
 /**
@@ -442,7 +607,7 @@ export class AuditService {
   async log(
     tenantSlug: TenantSlug,
     userId: UserId,
-    action: AuditAction,
+    action: AuditActionType,
     resource: string,
     resourceId: ResourceId,
     changes?: Record<string, any>,

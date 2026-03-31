@@ -447,7 +447,90 @@ export class PerformanceMonitor {
   }
 }
 
-// ... (rest of the code remains the same)
+// Export singleton instance
+export const performanceMonitor = new PerformanceMonitor();
+
+// Loading state management
+export interface LoadingState {
+  isLoading: boolean;
+  message?: string;
+  progress?: number;
+  error?: string;
+}
+
+export class LoadingStateManager {
+  private loadingStates: Map<string, LoadingState> = new Map();
+  private subscribers: Map<string, Set<(state: LoadingState) => void>> = new Map();
+
+  getLoadingState(key: string): LoadingState {
+    return this.loadingStates.get(key) || { isLoading: false };
+  }
+
+  setLoading(key: string, loading: boolean, message?: string): void {
+    const currentState = this.getLoadingState(key);
+    const newState: LoadingState = {
+      ...currentState,
+      isLoading: loading,
+      message: message || currentState.message,
+    };
+    this.loadingStates.set(key, newState);
+    this.notifySubscribers(key, newState);
+  }
+
+  setProgress(key: string, progress: number): void {
+    const currentState = this.getLoadingState(key);
+    const newState: LoadingState = {
+      ...currentState,
+      progress,
+    };
+    this.loadingStates.set(key, newState);
+    this.notifySubscribers(key, newState);
+  }
+
+  setError(key: string, error: string): void {
+    const currentState = this.getLoadingState(key);
+    const newState: LoadingState = {
+      ...currentState,
+      isLoading: false,
+      error,
+    };
+    this.loadingStates.set(key, newState);
+    this.notifySubscribers(key, newState);
+  }
+
+  clear(key: string): void {
+    this.loadingStates.delete(key);
+    this.subscribers.delete(key);
+  }
+
+  subscribe(key: string, callback: (state: LoadingState) => void): () => void {
+    if (!this.subscribers.has(key)) {
+      this.subscribers.set(key, new Set());
+    }
+    this.subscribers.get(key)!.add(callback);
+    
+    // Return unsubscribe function
+    return () => {
+      const subscribers = this.subscribers.get(key);
+      if (subscribers) {
+        subscribers.delete(callback);
+        if (subscribers.size === 0) {
+          this.subscribers.delete(key);
+        }
+      }
+    };
+  }
+
+  private notifySubscribers(key: string, state: LoadingState): void {
+    const subscribers = this.subscribers.get(key);
+    if (subscribers) {
+      subscribers.forEach(callback => callback(state));
+    }
+  }
+}
+
+// Export singleton instance
+export const loadingStateManager = new LoadingStateManager();
 
 // Memoization utility
 export function memoize<T extends (...args: any[]) => any>(
@@ -462,7 +545,7 @@ export function memoize<T extends (...args: any[]) => any>(
       return cache.get(key) as ReturnType<T>;
     }
 
-    const result = func.apply(this, args);
+    const result = func(...args);
     cache.set(key, result);
     return result;
   }) as T;
@@ -476,7 +559,7 @@ export function debounce<T extends (...args: any[]) => any>(
 
   return ((...args: any[]) => {
     clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
+    timeout = setTimeout(() => func(...args), wait);
   }) as T;
 }
 
@@ -488,7 +571,7 @@ export function throttle<T extends (...args: any[]) => any>(
 
   return ((...args: any[]) => {
     if (!inThrottle) {
-      func.apply(this, args);
+      func(...args);
       inThrottle = true;
       setTimeout(() => {
         inThrottle = false;
@@ -604,7 +687,7 @@ export function useLoadingState(key: string) {
 
     updateLoadingState();
     
-    const unsubscribe = loadingStateManager.subscribe(updateLoadingState);
+    const unsubscribe = loadingStateManager.subscribe('global', updateLoadingState);
     
     return unsubscribe;
   }, [key]);

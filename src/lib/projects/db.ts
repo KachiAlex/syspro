@@ -454,7 +454,7 @@ export async function logTime(
         input.description || null,
         input.activityType || null,
         input.billable || false,
-        input.createdBy || "SUBMITTED",
+        createdBy || "SUBMITTED",
       ]
     );
 

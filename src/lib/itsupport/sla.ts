@@ -16,14 +16,14 @@ export function computeSLADueTimes(
 }
 
 export function checkSLABreach(ticket: Ticket, now: Date): { responseBreached: boolean; resolutionBreached: boolean } {
-  const responseBreached = ticket.slaResponseDue && now > new Date(ticket.slaResponseDue);
-  const resolutionBreached = ticket.slaResolutionDue && now > new Date(ticket.slaResolutionDue);
+  const responseBreached = ticket.slaResponseDue ? now > new Date(ticket.slaResponseDue) : false;
+  const resolutionBreached = ticket.slaResolutionDue ? now > new Date(ticket.slaResolutionDue) : false;
   return { responseBreached, resolutionBreached };
 }
 
 export function shouldEscalate(ticket: Ticket, now: Date): boolean {
   // Example: escalate if resolution breached and not already escalated
-  return (
+  return Boolean(
     ticket.slaResolutionDue &&
     now > new Date(ticket.slaResolutionDue) &&
     !ticket.escalationLevel

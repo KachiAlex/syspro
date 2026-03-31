@@ -1,4 +1,4 @@
-export type Json = any;
+import { Json } from '../common-types';
 
 export interface AutomationEvent {
   type: string;

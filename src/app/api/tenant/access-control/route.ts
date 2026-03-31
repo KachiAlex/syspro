@@ -13,6 +13,7 @@ import {
   asResourceId,
   asUserId,
 } from "@/lib/tenant-admin/utils";
+import { UserId } from "@/lib/tenant-admin/types";
 import { AuditService } from "@/lib/tenant-admin/service";
 
 /**
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     const service = new AccessControlService();
     let controls;
     if (userId) {
-      controls = await service.getUserAccess(asTenantSlug(context.tenantSlug), userId);
+      controls = await service.getUserAccess(asTenantSlug(context.tenantSlug), userId as UserId);
     } else {
       controls = await service.getAll(asTenantSlug(context.tenantSlug));
     }
@@ -72,18 +73,18 @@ export async function POST(request: NextRequest) {
       const service = new AccessControlService();
       const accessId = await service.grantTemporaryAccess(
         asTenantSlug(context.tenantSlug),
-        parsed.data.grantedTo,
+        parsed.data.grantedTo as UserId,
         parsed.data.moduleKey,
         parsed.data.permissions as any,
         new Date(parsed.data.expiresAt),
         parsed.data.justification,
-        context.userId
+        context.userId as UserId
       );
 
       const auditService = new AuditService();
       await auditService.log(
         asTenantSlug(context.tenantSlug),
-        context.userId,
+        context.userId as UserId,
         "create",
         "temporary_access",
         accessId,
@@ -128,8 +129,8 @@ export async function PATCH(request: NextRequest) {
       const auditService = new AuditService();
       await auditService.log(
         asTenantSlug(context.tenantSlug),
-        context.userId,
-        "revoke",
+        context.userId as UserId,
+        "delete",
         "temporary_access",
         asResourceId(id!)
       );
@@ -159,7 +160,7 @@ export async function PATCH(request: NextRequest) {
       const auditService = new AuditService();
       await auditService.log(
         asTenantSlug(context.tenantSlug),
-        context.userId,
+        context.userId as UserId,
         "update",
         "access_control",
         asResourceId(id!),
@@ -194,12 +195,12 @@ export async function DELETE(request: NextRequest) {
     }
 
     const service = new AccessControlService();
-    await service.delete(asTenantSlug(context.tenantSlug), asResourceId(id!));
+    await service.revokeAccess(asTenantSlug(context.tenantSlug), asResourceId(id!));
 
     const auditService = new AuditService();
     await auditService.log(
       asTenantSlug(context.tenantSlug),
-      context.userId,
+      context.userId as UserId,
       "delete",
       "access_control",
       asResourceId(id!)

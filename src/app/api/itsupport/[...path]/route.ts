@@ -19,7 +19,7 @@ export async function GET(request: NextRequest, { params }: { params: { path: st
     // Remove hop-by-hop headers if present
     headers.delete('connection');
     const body = await res.arrayBuffer();
-    return new NextResponse(body.length ? Buffer.from(body) : null, { status: res.status, headers });
+    return new NextResponse(body.byteLength ? Buffer.from(body) : null, { status: res.status, headers });
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('[itsupport proxy] error', err);

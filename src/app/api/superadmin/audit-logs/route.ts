@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { page, limit } = validation.data;
-    const offset = (page - 1) * limit;
+    const offset = (page! - 1) * limit!;
     const logs = await getAuditLogs(limit, offset);
 
     return NextResponse.json(

@@ -1,47 +1,6 @@
-export type Json = any;
+import { Json } from '../common-types';
 
 export type ContractType = 'full_time' | 'part_time' | 'contractor' | 'intern';
-
-export interface User {
-  id: string;
-  tenantId?: string | null;
-  email: string;
-  name?: string;
-  status: 'invited' | 'active' | 'suspended' | 'terminated';
-  contractType?: ContractType;
-  metadata?: Json;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface Role {
-  id: string;
-  tenantId?: string | null;
-  name: string;
-  description?: string;
-  predefined?: boolean;
-  metadata?: Json;
-}
-
-export interface Permission {
-  id: string;
-  key: string;
-  module: string;
-  action: string;
-  description?: string;
-}
-
-export interface Delegation {
-  id: string;
-  tenantId?: string;
-  grantedBy?: string;
-  grantedTo?: string;
-  roleId?: string;
-  startsAt?: string;
-  endsAt?: string;
-  reason?: string;
-}
-export type Json = any;
 
 export interface User {
   id: string;

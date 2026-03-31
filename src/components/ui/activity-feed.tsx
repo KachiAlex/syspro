@@ -7,6 +7,7 @@ import {
   Plus, 
   Edit, 
   Trash2, 
+  X,
   User, 
   Building, 
   CreditCard, 

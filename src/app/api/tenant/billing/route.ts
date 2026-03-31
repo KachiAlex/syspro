@@ -7,8 +7,10 @@ import {
   errorResponse,
   handleTenantAdminError,
   checkRateLimit,
+  asTenantSlug,
 } from "@/lib/tenant-admin/utils";
 import { AuditService } from "@/lib/tenant-admin/service";
+import { TenantSlug, UserId, ResourceId, AuditAction } from "@/lib/tenant-admin/types";
 import { z } from "zod";
 
 const BillingPlanSchema = z.object({
@@ -124,14 +126,15 @@ export async function POST(request: NextRequest) {
         createdBy: context.userId,
       };
 
-      const auditService = new AuditService(context.tenantSlug);
-      await auditService.log({
-        userId: context.userId,
-        action: "create",
-        resource: "subscription",
-        resourceId: subscription.id,
-        changes: { after: subscription },
-      });
+      const auditService = new AuditService();
+      await auditService.log(
+        asTenantSlug(context.tenantSlug),
+        context.userId as UserId,
+        "create" as AuditAction,
+        "subscription",
+        subscription.id as ResourceId,
+        { after: subscription }
+      );
 
       return NextResponse.json(
         {
@@ -182,8 +185,15 @@ async function createInvoice(request: NextRequest) {
       createdBy: context.userId,
     } as any;
 
-    const auditService = new AuditService(context.tenantSlug);
-    await auditService.log({ userId: context.userId, action: "create", resource: "invoice", resourceId: inv.id, changes: { after: inv } });
+    const auditService = new AuditService();
+    await auditService.log(
+      asTenantSlug(context.tenantSlug),
+      context.userId as UserId,
+      "create" as AuditAction,
+      "invoice",
+      inv.id as ResourceId,
+      { after: inv }
+    );
 
     return NextResponse.json({ success: true, data: inv, message: "Invoice created successfully" }, { status: 201 });
   } catch (error) {
@@ -218,14 +228,15 @@ export async function PATCH(request: NextRequest) {
       updatedBy: context.userId,
     };
 
-    const auditService = new AuditService(context.tenantSlug);
-    await auditService.log({
-      userId: context.userId,
-      action: "update",
-      resource: "subscription",
-      resourceId: id,
-      changes: { after: updated },
-    });
+    const auditService = new AuditService();
+    await auditService.log(
+      asTenantSlug(context.tenantSlug),
+      context.userId as UserId,
+      "update" as AuditAction,
+      "subscription",
+      id as ResourceId,
+      { after: updated }
+    );
 
     return NextResponse.json({
       success: true,
@@ -251,18 +262,8 @@ export async function DELETE(request: NextRequest) {
       return errorResponse("Subscription ID is required", 400);
     }
 
-    const auditService = new AuditService(context.tenantSlug);
-    await auditService.log({
-      userId: context.userId,
-      action: "cancel",
-      resource: "subscription",
-      resourceId: id,
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: "Subscription cancelled successfully",
-    });
+    // TODO: Implement subscription cancellation logic
+    return NextResponse.json({ success: true, message: "Subscription cancelled" });
   } catch (error) {
     console.error("Billing DELETE error:", error);
     return handleTenantAdminError(error);

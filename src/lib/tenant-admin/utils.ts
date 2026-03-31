@@ -104,7 +104,7 @@ export function validateTenantContext(request: NextRequest, requiredPermission?:
   }
 
   if (requiredPermission) {
-    requirePermission(context.userRole, requiredPermission);
+    requirePermission(context.userRole, requiredPermission as any);
   }
 
   return context;
@@ -294,7 +294,7 @@ export function sanitizeObject<T extends Record<string, any>>(obj: T): T {
 
   for (const key in sanitized) {
     if (typeof sanitized[key] === "string") {
-      sanitized[key] = sanitizeString(sanitized[key]);
+      (sanitized as any)[key] = sanitizeString(sanitized[key]);
     }
   }
 

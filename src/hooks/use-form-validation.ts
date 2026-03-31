@@ -31,6 +31,47 @@ export type FormValidation<T extends Record<string, any> = Record<string, any>> 
   touched: Record<keyof T, boolean>;
 };
 
+export type UseFormValidationReturn<T extends Record<string, any> = Record<string, any>> = {
+  // Form state
+  values: T;
+  errors: Record<keyof T, string | null>;
+  touched: Record<keyof T, boolean>;
+  isValid: boolean;
+  isDirty: boolean;
+  isSubmitting: boolean;
+  
+  // Global messages
+  globalError: string | null;
+  globalSuccess: string | null;
+  
+  // Actions
+  setFieldValue: (fieldKey: keyof T, value: any) => void;
+  setFieldError: (fieldKey: keyof T, error: string | null) => void;
+  setFieldTouched: (fieldKey: keyof T, touched: boolean) => void;
+  handleFieldChange: (fieldKey: keyof T, value: any) => void;
+  handleFieldBlur: (fieldKey: keyof T) => void;
+  handleSubmit: (e?: React.FormEvent) => Promise<void>;
+  resetForm: () => void;
+  
+  // Message actions
+  clearMessages: () => void;
+  setGlobalErrorMessage: (error: string) => void;
+  setGlobalSuccessMessage: (success: string) => void;
+  
+  // Utility
+  getFieldProps: (fieldKey: keyof T) => {
+    name: keyof T;
+    value: any;
+    error: string | null;
+    touched: boolean;
+    dirty: boolean;
+    onChange: (value: any) => void;
+    onBlur: () => void;
+    setError: (error: string | null) => void;
+    setTouched: (touched: boolean) => void;
+  };
+};
+
 export type UseFormValidationOptions<T> = {
   initialValues: T;
   validationSchema?: ZodSchema<T>;
@@ -145,12 +186,12 @@ export function useFormValidation<T extends Record<string, any>>({
       return {} as Record<keyof T, string | null>;
     } catch (error) {
       if (error instanceof ZodError) {
-        const errors: Record<string, string | null> = {} as Record<string, string | null>;
+        const errors = {} as Record<keyof T, string | null>;
         error.errors.forEach((err) => {
           const path = err.path.join(".");
-          errors[path as keyof T] = err.message;
+          (errors as any)[path] = err.message;
         });
-        return errors as Record<keyof T, string | null>;
+        return errors;
       }
       return {} as Record<keyof T, string | null>;
     }

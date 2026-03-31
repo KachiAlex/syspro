@@ -15,6 +15,7 @@ import {
   asResourceId,
 } from "@/lib/tenant-admin/utils";
 import { AuditService } from "@/lib/tenant-admin/service";
+import { UserId } from "@/lib/tenant-admin/types";
 
 /**
  * GET /api/tenant/roles
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
     const auditService = new AuditService();
     await auditService.log(
       asTenantSlug(context.tenantSlug),
-      context.userId,
+      { __brand: "UserId", value: context.userId } as unknown as UserId,
       "create",
       "role",
       role.id,
@@ -115,7 +116,7 @@ export async function PATCH(request: NextRequest) {
     const auditService = new AuditService();
     await auditService.log(
       asTenantSlug(context.tenantSlug),
-      context.userId,
+      { __brand: "UserId", value: context.userId } as unknown as UserId,
       "update",
       "role",
       asResourceId(id!),
@@ -153,7 +154,7 @@ export async function DELETE(request: NextRequest) {
     const auditService = new AuditService();
     await auditService.log(
       asTenantSlug(context.tenantSlug),
-      context.userId,
+      { __brand: "UserId", value: context.userId } as unknown as UserId,
       "delete",
       "role",
       asResourceId(id!),

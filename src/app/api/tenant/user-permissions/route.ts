@@ -39,6 +39,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Step 2: Validate user has access to this tenant
+    if (!user) {
+      return NextResponse.json({ error: "User not authenticated" }, { status: 401 });
+    }
     const hasAccess = await validateTenantAccess(user, tenantSlug);
     if (!hasAccess) {
       return NextResponse.json({ error: "Access denied to this tenant" }, { status: 403 });

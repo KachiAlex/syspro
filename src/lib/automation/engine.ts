@@ -1,4 +1,4 @@
-import { AutomationRule, Condition, RuleSimulationResult, Action } from "@/lib/automation";
+import { AutomationRule, Condition, RuleSimulationResult, Action } from "../automation";
 import { insertAutomationAudit, enqueueAutomationActions } from "./db";
 
 function getValue(payload: any, path?: string): any {

@@ -10,6 +10,7 @@ export interface AuthContext {
   tenantSlug: string;
   userId?: string;
   userRole?: string; // e.g., "admin", "operator", "viewer"
+  userPermissions?: string[];
 }
 
 /**
@@ -22,8 +23,9 @@ export function extractAuthContext(request: NextRequest): AuthContext {
   const tenantSlug = url.searchParams.get("tenantSlug") ?? "kreatix-default";
   const userId = url.searchParams.get("userId"); // placeholder
   const userRole = url.searchParams.get("userRole") ?? "admin"; // default to admin for scaffold
+  const userPermissions: string[] = []; // placeholder
 
-  return { tenantSlug, userId: userId || undefined, userRole };
+  return { tenantSlug, userId: userId || undefined, userRole, userPermissions };
 }
 
 /**

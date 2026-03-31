@@ -16,6 +16,7 @@ import {
   asResourceId,
 } from "@/lib/tenant-admin/utils";
 import { AuditService } from "@/lib/tenant-admin/service";
+import { TenantSlug, UserId, ResourceId, AuditAction } from "@/lib/tenant-admin/types";
 
 /**
  * GET /api/tenant/departments
@@ -34,8 +35,8 @@ export async function GET(request: NextRequest) {
     const filters = getFilterParams(request);
     const sort = getSortParams(request);
 
-    const service = new DepartmentService(context.tenantSlug);
-    const departments = await service.getAll(context.tenantSlug);
+    const service = new DepartmentService();
+    const departments = await service.getAll(asTenantSlug(context.tenantSlug));
 
     return NextResponse.json({
       success: true,
@@ -66,13 +67,22 @@ export async function POST(request: NextRequest) {
     }
 
     const service = new DepartmentService();
-    const department = await service.create(asTenantSlug(context.tenantSlug), parsed.data);
+    const departmentData = {
+      ...parsed.data,
+      parentDepartmentId: parsed.data.parentDepartmentId ? 
+        asResourceId(parsed.data.parentDepartmentId) : 
+        undefined,
+      manager: parsed.data.manager ? 
+        { __brand: "UserId", value: parsed.data.manager } as unknown as UserId : 
+        undefined
+    };
+    const department = await service.create(asTenantSlug(context.tenantSlug), departmentData);
 
     // Log audit trail
     const auditService = new AuditService();
     await auditService.log(
       asTenantSlug(context.tenantSlug),
-      context.userId,
+      { __brand: "UserId", value: context.userId } as unknown as UserId,
       "create",
       "department",
       department.id,
@@ -113,13 +123,22 @@ export async function PATCH(request: NextRequest) {
 
     const service = new DepartmentService();
     const existing = await service.getById(asTenantSlug(context.tenantSlug), asResourceId(id!));
-    const updated = await service.update(asTenantSlug(context.tenantSlug), asResourceId(id!), parsed.data);
+    const updateData = {
+      ...parsed.data,
+      parentDepartmentId: parsed.data.parentDepartmentId ? 
+        asResourceId(parsed.data.parentDepartmentId) : 
+        undefined,
+      manager: parsed.data.manager ? 
+        { __brand: "UserId", value: parsed.data.manager } as unknown as UserId : 
+        undefined
+    };
+    const updated = await service.update(asTenantSlug(context.tenantSlug), asResourceId(id!), updateData);
 
     // Log audit trail
     const auditService = new AuditService();
     await auditService.log(
       asTenantSlug(context.tenantSlug),
-      context.userId,
+      { __brand: "UserId", value: context.userId } as unknown as UserId,
       "update",
       "department",
       asResourceId(id!),
@@ -158,7 +177,7 @@ export async function DELETE(request: NextRequest) {
     const auditService = new AuditService();
     await auditService.log(
       asTenantSlug(context.tenantSlug),
-      context.userId,
+      { __brand: "UserId", value: context.userId } as unknown as UserId,
       "delete",
       "department",
       asResourceId(id!),

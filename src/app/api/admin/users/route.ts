@@ -8,11 +8,13 @@ export const users = new Map<string, User>();
 function sampleUser(): User {
   return {
     id: 'local-1',
+    tenantSlug: 'default',
     email: 'admin@example.com',
-    name: 'Tenant Admin',
+    displayName: 'Tenant Admin',
     status: 'active',
-    contractType: 'full_time',
+    contractType: 'full-time',
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 }
 
@@ -34,11 +36,13 @@ export async function POST(request: Request) {
         const id = `local-${Math.random().toString(36).slice(2, 10)}`;
         const u: User = {
           id,
+          tenantSlug: 'default',
           email: user.email,
-          name: user.name,
+          displayName: user.name,
           status: 'invited',
-          contractType: user.contractType ?? 'full_time',
+          contractType: user.contractType ?? 'full-time',
           createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
         users.set(id, u);
         created.push(u);
@@ -50,11 +54,13 @@ export async function POST(request: Request) {
     const id = `local-${Math.random().toString(36).slice(2, 10)}`;
     const u: User = {
       id,
+      tenantSlug: 'default',
       email: body.email,
-      name: body.name,
+      displayName: body.name,
       status: 'invited',
-      contractType: body.contractType ?? 'full_time',
+      contractType: body.contractType ?? 'full-time',
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
     users.set(id, u);
     return NextResponse.json({ data: u }, { status: 201 });

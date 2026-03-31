@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { UseFormValidation, UseFormValidationOptions } from "@/hooks/use-form-validation";
+import { useFormValidation, UseFormValidationOptions, UseFormValidationReturn, FormValidation } from "@/hooks/use-form-validation";
 import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 
 export interface EnhancedFormProps<T extends Record<string, any>> extends UseFormValidationOptions<T> {
-  children: (form: UseFormValidation<T>) => React.ReactNode;
+  children: (form: UseFormValidationReturn<T>) => React.ReactNode;
   className?: string;
   noValidate?: boolean;
   autoComplete?: string;
@@ -18,7 +18,7 @@ export function EnhancedForm<T extends Record<string, any>>({
   autoComplete = "off",
   ...formOptions
 }: EnhancedFormProps<T>) {
-  const form = UseFormValidation(formOptions);
+  const form = useFormValidation(formOptions);
 
   return (
     <form
@@ -181,6 +181,7 @@ export interface EnhancedSelectProps extends React.SelectHTMLAttributes<HTMLSele
   required?: boolean;
   options: { value: string; label: string; disabled?: boolean }[];
   containerClassName?: string;
+  placeholder?: string;
 }
 
 export function EnhancedSelect({
@@ -192,6 +193,7 @@ export function EnhancedSelect({
   options,
   containerClassName = "",
   className = "",
+  placeholder,
   ...props
 }: EnhancedSelectProps) {
   const hasError = error && touched;
@@ -213,7 +215,7 @@ export function EnhancedSelect({
         } ${className}`}
         {...props}
       >
-        <option value="">{props.placeholder || "Select an option"}</option>
+        <option value="">{placeholder || "Select an option"}</option>
         {options.map((option) => (
           <option key={option.value} value={option.value} disabled={option.disabled}>
             {option.label}
@@ -369,7 +371,7 @@ export function FormSubmitButton({
     }
   }, [isSubmitting, showSuccess]);
 
-  const handleClick = (e: React.FormEvent) => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!isSubmitting && !disabled) {
       setShowSuccess(true);
       props.onClick?.(e);

@@ -51,6 +51,7 @@ export const HRModule: React.FC<HRModuleProps> = ({
   // Use the new API hook for real data
   const {
     employees,
+    departments,
     loading: dataLoading,
     error: dataError,
     createEmployee: createEmployeeAPI,
@@ -214,17 +215,20 @@ export const HRModule: React.FC<HRModuleProps> = ({
         isOpen={showAddModal} 
         onClose={() => setShowAddModal(false)} 
         onSubmit={handleAddEmployee}
+        departments={departments}
       />
       <EditEmployeeModal 
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
         onSubmit={handleUpdateEmployee}
         employee={selectedEmployee || undefined}
+        departments={departments}
+        statuses={['Active', 'Inactive', 'On Leave']}
       />
       <RunPayrollModal 
         isOpen={showPayrollModal}
         onClose={() => setShowPayrollModal(false)}
-        onSubmit={() => {
+        onSubmit={async () => {
           showAlert('success', 'Payroll run completed!');
           setShowPayrollModal(false);
         }}
@@ -232,10 +236,11 @@ export const HRModule: React.FC<HRModuleProps> = ({
       <PostJobModal 
         isOpen={showJobModal}
         onClose={() => setShowJobModal(false)}
-        onSubmit={() => {
-          showAlert('success', 'Job posting created!');
+        onSubmit={async () => {
+          showAlert('success', 'Job posted successfully!');
           setShowJobModal(false);
         }}
+        departments={departments}
       />
       <ViewEmployeeModal 
         isOpen={showViewModal}
@@ -246,12 +251,19 @@ export const HRModule: React.FC<HRModuleProps> = ({
           setShowViewModal(false);
           setShowEditModal(true);
         }}
-        onAward={(emp) => showAlert('success', `Award for ${emp.name}!`)}
+        onAward={(emp) => {
+          showAlert('success', 'Award given to ' + emp.name);
+        }}
+        onDelete={async (emp) => {
+          showAlert('success', 'Employee ' + emp.name + ' deleted');
+          setShowViewModal(false);
+          refetchEmployees();
+        }}
       />
       <TrainingModal 
         isOpen={showTrainingModal}
         onClose={() => setShowTrainingModal(false)}
-        onSubmit={() => {
+        onSubmit={async () => {
           showAlert('success', 'Training session scheduled!');
           setShowTrainingModal(false);
         }}

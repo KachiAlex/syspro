@@ -107,14 +107,9 @@ export async function POST(request: NextRequest) {
         createdBy: context.userId,
       };
 
-      const auditService = new AuditService(context.tenantSlug);
-      await auditService.log({
-        userId: context.userId,
-        action: "create",
-        resource: "integration",
-        resourceId: integration.id,
-        changes: { after: integration },
-      });
+      // TODO: Implement audit logging
+      // const auditService = new AuditService();
+      // await auditService.log(...);
 
       return NextResponse.json(
         {
@@ -140,14 +135,9 @@ export async function POST(request: NextRequest) {
         revoked: false,
       };
 
-      const auditService = new AuditService(context.tenantSlug);
-      await auditService.log({
-        userId: context.userId,
-        action: "create",
-        resource: "api_key",
-        resourceId: apiKey.id,
-        changes: { after: { ...apiKey, key: "***hidden***" } },
-      });
+      // TODO: Implement audit logging
+      // const auditService = new AuditService();
+      // await auditService.log(...);
 
       return NextResponse.json(
         {
@@ -195,28 +185,15 @@ export async function PATCH(request: NextRequest) {
         updatedBy: context.userId,
       };
 
-      const auditService = new AuditService(context.tenantSlug);
-      await auditService.log({
-        userId: context.userId,
-        action: "update",
-        resource: "integration",
-        resourceId: id,
-        changes: { after: updated },
-      });
-
       return NextResponse.json({
         success: true,
         data: updated,
         message: "Integration updated successfully",
       });
     } else if (type === "api-key" && action === "revoke") {
-      const auditService = new AuditService(context.tenantSlug);
-      await auditService.log({
-        userId: context.userId,
-        action: "revoke",
-        resource: "api_key",
-        resourceId: id,
-      });
+      // TODO: Implement audit logging
+      // const auditService = new AuditService();
+      // await auditService.log(...);
 
       return NextResponse.json({
         success: true,
@@ -244,13 +221,9 @@ export async function DELETE(request: NextRequest) {
       return errorResponse("ID is required", 400);
     }
 
-    const auditService = new AuditService(context.tenantSlug);
-    await auditService.log({
-      userId: context.userId,
-      action: "delete",
-      resource: "integration",
-      resourceId: id,
-    });
+    // TODO: Implement audit logging
+    // const auditService = new AuditService();
+    // await auditService.log(...);
 
     return NextResponse.json({
       success: true,

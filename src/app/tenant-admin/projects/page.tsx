@@ -1,8 +1,5 @@
+import Projects from '@/app/tenant-admin/sections/projects';
+
 export default function ProjectsPage() {
-  return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
-      <p className="text-gray-600 mt-2">Manage and track projects.</p>
-    </div>
-  );
+  return <Projects tenantSlug="default" />;
 }

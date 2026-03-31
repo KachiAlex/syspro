@@ -1,10 +1,10 @@
-import { db } from "@/lib/sql-client";
+import { db, type QueryResult } from "@/lib/sql-client";
 import type { Campaign, LeadSource, CampaignCost, RevenueAttribution, EnablementAsset } from "./types";
 import { calculateAttributionSummary, type AttributionModel } from "./attribution";
 import type { AttributionSummary } from "./attribution";
 
 export async function createCampaign(input: Partial<Campaign>): Promise<Campaign> {
-  const [row] = (await db.query(
+  const result = (await db.query(
     `insert into revops_campaigns (tenant_slug, subsidiary, region, branch, name, channel, status, start_at, end_at, budget, approved_by, approved_at, metadata, created_by)
      values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) returning *`,
     [
@@ -23,7 +23,8 @@ export async function createCampaign(input: Partial<Campaign>): Promise<Campaign
       input.metadata ?? null,
       input.createdBy ?? null,
     ]
-  )) as any[];
+  )) as QueryResult<Campaign>;
+  const row = result.rows[0];
   return db.mapRow(row);
 }
 
@@ -33,13 +34,13 @@ export async function listCampaigns(tenantSlug: string): Promise<Campaign[]> {
 }
 
 export async function createLeadSource(input: Partial<LeadSource>): Promise<LeadSource> {
-  const [row] = (await db.query(
+  const result = (await db.query(
     `insert into revops_lead_sources (tenant_slug, name, channel, campaign_id, cost_center, region, branch, metadata, created_by)
      values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning *`,
     [
       input.tenantSlug,
       input.name,
-      input.channel ?? null,
+      input.channel,
       input.campaignId ?? null,
       input.costCenter ?? null,
       input.region ?? null,
@@ -47,67 +48,71 @@ export async function createLeadSource(input: Partial<LeadSource>): Promise<Lead
       input.metadata ?? null,
       input.createdBy ?? null,
     ]
-  )) as any[];
+  )) as QueryResult<LeadSource>;
+  const row = result.rows[0];
   return db.mapRow(row);
 }
 
 export async function listLeadSources(tenantSlug: string): Promise<LeadSource[]> {
-  const rows = (await db.query(`select * from revops_lead_sources where tenant_slug = $1 order by created_at desc`, [tenantSlug])) as any;
-  return db.mapRows(rows);
+  const result = (await db.query(`select * from revops_lead_sources where tenant_slug = $1 order by created_at desc`, [tenantSlug])) as QueryResult<LeadSource>;
+  return db.mapRows(result.rows);
 }
 
 export async function addCampaignCost(input: Partial<CampaignCost>): Promise<CampaignCost> {
-  const [row] = (await db.query(
+  const result = (await db.query(
     `insert into revops_campaign_costs (tenant_slug, campaign_id, amount, currency, category, incurred_at, metadata, created_by)
      values ($1,$2,$3,$4,$5,$6,$7,$8) returning *`,
     [
       input.tenantSlug,
       input.campaignId,
       input.amount,
-      input.currency ?? 'USD',
-      input.category ?? null,
-      input.incurredAt ?? null,
-      input.metadata ?? null,
-      input.createdBy ?? null,
+      input.currency,
+      input.category,
+      input.incurredAt,
+      input.metadata,
+      input.createdBy,
     ]
-  )) as any[];
+  )) as QueryResult<CampaignCost>;
+  const row = result.rows[0];
   return db.mapRow(row);
 }
 
 export async function recordAttribution(input: Partial<RevenueAttribution>): Promise<RevenueAttribution> {
-  const [row] = (await db.query(
+  const result = (await db.query(
     `insert into revops_revenue_attributions (tenant_slug, campaign_id, lead_source_id, opportunity_id, invoice_id, amount, attribution_model, attributed_at, metadata, created_by)
      values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning *`,
     [
       input.tenantSlug,
-      input.campaignId ?? null,
-      input.leadSourceId ?? null,
-      input.opportunityId ?? null,
-      input.invoiceId ?? null,
-      input.amount ?? null,
-      input.attributionModel ?? null,
-      input.attributedAt ?? null,
-      input.metadata ?? null,
-      input.createdBy ?? null,
+      input.campaignId,
+      input.leadSourceId,
+      input.opportunityId,
+      input.invoiceId,
+      input.amount,
+      input.attributionModel,
+      input.attributedAt,
+      input.metadata,
+      input.createdBy,
     ]
-  )) as any[];
+  )) as QueryResult<RevenueAttribution>;
+  const row = result.rows[0];
   return db.mapRow(row);
 }
 
 export async function uploadEnablementAsset(input: Partial<EnablementAsset>): Promise<EnablementAsset> {
-  const [row] = (await db.query(
+  const result = (await db.query(
     `insert into revops_enablement_assets (tenant_slug, name, type, version, url, metadata, created_by)
      values ($1,$2,$3,$4,$5,$6,$7) returning *`,
     [
       input.tenantSlug,
       input.name,
-      input.type ?? null,
-      input.version ?? 1,
-      input.url ?? null,
-      input.metadata ?? null,
-      input.createdBy ?? null,
+      input.type,
+      input.version,
+      input.url,
+      input.metadata,
+      input.createdBy,
     ]
-  )) as any[];
+  )) as QueryResult<EnablementAsset>;
+  const row = result.rows[0];
   return db.mapRow(row);
 }
 
@@ -115,7 +120,7 @@ export async function calculateAttributionForTenant(tenantSlug: string, model: A
   const rows = (await db.query(
     `select * from revops_revenue_attributions where tenant_slug = $1 order by attributed_at asc`,
     [tenantSlug]
-  )) as any[];
+  )) as unknown as any[];
 
   const events = rows.map((r) => ({
     id: String(r.id),

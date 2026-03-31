@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Download, Loader2, Play, RefreshCcw } from "lucide-react";
-import { FixedSizeList as List, ListOnItemsRenderedProps } from "react-window";
 import ReportDefinitionModal from "@/components/ReportDefinitionModal";
 
 type Report = {
@@ -72,15 +71,15 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
     return () => clearTimeout(t);
   }, [tenantSlug]);
 
-  const listRef = useRef<List | null>(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
   const ITEM_SIZE = 140; // reduced height since definition moved to modal
 
   const [defOpen, setDefOpen] = useState(false);
   const [selectedDefinition, setSelectedDefinition] = useState<any>(null);
 
-  const handleItemsRendered = useCallback((props: ListOnItemsRenderedProps) => {
-    const { visibleStopIndex } = props as any;
-    if (visibleStopIndex >= reports.length - 3 && hasMore && !loading) {
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop <= clientHeight * 1.5 && hasMore && !loading) {
       awaitLoadMore();
     }
   }, [reports.length, hasMore, loading, page]);
@@ -206,47 +205,35 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
         ) : reports.length === 0 ? (
           <div className="text-sm text-slate-500">No reports yet. Create one above.</div>
         ) : (
-          <div className="">
-            <List
-              height={Math.min(600, reports.length * ITEM_SIZE)}
-              itemCount={reports.length}
-              itemSize={ITEM_SIZE}
-              width="100%"
-              onItemsRendered={handleItemsRendered}
-              ref={(r: List | null) => (listRef.current = r)}
-            >
-              {({ index, style }: { index: number; style: React.CSSProperties }) => {
-                const r = reports[index];
-                return (
-                  <div style={style} key={r.id} className="p-2">
-                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-900">{r.name}</p>
-                          <p className="text-xs text-slate-500">{r.reportType}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => runReport(r)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-white">
-                            <Play className="h-3 w-3" /> Run now
-                          </button>
-                          <button onClick={() => loadJobs(r.id)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-white">
-                            History
-                          </button>
-                        </div>
-                      </div>
-                      <div className="mt-3 flex items-center justify-between">
-                        <div className="text-xs text-slate-600">{r.schedule || "On-demand"}</div>
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => { setSelectedDefinition(r.definition); setDefOpen(true); }} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-white">View definition</button>
-                        </div>
-                      </div>
+          <div className="max-h-96 overflow-y-auto" onScroll={handleScroll} ref={listRef}>
+            {reports.map((r, index) => (
+              <div key={r.id} className="p-2">
+                <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">{r.name}</p>
+                      <p className="text-xs text-slate-500">{r.reportType}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => runReport(r)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-white">
+                        <Play className="h-3 w-3" /> Run now
+                      </button>
+                      <button onClick={() => loadJobs(r.id)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-white">
+                        History
+                      </button>
                     </div>
                   </div>
-                );
-              }}
-            </List>
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="text-xs text-slate-600">{r.schedule || "On-demand"}</div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => { setSelectedDefinition(r.definition); setDefOpen(true); }} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-white">View definition</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
             {hasMore && (
-              <div className="flex justify-center mt-4">
+              <div className="flex justify-center mt-4 p-4">
                 <button
                   onClick={() => { if (nextCursor) loadReports(nextCursor); else loadReports(null); }}
                   disabled={loading}

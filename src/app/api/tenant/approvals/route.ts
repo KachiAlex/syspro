@@ -9,8 +9,10 @@ import {
   errorResponse,
   handleTenantAdminError,
   checkRateLimit,
+  asTenantSlug,
 } from "@/lib/tenant-admin/utils";
 import { AuditService } from "@/lib/tenant-admin/service";
+import { TenantSlug, UserId, ResourceId, AuditAction } from "@/lib/tenant-admin/types";
 import { z } from "zod";
 
 // Schemas for approval operations
@@ -79,7 +81,7 @@ export async function GET(request: NextRequest) {
     // TODO: ApprovalFlowService needs getAll method
     const service = new ApprovalFlowService();
     // const flows = await service.getAll(context.tenantSlug);
-    const flows = []; // Placeholder
+    const flows: any[] = []; // Placeholder
 
     return NextResponse.json({
       success: true,
@@ -115,7 +117,7 @@ export async function POST(request: NextRequest) {
       const service = new ApprovalFlowService();
       // TODO: Create flow and return it with proper response
       const flowId = await service.createFlow(
-        context.tenantSlug,
+        asTenantSlug(context.tenantSlug),
         parsed.data.name,
         'custom',
         parsed.data.steps || []
@@ -123,9 +125,9 @@ export async function POST(request: NextRequest) {
 
       const auditService = new AuditService();
       await auditService.log(
-        context.tenantSlug,
-        context.userId,
-        "create",
+        asTenantSlug(context.tenantSlug),
+        context.userId as UserId,
+        "create" as AuditAction,
         "approval_flow",
         flowId,
         { after: { id: flowId } }
@@ -134,7 +136,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: true,
-          data: flow,
+          data: { id: flowId },
           message: "Approval flow created successfully",
         },
         { status: 201 }
@@ -148,18 +150,18 @@ export async function POST(request: NextRequest) {
 
       const service = new ApprovalFlowService();
       const request_obj = await service.createRequest(
-        context.tenantSlug,
-        parsed.data.flowId as import('@/lib/tenant-admin/types').ResourceId,
+        asTenantSlug(context.tenantSlug),
+        parsed.data.flowId as ResourceId,
         parsed.data.resourceType,
-        context.userId as import('@/lib/tenant-admin/types').UserId,
-        parsed.data.resourceId as import('@/lib/tenant-admin/types').ResourceId
+        context.userId as UserId,
+        parsed.data.resourceId as ResourceId
       );
 
       const auditService = new AuditService();
       await auditService.log(
-        context.tenantSlug,
-        context.userId,
-        "create",
+        asTenantSlug(context.tenantSlug),
+        context.userId as UserId,
+        "create" as AuditAction,
         "approval_request",
         request_obj.id,
         { after: request_obj }
@@ -220,20 +222,20 @@ export async function PATCH(request: NextRequest) {
                             parsed.data.status === 'rejected' ? 'reject' : 'cancel';
       
       await service.approveRequest(
-        context.tenantSlug,
-        id as import('@/lib/tenant-admin/types').ResourceId,
+        asTenantSlug(context.tenantSlug),
+        id as ResourceId,
         approvalAction as any,
-        context.userId as import('@/lib/tenant-admin/types').UserId,
+        context.userId as UserId,
         parsed.data.comments
       );
 
       const auditService = new AuditService();
       await auditService.log(
-        context.tenantSlug,
-        context.userId,
-        "update",
+        asTenantSlug(context.tenantSlug),
+        context.userId as UserId,
+        "update" as AuditAction,
         "approval_request",
-        id as import('@/lib/tenant-admin/types').ResourceId,
+        id as ResourceId,
         { status: parsed.data.status }
       );
 
@@ -264,32 +266,34 @@ export async function DELETE(request: NextRequest) {
       return errorResponse("ID is required", 400);
     }
 
-    const service = new ApprovalFlowService(context.tenantSlug);
+    const service = new ApprovalFlowService();
 
     if (type === "flow") {
-      const existing = await service.getById(id);
-      await service.delete(id);
+      const existing = await service.getById(asTenantSlug(context.tenantSlug), id as ResourceId);
+      await service.delete(asTenantSlug(context.tenantSlug), id as ResourceId);
 
-      const auditService = new AuditService(context.tenantSlug);
-      await auditService.log({
-        userId: context.userId,
-        action: "delete",
-        resource: "approval_flow",
-        resourceId: id,
-        changes: { before: existing },
-      });
+      const auditService = new AuditService();
+      await auditService.log(
+        asTenantSlug(context.tenantSlug),
+        context.userId as UserId,
+        "delete" as AuditAction,
+        "approval_flow",
+        id as ResourceId,
+        { before: existing }
+      );
     } else if (type === "request") {
-      const existing = await service.getRequestById(id);
-      await service.deleteRequest(id);
+      const existing = await service.getRequestById(asTenantSlug(context.tenantSlug), id as ResourceId);
+      await service.deleteRequest(asTenantSlug(context.tenantSlug), id as ResourceId);
 
-      const auditService = new AuditService(context.tenantSlug);
-      await auditService.log({
-        userId: context.userId,
-        action: "delete",
-        resource: "approval_request",
-        resourceId: id,
-        changes: { before: existing },
-      });
+      const auditService = new AuditService();
+      await auditService.log(
+        asTenantSlug(context.tenantSlug),
+        context.userId as UserId,
+        "delete" as AuditAction,
+        "approval_request",
+        id as ResourceId,
+        { before: existing }
+      );
     } else {
       return errorResponse("Invalid type parameter", 400);
     }

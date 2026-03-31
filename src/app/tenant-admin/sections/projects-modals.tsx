@@ -37,13 +37,15 @@ export function CreateProjectModal({
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    client: '',
-    status: 'active',
+    objective: '',
+    subsidiary: '',
+    branch: '',
+    departments: '',
     startDate: '',
     endDate: '',
-    budget: '',
-    manager: '',
-    priority: 'medium',
+    budgetApproved: '',
+    owner: '',
+    priority: 'Medium',
   });
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -57,29 +59,37 @@ export function CreateProjectModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.client || !formData.startDate) {
+    if (!formData.name || !formData.objective || !formData.startDate) {
       setAlert({ type: 'error', message: 'Please fill in all required fields' });
       return;
     }
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      onSubmit(formData);
+      const projectData = {
+        ...formData,
+        budgetApproved: parseFloat(formData.budgetApproved) || 0,
+        departments: formData.departments.split(',').map(d => d.trim()).filter(d => d),
+      };
+      await onSubmit(projectData);
       setAlert({ type: 'success', message: 'Project created successfully!' });
       setTimeout(() => {
         setFormData({
           name: '',
           description: '',
-          client: '',
-          status: 'active',
+          objective: '',
+          subsidiary: '',
+          branch: '',
+          departments: '',
           startDate: '',
           endDate: '',
-          budget: '',
-          manager: '',
-          priority: 'medium',
+          budgetApproved: '',
+          owner: '',
+          priority: 'Medium',
         });
         onClose();
       }, 1500);
+    } catch (error) {
+      setAlert({ type: 'error', message: 'Failed to create project' });
     } finally {
       setLoading(false);
     }
@@ -123,18 +133,32 @@ export function CreateProjectModal({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Client <span className="text-red-600">*</span>
+                Owner
               </label>
               <input
                 type="text"
-                name="client"
-                value={formData.client}
+                name="owner"
+                value={formData.owner}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Client name"
-                required
+                placeholder="Project owner"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Objective <span className="text-red-600">*</span>
+            </label>
+            <textarea
+              name="objective"
+              value={formData.objective}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Project objective"
+              rows={2}
+              required
+            />
           </div>
 
           <div>
@@ -148,6 +172,49 @@ export function CreateProjectModal({
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Project description"
               rows={3}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Subsidiary
+              </label>
+              <input
+                type="text"
+                name="subsidiary"
+                value={formData.subsidiary}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Subsidiary"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Branch
+              </label>
+              <input
+                type="text"
+                name="branch"
+                value={formData.branch}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Branch"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Departments
+            </label>
+            <input
+              type="text"
+              name="departments"
+              value={formData.departments}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Engineering, Marketing, Sales (comma separated)"
             />
           </div>
 
@@ -182,49 +249,17 @@ export function CreateProjectModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Budget
+                Budget Approved
               </label>
               <input
                 type="number"
-                name="budget"
-                value={formData.budget}
+                name="budgetApproved"
+                value={formData.budgetApproved}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0.00"
                 step="0.01"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Project Manager
-              </label>
-              <input
-                type="text"
-                name="manager"
-                value={formData.manager}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Manager name"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Status
-              </label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="active">Active</option>
-                <option value="planning">Planning</option>
-                <option value="completed">Completed</option>
-                <option value="on-hold">On Hold</option>
-              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -236,10 +271,10 @@ export function CreateProjectModal({
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="critical">Critical</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+                <option value="Critical">Critical</option>
               </select>
             </div>
           </div>
@@ -294,19 +329,31 @@ export function ViewProjectModal({
               <p className="text-lg font-medium text-gray-900">{project.name}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Client</p>
-              <p className="text-lg font-medium text-gray-900">{project.client}</p>
+              <p className="text-sm text-gray-600">Owner</p>
+              <p className="text-lg font-medium text-gray-900">{project.owner}</p>
             </div>
           </div>
+
+          <div>
+            <p className="text-sm text-gray-600">Objective</p>
+            <p className="text-lg font-medium text-gray-900">{project.objective}</p>
+          </div>
+
+          {project.description && (
+            <div>
+              <p className="text-sm text-gray-600">Description</p>
+              <p className="text-gray-900">{project.description}</p>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-600">Status</p>
               <p className="text-lg font-medium text-gray-900 capitalize">
                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                  project.status === 'completed' ? 'bg-green-100 text-green-800' :
-                  project.status === 'active' ? 'bg-blue-100 text-blue-800' :
-                  project.status === 'on-hold' ? 'bg-yellow-100 text-yellow-800' :
+                  project.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                  project.status === 'Active' ? 'bg-blue-100 text-blue-800' :
+                  project.status === 'On Hold' ? 'bg-yellow-100 text-yellow-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>
                   {project.status}
@@ -317,9 +364,9 @@ export function ViewProjectModal({
               <p className="text-sm text-gray-600">Priority</p>
               <p className="text-lg font-medium text-gray-900 capitalize">
                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                  project.priority === 'critical' ? 'bg-red-100 text-red-800' :
-                  project.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                  project.priority === 'medium' ? 'bg-blue-100 text-blue-800' :
+                  project.priority === 'Critical' ? 'bg-red-100 text-red-800' :
+                  project.priority === 'High' ? 'bg-orange-100 text-orange-800' :
+                  project.priority === 'Medium' ? 'bg-blue-100 text-blue-800' :
                   'bg-green-100 text-green-800'
                 }`}>
                   {project.priority}
@@ -341,19 +388,19 @@ export function ViewProjectModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-gray-600">Budget</p>
-              <p className="text-lg font-medium text-gray-900">${parseFloat(project.budget || 0).toFixed(2)}</p>
+              <p className="text-sm text-gray-600">Budget Approved</p>
+              <p className="text-lg font-medium text-gray-900">${project.budgetApproved.toFixed(2)}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Project Manager</p>
-              <p className="text-lg font-medium text-gray-900">{project.manager || 'Unassigned'}</p>
+              <p className="text-sm text-gray-600">Budget Spent</p>
+              <p className="text-lg font-medium text-gray-900">${project.budgetSpent.toFixed(2)}</p>
             </div>
           </div>
 
-          {project.description && (
+          {project.departments && project.departments.length > 0 && (
             <div>
-              <p className="text-sm text-gray-600">Description</p>
-              <p className="text-gray-900">{project.description}</p>
+              <p className="text-sm text-gray-600">Departments</p>
+              <p className="text-gray-900">{project.departments.join(', ')}</p>
             </div>
           )}
 

@@ -19,6 +19,7 @@ import {
   Task,
   EmployeeSkill,
   TaskAssignment,
+  DetailedSuggestion,
 } from "./types";
 
 // ============================================================
@@ -139,12 +140,6 @@ interface RecommendationFactors {
   departmentAlignmentScore: number;
 }
 
-interface DetailedSuggestion extends TaskFitSuggestion {
-  factors: RecommendationFactors;
-  riskFlags: string[];
-  reason: string;
-}
-
 async function scoreEmployee(
   employeeId: string,
   tenantSlug: string,
@@ -206,22 +201,14 @@ async function scoreEmployee(
 
     return {
       employeeId,
-      employeeName: "Employee", // TODO: Fetch from database
-      department: "Unknown", // TODO: Fetch from database
-      skillMatch: skillsMatchScore,
-      availability: availabilityScore,
-      currentLoad: employeeCapacity.utilizationPercent,
-      performanceScore: performanceHistoryScore,
-      fitScore: Math.round(fitScore * 100) / 100,
-      factors: {
-        skillsMatchScore,
-        capacityScore,
-        availabilityScore,
-        performanceHistoryScore,
-        departmentAlignmentScore: 75, // TODO: Implement
-      },
-      riskFlags,
-      reason: reasons.join("; ") || "Below threshold",
+      taskId: task.id,
+      projectId: task.projectId,
+      fitScore: Math.round((skillsMatchScore + capacityScore + availabilityScore + performanceHistoryScore) / 4),
+      recommendationReason: reasons.join(", "),
+      skillsMatchScore,
+      capacityScore,
+      availabilityScore,
+      performanceHistoryScore,
     };
   } catch (error) {
     console.error(`Error scoring employee ${employeeId}:`, error);

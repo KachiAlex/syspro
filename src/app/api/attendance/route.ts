@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const tenantSlug = url.searchParams.get("tenantSlug") || undefined;
     const employeeId = url.searchParams.get("employeeId") || undefined;
 
-    const result = await getAttendance({ action, tenantSlug, employeeId, urlSearchParams: url.searchParams });
+    const result = await getAttendance({ action, tenantId: tenantSlug, employeeId, limit: undefined });
     return NextResponse.json({ ok: true, data: result });
   } catch (err) {
     console.error("GET /api/attendance error", err);

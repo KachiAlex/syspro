@@ -7,8 +7,10 @@ import {
   errorResponse,
   handleTenantAdminError,
   checkRateLimit,
+  asTenantSlug,
 } from "@/lib/tenant-admin/utils";
 import { AuditService } from "@/lib/tenant-admin/service";
+import { AuditAction, UserId, ResourceId } from "@/lib/tenant-admin/types";
 import { z } from "zod";
 
 const CreateReportSchema = z.object({
@@ -136,14 +138,15 @@ export async function POST(request: NextRequest) {
         createdBy: context.userId,
       };
 
-      const auditService = new AuditService(context.tenantSlug);
-      await auditService.log({
-        userId: context.userId,
-        action: "create",
-        resource: "report",
-        resourceId: report.id,
-        changes: { after: report },
-      });
+      const auditService = new AuditService();
+      await auditService.log(
+        asTenantSlug(context.tenantSlug),
+        context.userId as UserId,
+        "create",
+        "report",
+        report.id as ResourceId,
+        { after: report }
+      );
 
       return NextResponse.json(
         {
@@ -168,14 +171,15 @@ export async function POST(request: NextRequest) {
         createdBy: context.userId,
       };
 
-      const auditService = new AuditService(context.tenantSlug);
-      await auditService.log({
-        userId: context.userId,
-        action: "create",
-        resource: "export",
-        resourceId: exportJob.id,
-        changes: { after: exportJob },
-      });
+      const auditService = new AuditService();
+      await auditService.log(
+        asTenantSlug(context.tenantSlug),
+        context.userId as UserId,
+        "create",
+        "export",
+        exportJob.id as ResourceId,
+        { after: exportJob }
+      );
 
       return NextResponse.json(
         {
@@ -218,14 +222,15 @@ export async function PATCH(request: NextRequest) {
       updatedBy: context.userId,
     };
 
-    const auditService = new AuditService(context.tenantSlug);
-    await auditService.log({
-      userId: context.userId,
-      action: action === "rerun" ? "execute" : "update",
-      resource: "report",
-      resourceId: id,
-      changes: { after: updated },
-    });
+    const auditService = new AuditService();
+    await auditService.log(
+      asTenantSlug(context.tenantSlug),
+      context.userId as UserId,
+      action === "rerun" ? "execute" as AuditAction : "update",
+      "report",
+      id as ResourceId,
+      { after: updated }
+    );
 
     return NextResponse.json({
       success: true,
@@ -251,13 +256,14 @@ export async function DELETE(request: NextRequest) {
       return errorResponse("ID is required", 400);
     }
 
-    const auditService = new AuditService(context.tenantSlug);
-    await auditService.log({
-      userId: context.userId,
-      action: "delete",
-      resource: "report",
-      resourceId: id,
-    });
+    const auditService = new AuditService();
+    await auditService.log(
+      asTenantSlug(context.tenantSlug),
+      context.userId as UserId,
+      "delete",
+      "report",
+      id as ResourceId
+    );
 
     return NextResponse.json({
       success: true,
