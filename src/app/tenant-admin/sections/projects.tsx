@@ -183,14 +183,14 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
   }
 
   return (
-    <div className="max-w-full">
-      <div className="mb-8">
+    <div className="max-w-6xl mx-auto space-y-6">
+      <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Project Management</h2>
         <p className="text-gray-600">Create and manage projects, assign teams, and track progress</p>
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
@@ -230,7 +230,7 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
       </div>
 
       {/* Action Buttons */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm mb-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
         <div className="flex flex-wrap gap-3">
           <button 
             onClick={() => setShowCreateModal(true)}
