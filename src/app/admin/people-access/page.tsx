@@ -72,15 +72,15 @@ export default function PeopleAccessPage() {
           {notif && (
             <div className="mb-2 p-2 bg-blue-100 text-blue-800 rounded">{notif}</div>
           )}
-          <div className="flex gap-2 mb-4">
+          <div className="mb-4 flex gap-2">
             <button
-              className="btn btn-blue px-4 py-2 rounded"
+              className="inline-flex items-center justify-center rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
               onClick={() => setInviteOpen(true)}
             >
               Invite User
             </button>
             <button
-              className="btn btn-success px-4 py-2 rounded"
+              className="inline-flex items-center justify-center rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
               onClick={() => setCsvOpen(true)}
             >
               Import CSV

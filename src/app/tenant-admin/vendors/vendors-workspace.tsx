@@ -177,7 +177,7 @@ export default function VendorsWorkspace() {
               setLoading(false);
             }
           }}
-          className="btn btn-primary"
+          className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
         >
           New Vendor
         </button>
@@ -232,8 +232,12 @@ export default function VendorsWorkspace() {
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    <button className="btn btn-outline btn-sm">Edit</button>
-                    <button className="btn btn-primary btn-sm">Create PO</button>
+                    <button className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300">
+                      Edit
+                    </button>
+                    <button className="rounded-full bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400">
+                      Create PO
+                    </button>
                   </div>
                 </div>
               </div>

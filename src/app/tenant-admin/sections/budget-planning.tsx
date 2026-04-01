@@ -996,7 +996,7 @@ export default function BudgetPlanningWorkspace({
               <button
                 onClick={createBudget}
                 disabled={loading}
-                className="px-4 py-2 btn btn-blue rounded-lg disabled:opacity-50"
+                className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? "Creating..." : "Create Budget"}
               </button>

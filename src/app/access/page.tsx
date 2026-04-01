@@ -76,9 +76,9 @@ export default function AccessPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Hero Section */}
-      <section className="pro-home-main" style={{ paddingTop: '4rem' }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
+      <section className="px-6 pt-16 pb-10">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-16 grid items-center gap-12 md:grid-cols-2">
             {/* Left Side - Tenant Login Form */}
             <div>
               {/* Tenant Login Header */}

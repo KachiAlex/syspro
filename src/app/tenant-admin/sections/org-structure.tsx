@@ -500,7 +500,7 @@ function WelcomeStep({ onStart }: { onStart: () => void }) {
 
       <button
         onClick={onStart}
-        className="flex w-full items-center justify-center gap-2 rounded-full btn btn-dark px-6 py-3 text-base font-semibold shadow-sm active:opacity-95 transition-colors"
+        className="flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 active:opacity-95"
       >
         Start Setup <ArrowRight className="h-5 w-5" />
       </button>

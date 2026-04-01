@@ -203,10 +203,10 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
               className="rounded-lg border px-3 py-2"
             />
           </div>
-          <button 
-            type="submit" 
-            disabled={form.isSubmitting || !canCreate || permissions.loading} 
-            className="rounded-full btn btn-dark px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          <button
+            type="submit"
+            disabled={form.isSubmitting || !canCreate || permissions.loading}
+            className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
             title={!canCreate ? "You don't have permission to create employees" : undefined}
           >
             {form.isSubmitting ? "Adding..." : "Add employee"}

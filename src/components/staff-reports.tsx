@@ -431,7 +431,7 @@ export default function StaffReports({
         </div>
 
         {/* AI Voice Draft */}
-        <div className="rounded-3xl muted-border bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 p-6 text-white shadow-lg">
+        <div className="rounded-3xl border border-white/15 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 p-6 text-white shadow-lg">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-lg font-semibold">Generate Report with AI</p>
@@ -472,7 +472,7 @@ export default function StaffReports({
 
           <div className="mt-4 space-y-4">
             {!speechSupported && (
-              <div className="rounded-2xl muted-border glass px-4 py-3 text-sm text-muted">
+              <div className="rounded-2xl border border-white/15 glass px-4 py-3 text-sm text-slate-500">
                 Your browser does not expose the Web Speech API. Paste your typed notes into the transcript box and the AI will still structure it for you.
               </div>
             )}

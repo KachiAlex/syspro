@@ -149,12 +149,12 @@ export default function BillDrawer({ bill, onClose, onPayment }: BillDrawerProps
           <div className="space-y-2">
             <button
               onClick={handleMakePayment}
-              className="w-full btn btn-primary"
+              className="w-full rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={loading}
             >
               {loading ? "Processing..." : "Make Payment"}
             </button>
-            <button className="w-full btn btn-outline">
+            <button className="w-full rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300">
               Edit Bill
             </button>
           </div>

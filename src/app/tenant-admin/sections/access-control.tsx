@@ -259,7 +259,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
               setSelectedModules([]);
             }}
             disabled={!canCreate || permissions.loading}
-            className="whitespace-nowrap btn btn-blue px-4 py-2 text-sm font-medium rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+            className="whitespace-nowrap rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
             title={!canCreate ? "You don't have permission to create roles" : undefined}
           >
             {showCreateForm ? "Cancel" : "+ Create Role"}

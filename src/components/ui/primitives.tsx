@@ -10,22 +10,22 @@ interface PanelProps {
   variant?: "frost" | "glass" | "card" | "daylight";
 }
 
-export function Panel({ children, className, variant = "card" }: PanelProps) {
-  const baseStyles = {
-    card: "rounded-3xl muted-border glass p-6 backdrop-blur",
-    glass: "rounded-[32px] muted-border glass p-6 backdrop-blur-xl",
-    frost: "rounded-[28px] muted-border glass p-6 shadow-[0_30px_60px_rgba(0,0,0,0.35)]",
-    daylight: "rounded-3xl border border-slate-200 bg-[color:var(--background)] p-6 shadow-lg shadow-slate-900/5",
-  };
+const PANEL_VARIANTS: Record<NonNullable<PanelProps["variant"]>, string> = {
+  card: "rounded-3xl border border-slate-200/10 bg-slate-900/40 p-6 shadow-lg shadow-slate-950/30 backdrop-blur",
+  glass: "rounded-[32px] border border-slate-200/10 bg-slate-900/30 p-6 shadow-xl shadow-slate-950/40 backdrop-blur-xl",
+  frost: "rounded-[28px] border border-white/20 bg-white/10 p-6 shadow-[0_30px_60px_rgba(15,23,42,0.45)] backdrop-blur-2xl",
+  daylight: "rounded-3xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-900/10",
+};
 
-  return <div className={cn(baseStyles[variant], className)}>{children}</div>;
+export function Panel({ children, className, variant = "card" }: PanelProps) {
+  return <div className={cn(PANEL_VARIANTS[variant], className)}>{children}</div>;
 }
 
 const TAG_TONES = {
-  teal: "text-[#64ffd6] bg-[#64ffd6]/10",
-  amber: "text-[#ffd36b] bg-[#ffd36b]/10",
-  rose: "text-[#ff8aa1] bg-[#ff8aa1]/10",
-  indigo: "text-[#8fb0ff] bg-[#8fb0ff]/10",
+  teal: "text-teal-200 bg-teal-400/10",
+  amber: "text-amber-200 bg-amber-400/10",
+  rose: "text-rose-200 bg-rose-400/10",
+  indigo: "text-indigo-200 bg-indigo-400/10",
 } as const;
 
 type TagTone = keyof typeof TAG_TONES;
@@ -50,19 +50,21 @@ interface SectionHeadingProps {
   tone?: "light" | "dark";
 }
 
+const SECTION_TONES = {
+  light: {
+    eyebrow: "text-slate-500",
+    title: "text-slate-900",
+    description: "text-slate-600",
+  },
+  dark: {
+    eyebrow: "text-slate-400",
+    title: "text-white",
+    description: "text-slate-400",
+  },
+} satisfies Record<NonNullable<SectionHeadingProps["tone"]>, Record<"eyebrow" | "title" | "description", string>>;
+
 export function SectionHeading({ eyebrow, title, description, tone = "light" }: SectionHeadingProps) {
-  const toneClasses =
-    tone === "dark"
-      ? {
-          eyebrow: "text-muted",
-          title: "text-[color:var(--foreground)]",
-          description: "text-muted",
-        }
-      : {
-          eyebrow: "text-muted",
-          title: "text-[color:var(--foreground)]",
-          description: "text-muted",
-        };
+  const toneClasses = SECTION_TONES[tone];
 
   return (
     <div>
@@ -80,14 +82,14 @@ interface PillButtonProps {
   variant?: PillButtonVariant;
 }
 
-export function PillButton({ children, variant = "secondary" }: PillButtonProps) {
-  const variants: Record<PillButtonVariant, string> = {
-    primary: "bg-[color:var(--foreground)] text-[color:var(--background)] hover:opacity-95",
-    secondary: "border muted-border nav-muted hover:border-[color:var(--foreground)] hover:text-[color:var(--foreground)]",
-  };
+const PILL_VARIANTS: Record<PillButtonVariant, string> = {
+  primary: "bg-slate-900 text-white hover:bg-slate-800",
+  secondary: "border border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700",
+};
 
+export function PillButton({ children, variant = "secondary" }: PillButtonProps) {
   return (
-    <button className={cn("group flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition", variants[variant])}>
+    <button className={cn("group flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition", PILL_VARIANTS[variant])}>
       {children}
     </button>
   );
@@ -102,9 +104,9 @@ interface MetricStatProps {
 export function MetricStat({ label, value, helper }: MetricStatProps) {
   return (
     <div className="space-y-1">
-      <p className="text-xs uppercase tracking-[0.35em] text-muted">{label}</p>
-      <p className="text-3xl font-semibold text-[color:var(--foreground)]">{value}</p>
-      {helper ? <p className="text-xs text-muted">{helper}</p> : null}
+      <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{label}</p>
+      <p className="text-3xl font-semibold text-white">{value}</p>
+      {helper ? <p className="text-xs text-slate-500">{helper}</p> : null}
     </div>
   );
 }
