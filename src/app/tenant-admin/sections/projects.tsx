@@ -546,6 +546,7 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
             );
           })
         )}
+      </div>
 
       {/* Modals */}
       <CreateProjectModal 
