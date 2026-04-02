@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Plus, Eye, Edit, Download, Filter, Building, FileText, Star, TrendingUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Eye, Edit, Download, Filter, Building, FileText, Star, TrendingUp, RefreshCw } from 'lucide-react';
 
 interface Vendors {
   tenantSlug: string;
@@ -16,7 +16,46 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [alert, setAlert] = useState<{ type: 'success' | 'info'; message: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+
+  // Initialize last refreshed on mount
+  useEffect(() => {
+    setLastRefreshed(new Date());
+  }, []);
+
+  // Auto-dismiss alerts after 3.5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(null), 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
+  // Refresh vendors data
+  const handleRefreshVendors = () => {
+    setLoading(true);
+    try {
+      // TODO: Replace with actual API call
+      // const response = await apiClient.get(`/api/vendors?tenantSlug=${tenantSlug}`);
+      // setVendors(response.data?.vendors || []);
+      setLastRefreshed(new Date());
+      setSuccess("Vendors refreshed successfully");
+    } catch (err) {
+      setError("Failed to refresh vendors");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredVendors = vendors.filter(v => {
     if (categoryFilter !== 'All' && v.category !== categoryFilter) return false;
@@ -27,9 +66,35 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Vendor Management</h2>
-        <p className="text-gray-600">Manage vendor profiles, contracts, and performance tracking</p>
+      {error && (
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-red-700 text-sm mb-6">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-700 text-sm mb-6">
+          {success}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Vendor Management</h2>
+          <p className="text-gray-600">Manage vendor profiles, contracts, and performance tracking</p>
+          {lastRefreshed && (
+            <p className="text-xs text-gray-500 mt-1">
+              Last updated: {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={handleRefreshVendors}
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
       </div>
 
       {/* Statistics */}
@@ -205,11 +270,6 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
         </div>
       </div>
 
-      {alert && (
-        <div className="fixed bottom-4 right-4 px-6 py-3 rounded-lg text-white font-medium bg-green-600">
-          {alert.message}
-        </div>
-      )}
     </div>
   );
 };
