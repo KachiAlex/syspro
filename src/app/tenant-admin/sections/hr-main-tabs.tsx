@@ -335,8 +335,57 @@ function StaffTab({
   onViewEmployee: (emp: Employee) => void;
   loading: boolean;
 }) {
+  const activeEmployees = employees.filter(e => e.status === 'Active').length;
+  const onLeaveEmployees = employees.filter(e => e.status === 'On Leave').length;
+  const departmentDistribution = employees.length > 0
+    ? Object.entries(
+        employees.reduce((acc: Record<string, number>, emp) => {
+          acc[emp.department] = (acc[emp.department] || 0) + 1;
+          return acc;
+        }, {})
+      ).map(([dept, count]) => ({
+        dept,
+        count,
+        pct: Math.round((count / employees.length) * 100)
+      })).sort((a, b) => b.count - a.count)
+    : [];
+
   return (
     <div className="space-y-6">
+      {/* Staff Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <p className="text-sm text-gray-600 mb-1">Total Staff</p>
+          <p className="text-3xl font-bold text-gray-900">{employees.length}</p>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <p className="text-sm text-gray-600 mb-1">Active</p>
+          <p className="text-3xl font-bold text-emerald-600">{activeEmployees}</p>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <p className="text-sm text-gray-600 mb-1">On Leave</p>
+          <p className="text-3xl font-bold text-amber-600">{onLeaveEmployees}</p>
+        </div>
+      </div>
+
+      {/* Department Distribution */}
+      {departmentDistribution.length > 0 && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h4 className="text-lg font-semibold text-gray-900 mb-4">Department Distribution</h4>
+          <div className="space-y-3">
+            {departmentDistribution.map(d => (
+              <div key={d.dept} className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-900 w-32 truncate">{d.dept}</span>
+                <div className="flex-1 bg-gray-200 rounded-full h-2">
+                  <div className="h-2 rounded-full bg-blue-500" style={{ width: `${Math.min(d.pct, 100)}%` }}></div>
+                </div>
+                <span className="text-sm text-gray-600 w-12 text-right">{d.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900">Staff Directory</h3>
         <button
@@ -663,6 +712,8 @@ function PayrollTab({
   const processedCount = payrollRecords.filter(r => r.status === 'Processed').length;
   const paidCount = payrollRecords.filter(r => r.status === 'Paid').length;
   const totalAmount = payrollRecords.reduce((sum, r) => sum + r.netSalary, 0);
+  const totalBaseSalary = payrollRecords.reduce((sum, r) => sum + r.baseSalary, 0);
+  const totalDeductions = payrollRecords.reduce((sum, r) => sum + r.deductions, 0);
 
   return (
     <div className="space-y-6">
@@ -685,6 +736,19 @@ function PayrollTab({
         </div>
       </div>
 
+      {/* Payroll Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
+          <p className="text-sm text-gray-600 mb-1">Monthly Payroll</p>
+          <p className="text-3xl font-bold text-blue-600">${(totalBaseSalary / 1000).toFixed(0)}K</p>
+        </div>
+        <div className="bg-green-50 rounded-lg border border-green-200 p-4">
+          <p className="text-sm text-gray-600 mb-1">Net Payroll</p>
+          <p className="text-3xl font-bold text-green-600">${(totalAmount / 1000).toFixed(0)}K</p>
+        </div>
+      </div>
+
+      {/* Payroll Status */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">Pending</p>
@@ -699,8 +763,8 @@ function PayrollTab({
           <p className="text-3xl font-bold text-emerald-600">{paidCount}</p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-sm text-gray-600 mb-1">Total Amount</p>
-          <p className="text-3xl font-bold text-gray-900">${(totalAmount / 1000).toFixed(0)}K</p>
+          <p className="text-sm text-gray-600 mb-1">Total Deductions</p>
+          <p className="text-3xl font-bold text-red-600">-${(totalDeductions / 1000).toFixed(0)}K</p>
         </div>
       </div>
 
