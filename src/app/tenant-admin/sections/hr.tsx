@@ -995,7 +995,13 @@ const HRComponent: React.FC = () => {
           employees={filteredEmployees}
           onAddEmployee={() => setShowAddModal(true)}
           onEditEmployee={handleEditEmployee}
-          onDeleteEmployee={handleDeleteEmployee}
+          onDeleteEmployee={(id: string) => {
+            const emp = filteredEmployees.find(e => e.id === id);
+            if (emp) {
+              setEmployeeToDelete(emp);
+              setShowDeleteModal(true);
+            }
+          }}
           onViewEmployee={handleViewEmployee}
         />
       </div>
