@@ -243,11 +243,14 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
 
   const tabs: Array<{ id: ProjectTab; label: string; icon: React.ReactNode }> = [
     { id: 'overview', label: 'Overview', icon: <Briefcase className="w-4 h-4" /> },
+    { id: 'active', label: 'Active Projects', icon: <Zap className="w-4 h-4" /> },
+    { id: 'archive', label: 'Archive', icon: <Archive className="w-4 h-4" /> },
     { id: 'tasks', label: 'Tasks', icon: <CheckSquare className="w-4 h-4" /> },
     { id: 'team', label: 'Team', icon: <Users className="w-4 h-4" /> },
     { id: 'budget', label: 'Budget', icon: <DollarSign className="w-4 h-4" /> },
     { id: 'timeline', label: 'Timeline', icon: <Calendar className="w-4 h-4" /> },
     { id: 'reports', label: 'Reports', icon: <BarChart3 className="w-4 h-4" /> },
+    { id: 'advanced-reports', label: 'Advanced Reports', icon: <TrendingUp className="w-4 h-4" /> },
   ];
 
   const renderTabContent = () => {
@@ -278,6 +281,10 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
             tenantSlug={tenantSlug}
           />
         );
+      case 'active':
+        return <ProjectsActive projects={projects} tenantSlug={tenantSlug} onRefresh={fetchProjects} />;
+      case 'archive':
+        return <ProjectsArchive tenantSlug={tenantSlug} onRefresh={fetchProjects} />;
       case 'tasks':
         return <ProjectsTasks projects={projects} tenantSlug={tenantSlug} />;
       case 'team':
@@ -288,6 +295,8 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
         return <ProjectsTimeline projects={projects} tenantSlug={tenantSlug} />;
       case 'reports':
         return <ProjectsReports projects={projects} tenantSlug={tenantSlug} />;
+      case 'advanced-reports':
+        return <ProjectsAdvancedReports projects={projects} tenantSlug={tenantSlug} />;
       default:
         return null;
     }
