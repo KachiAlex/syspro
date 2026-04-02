@@ -11,7 +11,7 @@ interface FormAlertProps {
 
 const FormAlert: React.FC<FormAlertProps> = ({ type, message, onClose }) => {
   React.useEffect(() => {
-    const timer = setTimeout(onClose, 3000);
+    const timer = setTimeout(onClose, 3500);
     return () => clearTimeout(timer);
   }, [onClose]);
 
@@ -63,11 +63,11 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
 
     try {
       await onSubmit(formData);
+      setFormData({ firstName: '', lastName: '', email: '', department: '', position: '', startDate: '', salary: '', employmentType: 'Full-time' });
       setAlert({ type: 'success', message: 'Employee added successfully!' });
       setTimeout(() => {
-        setFormData({ firstName: '', lastName: '', email: '', department: '', position: '', startDate: '', salary: '', employmentType: 'Full-time' });
         onClose();
-      }, 1500);
+      }, 3500);
     } catch (error) {
       setAlert({ type: 'error', message: error instanceof Error ? error.message : 'Failed to add employee' });
     } finally {
@@ -180,7 +180,7 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, on
       setAlert({ type: 'success', message: 'Employee updated successfully!' });
       setTimeout(() => {
         onClose();
-      }, 1200);
+      }, 3500);
     } catch (error) {
       setAlert({ type: 'error', message: error instanceof Error ? error.message : 'Failed to update employee' });
     } finally {
@@ -282,7 +282,7 @@ export const RunPayrollModal: React.FC<RunPayrollModalProps> = ({ isOpen, onClos
       setAlert({ type: 'success', message: 'Payroll run initiated successfully!' });
       setTimeout(() => {
         onClose();
-      }, 1500);
+      }, 3500);
     } catch (error) {
       setAlert({ type: 'error', message: error instanceof Error ? error.message : 'Failed to run payroll' });
     } finally {
@@ -355,11 +355,11 @@ export const PostJobModal: React.FC<PostJobModalProps> = ({ isOpen, onClose, onS
 
     try {
       await onSubmit(formData);
+      setFormData({ title: '', department: '', description: '', requirements: '', salaryRange: '', jobType: 'Full-time' });
       setAlert({ type: 'success', message: 'Job posting created successfully!' });
       setTimeout(() => {
-        setFormData({ title: '', department: '', description: '', requirements: '', salaryRange: '', jobType: 'Full-time' });
         onClose();
-      }, 1500);
+      }, 3500);
     } catch (error) {
       setAlert({ type: 'error', message: error instanceof Error ? error.message : 'Failed to create job posting' });
     } finally {
@@ -577,11 +577,11 @@ export const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, o
 
     try {
       await onSubmit(formData);
+      setFormData({ title: '', startDate: '', duration: '', maxParticipants: '', instructor: '' });
       setAlert({ type: 'success', message: 'Training scheduled successfully!' });
       setTimeout(() => {
-        setFormData({ title: '', startDate: '', duration: '', maxParticipants: '', instructor: '' });
         onClose();
-      }, 1500);
+      }, 3500);
     } catch (error) {
       setAlert({ type: 'error', message: error instanceof Error ? error.message : 'Failed to schedule training' });
     } finally {

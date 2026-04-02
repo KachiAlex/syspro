@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus, Eye, Edit, Award, Download, Filter, Users, Target, DollarSign, Briefcase } from 'lucide-react';
+import { Plus, Eye, Edit, Award, Download, Filter, Users, Target, DollarSign, Briefcase, RefreshCw } from 'lucide-react';
 import { AddEmployeeModal, RunPayrollModal, PostJobModal, ViewEmployeeModal, TrainingModal, EditEmployeeModal, DeleteEmployeeModal } from './hr-modals';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { apiClient } from '@/lib/api-client';
@@ -129,6 +129,7 @@ const HRComponent: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
 
   const departmentOptionsForForms = departmentCatalog.filter((dept): dept is string => Boolean(dept));
   const statusOptionsForForms = statusCatalog.filter((status): status is string => Boolean(status));
@@ -244,6 +245,8 @@ const HRComponent: React.FC = () => {
       } else {
         setTrainingSessions(DEFAULT_TRAINING_SESSIONS);
       }
+
+      setLastRefreshed(new Date());
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Failed to load employees');
     } finally {
@@ -254,8 +257,16 @@ const HRComponent: React.FC = () => {
   useEffect(() => {
     if (tenantSlug) {
       fetchEmployees();
+      setLastRefreshed(new Date());
     }
   }, [fetchEmployees, tenantSlug]);
+
+  useEffect(() => {
+    if (alert) {
+      const timer = setTimeout(() => setAlert(null), 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [alert]);
 
   const filteredEmployees = useMemo(() => {
     return employees.filter((emp) => {
@@ -671,8 +682,23 @@ const HRComponent: React.FC = () => {
       {/* Employee Directory */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Employee Directory</h3>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Employee Directory</h3>
+            {lastRefreshed && (
+              <p className="text-xs text-gray-500 mt-1">
+                Last updated: {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            )}
+          </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={fetchEmployees}
+              disabled={isLoading}
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
             <span className="text-sm text-gray-500">Showing {filteredEmployees.length}</span>
           </div>
         </div>
@@ -688,9 +714,38 @@ const HRComponent: React.FC = () => {
               </button>
             </div>
           ) : isLoading ? (
-            <div className="p-6 text-center text-sm text-gray-500">Loading employees…</div>
+            <div className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="p-4 bg-gray-50 rounded-lg animate-pulse">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-300 rounded w-32"></div>
+                      <div className="h-3 bg-gray-300 rounded w-48"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : filteredEmployees.length === 0 ? (
-            <div className="p-6 text-center text-sm text-gray-500">No employees found for the selected filters.</div>
+            <div className="p-12 text-center">
+              <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-600 font-medium mb-2">No employees found</p>
+              <p className="text-sm text-gray-500 mb-4">
+                {employees.length === 0 
+                  ? 'Add your first employee to get started with HR management'
+                  : 'Try adjusting your filters or search query'}
+              </p>
+              {employees.length === 0 && (
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add First Employee
+                </button>
+              )}
+            </div>
           ) : (
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
@@ -817,7 +872,18 @@ const HRComponent: React.FC = () => {
         </div>
         <div className="space-y-3">
           {trainingSessions.length === 0 ? (
-            <p className="text-sm text-gray-500">Schedule a session to get started.</p>
+            <div className="p-8 text-center">
+              <Briefcase className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-600 font-medium mb-2">No training sessions scheduled</p>
+              <p className="text-sm text-gray-500 mb-4">Create training sessions to develop your team</p>
+              <button
+                onClick={() => setShowTrainingModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Schedule Training
+              </button>
+            </div>
           ) : (
             trainingSessions.map((session) => (
               <div key={session.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">

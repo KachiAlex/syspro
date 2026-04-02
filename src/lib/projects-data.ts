@@ -529,3 +529,13 @@ export function listTimeEntries(tenantSlug: string, projectId?: string) {
   const store = getTenantStore(tenantSlug);
   return projectId ? store.timeLogs.filter((log) => log.projectId === projectId) : store.timeLogs;
 }
+
+export function deleteProject(tenantSlug: string, projectId: string) {
+  const store = getTenantStore(tenantSlug);
+  const index = store.projects.findIndex((p) => p.id === projectId);
+  if (index === -1) {
+    throw new Error("Project not found");
+  }
+  store.projects.splice(index, 1);
+  return true;
+}
