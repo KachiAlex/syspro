@@ -185,20 +185,35 @@ async function fetchLeads(params: { tenantSlug: string; regionId: string; branch
   const searchParams = new URLSearchParams({ tenantSlug: params.tenantSlug, limit: "50" });
   if (params.regionId) searchParams.set("regionId", params.regionId);
   if (params.branchId) searchParams.set("branchId", params.branchId);
-  const response = await apiClient.get<LeadsResponse>(`/crm/leads?${searchParams.toString()}`);
-  return response.data;
+  try {
+    const response = await apiClient.get<LeadsResponse>(`/crm/leads?${searchParams.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch leads:', error);
+    return { leads: [], total: 0 };
+  }
 }
 
 async function fetchContacts(params: { tenantSlug: string }) {
   const searchParams = new URLSearchParams({ tenantSlug: params.tenantSlug, limit: "50" });
-  const response = await apiClient.get<ContactsResponse>(`/crm/contacts?${searchParams.toString()}`);
-  return response.data;
+  try {
+    const response = await apiClient.get<ContactsResponse>(`/crm/contacts?${searchParams.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch contacts:', error);
+    return { contacts: [], total: 0 };
+  }
 }
 
 async function fetchDeals(params: { tenantSlug: string }) {
   const searchParams = new URLSearchParams({ tenantSlug: params.tenantSlug, limit: "50" });
-  const response = await apiClient.get<DealsResponse>(`/crm/deals?${searchParams.toString()}`);
-  return response.data;
+  try {
+    const response = await apiClient.get<DealsResponse>(`/crm/deals?${searchParams.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch deals:', error);
+    return { deals: [], total: 0 };
+  }
 }
 
 async function createLead(payload: {
@@ -402,7 +417,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
       });
     } catch (error) {
       console.error('CRM data loading error:', error);
-      setErrorMessage(error instanceof Error ? error.message : "Failed to load CRM data");
+      setErrorMessage("Failed to load CRM data. Please try again.");
       // Set default empty state on error
       setLeads([]);
       setContacts([]);
