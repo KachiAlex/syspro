@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, Eye, TrendingUp } from "lucide-react";
+import { Download, Eye, TrendingUp, RefreshCw, CreditCard } from "lucide-react";
 import { FormAlert } from "@/components/form";
 import CreateInvoiceModal from "../components/CreateInvoiceModal";
 import { CreatePaymentModal } from "../payments/payments-workspace";
@@ -55,6 +55,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [showCreateInvoice, setShowCreateInvoice] = useState(false);
   const [showCreatePayment, setShowCreatePayment] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
@@ -68,6 +69,26 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
   const ts = tenantSlug ?? "kreatix-default";
 
+  // Initialize last refreshed on mount
+  useEffect(() => {
+    setLastRefreshed(new Date());
+  }, []);
+
+  // Auto-dismiss alerts after 3.5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(null), 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
   async function load() {
     setLoading(true);
     setError(null);
@@ -79,6 +100,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
         const data = payload.data || payload;
         setInvoices(data.invoices ?? []);
         setSubscriptions(data.subscriptions ?? []);
+        setLastRefreshed(new Date());
       }
     } catch (err) {
       console.error(err);
@@ -101,7 +123,6 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
       });
       if (res.ok) {
         setSuccess("Invoice marked as paid");
-        setTimeout(() => setSuccess(null), 3000);
         load();
       }
     } catch (err) {
@@ -118,7 +139,6 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
       });
       if (res.ok) {
         setSuccess("Subscription cancelled successfully");
-        setTimeout(() => setSuccess(null), 3000);
         setShowCancelSubscription(false);
         load();
       } else {
@@ -172,7 +192,6 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
       });
       if (res.ok) {
         setSuccess(`Successfully upgraded to ${newPlan} plan`);
-        setTimeout(() => setSuccess(null), 3000);
         setShowUpgradeSubscription(false);
         load();
       } else {
@@ -207,15 +226,6 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
     setShowViewInvoice(true);
   }
 
-  if (loading) {
-    return (
-      <div className="rounded-lg bg-slate-50 p-8 text-center">
-        <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900"></div>
-        <p className="mt-2 text-slate-600">Loading billing information…</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {error && (
@@ -234,6 +244,26 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
         />
       )}
 
+      {/* Header with Refresh Button */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900">Billing & Subscriptions</h2>
+          {lastRefreshed && (
+            <p className="text-xs text-slate-500 mt-1">
+              Last updated: {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={load}
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </div>
+
       {/* Subscriptions */}
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="mb-4">
@@ -242,10 +272,29 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
           <p className="mt-1 text-sm text-slate-600">Manage your organization's subscriptions and plans</p>
         </div>
 
-        {(subscriptions ?? []).length === 0 ? (
-          <div className="rounded-lg bg-blue-50 p-4 text-center text-sm">
+        {loading ? (
+          <div className="space-y-3">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="rounded-lg border border-slate-200 p-4 animate-pulse">
+                <div className="space-y-3">
+                  <div className="h-5 bg-slate-200 rounded w-32"></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="h-4 bg-slate-200 rounded"></div>
+                    <div className="h-4 bg-slate-200 rounded"></div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="h-8 bg-slate-200 rounded w-20"></div>
+                    <div className="h-8 bg-slate-200 rounded w-20"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (subscriptions ?? []).length === 0 ? (
+          <div className="rounded-lg bg-blue-50 p-6 text-center">
+            <CreditCard className="w-10 h-10 text-blue-300 mx-auto mb-3" />
             <p className="font-medium text-blue-900">No active subscriptions</p>
-            <p className="mt-1 text-blue-700">Contact sales to get started</p>
+            <p className="mt-1 text-sm text-blue-700">Contact sales to get started with a subscription plan</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -325,10 +374,30 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
           </button>
         </div>
 
-        {(invoices ?? []).length === 0 ? (
-          <div className="rounded-lg bg-blue-50 p-4 text-center text-sm">
-            <p className="font-medium text-blue-900">No invoices</p>
-            <p className="mt-1 text-blue-700">Invoices will appear here once generated</p>
+        {loading ? (
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="rounded-lg border border-slate-200 p-4 animate-pulse">
+                <div className="space-y-3">
+                  <div className="h-5 bg-slate-200 rounded w-24"></div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="h-4 bg-slate-200 rounded"></div>
+                    <div className="h-4 bg-slate-200 rounded"></div>
+                    <div className="h-4 bg-slate-200 rounded"></div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="h-8 bg-slate-200 rounded w-20"></div>
+                    <div className="h-8 bg-slate-200 rounded w-20"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (invoices ?? []).length === 0 ? (
+          <div className="rounded-lg bg-blue-50 p-6 text-center">
+            <CreditCard className="w-10 h-10 text-blue-300 mx-auto mb-3" />
+            <p className="font-medium text-blue-900">No invoices yet</p>
+            <p className="mt-1 text-sm text-blue-700">Invoices will appear here once generated</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -405,7 +474,6 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
               return;
             }
             setSuccess("Invoice created");
-            setTimeout(() => setSuccess(null), 3000);
             setShowCreateInvoice(false);
             await load();
           } catch (err) {
@@ -420,13 +488,11 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
         onClose={() => setShowCreatePayment(false)}
         onSuccess={() => {
           setSuccess("Payment created successfully");
-          setTimeout(() => setSuccess(null), 3000);
           setShowCreatePayment(false);
           load();
         }}
         onError={(err: string) => {
           setError(err);
-          setTimeout(() => setError(null), 4000);
         }}
       />
 
