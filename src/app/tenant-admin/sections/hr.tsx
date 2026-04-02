@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Eye, Edit, Award, Download, Filter, Users, Target, DollarSign, Briefcase, RefreshCw } from 'lucide-react';
 import { AddEmployeeModal, RunPayrollModal, PostJobModal, ViewEmployeeModal, TrainingModal, EditEmployeeModal, DeleteEmployeeModal } from './hr-modals';
+import HRTabs from './hr-tabs';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { apiClient } from '@/lib/api-client';
 
@@ -985,6 +986,11 @@ const HRComponent: React.FC = () => {
         onClose={() => setShowTrainingModal(false)}
         onSubmit={handleTrainingSubmit}
       />
+
+      {/* HR Tabs Section */}
+      <div className="mt-12 border-t border-gray-200 pt-8">
+        <HRTabs tenantSlug={tenantSlug} />
+      </div>
 
       {/* Alert */}
       {alert && (
