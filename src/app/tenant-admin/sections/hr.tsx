@@ -106,6 +106,7 @@ const DEFAULT_STATUS_LABELS = ['Active', 'On Leave', 'Inactive', 'Terminated'];
 
 const HRComponent: React.FC = () => {
   const { tenantSlug } = useTenantContext();
+  const [activeMainTab, setActiveMainTab] = useState<'staff' | 'attendance' | 'reports' | 'payroll'>('staff');
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -584,6 +585,24 @@ const HRComponent: React.FC = () => {
         <p className="text-gray-600">Manage employee records, payroll, benefits, and HR analytics</p>
       </div>
 
+      {/* HR Main Tabs - Primary Navigation */}
+      <div className="mb-8">
+        <HRMainTabs
+          tenantSlug={tenantSlug}
+          employees={filteredEmployees}
+          onAddEmployee={() => setShowAddModal(true)}
+          onEditEmployee={handleEditEmployee}
+          onDeleteEmployee={(id: string) => {
+            const emp = filteredEmployees.find(e => e.id === id);
+            if (emp) {
+              setEmployeeToDelete(emp);
+              setShowDeleteModal(true);
+            }
+          }}
+          onViewEmployee={handleViewEmployee}
+        />
+      </div>
+
       {/* HR Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -987,24 +1006,6 @@ const HRComponent: React.FC = () => {
         onClose={() => setShowTrainingModal(false)}
         onSubmit={handleTrainingSubmit}
       />
-
-      {/* HR Main Tabs Section */}
-      <div className="mt-12 border-t border-gray-200 pt-8">
-        <HRMainTabs
-          tenantSlug={tenantSlug}
-          employees={filteredEmployees}
-          onAddEmployee={() => setShowAddModal(true)}
-          onEditEmployee={handleEditEmployee}
-          onDeleteEmployee={(id: string) => {
-            const emp = filteredEmployees.find(e => e.id === id);
-            if (emp) {
-              setEmployeeToDelete(emp);
-              setShowDeleteModal(true);
-            }
-          }}
-          onViewEmployee={handleViewEmployee}
-        />
-      </div>
 
       {/* HR Sub-Tabs Section */}
       <div className="mt-12 border-t border-gray-200 pt-8">
