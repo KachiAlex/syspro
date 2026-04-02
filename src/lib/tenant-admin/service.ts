@@ -181,7 +181,8 @@ export class EmployeeService {
       ? `select * from admin_employees where tenant_slug = $1 and department_id = $2 order by name`
       : `select * from admin_employees where tenant_slug = $1 order by name`;
     
-    return this.sql.query(query, departmentId ? [tenantSlug, departmentId] : [tenantSlug]);
+    const result = await this.sql.query<Employee>(query, departmentId ? [tenantSlug, departmentId] : [tenantSlug]);
+    return result.rows || [];
   }
 
   async getById(tenantSlug: TenantSlug, id: ResourceId): Promise<Employee | null> {

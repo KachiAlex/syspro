@@ -19,7 +19,10 @@ import ProjectsActive from './projects-active';
 import ProjectsArchive from './projects-archive';
 import ProjectsAdvancedReports from './projects-advanced-reports';
 
-type ProjectTab = 'overview' | 'tasks' | 'team' | 'budget' | 'timeline' | 'reports' | 'active' | 'archive' | 'advanced-reports';
+type ProjectTab = 'overview' | 'active' | 'archive';
+type ActiveProjectsSubTab = 'overview' | 'tasks' | 'team' | 'budget' | 'timeline';
+type ArchiveSubTab = 'overview' | 'reports';
+type ReportsTab = 'reports' | 'advanced-reports';
 
 interface Project {
   id: string;
@@ -44,6 +47,8 @@ interface Project {
 
 export default function Projects({ tenantSlug }: { tenantSlug: string }) {
   const [activeTab, setActiveTab] = useState<ProjectTab>('overview');
+  const [activeProjectsSubTab, setActiveProjectsSubTab] = useState<ActiveProjectsSubTab>('overview');
+  const [archiveSubTab, setArchiveSubTab] = useState<ArchiveSubTab>('overview');
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -241,16 +246,23 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
     );
   }
 
-  const tabs: Array<{ id: ProjectTab; label: string; icon: React.ReactNode }> = [
+  const mainTabs: Array<{ id: ProjectTab; label: string; icon: React.ReactNode }> = [
     { id: 'overview', label: 'Overview', icon: <Briefcase className="w-4 h-4" /> },
     { id: 'active', label: 'Active Projects', icon: <Zap className="w-4 h-4" /> },
     { id: 'archive', label: 'Archive', icon: <Archive className="w-4 h-4" /> },
+  ];
+
+  const activeProjectsSubTabs: Array<{ id: ActiveProjectsSubTab; label: string; icon: React.ReactNode }> = [
+    { id: 'overview', label: 'Overview', icon: <Briefcase className="w-4 h-4" /> },
     { id: 'tasks', label: 'Tasks', icon: <CheckSquare className="w-4 h-4" /> },
     { id: 'team', label: 'Team', icon: <Users className="w-4 h-4" /> },
     { id: 'budget', label: 'Budget', icon: <DollarSign className="w-4 h-4" /> },
     { id: 'timeline', label: 'Timeline', icon: <Calendar className="w-4 h-4" /> },
+  ];
+
+  const archiveSubTabs: Array<{ id: ArchiveSubTab; label: string; icon: React.ReactNode }> = [
+    { id: 'overview', label: 'Overview', icon: <Briefcase className="w-4 h-4" /> },
     { id: 'reports', label: 'Reports', icon: <BarChart3 className="w-4 h-4" /> },
-    { id: 'advanced-reports', label: 'Advanced Reports', icon: <TrendingUp className="w-4 h-4" /> },
   ];
 
   const renderTabContent = () => {
@@ -282,9 +294,18 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
           />
         );
       case 'active':
-        return <ProjectsActive projects={projects} tenantSlug={tenantSlug} onRefresh={fetchProjects} />;
+        return renderActiveProjectsContent();
       case 'archive':
-        return <ProjectsArchive tenantSlug={tenantSlug} onRefresh={fetchProjects} />;
+        return renderArchiveContent();
+      default:
+        return null;
+    }
+  };
+
+  const renderActiveProjectsContent = () => {
+    switch (activeProjectsSubTab) {
+      case 'overview':
+        return <ProjectsActive projects={projects} tenantSlug={tenantSlug} onRefresh={fetchProjects} />;
       case 'tasks':
         return <ProjectsTasks projects={projects} tenantSlug={tenantSlug} />;
       case 'team':
@@ -293,10 +314,24 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
         return <ProjectsBudget projects={projects} tenantSlug={tenantSlug} />;
       case 'timeline':
         return <ProjectsTimeline projects={projects} tenantSlug={tenantSlug} />;
+      default:
+        return null;
+    }
+  };
+
+  const renderArchiveContent = () => {
+    switch (archiveSubTab) {
+      case 'overview':
+        return <ProjectsArchive tenantSlug={tenantSlug} onRefresh={fetchProjects} />;
       case 'reports':
-        return <ProjectsReports projects={projects} tenantSlug={tenantSlug} />;
-      case 'advanced-reports':
-        return <ProjectsAdvancedReports projects={projects} tenantSlug={tenantSlug} />;
+        return (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <ProjectsReports projects={projects} tenantSlug={tenantSlug} />
+              <ProjectsAdvancedReports projects={projects} tenantSlug={tenantSlug} />
+            </div>
+          </div>
+        );
       default:
         return null;
     }
@@ -327,13 +362,17 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
         </button>
       </div>
 
-      {/* Sub-Tab Navigation */}
+      {/* Main Tab Navigation */}
       <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
         <div className="flex overflow-x-auto border-b border-gray-200">
-          {tabs.map(tab => (
+          {mainTabs.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setActiveTab(tab.id);
+                if (tab.id === 'active') setActiveProjectsSubTab('overview');
+                if (tab.id === 'archive') setArchiveSubTab('overview');
+              }}
               className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
                 activeTab === tab.id
                   ? 'border-blue-600 text-blue-600 bg-blue-50'
@@ -345,6 +384,47 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
             </button>
           ))}
         </div>
+
+        {/* Sub-Tab Navigation for Active Projects */}
+        {activeTab === 'active' && (
+          <div className="flex overflow-x-auto border-b border-gray-100 bg-gray-50 px-6">
+            {activeProjectsSubTabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveProjectsSubTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                  activeProjectsSubTab === tab.id
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Sub-Tab Navigation for Archive */}
+        {activeTab === 'archive' && (
+          <div className="flex overflow-x-auto border-b border-gray-100 bg-gray-50 px-6">
+            {archiveSubTabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setArchiveSubTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                  archiveSubTab === tab.id
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="p-6">
           {renderTabContent()}
         </div>

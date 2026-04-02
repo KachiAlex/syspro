@@ -217,7 +217,10 @@ const HRComponent: React.FC = () => {
       );
 
       const payload = response.data;
-      const normalized = (payload?.data ?? []).map((employee): Employee => ({
+      
+      // Ensure data is an array before mapping
+      const employeeData = Array.isArray(payload?.data) ? payload.data : [];
+      const normalized = employeeData.map((employee): Employee => ({
         id: employee.id,
         name: employee.name,
         email: employee.email,
@@ -251,7 +254,11 @@ const HRComponent: React.FC = () => {
 
       setLastRefreshed(new Date());
     } catch (error) {
+      console.error('Employee fetch error:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Failed to load employees');
+      // Set default empty state on error
+      setEmployees([]);
+      updateFilterOptions([]);
     } finally {
       setIsLoading(false);
     }
