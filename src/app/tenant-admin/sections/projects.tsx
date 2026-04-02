@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Eye, Edit, Trash2, Download, Filter, Briefcase, AlertCircle, TrendingUp, Users, Calendar, DollarSign, Grid3x3, List, Copy, RefreshCw, BarChart3, CheckSquare, Zap } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Download, Filter, Briefcase, AlertCircle, TrendingUp, Users, Calendar, DollarSign, Grid3x3, List, Copy, RefreshCw, BarChart3, CheckSquare, Zap, Archive, RotateCcw } from 'lucide-react';
 import { 
   CreateProjectModal, 
   ViewProjectModal, 
@@ -15,8 +15,11 @@ import ProjectsTeam from './projects-team';
 import ProjectsBudget from './projects-budget';
 import ProjectsTimeline from './projects-timeline';
 import ProjectsReports from './projects-reports';
+import ProjectsActive from './projects-active';
+import ProjectsArchive from './projects-archive';
+import ProjectsAdvancedReports from './projects-advanced-reports';
 
-type ProjectTab = 'overview' | 'tasks' | 'team' | 'budget' | 'timeline' | 'reports';
+type ProjectTab = 'overview' | 'tasks' | 'team' | 'budget' | 'timeline' | 'reports' | 'active' | 'archive' | 'advanced-reports';
 
 interface Project {
   id: string;

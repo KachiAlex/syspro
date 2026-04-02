@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Eye, Edit, Award, Download, Filter, Users, Target, DollarSign, Briefcase, RefreshCw } from 'lucide-react';
 import { AddEmployeeModal, RunPayrollModal, PostJobModal, ViewEmployeeModal, TrainingModal, EditEmployeeModal, DeleteEmployeeModal } from './hr-modals';
 import HRTabs from './hr-tabs';
+import HRMainTabs from './hr-main-tabs';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { apiClient } from '@/lib/api-client';
 
@@ -987,7 +988,19 @@ const HRComponent: React.FC = () => {
         onSubmit={handleTrainingSubmit}
       />
 
-      {/* HR Tabs Section */}
+      {/* HR Main Tabs Section */}
+      <div className="mt-12 border-t border-gray-200 pt-8">
+        <HRMainTabs
+          tenantSlug={tenantSlug}
+          employees={filteredEmployees}
+          onAddEmployee={() => setShowAddModal(true)}
+          onEditEmployee={handleEditEmployee}
+          onDeleteEmployee={handleDeleteEmployee}
+          onViewEmployee={handleViewEmployee}
+        />
+      </div>
+
+      {/* HR Sub-Tabs Section */}
       <div className="mt-12 border-t border-gray-200 pt-8">
         <HRTabs tenantSlug={tenantSlug} />
       </div>
