@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Eye, Edit, Trash2, Download, Filter, Briefcase, AlertCircle, TrendingUp, Users, Calendar, DollarSign, Grid3x3, List, Copy } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Download, Filter, Briefcase, AlertCircle, TrendingUp, Users, Calendar, DollarSign, Grid3x3, List, Copy, RefreshCw } from 'lucide-react';
 import { 
   CreateProjectModal, 
   ViewProjectModal, 
@@ -35,6 +35,8 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
 
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
@@ -47,21 +49,42 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
   const [showManageTasksModal, setShowManageTasksModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | undefined>();
 
-  // Fetch projects from API
+  // Initialize last refreshed on mount
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        setLoading(true);
-        const response = await apiClient.get('/api/projects');
-        setProjects(response.data?.projects || []);
-      } catch (err) {
-        console.error('Failed to fetch projects:', err);
-        setError('Failed to load projects');
-      } finally {
-        setLoading(false);
-      }
-    };
+    setLastRefreshed(new Date());
+  }, []);
 
+  // Auto-dismiss alerts after 3.5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(null), 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
+  // Fetch projects from API
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get('/api/projects');
+      setProjects(response.data?.projects || []);
+      setLastRefreshed(new Date());
+    } catch (err) {
+      console.error('Failed to fetch projects:', err);
+      setError('Failed to load projects');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchProjects();
   }, [tenantSlug]);
 
@@ -82,10 +105,11 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
       });
       
       setProjects([...projects, response.data]);
-      alert('Project created successfully!');
+      setSuccess('Project created successfully!');
+      setShowCreateModal(false);
     } catch (err) {
       console.error('Failed to create project:', err);
-      alert('Failed to create project');
+      setError('Failed to create project');
     }
   };
 
@@ -109,10 +133,10 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
       try {
         await apiClient.delete(`/api/projects/${id}`);
         setProjects(projects.filter(p => p.id !== id));
-        alert('Project deleted successfully!');
+        setSuccess('Project deleted successfully!');
       } catch (err) {
         console.error('Failed to delete project:', err);
-        alert('Failed to delete project');
+        setError('Failed to delete project');
       }
     }
   };
@@ -128,10 +152,10 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
       });
       
       setProjects([...projects, response.data]);
-      alert('Project duplicated successfully!');
+      setSuccess('Project duplicated successfully!');
     } catch (err) {
       console.error('Failed to duplicate project:', err);
-      alert('Failed to duplicate project');
+      setError('Failed to duplicate project');
     }
   };
 
@@ -189,23 +213,14 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
     return diffDays;
   };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500 mb-4"></div>
-        <span className="text-white/70">Loading projects...</span>
-      </div>
-    );
-  }
-
-  if (error) {
+  if (error && projects.length === 0) {
     return (
       <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-12 text-center backdrop-blur">
         <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-white mb-2">Error Loading Projects</h3>
         <p className="text-red-300 mb-4">{error}</p>
         <button 
-          onClick={() => window.location.reload()}
+          onClick={() => fetchProjects()}
           className="px-4 py-2 bg-gradient-to-r from-sky-500 to-indigo-500 text-white rounded-lg hover:shadow-lg hover:shadow-sky-500/50 transition-all inline-flex items-center font-medium"
         >
           Retry
@@ -216,9 +231,27 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold text-white mb-2">Project Management</h2>
-        <p className="text-white/70">Create and manage projects, assign teams, and track progress</p>
+      {error && <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-red-300 text-sm">{error}</div>}
+      {success && <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-300 text-sm">{success}</div>}
+
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-white mb-2">Project Management</h2>
+          <p className="text-white/70">Create and manage projects, assign teams, and track progress</p>
+          {lastRefreshed && (
+            <p className="text-xs text-white/50 mt-2">
+              Last updated: {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={fetchProjects}
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm border border-white/20 rounded-lg text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
       </div>
 
       {/* Statistics */}
@@ -353,10 +386,51 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
 
       {/* Projects Grid/List */}
       <div className={viewMode === 'grid' ? 'grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6' : 'space-y-4'}>
-        {filteredProjects.map(project => {
-          const budgetUtilization = getBudgetUtilization(project.budgetSpent, project.budgetApproved);
-          return (
-          <div key={project.id} className="group rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 via-slate-900/50 to-slate-950 p-6 backdrop-blur hover:border-white/20 transition-all shadow-lg hover:shadow-xl">
+        {loading ? (
+          <>
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur animate-pulse">
+                <div className="space-y-4">
+                  <div className="h-6 bg-white/10 rounded w-3/4"></div>
+                  <div className="h-4 bg-white/10 rounded w-full"></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="h-4 bg-white/10 rounded"></div>
+                    <div className="h-4 bg-white/10 rounded"></div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-1 h-8 bg-white/10 rounded"></div>
+                    <div className="flex-1 h-8 bg-white/10 rounded"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </>
+        ) : filteredProjects.length === 0 ? (
+          <div className="col-span-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 via-slate-900/50 to-slate-950 p-12 text-center backdrop-blur">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 mx-auto mb-4">
+              <Briefcase className="w-8 h-8 text-white/40" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">No projects found</h3>
+            <p className="text-white/70 mb-6">
+              {searchQuery || statusFilter || priorityFilter 
+                ? "Try adjusting your filters or search criteria" 
+                : "Get started by creating your first project"}
+            </p>
+            {!searchQuery && !statusFilter && !priorityFilter && (
+              <button 
+                onClick={() => setShowCreateModal(true)}
+                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-sky-500 to-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-sky-500/30 transition hover:shadow-xl"
+              >
+                <Plus className="w-4 h-4" />
+                Create Your First Project
+              </button>
+            )}
+          </div>
+        ) : (
+          filteredProjects.map(project => {
+            const budgetUtilization = getBudgetUtilization(project.budgetSpent, project.budgetApproved);
+            return (
+              <div key={project.id} className="group rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 via-slate-900/50 to-slate-950 p-6 backdrop-blur hover:border-white/20 transition-all shadow-lg hover:shadow-xl">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-white mb-1">{project.name}</h3>
@@ -468,33 +542,10 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
-          </div>
-        );
-        })}
-      </div>
-
-      {filteredProjects.length === 0 && (
-        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 via-slate-900/50 to-slate-950 p-12 text-center backdrop-blur">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 mx-auto mb-4">
-            <Briefcase className="w-8 h-8 text-white/40" />
-          </div>
-          <h3 className="text-lg font-semibold text-white mb-2">No projects found</h3>
-          <p className="text-white/70 mb-6">
-            {searchQuery || statusFilter || priorityFilter 
-              ? "Try adjusting your filters or search criteria" 
-              : "Get started by creating your first project"}
-          </p>
-          {!searchQuery && !statusFilter && !priorityFilter && (
-            <button 
-              onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-sky-500 to-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-sky-500/30 transition hover:shadow-xl"
-            >
-              <Plus className="w-4 h-4" />
-              Create Your First Project
-            </button>
-          )}
-        </div>
-      )}
+            </div>
+            );
+          })
+        )}
 
       {/* Modals */}
       <CreateProjectModal 
