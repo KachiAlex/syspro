@@ -16,6 +16,7 @@ interface Employee {
   position: string;
   startDate: string;
   status: string;
+  performance: string;
   salary: string;
 }
 
