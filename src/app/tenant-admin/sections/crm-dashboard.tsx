@@ -376,27 +376,38 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
         fetchDeals({ tenantSlug: effectiveTenant }),
       ]);
 
-      const normalizedLeads: LeadRow[] = leadData.leads.map(toLeadRow);
+      // Ensure data is in the expected format before calling .map()
+      const leadArray = Array.isArray(leadData?.leads) ? leadData.leads : [];
+      const contactArray = Array.isArray(contactData?.contacts) ? contactData.contacts : [];
+      const dealArray = Array.isArray(dealData?.deals) ? dealData.deals : [];
 
-      const normalizedContacts: ContactRow[] = contactData.contacts.map(toContactRow);
+      const normalizedLeads: LeadRow[] = leadArray.map(toLeadRow);
 
-      const normalizedDeals: DealRow[] = dealData.deals.map(toDealRow);
+      const normalizedContacts: ContactRow[] = contactArray.map(toContactRow);
+
+      const normalizedDeals: DealRow[] = dealArray.map(toDealRow);
 
       setLeads(normalizedLeads);
-      setTotalLeads(leadData.total);
+      setTotalLeads(leadData?.total ?? 0);
       setContacts(normalizedContacts);
-      setTotalContacts(contactData.total);
+      setTotalContacts(contactData?.total ?? 0);
       setDeals(normalizedDeals);
-      setTotalDeals(dealData.total);
+      setTotalDeals(dealData?.total ?? 0);
 
       setStats({
-        totalLeads: leadData.total,
-        totalContacts: contactData.total,
-        totalDeals: dealData.total,
+        totalLeads: leadData?.total ?? 0,
+        totalContacts: contactData?.total ?? 0,
+        totalDeals: dealData?.total ?? 0,
         pipelineValue: normalizedDeals.reduce((sum, deal) => sum + deal.amount, 0),
       });
     } catch (error) {
+      console.error('CRM data loading error:', error);
       setErrorMessage(error instanceof Error ? error.message : "Failed to load CRM data");
+      // Set default empty state on error
+      setLeads([]);
+      setContacts([]);
+      setDeals([]);
+      setStats(DEFAULT_STATS);
     } finally {
       setIsLoading(false);
     }
