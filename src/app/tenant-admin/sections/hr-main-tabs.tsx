@@ -151,9 +151,10 @@ export default function HRMainTabs({
 
   const handleExportReport = async () => {
     try {
+      const empArray = Array.isArray(employees) ? employees : [];
       const csv = [
         ['Name', 'Email', 'Department', 'Position', 'Status', 'Salary'],
-        ...employees.map(e => [e.name, e.email, e.department, e.position, e.status, e.salary])
+        ...empArray.map(e => [e.name, e.email, e.department, e.position, e.status, e.salary])
       ].map(row => row.join(',')).join('\n');
 
       const blob = new Blob([csv], { type: 'text/csv' });
@@ -169,14 +170,16 @@ export default function HRMainTabs({
     }
   };
 
-  const filteredEmployees = employees.filter(emp => {
+  const employeeArray = Array.isArray(employees) ? employees : [];
+
+  const filteredEmployees = employeeArray.filter(emp => {
     const matchesSearch = emp.name.toLowerCase().includes(staffSearch.toLowerCase()) ||
                          emp.email.toLowerCase().includes(staffSearch.toLowerCase());
     const matchesDepartment = staffDepartmentFilter === 'All' || emp.department === staffDepartmentFilter;
     return matchesSearch && matchesDepartment;
   });
 
-  const departments = ['All', ...new Set(employees.map(e => e.department))];
+  const departments = ['All', ...new Set(employeeArray.map(e => e.department))];
 
   return (
     <div className="space-y-6">
@@ -335,18 +338,19 @@ function StaffTab({
   onViewEmployee: (emp: Employee) => void;
   loading: boolean;
 }) {
-  const activeEmployees = employees.filter(e => e.status === 'Active').length;
-  const onLeaveEmployees = employees.filter(e => e.status === 'On Leave').length;
-  const departmentDistribution = employees.length > 0
+  const empArray = Array.isArray(employees) ? employees : [];
+  const activeEmployees = empArray.filter(e => e.status === 'Active').length;
+  const onLeaveEmployees = empArray.filter(e => e.status === 'On Leave').length;
+  const departmentDistribution = empArray.length > 0
     ? Object.entries(
-        employees.reduce((acc: Record<string, number>, emp) => {
+        empArray.reduce((acc: Record<string, number>, emp) => {
           acc[emp.department] = (acc[emp.department] || 0) + 1;
           return acc;
         }, {})
       ).map(([dept, count]) => ({
         dept,
         count,
-        pct: Math.round((count / employees.length) * 100)
+        pct: Math.round((count / empArray.length) * 100)
       })).sort((a, b) => b.count - a.count)
     : [];
 
@@ -427,7 +431,7 @@ function StaffTab({
             </div>
           ))}
         </div>
-      ) : employees.length === 0 ? (
+      ) : empArray.length === 0 ? (
         <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
           <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600 font-medium mb-2">No employees found</p>
@@ -442,7 +446,7 @@ function StaffTab({
         </div>
       ) : (
         <div className="space-y-3">
-          {employees.map(emp => (
+          {empArray.map(emp => (
             <div key={emp.id} className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -544,7 +548,7 @@ function AttendanceTab({
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">On Leave</p>
-          <p className="text-3xl font-bold text-blue-600">{attendanceRecords.filter(r => r.status === 'Leave').length}</p>
+          <p className="text-3xl font-bold text-blue-600">{(Array.isArray(attendanceRecords) ? attendanceRecords : []).filter(r => r.status === 'Leave').length}</p>
         </div>
       </div>
 
@@ -559,7 +563,7 @@ function AttendanceTab({
             </div>
           ))}
         </div>
-      ) : attendanceRecords.length === 0 ? (
+      ) : (Array.isArray(attendanceRecords) ? attendanceRecords : []).length === 0 ? (
         <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
           <Clock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600 font-medium mb-2">No attendance records</p>
@@ -567,7 +571,7 @@ function AttendanceTab({
         </div>
       ) : (
         <div className="space-y-3">
-          {attendanceRecords.map(record => (
+          {(Array.isArray(attendanceRecords) ? attendanceRecords : []).map(record => (
             <div key={record.id} className="bg-white rounded-lg border border-gray-200 p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -610,12 +614,16 @@ function ReportsTab({
   onExportReport: () => void;
   loading: boolean;
 }) {
-  const totalEmployees = employees.length;
-  const activeEmployees = employees.filter(e => e.status === 'Active').length;
-  const avgAttendance = attendanceRecords.length > 0
-    ? Math.round((attendanceRecords.filter(r => r.status === 'Present').length / attendanceRecords.length) * 100)
+  const empArray = Array.isArray(employees) ? employees : [];
+  const attArray = Array.isArray(attendanceRecords) ? attendanceRecords : [];
+  const payArray = Array.isArray(payrollRecords) ? payrollRecords : [];
+  
+  const totalEmployees = empArray.length;
+  const activeEmployees = empArray.filter(e => e.status === 'Active').length;
+  const avgAttendance = attArray.length > 0
+    ? Math.round((attArray.filter(r => r.status === 'Present').length / attArray.length) * 100)
     : 0;
-  const totalPayroll = payrollRecords.reduce((sum, r) => sum + r.netSalary, 0);
+  const totalPayroll = payArray.reduce((sum, r) => sum + r.netSalary, 0);
 
   return (
     <div className="space-y-6">
@@ -779,7 +787,7 @@ function PayrollTab({
             </div>
           ))}
         </div>
-      ) : payrollRecords.length === 0 ? (
+      ) : (Array.isArray(payrollRecords) ? payrollRecords : []).length === 0 ? (
         <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
           <DollarSign className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600 font-medium mb-2">No payroll records</p>
@@ -794,7 +802,7 @@ function PayrollTab({
         </div>
       ) : (
         <div className="space-y-3">
-          {payrollRecords.map(record => (
+          {(Array.isArray(payrollRecords) ? payrollRecords : []).map(record => (
             <div key={record.id} className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
