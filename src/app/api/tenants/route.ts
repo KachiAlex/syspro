@@ -42,9 +42,24 @@ const payloadSchema = z.object({
 
 export async function GET() {
   try {
-    // If DATABASE_URL is not configured, use a lightweight file-backed
-    // dev fallback so created tenants persist across refreshes.
-    if (!process.env.DATABASE_URL) {
+    const sql = SQL;
+    
+    try {
+      await ensureTenantTable(sql);
+
+      const rows = (await sql`
+        select name, slug, region, status, ledger_delta, seats, admin_email,
+               default_region_id, default_region_name, default_branch_id, default_branch_name,
+               "isActive" as is_active, "schemaName" as schema_name
+        from tenants
+        where "deletedAt" is null
+        order by "createdAt" desc nulls last
+      `) as any[];
+
+      return NextResponse.json({ tenants: rows.map(mapTenantRow) });
+    } catch (dbError) {
+      // If database fails, use file-backed fallback for dev
+      console.warn("Database query failed, using file-backed fallback:", dbError);
       const devPath = path.join(process.cwd(), "dev-data");
       const file = path.join(devPath, "tenants.json");
       try {
@@ -53,24 +68,10 @@ export async function GET() {
         const rows = JSON.parse(content || "[]");
         return NextResponse.json({ tenants: Array.isArray(rows) ? rows : [] });
       } catch (e) {
-        console.error("Dev tenants read failed", e);
+        console.error("Dev tenants fallback failed", e);
         return NextResponse.json({ tenants: [] });
       }
     }
-
-    const sql = SQL;
-    await ensureTenantTable(sql);
-
-    const rows = (await sql`
-      select name, slug, region, status, ledger_delta, seats, admin_email,
-             default_region_id, default_region_name, default_branch_id, default_branch_name,
-             "isActive" as is_active, "schemaName" as schema_name
-      from tenants
-      where "deletedAt" is null
-      order by "createdAt" desc nulls last
-    `) as any[];
-
-    return NextResponse.json({ tenants: rows.map(mapTenantRow) });
   } catch (error) {
     console.error("Failed to fetch tenants", error);
     return NextResponse.json({ error: "Unable to fetch tenants" }, { status: 500 });

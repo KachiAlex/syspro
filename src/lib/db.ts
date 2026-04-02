@@ -8,32 +8,32 @@ const globalForSql = globalThis as typeof globalThis & {
 export function getSql() {
   const connectionString = process.env.DATABASE_URL;
   
-  // Always use mock in development to avoid connection failures
-  // This allows UI development without database connectivity
-  if (process.env.NODE_ENV === 'development' || !connectionString) {
+  // If DATABASE_URL is configured, always try to use real database
+  if (connectionString) {
     if (!globalForSql.neonSql) {
-      // Create a minimal mock that can be used as a template tag: `await sql`...``
-      globalForSql.neonSql = (async function mockSql(_strings: TemplateStringsArray, ..._args: any[]) {
-        return [];
-      }) as any;
-      globalForSql.usesMock = true;
-    }
-    if (globalForSql.usesMock) {
-      console.warn("Using in-memory mock SQL client (dev mode) — database calls will return empty results.");
+      try {
+        globalForSql.neonSql = neon(connectionString);
+        console.log("✓ Connected to Neon database");
+      } catch (err) {
+        console.error("Failed to initialize Neon client:", err);
+        // Fallback to mock if connection fails
+        globalForSql.neonSql = (async function mockSql(_strings: TemplateStringsArray, ..._args: any[]) {
+          return [];
+        }) as any;
+        globalForSql.usesMock = true;
+        console.warn("⚠ Falling back to mock SQL client");
+      }
     }
     return globalForSql.neonSql as any;
   }
 
+  // No DATABASE_URL configured - use mock
   if (!globalForSql.neonSql) {
-    try {
-      globalForSql.neonSql = neon(connectionString);
-    } catch (err) {
-      console.warn("Failed to initialize Neon client, falling back to mock:", err);
-      globalForSql.neonSql = (async function mockSql(_strings: TemplateStringsArray, ..._args: any[]) {
-        return [];
-      }) as any;
-      globalForSql.usesMock = true;
-    }
+    globalForSql.neonSql = (async function mockSql(_strings: TemplateStringsArray, ..._args: any[]) {
+      return [];
+    }) as any;
+    globalForSql.usesMock = true;
+    console.warn("⚠ DATABASE_URL not configured — using in-memory mock SQL client (dev only).");
   }
 
   return globalForSql.neonSql as any;
