@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus, Eye, Edit, Award, Download, Filter, Users, Target, DollarSign, Briefcase, RefreshCw } from 'lucide-react';
+import { Plus, Eye, Edit, Award, Download, Filter, Users, Target, DollarSign, Briefcase, RefreshCw, Clock } from 'lucide-react';
 import { AddEmployeeModal, RunPayrollModal, PostJobModal, ViewEmployeeModal, TrainingModal, EditEmployeeModal, DeleteEmployeeModal } from './hr-modals';
 import HRTabs from './hr-tabs';
 import HRMainTabs from './hr-main-tabs';
@@ -588,12 +588,60 @@ const HRComponent: React.FC = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Human Resources</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">HR & Operations</h2>
         <p className="text-gray-600">Manage employee records, payroll, benefits, and HR analytics</p>
       </div>
 
-      {/* HR Main Tabs - Primary Navigation */}
-      <div className="mb-8">
+      {/* Main Tab Navigation */}
+      <div className="flex gap-2 border-b border-gray-200 mb-8">
+        <button
+          onClick={() => setActiveMainTab('staff')}
+          className={`px-4 py-3 font-medium transition-colors border-b-2 ${
+            activeMainTab === 'staff'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <Users className="w-4 h-4 inline mr-2" />
+          Staff
+        </button>
+        <button
+          onClick={() => setActiveMainTab('attendance')}
+          className={`px-4 py-3 font-medium transition-colors border-b-2 ${
+            activeMainTab === 'attendance'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <Clock className="w-4 h-4 inline mr-2" />
+          Attendance
+        </button>
+        <button
+          onClick={() => setActiveMainTab('reports')}
+          className={`px-4 py-3 font-medium transition-colors border-b-2 ${
+            activeMainTab === 'reports'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <Download className="w-4 h-4 inline mr-2" />
+          Reports
+        </button>
+        <button
+          onClick={() => setActiveMainTab('payroll')}
+          className={`px-4 py-3 font-medium transition-colors border-b-2 ${
+            activeMainTab === 'payroll'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <DollarSign className="w-4 h-4 inline mr-2" />
+          Payroll
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      {activeMainTab === 'staff' && (
         <HRMainTabs
           tenantSlug={tenantSlug}
           employees={filteredEmployees}
@@ -608,8 +656,25 @@ const HRComponent: React.FC = () => {
           }}
           onViewEmployee={handleViewEmployee}
         />
-      </div>
+      )}
 
+      {activeMainTab === 'attendance' && (
+        <div className="space-y-6">
+          <HRTabs tenantSlug={tenantSlug} />
+        </div>
+      )}
+
+      {activeMainTab === 'reports' && (
+        <div className="space-y-6">
+          <HRTabs tenantSlug={tenantSlug} />
+        </div>
+      )}
+
+      {activeMainTab === 'payroll' && (
+        <div className="space-y-6">
+          <HRTabs tenantSlug={tenantSlug} />
+        </div>
+      )}
 
       {/* Modals */}
       <AddEmployeeModal
@@ -659,11 +724,6 @@ const HRComponent: React.FC = () => {
         onClose={() => setShowTrainingModal(false)}
         onSubmit={handleTrainingSubmit}
       />
-
-      {/* HR Sub-Tabs Section */}
-      <div className="mt-12 border-t border-gray-200 pt-8">
-        <HRTabs tenantSlug={tenantSlug} />
-      </div>
 
       {/* Alert */}
       {alert && (
