@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Settings, Plus, Search, Filter, Play, Pause, Edit, Trash2, CheckCircle, AlertCircle, Clock, Zap } from 'lucide-react';
+import { Search, Settings, PlayCircle, Clock, CheckCircle, AlertCircle, Pause, Edit, Trash2, Plus, Filter } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 
 interface Rule {
@@ -22,14 +22,14 @@ interface Rule {
 const rules: Rule[] = [
   {
     id: '1',
-    name: 'Invoice Validation',
-    description: 'Validate incoming invoices against purchase orders',
-    trigger: 'New Invoice Created',
-    action: 'Validate and Route',
+    name: 'Invoice Auto-Approval',
+    description: 'Automatically approve invoices under $1000',
+    trigger: 'Invoice Created',
+    action: 'Auto Approve',
     status: 'active',
     priority: 'high',
-    lastTriggered: '15 minutes ago',
-    triggersToday: 47,
+    lastTriggered: '5 minutes ago',
+    triggersToday: 45,
     successRate: 98.2,
     category: 'Finance'
   },
@@ -235,44 +235,44 @@ export default function RulesPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Rules</p>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">{rules.length}</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Rules</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">{rules.length}</p>
+                </div>
+                <Settings className="w-8 h-8 sm:w-12 sm:h-12 text-blue-100" />
+              </div>
             </div>
-              <Settings className="w-8 h-8 sm:w-12 sm:h-12 text-blue-100" />
-          </div>
-        </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Active</p>
-              <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-2">{rules.filter(r => r.status === 'active').length}</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Active</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-2">{rules.filter(r => r.status === 'active').length}</p>
+                </div>
+                <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-100" />
+              </div>
             </div>
-              <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-100" />
-          </div>
-        </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Triggers Today</p>
-              <p className="text-2xl sm:text-3xl font-bold text-blue-600 mt-2">{rules.reduce((sum, r) => sum + r.triggersToday, 0)}</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Triggers Today</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-blue-600 mt-2">{rules.reduce((sum, r) => sum + r.triggersToday, 0)}</p>
+                </div>
+                <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-blue-100" />
+              </div>
             </div>
-              <Zap className="w-8 h-8 sm:w-12 sm:h-12 text-blue-100" />
-          </div>
-        </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Avg Success Rate</p>
-              <p className="text-2xl sm:text-3xl font-bold text-purple-600 mt-2">
-                {(rules.reduce((sum, r) => sum + r.successRate, 0) / rules.length).toFixed(1)}%
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Avg Success Rate</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-purple-600 mt-2">
+                    {(rules.reduce((sum, r) => sum + r.successRate, 0) / rules.length).toFixed(1)}%
+                  </p>
+                </div>
+                <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-purple-100" />
+              </div>
             </div>
-              <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-purple-100" />
           </div>
-        </div>
-      </div>
 
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
@@ -345,7 +345,7 @@ export default function RulesPage() {
                       <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1 sm:gap-2">
                           <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
-                            <Play className="w-3 h-3" />
+                            <PlayCircle className="w-3 h-3" />
                             <span className="hidden sm:inline">Test</span>
                           </button>
                           <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-700">
@@ -365,46 +365,48 @@ export default function RulesPage() {
             </div>
           </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Rule Performance</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Total Triggers Today</span>
-              <span className="text-sm font-semibold text-blue-600">{rules.reduce((sum, r) => sum + r.triggersToday, 0)}</span>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Rule Performance</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Total Triggers Today</span>
+                  <span className="text-sm font-semibold text-blue-600">{rules.reduce((sum, r) => sum + r.triggersToday, 0)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Successful Executions</span>
+                  <span className="text-sm font-semibold text-green-600">{Math.round(rules.reduce((sum, r) => sum + r.triggersToday * (r.successRate / 100), 0))}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Failed Executions</span>
+                  <span className="text-sm font-semibold text-red-600">{Math.round(rules.reduce((sum, r) => sum + r.triggersToday * ((100 - r.successRate) / 100), 0))}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Average Success Rate</span>
+                  <span className="text-sm font-semibold text-purple-600">
+                    {(rules.reduce((sum, r) => sum + r.successRate, 0) / rules.length).toFixed(1)}%
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Successful Executions</span>
-              <span className="text-sm font-semibold text-green-600">{Math.round(rules.reduce((sum, r) => sum + r.triggersToday * (r.successRate / 100), 0))}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Failed Executions</span>
-              <span className="text-sm font-semibold text-red-600">{Math.round(rules.reduce((sum, r) => sum + r.triggersToday * ((100 - r.successRate) / 100), 0))}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Average Success Rate</span>
-              <span className="text-sm font-semibold text-purple-600">
-                {(rules.reduce((sum, r) => sum + r.successRate, 0) / rules.length).toFixed(1)}%
-              </span>
-            </div>
-          </div>
-        </div>
 
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-          <div className="space-y-3">
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
-              <Plus className="w-4 h-4" />
-              Create New Rule
-            </button>
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-              <Settings className="w-4 h-4" />
-              Rule Settings
-            </button>
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-              <Filter className="w-4 h-4" />
-              Bulk Actions
-            </button>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+              <div className="space-y-3">
+                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                  <Plus className="w-4 h-4" />
+                  Create New Rule
+                </button>
+                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                  <Settings className="w-4 h-4" />
+                  Rule Settings
+                </button>
+                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                  <Filter className="w-4 h-4" />
+                  Bulk Actions
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

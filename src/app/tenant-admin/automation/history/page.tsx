@@ -2,122 +2,122 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Clock, Search, Filter, Download, Eye, CheckCircle, AlertCircle, XCircle, Calendar, TrendingUp, TrendingDown } from 'lucide-react';
+import { Search, Clock, CheckCircle, XCircle, AlertCircle, PlayCircle, Settings, Download, Eye, TrendingDown } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 
 interface Execution {
   id: string;
   name: string;
   type: 'workflow' | 'rule';
+  category: string;
   status: 'success' | 'failed' | 'running';
   startTime: string;
   endTime: string;
   duration: string;
   triggeredBy: string;
-  category: string;
   error?: string;
 }
 
 const executions: Execution[] = [
   {
     id: '1',
-    name: 'Customer Onboarding',
+    name: 'Customer Onboarding Workflow',
     type: 'workflow',
+    category: 'Customer Management',
     status: 'success',
-    startTime: '2026-04-03 14:30:15',
-    endTime: '2026-04-03 14:30:18',
+    startTime: '2024-04-03 14:30:00',
+    endTime: '2024-04-03 14:30:03',
     duration: '3.2s',
-    triggeredBy: 'System',
-    category: 'Customer Management'
+    triggeredBy: 'Schedule'
   },
   {
     id: '2',
-    name: 'Invoice Validation',
+    name: 'Invoice Processing Rule',
     type: 'rule',
+    category: 'Finance',
     status: 'success',
-    startTime: '2026-04-03 14:25:42',
-    endTime: '2026-04-03 14:25:43',
+    startTime: '2024-04-03 14:25:00',
+    endTime: '2024-04-03 14:25:01',
     duration: '0.8s',
-    triggeredBy: 'User',
-    category: 'Finance'
+    triggeredBy: 'User Action'
   },
   {
     id: '3',
     name: 'Daily Report Generation',
     type: 'workflow',
-    status: 'failed',
-    startTime: '2026-04-03 14:00:00',
-    endTime: '2026-04-03 14:00:12',
-    duration: '12.4s',
-    triggeredBy: 'System',
     category: 'Reporting',
+    status: 'failed',
+    startTime: '2024-04-03 14:20:00',
+    endTime: '2024-04-03 14:20:12',
+    duration: '12.4s',
+    triggeredBy: 'Schedule',
     error: 'Database connection timeout'
   },
   {
     id: '4',
     name: 'Email Notification Trigger',
     type: 'rule',
+    category: 'Notifications',
     status: 'success',
-    startTime: '2026-04-03 13:45:30',
-    endTime: '2026-04-03 13:45:31',
+    startTime: '2024-04-03 14:15:00',
+    endTime: '2024-04-03 14:15:01',
     duration: '1.1s',
-    triggeredBy: 'System',
-    category: 'Notifications'
+    triggeredBy: 'User Action'
   },
   {
     id: '5',
-    name: 'Inventory Sync',
+    name: 'Inventory Sync Workflow',
     type: 'workflow',
+    category: 'Inventory',
     status: 'running',
-    startTime: '2026-04-03 13:30:00',
+    startTime: '2024-04-03 14:10:00',
     endTime: '-',
-    duration: 'Running...',
-    triggeredBy: 'System',
-    category: 'Inventory'
+    duration: '-',
+    triggeredBy: 'Schedule'
   },
   {
     id: '6',
-    name: 'Lead Assignment',
+    name: 'Customer Welcome Email',
     type: 'rule',
+    category: 'Customer Service',
     status: 'success',
-    startTime: '2026-04-03 13:15:22',
-    endTime: '2026-04-03 13:15:23',
-    duration: '0.9s',
-    triggeredBy: 'User',
-    category: 'Sales'
+    startTime: '2024-04-03 14:05:00',
+    endTime: '2024-04-03 14:05:01',
+    duration: '0.5s',
+    triggeredBy: 'User Action'
   },
   {
     id: '7',
-    name: 'Expense Approval',
-    type: 'rule',
-    status: 'failed',
-    startTime: '2026-04-03 13:00:15',
-    endTime: '2026-04-03 13:00:18',
-    duration: '3.1s',
-    triggeredBy: 'User',
-    category: 'Finance',
-    error: 'Insufficient permissions'
+    name: 'Sales Report Generation',
+    type: 'workflow',
+    category: 'Sales',
+    status: 'success',
+    startTime: '2024-04-03 14:00:00',
+    endTime: '2024-04-03 14:00:02',
+    duration: '2.1s',
+    triggeredBy: 'Schedule'
   },
   {
     id: '8',
-    name: 'Customer Welcome Email',
+    name: 'Low Stock Alert',
     type: 'rule',
-    status: 'success',
-    startTime: '2026-04-03 12:45:10',
-    endTime: '2026-04-03 12:45:12',
-    duration: '2.0s',
-    triggeredBy: 'System',
-    category: 'Customer Service'
+    category: 'Inventory',
+    status: 'failed',
+    startTime: '2024-04-03 13:55:00',
+    endTime: '2024-04-03 13:55:00',
+    duration: '0.1s',
+    triggeredBy: 'System Event',
+    error: 'Invalid email configuration'
   }
 ];
 
-export default function AutomationHistoryPage() {
+export default function HistoryPage() {
   const { tenantSlug } = useTenantContext();
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateRange, setDateRange] = useState('today');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [dateRange, setDateRange] = useState('today');
 
   const filteredExecutions = executions.filter(execution => {
     const matchesSearch = execution.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -141,7 +141,7 @@ export default function AutomationHistoryPage() {
     switch (status) {
       case 'success': return <CheckCircle className="w-4 h-4 text-green-600" />;
       case 'failed': return <XCircle className="w-4 h-4 text-red-600" />;
-      case 'running': return <Clock className="w-4 h-4 text-blue-600" />;
+      case 'running': return <Clock className="w-4 h-4 text-blue-600 animate-spin" />;
       default: return <AlertCircle className="w-4 h-4 text-gray-600" />;
     }
   };
@@ -271,46 +271,46 @@ export default function AutomationHistoryPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Executions</p>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">{executions.length}</p>
-              <p className="text-xs text-blue-600 mt-2">↑ 15.2% from yesterday</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Executions</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">{executions.length}</p>
+                  <p className="text-xs text-blue-600 mt-2">↑ 15.2% from yesterday</p>
+                </div>
+                <Clock className="w-8 h-8 sm:w-12 sm:h-12 text-blue-100" />
+              </div>
             </div>
-            <Clock className="w-12 h-12 text-blue-100" />
-          </div>
-        </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Successful</p>
-              <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-2">{executions.filter(e => e.status === 'success').length}</p>
-              <p className="text-xs text-green-600 mt-2">94.7% success rate</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Successful</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-2">{executions.filter(e => e.status === 'success').length}</p>
+                  <p className="text-xs text-green-600 mt-2">94.7% success rate</p>
+                </div>
+                <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-100" />
+              </div>
             </div>
-              <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-100" />
-          </div>
-        </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Failed</p>
-              <p className="text-2xl sm:text-3xl font-bold text-red-600 mt-2">{executions.filter(e => e.status === 'failed').length}</p>
-              <p className="text-xs text-red-600 mt-2">5.3% failure rate</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Failed</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-red-600 mt-2">{executions.filter(e => e.status === 'failed').length}</p>
+                  <p className="text-xs text-red-600 mt-2">5.3% failure rate</p>
+                </div>
+                <XCircle className="w-8 h-8 sm:w-12 sm:h-12 text-red-100" />
+              </div>
             </div>
-              <XCircle className="w-8 h-8 sm:w-12 sm:h-12 text-red-100" />
-          </div>
-        </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Running</p>
-              <p className="text-2xl sm:text-3xl font-bold text-blue-600 mt-2">{executions.filter(e => e.status === 'running').length}</p>
-              <p className="text-xs text-blue-600 mt-2">Currently active</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Running</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-blue-600 mt-2">{executions.filter(e => e.status === 'running').length}</p>
+                  <p className="text-xs text-blue-600 mt-2">Currently active</p>
+                </div>
+                <Clock className="w-8 h-8 sm:w-12 sm:h-12 text-blue-100" />
+              </div>
             </div>
-            <Clock className="w-12 h-12 text-blue-100" />
           </div>
-        </div>
-      </div>
 
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
@@ -387,49 +387,51 @@ export default function AutomationHistoryPage() {
             </div>
           </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Execution Analytics</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Average Execution Time</span>
-              <span className="text-sm font-semibold text-gray-900">2.8s</span>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Execution Analytics</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Average Execution Time</span>
+                  <span className="text-sm font-semibold text-gray-900">2.8s</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Peak Hour</span>
+                  <span className="text-sm font-semibold text-blue-600">2:00 PM - 3:00 PM</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Most Active Category</span>
+                  <span className="text-sm font-semibold text-purple-600">Finance</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">System Health Score</span>
+                  <span className="text-sm font-semibold text-green-600">94.7%</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Peak Hour</span>
-              <span className="text-sm font-semibold text-blue-600">2:00 PM - 3:00 PM</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Most Active Category</span>
-              <span className="text-sm font-semibold text-purple-600">Finance</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">System Health Score</span>
-              <span className="text-sm font-semibold text-green-600">94.7%</span>
-            </div>
-          </div>
-        </div>
 
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Error Analysis</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Database Errors</span>
-              <span className="text-sm font-semibold text-red-600">2</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Permission Errors</span>
-              <span className="text-sm font-semibold text-amber-600">1</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Timeout Errors</span>
-              <span className="text-sm font-semibold text-red-600">1</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Error Rate Trend</span>
-              <div className="flex items-center gap-1">
-                <TrendingDown className="w-3 h-3 text-green-600" />
-                <span className="text-sm font-semibold text-green-600">↓ 12.4%</span>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Error Analysis</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Database Errors</span>
+                  <span className="text-sm font-semibold text-red-600">2</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Permission Errors</span>
+                  <span className="text-sm font-semibold text-amber-600">1</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Timeout Errors</span>
+                  <span className="text-sm font-semibold text-red-600">1</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Error Rate Trend</span>
+                  <div className="flex items-center gap-1">
+                    <TrendingDown className="w-3 h-3 text-green-600" />
+                    <span className="text-sm font-semibold text-green-600">↓ 12.4%</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
