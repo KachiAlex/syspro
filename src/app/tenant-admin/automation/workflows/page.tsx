@@ -38,7 +38,7 @@ const workflows: Workflow[] = [
     status: 'active',
     lastRun: '30 minutes ago',
     nextRun: 'In 30 minutes',
-    executions: 1,247,
+    executions: 1247,
     successRate: 96.8,
     avgDuration: '1.8s',
     category: 'Finance'
@@ -62,7 +62,7 @@ const workflows: Workflow[] = [
     status: 'active',
     lastRun: '15 minutes ago',
     nextRun: 'In 15 minutes',
-    executions: 2,156,
+    executions: 2156,
     successRate: 99.1,
     avgDuration: '2.1s',
     category: 'Inventory'
