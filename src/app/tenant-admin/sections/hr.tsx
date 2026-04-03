@@ -173,15 +173,8 @@ const HRComponent: React.FC = () => {
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Navigation</h3>
           <div className="space-y-2">
-            <button
-              onClick={() => setActiveTab('staff')}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100"
-            >
-              <Plus className="w-4 h-4" />
-              Manage Staff
-            </button>
             <button
               onClick={() => setActiveTab('attendance')}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100"
