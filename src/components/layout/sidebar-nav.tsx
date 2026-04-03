@@ -77,9 +77,9 @@ const navigationItems = [
     icon: ShoppingCart,
     children: [
       { title: "Sales Orders", href: "/tenant-admin/sales/orders" },
-      { title: "Suppliers", href: "/tenant-admin/suppliers" },
-      { title: "Purchase Orders", href: "/tenant-admin/purchases" },
-      { title: "Inventory", href: "/tenant-admin/inventory" },
+      { title: "Suppliers", href: "/tenant-admin/sales/suppliers" },
+      { title: "Purchase Orders", href: "/tenant-admin/sales/purchase-orders" },
+      { title: "Inventory", href: "/tenant-admin/sales/inventory" },
     ]
   },
   {
