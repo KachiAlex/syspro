@@ -1,7 +1,60 @@
 'use client';
 
-export default function HRComponent() {
-  return null;
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Plus, Eye, Edit, Award, Download, Filter, Users, Target, DollarSign, Briefcase, RefreshCw, Clock, BarChart3 } from 'lucide-react';
+import { AddEmployeeModal, RunPayrollModal, PostJobModal, ViewEmployeeModal, TrainingModal, EditEmployeeModal, DeleteEmployeeModal } from './hr-modals';
+import HRTabs from './hr-tabs';
+import HRMainTabs from './hr-main-tabs';
+import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { apiClient } from '@/lib/api-client';
+
+const EMPLOYEE_STATUS_LABELS: Record<string, string> = {
+  active: 'Active',
+  inactive: 'Inactive',
+  'on-leave': 'On Leave',
+  terminated: 'Terminated',
+};
+
+const STATUS_CODE_BY_LABEL = Object.entries(EMPLOYEE_STATUS_LABELS).reduce<Record<string, string>>((acc, [code, label]) => {
+  acc[label] = code;
+  return acc;
+}, {});
+
+function formatEmployeeStatus(status?: string | null) {
+  if (!status) return 'Active';
+  const normalized = status.toLowerCase();
+  return EMPLOYEE_STATUS_LABELS[normalized] ?? status;
+}
+
+function normalizeStatusLabel(label: string) {
+  if (!label) return 'active';
+  return STATUS_CODE_BY_LABEL[label] ?? label.trim().toLowerCase().replace(/\s+/g, '-');
+}
+
+interface ApiEmployee {
+  id: string;
+  name: string;
+  email: string;
+  departmentId: string;
+  jobTitle?: string | null;
+  status?: string | null;
+  hireDate?: string | null;
+  phone?: string | null;
+  costCenter?: string | null;
+  salary?: number | string | null;
+  employmentType?: string | null;
+}
+
+interface Employee {
+  id: string;
+  name: string;
+  email: string;
+  department: string;
+  position: string;
+  startDate: string;
+  status: string;
+  performance: string;
+  salary: string;
 }
 
 interface AddEmployeeFormData {
