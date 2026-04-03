@@ -42,7 +42,7 @@ export default function AutomationPage() {
   const [selectedPeriod, setSelectedPeriod] = useState('Last 24 Hours');
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <>
       {/* Sidebar - Persistent */}
       <div className="w-64 bg-white border-r border-gray-200 flex-shrink-0">
         <div className="p-6 border-b border-gray-200">
@@ -314,6 +314,6 @@ export default function AutomationPage() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

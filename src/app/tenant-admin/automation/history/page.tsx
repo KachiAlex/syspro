@@ -86,7 +86,8 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <>
+      {/* Sidebar - Persistent */}
       <div className="w-64 bg-white border-r border-gray-200 flex-shrink-0">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-bold text-gray-900">Automation</h2>
@@ -201,6 +202,6 @@ export default function HistoryPage() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

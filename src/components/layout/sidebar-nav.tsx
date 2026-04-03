@@ -108,10 +108,10 @@ const navigationItems = [
     href: "/tenant-admin/admin",
     icon: Settings,
     children: [
-      { title: "Settings", href: "/tenant-admin/admin/settings" },
-      { title: "Users & Roles", href: "/tenant-admin/admin/users" },
-      { title: "Audit Trail", href: "/tenant-admin/admin/audit" },
-      { title: "System Health", href: "/tenant-admin/admin/health" },
+      { title: "Settings", href: "/tenant-admin/settings" },
+      { title: "Users & Roles", href: "/tenant-admin/users" },
+      { title: "Audit Trail", href: "/tenant-admin/audit" },
+      { title: "System Health", href: "/tenant-admin/health" },
     ]
   },
 ];

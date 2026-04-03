@@ -219,12 +219,6 @@ export default function UsersPage() {
           <h1 className="text-2xl font-bold text-gray-900">Users & Roles</h1>
           <p className="text-sm text-gray-600 mt-1">User management and permissions</p>
         </div>
-        <Link
-          href="/tenant-admin/admin"
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-        >
-          ← Back to Admin
-        </Link>
       </div>
 
       <div className="flex items-center gap-4 border-b border-gray-200">
