@@ -5,37 +5,37 @@ import Link from 'next/link';
 import { Plus, Eye, Edit, Trash2, Search } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 
-interface SalesOrder {
+interface PurchaseOrder {
   id: string;
-  orderNumber: string;
-  customer: string;
+  poNumber: string;
+  supplier: string;
   amount: number;
   status: string;
-  orderDate: string;
+  poDate: string;
   dueDate: string;
   items: number;
 }
 
-const DEFAULT_ORDERS: SalesOrder[] = [
-  { id: '1', orderNumber: 'SO-001', customer: 'Acme Corp', amount: 8500, status: 'Completed', orderDate: '2026-04-03', dueDate: '2026-04-10', items: 5 },
-  { id: '2', orderNumber: 'SO-002', customer: 'Tech Solutions', amount: 12300, status: 'Pending', orderDate: '2026-04-02', dueDate: '2026-04-15', items: 8 },
-  { id: '3', orderNumber: 'SO-003', customer: 'Global Industries', amount: 15600, status: 'In Transit', orderDate: '2026-04-01', dueDate: '2026-04-12', items: 12 },
-  { id: '4', orderNumber: 'SO-004', customer: 'Innovation Labs', amount: 9200, status: 'Pending', orderDate: '2026-03-31', dueDate: '2026-04-20', items: 6 },
+const DEFAULT_POS: PurchaseOrder[] = [
+  { id: '1', poNumber: 'PO-001', supplier: 'Global Supply Co', amount: 12500, status: 'Received', poDate: '2026-03-25', dueDate: '2026-04-05', items: 8 },
+  { id: '2', poNumber: 'PO-002', supplier: 'Tech Parts Inc', amount: 18700, status: 'Pending', poDate: '2026-03-28', dueDate: '2026-04-10', items: 15 },
+  { id: '3', poNumber: 'PO-003', supplier: 'Premium Materials', amount: 9300, status: 'In Transit', poDate: '2026-03-30', dueDate: '2026-04-08', items: 5 },
+  { id: '4', poNumber: 'PO-004', supplier: 'Global Supply Co', amount: 15600, status: 'Pending', poDate: '2026-04-01', dueDate: '2026-04-15', items: 12 },
 ];
 
-export default function SalesOrdersPage() {
+export default function PurchaseOrdersPage() {
   const { tenantSlug } = useTenantContext();
-  const [orders, setOrders] = useState<SalesOrder[]>(DEFAULT_ORDERS);
+  const [pos, setPos] = useState<PurchaseOrder[]>(DEFAULT_POS);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
 
-  const statuses = ['All', 'Pending', 'In Transit', 'Completed', 'Cancelled'];
+  const statuses = ['All', 'Pending', 'In Transit', 'Received', 'Cancelled'];
 
-  const filteredOrders = orders.filter((order) => {
-    if (statusFilter !== 'All' && order.status !== statusFilter) return false;
+  const filteredPos = pos.filter((po) => {
+    if (statusFilter !== 'All' && po.status !== statusFilter) return false;
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      if (!order.orderNumber.toLowerCase().includes(query) && !order.customer.toLowerCase().includes(query)) return false;
+      if (!po.poNumber.toLowerCase().includes(query) && !po.supplier.toLowerCase().includes(query)) return false;
     }
     return true;
   });
@@ -43,7 +43,7 @@ export default function SalesOrdersPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Sales Orders</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Purchase Orders</h2>
         <Link
           href={`/tenant-admin/sales`}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
@@ -60,7 +60,7 @@ export default function SalesOrdersPage() {
               <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Order # or customer..."
+                placeholder="PO # or supplier..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -82,7 +82,7 @@ export default function SalesOrdersPage() {
           <div className="flex items-end">
             <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
               <Plus className="w-4 h-4" />
-              New Order
+              New PO
             </button>
           </div>
         </div>
@@ -92,34 +92,34 @@ export default function SalesOrdersPage() {
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Order #</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Customer</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">PO #</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Supplier</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Amount</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Order Date</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">PO Date</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Due Date</th>
               <th className="px-6 py-3 text-center text-xs font-semibold text-gray-900">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredOrders.length > 0 ? (
-              filteredOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{order.orderNumber}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{order.customer}</td>
-                  <td className="px-6 py-4 text-sm font-semibold text-gray-900">${order.amount.toLocaleString()}</td>
+            {filteredPos.length > 0 ? (
+              filteredPos.map((po) => (
+                <tr key={po.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{po.poNumber}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{po.supplier}</td>
+                  <td className="px-6 py-4 text-sm font-semibold text-gray-900">${po.amount.toLocaleString()}</td>
                   <td className="px-6 py-4 text-sm">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      order.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                      order.status === 'Pending' ? 'bg-amber-100 text-amber-800' :
-                      order.status === 'In Transit' ? 'bg-blue-100 text-blue-800' :
+                      po.status === 'Received' ? 'bg-green-100 text-green-800' :
+                      po.status === 'Pending' ? 'bg-amber-100 text-amber-800' :
+                      po.status === 'In Transit' ? 'bg-blue-100 text-blue-800' :
                       'bg-red-100 text-red-800'
                     }`}>
-                      {order.status}
+                      {po.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{order.orderDate}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{order.dueDate}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{po.poDate}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{po.dueDate}</td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
@@ -138,7 +138,7 @@ export default function SalesOrdersPage() {
             ) : (
               <tr>
                 <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-600">
-                  No orders found
+                  No purchase orders found
                 </td>
               </tr>
             )}
@@ -148,19 +148,19 @@ export default function SalesOrdersPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">PO Summary</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Total Orders</span>
-              <span className="font-semibold text-gray-900">{orders.length}</span>
+              <span className="text-gray-600">Total POs</span>
+              <span className="font-semibold text-gray-900">{pos.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Total Revenue</span>
-              <span className="font-semibold text-gray-900">${orders.reduce((sum, o) => sum + o.amount, 0).toLocaleString()}</span>
+              <span className="text-gray-600">Total Committed</span>
+              <span className="font-semibold text-gray-900">${pos.reduce((sum, p) => sum + p.amount, 0).toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Avg Order Value</span>
-              <span className="font-semibold text-gray-900">${Math.round(orders.reduce((sum, o) => sum + o.amount, 0) / orders.length).toLocaleString()}</span>
+              <span className="text-gray-600">Avg PO Value</span>
+              <span className="font-semibold text-gray-900">${Math.round(pos.reduce((sum, p) => sum + p.amount, 0) / pos.length).toLocaleString()}</span>
             </div>
           </div>
         </div>
@@ -169,7 +169,7 @@ export default function SalesOrdersPage() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Breakdown</h3>
           <div className="space-y-2">
             {statuses.filter(s => s !== 'All').map((status) => {
-              const count = orders.filter(o => o.status === status).length;
+              const count = pos.filter(p => p.status === status).length;
               return (
                 <div key={status} className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">{status}</span>
@@ -181,12 +181,12 @@ export default function SalesOrdersPage() {
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Customers</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Suppliers</h3>
           <div className="space-y-2">
-            {orders.slice(0, 3).map((order) => (
-              <div key={order.id} className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">{order.customer}</span>
-                <span className="text-sm font-semibold text-gray-900">${order.amount.toLocaleString()}</span>
+            {pos.slice(0, 3).map((po) => (
+              <div key={po.id} className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">{po.supplier}</span>
+                <span className="text-sm font-semibold text-gray-900">${po.amount.toLocaleString()}</span>
               </div>
             ))}
           </div>
