@@ -8,7 +8,7 @@ export default function AutomationLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="w-full h-full">
       {children}
     </div>
   );

@@ -43,8 +43,8 @@ export default function AutomationPage() {
 
   return (
     <>
-      {/* Sidebar - Persistent */}
-      <div className="w-64 bg-white border-r border-gray-200 flex-shrink-0">
+      {/* Sidebar - Only show on desktop when not in shell */}
+      <div className="hidden lg:block w-64 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-bold text-gray-900">Automation</h2>
           <p className="text-sm text-gray-600 mt-1">Manage workflows and rules</p>
@@ -54,14 +54,18 @@ export default function AutomationPage() {
             <Link
               key={tab.id}
               href={tab.href}
-              className="flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors group hover:bg-gray-100"
+              className={`flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors group ${
+                tab.id === 'overview' ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-100'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <tab.icon className="w-4 h-4 text-gray-400 group-hover:text-gray-600" />
-                <span className="text-gray-700 group-hover:text-gray-900">{tab.name}</span>
+                <tab.icon className={`w-4 h-4 ${tab.id === 'overview' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                <span className={tab.id === 'overview' ? 'text-blue-700' : 'text-gray-700 group-hover:text-gray-900'}>{tab.name}</span>
               </div>
               {tab.count && (
-                <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium group-hover:bg-gray-200">
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                  tab.id === 'overview' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700 group-hover:bg-gray-200'
+                }`}>
                   {tab.count}
                 </span>
               )}
@@ -72,7 +76,7 @@ export default function AutomationPage() {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        <div className="p-6 space-y-6 max-w-7xl mx-auto">
+        <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Automation Overview</h1>

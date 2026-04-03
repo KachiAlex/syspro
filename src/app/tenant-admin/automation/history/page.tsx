@@ -87,8 +87,8 @@ export default function HistoryPage() {
 
   return (
     <>
-      {/* Sidebar - Persistent */}
-      <div className="w-64 bg-white border-r border-gray-200 flex-shrink-0">
+      {/* Sidebar - Only show on desktop when not in shell */}
+      <div className="hidden lg:block w-64 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-bold text-gray-900">Automation</h2>
           <p className="text-sm text-gray-600 mt-1">Manage workflows and rules</p>
@@ -122,8 +122,9 @@ export default function HistoryPage() {
         </nav>
       </div>
 
+      {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        <div className="p-6 space-y-6 max-w-7xl mx-auto">
+        <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">History</h1>
