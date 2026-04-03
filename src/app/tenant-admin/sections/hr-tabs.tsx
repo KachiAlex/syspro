@@ -160,7 +160,8 @@ export default function HRTabs({ tenantSlug }: HRTabsProps) {
         ...data,
         tenantSlug
       });
-      setReviews(reviews.map(r => r.id === id ? response.data?.data : r));
+      const reviewArray = Array.isArray(reviews) ? reviews : [];
+      setReviews(reviewArray.map(r => r.id === id ? response.data?.data : r));
       setSuccess('Performance review updated successfully');
       setSelectedReview(null);
     } catch (err) {
@@ -200,7 +201,8 @@ export default function HRTabs({ tenantSlug }: HRTabsProps) {
         status: 'Closed',
         tenantSlug
       });
-      setJobOpenings(jobOpenings.map(j => j.id === id ? response.data?.data : j));
+      const jobArray = Array.isArray(jobOpenings) ? jobOpenings : [];
+      setJobOpenings(jobArray.map(j => j.id === id ? response.data?.data : j));
       setSuccess('Job opening closed successfully');
     } catch (err) {
       setError('Failed to close job opening');
@@ -213,7 +215,8 @@ export default function HRTabs({ tenantSlug }: HRTabsProps) {
         stage: newStage,
         tenantSlug
       });
-      setCandidates(candidates.map(c => c.id === candidateId ? response.data?.data : c));
+      const candidateArray = Array.isArray(candidates) ? candidates : [];
+      setCandidates(candidateArray.map(c => c.id === candidateId ? response.data?.data : c));
       setSuccess('Candidate stage updated successfully');
     } catch (err) {
       setError('Failed to update candidate stage');
@@ -227,7 +230,8 @@ export default function HRTabs({ tenantSlug }: HRTabsProps) {
         status: 'Approved',
         tenantSlug
       });
-      setLeaveRequests(leaveRequests.map(l => l.id === id ? response.data?.data : l));
+      const leaveArray = Array.isArray(leaveRequests) ? leaveRequests : [];
+      setLeaveRequests(leaveArray.map(l => l.id === id ? response.data?.data : l));
       setSuccess('Leave request approved successfully');
     } catch (err) {
       setError('Failed to approve leave request');
@@ -240,7 +244,8 @@ export default function HRTabs({ tenantSlug }: HRTabsProps) {
         status: 'Rejected',
         tenantSlug
       });
-      setLeaveRequests(leaveRequests.map(l => l.id === id ? response.data?.data : l));
+      const leaveArray = Array.isArray(leaveRequests) ? leaveRequests : [];
+      setLeaveRequests(leaveArray.map(l => l.id === id ? response.data?.data : l));
       setSuccess('Leave request rejected successfully');
     } catch (err) {
       setError('Failed to reject leave request');
@@ -413,7 +418,7 @@ function PerformanceTab({
             </div>
           ))}
         </div>
-      ) : reviews.length === 0 ? (
+      ) : (Array.isArray(reviews) ? reviews : []).length === 0 ? (
         <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
           <Award className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600 font-medium mb-2">No performance reviews yet</p>
@@ -428,7 +433,7 @@ function PerformanceTab({
         </div>
       ) : (
         <div className="space-y-3">
-          {reviews.map(review => (
+          {(Array.isArray(reviews) ? reviews : []).map(review => (
             <div key={review.id} className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
@@ -480,14 +485,14 @@ function PerformanceTab({
 
       <div className="mt-8">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Employee Goals</h3>
-        {goals.length === 0 ? (
+        {(Array.isArray(goals) ? goals : []).length === 0 ? (
           <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
             <Target className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-600 font-medium">No goals set yet</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {goals.map(goal => (
+            {(Array.isArray(goals) ? goals : []).map(goal => (
               <div key={goal.id} className="bg-white rounded-lg border border-gray-200 p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
@@ -560,7 +565,7 @@ function RecruitmentTab({
             </div>
           ))}
         </div>
-      ) : jobOpenings.length === 0 ? (
+      ) : (Array.isArray(jobOpenings) ? jobOpenings : []).length === 0 ? (
         <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
           <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600 font-medium mb-2">No job openings</p>
@@ -575,7 +580,7 @@ function RecruitmentTab({
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {jobOpenings.map(job => (
+          {(Array.isArray(jobOpenings) ? jobOpenings : []).map(job => (
             <div key={job.id} className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
@@ -615,14 +620,14 @@ function RecruitmentTab({
 
       <div className="mt-8">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Candidate Pipeline</h3>
-        {candidates.length === 0 ? (
+        {(Array.isArray(candidates) ? candidates : []).length === 0 ? (
           <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
             <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-600 font-medium">No candidates yet</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {candidates.map(candidate => (
+            {(Array.isArray(candidates) ? candidates : []).map(candidate => (
               <div key={candidate.id} className="bg-white rounded-lg border border-gray-200 p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
@@ -785,10 +790,15 @@ function AnalyticsTab({
   leaveRequests: LeaveRequest[];
   loading: boolean;
 }) {
-  const avgRating = reviews.length > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : 0;
-  const completedGoals = goals.filter(g => g.status === 'Completed').length;
-  const openJobs = jobOpenings.filter(j => j.status === 'Open').length;
-  const hiredCandidates = candidates.filter(c => c.stage === 'Hired').length;
+  const reviewsArray = Array.isArray(reviews) ? reviews : [];
+  const goalsArray = Array.isArray(goals) ? goals : [];
+  const jobsArray = Array.isArray(jobOpenings) ? jobOpenings : [];
+  const candidatesArray = Array.isArray(candidates) ? candidates : [];
+  
+  const avgRating = reviewsArray.length > 0 ? (reviewsArray.reduce((sum, r) => sum + r.rating, 0) / reviewsArray.length).toFixed(1) : 0;
+  const completedGoals = goalsArray.filter(g => g.status === 'Completed').length;
+  const openJobs = jobsArray.filter(j => j.status === 'Open').length;
+  const hiredCandidates = candidatesArray.filter(c => c.stage === 'Hired').length;
 
   return (
     <div className="space-y-6">
@@ -882,29 +892,29 @@ function AnalyticsTab({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-700">Pending</span>
-                <span className="font-semibold">{leaveRequests.filter(r => r.status === 'Pending').length}</span>
+                <span className="font-semibold">{(Array.isArray(leaveRequests) ? leaveRequests : []).filter(r => r.status === 'Pending').length}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-700">Approved</span>
-                <span className="font-semibold">{leaveRequests.filter(r => r.status === 'Approved').length}</span>
+                <span className="font-semibold">{(Array.isArray(leaveRequests) ? leaveRequests : []).filter(r => r.status === 'Approved').length}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-700">Rejected</span>
-                <span className="font-semibold">{leaveRequests.filter(r => r.status === 'Rejected').length}</span>
+                <span className="font-semibold">{(Array.isArray(leaveRequests) ? leaveRequests : []).filter(r => r.status === 'Rejected').length}</span>
               </div>
             </div>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-2">Total Days Off</p>
             <p className="text-3xl font-bold text-gray-900">
-              {leaveRequests.reduce((sum, r) => sum + r.days, 0)}
+              {(Array.isArray(leaveRequests) ? leaveRequests : []).reduce((sum, r) => sum + r.days, 0)}
             </p>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-2">Approval Rate</p>
             <p className="text-3xl font-bold text-gray-900">
-              {leaveRequests.length > 0 
-                ? Math.round((leaveRequests.filter(r => r.status === 'Approved').length / leaveRequests.length) * 100)
+              {(Array.isArray(leaveRequests) ? leaveRequests : []).length > 0 
+                ? Math.round(((Array.isArray(leaveRequests) ? leaveRequests : []).filter(r => r.status === 'Approved').length / (Array.isArray(leaveRequests) ? leaveRequests : []).length) * 100)
                 : 0}%
             </p>
           </div>
