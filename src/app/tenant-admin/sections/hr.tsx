@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus, Eye, Edit, Award, Download, Filter, Users, Target, DollarSign, Briefcase, RefreshCw, Clock } from 'lucide-react';
+import { Plus, Eye, Edit, Award, Download, Filter, Users, Target, DollarSign, Briefcase, RefreshCw, Clock, BarChart3, TrendingUp } from 'lucide-react';
 import { AddEmployeeModal, RunPayrollModal, PostJobModal, ViewEmployeeModal, TrainingModal, EditEmployeeModal, DeleteEmployeeModal } from './hr-modals';
 import HRTabs from './hr-tabs';
 import HRMainTabs from './hr-main-tabs';
@@ -104,9 +104,19 @@ const DEFAULT_PAYROLL_METRICS: PayrollMetrics = {
 const DEFAULT_DEPARTMENTS = ['Engineering', 'Sales', 'Marketing', 'HR', 'Finance'];
 const DEFAULT_STATUS_LABELS = ['Active', 'On Leave', 'Inactive', 'Terminated'];
 
+type PrimaryTab = 'staff' | 'attendance' | 'payroll' | 'reports';
+type StaffSecondaryTab = 'overview' | 'directory' | 'organization' | 'training';
+type AttendanceSecondaryTab = 'overview' | 'tracking' | 'leaves' | 'schedules';
+type PayrollSecondaryTab = 'overview' | 'runs' | 'deductions' | 'reports';
+type ReportsSecondaryTab = 'summary' | 'analytics' | 'compliance' | 'forecasting';
+
 const HRComponent: React.FC = () => {
   const { tenantSlug } = useTenantContext();
-  const [activeMainTab, setActiveMainTab] = useState<'staff' | 'attendance' | 'reports' | 'payroll'>('staff');
+  const [primaryTab, setPrimaryTab] = useState<PrimaryTab>('staff');
+  const [staffSecondaryTab, setStaffSecondaryTab] = useState<StaffSecondaryTab>('overview');
+  const [attendanceSecondaryTab, setAttendanceSecondaryTab] = useState<AttendanceSecondaryTab>('overview');
+  const [payrollSecondaryTab, setPayrollSecondaryTab] = useState<PayrollSecondaryTab>('overview');
+  const [reportsSecondaryTab, setReportsSecondaryTab] = useState<ReportsSecondaryTab>('summary');
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -592,89 +602,295 @@ const HRComponent: React.FC = () => {
         <p className="text-gray-600">Manage employee records, payroll, benefits, and HR analytics</p>
       </div>
 
-      {/* Main Tab Navigation */}
-      <div className="flex gap-2 border-b border-gray-200 mb-8">
-        <button
-          onClick={() => setActiveMainTab('staff')}
-          className={`px-4 py-3 font-medium transition-colors border-b-2 ${
-            activeMainTab === 'staff'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          <Users className="w-4 h-4 inline mr-2" />
-          Staff
-        </button>
-        <button
-          onClick={() => setActiveMainTab('attendance')}
-          className={`px-4 py-3 font-medium transition-colors border-b-2 ${
-            activeMainTab === 'attendance'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          <Clock className="w-4 h-4 inline mr-2" />
-          Attendance
-        </button>
-        <button
-          onClick={() => setActiveMainTab('reports')}
-          className={`px-4 py-3 font-medium transition-colors border-b-2 ${
-            activeMainTab === 'reports'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          <Download className="w-4 h-4 inline mr-2" />
-          Reports
-        </button>
-        <button
-          onClick={() => setActiveMainTab('payroll')}
-          className={`px-4 py-3 font-medium transition-colors border-b-2 ${
-            activeMainTab === 'payroll'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          <DollarSign className="w-4 h-4 inline mr-2" />
-          Payroll
-        </button>
+      {/* Primary Tab Navigation */}
+      <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="flex overflow-x-auto border-b border-gray-200">
+          <button
+            onClick={() => {
+              setPrimaryTab('staff');
+              setStaffSecondaryTab('overview');
+            }}
+            className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
+              primaryTab === 'staff'
+                ? 'border-blue-600 text-blue-600 bg-blue-50'
+                : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            Staff
+          </button>
+          <button
+            onClick={() => {
+              setPrimaryTab('attendance');
+              setAttendanceSecondaryTab('overview');
+            }}
+            className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
+              primaryTab === 'attendance'
+                ? 'border-blue-600 text-blue-600 bg-blue-50'
+                : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+            }`}
+          >
+            <Clock className="w-4 h-4" />
+            Attendance
+          </button>
+          <button
+            onClick={() => {
+              setPrimaryTab('payroll');
+              setPayrollSecondaryTab('overview');
+            }}
+            className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
+              primaryTab === 'payroll'
+                ? 'border-blue-600 text-blue-600 bg-blue-50'
+                : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+            }`}
+          >
+            <DollarSign className="w-4 h-4" />
+            Payroll
+          </button>
+          <button
+            onClick={() => {
+              setPrimaryTab('reports');
+              setReportsSecondaryTab('summary');
+            }}
+            className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
+              primaryTab === 'reports'
+                ? 'border-blue-600 text-blue-600 bg-blue-50'
+                : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+            }`}
+          >
+            <BarChart3 className="w-4 h-4" />
+            Reports
+          </button>
+        </div>
+
+        {/* Secondary Tab Navigation for Staff */}
+        {primaryTab === 'staff' && (
+          <div className="flex overflow-x-auto border-b border-gray-100 bg-gray-50 px-6">
+            <button
+              onClick={() => setStaffSecondaryTab('overview')}
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                staffSecondaryTab === 'overview'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setStaffSecondaryTab('directory')}
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                staffSecondaryTab === 'directory'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Directory
+            </button>
+            <button
+              onClick={() => setStaffSecondaryTab('organization')}
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                staffSecondaryTab === 'organization'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Organization
+            </button>
+            <button
+              onClick={() => setStaffSecondaryTab('training')}
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                staffSecondaryTab === 'training'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Training
+            </button>
+          </div>
+        )}
+
+        {/* Secondary Tab Navigation for Attendance */}
+        {primaryTab === 'attendance' && (
+          <div className="flex overflow-x-auto border-b border-gray-100 bg-gray-50 px-6">
+            <button
+              onClick={() => setAttendanceSecondaryTab('overview')}
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                attendanceSecondaryTab === 'overview'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setAttendanceSecondaryTab('tracking')}
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                attendanceSecondaryTab === 'tracking'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Tracking
+            </button>
+            <button
+              onClick={() => setAttendanceSecondaryTab('leaves')}
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                attendanceSecondaryTab === 'leaves'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Leaves
+            </button>
+            <button
+              onClick={() => setAttendanceSecondaryTab('schedules')}
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                attendanceSecondaryTab === 'schedules'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Schedules
+            </button>
+          </div>
+        )}
+
+        {/* Secondary Tab Navigation for Payroll */}
+        {primaryTab === 'payroll' && (
+          <div className="flex overflow-x-auto border-b border-gray-100 bg-gray-50 px-6">
+            <button
+              onClick={() => setPayrollSecondaryTab('overview')}
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                payrollSecondaryTab === 'overview'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setPayrollSecondaryTab('runs')}
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                payrollSecondaryTab === 'runs'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Runs
+            </button>
+            <button
+              onClick={() => setPayrollSecondaryTab('deductions')}
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                payrollSecondaryTab === 'deductions'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Deductions
+            </button>
+            <button
+              onClick={() => setPayrollSecondaryTab('reports')}
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                payrollSecondaryTab === 'reports'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Reports
+            </button>
+          </div>
+        )}
+
+        {/* Secondary Tab Navigation for Reports */}
+        {primaryTab === 'reports' && (
+          <div className="flex overflow-x-auto border-b border-gray-100 bg-gray-50 px-6">
+            <button
+              onClick={() => setReportsSecondaryTab('summary')}
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                reportsSecondaryTab === 'summary'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Summary
+            </button>
+            <button
+              onClick={() => setReportsSecondaryTab('analytics')}
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                reportsSecondaryTab === 'analytics'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Analytics
+            </button>
+            <button
+              onClick={() => setReportsSecondaryTab('compliance')}
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                reportsSecondaryTab === 'compliance'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Compliance
+            </button>
+            <button
+              onClick={() => setReportsSecondaryTab('forecasting')}
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                reportsSecondaryTab === 'forecasting'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Forecasting
+            </button>
+          </div>
+        )}
+
+        {/* Tab Content */}
+        <div className="p-6">
+          {primaryTab === 'staff' && staffSecondaryTab === 'overview' && (
+            <HRMainTabs
+              tenantSlug={tenantSlug}
+              employees={filteredEmployees}
+              onAddEmployee={() => setShowAddModal(true)}
+              onEditEmployee={handleEditEmployee}
+              onDeleteEmployee={(id: string) => {
+                const emp = filteredEmployees.find(e => e.id === id);
+                if (emp) {
+                  setEmployeeToDelete(emp);
+                  setShowDeleteModal(true);
+                }
+              }}
+              onViewEmployee={handleViewEmployee}
+            />
+          )}
+
+          {primaryTab === 'staff' && staffSecondaryTab !== 'overview' && (
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-6">
+              <p className="text-sm text-gray-600">{staffSecondaryTab.charAt(0).toUpperCase() + staffSecondaryTab.slice(1)} view coming soon</p>
+            </div>
+          )}
+
+          {primaryTab === 'attendance' && (
+            <div className="space-y-6">
+              <HRTabs tenantSlug={tenantSlug} />
+            </div>
+          )}
+
+          {primaryTab === 'payroll' && (
+            <div className="space-y-6">
+              <HRTabs tenantSlug={tenantSlug} />
+            </div>
+          )}
+
+          {primaryTab === 'reports' && (
+            <div className="space-y-6">
+              <HRTabs tenantSlug={tenantSlug} />
+            </div>
+          )}
+        </div>
       </div>
-
-      {/* Tab Content */}
-      {activeMainTab === 'staff' && (
-        <HRMainTabs
-          tenantSlug={tenantSlug}
-          employees={filteredEmployees}
-          onAddEmployee={() => setShowAddModal(true)}
-          onEditEmployee={handleEditEmployee}
-          onDeleteEmployee={(id: string) => {
-            const emp = filteredEmployees.find(e => e.id === id);
-            if (emp) {
-              setEmployeeToDelete(emp);
-              setShowDeleteModal(true);
-            }
-          }}
-          onViewEmployee={handleViewEmployee}
-        />
-      )}
-
-      {activeMainTab === 'attendance' && (
-        <div className="space-y-6">
-          <HRTabs tenantSlug={tenantSlug} />
-        </div>
-      )}
-
-      {activeMainTab === 'reports' && (
-        <div className="space-y-6">
-          <HRTabs tenantSlug={tenantSlug} />
-        </div>
-      )}
-
-      {activeMainTab === 'payroll' && (
-        <div className="space-y-6">
-          <HRTabs tenantSlug={tenantSlug} />
-        </div>
-      )}
 
       {/* Modals */}
       <AddEmployeeModal
