@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Eye, Edit, Trash2, Download, Filter, Briefcase, AlertCircle, TrendingUp, Users, Calendar, DollarSign, Grid3x3, List, Copy, RefreshCw, BarChart3, CheckSquare, Zap, Archive, RotateCcw } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Download, Filter, Briefcase, AlertCircle, TrendingUp, Users, Calendar, DollarSign, Grid3x3, List, Copy, RefreshCw, BarChart3, CheckSquare, Zap, Archive, RotateCcw, AlertTriangle, TrendingDown } from 'lucide-react';
 import { 
   CreateProjectModal, 
   ViewProjectModal, 
@@ -19,10 +19,11 @@ import ProjectsActive from './projects-active';
 import ProjectsArchive from './projects-archive';
 import ProjectsAdvancedReports from './projects-advanced-reports';
 
-type ProjectTab = 'overview' | 'active' | 'archive';
-type ActiveProjectsSubTab = 'overview' | 'tasks' | 'team' | 'budget' | 'timeline';
-type ArchiveSubTab = 'overview' | 'reports';
-type ReportsTab = 'reports' | 'advanced-reports';
+type PrimaryTab = 'all' | 'active' | 'archive' | 'reports';
+type AllProjectsSecondaryTab = 'overview' | 'timeline' | 'team' | 'budget' | 'reports';
+type ActiveProjectsSecondaryTab = 'overview' | 'tasks' | 'team' | 'budget' | 'timeline' | 'risks';
+type ArchiveSecondaryTab = 'overview' | 'reports' | 'lessons';
+type ReportsSecondaryTab = 'summary' | 'advanced' | 'forecasting' | 'trends';
 
 interface Project {
   id: string;
@@ -46,9 +47,11 @@ interface Project {
 }
 
 export default function Projects({ tenantSlug }: { tenantSlug: string }) {
-  const [activeTab, setActiveTab] = useState<ProjectTab>('overview');
-  const [activeProjectsSubTab, setActiveProjectsSubTab] = useState<ActiveProjectsSubTab>('overview');
-  const [archiveSubTab, setArchiveSubTab] = useState<ArchiveSubTab>('overview');
+  const [primaryTab, setPrimaryTab] = useState<PrimaryTab>('all');
+  const [allProjectsSecondaryTab, setAllProjectsSecondaryTab] = useState<AllProjectsSecondaryTab>('overview');
+  const [activeProjectsSecondaryTab, setActiveProjectsSecondaryTab] = useState<ActiveProjectsSecondaryTab>('overview');
+  const [archiveSecondaryTab, setArchiveSecondaryTab] = useState<ArchiveSecondaryTab>('overview');
+  const [reportsSecondaryTab, setReportsSecondaryTab] = useState<ReportsSecondaryTab>('summary');
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -246,27 +249,62 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
     );
   }
 
-  const mainTabs: Array<{ id: ProjectTab; label: string; icon: React.ReactNode }> = [
-    { id: 'overview', label: 'Overview', icon: <Briefcase className="w-4 h-4" /> },
-    { id: 'active', label: 'Active Projects', icon: <Zap className="w-4 h-4" /> },
-    { id: 'archive', label: 'Archive', icon: <Archive className="w-4 h-4" /> },
+  // Primary Tabs - Main content categories
+  const primaryTabs: Array<{ id: PrimaryTab; label: string; icon: React.ReactNode; description: string }> = [
+    { id: 'all', label: 'All Projects', icon: <Briefcase className="w-4 h-4" />, description: 'View and manage all projects' },
+    { id: 'active', label: 'Active Projects', icon: <Zap className="w-4 h-4" />, description: 'In-progress projects' },
+    { id: 'archive', label: 'Archive', icon: <Archive className="w-4 h-4" />, description: 'Completed and archived projects' },
+    { id: 'reports', label: 'Reports', icon: <BarChart3 className="w-4 h-4" />, description: 'Analytics and insights' },
   ];
 
-  const activeProjectsSubTabs: Array<{ id: ActiveProjectsSubTab; label: string; icon: React.ReactNode }> = [
+  // Secondary Tabs - Context-specific for each primary tab
+  const allProjectsSecondaryTabs: Array<{ id: AllProjectsSecondaryTab; label: string; icon: React.ReactNode }> = [
+    { id: 'overview', label: 'Overview', icon: <Briefcase className="w-4 h-4" /> },
+    { id: 'timeline', label: 'Timeline', icon: <Calendar className="w-4 h-4" /> },
+    { id: 'team', label: 'Team', icon: <Users className="w-4 h-4" /> },
+    { id: 'budget', label: 'Budget', icon: <DollarSign className="w-4 h-4" /> },
+    { id: 'reports', label: 'Reports', icon: <BarChart3 className="w-4 h-4" /> },
+  ];
+
+  const activeProjectsSecondaryTabs: Array<{ id: ActiveProjectsSecondaryTab; label: string; icon: React.ReactNode }> = [
     { id: 'overview', label: 'Overview', icon: <Briefcase className="w-4 h-4" /> },
     { id: 'tasks', label: 'Tasks', icon: <CheckSquare className="w-4 h-4" /> },
     { id: 'team', label: 'Team', icon: <Users className="w-4 h-4" /> },
     { id: 'budget', label: 'Budget', icon: <DollarSign className="w-4 h-4" /> },
     { id: 'timeline', label: 'Timeline', icon: <Calendar className="w-4 h-4" /> },
+    { id: 'risks', label: 'Risks', icon: <AlertTriangle className="w-4 h-4" /> },
   ];
 
-  const archiveSubTabs: Array<{ id: ArchiveSubTab; label: string; icon: React.ReactNode }> = [
+  const archiveSecondaryTabs: Array<{ id: ArchiveSecondaryTab; label: string; icon: React.ReactNode }> = [
     { id: 'overview', label: 'Overview', icon: <Briefcase className="w-4 h-4" /> },
     { id: 'reports', label: 'Reports', icon: <BarChart3 className="w-4 h-4" /> },
+    { id: 'lessons', label: 'Lessons Learned', icon: <TrendingDown className="w-4 h-4" /> },
+  ];
+
+  const reportsSecondaryTabs: Array<{ id: ReportsSecondaryTab; label: string; icon: React.ReactNode }> = [
+    { id: 'summary', label: 'Summary', icon: <BarChart3 className="w-4 h-4" /> },
+    { id: 'advanced', label: 'Advanced', icon: <TrendingUp className="w-4 h-4" /> },
+    { id: 'forecasting', label: 'Forecasting', icon: <TrendingUp className="w-4 h-4" /> },
+    { id: 'trends', label: 'Trends', icon: <TrendingDown className="w-4 h-4" /> },
   ];
 
   const renderTabContent = () => {
-    switch (activeTab) {
+    switch (primaryTab) {
+      case 'all':
+        return renderAllProjectsContent();
+      case 'active':
+        return renderActiveProjectsContent();
+      case 'archive':
+        return renderArchiveContent();
+      case 'reports':
+        return renderReportsContent();
+      default:
+        return null;
+    }
+  };
+
+  const renderAllProjectsContent = () => {
+    switch (allProjectsSecondaryTab) {
       case 'overview':
         return (
           <ProjectsOverview
@@ -293,17 +331,21 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
             tenantSlug={tenantSlug}
           />
         );
-      case 'active':
-        return renderActiveProjectsContent();
-      case 'archive':
-        return renderArchiveContent();
+      case 'timeline':
+        return <ProjectsTimeline projects={projects} tenantSlug={tenantSlug} />;
+      case 'team':
+        return <ProjectsTeam projects={projects} tenantSlug={tenantSlug} />;
+      case 'budget':
+        return <ProjectsBudget projects={projects} tenantSlug={tenantSlug} />;
+      case 'reports':
+        return <ProjectsReports projects={projects} tenantSlug={tenantSlug} />;
       default:
         return null;
     }
   };
 
   const renderActiveProjectsContent = () => {
-    switch (activeProjectsSubTab) {
+    switch (activeProjectsSecondaryTab) {
       case 'overview':
         return <ProjectsActive projects={projects} tenantSlug={tenantSlug} onRefresh={fetchProjects} />;
       case 'tasks':
@@ -314,22 +356,50 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
         return <ProjectsBudget projects={projects} tenantSlug={tenantSlug} />;
       case 'timeline':
         return <ProjectsTimeline projects={projects} tenantSlug={tenantSlug} />;
+      case 'risks':
+        return (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-6">
+            <p className="text-sm text-amber-800">Risk management view coming soon</p>
+          </div>
+        );
       default:
         return null;
     }
   };
 
   const renderArchiveContent = () => {
-    switch (archiveSubTab) {
+    switch (archiveSecondaryTab) {
       case 'overview':
         return <ProjectsArchive tenantSlug={tenantSlug} onRefresh={fetchProjects} />;
       case 'reports':
+        return <ProjectsReports projects={projects} tenantSlug={tenantSlug} />;
+      case 'lessons':
         return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <ProjectsReports projects={projects} tenantSlug={tenantSlug} />
-              <ProjectsAdvancedReports projects={projects} tenantSlug={tenantSlug} />
-            </div>
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-6">
+            <p className="text-sm text-blue-800">Lessons learned view coming soon</p>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const renderReportsContent = () => {
+    switch (reportsSecondaryTab) {
+      case 'summary':
+        return <ProjectsReports projects={projects} tenantSlug={tenantSlug} />;
+      case 'advanced':
+        return <ProjectsAdvancedReports projects={projects} tenantSlug={tenantSlug} />;
+      case 'forecasting':
+        return (
+          <div className="rounded-lg border border-purple-200 bg-purple-50 p-6">
+            <p className="text-sm text-purple-800">Forecasting view coming soon</p>
+          </div>
+        );
+      case 'trends':
+        return (
+          <div className="rounded-lg border border-green-200 bg-green-50 p-6">
+            <p className="text-sm text-green-800">Trends view coming soon</p>
           </div>
         );
       default:
@@ -365,19 +435,22 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
       {/* Main Tab Navigation */}
       <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
         <div className="flex overflow-x-auto border-b border-gray-200">
-          {mainTabs.map(tab => (
+          {primaryTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => {
-                setActiveTab(tab.id);
-                if (tab.id === 'active') setActiveProjectsSubTab('overview');
-                if (tab.id === 'archive') setArchiveSubTab('overview');
+                setPrimaryTab(tab.id);
+                if (tab.id === 'all') setAllProjectsSecondaryTab('overview');
+                if (tab.id === 'active') setActiveProjectsSecondaryTab('overview');
+                if (tab.id === 'archive') setArchiveSecondaryTab('overview');
+                if (tab.id === 'reports') setReportsSecondaryTab('summary');
               }}
               className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
-                activeTab === tab.id
+                primaryTab === tab.id
                   ? 'border-blue-600 text-blue-600 bg-blue-50'
                   : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
+              title={tab.description}
             >
               {tab.icon}
               {tab.label}
@@ -385,15 +458,15 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
           ))}
         </div>
 
-        {/* Sub-Tab Navigation for Active Projects */}
-        {activeTab === 'active' && (
+        {/* Secondary Tab Navigation for All Projects */}
+        {primaryTab === 'all' && (
           <div className="flex overflow-x-auto border-b border-gray-100 bg-gray-50 px-6">
-            {activeProjectsSubTabs.map(tab => (
+            {allProjectsSecondaryTabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveProjectsSubTab(tab.id)}
+                onClick={() => setAllProjectsSecondaryTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
-                  activeProjectsSubTab === tab.id
+                  allProjectsSecondaryTab === tab.id
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
@@ -405,15 +478,55 @@ export default function Projects({ tenantSlug }: { tenantSlug: string }) {
           </div>
         )}
 
-        {/* Sub-Tab Navigation for Archive */}
-        {activeTab === 'archive' && (
+        {/* Secondary Tab Navigation for Active Projects */}
+        {primaryTab === 'active' && (
           <div className="flex overflow-x-auto border-b border-gray-100 bg-gray-50 px-6">
-            {archiveSubTabs.map(tab => (
+            {activeProjectsSecondaryTabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setArchiveSubTab(tab.id)}
+                onClick={() => setActiveProjectsSecondaryTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
-                  archiveSubTab === tab.id
+                  activeProjectsSecondaryTab === tab.id
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Secondary Tab Navigation for Archive */}
+        {primaryTab === 'archive' && (
+          <div className="flex overflow-x-auto border-b border-gray-100 bg-gray-50 px-6">
+            {archiveSecondaryTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setArchiveSecondaryTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                  archiveSecondaryTab === tab.id
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Secondary Tab Navigation for Reports */}
+        {primaryTab === 'reports' && (
+          <div className="flex overflow-x-auto border-b border-gray-100 bg-gray-50 px-6">
+            {reportsSecondaryTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setReportsSecondaryTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                  reportsSecondaryTab === tab.id
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
