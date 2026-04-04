@@ -4,6 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Plus, Eye, Edit, Trash2, Search, Mail, Phone } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { 
+  CreateSupplierModal, 
+  ViewSupplierModal, 
+  DeleteConfirmationModal 
+} from '@/app/tenant-admin/sections/sales-procurement-modals';
 
 interface Supplier {
   id: string;
@@ -28,6 +33,13 @@ export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>(DEFAULT_SUPPLIERS);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  
+  // Modal states
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const statuses = ['All', 'Active', 'Inactive', 'On Hold'];
 
@@ -39,6 +51,67 @@ export default function SuppliersPage() {
     }
     return true;
   });
+
+  // Modal handlers
+  const handleCreateSupplier = async (data: any) => {
+    setIsLoading(true);
+    try {
+      console.log('Creating supplier:', data);
+      // TODO: API call to create supplier
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      
+      // Add new supplier to local state
+      const newSupplier: Supplier = {
+        id: (suppliers.length + 1).toString(),
+        name: data.name || 'New Supplier',
+        contact: 'Contact Person',
+        email: data.email || 'supplier@example.com',
+        phone: data.phone || '+1-555-0000',
+        rating: 4.0,
+        status: 'Active',
+        totalSpend: 0
+      };
+      setSuppliers([...suppliers, newSupplier]);
+    } catch (error) {
+      console.error('Error creating supplier:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteSupplier = async () => {
+    if (!selectedSupplier) return;
+    
+    setIsLoading(true);
+    try {
+      console.log('Deleting supplier:', selectedSupplier);
+      // TODO: API call to delete supplier
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      
+      // Remove supplier from local state
+      setSuppliers(suppliers.filter(supplier => supplier.id !== selectedSupplier.id));
+    } catch (error) {
+      console.error('Error deleting supplier:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleViewSupplier = (supplier: Supplier) => {
+    setSelectedSupplier(supplier);
+    setShowViewModal(true);
+  };
+
+  const handleEditSupplier = (supplier: Supplier) => {
+    setSelectedSupplier(supplier);
+    // TODO: Implement edit modal
+    console.log('Edit supplier:', supplier);
+  };
+
+  const handleDeleteClick = (supplier: Supplier) => {
+    setSelectedSupplier(supplier);
+    setShowDeleteModal(true);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -80,7 +153,10 @@ export default function SuppliersPage() {
             </select>
           </div>
           <div className="flex items-end">
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
               <Plus className="w-4 h-4" />
               Add Supplier
             </button>
@@ -125,13 +201,22 @@ export default function SuppliersPage() {
                   <td className="px-6 py-4 text-sm font-semibold text-gray-900">${supplier.totalSpend.toLocaleString()}</td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
+                      <button 
+                        onClick={() => handleViewSupplier(supplier)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-700">
+                      <button 
+                        onClick={() => handleEditSupplier(supplier)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-700"
+                      >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700">
+                      <button 
+                        onClick={() => handleDeleteClick(supplier)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -158,25 +243,13 @@ export default function SuppliersPage() {
               <span className="font-semibold text-gray-900">{suppliers.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Active</span>
-              <span className="font-semibold text-green-600">{suppliers.filter(s => s.status === 'Active').length}</span>
+              <span className="text-gray-600">Active Suppliers</span>
+              <span className="font-semibold text-gray-900">{suppliers.filter(s => s.status === 'Active').length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Total Spend</span>
-              <span className="font-semibold text-gray-900">${suppliers.reduce((sum, s) => sum + s.totalSpend, 0).toLocaleString()}</span>
+              <span className="text-gray-600">Avg Rating</span>
+              <span className="font-semibold text-gray-900">★ {(suppliers.reduce((sum, s) => sum + s.rating, 0) / suppliers.length).toFixed(1)}</span>
             </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Rated</h3>
-          <div className="space-y-2">
-            {suppliers.sort((a, b) => b.rating - a.rating).slice(0, 3).map((supplier) => (
-              <div key={supplier.id} className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">{supplier.name}</span>
-                <span className="text-sm font-semibold text-gray-900">★ {supplier.rating}</span>
-              </div>
-            ))}
           </div>
         </div>
 
@@ -184,7 +257,7 @@ export default function SuppliersPage() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Breakdown</h3>
           <div className="space-y-2">
             {statuses.filter(s => s !== 'All').map((status) => {
-              const count = suppliers.filter(sup => sup.status === status).length;
+              const count = suppliers.filter(s => s.status === status).length;
               return (
                 <div key={status} className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">{status}</span>
@@ -194,7 +267,45 @@ export default function SuppliersPage() {
             })}
           </div>
         </div>
+
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performers</h3>
+          <div className="space-y-2">
+            {suppliers
+              .sort((a, b) => b.rating - a.rating)
+              .slice(0, 3)
+              .map((supplier) => (
+                <div key={supplier.id} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">{supplier.name}</span>
+                  <span className="text-sm font-semibold text-gray-900">★ {supplier.rating}</span>
+                </div>
+              ))}
+          </div>
+        </div>
       </div>
+
+      {/* Modals */}
+      <CreateSupplierModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateSupplier}
+        isLoading={isLoading}
+      />
+
+      <ViewSupplierModal
+        isOpen={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        supplier={selectedSupplier}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteSupplier}
+        isLoading={isLoading}
+        itemType="Supplier"
+        itemName={selectedSupplier?.name || ''}
+      />
     </div>
   );
 }

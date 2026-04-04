@@ -2,8 +2,13 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Plus, Eye, Edit, Trash2, Search, AlertCircle } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Search } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { 
+  AddInventoryItemModal, 
+  ViewInventoryItemModal, 
+  DeleteConfirmationModal 
+} from '@/app/tenant-admin/sections/sales-procurement-modals';
 
 interface InventoryItem {
   id: string;
@@ -16,32 +21,97 @@ interface InventoryItem {
   status: string;
 }
 
-const DEFAULT_INVENTORY: InventoryItem[] = [
-  { id: '1', sku: 'SKU-001', name: 'Component A', quantity: 250, reorderLevel: 50, unitPrice: 15.50, location: 'Warehouse A', status: 'In Stock' },
-  { id: '2', sku: 'SKU-002', name: 'Component B', quantity: 45, reorderLevel: 100, unitPrice: 22.00, location: 'Warehouse B', status: 'Low Stock' },
-  { id: '3', sku: 'SKU-003', name: 'Assembly C', quantity: 0, reorderLevel: 25, unitPrice: 85.00, location: 'Warehouse A', status: 'Out of Stock' },
-  { id: '4', sku: 'SKU-004', name: 'Part D', quantity: 180, reorderLevel: 75, unitPrice: 12.50, location: 'Warehouse C', status: 'In Stock' },
-  { id: '5', sku: 'SKU-005', name: 'Module E', quantity: 60, reorderLevel: 80, unitPrice: 45.00, location: 'Warehouse B', status: 'Low Stock' },
+const DEFAULT_ITEMS: InventoryItem[] = [
+  { id: '1', sku: 'SKU-001', name: 'Laptop Computer', quantity: 25, reorderLevel: 10, unitPrice: 899.99, location: 'Warehouse A, Shelf 1', status: 'In Stock' },
+  { id: '2', sku: 'SKU-002', name: 'Office Chair', quantity: 8, reorderLevel: 15, unitPrice: 249.99, location: 'Warehouse B, Shelf 2', status: 'Low Stock' },
+  { id: '3', sku: 'SKU-003', name: 'Printer Paper', quantity: 150, reorderLevel: 50, unitPrice: 29.99, location: 'Warehouse A, Shelf 3', status: 'In Stock' },
+  { id: '4', sku: 'SKU-004', name: 'Desk Lamp', quantity: 0, reorderLevel: 20, unitPrice: 45.99, location: 'Warehouse C, Shelf 1', status: 'Out of Stock' },
 ];
 
 export default function InventoryPage() {
   const { tenantSlug } = useTenantContext();
-  const [items, setItems] = useState<InventoryItem[]>(DEFAULT_INVENTORY);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(DEFAULT_ITEMS);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  
+  // Modal states
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const statuses = ['All', 'In Stock', 'Low Stock', 'Out of Stock'];
 
-  const filteredItems = items.filter((item) => {
+  const filteredItems = inventoryItems.filter((item) => {
     if (statusFilter !== 'All' && item.status !== statusFilter) return false;
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      if (!item.sku.toLowerCase().includes(query) && !item.name.toLowerCase().includes(query)) return false;
+      if (!item.name.toLowerCase().includes(query) && !item.sku.toLowerCase().includes(query)) return false;
     }
     return true;
   });
 
-  const totalInventoryValue = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+  // Modal handlers
+  const handleAddItem = async (data: any) => {
+    setIsLoading(true);
+    try {
+      console.log('Adding inventory item:', data);
+      // TODO: API call to add inventory item
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      
+      // Add new item to local state
+      const newItem: InventoryItem = {
+        id: (inventoryItems.length + 1).toString(),
+        sku: data.sku || `SKU-${String(inventoryItems.length + 1).padStart(3, '0')}`,
+        name: data.productName || 'New Item',
+        quantity: data.quantity || 0,
+        reorderLevel: data.reorderLevel || 10,
+        unitPrice: data.unitPrice || 0,
+        location: data.location || 'Warehouse A',
+        status: data.quantity > data.reorderLevel ? 'In Stock' : data.quantity > 0 ? 'Low Stock' : 'Out of Stock'
+      };
+      setInventoryItems([...inventoryItems, newItem]);
+    } catch (error) {
+      console.error('Error adding inventory item:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteItem = async () => {
+    if (!selectedItem) return;
+    
+    setIsLoading(true);
+    try {
+      console.log('Deleting inventory item:', selectedItem);
+      // TODO: API call to delete inventory item
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      
+      // Remove item from local state
+      setInventoryItems(inventoryItems.filter(item => item.id !== selectedItem.id));
+    } catch (error) {
+      console.error('Error deleting inventory item:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleViewItem = (item: InventoryItem) => {
+    setSelectedItem(item);
+    setShowViewModal(true);
+  };
+
+  const handleEditItem = (item: InventoryItem) => {
+    setSelectedItem(item);
+    // TODO: Implement edit modal
+    console.log('Edit item:', item);
+  };
+
+  const handleDeleteClick = (item: InventoryItem) => {
+    setSelectedItem(item);
+    setShowDeleteModal(true);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -63,7 +133,7 @@ export default function InventoryPage() {
               <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="SKU or item name..."
+                placeholder="Item name or SKU..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -83,7 +153,10 @@ export default function InventoryPage() {
             </select>
           </div>
           <div className="flex items-end">
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
               <Plus className="w-4 h-4" />
               Add Item
             </button>
@@ -126,13 +199,22 @@ export default function InventoryPage() {
                   </td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
+                      <button 
+                        onClick={() => handleViewItem(item)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-700">
+                      <button 
+                        onClick={() => handleEditItem(item)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-700"
+                      >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700">
+                      <button 
+                        onClick={() => handleDeleteClick(item)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -142,7 +224,7 @@ export default function InventoryPage() {
             ) : (
               <tr>
                 <td colSpan={8} className="px-6 py-8 text-center text-sm text-gray-600">
-                  No inventory items found
+                  No items found
                 </td>
               </tr>
             )}
@@ -156,24 +238,24 @@ export default function InventoryPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Total Items</span>
-              <span className="font-semibold text-gray-900">{items.length}</span>
+              <span className="font-semibold text-gray-900">{inventoryItems.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Total Units</span>
-              <span className="font-semibold text-gray-900">{items.reduce((sum, i) => sum + i.quantity, 0)}</span>
+              <span className="text-gray-600">Total Quantity</span>
+              <span className="font-semibold text-gray-900">{inventoryItems.reduce((sum, item) => sum + item.quantity, 0)}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Total Value</span>
-              <span className="font-semibold text-gray-900">${totalInventoryValue.toLocaleString()}</span>
+              <span className="font-semibold text-gray-900">${inventoryItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0).toFixed(2)}</span>
             </div>
           </div>
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Stock Status</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Breakdown</h3>
           <div className="space-y-2">
             {statuses.filter(s => s !== 'All').map((status) => {
-              const count = items.filter(i => i.status === status).length;
+              const count = inventoryItems.filter(item => item.status === status).length;
               return (
                 <div key={status} className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">{status}</span>
@@ -187,18 +269,44 @@ export default function InventoryPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Low Stock Alerts</h3>
           <div className="space-y-2">
-            {items.filter(i => i.status !== 'In Stock').map((item) => (
-              <div key={item.id} className="flex items-center gap-2 p-2 border border-amber-200 rounded-lg bg-amber-50">
-                <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-amber-900">{item.sku}</p>
-                  <p className="text-xs text-amber-700">{item.quantity} / {item.reorderLevel}</p>
+            {inventoryItems
+              .filter(item => item.status === 'Low Stock')
+              .slice(0, 3)
+              .map((item) => (
+                <div key={item.id} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">{item.name}</span>
+                  <span className="text-sm font-semibold text-amber-600">{item.quantity} left</span>
                 </div>
-              </div>
-            ))}
+              ))}
+            {inventoryItems.filter(item => item.status === 'Low Stock').length === 0 && (
+              <p className="text-sm text-gray-500">No low stock items</p>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <AddInventoryItemModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleAddItem}
+        isLoading={isLoading}
+      />
+
+      <ViewInventoryItemModal
+        isOpen={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        item={selectedItem}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteItem}
+        isLoading={isLoading}
+        itemType="Inventory Item"
+        itemName={selectedItem?.name || ''}
+      />
     </div>
   );
 }

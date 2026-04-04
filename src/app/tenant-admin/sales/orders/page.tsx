@@ -4,6 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Plus, Eye, Edit, Trash2, Search } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { 
+  CreateSalesOrderModal, 
+  ViewSalesOrderModal, 
+  DeleteConfirmationModal 
+} from '@/app/tenant-admin/sections/sales-procurement-modals';
 
 interface SalesOrder {
   id: string;
@@ -28,6 +33,13 @@ export default function SalesOrdersPage() {
   const [orders, setOrders] = useState<SalesOrder[]>(DEFAULT_ORDERS);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  
+  // Modal states
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const statuses = ['All', 'Pending', 'In Transit', 'Completed', 'Cancelled'];
 
@@ -39,6 +51,67 @@ export default function SalesOrdersPage() {
     }
     return true;
   });
+
+  // Modal handlers
+  const handleCreateOrder = async (data: any) => {
+    setIsLoading(true);
+    try {
+      console.log('Creating sales order:', data);
+      // TODO: API call to create sales order
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      
+      // Add new order to local state
+      const newOrder: SalesOrder = {
+        id: (orders.length + 1).toString(),
+        orderNumber: `SO-${String(orders.length + 1).padStart(3, '0')}`,
+        customer: 'Acme Corp', // Would come from form data
+        amount: 10000, // Would come from form data
+        status: 'Pending',
+        orderDate: new Date().toISOString().split('T')[0],
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        items: 1
+      };
+      setOrders([...orders, newOrder]);
+    } catch (error) {
+      console.error('Error creating sales order:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!selectedOrder) return;
+    
+    setIsLoading(true);
+    try {
+      console.log('Deleting sales order:', selectedOrder);
+      // TODO: API call to delete sales order
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      
+      // Remove order from local state
+      setOrders(orders.filter(order => order.id !== selectedOrder.id));
+    } catch (error) {
+      console.error('Error deleting sales order:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleViewOrder = (order: SalesOrder) => {
+    setSelectedOrder(order);
+    setShowViewModal(true);
+  };
+
+  const handleEditOrder = (order: SalesOrder) => {
+    setSelectedOrder(order);
+    // TODO: Implement edit modal
+    console.log('Edit order:', order);
+  };
+
+  const handleDeleteClick = (order: SalesOrder) => {
+    setSelectedOrder(order);
+    setShowDeleteModal(true);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -80,7 +153,10 @@ export default function SalesOrdersPage() {
             </select>
           </div>
           <div className="flex items-end">
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
               <Plus className="w-4 h-4" />
               New Order
             </button>
@@ -122,13 +198,22 @@ export default function SalesOrdersPage() {
                   <td className="px-6 py-4 text-sm text-gray-600">{order.dueDate}</td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
+                      <button 
+                        onClick={() => handleViewOrder(order)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-700">
+                      <button 
+                        onClick={() => handleEditOrder(order)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-700"
+                      >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700">
+                      <button 
+                        onClick={() => handleDeleteClick(order)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -192,6 +277,29 @@ export default function SalesOrdersPage() {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <CreateSalesOrderModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateOrder}
+        isLoading={isLoading}
+      />
+
+      <ViewSalesOrderModal
+        isOpen={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        order={selectedOrder}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteOrder}
+        isLoading={isLoading}
+        itemType="Sales Order"
+        itemName={selectedOrder?.orderNumber || ''}
+      />
     </div>
   );
 }

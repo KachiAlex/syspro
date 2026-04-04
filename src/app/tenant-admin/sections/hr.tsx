@@ -96,9 +96,6 @@ const HRComponent: React.FC = () => {
   const [statuses, setStatuses] = useState<string[]>(['Active', 'On Leave', 'Terminated']);
   const [reports, setReports] = useState<any[]>([]);
 
-  const departments = ['All Departments', 'Engineering', 'Sales', 'Marketing', 'HR', 'Finance', 'Operations'];
-  const statuses = ['All Statuses', 'Active', 'On Leave', 'Inactive', 'Terminated'];
-
   const filteredEmployees = employees.filter((emp) => {
     if (departmentFilter !== 'All Departments' && emp.department !== departmentFilter) return false;
     if (statusFilter !== 'All Statuses' && emp.status !== statusFilter) return false;
@@ -108,6 +105,59 @@ const HRComponent: React.FC = () => {
     }
     return true;
   });
+
+  // Handler functions for modals
+  const handleViewEmployee = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setShowViewModal(true);
+  };
+
+  const handleEditEmployee = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteEmployee = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setShowDeleteModal(true);
+  };
+
+  const handleMarkAttendance = async (attendanceData: any) => {
+    if (!tenantSlug) return;
+    
+    try {
+      await HRService.markAttendance(tenantSlug, attendanceData);
+      console.log('Attendance marked successfully');
+    } catch (error) {
+      console.error('Failed to mark attendance:', error);
+      throw error;
+    }
+  };
+
+  const handleSubmitLeave = async (leaveData: any) => {
+    if (!tenantSlug) return;
+    
+    try {
+      await HRService.submitLeaveRequest(tenantSlug, leaveData);
+      console.log('Leave request submitted successfully');
+    } catch (error) {
+      console.error('Failed to submit leave request:', error);
+      throw error;
+    }
+  };
+
+  const handleGenerateReport = async (reportData: any) => {
+    if (!tenantSlug) return;
+    
+    try {
+      const report = await HRService.generateReport(tenantSlug, reportData);
+      setReports(prev => [report, ...prev]);
+      console.log('Report generated successfully');
+    } catch (error) {
+      console.error('Failed to generate report:', error);
+      throw error;
+    }
+  };
 
   const renderOverviewTab = () => (
     <div className="space-y-6">
@@ -192,29 +242,36 @@ const HRComponent: React.FC = () => {
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Navigation</h3>
-          <div className="space-y-2">
-            <Link
-              href="/tenant-admin/hr/attendance"
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button
+              onClick={() => setShowAttendanceModal(true)}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100"
             >
               <Clock className="w-4 h-4" />
-              View Attendance
-            </Link>
-            <Link
-              href="/tenant-admin/hr/payroll"
+              Mark Attendance
+            </button>
+            <button
+              onClick={() => setShowLeaveModal(true)}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100"
+            >
+              <Calendar className="w-4 h-4" />
+              Request Leave
+            </button>
+            <button
+              onClick={() => setShowRunPayrollModal(true)}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100"
             >
               <DollarSign className="w-4 h-4" />
-              Process Payroll
-            </Link>
-            <Link
-              href="/tenant-admin/hr/staff-reports"
+              Run Payroll
+            </button>
+            <button
+              onClick={() => setShowGenerateReportModal(true)}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100"
             >
               <BarChart2 className="w-4 h-4" />
-              View Reports
-            </Link>
+              Generate Report
+            </button>
           </div>
         </div>
       </div>
@@ -309,10 +366,29 @@ const HRComponent: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{emp.startDate}</td>
                   <td className="px-6 py-4 text-center">
-                    <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
-                      <Eye className="w-4 h-4" />
-                      View
-                    </button>
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => handleViewEmployee(emp)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                        title="View Details"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleEditEmployee(emp)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-700 transition-colors"
+                        title="Edit Employee"
+                      >
+                        <Search className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteEmployee(emp)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700 transition-colors"
+                        title="Delete Employee"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

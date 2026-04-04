@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, AlertTriangle, Package, Users, ShoppingCart, Plus, Search, Filter, Download } from "lucide-react";
+import { X, AlertTriangle, Package, Users, ShoppingCart, Plus, Search, Filter, Download, Edit, Trash2, Eye, Mail, Phone, MapPin, Calendar, DollarSign, Star } from "lucide-react";
 
 // Sales Order Modal
 export interface SalesOrderFormData {
@@ -153,6 +153,193 @@ export function CreateSalesOrderModal({
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// View Sales Order Modal
+export function ViewSalesOrderModal({
+  isOpen,
+  onClose,
+  order,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  order: any;
+}) {
+  if (!isOpen || !order) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">Sales Order Details</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 mb-2">Order Information</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Order Number:</span>
+                  <span className="text-sm font-medium text-gray-900">{order.orderNumber}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Customer:</span>
+                  <span className="text-sm font-medium text-gray-900">{order.customer}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Order Date:</span>
+                  <span className="text-sm font-medium text-gray-900">{order.orderDate}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Due Date:</span>
+                  <span className="text-sm font-medium text-gray-900">{order.dueDate}</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 mb-2">Financial Information</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Total Amount:</span>
+                  <span className="text-sm font-medium text-gray-900">${order.amount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Status:</span>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    order.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                    order.status === 'Pending' ? 'bg-amber-100 text-amber-800' :
+                    'bg-blue-100 text-blue-800'
+                  }`}>
+                    {order.status}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Items:</span>
+                  <span className="text-sm font-medium text-gray-900">{order.items}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-medium text-gray-500 mb-2">Order Items</h3>
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Product</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Quantity</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Unit Price</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  <tr>
+                    <td className="px-4 py-2 text-sm text-gray-900">Sample Product</td>
+                    <td className="px-4 py-2 text-sm text-gray-900">1</td>
+                    <td className="px-4 py-2 text-sm text-gray-900">${order.amount.toLocaleString()}</td>
+                    <td className="px-4 py-2 text-sm font-medium text-gray-900">${order.amount.toLocaleString()}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Delete Confirmation Modal
+export function DeleteConfirmationModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  isLoading,
+  itemType,
+  itemName,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => Promise<void>;
+  isLoading: boolean;
+  itemType: string;
+  itemName: string;
+}) {
+  const [error, setError] = useState<string | null>(null);
+
+  const handleConfirm = async () => {
+    setError(null);
+    try {
+      await onConfirm();
+      onClose();
+    } catch (err) {
+      setError(`Failed to delete ${itemType.toLowerCase()}`);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg w-full max-w-md mx-4">
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+              <Trash2 className="w-5 h-5 text-red-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Delete {itemType}</h2>
+              <p className="text-sm text-gray-600">This action cannot be undone.</p>
+            </div>
+          </div>
+
+          {error && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
+              <span className="text-sm text-red-700">{error}</span>
+            </div>
+          )}
+
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <p className="text-sm text-gray-700">
+              Are you sure you want to delete <span className="font-medium text-gray-900">"{itemName}"</span>?
+            </p>
+          </div>
+
+          <div className="flex items-center justify-end gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirm}
+              disabled={isLoading}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+            >
+              {isLoading ? "Deleting..." : `Delete ${itemType}`}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -480,6 +667,99 @@ export function CreateSupplierModal({
   );
 }
 
+// View Supplier Modal
+export function ViewSupplierModal({
+  isOpen,
+  onClose,
+  supplier,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  supplier: any;
+}) {
+  if (!isOpen || !supplier) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">Supplier Details</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+              <Users className="w-8 h-8 text-purple-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">{supplier.name}</h3>
+              <p className="text-sm text-gray-600">Contact: {supplier.contact}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="text-sm font-medium text-gray-500 mb-3">Contact Information</h4>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Mail className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-900">{supplier.email}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Phone className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-900">{supplier.phone}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-900">123 Supplier St, City, State</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-medium text-gray-500 mb-3">Business Information</h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Rating:</span>
+                  <div className="flex items-center gap-1">
+                    <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                    <span className="text-sm font-medium text-gray-900">{supplier.rating}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Status:</span>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    supplier.status === 'Active' ? 'bg-green-100 text-green-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {supplier.status}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Total Spend:</span>
+                  <span className="text-sm font-medium text-gray-900">${supplier.totalSpend.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Inventory Item Modal
 export interface InventoryFormData {
   productName: string;
@@ -668,6 +948,97 @@ export function AddInventoryItemModal({
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// View Inventory Item Modal
+export function ViewInventoryItemModal({
+  isOpen,
+  onClose,
+  item,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  item: any;
+}) {
+  if (!isOpen || !item) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">Inventory Item Details</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
+              <Package className="w-8 h-8 text-amber-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
+              <p className="text-sm text-gray-600">SKU: {item.sku}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="text-sm font-medium text-gray-500 mb-3">Stock Information</h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Current Quantity:</span>
+                  <span className="text-sm font-medium text-gray-900">{item.quantity}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Reorder Level:</span>
+                  <span className="text-sm font-medium text-gray-900">{item.reorderLevel}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Status:</span>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    item.status === 'In Stock' ? 'bg-green-100 text-green-800' :
+                    item.status === 'Low Stock' ? 'bg-amber-100 text-amber-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {item.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-medium text-gray-500 mb-3">Pricing & Location</h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Unit Price:</span>
+                  <span className="text-sm font-medium text-gray-900">${item.unitPrice.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Total Value:</span>
+                  <span className="text-sm font-medium text-gray-900">${(item.quantity * item.unitPrice).toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Location:</span>
+                  <span className="text-sm font-medium text-gray-900">{item.location}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );

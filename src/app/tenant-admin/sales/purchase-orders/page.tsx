@@ -4,6 +4,10 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Plus, Eye, Edit, Trash2, Search } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { 
+  CreatePurchaseOrderModal, 
+  DeleteConfirmationModal 
+} from '@/app/tenant-admin/sections/sales-procurement-modals';
 
 interface PurchaseOrder {
   id: string;
@@ -17,21 +21,27 @@ interface PurchaseOrder {
 }
 
 const DEFAULT_POS: PurchaseOrder[] = [
-  { id: '1', poNumber: 'PO-001', supplier: 'Global Supply Co', amount: 12500, status: 'Received', poDate: '2026-03-25', dueDate: '2026-04-05', items: 8 },
-  { id: '2', poNumber: 'PO-002', supplier: 'Tech Parts Inc', amount: 18700, status: 'Pending', poDate: '2026-03-28', dueDate: '2026-04-10', items: 15 },
-  { id: '3', poNumber: 'PO-003', supplier: 'Premium Materials', amount: 9300, status: 'In Transit', poDate: '2026-03-30', dueDate: '2026-04-08', items: 5 },
-  { id: '4', poNumber: 'PO-004', supplier: 'Global Supply Co', amount: 15600, status: 'Pending', poDate: '2026-04-01', dueDate: '2026-04-15', items: 12 },
+  { id: '1', poNumber: 'PO-001', supplier: 'Global Supply Co', amount: 12000, status: 'Received', poDate: '2026-04-01', dueDate: '2026-04-15', items: 8 },
+  { id: '2', poNumber: 'PO-002', supplier: 'Tech Parts Inc', amount: 8500, status: 'Pending', poDate: '2026-04-02', dueDate: '2026-04-20', items: 5 },
+  { id: '3', poNumber: 'PO-003', supplier: 'Premium Materials', amount: 15600, status: 'In Transit', poDate: '2026-04-03', dueDate: '2026-04-18', items: 12 },
+  { id: '4', poNumber: 'PO-004', supplier: 'Bulk Distributors', amount: 9800, status: 'Pending', poDate: '2026-04-04', dueDate: '2026-04-25', items: 6 },
 ];
 
 export default function PurchaseOrdersPage() {
   const { tenantSlug } = useTenantContext();
-  const [pos, setPos] = useState<PurchaseOrder[]>(DEFAULT_POS);
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(DEFAULT_POS);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  
+  // Modal states
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const statuses = ['All', 'Pending', 'In Transit', 'Received', 'Cancelled'];
 
-  const filteredPos = pos.filter((po) => {
+  const filteredPos = purchaseOrders.filter((po) => {
     if (statusFilter !== 'All' && po.status !== statusFilter) return false;
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -39,6 +49,68 @@ export default function PurchaseOrdersPage() {
     }
     return true;
   });
+
+  // Modal handlers
+  const handleCreatePO = async (data: any) => {
+    setIsLoading(true);
+    try {
+      console.log('Creating purchase order:', data);
+      // TODO: API call to create purchase order
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      
+      // Add new PO to local state
+      const newPO: PurchaseOrder = {
+        id: (purchaseOrders.length + 1).toString(),
+        poNumber: `PO-${String(purchaseOrders.length + 1).padStart(3, '0')}`,
+        supplier: 'New Supplier', // Would come from form data
+        amount: 10000, // Would come from form data
+        status: 'Pending',
+        poDate: new Date().toISOString().split('T')[0],
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        items: 1
+      };
+      setPurchaseOrders([...purchaseOrders, newPO]);
+    } catch (error) {
+      console.error('Error creating purchase order:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeletePO = async () => {
+    if (!selectedPO) return;
+    
+    setIsLoading(true);
+    try {
+      console.log('Deleting purchase order:', selectedPO);
+      // TODO: API call to delete purchase order
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      
+      // Remove PO from local state
+      setPurchaseOrders(purchaseOrders.filter(po => po.id !== selectedPO.id));
+    } catch (error) {
+      console.error('Error deleting purchase order:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleViewPO = (po: PurchaseOrder) => {
+    setSelectedPO(po);
+    // TODO: Implement view modal
+    console.log('View PO:', po);
+  };
+
+  const handleEditPO = (po: PurchaseOrder) => {
+    setSelectedPO(po);
+    // TODO: Implement edit modal
+    console.log('Edit PO:', po);
+  };
+
+  const handleDeleteClick = (po: PurchaseOrder) => {
+    setSelectedPO(po);
+    setShowDeleteModal(true);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -80,7 +152,10 @@ export default function PurchaseOrdersPage() {
             </select>
           </div>
           <div className="flex items-end">
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
               <Plus className="w-4 h-4" />
               New PO
             </button>
@@ -122,13 +197,22 @@ export default function PurchaseOrdersPage() {
                   <td className="px-6 py-4 text-sm text-gray-600">{po.dueDate}</td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
+                      <button 
+                        onClick={() => handleViewPO(po)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-700">
+                      <button 
+                        onClick={() => handleEditPO(po)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-700"
+                      >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700">
+                      <button 
+                        onClick={() => handleDeleteClick(po)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -152,15 +236,15 @@ export default function PurchaseOrdersPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Total POs</span>
-              <span className="font-semibold text-gray-900">{pos.length}</span>
+              <span className="font-semibold text-gray-900">{purchaseOrders.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Total Committed</span>
-              <span className="font-semibold text-gray-900">${pos.reduce((sum, p) => sum + p.amount, 0).toLocaleString()}</span>
+              <span className="text-gray-600">Total Value</span>
+              <span className="font-semibold text-gray-900">${purchaseOrders.reduce((sum, po) => sum + po.amount, 0).toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Avg PO Value</span>
-              <span className="font-semibold text-gray-900">${Math.round(pos.reduce((sum, p) => sum + p.amount, 0) / pos.length).toLocaleString()}</span>
+              <span className="font-semibold text-gray-900">${Math.round(purchaseOrders.reduce((sum, po) => sum + po.amount, 0) / purchaseOrders.length).toLocaleString()}</span>
             </div>
           </div>
         </div>
@@ -169,7 +253,7 @@ export default function PurchaseOrdersPage() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Breakdown</h3>
           <div className="space-y-2">
             {statuses.filter(s => s !== 'All').map((status) => {
-              const count = pos.filter(p => p.status === status).length;
+              const count = purchaseOrders.filter(po => po.status === status).length;
               return (
                 <div key={status} className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">{status}</span>
@@ -183,7 +267,7 @@ export default function PurchaseOrdersPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Suppliers</h3>
           <div className="space-y-2">
-            {pos.slice(0, 3).map((po) => (
+            {purchaseOrders.slice(0, 3).map((po) => (
               <div key={po.id} className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">{po.supplier}</span>
                 <span className="text-sm font-semibold text-gray-900">${po.amount.toLocaleString()}</span>
@@ -192,6 +276,23 @@ export default function PurchaseOrdersPage() {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <CreatePurchaseOrderModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreatePO}
+        isLoading={isLoading}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeletePO}
+        isLoading={isLoading}
+        itemType="Purchase Order"
+        itemName={selectedPO?.poNumber || ''}
+      />
     </div>
   );
 }
