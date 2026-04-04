@@ -54,15 +54,9 @@ const navigationItems = [
     ]
   },
   {
-    title: "HR & Operations",
+    title: "Overview",
     href: "/tenant-admin/hr",
     icon: UserCog,
-    children: [
-      { title: "Staff", href: "/tenant-admin/hr/staff" },
-      { title: "Attendance", href: "/tenant-admin/hr/attendance" },
-      { title: "Reports", href: "/tenant-admin/hr/staff-reports" },
-      { title: "Payroll", href: "/tenant-admin/hr/payroll" },
-    ]
   },
   {
     title: "Projects",
