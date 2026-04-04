@@ -509,7 +509,7 @@ export class MockTeamDataService {
     return [];
   }
 
-  static async resolveQualityAlert(alertId: string, resolvedBy: string, notes?: string, tenantSlug: string): Promise<void> {
+  static async resolveQualityAlert(alertId: string, resolvedBy: string, tenantSlug: string, notes?: string): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, 300));
   }
 
