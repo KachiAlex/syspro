@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 
-type HRTab = 'overview' | 'staff' | 'attendance' | 'payroll' | 'reports';
+type HRTab = 'overview';
 
 interface Employee {
   id: string;
@@ -660,10 +660,6 @@ const HRComponent: React.FC = () => {
 
   const tabs: { id: HRTab; label: string }[] = [
     { id: 'overview', label: 'HR & Operations' },
-    { id: 'staff', label: 'Staff' },
-    { id: 'attendance', label: 'Attendance' },
-    { id: 'payroll', label: 'Payroll' },
-    { id: 'reports', label: 'Reports' },
   ];
 
   return (
@@ -687,11 +683,7 @@ const HRComponent: React.FC = () => {
       </div>
 
       <div>
-        {activeTab === 'overview' && renderOverviewTab()}
-        {activeTab === 'staff' && renderStaffTab()}
-        {activeTab === 'attendance' && renderAttendanceTab()}
-        {activeTab === 'payroll' && renderPayrollTab()}
-        {activeTab === 'reports' && renderReportsTab()}
+        {renderOverviewTab()}
       </div>
     </div>
   );
