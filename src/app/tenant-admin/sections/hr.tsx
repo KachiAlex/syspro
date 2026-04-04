@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import {
   Plus, Eye, Search, RefreshCw, Clock, DollarSign, BarChart2, Users, CheckCircle, Calendar,
   Download, MoreVertical, Award, Briefcase
@@ -175,27 +176,27 @@ const HRComponent: React.FC = () => {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Navigation</h3>
           <div className="space-y-2">
-            <button
-              onClick={() => setActiveTab('attendance')}
+            <Link
+              href="/tenant-admin/hr/attendance"
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100"
             >
               <Clock className="w-4 h-4" />
               View Attendance
-            </button>
-            <button
-              onClick={() => setActiveTab('payroll')}
+            </Link>
+            <Link
+              href="/tenant-admin/hr/payroll"
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100"
             >
               <DollarSign className="w-4 h-4" />
               Process Payroll
-            </button>
-            <button
-              onClick={() => setActiveTab('reports')}
+            </Link>
+            <Link
+              href="/tenant-admin/hr/staff-reports"
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100"
             >
               <BarChart2 className="w-4 h-4" />
-              Generate Reports
-            </button>
+              View Reports
+            </Link>
           </div>
         </div>
       </div>
