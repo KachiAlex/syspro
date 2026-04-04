@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Plus, Eye, Edit, Trash2, Search } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { CreateProjectModal } from '../components/CreateProjectModal';
+import { ViewProjectModal, EditProjectModal, DeleteProjectModal } from '../components/ActiveProjectModals';
 import { ProjectService, ProjectFormData } from '../services/projectService';
 
 interface Project {
@@ -77,6 +78,12 @@ export default function ActiveProjectsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  
+  // Modal states for action buttons
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   const statuses = ['All', 'Planning', 'In Progress', 'On Hold', 'Completed'];
 
@@ -108,6 +115,57 @@ export default function ActiveProjectsPage() {
       console.error('Failed to create project:', error);
       throw error;
     }
+  };
+
+  const handleViewProject = (project: Project) => {
+    setSelectedProject(project);
+    setShowViewModal(true);
+  };
+
+  const handleEditProject = (project: Project) => {
+    setSelectedProject(project);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateProject = async (updates: Partial<Project>) => {
+    if (!tenantSlug || !selectedProject) return;
+
+    try {
+      const updatedProject = await ProjectService.updateProject(tenantSlug, selectedProject.id, updates);
+      
+      // Update local state
+      setProjects(prev => prev.map(p => 
+        p.id === selectedProject.id 
+          ? { ...p, ...updatedProject }
+          : p
+      ));
+      
+      console.log('Project updated successfully:', updatedProject);
+    } catch (error) {
+      console.error('Failed to update project:', error);
+      throw error;
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    if (!tenantSlug || !selectedProject) return;
+
+    try {
+      await ProjectService.deleteProject(tenantSlug, selectedProject.id);
+      
+      // Update local state
+      setProjects(prev => prev.filter(p => p.id !== selectedProject.id));
+      
+      console.log('Project deleted successfully:', selectedProject.name);
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      throw error;
+    }
+  };
+
+  const openDeleteModal = (project: Project) => {
+    setSelectedProject(project);
+    setShowDeleteModal(true);
   };
 
   const filteredProjects = projects.filter((project) => {
@@ -216,13 +274,25 @@ export default function ActiveProjectsPage() {
                   <td className="px-6 py-4 text-sm text-gray-600">{project.teamMembers}</td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
+                      <button 
+                        onClick={() => handleViewProject(project)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                        title="View Details"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-700">
+                      <button 
+                        onClick={() => handleEditProject(project)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-700 transition-colors"
+                        title="Edit Project"
+                      >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700">
+                      <button 
+                        onClick={() => openDeleteModal(project)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700 transition-colors"
+                        title="Delete Project"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -282,6 +352,27 @@ export default function ActiveProjectsPage() {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSubmit={handleCreateProject}
+      />
+
+      {/* Action Modals */}
+      <ViewProjectModal
+        isOpen={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        project={selectedProject}
+      />
+
+      <EditProjectModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onConfirm={handleUpdateProject}
+        project={selectedProject}
+      />
+
+      <DeleteProjectModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteProject}
+        projectName={selectedProject?.name || ''}
       />
     </div>
   );

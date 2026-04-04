@@ -57,26 +57,12 @@ const navigationItems = [
     title: "HR & Operations",
     href: "/tenant-admin/hr",
     icon: UserCog,
-  },
-  {
-    title: "Staff",
-    href: "/tenant-admin/hr/staff",
-    icon: Users,
-  },
-  {
-    title: "Attendance",
-    href: "/tenant-admin/hr/attendance",
-    icon: Calendar,
-  },
-  {
-    title: "Payroll",
-    href: "/tenant-admin/hr/payroll",
-    icon: DollarSign,
-  },
-  {
-    title: "Reports",
-    href: "/tenant-admin/hr/staff-reports",
-    icon: BarChart3,
+    children: [
+      { title: "Staff", href: "/tenant-admin/hr/staff" },
+      { title: "Attendance", href: "/tenant-admin/hr/attendance" },
+      { title: "Payroll", href: "/tenant-admin/hr/payroll" },
+      { title: "Reports", href: "/tenant-admin/hr/staff-reports" },
+    ]
   },
   {
     title: "Projects",
