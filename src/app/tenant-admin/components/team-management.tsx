@@ -36,9 +36,9 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
       canGenerateReports: false,
       canManageTeam: false,
       canConfigureIntegrations: false,
-      allowedDataTypes: [],
-      allowedDepartments: []
-    }
+      allowedDataTypes: [] as string[],
+      allowedDepartments: [] as string[]
+    } as TeamPermissions
   });
 
   useEffect(() => {
@@ -93,9 +93,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
       const newMember = await TeamDataService.createTeamMember(tenantSlug, {
         ...formData,
         isActive: true,
-        avatar: undefined,
-        joinedAt: new Date().toISOString(),
-        lastActiveAt: new Date().toISOString()
+        avatar: undefined
       });
 
       setTeamMembers(prev => [newMember, ...prev]);
@@ -157,8 +155,8 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
       firstName: '',
       lastName: '',
       email: '',
-      department: 'sales',
-      role: 'contributor',
+      department: 'sales' as TeamMember['department'],
+      role: 'contributor' as TeamMember['role'],
       position: '',
       permissions: {
         canSubmitData: true,
@@ -167,9 +165,9 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
         canGenerateReports: false,
         canManageTeam: false,
         canConfigureIntegrations: false,
-        allowedDataTypes: [],
-        allowedDepartments: []
-      }
+        allowedDataTypes: [] as string[],
+        allowedDepartments: [] as string[]
+      } as TeamPermissions
     });
     setErrors({});
   };
