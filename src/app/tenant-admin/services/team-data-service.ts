@@ -128,9 +128,9 @@ export class TeamDataService {
     }
   }
 
-  static async approveTeamSubmission(submissionId: string, reviewerId: string, notes?: string, tenantSlug: string): Promise<TeamDataSubmission> {
+  static async approveTeamSubmission(submissionId: string, reviewerId: string, tenantSlug: string, notes?: string): Promise<TeamDataSubmission> {
     if (useMockService) {
-      return MockTeamDataService.approveTeamSubmission(submissionId, reviewerId, notes, tenantSlug);
+      return MockTeamDataService.approveTeamSubmission(submissionId, reviewerId, tenantSlug, notes);
     }
     
     try {

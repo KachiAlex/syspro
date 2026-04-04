@@ -364,7 +364,7 @@ export class MockTeamDataService {
     mockTeamSubmissions.splice(submissionIndex, 1);
   }
 
-  static async approveTeamSubmission(submissionId: string, reviewerId: string, notes?: string, tenantSlug: string): Promise<TeamDataSubmission> {
+  static async approveTeamSubmission(submissionId: string, reviewerId: string, tenantSlug: string, notes?: string): Promise<TeamDataSubmission> {
     await new Promise(resolve => setTimeout(resolve, 500));
     const submissionIndex = mockTeamSubmissions.findIndex(s => s.id === submissionId);
     if (submissionIndex === -1) throw new Error('Submission not found');
