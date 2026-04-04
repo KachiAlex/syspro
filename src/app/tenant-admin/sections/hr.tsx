@@ -175,7 +175,7 @@ const HRComponent: React.FC = () => {
         position: newEmployee.position,
         startDate: newEmployee.startDate,
         status: 'Active',
-        salary: newEmployee.salary
+        salary: newEmployee.salary || ''
       };
       
       setEmployees(prev => [localEmployee, ...prev]);
