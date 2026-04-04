@@ -308,7 +308,7 @@ export default function AddContactModal({
                 name="type"
                 value={formData.type}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                 disabled={isSubmitting}
               >
                 <option value="Customer">Customer</option>
@@ -327,7 +327,7 @@ export default function AddContactModal({
                 name="segment"
                 value={formData.segment}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                 disabled={isSubmitting}
               >
                 <option value="VIP">VIP</option>
@@ -349,7 +349,7 @@ export default function AddContactModal({
               onChange={handleInputChange}
               placeholder="Add any additional notes..."
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
               disabled={isSubmitting}
             />
           </div>

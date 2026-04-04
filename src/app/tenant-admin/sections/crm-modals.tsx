@@ -166,7 +166,7 @@ export function CreateLeadModal({
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="John Smith"
               disabled={isLoading || isViewMode}
             />
@@ -180,7 +180,7 @@ export function CreateLeadModal({
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="john@example.com"
               disabled={isLoading || isViewMode}
             />
@@ -194,7 +194,7 @@ export function CreateLeadModal({
               type="text"
               value={formData.company}
               onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="Tech Corp"
               disabled={isLoading || isViewMode}
             />
@@ -208,7 +208,7 @@ export function CreateLeadModal({
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="+1 (555) 000-0000"
               disabled={isLoading || isViewMode}
             />
@@ -222,7 +222,7 @@ export function CreateLeadModal({
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as (typeof LEAD_STAGE_OPTIONS)[number]["value"] })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 disabled={isLoading || isViewMode}
               >
                 {LEAD_STAGE_OPTIONS.map((option) => (
@@ -239,7 +239,7 @@ export function CreateLeadModal({
               <select
                 value={formData.source}
                 onChange={(e) => setFormData({ ...formData, source: e.target.value as (typeof LEAD_SOURCE_OPTIONS)[number]["value"] })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 disabled={isLoading || isViewMode}
               >
                 {LEAD_SOURCE_OPTIONS.map((option) => (
@@ -444,7 +444,7 @@ export function CreateContactModal({
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="Jane Doe"
               disabled={isLoading || isViewMode}
             />
@@ -458,7 +458,7 @@ export function CreateContactModal({
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="jane@example.com"
               disabled={isLoading || isViewMode}
             />
@@ -472,7 +472,7 @@ export function CreateContactModal({
               type="text"
               value={formData.company}
               onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="ABC Corp"
               disabled={isLoading || isViewMode}
             />
@@ -486,7 +486,7 @@ export function CreateContactModal({
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="+1 (555) 000-0000"
               disabled={isLoading || isViewMode}
             />
@@ -500,7 +500,7 @@ export function CreateContactModal({
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 disabled={isLoading || isViewMode}
               >
                 <option>Customer</option>
@@ -516,7 +516,7 @@ export function CreateContactModal({
               <select
                 value={formData.segment}
                 onChange={(e) => setFormData({ ...formData, segment: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 disabled={isLoading || isViewMode}
               >
                 <option>VIP</option>
@@ -691,7 +691,7 @@ export function CreateDealModal({
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="Enterprise Deal - ABC Corp"
               disabled={isLoading || isViewMode}
             />
@@ -705,7 +705,7 @@ export function CreateDealModal({
               type="text"
               value={formData.company}
               onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="ABC Corporation"
               disabled={isLoading || isViewMode}
             />
@@ -719,7 +719,7 @@ export function CreateDealModal({
               type="number"
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: +e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="50000"
               min="1"
               disabled={isLoading || isViewMode}
@@ -734,7 +734,7 @@ export function CreateDealModal({
               <select
                 value={formData.stage}
                 onChange={(e) => setFormData({ ...formData, stage: e.target.value as (typeof DEAL_STAGE_OPTIONS)[number]["value"] })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 disabled={isLoading || isViewMode}
               >
                 {DEAL_STAGE_OPTIONS.map((option) => (
@@ -769,7 +769,7 @@ export function CreateDealModal({
               type="date"
               value={formData.closingDate}
               onChange={(e) => setFormData({ ...formData, closingDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               disabled={isLoading || isViewMode}
             />
           </div>

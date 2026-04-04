@@ -279,7 +279,7 @@ export default function CreateInvoiceModal({
                   value={formData.customerCode}
                   onChange={handleInputChange}
                   placeholder="CUST-001"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                   disabled={isSubmitting}
                 />
               </div>
@@ -325,7 +325,7 @@ export default function CreateInvoiceModal({
                   value={formData.purchaseOrder}
                   onChange={handleInputChange}
                   placeholder="PO-12345"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                   disabled={isSubmitting}
                 />
               </div>
@@ -381,7 +381,7 @@ export default function CreateInvoiceModal({
                   name="currency"
                   value={formData.currency}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                   disabled={isSubmitting}
                 >
                   <option value="₦">Nigerian Naira (₦)</option>
@@ -398,7 +398,7 @@ export default function CreateInvoiceModal({
                   name="status"
                   value={formData.status}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                   disabled={isSubmitting}
                 >
                   <option value="draft">Draft</option>
@@ -586,7 +586,7 @@ export default function CreateInvoiceModal({
                   value={formData.paymentTerms}
                   onChange={handleInputChange}
                   placeholder="Net 30"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                   disabled={isSubmitting}
                 />
               </div>
@@ -600,7 +600,7 @@ export default function CreateInvoiceModal({
                   value={formData.tags}
                   onChange={handleInputChange}
                   placeholder="urgent, client1, project-x"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                   disabled={isSubmitting}
                 />
               </div>
@@ -614,7 +614,7 @@ export default function CreateInvoiceModal({
                   onChange={handleInputChange}
                   placeholder="Add any additional notes or payment instructions..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                   disabled={isSubmitting}
                 />
               </div>

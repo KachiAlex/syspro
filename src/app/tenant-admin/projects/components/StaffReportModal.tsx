@@ -177,7 +177,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
                   ...prev, 
                   reportType: e.target.value as 'daily' | 'weekly' | 'milestone' | 'issue'
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                 disabled={loading}
               >
                 <option value="daily">Daily Report</option>
@@ -285,7 +285,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
               value={formData.nextSteps}
               onChange={(e) => setFormData(prev => ({ ...prev, nextSteps: e.target.value }))}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
               placeholder="What are your next steps or planned activities?"
               disabled={loading}
             />

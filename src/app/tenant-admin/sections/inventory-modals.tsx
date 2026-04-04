@@ -116,7 +116,7 @@ export function CreateProductModal({
                 name="sku"
                 value={formData.sku}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 placeholder="e.g., PROD-001"
                 required
               />
@@ -130,7 +130,7 @@ export function CreateProductModal({
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 placeholder="Product name"
                 required
               />
@@ -146,7 +146,7 @@ export function CreateProductModal({
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 required
               >
                 <option value="">Select category</option>
@@ -166,7 +166,7 @@ export function CreateProductModal({
                 name="supplier"
                 value={formData.supplier}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 placeholder="Supplier name"
               />
             </div>
@@ -180,7 +180,7 @@ export function CreateProductModal({
               name="description"
               value={formData.description}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="Product description"
               rows={3}
             />
@@ -196,7 +196,7 @@ export function CreateProductModal({
                 name="quantity"
                 value={formData.quantity}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 placeholder="0"
                 required
               />
@@ -210,7 +210,7 @@ export function CreateProductModal({
                 name="reorderLevel"
                 value={formData.reorderLevel}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 placeholder="0"
               />
             </div>
@@ -226,7 +226,7 @@ export function CreateProductModal({
                 name="unitCost"
                 value={formData.unitCost}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 placeholder="0.00"
                 step="0.01"
               />
@@ -240,7 +240,7 @@ export function CreateProductModal({
                 name="salePrice"
                 value={formData.salePrice}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 placeholder="0.00"
                 step="0.01"
               />
@@ -446,7 +446,7 @@ export function AdjustStockModal({
               name="adjustmentType"
               value={formData.adjustmentType}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
             >
               <option value="add">Add to Stock</option>
               <option value="remove">Remove from Stock</option>
@@ -463,7 +463,7 @@ export function AdjustStockModal({
               name="quantity"
               value={formData.quantity}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="0"
               required
             />
@@ -477,7 +477,7 @@ export function AdjustStockModal({
               name="reason"
               value={formData.reason}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               required
             >
               <option value="">Select reason</option>
@@ -498,7 +498,7 @@ export function AdjustStockModal({
               name="notes"
               value={formData.notes}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="Additional notes..."
               rows={3}
             />
@@ -613,7 +613,7 @@ export function ImportInventoryModal({
               name="importType"
               value={formData.importType}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
             >
               <option value="csv">CSV File</option>
               <option value="excel">Excel File</option>
@@ -629,7 +629,7 @@ export function ImportInventoryModal({
               type="file"
               onChange={handleFileChange}
               accept=".csv,.xlsx,.xls,.json"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               required
             />
             <p className="text-xs text-gray-500 mt-2">

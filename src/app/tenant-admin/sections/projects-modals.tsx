@@ -126,7 +126,7 @@ export function CreateProjectModal({
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 placeholder="Project name"
                 required
               />
@@ -140,7 +140,7 @@ export function CreateProjectModal({
                 name="owner"
                 value={formData.owner}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 placeholder="Project owner"
               />
             </div>
@@ -154,7 +154,7 @@ export function CreateProjectModal({
               name="objective"
               value={formData.objective}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="Project objective"
               rows={2}
               required
@@ -169,7 +169,7 @@ export function CreateProjectModal({
               name="description"
               value={formData.description}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="Project description"
               rows={3}
             />
@@ -185,7 +185,7 @@ export function CreateProjectModal({
                 name="subsidiary"
                 value={formData.subsidiary}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 placeholder="Subsidiary"
               />
             </div>
@@ -198,7 +198,7 @@ export function CreateProjectModal({
                 name="branch"
                 value={formData.branch}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 placeholder="Branch"
               />
             </div>
@@ -213,7 +213,7 @@ export function CreateProjectModal({
               name="departments"
               value={formData.departments}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="Engineering, Marketing, Sales (comma separated)"
             />
           </div>
@@ -228,7 +228,7 @@ export function CreateProjectModal({
                 name="startDate"
                 value={formData.startDate}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 required
               />
             </div>
@@ -241,7 +241,7 @@ export function CreateProjectModal({
                 name="endDate"
                 value={formData.endDate}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               />
             </div>
           </div>
@@ -256,7 +256,7 @@ export function CreateProjectModal({
                 name="budgetApproved"
                 value={formData.budgetApproved}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 placeholder="0.00"
                 step="0.01"
               />
@@ -269,7 +269,7 @@ export function CreateProjectModal({
                 name="priority"
                 value={formData.priority}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               >
                 <option value="Low">Low</option>
                 <option value="Medium">Medium</option>
@@ -501,7 +501,7 @@ export function ManageTeamModal({
               name="teamMembers"
               value={formData.teamMembers}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="e.g., John Doe, Jane Smith, Mike Jones"
               rows={4}
               required
@@ -516,7 +516,7 @@ export function ManageTeamModal({
               name="roles"
               value={formData.roles}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="e.g., Developer, Designer, QA"
               rows={4}
             />
@@ -624,7 +624,7 @@ export function ManageTasksModal({
               name="taskName"
               value={formData.taskName}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="Task name"
               required
             />
@@ -639,7 +639,7 @@ export function ManageTasksModal({
               name="assignee"
               value={formData.assignee}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               placeholder="Team member name"
             />
           </div>
@@ -654,7 +654,7 @@ export function ManageTasksModal({
                 name="dueDate"
                 value={formData.dueDate}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
                 required
               />
             </div>
@@ -666,7 +666,7 @@ export function ManageTasksModal({
                 name="priority"
                 value={formData.priority}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>

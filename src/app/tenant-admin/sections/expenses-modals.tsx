@@ -297,13 +297,13 @@ export function ViewExpenseModal({
             <div className="flex gap-2">
               <button
                 onClick={onReject}
-                className="flex-1 rounded-lg border border-rose-200 px-4 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               >
                 Reject
               </button>
               <button
                 onClick={onApprove}
-                className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 flex items-center justify-center gap-2"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               >
                 <Check className="w-4 h-4" />
                 Approve

@@ -199,7 +199,7 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
                   ...prev, 
                   reportType: e.target.value as 'summary' | 'performance' | 'financial' | 'risk'
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                 disabled={loading}
               >
                 <option value="summary">Summary Report</option>

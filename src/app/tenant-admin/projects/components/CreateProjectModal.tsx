@@ -284,7 +284,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                   ...prev, 
                   priority: e.target.value as 'low' | 'medium' | 'high' 
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                 disabled={loading}
               >
                 <option value="low">Low</option>
@@ -303,7 +303,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                   ...prev, 
                   status: e.target.value as 'planning' | 'in_progress' | 'on_hold' 
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                 disabled={loading}
               >
                 <option value="planning">Planning</option>

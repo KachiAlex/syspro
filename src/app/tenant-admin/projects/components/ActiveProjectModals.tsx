@@ -239,7 +239,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                 type="text"
                 value={formData.name || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                 disabled={loading}
               />
             </div>
@@ -252,7 +252,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                 value={formData.description || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                 disabled={loading}
               />
             </div>
@@ -264,7 +264,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
               <select
                 value={formData.status || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                 disabled={loading}
               >
                 <option value="Planning">Planning</option>
@@ -284,7 +284,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                 max="100"
                 value={formData.progress || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, progress: parseInt(e.target.value) || 0 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                 disabled={loading}
               />
             </div>
@@ -297,7 +297,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                 type="date"
                 value={formData.dueDate || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                 disabled={loading}
               />
             </div>
@@ -310,7 +310,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                 type="text"
                 value={formData.budget || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                 disabled={loading}
               />
             </div>
@@ -323,7 +323,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                 type="text"
                 value={formData.manager || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, manager: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                 disabled={loading}
               />
             </div>

@@ -95,7 +95,7 @@ export function CreateCampaignModal({
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
               placeholder="e.g., Q1 Enterprise Push"
               disabled={isLoading}
             />
@@ -109,7 +109,7 @@ export function CreateCampaignModal({
             <select
               value={formData.channel}
               onChange={(e) => setFormData({ ...formData, channel: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
               disabled={isLoading}
             >
               <option value="email">Email</option>
@@ -129,7 +129,7 @@ export function CreateCampaignModal({
             <select
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
               disabled={isLoading}
             >
               <option value="planning">Planning</option>
@@ -147,7 +147,7 @@ export function CreateCampaignModal({
               type="number"
               value={formData.budget}
               onChange={(e) => setFormData({ ...formData, budget: +e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
               placeholder="10000"
               min="1"
               disabled={isLoading}
@@ -163,7 +163,7 @@ export function CreateCampaignModal({
               type="date"
               value={formData.startDate}
               onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
               disabled={isLoading}
             />
           </div>
@@ -177,7 +177,7 @@ export function CreateCampaignModal({
               type="date"
               value={formData.endDate || ""}
               onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
               disabled={isLoading}
             />
           </div>
@@ -299,7 +299,7 @@ export function EditCampaignModal({
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
               disabled={isLoading}
             />
           </div>
@@ -312,7 +312,7 @@ export function EditCampaignModal({
             <select
               value={formData.channel}
               onChange={(e) => setFormData({ ...formData, channel: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
               disabled={isLoading}
             >
               <option value="email">Email</option>
@@ -332,7 +332,7 @@ export function EditCampaignModal({
             <select
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
               disabled={isLoading}
             >
               <option value="planning">Planning</option>
@@ -351,7 +351,7 @@ export function EditCampaignModal({
               type="number"
               value={formData.budget}
               onChange={(e) => setFormData({ ...formData, budget: +e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
               min="1"
               disabled={isLoading}
             />
@@ -366,7 +366,7 @@ export function EditCampaignModal({
               type="date"
               value={formData.startDate}
               onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
               disabled={isLoading}
             />
           </div>
@@ -380,7 +380,7 @@ export function EditCampaignModal({
               type="date"
               value={formData.endDate || ""}
               onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
               disabled={isLoading}
             />
           </div>
