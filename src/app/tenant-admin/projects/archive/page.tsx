@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { RotateCcw, Eye, Trash2, Search } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { ViewProjectModal, RestoreProjectModal, DeleteProjectModal } from '../components/ArchiveModals';
+import { ProjectService } from '../services/projectService';
 
 interface ArchivedProject {
   id: string;
@@ -68,6 +70,13 @@ export default function ProjectArchivePage() {
   const { tenantSlug } = useTenantContext();
   const [projects, setProjects] = useState<ArchivedProject[]>(DEFAULT_ARCHIVED_PROJECTS);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
+  
+  // Modal states
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<ArchivedProject | null>(null);
 
   const filteredProjects = projects.filter((project) => {
     if (searchQuery) {
@@ -76,6 +85,79 @@ export default function ProjectArchivePage() {
     }
     return true;
   });
+
+  const handleViewProject = (project: ArchivedProject) => {
+    setSelectedProject(project);
+    setShowViewModal(true);
+  };
+
+  const handleRestoreProject = async (project: ArchivedProject) => {
+    if (!tenantSlug) return;
+    
+    try {
+      await ProjectService.restoreProject(tenantSlug, project.id);
+      setProjects(prev => prev.filter(p => p.id !== project.id));
+      console.log('Project restored successfully:', project.name);
+    } catch (error) {
+      console.error('Failed to restore project:', error);
+      throw error;
+    }
+  };
+
+  const handleDeleteProject = async (project: ArchivedProject) => {
+    if (!tenantSlug) return;
+    
+    try {
+      await ProjectService.deleteProject(tenantSlug, project.id);
+      setProjects(prev => prev.filter(p => p.id !== project.id));
+      console.log('Project deleted successfully:', project.name);
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      throw error;
+    }
+  };
+
+  const handleBulkRestore = async () => {
+    if (!tenantSlug || selectedProjects.size === 0) return;
+    
+    try {
+      const projectIds = Array.from(selectedProjects);
+      await ProjectService.bulkRestoreProjects(tenantSlug, projectIds);
+      setProjects(prev => prev.filter(p => !selectedProjects.has(p.id)));
+      setSelectedProjects(new Set());
+      console.log('Bulk restore successful');
+    } catch (error) {
+      console.error('Failed to bulk restore projects:', error);
+      throw error;
+    }
+  };
+
+  const toggleProjectSelection = (projectId: string) => {
+    setSelectedProjects(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(projectId)) {
+        newSet.delete(projectId);
+      } else {
+        newSet.add(projectId);
+      }
+      return newSet;
+    });
+  };
+
+  const openRestoreModal = (project: ArchivedProject) => {
+    setSelectedProject(project);
+    setShowRestoreModal(true);
+  };
+
+  const openDeleteModal = (project: ArchivedProject) => {
+    setSelectedProject(project);
+    setShowDeleteModal(true);
+  };
+
+  const openBulkRestoreModal = () => {
+    setSelectedProject(null);
+    setShowRestoreModal(true);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -90,7 +172,7 @@ export default function ProjectArchivePage() {
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-2">Search</label>
             <div className="relative">
@@ -104,6 +186,26 @@ export default function ProjectArchivePage() {
               />
             </div>
           </div>
+          <div className="flex items-end">
+            <div className="text-sm text-gray-600">
+              {selectedProjects.size > 0 && (
+                <span className="font-medium text-blue-600">
+                  {selectedProjects.size} project{selectedProjects.size > 1 ? 's' : ''} selected
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex items-end">
+            {selectedProjects.size > 0 && (
+              <button
+                onClick={openBulkRestoreModal}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-amber-600 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Restore Selected ({selectedProjects.size})
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -111,6 +213,20 @@ export default function ProjectArchivePage() {
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">
+                <input
+                  type="checkbox"
+                  checked={selectedProjects.size === filteredProjects.length && filteredProjects.length > 0}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedProjects(new Set(filteredProjects.map(p => p.id)));
+                    } else {
+                      setSelectedProjects(new Set());
+                    }
+                  }}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+              </th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Project Name</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Manager</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Completed</th>
@@ -125,6 +241,14 @@ export default function ProjectArchivePage() {
               filteredProjects.map((project) => (
                 <tr key={project.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedProjects.has(project.id)}
+                      onChange={() => toggleProjectSelection(project.id)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </td>
+                  <td className="px-6 py-4">
                     <div>
                       <p className="text-sm font-medium text-gray-900">{project.name}</p>
                       <p className="text-xs text-gray-600 mt-1">{project.description}</p>
@@ -137,13 +261,25 @@ export default function ProjectArchivePage() {
                   <td className="px-6 py-4 text-sm text-gray-600">{project.teamMembers}</td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
+                      <button 
+                        onClick={() => handleViewProject(project)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                        title="View Details"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-600 hover:text-green-700">
+                      <button 
+                        onClick={() => openRestoreModal(project)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-600 hover:text-green-700 transition-colors"
+                        title="Restore Project"
+                      >
                         <RotateCcw className="w-4 h-4" />
                       </button>
-                      <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700">
+                      <button 
+                        onClick={() => openDeleteModal(project)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700 transition-colors"
+                        title="Delete Project"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -152,7 +288,7 @@ export default function ProjectArchivePage() {
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-600">
+                <td colSpan={8} className="px-6 py-8 text-center text-sm text-gray-600">
                   No archived projects found
                 </td>
               </tr>
@@ -201,6 +337,36 @@ export default function ProjectArchivePage() {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <ViewProjectModal
+        isOpen={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        project={selectedProject}
+      />
+
+      <RestoreProjectModal
+        isOpen={showRestoreModal}
+        onClose={() => setShowRestoreModal(false)}
+        onConfirm={selectedProject 
+          ? () => handleRestoreProject(selectedProject)
+          : handleBulkRestore
+        }
+        projectName={selectedProject?.name || ''}
+        isBulk={!selectedProject}
+        projectCount={selectedProjects.size}
+      />
+
+      <DeleteProjectModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={async () => {
+          if (selectedProject) {
+            await handleDeleteProject(selectedProject);
+          }
+        }}
+        projectName={selectedProject?.name || ''}
+      />
     </div>
   );
 }

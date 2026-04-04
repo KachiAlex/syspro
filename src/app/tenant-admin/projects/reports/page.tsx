@@ -1,23 +1,147 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Download, TrendingUp, BarChart3, Calendar } from 'lucide-react';
+import { Download, TrendingUp, BarChart3, Calendar, Plus, Send, FileText, Users } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { StaffReportModal } from '../components/StaffReportModal';
+import { AdminReportModal } from '../components/AdminReportModal';
+
+interface UserRole {
+  canViewReports: boolean;
+  canSubmitReports: boolean;
+  canCreateReports: boolean;
+  reportingLevel: 'staff' | 'admin' | 'superadmin';
+}
+
+interface Project {
+  id: string;
+  name: string;
+}
+
+interface User {
+  id: string;
+  name: string;
+  role: string;
+  level: 'staff' | 'admin' | 'superadmin';
+}
 
 export default function ProjectReportsPage() {
   const { tenantSlug } = useTenantContext();
+  const [userRole, setUserRole] = useState<UserRole>({
+    canViewReports: true,
+    canSubmitReports: false,
+    canCreateReports: false,
+    reportingLevel: 'staff'
+  });
+  const [currentUser, setCurrentUser] = useState('John Doe');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [availableRecipients, setAvailableRecipients] = useState<User[]>([]);
+  
+  // Modal states
+  const [showStaffReportModal, setShowStaffReportModal] = useState(false);
+  const [showAdminReportModal, setShowAdminReportModal] = useState(false);
+
+  // Mock data - in real app, this would come from API
+  useEffect(() => {
+    // Simulate fetching user role and data
+    const mockUserRole: UserRole = {
+      canViewReports: true,
+      canSubmitReports: true, // Change based on actual user role
+      canCreateReports: true, // Change based on actual user role
+      reportingLevel: 'admin' // Change based on actual user role
+    };
+    
+    const mockProjects: Project[] = [
+      { id: '1', name: 'Website Redesign' },
+      { id: '2', name: 'Mobile App Development' },
+      { id: '3', name: 'API Integration' },
+      { id: '4', name: 'Database Migration' },
+    ];
+    
+    const mockRecipients: User[] = [
+      { id: '1', name: 'Sarah Johnson', role: 'Regional Manager', level: 'superadmin' },
+      { id: '2', name: 'Mike Davis', role: 'Department Head', level: 'admin' },
+      { id: '3', name: 'Emily Chen', role: 'Senior Manager', level: 'admin' },
+    ];
+    
+    setUserRole(mockUserRole);
+    setProjects(mockProjects);
+    setAvailableRecipients(mockRecipients);
+  }, []);
+
+  const handleStaffReportSubmit = async (reportData: any) => {
+    try {
+      // API call to submit staff report
+      console.log('Submitting staff report:', reportData);
+      // In real app: await apiClient.post('/api/projects/reports/submit', reportData);
+    } catch (error) {
+      console.error('Failed to submit staff report:', error);
+      throw error;
+    }
+  };
+
+  const handleAdminReportSubmit = async (reportData: any) => {
+    try {
+      // API call to create admin report
+      console.log('Creating admin report:', reportData);
+      // In real app: await apiClient.post('/api/projects/reports/create', reportData);
+    } catch (error) {
+      console.error('Failed to create admin report:', error);
+      throw error;
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Project Reports & Analytics</h2>
-        <Link
-          href={`/tenant-admin/projects`}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-        >
-          ← Back to Overview
-        </Link>
+        <div className="flex items-center gap-3">
+          {/* Role-based action buttons */}
+          {userRole.canSubmitReports && (
+            <button
+              onClick={() => setShowStaffReportModal(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              Submit Report
+            </button>
+          )}
+          
+          {userRole.canCreateReports && (
+            <button
+              onClick={() => setShowAdminReportModal(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <BarChart3 className="w-4 h-4" />
+              Create Report
+            </button>
+          )}
+          
+          <Link
+            href={`/tenant-admin/projects`}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            ← Back to Overview
+          </Link>
+        </div>
+      </div>
+
+      {/* User role indicator */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center gap-2">
+          <Users className="w-5 h-5 text-blue-600" />
+          <div>
+            <p className="text-sm font-medium text-blue-900">
+              Current Role: {userRole.reportingLevel.charAt(0).toUpperCase() + userRole.reportingLevel.slice(1)}
+            </p>
+            <p className="text-xs text-blue-700 mt-1">
+              {userRole.canSubmitReports && '• Can submit reports '}
+              {userRole.canCreateReports && '• Can create reports '}
+              {userRole.canViewReports && '• Can view reports'}
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -43,99 +167,63 @@ export default function ProjectReportsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Reports received from staff (for admins) */}
+      {userRole.reportingLevel !== 'staff' && (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Status Distribution</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Reports Received from Staff</h3>
           <div className="space-y-3">
             {[
-              { status: 'Completed', count: 4, percentage: 33 },
-              { status: 'In Progress', count: 7, percentage: 58 },
-              { status: 'Planning', count: 1, percentage: 9 },
-            ].map((item, idx) => (
-              <div key={idx}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-gray-600">{item.status}</span>
-                  <span className="text-sm font-semibold text-gray-900">{item.count} ({item.percentage}%)</span>
+              { 
+                id: '1', 
+                project: 'Website Redesign', 
+                submittedBy: 'John Smith', 
+                type: 'Daily Report', 
+                date: '2026-04-04',
+                status: 'reviewed'
+              },
+              { 
+                id: '2', 
+                project: 'Mobile App Development', 
+                submittedBy: 'Sarah Johnson', 
+                type: 'Weekly Report', 
+                date: '2026-04-03',
+                status: 'pending'
+              },
+              { 
+                id: '3', 
+                project: 'API Integration', 
+                submittedBy: 'Mike Davis', 
+                type: 'Milestone Report', 
+                date: '2026-04-02',
+                status: 'reviewed'
+              },
+            ].map((report) => (
+              <div key={report.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                <div>
+                  <p className="font-medium text-gray-900">{report.project}</p>
+                  <p className="text-sm text-gray-600">
+                    {report.type} by {report.submittedBy} • {report.date}
+                  </p>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${item.percentage}%` }} />
+                <div className="flex items-center gap-2">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    report.status === 'reviewed' 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {report.status}
+                  </span>
+                  <button className="text-blue-600 hover:text-blue-700">
+                    <Download className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         </div>
+      )}
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Budget Utilization</h3>
-          <div className="space-y-3">
-            {[
-              { category: 'Development', spent: '$180K', budget: '$200K', percentage: 90 },
-              { category: 'Design', spent: '$65K', budget: '$80K', percentage: 81 },
-              { category: 'Infrastructure', spent: '$95K', budget: '$120K', percentage: 79 },
-              { category: 'Testing', spent: '$45K', budget: '$55K', percentage: 82 },
-            ].map((item, idx) => (
-              <div key={idx}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-gray-600">{item.category}</span>
-                  <span className="text-sm font-semibold text-gray-900">{item.spent} / {item.budget}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-green-600 h-2 rounded-full" style={{ width: `${item.percentage}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Performance Metrics</h3>
-        <div className="space-y-3">
-          {[
-            { metric: 'On-Time Delivery Rate', value: '78%', trend: 'up' },
-            { metric: 'Budget Adherence', value: '85%', trend: 'up' },
-            { metric: 'Team Utilization', value: '92%', trend: 'up' },
-            { metric: 'Quality Score', value: '4.2/5.0', trend: 'stable' },
-            { metric: 'Scope Creep', value: '12%', trend: 'down' },
-            { metric: 'Risk Incidents', value: '2', trend: 'down' },
-          ].map((item, idx) => (
-            <div key={idx} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-              <span className="text-sm text-gray-600">{item.metric}</span>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-gray-900">{item.value}</span>
-                {item.trend === 'up' && <TrendingUp className="w-4 h-4 text-green-600" />}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Timeline Analysis</h3>
-        <div className="space-y-3">
-          {[
-            { project: 'Website Redesign', planned: '4 months', actual: '3.5 months', status: 'On Track' },
-            { project: 'Mobile App Development', planned: '6 months', actual: '4 months (ongoing)', status: 'Ahead' },
-            { project: 'API Integration', planned: '2 months', actual: '1.5 months', status: 'On Track' },
-            { project: 'Database Migration', planned: '3 months', actual: '2.5 months (ongoing)', status: 'On Track' },
-          ].map((item, idx) => (
-            <div key={idx} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-              <div>
-                <p className="font-medium text-gray-900">{item.project}</p>
-                <p className="text-xs text-gray-600 mt-1">Planned: {item.planned} | Actual: {item.actual}</p>
-              </div>
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                item.status === 'On Track' ? 'bg-green-100 text-green-800' :
-                item.status === 'Ahead' ? 'bg-blue-100 text-blue-800' :
-                'bg-amber-100 text-amber-800'
-              }`}>
-                {item.status}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
+      {/* Available Reports */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Available Reports</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -159,6 +247,24 @@ export default function ProjectReportsPage() {
           ))}
         </div>
       </div>
+
+      {/* Modals */}
+      <StaffReportModal
+        isOpen={showStaffReportModal}
+        onClose={() => setShowStaffReportModal(false)}
+        onSubmit={handleStaffReportSubmit}
+        projects={projects}
+        currentUser={currentUser}
+      />
+
+      <AdminReportModal
+        isOpen={showAdminReportModal}
+        onClose={() => setShowAdminReportModal(false)}
+        onSubmit={handleAdminReportSubmit}
+        projects={projects}
+        availableRecipients={availableRecipients}
+        currentUser={currentUser}
+      />
     </div>
   );
 }

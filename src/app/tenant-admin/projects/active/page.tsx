@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Plus, Eye, Edit, Trash2, Search } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { CreateProjectModal } from '../components/CreateProjectModal';
+import { ProjectService, ProjectFormData } from '../services/projectService';
 
 interface Project {
   id: string;
@@ -74,8 +76,39 @@ export default function ActiveProjectsPage() {
   const [projects, setProjects] = useState<Project[]>(DEFAULT_PROJECTS);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const statuses = ['All', 'Planning', 'In Progress', 'On Hold', 'Completed'];
+
+  const handleCreateProject = async (projectData: ProjectFormData) => {
+    if (!tenantSlug) {
+      throw new Error('Tenant context not available');
+    }
+
+    try {
+      const newProject = await ProjectService.createProject(tenantSlug, projectData);
+      
+      // Convert API response to local Project interface
+      const localProject: Project = {
+        id: newProject.id,
+        name: newProject.name,
+        description: newProject.description,
+        status: newProject.status,
+        progress: newProject.progress,
+        startDate: newProject.startDate,
+        dueDate: newProject.dueDate,
+        teamMembers: newProject.teamMembers,
+        budget: newProject.budget,
+        manager: newProject.manager,
+      };
+      
+      setProjects(prev => [localProject, ...prev]);
+      console.log('Project created successfully:', newProject);
+    } catch (error) {
+      console.error('Failed to create project:', error);
+      throw error;
+    }
+  };
 
   const filteredProjects = projects.filter((project) => {
     if (statusFilter !== 'All' && project.status !== statusFilter) return false;
@@ -126,7 +159,10 @@ export default function ActiveProjectsPage() {
             </select>
           </div>
           <div className="flex items-end">
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            >
               <Plus className="w-4 h-4" />
               New Project
             </button>
@@ -240,6 +276,13 @@ export default function ActiveProjectsPage() {
           </div>
         </div>
       </div>
+
+      {/* Create Project Modal */}
+      <CreateProjectModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateProject}
+      />
     </div>
   );
 }
