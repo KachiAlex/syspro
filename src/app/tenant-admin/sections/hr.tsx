@@ -462,7 +462,25 @@ const HRComponent: React.FC = () => {
 
   const renderAttendanceTab = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Attendance & Leave Management</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">Attendance & Leave Management</h2>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowAttendanceModal(true)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          >
+            <Clock className="w-4 h-4" />
+            Mark Attendance
+          </button>
+          <button
+            onClick={() => setShowLeaveModal(true)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700"
+          >
+            <Calendar className="w-4 h-4" />
+            Request Leave
+          </button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -567,7 +585,16 @@ const HRComponent: React.FC = () => {
 
   const renderPayrollTab = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Payroll Management</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">Payroll Management</h2>
+        <button
+          onClick={() => setShowRunPayrollModal(true)}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+        >
+          <DollarSign className="w-4 h-4" />
+          Run Payroll
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -654,7 +681,25 @@ const HRComponent: React.FC = () => {
 
   const renderReportsTab = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">HR Reports & Analytics</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">HR Reports & Analytics</h2>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowGenerateReportModal(true)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          >
+            <BarChart2 className="w-4 h-4" />
+            Generate Report
+          </button>
+          <button
+            onClick={() => setShowReportHistoryModal(true)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            <Download className="w-4 h-4" />
+            Report History
+          </button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
