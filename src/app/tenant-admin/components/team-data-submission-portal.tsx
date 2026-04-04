@@ -36,7 +36,8 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
       end: new Date().toISOString().split('T')[0]
     },
     data: {} as Record<string, any>,
-    confidence: 'medium' as TeamDataSubmission['confidence']
+    confidence: 'medium' as TeamDataSubmission['confidence'],
+    source: 'manual' as TeamDataSubmission['source']
   });
 
   useEffect(() => {
