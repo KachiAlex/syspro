@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 
-type HRTab = 'hr-operations' | 'staff' | 'attendance' | 'payroll' | 'reports';
+type HRTab = 'overview';
 
 interface Employee {
   id: string;
@@ -70,7 +70,7 @@ const DEFAULT_TRAINING_SESSIONS: TrainingSession[] = [
 
 const HRComponent: React.FC = () => {
   const { tenantSlug } = useTenantContext();
-  const [activeTab, setActiveTab] = useState<HRTab>('hr-operations');
+  const [activeTab, setActiveTab] = useState<HRTab>('overview');
   const [employees, setEmployees] = useState<Employee[]>(DEFAULT_EMPLOYEES);
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('All Departments');
@@ -90,7 +90,7 @@ const HRComponent: React.FC = () => {
     return true;
   });
 
-  const renderHROperationsTab = () => (
+  const renderOverviewTab = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -659,11 +659,7 @@ const HRComponent: React.FC = () => {
   );
 
   const tabs: { id: HRTab; label: string }[] = [
-    { id: 'hr-operations', label: 'HR & Operations' },
-    { id: 'staff', label: 'Staff' },
-    { id: 'attendance', label: 'Attendance' },
-    { id: 'payroll', label: 'Payroll' },
-    { id: 'reports', label: 'Reports' },
+    { id: 'overview', label: 'HR & Operations' },
   ];
 
   return (
@@ -687,11 +683,7 @@ const HRComponent: React.FC = () => {
       </div>
 
       <div>
-        {activeTab === 'hr-operations' && renderHROperationsTab()}
-        {activeTab === 'staff' && renderStaffTab()}
-        {activeTab === 'attendance' && renderAttendanceTab()}
-        {activeTab === 'payroll' && renderPayrollTab()}
-        {activeTab === 'reports' && renderReportsTab()}
+        {renderOverviewTab()}
       </div>
     </div>
   );
