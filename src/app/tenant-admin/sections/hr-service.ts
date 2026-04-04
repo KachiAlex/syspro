@@ -205,6 +205,77 @@ export class HRService {
   }
 
   // Employee Management (additional methods for HR operations)
+  static async addEmployee(tenantSlug: string, employeeData: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    department: string;
+    position: string;
+    startDate: string;
+    salary?: string;
+    employmentType: string;
+  }): Promise<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    department: string;
+    position: string;
+    startDate: string;
+    status: string;
+    salary?: string;
+  }> {
+    try {
+      const response = await apiClient.post('/hr/employees', {
+        ...employeeData,
+        tenantSlug
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to add employee:', error);
+      throw new Error('Failed to add employee. Please try again.');
+    }
+  }
+
+  static async importEmployeesFromExcel(tenantSlug: string, file: File): Promise<{
+  imported: number;
+  failed: number;
+  errors: string[];
+}> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('tenantSlug', tenantSlug);
+
+      const response = await apiClient.post('/hr/employees/import', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to import employees:', error);
+      throw new Error('Failed to import employees. Please check the file format and try again.');
+    }
+  }
+
+  static async generateInviteLink(tenantSlug: string, emails: string[]): Promise<{
+    link: string;
+    expiresAt: string;
+    maxUses: number;
+  }> {
+    try {
+      const response = await apiClient.post('/hr/employees/invite', {
+        tenantSlug,
+        emails
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to generate invite link:', error);
+      throw new Error('Failed to generate invite link. Please try again.');
+    }
+  }
+
   static async getEmployees(tenantSlug: string): Promise<Array<{
     id: string;
     name: string;

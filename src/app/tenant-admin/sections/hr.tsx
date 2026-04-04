@@ -7,7 +7,8 @@ import {
   Download, MoreVertical, Award, Briefcase
 } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
-import { AddEmployeeModal, EditEmployeeModal, ViewEmployeeModal, DeleteEmployeeModal, RunPayrollModal, PostJobModal, TrainingModal } from './hr-modals';
+import { AddEmployeeModal } from './hr-add-employee-modal';
+import { EditEmployeeModal, ViewEmployeeModal, DeleteEmployeeModal, RunPayrollModal, PostJobModal, TrainingModal } from './hr-modals';
 import { AttendanceModal, LeaveModal } from './hr-attendance-modals';
 import { GenerateReportModal, ReportHistoryModal } from './hr-reports-modals';
 import { HRService } from './hr-service';
@@ -155,6 +156,32 @@ const HRComponent: React.FC = () => {
       console.log('Report generated successfully');
     } catch (error) {
       console.error('Failed to generate report:', error);
+      throw error;
+    }
+  };
+
+  const handleAddEmployee = async (employeeData: any) => {
+    if (!tenantSlug) return;
+    
+    try {
+      const newEmployee = await HRService.addEmployee(tenantSlug, employeeData);
+      
+      // Convert to local Employee interface
+      const localEmployee: Employee = {
+        id: newEmployee.id,
+        name: `${newEmployee.firstName} ${newEmployee.lastName}`,
+        email: newEmployee.email,
+        department: newEmployee.department,
+        position: newEmployee.position,
+        startDate: newEmployee.startDate,
+        status: 'Active',
+        salary: newEmployee.salary
+      };
+      
+      setEmployees(prev => [localEmployee, ...prev]);
+      console.log('Employee added successfully:', newEmployee);
+    } catch (error) {
+      console.error('Failed to add employee:', error);
       throw error;
     }
   };
@@ -830,10 +857,7 @@ const HRComponent: React.FC = () => {
       <AddEmployeeModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onSubmit={async (data) => {
-          // Handle add employee
-          console.log('Add employee:', data);
-        }}
+        onSubmit={handleAddEmployee}
         departments={departments}
       />
 

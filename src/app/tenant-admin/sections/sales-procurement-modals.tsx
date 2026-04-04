@@ -35,6 +35,26 @@ export function CreateSalesOrderModal({
     notes: "",
   });
   const [error, setError] = useState<string | null>(null);
+  const [showItemModal, setShowItemModal] = useState(false);
+
+  const handleAddItem = () => {
+    setShowItemModal(true);
+  };
+
+  const handleAddItemSubmit = (itemData: { productId: string; quantity: number; unitPrice: number }) => {
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, itemData]
+    }));
+    setShowItemModal(false);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index)
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +62,11 @@ export function CreateSalesOrderModal({
 
     if (!formData.customerId) {
       setError("Customer is required");
+      return;
+    }
+
+    if (formData.items.length === 0) {
+      setError("At least one item is required");
       return;
     }
 
@@ -116,12 +141,44 @@ export function CreateSalesOrderModal({
             <div className="border border-gray-200 rounded-lg p-4">
               <button
                 type="button"
+                onClick={handleAddItem}
                 className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
                 <Plus className="w-4 h-4" />
                 Add Item
               </button>
-              <p className="text-sm text-gray-500 mt-2">No items added yet</p>
+              
+              {formData.items.length > 0 ? (
+                <div className="mt-4 space-y-2">
+                  {formData.items.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900">
+                          Product ID: {item.productId}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Qty: {item.quantity} × ${item.unitPrice.toFixed(2)} = ${(item.quantity * item.unitPrice).toFixed(2)}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(index)}
+                        className="p-1 text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="pt-2 border-t border-gray-200">
+                    <div className="flex justify-between text-sm font-medium text-gray-900">
+                      <span>Total:</span>
+                      <span>${formData.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 mt-2">No items added yet</p>
+              )}
             </div>
           </div>
 
@@ -154,6 +211,12 @@ export function CreateSalesOrderModal({
           </div>
         </form>
       </div>
+
+      <AddItemModal
+        isOpen={showItemModal}
+        onClose={() => setShowItemModal(false)}
+        onSubmit={handleAddItemSubmit}
+      />
     </div>
   );
 }
@@ -1039,6 +1102,137 @@ export function ViewInventoryItemModal({
             Close
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Add Item Modal for Sales Order
+export function AddItemModal({
+  isOpen,
+  onClose,
+  onSubmit,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (itemData: { productId: string; quantity: number; unitPrice: number }) => void;
+}) {
+  const [itemData, setItemData] = useState({
+    productId: "",
+    quantity: 1,
+    unitPrice: 0,
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!itemData.productId) {
+      setError("Product is required");
+      return;
+    }
+
+    if (itemData.quantity <= 0) {
+      setError("Quantity must be greater than 0");
+      return;
+    }
+
+    if (itemData.unitPrice <= 0) {
+      setError("Unit price must be greater than 0");
+      return;
+    }
+
+    onSubmit(itemData);
+    setItemData({ productId: "", quantity: 1, unitPrice: 0 });
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg w-full max-w-md mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">Add Item</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
+              <span className="text-sm text-red-700">{error}</span>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Product</label>
+            <select
+              value={itemData.productId}
+              onChange={(e) => setItemData({ ...itemData, productId: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            >
+              <option value="">Select Product</option>
+              <option value="PROD-001">Laptop Computer</option>
+              <option value="PROD-002">Office Chair</option>
+              <option value="PROD-003">Printer Paper</option>
+              <option value="PROD-004">Desk Lamp</option>
+              <option value="PROD-005">Wireless Mouse</option>
+              <option value="PROD-006">Keyboard</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+            <input
+              type="number"
+              min="1"
+              value={itemData.quantity}
+              onChange={(e) => setItemData({ ...itemData, quantity: parseInt(e.target.value) || 0 })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price ($)</label>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={itemData.unitPrice}
+              onChange={(e) => setItemData({ ...itemData, unitPrice: parseFloat(e.target.value) || 0 })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+
+          <div className="pt-2 border-t border-gray-200">
+            <div className="flex justify-between text-sm font-medium text-gray-900">
+              <span>Total:</span>
+              <span>${(itemData.quantity * itemData.unitPrice).toFixed(2)}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
+              Add Item
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
