@@ -137,9 +137,9 @@ export default function ActiveProjectsPage() {
       if (updates.name !== undefined) formDataUpdates.name = updates.name;
       if (updates.description !== undefined) formDataUpdates.description = updates.description;
       if (updates.startDate !== undefined) formDataUpdates.startDate = updates.startDate;
-      if (updates.dueDate !== undefined) formDataUpdates.endDate = updates.dueDate;
+      if (updates.dueDate !== undefined) formDataUpdates.dueDate = updates.dueDate;
       if (updates.budget !== undefined) formDataUpdates.budget = updates.budget;
-      if (updates.manager !== undefined) formDataUpdates.projectManager = updates.manager;
+      if (updates.manager !== undefined) formDataUpdates.manager = updates.manager;
       if (updates.teamMembers !== undefined) {
         formDataUpdates.teamMembers = updates.teamMembers.toString() ? [updates.teamMembers.toString()] : [];
       }
