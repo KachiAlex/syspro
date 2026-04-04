@@ -131,7 +131,20 @@ export default function ActiveProjectsPage() {
     if (!tenantSlug || !selectedProject) return;
 
     try {
-      const updatedProject = await ProjectService.updateProject(tenantSlug, selectedProject.id, updates);
+      // Convert Project type to ProjectFormData type
+      const formDataUpdates: Partial<ProjectFormData> = {};
+      
+      if (updates.name !== undefined) formDataUpdates.name = updates.name;
+      if (updates.description !== undefined) formDataUpdates.description = updates.description;
+      if (updates.startDate !== undefined) formDataUpdates.startDate = updates.startDate;
+      if (updates.dueDate !== undefined) formDataUpdates.endDate = updates.dueDate;
+      if (updates.budget !== undefined) formDataUpdates.budget = updates.budget;
+      if (updates.manager !== undefined) formDataUpdates.projectManager = updates.manager;
+      if (updates.teamMembers !== undefined) {
+        formDataUpdates.teamMembers = updates.teamMembers.toString() ? [updates.teamMembers.toString()] : [];
+      }
+
+      const updatedProject = await ProjectService.updateProject(tenantSlug, selectedProject.id, formDataUpdates);
       
       // Update local state
       setProjects(prev => prev.map(p => 
