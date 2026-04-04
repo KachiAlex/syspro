@@ -132,8 +132,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
     try {
       const submission = await TeamDataService.createTeamSubmission(tenantSlug, {
         teamMemberId: currentUserId,
-        ...formData,
-        status: 'submitted'
+        ...formData
       });
 
       setSubmissions(prev => [submission, ...prev]);
