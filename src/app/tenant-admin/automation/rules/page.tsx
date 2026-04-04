@@ -92,45 +92,10 @@ export default function RulesPage() {
 
   return (
     <>
-      {/* Sidebar - Only show on desktop when not in shell */}
-      <div className="hidden lg:block w-64 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Automation</h2>
-          <p className="text-sm text-gray-600 mt-1">Manage workflows and rules</p>
-        </div>
-        <nav className="p-4 space-y-1">
-          {[
-            { id: 'workflows', name: 'Workflows', href: '/tenant-admin/automation/workflows', icon: PlayCircle, count: 24 },
-            { id: 'rules', name: 'Rules', href: '/tenant-admin/automation/rules', icon: Settings, count: 18 },
-            { id: 'history', name: 'History', href: '/tenant-admin/automation/history', icon: Clock, count: 156 }
-          ].map((tab) => (
-            <Link
-              key={tab.id}
-              href={tab.href}
-              className={`flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors group ${
-                tab.id === 'rules' ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-100'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <tab.icon className={`w-4 h-4 ${tab.id === 'rules' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
-                <span className={tab.id === 'rules' ? 'text-blue-700' : 'text-gray-700 group-hover:text-gray-900'}>{tab.name}</span>
-              </div>
-              {tab.count && (
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                  tab.id === 'rules' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700 group-hover:bg-gray-200'
-                }`}>
-                  {tab.count}
-                </span>
-              )}
-            </Link>
-          ))}
-        </nav>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Horizontal Navigation Tabs */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Rules</h1>
               <p className="text-sm text-gray-600 mt-1">Configure business rules and automation triggers</p>
@@ -142,6 +107,41 @@ export default function RulesPage() {
               ← Back to Overview
             </Link>
           </div>
+          
+          {/* Navigation Tabs */}
+          <nav className="flex space-x-8 overflow-x-auto">
+            {[
+              { id: 'workflows', name: 'Workflows', href: '/tenant-admin/automation/workflows', icon: PlayCircle, count: 24 },
+              { id: 'rules', name: 'Rules', href: '/tenant-admin/automation/rules', icon: Settings, count: 18 },
+              { id: 'history', name: 'History', href: '/tenant-admin/automation/history', icon: Clock, count: 156 }
+            ].map((tab) => (
+              <Link
+                key={tab.id}
+                href={tab.href}
+                className={`flex items-center gap-2 px-1 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  tab.id === 'rules' 
+                    ? 'border-blue-500 text-blue-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <tab.icon className={`w-4 h-4 ${tab.id === 'rules' ? 'text-blue-600' : 'text-gray-400'}`} />
+                <span>{tab.name}</span>
+                {tab.count && (
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    tab.id === 'rules' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {tab.count}
+                  </span>
+                )}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
