@@ -157,7 +157,8 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
         end: new Date().toISOString().split('T')[0]
       },
       data: {},
-      confidence: 'medium'
+      confidence: 'medium',
+      source: 'manual'
     });
     setUploadedFiles([]);
     setUploadProgress({});
