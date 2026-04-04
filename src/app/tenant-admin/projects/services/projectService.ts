@@ -91,9 +91,7 @@ export class ProjectService {
 
   static async deleteProject(tenantSlug: string, projectId: string): Promise<void> {
     try {
-      await apiClient.delete(`/projects/${projectId}`, {
-        data: { tenantSlug }
-      });
+      await apiClient.delete(`/projects/${projectId}?tenantSlug=${tenantSlug}`);
     } catch (error) {
       console.error('Failed to delete project:', error);
       throw new Error('Failed to delete project. Please try again.');
