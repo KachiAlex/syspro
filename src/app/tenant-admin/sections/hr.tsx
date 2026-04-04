@@ -813,7 +813,7 @@ const HRComponent: React.FC = () => {
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
                   ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               {tab.label}
@@ -825,6 +825,122 @@ const HRComponent: React.FC = () => {
       <div>
         {renderOverviewTab()}
       </div>
+
+      {/* Employee Management Modals */}
+      <AddEmployeeModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={async (data) => {
+          // Handle add employee
+          console.log('Add employee:', data);
+        }}
+        departments={departments}
+      />
+
+      <EditEmployeeModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSubmit={async (data) => {
+          // Handle edit employee
+          console.log('Edit employee:', data);
+        }}
+        employee={selectedEmployee}
+        departments={departments}
+        statuses={statuses}
+      />
+
+      <ViewEmployeeModal
+        isOpen={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        employee={selectedEmployee}
+        onEdit={() => setShowEditModal(true)}
+        onAward={() => setShowTrainingModal(true)}
+        onDelete={() => setShowDeleteModal(true)}
+      />
+
+      <DeleteEmployeeModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={async () => {
+          // Handle delete employee
+          console.log('Delete employee:', selectedEmployee?.name);
+        }}
+        employeeName={selectedEmployee?.name}
+      />
+
+      {/* Payroll & Training Modals */}
+      <RunPayrollModal
+        isOpen={showRunPayrollModal}
+        onClose={() => setShowRunPayrollModal(false)}
+        onSubmit={async (data) => {
+          // Handle run payroll
+          console.log('Run payroll:', data);
+        }}
+      />
+
+      <PostJobModal
+        isOpen={showPostJobModal}
+        onClose={() => setShowPostJobModal(false)}
+        onSubmit={async (data) => {
+          // Handle post job
+          console.log('Post job:', data);
+        }}
+        departments={departments}
+      />
+
+      <TrainingModal
+        isOpen={showTrainingModal}
+        onClose={() => setShowTrainingModal(false)}
+        onSubmit={async (data) => {
+          // Handle training session
+          console.log('Create training:', data);
+        }}
+      />
+
+      {/* Attendance & Leave Modals */}
+      <AttendanceModal
+        isOpen={showAttendanceModal}
+        onClose={() => setShowAttendanceModal(false)}
+        onSubmit={handleMarkAttendance}
+        employees={employees.map(emp => ({
+          id: emp.id,
+          name: emp.name,
+          department: emp.department
+        }))}
+      />
+
+      <LeaveModal
+        isOpen={showLeaveModal}
+        onClose={() => setShowLeaveModal(false)}
+        onSubmit={handleSubmitLeave}
+        employees={employees.map(emp => ({
+          id: emp.id,
+          name: emp.name,
+          department: emp.department
+        }))}
+      />
+
+      {/* Reports Modals */}
+      <GenerateReportModal
+        isOpen={showGenerateReportModal}
+        onClose={() => setShowGenerateReportModal(false)}
+        onSubmit={handleGenerateReport}
+      />
+
+      <ReportHistoryModal
+        isOpen={showReportHistoryModal}
+        onClose={() => setShowReportHistoryModal(false)}
+        reports={reports}
+        onDownload={async (reportId) => {
+          // Handle download report
+          console.log('Download report:', reportId);
+        }}
+        onDelete={async (reportId) => {
+          // Handle delete report
+          setReports(prev => prev.filter(r => r.id !== reportId));
+          console.log('Delete report:', reportId);
+        }}
+      />
     </div>
   );
 };
