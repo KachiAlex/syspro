@@ -1,11 +1,37 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SidebarNav } from "./sidebar-nav";
-import { Menu, X, ChevronDown, User, Bell, Settings } from "lucide-react";
+import { Menu, X, ChevronDown, User, Bell, Settings, Search, Command } from "lucide-react";
 
 export default function TenantAdminShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ctrl+K or Cmd+K for search
+      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+      
+      // Escape to close modals
+      if (event.key === 'Escape') {
+        if (searchOpen) {
+          setSearchOpen(false);
+        }
+        if (sidebarOpen) {
+          setSidebarOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [searchOpen, sidebarOpen]);
 
   return (
     <div className="min-h-screen flex bg-gray-50 relative">
@@ -15,6 +41,50 @@ export default function TenantAdminShell({ children }: { children: React.ReactNo
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
+      )}
+      
+      {/* Search Overlay */}
+      {searchOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-50"
+          onClick={() => setSearchOpen(false)}
+        >
+          <div className="flex items-start justify-center pt-20">
+            <div 
+              className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <Search className="w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search anything..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1 px-3 py-2 text-lg border-0 outline-none"
+                    autoFocus
+                  />
+                  <button
+                    onClick={() => setSearchOpen(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg"
+                  >
+                    <X className="w-4 h-4 text-gray-500" />
+                  </button>
+                </div>
+                <div className="text-xs text-gray-500 mb-2">
+                  Press <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">Ctrl</kbd> + <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">K</kbd> to open search
+                </div>
+                {/* Search Results */}
+                <div className="border-t pt-2">
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    {searchQuery ? `Searching for "${searchQuery}"...` : "Type to search..."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
       
       {/* Sidebar */}
@@ -96,6 +166,19 @@ export default function TenantAdminShell({ children }: { children: React.ReactNo
                 className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <Menu className="h-5 w-5 text-gray-500" />
+              </button>
+              
+              {/* Search Bar */}
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="hidden sm:flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors min-w-0 max-w-xs"
+              >
+                <Search className="w-4 h-4 text-gray-400" />
+                <span className="text-sm text-gray-500 truncate">Search...</span>
+                <kbd className="hidden md:flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-600">
+                  <Command className="w-3 h-3" />
+                  K
+                </kbd>
               </button>
               
               {/* Breadcrumb */}

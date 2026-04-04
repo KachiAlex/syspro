@@ -18,9 +18,12 @@ import {
   Building,
   CreditCard,
   Receipt,
-  TrendingUp
+  TrendingUp,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 const navigationItems = [
   {
@@ -122,12 +125,26 @@ interface SidebarNavProps {
 
 export function SidebarNav({ className }: SidebarNavProps) {
   const pathname = usePathname();
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+
+  const toggleSection = (title: string) => {
+    setCollapsedSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(title)) {
+        newSet.delete(title);
+      } else {
+        newSet.add(title);
+      }
+      return newSet;
+    });
+  };
 
   return (
     <nav className={cn("space-y-1", className)}>
       {navigationItems.map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
         const Icon = item.icon;
+        const isCollapsed = collapsedSections.has(item.title);
         
         return (
           <div key={item.href} className="group">
@@ -149,9 +166,23 @@ export function SidebarNav({ className }: SidebarNavProps) {
               {isActive && (
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-600 rounded-r-full"></div>
               )}
+              {item.children && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleSection(item.title);
+                  }}
+                  className="ml-auto p-1 hover:bg-gray-200 rounded transition-colors"
+                >
+                  <ChevronDown className={cn(
+                    "w-4 h-4 transition-transform duration-200",
+                    isCollapsed ? "rotate-0" : "rotate-180"
+                  )} />
+                </button>
+              )}
             </Link>
             
-            {item.children && (
+            {item.children && !isCollapsed && (
               <div className="ml-6 mt-1 space-y-1">
                 {item.children.map((child) => {
                   const isChildActive = pathname === child.href;
