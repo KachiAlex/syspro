@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api-client';
+import { MockReportService, mockReportTemplates } from './mock-report-service';
 
 export interface Report {
   id: string;
@@ -52,9 +53,16 @@ export interface ReportGenerationParams {
   tenantSlug: string;
 }
 
+// Use mock service for development, switch to real API when backend is ready
+const useMockService = process.env.NODE_ENV === 'development' || !apiClient;
+
 export class ReportService {
   // Generate a new report
   static async generateReport(params: ReportGenerationParams): Promise<Report> {
+    if (useMockService) {
+      return MockReportService.generateReport(params);
+    }
+    
     try {
       const response = await apiClient.post('/reports/generate', params);
       return response.data;
@@ -66,6 +74,10 @@ export class ReportService {
 
   // Get all reports for a tenant
   static async getReports(tenantSlug: string, module?: string): Promise<Report[]> {
+    if (useMockService) {
+      return MockReportService.getReports(tenantSlug, module);
+    }
+    
     try {
       const params = new URLSearchParams({ tenantSlug });
       if (module) params.append('module', module);
@@ -80,6 +92,10 @@ export class ReportService {
 
   // Download a report
   static async downloadReport(reportId: string, tenantSlug: string): Promise<string> {
+    if (useMockService) {
+      return MockReportService.downloadReport(reportId, tenantSlug);
+    }
+    
     try {
       const response = await apiClient.get(`/reports/${reportId}/download?tenantSlug=${tenantSlug}`);
       return response.data.fileUrl;
@@ -91,6 +107,10 @@ export class ReportService {
 
   // Delete a report
   static async deleteReport(reportId: string, tenantSlug: string): Promise<void> {
+    if (useMockService) {
+      return MockReportService.deleteReport(reportId, tenantSlug);
+    }
+    
     try {
       await apiClient.delete(`/reports/${reportId}?tenantSlug=${tenantSlug}`);
     } catch (error) {
@@ -101,6 +121,10 @@ export class ReportService {
 
   // Get report templates
   static async getReportTemplates(module?: string): Promise<ReportTemplate[]> {
+    if (useMockService) {
+      return MockReportService.getReportTemplates(module);
+    }
+    
     try {
       const params = module ? `?module=${module}` : '';
       const response = await apiClient.get(`/reports/templates${params}`);
@@ -195,6 +219,10 @@ export class ReportService {
       user: string;
     }>;
   }> {
+    if (useMockService) {
+      return MockReportService.getReportAnalytics(tenantSlug);
+    }
+    
     try {
       const response = await apiClient.get(`/reports/analytics?tenantSlug=${tenantSlug}`);
       return response.data;

@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { Plus, Download, FileText, Database, TrendingUp, Calculator, Eye, Edit } from 'lucide-react';
+import { UnifiedReportModal } from '../components/unified-report-modal';
+import { ReportService } from '../services/report-service';
 
 interface Accounting {
   tenantSlug: string;
@@ -14,9 +16,26 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
   ]);
 
   const [alert, setAlert] = useState<{ type: 'success' | 'info'; message: string } | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
 
-  const handleGenerateReport = (type: string) => {
-    setAlert({ type: 'success', message: `${type} report generated successfully!` });
+  const handleGenerateReport = async (reportData: any) => {
+    try {
+      const report = await ReportService.generateReport({
+        module: 'financial',
+        reportType: reportData.reportType,
+        dateRange: reportData.dateRange,
+        format: reportData.format,
+        includeCharts: reportData.includeCharts,
+        filters: reportData.filters,
+        tenantSlug
+      });
+
+      setAlert({ type: 'success', message: `${reportData.reportType} report generated successfully!` });
+      setShowReportModal(false);
+    } catch (error) {
+      console.error('Failed to generate report:', error);
+      setAlert({ type: 'info', message: 'Failed to generate report. Please try again.' });
+    }
   };
 
   const handleExportData = () => {
@@ -25,6 +44,16 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
 
   return (
     <div className="p-6">
+      {alert && (
+        <div className={`mb-4 p-4 rounded-lg border ${
+          alert.type === 'success' 
+            ? 'bg-green-50 border-green-200 text-green-800' 
+            : 'bg-blue-50 border-blue-200 text-blue-800'
+        }`}>
+          {alert.message}
+        </div>
+      )}
+
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Accounting Workspace</h2>
         <p className="text-gray-600">Manage journal entries, financial reports, and chart of accounts</p>
@@ -77,7 +106,7 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
             <Plus className="w-4 h-4 mr-2 inline" />
             Journal Entry
           </button>
-          <button onClick={() => handleGenerateReport('Income Statement')} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+          <button onClick={() => setShowReportModal(true)} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
             <FileText className="w-4 h-4 mr-2 inline" />
             Generate Report
           </button>
@@ -223,6 +252,17 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
           {alert.message}
         </div>
       )}
+
+      {/* Unified Report Modal */}
+      <UnifiedReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        module="financial"
+        tenantSlug={tenantSlug}
+        onReportGenerated={(report) => {
+          setAlert({ type: 'success', message: `${report.type} report generated successfully!` });
+        }}
+      />
     </div>
   );
 };

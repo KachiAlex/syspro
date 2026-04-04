@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { TrendingUp, Users, ShoppingCart, DollarSign, Download, Calendar, Filter, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { TrendingUp, Users, ShoppingCart, DollarSign, Download, Calendar, Filter, ArrowUpRight, ArrowDownRight, BarChart3 } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { UnifiedReportModal } from '../../components/unified-report-modal';
+import { ReportService } from '../../services/report-service';
 
 interface SalesMetric {
   title: string;
@@ -64,17 +66,46 @@ export default function SalesAnalyticsPage() {
   const { tenantSlug } = useTenantContext();
   const [selectedPeriod, setSelectedPeriod] = useState('This Month');
   const [selectedReportType, setSelectedReportType] = useState('All');
+  const [showReportModal, setShowReportModal] = useState(false);
+
+  const handleGenerateReport = async (reportData: any) => {
+    try {
+      const report = await ReportService.generateReport({
+        module: 'sales',
+        reportType: reportData.reportType,
+        dateRange: reportData.dateRange,
+        format: reportData.format,
+        includeCharts: reportData.includeCharts,
+        filters: reportData.filters,
+        tenantSlug
+      });
+
+      console.log('Sales report generated:', report);
+      setShowReportModal(false);
+    } catch (error) {
+      console.error('Failed to generate sales report:', error);
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Sales Reports</h2>
-        <Link
-          href="/tenant-admin/analytics"
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-        >
-          ← Back to Overview
-        </Link>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowReportModal(true)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          >
+            <BarChart3 className="w-4 h-4" />
+            Generate Report
+          </button>
+          <Link
+            href="/tenant-admin/analytics"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            ← Back to Overview
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -278,6 +309,17 @@ export default function SalesAnalyticsPage() {
           </div>
         </div>
       </div>
+
+      {/* Unified Report Modal */}
+      <UnifiedReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        module="sales"
+        tenantSlug={tenantSlug || ''}
+        onReportGenerated={(report) => {
+          console.log('Sales report generated:', report);
+        }}
+      />
     </div>
   );
 }

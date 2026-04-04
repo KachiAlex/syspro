@@ -10,7 +10,8 @@ import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { AddEmployeeModal } from './hr-add-employee-modal';
 import { EditEmployeeModal, ViewEmployeeModal, DeleteEmployeeModal, RunPayrollModal, PostJobModal, TrainingModal } from './hr-modals';
 import { AttendanceModal, LeaveModal } from './hr-attendance-modals';
-import { GenerateReportModal, ReportHistoryModal } from './hr-reports-modals';
+import { UnifiedReportModal } from '../components/unified-report-modal';
+import { ReportService } from '../services/report-service';
 import { HRService } from './hr-service';
 
 type HRTab = 'overview';
@@ -90,8 +91,7 @@ const HRComponent: React.FC = () => {
   const [showTrainingModal, setShowTrainingModal] = useState(false);
   const [showAttendanceModal, setShowAttendanceModal] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
-  const [showGenerateReportModal, setShowGenerateReportModal] = useState(false);
-  const [showReportHistoryModal, setShowReportHistoryModal] = useState(false);
+  const [showUnifiedReportModal, setShowUnifiedReportModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [departments, setDepartments] = useState<string[]>(['Engineering', 'Sales', 'Marketing', 'HR', 'Finance']);
   const [statuses, setStatuses] = useState<string[]>(['Active', 'On Leave', 'Terminated']);
@@ -151,9 +151,18 @@ const HRComponent: React.FC = () => {
     if (!tenantSlug) return;
     
     try {
-      const report = await HRService.generateReport(tenantSlug, reportData);
+      const report = await ReportService.generateReport({
+        module: 'hr',
+        reportType: reportData.reportType,
+        dateRange: reportData.dateRange,
+        format: reportData.format,
+        includeCharts: reportData.includeCharts,
+        filters: reportData.filters,
+        tenantSlug
+      });
+      
       setReports(prev => [report, ...prev]);
-      console.log('Report generated successfully');
+      console.log('HR report generated successfully');
     } catch (error) {
       console.error('Failed to generate report:', error);
       throw error;
@@ -293,7 +302,7 @@ const HRComponent: React.FC = () => {
               Run Payroll
             </button>
             <button
-              onClick={() => setShowGenerateReportModal(true)}
+              onClick={() => setShowUnifiedReportModal(true)}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100"
             >
               <BarChart2 className="w-4 h-4" />
@@ -712,14 +721,14 @@ const HRComponent: React.FC = () => {
         <h2 className="text-2xl font-bold text-gray-900">HR Reports & Analytics</h2>
         <div className="flex gap-3">
           <button
-            onClick={() => setShowGenerateReportModal(true)}
+            onClick={() => setShowUnifiedReportModal(true)}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
           >
             <BarChart2 className="w-4 h-4" />
             Generate Report
           </button>
           <button
-            onClick={() => setShowReportHistoryModal(true)}
+            onClick={() => setShowUnifiedReportModal(true)}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             <Download className="w-4 h-4" />
@@ -945,24 +954,14 @@ const HRComponent: React.FC = () => {
       />
 
       {/* Reports Modals */}
-      <GenerateReportModal
-        isOpen={showGenerateReportModal}
-        onClose={() => setShowGenerateReportModal(false)}
-        onSubmit={handleGenerateReport}
-      />
-
-      <ReportHistoryModal
-        isOpen={showReportHistoryModal}
-        onClose={() => setShowReportHistoryModal(false)}
-        reports={reports}
-        onDownload={async (reportId) => {
-          // Handle download report
-          console.log('Download report:', reportId);
-        }}
-        onDelete={async (reportId) => {
-          // Handle delete report
-          setReports(prev => prev.filter(r => r.id !== reportId));
-          console.log('Delete report:', reportId);
+      <UnifiedReportModal
+        isOpen={showUnifiedReportModal}
+        onClose={() => setShowUnifiedReportModal(false)}
+        module="hr"
+        tenantSlug={tenantSlug || ''}
+        onReportGenerated={(report) => {
+          setReports(prev => [report, ...prev]);
+          console.log('HR report generated:', report);
         }}
       />
     </div>

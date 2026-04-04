@@ -43,41 +43,10 @@ export default function AutomationPage() {
 
   return (
     <>
-      {/* Sidebar - Only show on desktop when not in shell */}
-      <div className="hidden lg:block w-64 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Automation</h2>
-          <p className="text-sm text-gray-600 mt-1">Manage workflows and rules</p>
-        </div>
-        <nav className="p-4 space-y-1">
-          {automationTabs.map((tab) => (
-            <Link
-              key={tab.id}
-              href={tab.href}
-              className={`flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors group ${
-                tab.id === 'overview' ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-100'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <tab.icon className={`w-4 h-4 ${tab.id === 'overview' ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
-                <span className={tab.id === 'overview' ? 'text-blue-700' : 'text-gray-700 group-hover:text-gray-900'}>{tab.name}</span>
-              </div>
-              {tab.count && (
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                  tab.id === 'overview' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700 group-hover:bg-gray-200'
-                }`}>
-                  {tab.count}
-                </span>
-              )}
-            </Link>
-          ))}
-        </nav>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
+      {/* Horizontal Navigation Tabs */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Automation Overview</h1>
               <p className="text-sm text-gray-600 mt-1">Monitor and manage your automation workflows</p>
@@ -99,6 +68,37 @@ export default function AutomationPage() {
               </button>
             </div>
           </div>
+          
+          {/* Navigation Tabs */}
+          <nav className="flex space-x-8 overflow-x-auto">
+            {automationTabs.map((tab) => (
+              <Link
+                key={tab.id}
+                href={tab.href}
+                className={`flex items-center gap-2 px-1 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  tab.id === 'overview' 
+                    ? 'border-blue-500 text-blue-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <tab.icon className={`w-4 h-4 ${tab.id === 'overview' ? 'text-blue-600' : 'text-gray-400'}`} />
+                <span>{tab.name}</span>
+                {tab.count && (
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    tab.id === 'overview' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {tab.count}
+                  </span>
+                )}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
@@ -142,97 +142,6 @@ export default function AutomationPage() {
                   <p className="text-xs text-amber-600 mt-2">↓ 12.4% from last period</p>
                 </div>
                 <AlertCircle className="w-8 h-8 sm:w-12 sm:h-12 text-amber-100" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="p-4 sm:p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Access</h3>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 sm:p-6 border border-green-200">
-                  <div className="flex items-center gap-3 mb-4">
-                    <PlayCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
-                    <h3 className="text-base sm:text-lg font-semibold text-green-900">Workflows</h3>
-                  </div>
-                  <p className="text-sm text-green-700 mb-4">Manage and monitor automated workflows and business processes</p>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-green-600">Active Workflows</span>
-                      <span className="font-medium text-green-900">24</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-green-600">Running Now</span>
-                      <span className="font-medium text-green-900">3</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-green-600">Avg Execution Time</span>
-                      <span className="font-medium text-green-900">2.4s</span>
-                    </div>
-                  </div>
-                  <Link
-                    href="/tenant-admin/automation/workflows"
-                    className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-green-600 hover:text-green-700"
-                  >
-                    View Workflows →
-                  </Link>
-                </div>
-
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 sm:p-6 border border-blue-200">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Settings className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
-                    <h3 className="text-base sm:text-lg font-semibold text-blue-900">Rules</h3>
-                  </div>
-                  <p className="text-sm text-blue-700 mb-4">Configure business rules and automation triggers</p>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-blue-600">Active Rules</span>
-                      <span className="font-medium text-blue-900">18</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-blue-600">Triggers Today</span>
-                      <span className="font-medium text-blue-900">342</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-blue-600">Rule Success Rate</span>
-                      <span className="font-medium text-blue-900">96.2%</span>
-                    </div>
-                  </div>
-                  <Link
-                    href="/tenant-admin/automation/rules"
-                    className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
-                  >
-                    View Rules →
-                  </Link>
-                </div>
-
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 sm:p-6 border border-purple-200">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
-                    <h3 className="text-base sm:text-lg font-semibold text-purple-900">History</h3>
-                  </div>
-                  <p className="text-sm text-purple-700 mb-4">View execution history and performance analytics</p>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-purple-600">Total Executions</span>
-                      <span className="font-medium text-purple-900">1847</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-purple-600">Successful</span>
-                      <span className="font-medium text-purple-900">1749</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-purple-600">Failed</span>
-                      <span className="font-medium text-purple-900">98</span>
-                    </div>
-                  </div>
-                  <Link
-                    href="/tenant-admin/automation/history"
-                    className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-purple-600 hover:text-purple-700"
-                  >
-                    View History →
-                  </Link>
-                </div>
               </div>
             </div>
           </div>
