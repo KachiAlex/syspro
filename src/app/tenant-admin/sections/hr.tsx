@@ -7,6 +7,10 @@ import {
   Download, MoreVertical, Award, Briefcase
 } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { AddEmployeeModal, EditEmployeeModal, ViewEmployeeModal, DeleteEmployeeModal, RunPayrollModal, PostJobModal, TrainingModal } from './hr-modals';
+import { AttendanceModal, LeaveModal } from './hr-attendance-modals';
+import { GenerateReportModal, ReportHistoryModal } from './hr-reports-modals';
+import { HRService } from './hr-service';
 
 type HRTab = 'overview';
 
@@ -77,6 +81,20 @@ const HRComponent: React.FC = () => {
   const [departmentFilter, setDepartmentFilter] = useState('All Departments');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showRunPayrollModal, setShowRunPayrollModal] = useState(false);
+  const [showPostJobModal, setShowPostJobModal] = useState(false);
+  const [showTrainingModal, setShowTrainingModal] = useState(false);
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showGenerateReportModal, setShowGenerateReportModal] = useState(false);
+  const [showReportHistoryModal, setShowReportHistoryModal] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [departments, setDepartments] = useState<string[]>(['Engineering', 'Sales', 'Marketing', 'HR', 'Finance']);
+  const [statuses, setStatuses] = useState<string[]>(['Active', 'On Leave', 'Terminated']);
+  const [reports, setReports] = useState<any[]>([]);
 
   const departments = ['All Departments', 'Engineering', 'Sales', 'Marketing', 'HR', 'Finance', 'Operations'];
   const statuses = ['All Statuses', 'Active', 'On Leave', 'Inactive', 'Terminated'];
