@@ -218,9 +218,15 @@ export const LeaveModal: React.FC<LeaveModalProps> = ({
   onSubmit,
   employees
 }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    employeeId: string;
+    leaveType: 'annual' | 'sick' | 'personal' | 'maternity';
+    startDate: string;
+    endDate: string;
+    reason: string;
+  }>({
     employeeId: '',
-    leaveType: 'annual' as const,
+    leaveType: 'annual',
     startDate: '',
     endDate: '',
     reason: ''
