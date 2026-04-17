@@ -55,8 +55,8 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
       )}
 
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Accounting Workspace</h2>
-        <p className="text-gray-600">Manage journal entries, financial reports, and chart of accounts</p>
+        <h2 className="text-2xl font-bold text-black mb-2">Accounting Workspace</h2>
+        <p className="text-black">Manage journal entries, financial reports, and chart of accounts</p>
       </div>
 
       {/* Financial Overview */}
@@ -64,8 +64,8 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Revenue</p>
-              <p className="text-xl font-bold text-gray-900">$234,567</p>
+              <p className="text-sm text-black">Total Revenue</p>
+              <p className="text-xl font-bold text-black">$234,567</p>
             </div>
             <TrendingUp className="w-8 h-8 text-green-600" />
           </div>
@@ -73,8 +73,8 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Expenses</p>
-              <p className="text-xl font-bold text-gray-900">$145,890</p>
+              <p className="text-sm text-black">Total Expenses</p>
+              <p className="text-xl font-bold text-black">$145,890</p>
             </div>
             <Calculator className="w-8 h-8 text-red-600" />
           </div>
@@ -82,8 +82,8 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Net Income</p>
-              <p className="text-xl font-bold text-gray-900">$88,677</p>
+              <p className="text-sm text-black">Net Income</p>
+              <p className="text-xl font-bold text-black">$88,677</p>
             </div>
             <TrendingUp className="w-8 h-8 text-blue-600" />
           </div>
@@ -91,8 +91,8 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Cash Balance</p>
-              <p className="text-xl font-bold text-gray-900">$67,234</p>
+              <p className="text-sm text-black">Cash Balance</p>
+              <p className="text-xl font-bold text-black">$67,234</p>
             </div>
             <Database className="w-8 h-8 text-purple-600" />
           </div>
@@ -124,54 +124,54 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
       {/* Financial Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Income Statement (YTD)</h3>
+          <h3 className="text-lg font-semibold text-black mb-4">Income Statement (YTD)</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-gray-600">Revenue</span>
-              <span className="font-semibold">$234,567</span>
+              <span className="text-black">Revenue</span>
+              <span className="font-semibold text-black">$234,567</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-gray-600">Cost of Goods Sold</span>
-              <span className="font-semibold">-$67,234</span>
+              <span className="text-black">Cost of Goods Sold</span>
+              <span className="font-semibold text-black">-$67,234</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-gray-600 ml-4">Gross Profit</span>
+              <span className="text-black ml-4">Gross Profit</span>
               <span className="font-semibold text-green-600">$167,333</span>
             </div>
             <div className="flex justify-between items-center py-2">
-              <span className="font-bold">Net Income</span>
+              <span className="font-bold text-black">Net Income</span>
               <span className="font-bold text-lg text-green-600">$88,677</span>
             </div>
           </div>
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Balance Sheet</h3>
+          <h3 className="text-lg font-semibold text-black mb-4">Balance Sheet</h3>
           <div className="space-y-3">
             <div className="border-b pb-3">
-              <h4 className="font-medium text-gray-900 mb-2">Assets</h4>
+              <h4 className="font-medium text-black mb-2">Assets</h4>
               <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-600">Cash</span>
-                <span>$67,234</span>
+                <span className="text-black">Cash</span>
+                <span className="text-black">$67,234</span>
               </div>
               <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-600">Accounts Receivable</span>
-                <span>$45,678</span>
+                <span className="text-black">Accounts Receivable</span>
+                <span className="text-black">$45,678</span>
               </div>
               <div className="flex justify-between font-semibold text-sm border-t pt-1">
-                <span>Total Assets</span>
-                <span>$136,368</span>
+                <span className="text-black">Total Assets</span>
+                <span className="text-black">$136,368</span>
               </div>
             </div>
             <div>
-              <h4 className="font-medium text-gray-900 mb-2">Liabilities & Equity</h4>
+              <h4 className="font-medium text-black mb-2">Liabilities & Equity</h4>
               <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-600">Total Liabilities</span>
-                <span>$35,801</span>
+                <span className="text-black">Total Liabilities</span>
+                <span className="text-black">$35,801</span>
               </div>
               <div className="flex justify-between font-semibold text-sm border-t pt-1">
-                <span>Owner's Equity</span>
-                <span>$100,567</span>
+                <span className="text-black">Owner's Equity</span>
+                <span className="text-black">$100,567</span>
               </div>
             </div>
           </div>
@@ -181,7 +181,7 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
       {/* Recent Journal Entries */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Recent Journal Entries</h3>
+          <h3 className="text-lg font-semibold text-black">Recent Journal Entries</h3>
           <button className="text-blue-600 hover:text-blue-800 text-sm">View All</button>
         </div>
         <div className="overflow-x-auto">
@@ -199,10 +199,10 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
             <tbody className="divide-y">
               {journalEntries.map((entry, i) => (
                 <tr key={i} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">{entry.id}</td>
-                  <td className="px-4 py-3">{entry.date}</td>
-                  <td className="px-4 py-3">{entry.account}</td>
-                  <td className="px-4 py-3">{entry.description}</td>
+                  <td className="px-4 py-3 text-black">{entry.id}</td>
+                  <td className="px-4 py-3 text-black">{entry.date}</td>
+                  <td className="px-4 py-3 text-black">{entry.account}</td>
+                  <td className="px-4 py-3 text-black">{entry.description}</td>
                   <td className="px-4 py-3 font-semibold text-green-600">{entry.debit}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
@@ -220,29 +220,29 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
       {/* Chart of Accounts */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Assets</h3>
+          <h3 className="text-lg font-semibold text-black mb-4">Assets</h3>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between py-2 border-b"><span>Cash</span><span className="font-semibold">$67,234</span></div>
-            <div className="flex justify-between py-2 border-b"><span>Accounts Receivable</span><span className="font-semibold">$45,678</span></div>
-            <div className="flex justify-between py-2"><span>Equipment</span><span className="font-semibold">$89,234</span></div>
+            <div className="flex justify-between py-2 border-b"><span className="text-black">Cash</span><span className="font-semibold text-black">$67,234</span></div>
+            <div className="flex justify-between py-2 border-b"><span className="text-black">Accounts Receivable</span><span className="font-semibold text-black">$45,678</span></div>
+            <div className="flex justify-between py-2"><span className="text-black">Equipment</span><span className="font-semibold text-black">$89,234</span></div>
           </div>
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Liabilities</h3>
+          <h3 className="text-lg font-semibold text-black mb-4">Liabilities</h3>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between py-2 border-b"><span>Accounts Payable</span><span className="font-semibold">$23,456</span></div>
-            <div className="flex justify-between py-2 border-b"><span>Short-term Debt</span><span className="font-semibold">$12,345</span></div>
-            <div className="flex justify-between py-2"><span>Accrued Expenses</span><span className="font-semibold">$8,234</span></div>
+            <div className="flex justify-between py-2 border-b"><span className="text-black">Accounts Payable</span><span className="font-semibold text-black">$23,456</span></div>
+            <div className="flex justify-between py-2 border-b"><span className="text-black">Short-term Debt</span><span className="font-semibold text-black">$12,345</span></div>
+            <div className="flex justify-between py-2"><span className="text-black">Accrued Expenses</span><span className="font-semibold text-black">$8,234</span></div>
           </div>
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Equity</h3>
+          <h3 className="text-lg font-semibold text-black mb-4">Equity</h3>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between py-2 border-b"><span>Owner's Equity</span><span className="font-semibold">$100,567</span></div>
-            <div className="flex justify-between py-2 border-b"><span>Retained Earnings</span><span className="font-semibold">$45,234</span></div>
-            <div className="flex justify-between py-2"><span>Revenue</span><span className="font-semibold">$234,567</span></div>
+            <div className="flex justify-between py-2 border-b"><span className="text-black">Owner's Equity</span><span className="font-semibold text-black">$100,567</span></div>
+            <div className="flex justify-between py-2 border-b"><span className="text-black">Retained Earnings</span><span className="font-semibold text-black">$45,234</span></div>
+            <div className="flex justify-between py-2"><span className="text-black">Revenue</span><span className="font-semibold text-black">$234,567</span></div>
           </div>
         </div>
       </div>

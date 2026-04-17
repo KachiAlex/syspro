@@ -25,6 +25,30 @@ export default function FinanceReportsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("month");
   const [startDate, setStartDate] = useState("2024-03-01");
   const [endDate, setEndDate] = useState("2024-03-31");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const handleGenerateReport = async () => {
+    setIsGenerating(true);
+    setAlert(null);
+    
+    try {
+      // Simulate API call to generate report
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setAlert({
+        type: 'success',
+        message: `Financial report generated successfully for ${selectedPeriod} period (${startDate} to ${endDate})`
+      });
+    } catch (error) {
+      setAlert({
+        type: 'error',
+        message: 'Failed to generate report. Please try again.'
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const reports: Report[] = [
     {
@@ -88,17 +112,36 @@ export default function FinanceReportsPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Alert */}
+        {alert && (
+          <div className={`mb-6 p-4 rounded-lg border ${
+            alert.type === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-800' 
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            <div className="flex items-center justify-between">
+              <span>{alert.message}</span>
+              <button 
+                onClick={() => setAlert(null)}
+                className="text-current hover:opacity-70"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Finance Reports</h1>
-          <p className="text-gray-600 mt-2">Generate and analyze financial statements</p>
+          <h1 className="text-3xl font-bold text-black">Finance Reports</h1>
+          <p className="text-black mt-2">Generate and analyze financial statements</p>
         </div>
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-black mb-2">
                 Period
               </label>
               <select
@@ -113,7 +156,7 @@ export default function FinanceReportsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-black mb-2">
                 Start Date
               </label>
               <input
@@ -125,7 +168,7 @@ export default function FinanceReportsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-black mb-2">
                 End Date
               </label>
               <input
@@ -137,9 +180,13 @@ export default function FinanceReportsPage() {
             </div>
 
             <div className="flex items-end">
-              <button className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+              <button 
+                onClick={handleGenerateReport}
+                disabled={isGenerating}
+                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Download className="h-4 w-4" />
-                Generate
+                {isGenerating ? 'Generating...' : 'Generate'}
               </button>
             </div>
           </div>
@@ -156,14 +203,14 @@ export default function FinanceReportsPage() {
                 <div className="flex items-center gap-4">
                   {report.icon}
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">{report.name}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{report.description}</p>
+                    <h3 className="text-lg font-bold text-black">{report.name}</h3>
+                    <p className="text-sm text-black mt-1">{report.description}</p>
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-black">
                   Last generated: {new Date(report.lastGenerated).toLocaleDateString()}
                 </p>
                 <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">
@@ -177,46 +224,46 @@ export default function FinanceReportsPage() {
 
         {/* Income Statement Preview */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Income Statement (YTD)</h2>
+          <h2 className="text-2xl font-bold text-black mb-6">Income Statement (YTD)</h2>
 
           <div className="space-y-4">
             <div className="flex justify-between items-center py-3 border-b border-gray-200">
-              <p className="text-gray-900 font-medium">Total Revenue</p>
+              <p className="text-black font-medium">Total Revenue</p>
               <p className="text-lg font-bold text-green-600">
                 ${incomeStatementData.totalRevenue.toLocaleString()}
               </p>
             </div>
 
             <div className="flex justify-between items-center py-3 border-b border-gray-200">
-              <p className="text-gray-900 font-medium">Cost of Goods Sold</p>
+              <p className="text-black font-medium">Cost of Goods Sold</p>
               <p className="text-lg font-bold text-red-600">
                 -${incomeStatementData.costOfGoodsSold.toLocaleString()}
               </p>
             </div>
 
             <div className="flex justify-between items-center py-3 border-b border-gray-200 bg-gray-50 px-4">
-              <p className="text-gray-900 font-bold">Gross Profit</p>
+              <p className="text-black font-bold">Gross Profit</p>
               <p className="text-lg font-bold text-blue-600">
                 ${incomeStatementData.grossProfit.toLocaleString()}
               </p>
             </div>
 
             <div className="flex justify-between items-center py-3 border-b border-gray-200">
-              <p className="text-gray-900 font-medium">Operating Expenses</p>
+              <p className="text-black font-medium">Operating Expenses</p>
               <p className="text-lg font-bold text-red-600">
                 -${incomeStatementData.operatingExpenses.toLocaleString()}
               </p>
             </div>
 
             <div className="flex justify-between items-center py-3 border-b border-gray-200 bg-gray-50 px-4">
-              <p className="text-gray-900 font-bold">Operating Income</p>
+              <p className="text-black font-bold">Operating Income</p>
               <p className="text-lg font-bold text-blue-600">
                 ${incomeStatementData.operatingIncome.toLocaleString()}
               </p>
             </div>
 
             <div className="flex justify-between items-center py-3">
-              <p className="text-gray-900 font-bold">Net Income</p>
+              <p className="text-black font-bold">Net Income</p>
               <p className="text-xl font-bold text-green-600">
                 ${incomeStatementData.netIncome.toLocaleString()}
               </p>
@@ -227,14 +274,14 @@ export default function FinanceReportsPage() {
         {/* Expense Breakdown */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Expense Breakdown by Category</h2>
+            <h2 className="text-xl font-bold text-black mb-6">Expense Breakdown by Category</h2>
 
             <div className="space-y-4">
               {expenseCategories.map((category) => (
                 <div key={category.name}>
                   <div className="flex justify-between items-center mb-2">
-                    <p className="text-sm font-medium text-gray-700">{category.name}</p>
-                    <p className="text-sm font-bold text-gray-900">{category.percentage}%</p>
+                    <p className="text-sm font-medium text-black">{category.name}</p>
+                    <p className="text-sm font-bold text-black">{category.percentage}%</p>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
@@ -242,7 +289,7 @@ export default function FinanceReportsPage() {
                       style={{ width: `${category.percentage}%` }}
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-black mt-1">
                     ${category.amount.toLocaleString()}
                   </p>
                 </div>
@@ -252,24 +299,24 @@ export default function FinanceReportsPage() {
 
           {/* Monthly Comparison */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Monthly Comparison</h2>
+            <h2 className="text-xl font-bold text-black mb-6">Monthly Comparison</h2>
 
             <div className="space-y-6">
               {monthlyData.map((month) => (
                 <div key={month.month}>
-                  <p className="text-sm font-bold text-gray-900 mb-3">{month.month}</p>
+                  <p className="text-sm font-bold text-black mb-3">{month.month}</p>
                   <div className="flex items-end gap-4 h-24">
                     <div className="flex-1">
                       <div className="bg-green-500 rounded-t h-full w-full" />
-                      <p className="text-xs text-center mt-2 text-gray-600">Revenue</p>
-                      <p className="text-xs font-bold text-center">
+                      <p className="text-xs text-center mt-2 text-black">Revenue</p>
+                      <p className="text-xs font-bold text-center text-black">
                         ${(month.revenue / 1000).toFixed(0)}K
                       </p>
                     </div>
                     <div className="flex-1">
                       <div className="bg-red-500 rounded-t h-16 w-full" />
-                      <p className="text-xs text-center mt-2 text-gray-600">Expenses</p>
-                      <p className="text-xs font-bold text-center">
+                      <p className="text-xs text-center mt-2 text-black">Expenses</p>
+                      <p className="text-xs font-bold text-center text-black">
                         ${(month.expenses / 1000).toFixed(0)}K
                       </p>
                     </div>

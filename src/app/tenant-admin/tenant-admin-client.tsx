@@ -34,15 +34,15 @@ export default function TenantAdminClient() {
         return (
           <div className="p-6 space-y-6">
             <div className="mb-6">
-              <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-              <p className="text-gray-600 mt-1">Welcome back! Here's your tenant system at a glance.</p>
+              <h1 className="text-3xl font-bold text-black">Dashboard Overview</h1>
+              <p className="text-black mt-1">Welcome back! Here's your tenant system at a glance.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Active Users</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">1,243</p>
+                    <p className="text-sm font-medium text-black">Active Users</p>
+                    <p className="text-2xl font-bold text-black mt-1">1,243</p>
                     <p className="text-sm text-green-600 mt-2">↑ 8% from last week</p>
                   </div>
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -53,9 +53,9 @@ export default function TenantAdminClient() {
               <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Licenses Used</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">890 / 1000</p>
-                    <p className="text-sm text-gray-600 mt-2">89% capacity</p>
+                    <p className="text-sm font-medium text-black">Licenses Used</p>
+                    <p className="text-2xl font-bold text-black mt-1">890 / 1000</p>
+                    <p className="text-sm text-black mt-2">89% capacity</p>
                   </div>
                   <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                     <CheckCircle className="w-6 h-6 text-green-600" />
@@ -65,9 +65,9 @@ export default function TenantAdminClient() {
               <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Storage Usage</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">245 GB / 500 GB</p>
-                    <p className="text-sm text-gray-600 mt-2">49% capacity</p>
+                    <p className="text-sm font-medium text-black">Storage Usage</p>
+                    <p className="text-2xl font-bold text-black mt-1">245 GB / 500 GB</p>
+                    <p className="text-sm text-black mt-2">49% capacity</p>
                   </div>
                   <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                     <HardDrive className="w-6 h-6 text-purple-600" />
@@ -77,8 +77,8 @@ export default function TenantAdminClient() {
               <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">System Uptime</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">99.92%</p>
+                    <p className="text-sm font-medium text-black">System Uptime</p>
+                    <p className="text-2xl font-bold text-black mt-1">99.92%</p>
                     <p className="text-sm text-green-600 mt-2">This month</p>
                   </div>
                   <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -100,7 +100,7 @@ export default function TenantAdminClient() {
   return (
     <div className="p-6">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">Tenant: {tenantSlug}</h2>
+        <h2 className="text-2xl font-semibold text-black">Tenant: {tenantSlug}</h2>
         <div>
           <button onClick={() => setActiveSection("overview")} className="px-3 py-1 bg-gray-100 rounded mr-2">Overview</button>
           <button onClick={() => setActiveSection("hr")} className="px-3 py-1 bg-gray-100 rounded mr-2">People</button>
