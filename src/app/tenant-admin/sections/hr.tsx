@@ -40,40 +40,34 @@ interface TrainingSession {
   location?: string;
 }
 
-const DEFAULT_EMPLOYEES: Employee[] = [
-  { id: '1', name: 'John Smith', email: 'john@company.com', department: 'Engineering', position: 'Senior Developer', startDate: '2022-01-15', status: 'Active', salary: '$95,000' },
-  { id: '2', name: 'Sarah Johnson', email: 'sarah@company.com', department: 'Sales', position: 'Sales Manager', startDate: '2021-06-20', status: 'Active', salary: '$85,000' },
-  { id: '3', name: 'Mike Davis', email: 'mike@company.com', department: 'Marketing', position: 'Marketing Lead', startDate: '2022-03-10', status: 'On Leave', salary: '$75,000' },
-  { id: '4', name: 'Emily Chen', email: 'emily@company.com', department: 'Engineering', position: 'Developer', startDate: '2023-01-05', status: 'Active', salary: '$80,000' },
-  { id: '5', name: 'James Wilson', email: 'james@company.com', department: 'HR', position: 'HR Manager', startDate: '2020-09-12', status: 'Active', salary: '$70,000' },
-];
+interface AttendanceRecord {
+  id: string;
+  employeeName: string;
+  checkIn: string;
+  checkOut: string;
+  status: string;
+  hours: number;
+}
 
-const DEFAULT_TRAINING_SESSIONS: TrainingSession[] = [
-  {
-    id: 'leadership',
-    title: 'Leadership Excellence',
-    description: 'Advanced leadership and management skills',
-    status: 'planned',
-    startDate: '2026-05-01',
-    endDate: '2026-05-15',
-    instructor: 'Dr. Sarah Mitchell',
-    capacity: 30,
-    enrolled: 12,
-    location: 'Conference Room A',
-  },
-  {
-    id: 'sales',
-    title: 'Advanced Sales Techniques',
-    description: 'Modern sales methodologies and customer engagement',
-    status: 'ongoing',
-    startDate: '2026-04-01',
-    endDate: '2026-04-30',
-    instructor: 'John Anderson',
-    capacity: 40,
-    enrolled: 25,
-    location: 'Virtual',
-  },
-];
+interface LeaveRequest {
+  id: string;
+  employeeName: string;
+  leaveType: string;
+  days: number;
+  startDate: string;
+  endDate: string;
+  status: string;
+}
+
+interface PayrollRun {
+  id: string;
+  period: string;
+  employeeCount: number;
+  totalAmount: number;
+  status: string;
+  processedDate: string;
+}
+
 
 const HRComponent: React.FC = () => {
   const { tenantSlug } = useTenantContext();
@@ -97,6 +91,11 @@ const HRComponent: React.FC = () => {
   const [departments, setDepartments] = useState<string[]>(['Engineering', 'Sales', 'Marketing', 'HR', 'Finance']);
   const [statuses, setStatuses] = useState<string[]>(['Active', 'On Leave', 'Terminated']);
   const [reports, setReports] = useState<any[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [attendanceStats, setAttendanceStats] = useState({ present: 0, absent: 0, late: 0, halfDay: 0, total: 0 });
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [trainingSessions, setTrainingSessions] = useState<TrainingSession[]>([]);
+  const [payrollHistory, setPayrollHistory] = useState<PayrollRun[]>([]);
 
   const filteredEmployees = employees.filter((emp) => {
     if (departmentFilter !== 'All Departments' && emp.department !== departmentFilter) return false;
@@ -237,10 +236,25 @@ const HRComponent: React.FC = () => {
     if (!tenantSlug) return;
     setLoading(true);
     try {
-      const [fetchedEmployees, fetchedDepartments, fetchedReports] = await Promise.all([
+      const today = new Date().toISOString().split('T')[0];
+      const [
+        fetchedEmployees,
+        fetchedDepartments,
+        fetchedReports,
+        fetchedAttendance,
+        fetchedStats,
+        fetchedLeave,
+        fetchedTraining,
+        fetchedPayroll
+      ] = await Promise.all([
         HRService.getEmployees(tenantSlug),
         HRService.getDepartments(tenantSlug),
         HRService.getReports(tenantSlug).catch(() => []),
+        HRService.getAttendanceRecords(tenantSlug, { date: today }).catch(() => []),
+        HRService.getAttendanceStats(tenantSlug, today).catch(() => ({ present: 0, absent: 0, late: 0, halfDay: 0, total: 0 })),
+        HRService.getLeaveRequests(tenantSlug, { status: 'pending' }).catch(() => []),
+        HRService.getTrainingSessions(tenantSlug).catch(() => []),
+        HRService.getPayrollHistory(tenantSlug).catch(() => []),
       ]);
 
       setEmployees(
@@ -257,6 +271,43 @@ const HRComponent: React.FC = () => {
       );
       setDepartments(fetchedDepartments);
       setReports(fetchedReports);
+      setAttendanceRecords(fetchedAttendance.map((r: any) => ({
+        id: r.id,
+        employeeName: r.employeeName || r.employee?.name || '',
+        checkIn: r.checkIn || r.check_in || '—',
+        checkOut: r.checkOut || r.check_out || '—',
+        status: r.status,
+        hours: r.hours || 0
+      })));
+      setAttendanceStats(fetchedStats);
+      setLeaveRequests(fetchedLeave.map((r: any) => ({
+        id: r.id,
+        employeeName: r.employeeName || r.employee?.name || '',
+        leaveType: r.leaveType || r.leave_type || '—',
+        days: r.days || r.dayCount || 0,
+        startDate: r.startDate || r.start_date || '—',
+        endDate: r.endDate || r.end_date || '—',
+        status: r.status
+      })));
+      setTrainingSessions(fetchedTraining.map((s: any) => ({
+        id: s.id,
+        title: s.title,
+        description: s.description || '',
+        status: (s.status as 'planned' | 'ongoing' | 'completed') || 'planned',
+        startDate: s.startDate || s.start_date || '',
+        endDate: s.endDate || s.end_date || '',
+        instructor: s.instructor || '',
+        capacity: s.capacity || 0,
+        enrolled: s.enrolled || 0
+      })));
+      setPayrollHistory(fetchedPayroll.map((p: any) => ({
+        id: p.id,
+        period: p.period,
+        employeeCount: p.employeeCount || 0,
+        totalAmount: p.totalAmount || 0,
+        status: p.status,
+        processedDate: p.processedDate || p.processed_date || ''
+      })));
     } catch (error) {
       console.error('Failed to load HR data:', error);
     } finally {
@@ -537,38 +588,42 @@ const HRComponent: React.FC = () => {
 
       <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
         <h3 className="text-lg font-semibold text-[#F8FAFC] mb-4">Training & Development</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {DEFAULT_TRAINING_SESSIONS.map((session) => (
-            <div key={session.id} className="border border-[rgba(255,255,255,0.07)] rounded-lg p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h5 className="font-semibold text-[#F8FAFC]">{session.title}</h5>
-                  <p className="text-xs text-[#94A3B8] mt-1">{session.description}</p>
+        {trainingSessions.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {trainingSessions.map((session) => (
+              <div key={session.id} className="border border-[rgba(255,255,255,0.07)] rounded-lg p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h5 className="font-semibold text-[#F8FAFC]">{session.title}</h5>
+                    <p className="text-xs text-[#94A3B8] mt-1">{session.description}</p>
+                  </div>
+                  <span className={`text-xs font-medium px-2 py-1 rounded whitespace-nowrap ${
+                    session.status === 'completed' ? 'bg-green-500/10 text-green-400' :
+                    session.status === 'ongoing' ? 'bg-blue-500/10 text-blue-400' :
+                    'bg-[rgba(255,255,255,0.07)] text-[#F8FAFC]'
+                  }`}>
+                    {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                  </span>
                 </div>
-                <span className={`text-xs font-medium px-2 py-1 rounded whitespace-nowrap ${
-                  session.status === 'completed' ? 'bg-green-500/10 text-green-400' :
-                  session.status === 'ongoing' ? 'bg-blue-500/10 text-blue-400' :
-                  'bg-[rgba(255,255,255,0.07)] text-[#F8FAFC]'
-                }`}>
-                  {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-                </span>
-              </div>
-              <div className="space-y-2 text-sm mb-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-[#94A3B8]">Instructor:</span>
-                  <span className="font-medium text-[#F8FAFC]">{session.instructor}</span>
+                <div className="space-y-2 text-sm mb-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#94A3B8]">Instructor:</span>
+                    <span className="font-medium text-[#F8FAFC]">{session.instructor}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#94A3B8]">Enrollment:</span>
+                    <span className="font-medium text-[#F8FAFC]">{session.enrolled}/{session.capacity}</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[#94A3B8]">Enrollment:</span>
-                  <span className="font-medium text-[#F8FAFC]">{session.enrolled}/{session.capacity}</span>
+                <div className="w-full bg-[rgba(255,255,255,0.1)] rounded-full h-2">
+                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${session.capacity > 0 ? (session.enrolled / session.capacity) * 100 : 0}%` }} />
                 </div>
               </div>
-              <div className="w-full bg-[rgba(255,255,255,0.1)] rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${(session.enrolled / session.capacity) * 100}%` }} />
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-[#94A3B8]">No training sessions available.</p>
+        )}
       </div>
     </div>
   );
@@ -598,19 +653,19 @@ const HRComponent: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-4">
           <p className="text-xs text-[#94A3B8] mb-1">Present Today</p>
-          <p className="text-2xl font-bold text-green-400">{employees.filter(e => e.status === 'Active').length}</p>
+          <p className="text-2xl font-bold text-green-400">{attendanceStats.present}</p>
         </div>
         <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-4">
           <p className="text-xs text-[#94A3B8] mb-1">Absent</p>
-          <p className="text-2xl font-bold text-red-400">0</p>
+          <p className="text-2xl font-bold text-red-400">{attendanceStats.absent}</p>
         </div>
         <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-4">
           <p className="text-xs text-[#94A3B8] mb-1">Late</p>
-          <p className="text-2xl font-bold text-amber-400">0</p>
+          <p className="text-2xl font-bold text-amber-400">{attendanceStats.late}</p>
         </div>
         <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-4">
           <p className="text-xs text-[#94A3B8] mb-1">Half Day</p>
-          <p className="text-2xl font-bold text-[#818CF8]">0</p>
+          <p className="text-2xl font-bold text-[#818CF8]">{attendanceStats.halfDay}</p>
         </div>
       </div>
 
@@ -628,19 +683,32 @@ const HRComponent: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[rgba(255,255,255,0.07)]">
-              {employees.slice(0, 5).map((emp) => (
-                <tr key={emp.id} className="hover:bg-[rgba(255,255,255,0.02)]">
-                  <td className="px-4 py-3 font-medium text-[#F8FAFC]">{emp.name}</td>
-                  <td className="px-4 py-3 text-[#94A3B8]">09:00 AM</td>
-                  <td className="px-4 py-3 text-[#94A3B8]">06:00 PM</td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-400">
-                      Present
-                    </span>
+              {attendanceRecords.length > 0 ? (
+                attendanceRecords.map((record) => (
+                  <tr key={record.id} className="hover:bg-[rgba(255,255,255,0.02)]">
+                    <td className="px-4 py-3 font-medium text-[#F8FAFC]">{record.employeeName}</td>
+                    <td className="px-4 py-3 text-[#94A3B8]">{record.checkIn}</td>
+                    <td className="px-4 py-3 text-[#94A3B8]">{record.checkOut}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        record.status === 'present' ? 'bg-green-500/10 text-green-400' :
+                        record.status === 'absent' ? 'bg-red-500/10 text-red-400' :
+                        record.status === 'late' ? 'bg-amber-500/10 text-amber-400' :
+                        'bg-[rgba(255,255,255,0.07)] text-[#F8FAFC]'
+                      }`}>
+                        {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-[#94A3B8]">{record.hours}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-[#94A3B8]">
+                    No attendance records for today
                   </td>
-                  <td className="px-4 py-3 text-[#94A3B8]">9.0</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
@@ -649,48 +717,55 @@ const HRComponent: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
           <h4 className="font-semibold text-[#F8FAFC] mb-4">Pending Leave Requests</h4>
-          <div className="space-y-3">
-            {[
-              { name: 'John Smith', type: 'Annual', days: 5, from: '2026-04-15', to: '2026-04-20' },
-              { name: 'Sarah Johnson', type: 'Sick', days: 2, from: '2026-04-10', to: '2026-04-12' },
-            ].map((req, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 border border-[rgba(255,255,255,0.07)] rounded-lg">
-                <div>
-                  <p className="font-medium text-[#F8FAFC]">{req.name}</p>
-                  <p className="text-xs text-[#94A3B8]">{req.type} • {req.days} days</p>
+          {leaveRequests.length > 0 ? (
+            <div className="space-y-3">
+              {leaveRequests.map((req) => (
+                <div key={req.id} className="flex items-center justify-between p-3 border border-[rgba(255,255,255,0.07)] rounded-lg">
+                  <div>
+                    <p className="font-medium text-[#F8FAFC]">{req.employeeName}</p>
+                    <p className="text-xs text-[#94A3B8]">{req.leaveType} • {req.days} days</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        if (!tenantSlug) return;
+                        try {
+                          await HRService.updateLeaveStatus(tenantSlug, req.id, 'approved');
+                          setLeaveRequests(prev => prev.filter(r => r.id !== req.id));
+                        } catch (err) {
+                          console.error('Failed to approve leave:', err);
+                        }
+                      }}
+                      className="px-2 py-1 text-xs font-medium text-green-400 bg-green-50 rounded hover:bg-green-100"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!tenantSlug) return;
+                        try {
+                          await HRService.updateLeaveStatus(tenantSlug, req.id, 'rejected');
+                          setLeaveRequests(prev => prev.filter(r => r.id !== req.id));
+                        } catch (err) {
+                          console.error('Failed to reject leave:', err);
+                        }
+                      }}
+                      className="px-2 py-1 text-xs font-medium text-red-400 bg-red-50 rounded hover:bg-red-100"
+                    >
+                      Reject
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <button className="px-2 py-1 text-xs font-medium text-green-400 bg-green-50 rounded hover:bg-green-100">
-                    Approve
-                  </button>
-                  <button className="px-2 py-1 text-xs font-medium text-red-400 bg-red-50 rounded hover:bg-red-100">
-                    Reject
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-[#94A3B8]">No pending leave requests.</p>
+          )}
         </div>
 
         <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
           <h4 className="font-semibold text-[#F8FAFC] mb-4">Leave Balance</h4>
-          <div className="space-y-3">
-            {[
-              { type: 'Annual Leave', used: 10, total: 20, remaining: 10 },
-              { type: 'Sick Leave', used: 2, total: 10, remaining: 8 },
-              { type: 'Personal Leave', used: 1, total: 5, remaining: 4 },
-            ].map((leave, idx) => (
-              <div key={idx}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-[#F8FAFC]">{leave.type}</span>
-                  <span className="text-sm text-[#94A3B8]">{leave.remaining}/{leave.total}</span>
-                </div>
-                <div className="w-full bg-[rgba(255,255,255,0.1)] rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${(leave.used / leave.total) * 100}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
+          <p className="text-sm text-[#94A3B8]">Select an employee to view leave balance.</p>
         </div>
       </div>
     </div>
@@ -711,50 +786,59 @@ const HRComponent: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
-          <p className="text-sm font-medium text-[#94A3B8] mb-2">Monthly Payroll</p>
-          <p className="text-3xl font-bold text-[#F8FAFC]">$125,450</p>
-          <p className="text-xs text-[#64748B] mt-2">Current period</p>
+          <p className="text-sm font-medium text-[#94A3B8] mb-2">Latest Payroll</p>
+          <p className="text-3xl font-bold text-[#F8FAFC]">
+            {payrollHistory.length > 0 ? `$${(payrollHistory[0].totalAmount).toLocaleString()}` : '—'}
+          </p>
+          <p className="text-xs text-[#64748B] mt-2">
+            {payrollHistory.length > 0 ? payrollHistory[0].period : 'No data'}
+          </p>
         </div>
         <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
           <p className="text-sm font-medium text-[#94A3B8] mb-2">Annual Payroll</p>
-          <p className="text-3xl font-bold text-[#F8FAFC]">$1.5M</p>
-          <p className="text-xs text-[#64748B] mt-2">Projected</p>
+          <p className="text-3xl font-bold text-[#F8FAFC]">
+            ${payrollHistory.reduce((sum, p) => sum + (p.totalAmount || 0), 0).toLocaleString()}
+          </p>
+          <p className="text-xs text-[#64748B] mt-2">Total processed</p>
         </div>
         <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
           <p className="text-sm font-medium text-[#94A3B8] mb-2">Average Salary</p>
-          <p className="text-3xl font-bold text-[#F8FAFC]">$65,230</p>
+          <p className="text-3xl font-bold text-[#F8FAFC]">
+            {employees.length > 0 && employees.filter(e => e.salary).length > 0
+              ? `$${Math.round(employees.filter(e => e.salary).reduce((sum, e) => sum + (parseFloat(e.salary?.replace(/[$,]/g, '') || '0') || 0), 0) / employees.filter(e => e.salary).length).toLocaleString()}`
+              : '—'}
+          </p>
           <p className="text-xs text-[#64748B] mt-2">Per employee</p>
         </div>
         <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
-          <p className="text-sm font-medium text-[#94A3B8] mb-2">Total Benefits</p>
-          <p className="text-3xl font-bold text-[#F8FAFC]">$43,908</p>
-          <p className="text-xs text-[#64748B] mt-2">Monthly allocation</p>
+          <p className="text-sm font-medium text-[#94A3B8] mb-2">Total Employees</p>
+          <p className="text-3xl font-bold text-[#F8FAFC]">{employees.length}</p>
+          <p className="text-xs text-[#64748B] mt-2">Active workforce</p>
         </div>
       </div>
 
       <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
         <h3 className="text-lg font-semibold text-[#F8FAFC] mb-4">Payroll Breakdown</h3>
-        <div className="space-y-3">
-          {[
-            { label: 'Base Salary', amount: '$125,450', percentage: 65 },
-            { label: 'Allowances', amount: '$35,200', percentage: 18 },
-            { label: 'Bonuses', amount: '$21,340', percentage: 11 },
-            { label: 'Other', amount: '$6,010', percentage: 6 },
-          ].map((item, idx) => (
-            <div key={idx} className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-[#F8FAFC]">{item.label}</span>
-                  <span className="text-sm font-semibold text-[#F8FAFC]">{item.amount}</span>
+        {payrollHistory.length > 0 ? (
+          <div className="space-y-3">
+            {payrollHistory.slice(0, 1).map((run) => (
+              <div key={run.id} className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-[#F8FAFC]">{run.period}</span>
+                    <span className="text-sm font-semibold text-[#F8FAFC]">${run.totalAmount.toLocaleString()}</span>
+                  </div>
+                  <div className="w-full bg-[rgba(255,255,255,0.1)] rounded-full h-2">
+                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: '100%' }} />
+                  </div>
                 </div>
-                <div className="w-full bg-[rgba(255,255,255,0.1)] rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${item.percentage}%` }} />
-                </div>
+                <span className="ml-4 text-sm text-[#94A3B8] w-12 text-right">{run.employeeCount} emp</span>
               </div>
-              <span className="ml-4 text-sm text-[#94A3B8] w-12 text-right">{item.percentage}%</span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-[#94A3B8]">No payroll data available.</p>
+        )}
       </div>
 
       <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] overflow-hidden">
@@ -769,23 +853,31 @@ const HRComponent: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-[rgba(255,255,255,0.07)]">
-            {[
-              { period: 'April 2026', employees: 5, amount: '$125,450', status: 'Paid', date: '2026-04-05' },
-              { period: 'March 2026', employees: 5, amount: '$125,450', status: 'Paid', date: '2026-03-05' },
-              { period: 'February 2026', employees: 5, amount: '$123,210', status: 'Paid', date: '2026-02-05' },
-            ].map((run, idx) => (
-              <tr key={idx} className="hover:bg-[rgba(255,255,255,0.02)]">
-                <td className="px-6 py-4 text-sm font-medium text-[#F8FAFC]">{run.period}</td>
-                <td className="px-6 py-4 text-sm text-[#94A3B8]">{run.employees}</td>
-                <td className="px-6 py-4 text-sm font-semibold text-[#F8FAFC]">{run.amount}</td>
-                <td className="px-6 py-4 text-sm">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-400">
-                    {run.status}
-                  </span>
+            {payrollHistory.length > 0 ? (
+              payrollHistory.map((run) => (
+                <tr key={run.id} className="hover:bg-[rgba(255,255,255,0.02)]">
+                  <td className="px-6 py-4 text-sm font-medium text-[#F8FAFC]">{run.period}</td>
+                  <td className="px-6 py-4 text-sm text-[#94A3B8]">{run.employeeCount}</td>
+                  <td className="px-6 py-4 text-sm font-semibold text-[#F8FAFC]">${run.totalAmount.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-sm">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      run.status === 'Paid' ? 'bg-green-500/10 text-green-400' :
+                      run.status === 'Pending' ? 'bg-amber-500/10 text-amber-400' :
+                      'bg-[rgba(255,255,255,0.07)] text-[#F8FAFC]'
+                    }`}>
+                      {run.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-[#94A3B8]">{run.processedDate}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="px-6 py-8 text-center text-sm text-[#94A3B8]">
+                  No payroll history available
                 </td>
-                <td className="px-6 py-4 text-sm text-[#94A3B8]">{run.date}</td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
@@ -841,20 +933,20 @@ const HRComponent: React.FC = () => {
           <h4 className="font-semibold text-[#F8FAFC] mb-4">Key Metrics</h4>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[#94A3B8]">Turnover Rate</span>
-              <span className="font-semibold text-[#F8FAFC]">2.2%</span>
+              <span className="text-[#94A3B8]">Total Employees</span>
+              <span className="font-semibold text-[#F8FAFC]">{employees.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[#94A3B8]">Avg Tenure</span>
-              <span className="font-semibold text-[#F8FAFC]">4.8 yrs</span>
+              <span className="text-[#94A3B8]">Active</span>
+              <span className="font-semibold text-green-400">{employees.filter(e => e.status === 'Active').length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[#94A3B8]">Attendance Rate</span>
-              <span className="font-semibold text-[#F8FAFC]">96.5%</span>
+              <span className="text-[#94A3B8]">On Leave</span>
+              <span className="font-semibold text-amber-400">{employees.filter(e => e.status === 'On Leave').length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[#94A3B8]">Training Hours</span>
-              <span className="font-semibold text-[#F8FAFC]">156</span>
+              <span className="text-[#94A3B8]">Departments</span>
+              <span className="font-semibold text-[#818CF8]">{new Set(employees.map(e => e.department)).size}</span>
             </div>
           </div>
         </div>
@@ -862,51 +954,45 @@ const HRComponent: React.FC = () => {
 
       <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
         <h4 className="font-semibold text-[#F8FAFC] mb-4">Salary Distribution</h4>
-        <div className="space-y-3">
-          {[
-            { range: '$40K - $60K', count: 1, percentage: 20 },
-            { range: '$60K - $80K', count: 2, percentage: 40 },
-            { range: '$80K - $100K', count: 1, percentage: 20 },
-            { range: '$100K+', count: 1, percentage: 20 },
-          ].map((item, idx) => (
-            <div key={idx}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm text-[#94A3B8]">{item.range}</span>
-                <span className="text-sm font-semibold text-[#F8FAFC]">{item.count} ({item.percentage}%)</span>
-              </div>
-              <div className="w-full bg-[rgba(255,255,255,0.1)] rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${item.percentage}%` }} />
-              </div>
-            </div>
-          ))}
-        </div>
+        {employees.filter(e => e.salary).length > 0 ? (
+          <div className="space-y-3">
+            {(() => {
+              const ranges = [
+                { label: '$40K - $60K', min: 40000, max: 60000 },
+                { label: '$60K - $80K', min: 60000, max: 80000 },
+                { label: '$80K - $100K', min: 80000, max: 100000 },
+                { label: '$100K+', min: 100000, max: Infinity },
+              ];
+              const withSalaries = employees.filter(e => e.salary);
+              const total = withSalaries.length;
+              return ranges.map((range) => {
+                const count = withSalaries.filter(e => {
+                  const s = parseFloat(e.salary?.replace(/[$,]/g, '') || '0');
+                  return s >= range.min && s < range.max;
+                }).length;
+                const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                return (
+                  <div key={range.label}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-[#94A3B8]">{range.label}</span>
+                      <span className="text-sm font-semibold text-[#F8FAFC]">{count} ({pct}%)</span>
+                    </div>
+                    <div className="w-full bg-[rgba(255,255,255,0.1)] rounded-full h-2">
+                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        ) : (
+          <p className="text-sm text-[#94A3B8]">No salary data available.</p>
+        )}
       </div>
 
       <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
         <h4 className="font-semibold text-[#F8FAFC] mb-4">Compliance Reports</h4>
-        <div className="space-y-3">
-          {[
-            { name: 'Equal Employment Opportunity (EEO)', status: 'Compliant', lastUpdated: '2026-04-01' },
-            { name: 'FMLA Compliance Report', status: 'Compliant', lastUpdated: '2026-04-01' },
-            { name: 'Wage & Hour Compliance', status: 'Compliant', lastUpdated: '2026-04-01' },
-            { name: 'Benefits Compliance', status: 'Compliant', lastUpdated: '2026-03-20' },
-          ].map((report, idx) => (
-            <div key={idx} className="flex items-center justify-between p-4 border border-[rgba(255,255,255,0.07)] rounded-lg">
-              <div>
-                <p className="font-medium text-[#F8FAFC]">{report.name}</p>
-                <p className="text-xs text-[#94A3B8] mt-1">Last updated: {report.lastUpdated}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400">
-                  {report.status}
-                </span>
-                <button className="text-[#818CF8] hover:text-blue-700 text-sm font-medium">
-                  <Download className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+        <p className="text-sm text-[#94A3B8]">Compliance reports will be generated from real audit data.</p>
       </div>
     </div>
   );

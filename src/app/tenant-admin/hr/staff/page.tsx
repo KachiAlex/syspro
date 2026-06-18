@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Plus, Eye, Search } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { HRService } from '@/app/tenant-admin/sections/hr-service';
 
 interface Employee {
   id: string;
@@ -28,51 +29,62 @@ interface TrainingSession {
   location?: string;
 }
 
-const DEFAULT_EMPLOYEES: Employee[] = [
-  { id: '1', name: 'John Smith', email: 'john@company.com', department: 'Engineering', position: 'Senior Developer', startDate: '2022-01-15', status: 'Active', salary: '$95,000' },
-  { id: '2', name: 'Sarah Johnson', email: 'sarah@company.com', department: 'Sales', position: 'Sales Manager', startDate: '2021-06-20', status: 'Active', salary: '$85,000' },
-  { id: '3', name: 'Mike Davis', email: 'mike@company.com', department: 'Marketing', position: 'Marketing Lead', startDate: '2022-03-10', status: 'On Leave', salary: '$75,000' },
-  { id: '4', name: 'Emily Chen', email: 'emily@company.com', department: 'Engineering', position: 'Developer', startDate: '2023-01-05', status: 'Active', salary: '$80,000' },
-  { id: '5', name: 'James Wilson', email: 'james@company.com', department: 'HR', position: 'HR Manager', startDate: '2020-09-12', status: 'Active', salary: '$70,000' },
-];
-
-const DEFAULT_TRAINING_SESSIONS: TrainingSession[] = [
-  {
-    id: 'leadership',
-    title: 'Leadership Excellence',
-    description: 'Advanced leadership and management skills',
-    status: 'planned',
-    startDate: '2026-05-01',
-    endDate: '2026-05-15',
-    instructor: 'Dr. Sarah Mitchell',
-    capacity: 30,
-    enrolled: 12,
-    location: 'Conference Room A',
-  },
-  {
-    id: 'sales',
-    title: 'Advanced Sales Techniques',
-    description: 'Modern sales methodologies and customer engagement',
-    status: 'ongoing',
-    startDate: '2026-04-01',
-    endDate: '2026-04-30',
-    instructor: 'John Anderson',
-    capacity: 40,
-    enrolled: 25,
-    location: 'Virtual',
-  },
-];
 
 export default function StaffPage() {
   const { tenantSlug } = useTenantContext();
-  const [employees, setEmployees] = useState<Employee[]>(DEFAULT_EMPLOYEES);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [trainingSessions, setTrainingSessions] = useState<TrainingSession[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('All Departments');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const departments = ['All Departments', 'Engineering', 'Sales', 'Marketing', 'HR', 'Finance', 'Operations'];
+  const [departments, setDepartments] = useState<string[]>(['All Departments']);
   const statuses = ['All Statuses', 'Active', 'On Leave', 'Inactive', 'Terminated'];
+
+  const loadData = useCallback(async () => {
+    if (!tenantSlug) return;
+    setLoading(true);
+    try {
+      const [fetchedEmployees, fetchedDepartments, fetchedTraining] = await Promise.all([
+        HRService.getEmployees(tenantSlug).catch(() => []),
+        HRService.getDepartments(tenantSlug).catch(() => []),
+        HRService.getTrainingSessions(tenantSlug).catch(() => []),
+      ]);
+      setEmployees(fetchedEmployees.map((emp: any) => ({
+        id: emp.id,
+        name: emp.name,
+        email: emp.email,
+        department: emp.department,
+        position: emp.position,
+        startDate: emp.startDate,
+        status: emp.status,
+        salary: emp.salary ? `$${Number(emp.salary).toLocaleString()}` : ''
+      })));
+      setDepartments(['All Departments', ...fetchedDepartments]);
+      setTrainingSessions(fetchedTraining.map((s: any) => ({
+        id: s.id,
+        title: s.title,
+        description: s.description || '',
+        status: (s.status as 'planned' | 'ongoing' | 'completed') || 'planned',
+        startDate: s.startDate || s.start_date || '',
+        endDate: s.endDate || s.end_date || '',
+        instructor: s.instructor || '',
+        capacity: s.capacity || 0,
+        enrolled: s.enrolled || 0,
+        location: s.location || ''
+      })));
+    } catch (error) {
+      console.error('Failed to load staff data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [tenantSlug]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const filteredEmployees = useMemo(() => {
     return employees.filter((emp) => {
@@ -214,7 +226,7 @@ export default function StaffPage() {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Training & Development</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {DEFAULT_TRAINING_SESSIONS.map((session) => (
+          {trainingSessions.length > 0 ? trainingSessions.map((session) => (
             <div key={session.id} className="border border-gray-200 rounded-lg p-4">
               <div className="flex items-start justify-between mb-3">
                 <div>
@@ -243,7 +255,9 @@ export default function StaffPage() {
                 <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${(session.enrolled / session.capacity) * 100}%` }} />
               </div>
             </div>
-          ))}
+          )) : (
+            <p className="text-sm text-gray-600">No training sessions available.</p>
+          )}
         </div>
       </div>
     </div>

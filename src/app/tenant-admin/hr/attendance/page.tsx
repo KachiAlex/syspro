@@ -1,45 +1,83 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Clock, CheckCircle, AlertCircle, Calendar } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { HRService } from '@/app/tenant-admin/sections/hr-service';
 
 interface AttendanceRecord {
   id: string;
   employeeName: string;
   checkIn: string;
   checkOut: string;
-  status: 'present' | 'absent' | 'late' | 'half-day';
+  status: string;
   hours: number;
 }
 
 interface LeaveRequest {
   id: string;
   employeeName: string;
-  type: string;
+  leaveType: string;
   days: number;
-  from: string;
-  to: string;
-  status: 'pending' | 'approved' | 'rejected';
+  startDate: string;
+  endDate: string;
+  status: string;
 }
-
-const DEFAULT_ATTENDANCE: AttendanceRecord[] = [
-  { id: '1', employeeName: 'John Smith', checkIn: '09:00 AM', checkOut: '06:00 PM', status: 'present', hours: 9.0 },
-  { id: '2', employeeName: 'Sarah Johnson', checkIn: '09:15 AM', checkOut: '06:00 PM', status: 'late', hours: 8.75 },
-  { id: '3', employeeName: 'Mike Davis', checkIn: '-', checkOut: '-', status: 'absent', hours: 0 },
-  { id: '4', employeeName: 'Emily Chen', checkIn: '09:00 AM', checkOut: '01:00 PM', status: 'half-day', hours: 4.0 },
-  { id: '5', employeeName: 'James Wilson', checkIn: '09:00 AM', checkOut: '06:00 PM', status: 'present', hours: 9.0 },
-];
-
-const DEFAULT_LEAVE_REQUESTS: LeaveRequest[] = [
-  { id: '1', employeeName: 'John Smith', type: 'Annual', days: 5, from: '2026-04-15', to: '2026-04-20', status: 'pending' },
-  { id: '2', employeeName: 'Sarah Johnson', type: 'Sick', days: 2, from: '2026-04-10', to: '2026-04-12', status: 'pending' },
-  { id: '3', employeeName: 'Mike Davis', type: 'Personal', days: 1, from: '2026-04-08', to: '2026-04-08', status: 'approved' },
-];
 
 export default function AttendancePage() {
   const { tenantSlug } = useTenantContext();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [attendanceStats, setAttendanceStats] = useState({ present: 0, absent: 0, late: 0, halfDay: 0, total: 0 });
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    if (!tenantSlug) return;
+    setLoading(true);
+    try {
+      const [fetchedAttendance, fetchedStats, fetchedLeave] = await Promise.all([
+        HRService.getAttendanceRecords(tenantSlug, { date: selectedDate }).catch(() => []),
+        HRService.getAttendanceStats(tenantSlug, selectedDate).catch(() => ({ present: 0, absent: 0, late: 0, halfDay: 0, total: 0 })),
+        HRService.getLeaveRequests(tenantSlug, { status: 'pending' }).catch(() => []),
+      ]);
+      setAttendanceRecords(fetchedAttendance.map((r: any) => ({
+        id: r.id,
+        employeeName: r.employeeName || r.employee?.name || '',
+        checkIn: r.checkIn || r.check_in || '—',
+        checkOut: r.checkOut || r.check_out || '—',
+        status: r.status,
+        hours: r.hours || 0
+      })));
+      setAttendanceStats(fetchedStats);
+      setLeaveRequests(fetchedLeave.map((r: any) => ({
+        id: r.id,
+        employeeName: r.employeeName || r.employee?.name || '',
+        leaveType: r.leaveType || r.leave_type || '—',
+        days: r.days || r.dayCount || 0,
+        startDate: r.startDate || r.start_date || '—',
+        endDate: r.endDate || r.end_date || '—',
+        status: r.status
+      })));
+    } catch (error) {
+      console.error('Failed to load attendance data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [tenantSlug, selectedDate]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6">
+        <h2 className="text-2xl font-bold text-gray-900">Attendance & Leave Management</h2>
+        <div className="text-center py-12 text-gray-500">Loading attendance data...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -50,7 +88,7 @@ export default function AttendancePage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Present Today</p>
-              <p className="text-3xl font-bold text-green-600 mt-2">4</p>
+              <p className="text-3xl font-bold text-green-600 mt-2">{attendanceStats.present}</p>
             </div>
             <CheckCircle className="w-12 h-12 text-green-100" />
           </div>
@@ -61,7 +99,7 @@ export default function AttendancePage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Absent</p>
-              <p className="text-3xl font-bold text-red-600 mt-2">1</p>
+              <p className="text-3xl font-bold text-red-600 mt-2">{attendanceStats.absent}</p>
             </div>
             <AlertCircle className="w-12 h-12 text-red-100" />
           </div>
@@ -72,7 +110,7 @@ export default function AttendancePage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Late</p>
-              <p className="text-3xl font-bold text-amber-600 mt-2">1</p>
+              <p className="text-3xl font-bold text-amber-600 mt-2">{attendanceStats.late}</p>
             </div>
             <Clock className="w-12 h-12 text-amber-100" />
           </div>
@@ -83,11 +121,13 @@ export default function AttendancePage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Attendance Rate</p>
-              <p className="text-3xl font-bold text-blue-600 mt-2">96.5%</p>
+              <p className="text-3xl font-bold text-blue-600 mt-2">
+                {attendanceStats.total > 0 ? `${Math.round((attendanceStats.present / attendanceStats.total) * 100)}%` : '—'}
+              </p>
             </div>
             <Calendar className="w-12 h-12 text-blue-100" />
           </div>
-          <p className="text-xs text-gray-500 mt-4">Monthly average</p>
+          <p className="text-xs text-gray-500 mt-4">Daily average</p>
         </div>
       </div>
 
@@ -113,24 +153,32 @@ export default function AttendancePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {DEFAULT_ATTENDANCE.map((record) => (
-                <tr key={record.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">{record.employeeName}</td>
-                  <td className="px-4 py-3 text-gray-600">{record.checkIn}</td>
-                  <td className="px-4 py-3 text-gray-600">{record.checkOut}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      record.status === 'present' ? 'bg-green-100 text-green-800' :
-                      record.status === 'absent' ? 'bg-red-100 text-red-800' :
-                      record.status === 'late' ? 'bg-amber-100 text-amber-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                      {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-                    </span>
+              {attendanceRecords.length > 0 ? (
+                attendanceRecords.map((record) => (
+                  <tr key={record.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-900">{record.employeeName}</td>
+                    <td className="px-4 py-3 text-gray-600">{record.checkIn}</td>
+                    <td className="px-4 py-3 text-gray-600">{record.checkOut}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        record.status === 'present' ? 'bg-green-100 text-green-800' :
+                        record.status === 'absent' ? 'bg-red-100 text-red-800' :
+                        record.status === 'late' ? 'bg-amber-100 text-amber-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">{record.hours}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-600">
+                    No attendance records for selected date
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{record.hours}</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
@@ -139,68 +187,61 @@ export default function AttendancePage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h4 className="font-semibold text-gray-900 mb-4">Pending Leave Requests</h4>
-          <div className="space-y-3">
-            {DEFAULT_LEAVE_REQUESTS.filter(r => r.status === 'pending').map((req) => (
-              <div key={req.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-900">{req.employeeName}</p>
-                  <p className="text-xs text-gray-600">{req.type} • {req.days} days</p>
+          {leaveRequests.length > 0 ? (
+            <div className="space-y-3">
+              {leaveRequests.map((req) => (
+                <div key={req.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                  <div>
+                    <p className="font-medium text-gray-900">{req.employeeName}</p>
+                    <p className="text-xs text-gray-600">{req.leaveType} • {req.days} days</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        if (!tenantSlug) return;
+                        try {
+                          await HRService.updateLeaveStatus(tenantSlug, req.id, 'approved');
+                          setLeaveRequests(prev => prev.filter(r => r.id !== req.id));
+                        } catch (err) {
+                          console.error('Failed to approve leave:', err);
+                        }
+                      }}
+                      className="px-2 py-1 text-xs font-medium text-green-600 bg-green-50 rounded hover:bg-green-100"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!tenantSlug) return;
+                        try {
+                          await HRService.updateLeaveStatus(tenantSlug, req.id, 'rejected');
+                          setLeaveRequests(prev => prev.filter(r => r.id !== req.id));
+                        } catch (err) {
+                          console.error('Failed to reject leave:', err);
+                        }
+                      }}
+                      className="px-2 py-1 text-xs font-medium text-red-600 bg-red-50 rounded hover:bg-red-100"
+                    >
+                      Reject
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <button className="px-2 py-1 text-xs font-medium text-green-600 bg-green-50 rounded hover:bg-green-100">
-                    Approve
-                  </button>
-                  <button className="px-2 py-1 text-xs font-medium text-red-600 bg-red-50 rounded hover:bg-red-100">
-                    Reject
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-600">No pending leave requests.</p>
+          )}
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h4 className="font-semibold text-gray-900 mb-4">Leave Balance</h4>
-          <div className="space-y-3">
-            {[
-              { type: 'Annual Leave', used: 10, total: 20, remaining: 10 },
-              { type: 'Sick Leave', used: 2, total: 10, remaining: 8 },
-              { type: 'Personal Leave', used: 1, total: 5, remaining: 4 },
-            ].map((leave, idx) => (
-              <div key={idx}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-900">{leave.type}</span>
-                  <span className="text-sm text-gray-600">{leave.remaining}/{leave.total}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${(leave.used / leave.total) * 100}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
+          <p className="text-sm text-gray-600">Select an employee to view leave balance.</p>
         </div>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h4 className="font-semibold text-gray-900 mb-4">Work Schedules & Shifts</h4>
-        <div className="space-y-4">
-          {['Morning Shift (6 AM - 2 PM)', 'Afternoon Shift (2 PM - 10 PM)', 'Night Shift (10 PM - 6 AM)'].map((shift, idx) => (
-            <div key={idx} className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h5 className="font-semibold text-gray-900">{shift}</h5>
-                <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded">12 employees</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {['Mon', 'Tue', 'Wed'].map((day) => (
-                  <div key={day} className="text-center p-2 bg-gray-50 rounded">
-                    <p className="text-xs font-medium text-gray-600">{day}</p>
-                    <p className="text-sm font-semibold text-gray-900 mt-1">12</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+        <p className="text-sm text-gray-600">Work schedules will be populated from the scheduling system.</p>
       </div>
     </div>
   );
