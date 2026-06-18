@@ -1,0 +1,772 @@
+﻿npm : npm warn config optional Use `--omit=optional` to exclude 
+optional dependencies, or
+At line:1 char:15
++ cd c:\syspro; npm run build 2>&1 | Out-File c:\syspro\build3.log 
+-Enc ...
++               ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn config...epen 
+   dencies, or:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm warn config `--include=optional` to include them.
+npm warn config
+npm warn config       Default value does install optional deps 
+unless otherwise omitted.
+
+> syspro-erp-frontend@0.1.0 build
+> cross-env NODE_OPTIONS='--max-old-space-size=8192' TAILWIND_DISABLE_LIGHTNINGCSS=1 next build
+
+- info Loaded env from C:\syspro\.env.local
+- info Creating an optimized production build...
+- info Compiled successfully
+- info Skipping validation of types
+- info Skipping linting
+- info Collecting page data...
+ADMIN_PAGE_SERVER_RENDER: admin/tenant-admin executed on server
+- info Generating static pages (0/226)
+Automation summary GET failed DynamicServerError: Dynamic server 
+usage: request.url
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleReqBailout 
+(C:\syspro\.next\server\chunks\5501.js:4867:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4875:13)
+    at extractAuthContext 
+(C:\syspro\.next\server\chunks\5299.js:20:33)
+    at GET 
+(C:\syspro\.next\server\app\api\automation\summary\route.js:56:64)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30)
+    at ContextAPI.with 
+(C:\syspro\.next\server\chunks\5501.js:128:58)
+    at NoopTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1051:34) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error fetching trial balance: DynamicServerError: Dynamic server 
+usage: request.url
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleReqBailout 
+(C:\syspro\.next\server\chunks\5501.js:4867:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4875:13)
+    at GET (C:\syspro\.next\server\app\api\accounting\reports\trial-
+balance\route.js:56:37)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30)
+    at ContextAPI.with 
+(C:\syspro\.next\server\chunks\5501.js:128:58)
+    at NoopTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1051:34)
+    at ProxyTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1091:36) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Automation triggers GET failed DynamicServerError: Dynamic server 
+usage: request.url
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleReqBailout 
+(C:\syspro\.next\server\chunks\5501.js:4867:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4875:13)
+    at extractAuthContext 
+(C:\syspro\.next\server\chunks\5299.js:20:33)
+    at GET 
+(C:\syspro\.next\server\app\api\automation\triggers\route.js:95:64)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30)
+    at ContextAPI.with 
+(C:\syspro\.next\server\chunks\5501.js:128:58)
+    at NoopTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1051:34) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error fetching general ledger: DynamicServerError: Dynamic server 
+usage: request.url
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleReqBailout 
+(C:\syspro\.next\server\chunks\5501.js:4867:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4875:13)
+    at GET (C:\syspro\.next\server\app\api\accounting\reports\genera
+l-ledger\route.js:56:37)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30)
+    at ContextAPI.with 
+(C:\syspro\.next\server\chunks\5501.js:128:58)
+    at NoopTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1051:34)
+    at ProxyTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1091:36) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error generating aged payables report: DynamicServerError: Dynamic 
+server usage: nextUrl.searchParams
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleNextUrlBailout 
+(C:\syspro\.next\server\chunks\5501.js:4796:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4835:13)
+    at GET (C:\syspro\.next\server\app\api\finance\reports\aged-paya
+bles\route.js:53:46)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30)
+    at ContextAPI.with 
+(C:\syspro\.next\server\chunks\5501.js:128:58)
+    at NoopTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1051:34)
+    at ProxyTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1091:36) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error generating cash flow report: DynamicServerError: Dynamic 
+server usage: nextUrl.searchParams
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleNextUrlBailout 
+(C:\syspro\.next\server\chunks\5501.js:4796:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4835:13)
+    at GET (C:\syspro\.next\server\app\api\finance\reports\cash-flow
+\route.js:53:46)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30)
+    at ContextAPI.with 
+(C:\syspro\.next\server\chunks\5501.js:128:58)
+    at NoopTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1051:34)
+    at ProxyTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1091:36) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error generating aged receivables report: DynamicServerError: 
+Dynamic server usage: nextUrl.searchParams
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleNextUrlBailout 
+(C:\syspro\.next\server\chunks\5501.js:4796:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4835:13)
+    at GET (C:\syspro\.next\server\app\api\finance\reports\aged-rece
+ivables\route.js:53:46)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30)
+    at ContextAPI.with 
+(C:\syspro\.next\server\chunks\5501.js:128:58)
+    at NoopTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1051:34)
+    at ProxyTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1091:36) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error generating balance sheet: DynamicServerError: Dynamic server 
+usage: nextUrl.searchParams
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleNextUrlBailout 
+(C:\syspro\.next\server\chunks\5501.js:4796:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4835:13)
+    at GET (C:\syspro\.next\server\app\api\finance\reports\balance-s
+heet\route.js:53:46)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30)
+    at ContextAPI.with 
+(C:\syspro\.next\server\chunks\5501.js:128:58)
+    at NoopTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1051:34)
+    at ProxyTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1091:36) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error generating comparative P&L report: DynamicServerError: 
+Dynamic server usage: nextUrl.searchParams
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleNextUrlBailout 
+(C:\syspro\.next\server\chunks\5501.js:4796:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4835:13)
+    at GET (C:\syspro\.next\server\app\api\finance\reports\comparati
+ve-pnl\route.js:53:46)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30)
+    at ContextAPI.with 
+(C:\syspro\.next\server\chunks\5501.js:128:58)
+    at NoopTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1051:34)
+    at ProxyTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1091:36) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Report export failed: Dynamic server usage: request.url 
+DynamicServerError: Dynamic server usage: request.url
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleReqBailout 
+(C:\syspro\.next\server\chunks\5501.js:4867:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4875:13)
+    at GET (C:\syspro\.next\server\app\api\finance\reports\export\ro
+ute.js:50:37)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30)
+    at ContextAPI.with 
+(C:\syspro\.next\server\chunks\5501.js:128:58)
+    at NoopTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1051:34)
+    at ProxyTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1091:36) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Reports generation failed: Dynamic server usage: request.url 
+DynamicServerError: Dynamic server usage: request.url
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleReqBailout 
+(C:\syspro\.next\server\chunks\5501.js:4867:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4875:13)
+    at GET 
+(C:\syspro\.next\server\app\api\finance\reports\route.js:53:37)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30)
+    at ContextAPI.with 
+(C:\syspro\.next\server\chunks\5501.js:128:58)
+    at NoopTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1051:34)
+    at ProxyTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1091:36) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error generating P&L report: DynamicServerError: Dynamic server 
+usage: nextUrl.searchParams
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleNextUrlBailout 
+(C:\syspro\.next\server\chunks\5501.js:4796:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4835:13)
+    at GET 
+(C:\syspro\.next\server\app\api\finance\reports\pnl\route.js:53:46)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30)
+    at ContextAPI.with 
+(C:\syspro\.next\server\chunks\5501.js:128:58)
+    at NoopTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1051:34)
+    at ProxyTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1091:36) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+API: GET /api/finance/vendor-analytics called
+Vendor Analytics GET error: Error: Dynamic server usage: request.url
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleReqBailout 
+(C:\syspro\.next\server\chunks\5501.js:4867:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4875:13)
+    at GET (C:\syspro\.next\server\app\api\finance\vendor-analytics\
+route.js:489:37)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30)
+    at ContextAPI.with 
+(C:\syspro\.next\server\chunks\5501.js:128:58)
+    at NoopTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1051:34)
+    at ProxyTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1091:36)
+- info Generating static pages (56/226)
+Failed to fetch active projects: DynamicServerError: Dynamic server 
+usage: request.url
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleReqBailout 
+(C:\syspro\.next\server\chunks\5501.js:4867:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4875:13)
+    at extractAuthContext 
+(C:\syspro\.next\server\chunks\5299.js:20:33)
+    at extractTenantContext 
+(C:\syspro\.next\server\chunks\4785.js:92:96)
+    at validateTenantContext 
+(C:\syspro\.next\server\chunks\4785.js:101:21)
+    at GET 
+(C:\syspro\.next\server\app\api\projects\active\route.js:53:64)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Failed to generate report: DynamicServerError: Dynamic server 
+usage: request.url
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleReqBailout 
+(C:\syspro\.next\server\chunks\5501.js:4867:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4875:13)
+    at extractAuthContext 
+(C:\syspro\.next\server\chunks\5299.js:20:33)
+    at extractTenantContext 
+(C:\syspro\.next\server\chunks\4785.js:92:96)
+    at validateTenantContext 
+(C:\syspro\.next\server\chunks\4785.js:101:21)
+    at GET 
+(C:\syspro\.next\server\app\api\projects\reports\route.js:53:64)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Failed to generate advanced report: DynamicServerError: Dynamic 
+server usage: request.url
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleReqBailout 
+(C:\syspro\.next\server\chunks\5501.js:4867:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4875:13)
+    at extractAuthContext 
+(C:\syspro\.next\server\chunks\5299.js:20:33)
+    at extractTenantContext 
+(C:\syspro\.next\server\chunks\4785.js:92:96)
+    at validateTenantContext 
+(C:\syspro\.next\server\chunks\4785.js:101:21)
+    at GET (C:\syspro\.next\server\app\api\projects\reports\advanced
+\route.js:53:64)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Failed to export report: DynamicServerError: Dynamic server usage: 
+request.url
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleReqBailout 
+(C:\syspro\.next\server\chunks\5501.js:4867:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4875:13)
+    at extractAuthContext 
+(C:\syspro\.next\server\chunks\5299.js:20:33)
+    at extractTenantContext 
+(C:\syspro\.next\server\chunks\4785.js:92:96)
+    at validateTenantContext 
+(C:\syspro\.next\server\chunks\4785.js:101:21)
+    at GET (C:\syspro\.next\server\app\api\projects\reports\export\r
+oute.js:53:64)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Reports summary failed DynamicServerError: Dynamic server usage: 
+request.url
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleReqBailout 
+(C:\syspro\.next\server\chunks\5501.js:4867:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4875:13)
+    at extractAuthContext 
+(C:\syspro\.next\server\chunks\5299.js:20:33)
+    at GET 
+(C:\syspro\.next\server\app\api\reports\summary\route.js:210:64)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30)
+    at ContextAPI.with 
+(C:\syspro\.next\server\chunks\5501.js:128:58)
+    at NoopTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1051:34) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+- info Generating static pages (112/226)
+}
+Error fetching audit logs: DynamicServerError: Dynamic server 
+usage: nextUrl.searchParams
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleNextUrlBailout 
+(C:\syspro\.next\server\chunks\5501.js:4796:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4835:13)
+    at GET (C:\syspro\.next\server\app\api\superadmin\audit-logs\rou
+te.js:56:46)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30)
+    at ContextAPI.with 
+(C:\syspro\.next\server\chunks\5501.js:128:58)
+    at NoopTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1051:34)
+    at ProxyTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1091:36) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Automation audit GET failed DynamicServerError: Dynamic server 
+usage: request.url
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleReqBailout 
+(C:\syspro\.next\server\chunks\5501.js:4867:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4875:13)
+    at extractAuthContext 
+(C:\syspro\.next\server\chunks\5299.js:20:33)
+    at GET 
+(C:\syspro\.next\server\app\api\automation\audit\route.js:56:64)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30)
+    at ContextAPI.with 
+(C:\syspro\.next\server\chunks\5501.js:128:58)
+    at NoopTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1051:34) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Failed to fetch permissions: DynamicServerError: Dynamic server 
+usage: request.url
+    at Object.staticGenerationBailout 
+(C:\syspro\.next\server\chunks\2697.js:158:21)
+    at handleReqBailout 
+(C:\syspro\.next\server\chunks\5501.js:4867:23)
+    at Object.get (C:\syspro\.next\server\chunks\5501.js:4875:13)
+    at GET (C:\syspro\.next\server\app\api\tenant\user-permissions\r
+oute.js:63:50)
+    at C:\syspro\.next\server\chunks\5501.js:5172:43
+    at C:\syspro\.next\server\chunks\5501.js:6024:36
+    at NoopContextManager.with 
+(C:\syspro\.next\server\chunks\5501.js:458:30)
+    at ContextAPI.with 
+(C:\syspro\.next\server\chunks\5501.js:128:58)
+    at NoopTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1051:34)
+    at ProxyTracer.startActiveSpan 
+(C:\syspro\.next\server\chunks\5501.js:1091:36) {
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+- warn Entire page /crm/leads deopted into client-side rendering. 
+https://nextjs.org/docs/messages/deopted-into-client-rendering 
+/crm/leads
+- info Generating static pages (169/226)
+- info Generating static pages (226/226)
+- info Finalizing page optimization...
+
+Route (app)                                      Size     First Load JS
+Γöî Γùï /                                            8.93 kB        87.3 kB
+Γö£ Γùï /access                                      5.15 kB        89.4 kB
+Γö£ Γùï /admin/people-access                         7.56 kB        85.9 kB
+Γö£ ╬╗ /admin/tenant-admin                          178 B          84.4 kB
+Γö£ ╬╗ /api/accounting/accounts                     0 B                0 B
+Γö£ ╬╗ /api/accounting/journals                     0 B                0 B
+Γö£ ╬╗ /api/accounting/journals/[id]/approve        0 B                0 B
+Γö£ ╬╗ /api/accounting/periods                      0 B                0 B
+Γö£ ╬╗ /api/accounting/reports/general-ledger       0 B                0 B
+Γö£ ╬╗ /api/accounting/reports/trial-balance        0 B                0 B
+Γö£ ╬╗ /api/admin/users                             0 B                0 B
+Γö£ ╬╗ /api/admin/users/[id]                        0 B                0 B
+Γö£ ╬╗ /api/admin/users/[id]/deactivate             0 B                0 B
+Γö£ ╬╗ /api/attendance                              0 B                0 B
+Γö£ ╬╗ /api/attendance/policies                     0 B                0 B
+Γö£ ╬╗ /api/attendance/reports                      0 B                0 B
+Γö£ ╬╗ /api/attendance/timesheet                    0 B                0 B
+Γö£ ╬╗ /api/automation                              0 B                0 B
+Γö£ ╬╗ /api/automation/audit                        0 B                0 B
+Γö£ ╬╗ /api/automation/queue/process                0 B                0 B
+Γö£ ╬╗ /api/automation/rules                        0 B                0 B
+Γö£ ╬╗ /api/automation/rules/[id]                   0 B                0 B
+Γö£ ╬╗ /api/automation/rules/simulate               0 B                0 B
+Γö£ ╬╗ /api/automation/summary                      0 B                0 B
+Γö£ ╬╗ /api/automation/triggers                     0 B                0 B
+Γö£ ╬╗ /api/crm/contacts                            0 B                0 B
+Γö£ ╬╗ /api/crm/contacts/[id]                       0 B                0 B
+Γö£ ╬╗ /api/crm/customers                           0 B                0 B
+Γö£ ╬╗ /api/crm/dashboard                           0 B                0 B
+Γö£ ╬╗ /api/crm/deals                               0 B                0 B
+Γö£ ╬╗ /api/crm/deals/[id]                          0 B                0 B
+Γö£ ╬╗ /api/crm/leads                               0 B                0 B
+Γö£ ╬╗ /api/crm/leads/[id]                          0 B                0 B
+Γö£ Γùï /api/debug/server-info                       0 B                0 B
+Γö£ ╬╗ /api/dev/seed                                0 B                0 B
+Γö£ ╬╗ /api/dev/session                             0 B                0 B
+Γö£ ╬╗ /api/finance/accounts                        0 B                0 B
+Γö£ ╬╗ /api/finance/accounts/[id]                   0 B                0 B
+Γö£ ╬╗ /api/finance/approvals                       0 B                0 B
+Γö£ ╬╗ /api/finance/bills                           0 B                0 B
+Γö£ ╬╗ /api/finance/budgets                         0 B                0 B
+Γö£ ╬╗ /api/finance/budgets/[id]                    0 B                0 B
+Γö£ ╬╗ /api/finance/budgets/[id]/actuals            0 B                0 B
+Γö£ ╬╗ /api/finance/budgets/[id]/approvals          0 B                0 B
+Γö£ ╬╗ /api/finance/budgets/[id]/forecasts          0 B                0 B
+Γö£ ╬╗ /api/finance/budgets/[id]/lines              0 B                0 B
+Γö£ ╬╗ /api/finance/budgets/[id]/variances          0 B                0 B
+Γö£ ╬╗ /api/finance/dashboard                       0 B                0 B
+Γö£ ╬╗ /api/finance/expense-categories              0 B                0 B
+Γö£ ╬╗ /api/finance/expenses                        0 B                0 B
+Γö£ ╬╗ /api/finance/expenses/[id]                   0 B                0 B
+Γö£ ╬╗ /api/finance/expenses/[id]/approve           0 B                0 B
+Γö£ ╬╗ /api/finance/expenses/reports                0 B                0 B
+Γö£ ╬╗ /api/finance/expenses/upload                 0 B                0 B
+Γö£ ╬╗ /api/finance/invoices                        0 B                0 B
+Γö£ ╬╗ /api/finance/invoices/[id]                   0 B                0 B
+Γö£ ╬╗ /api/finance/payments                        0 B                0 B
+Γö£ ╬╗ /api/finance/payments/[id]                   0 B                0 B
+Γö£ ╬╗ /api/finance/purchase-orders                 0 B                0 B
+Γö£ ╬╗ /api/finance/purchase-orders/[id]            0 B                0 B
+Γö£ ╬╗ /api/finance/reports                         0 B                0 B
+Γö£ ╬╗ /api/finance/reports/aged-payables           0 B                0 B
+Γö£ ╬╗ /api/finance/reports/aged-receivables        0 B                0 B
+Γö£ ╬╗ /api/finance/reports/balance-sheet           0 B                0 B
+Γö£ ╬╗ /api/finance/reports/cash-flow               0 B                0 B
+Γö£ ╬╗ /api/finance/reports/comparative-pnl         0 B                0 B
+Γö£ ╬╗ /api/finance/reports/drill-down/[accountId]  0 B                0 B
+Γö£ ╬╗ /api/finance/reports/export                  0 B                0 B
+Γö£ ╬╗ /api/finance/reports/pnl                     0 B                0 B
+Γö£ ╬╗ /api/finance/vendor-analytics                0 B                0 B
+Γö£ ╬╗ /api/finance/vendor-payments                 0 B                0 B
+Γö£ ╬╗ /api/finance/vendors                         0 B                0 B
+Γö£ ╬╗ /api/finance/vendors/[id]                    0 B                0 B
+Γö£ Γùï /api/health                                  0 B                0 B
+Γö£ ╬╗ /api/hr/attendance                           0 B                0 B
+Γö£ ╬╗ /api/hr/departments                          0 B                0 B
+Γö£ ╬╗ /api/hr/employees                            0 B                0 B
+Γö£ ╬╗ /api/hr/staff-reports                        0 B                0 B
+Γö£ ╬╗ /api/hr/staff-reports/ai-draft               0 B                0 B
+Γö£ ╬╗ /api/inventory/products                      0 B                0 B
+Γö£ ╬╗ /api/inventory/stock-transfers               0 B                0 B
+Γö£ ╬╗ /api/itsupport/[...path]                     0 B                0 B
+Γö£ ╬╗ /api/itsupport/engineers                     0 B                0 B
+Γö£ ╬╗ /api/itsupport/fieldjobs                     0 B                0 B
+Γö£ ╬╗ /api/itsupport/fieldjobs/[id]                0 B                0 B
+Γö£ ╬╗ /api/itsupport/incidents                     0 B                0 B
+Γö£ ╬╗ /api/itsupport/integrations/attendance       0 B                0 B
+Γö£ ╬╗ /api/itsupport/integrations/crm              0 B                0 B
+Γö£ ╬╗ /api/itsupport/integrations/notify           0 B                0 B
+Γö£ ╬╗ /api/itsupport/kb                            0 B                0 B
+Γö£ ╬╗ /api/itsupport/kb/[id]                       0 B                0 B
+Γö£ Γùï /api/itsupport/monitoring                    0 B                0 B
+Γö£ ╬╗ /api/itsupport/sla                           0 B                0 B
+Γö£ ╬╗ /api/itsupport/tickets                       0 B                0 B
+Γö£ ╬╗ /api/itsupport/tickets/[id]                  0 B                0 B
+Γö£ ╬╗ /api/itsupport/tickets/[id]/activity         0 B                0 B
+Γö£ ╬╗ /api/itsupport/tickets/[id]/comments         0 B                0 B
+Γö£ ╬╗ /api/itsupport/tickets/[id]/transition       0 B                0 B
+Γö£ ╬╗ /api/policies                                0 B                0 B
+Γö£ ╬╗ /api/policies/[id]                           0 B                0 B
+Γö£ ╬╗ /api/procurement/invoices                    0 B                0 B
+Γö£ ╬╗ /api/procurement/purchase-orders             0 B                0 B
+Γö£ ╬╗ /api/procurement/vendors                     0 B                0 B
+Γö£ ╬╗ /api/projects                                0 B                0 B
+Γö£ ╬╗ /api/projects/[id]                           0 B                0 B
+Γö£ ╬╗ /api/projects/[id]/archive                   0 B                0 B
+Γö£ ╬╗ /api/projects/[id]/budget                    0 B                0 B
+Γö£ ╬╗ /api/projects/[id]/budget/[allocationId]     0 B                0 B
+Γö£ ╬╗ /api/projects/[id]/restore                   0 B                0 B
+Γö£ ╬╗ /api/projects/[id]/tasks                     0 B                0 B
+Γö£ ╬╗ /api/projects/[id]/tasks/[taskId]            0 B                0 B
+Γö£ ╬╗ /api/projects/[id]/team                      0 B                0 B
+Γö£ ╬╗ /api/projects/[id]/team/[memberId]           0 B                0 B
+Γö£ ╬╗ /api/projects/active                         0 B                0 B
+Γö£ ╬╗ /api/projects/archive                        0 B                0 B
+Γö£ ╬╗ /api/projects/assignments                    0 B                0 B
+Γö£ ╬╗ /api/projects/budgets                        0 B                0 B
+Γö£ ╬╗ /api/projects/capacity                       0 B                0 B
+Γö£ ╬╗ /api/projects/delete-permanent               0 B                0 B
+Γö£ ╬╗ /api/projects/invoices                       0 B                0 B
+Γö£ ╬╗ /api/projects/reports                        0 B                0 B
+Γö£ ╬╗ /api/projects/reports/advanced               0 B                0 B
+Γö£ ╬╗ /api/projects/reports/export                 0 B                0 B
+Γö£ ╬╗ /api/projects/restore                        0 B                0 B
+Γö£ ╬╗ /api/projects/tasks                          0 B                0 B
+Γö£ ╬╗ /api/projects/time-entries                   0 B                0 B
+Γö£ ╬╗ /api/projects/workstreams                    0 B                0 B
+Γö£ ╬╗ /api/reports                                 0 B                0 B
+Γö£ ╬╗ /api/reports/[id]                            0 B                0 B
+Γö£ ╬╗ /api/reports/[id]/run                        0 B                0 B
+Γö£ ╬╗ /api/reports/summary                         0 B                0 B
+Γö£ ╬╗ /api/reports/summary/refresh                 0 B                0 B
+Γö£ ╬╗ /api/revops/attribution                      0 B                0 B
+Γö£ ╬╗ /api/revops/campaigns                        0 B                0 B
+Γö£ ╬╗ /api/revops/campaigns/[campaignId]/costs     0 B                0 B
+Γö£ ╬╗ /api/revops/enablement-assets                0 B                0 B
+Γö£ ╬╗ /api/revops/forecast                         0 B                0 B
+Γö£ ╬╗ /api/revops/lead-sources                     0 B                0 B
+Γö£ ╬╗ /api/revops/overview                         0 B                0 B
+Γö£ ╬╗ /api/revops/sales-performance                0 B                0 B
+Γö£ ╬╗ /api/superadmin/accounts                     0 B                0 B
+Γö£ ╬╗ /api/superadmin/audit-logs                   0 B                0 B
+Γö£ ╬╗ /api/superadmin/auth/login                   0 B                0 B
+Γö£ ╬╗ /api/superadmin/auth/logout                  0 B                0 B
+Γö£ ╬╗ /api/superadmin/licenses                     0 B                0 B
+Γö£ ╬╗ /api/superadmin/licenses/[id]                0 B                0 B
+Γö£ ╬╗ /api/superadmin/setup                        0 B                0 B
+Γö£ ╬╗ /api/superadmin/tenants                      0 B                0 B
+Γö£ ╬╗ /api/superadmin/tenants/[slug]               0 B                0 B
+Γö£ ╬╗ /api/superadmin/tenants/[slug]/admins        0 B                0 B
+Γö£ ╬╗ /api/superadmin/tenants/[slug]/admins/[id]   0 B                0 B
+Γö£ ╬╗ /api/superadmin/tenants/admins               0 B                0 B
+Γö£ ╬╗ /api/superadmin/tenants/admins-batch         0 B                0 B
+Γö£ ╬╗ /api/superadmin/tenants/bulk                 0 B                0 B
+Γö£ ╬╗ /api/superadmin/tenants/bulk-activate        0 B                0 B
+Γö£ ╬╗ /api/superadmin/tenants/bulk-delete          0 B                0 B
+Γö£ ╬╗ /api/superadmin/tenants/bulk-suspend         0 B                0 B
+Γö£ ╬╗ /api/support/assign                          0 B                0 B
+Γö£ ╬╗ /api/support/dashboard/metrics               0 B                0 B
+Γö£ Γùï /api/support/health                          0 B                0 B
+Γö£ ╬╗ /api/support/incidents                       0 B                0 B
+Γö£ ╬╗ /api/support/knowledge-base                  0 B                0 B
+Γö£ ╬╗ /api/support/seed                            0 B                0 B
+Γö£ ╬╗ /api/support/sla                             0 B                0 B
+Γö£ ╬╗ /api/support/tickets                         0 B                0 B
+Γö£ ╬╗ /api/support/tickets/[ticketId]              0 B                0 B
+Γö£ ╬╗ /api/support/tickets/[ticketId]/activities   0 B                0 B
+Γö£ ╬╗ /api/support/tickets/[ticketId]/comments     0 B                0 B
+Γö£ ╬╗ /api/support/tickets/[ticketId]/field-jobs   0 B                0 B
+Γö£ ╬╗ /api/tenant/access-control                   0 B                0 B
+Γö£ ╬╗ /api/tenant/access-restrictions              0 B                0 B
+Γö£ ╬╗ /api/tenant/analytics                        0 B                0 B
+Γö£ ╬╗ /api/tenant/approvals                        0 B                0 B
+Γö£ ╬╗ /api/tenant/attendance                       0 B                0 B
+Γö£ ╬╗ /api/tenant/billing                          0 B                0 B
+Γö£ ╬╗ /api/tenant/cost-allocation                  0 B                0 B
+Γö£ ╬╗ /api/tenant/departments                      0 B                0 B
+Γö£ ╬╗ /api/tenant/employees                        0 B                0 B
+Γö£ ╬╗ /api/tenant/integrations                     0 B                0 B
+Γö£ ╬╗ /api/tenant/leave/requests                   0 B                0 B
+Γö£ ╬╗ /api/tenant/modules                          0 B                0 B
+Γö£ ╬╗ /api/tenant/org-admins                       0 B                0 B
+Γö£ ╬╗ /api/tenant/org-structure                    0 B                0 B
+Γö£ ╬╗ /api/tenant/payroll                          0 B                0 B
+Γö£ ╬╗ /api/tenant/performance/goals                0 B                0 B
+Γö£ ╬╗ /api/tenant/performance/reviews              0 B                0 B
+Γö£ ╬╗ /api/tenant/recruitment/candidates           0 B                0 B
+Γö£ ╬╗ /api/tenant/recruitment/jobs                 0 B                0 B
+Γö£ ╬╗ /api/tenant/role-history                     0 B                0 B
+Γö£ ╬╗ /api/tenant/roles                            0 B                0 B
+Γö£ ╬╗ /api/tenant/security                         0 B                0 B
+Γö£ ╬╗ /api/tenant/signin                           0 B                0 B
+Γö£ ╬╗ /api/tenant/user-permissions                 0 B                0 B
+Γö£ ╬╗ /api/tenant/users                            0 B                0 B
+Γö£ ╬╗ /api/tenant/users/assign-role                0 B                0 B
+Γö£ ╬╗ /api/tenant/workflows                        0 B                0 B
+Γö£ ╬╗ /api/tenant/workflows/[id]                   0 B                0 B
+Γö£ ╬╗ /api/tenant/workflows/[id]/duplicate         0 B                0 B
+Γö£ ╬╗ /api/tenant/workflows/[id]/status            0 B                0 B
+Γö£ ╬╗ /api/tenants                                 0 B                0 B
+Γö£ ╬╗ /api/tenants/[slug]                          0 B                0 B
+Γö£ Γùï /crm/accounts                                5.54 kB        83.9 kB
+Γö£ Γùï /crm/activities                              5.6 kB         83.9 kB
+Γö£ Γùï /crm/contacts                                5.7 kB           84 kB
+Γö£ Γùï /crm/deals                                   5.41 kB        83.7 kB
+Γö£ Γùï /crm/leads                                   7.73 kB        86.1 kB
+Γö£ Γùï /favicon.ico                                 0 B                0 B
+Γö£ Γùï /hr/staff-reports                            4.35 kB        82.7 kB
+Γö£ Γùï /itsupport/agent                             1.5 kB         79.8 kB
+Γö£ Γùï /itsupport/executive                         1.32 kB        79.7 kB
+Γö£ Γùï /itsupport/field                             1.58 kB        79.9 kB
+Γö£ Γùï /itsupport/manager                           1.49 kB        79.8 kB
+Γö£ Γùï /planner                                     7.12 kB        85.5 kB
+Γö£ Γùï /superadmin                                  7.55 kB        95.2 kB
+Γö£ Γùï /superadmin/login                            4.54 kB        98.1 kB
+Γö£ Γùï /suppliers                                   212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin                                3.18 kB        81.5 kB
+Γö£ ╬╗ /tenant-admin/admin                          5.84 kB          90 kB
+Γö£ ╬╗ /tenant-admin/admin/access                   212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/admin/audit                    212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/admin/billing                  212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/admin/health                   212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/admin/integrations             212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/admin/structure                212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/admin/users                    212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/analytics                      3.77 kB          88 kB
+Γö£ ╬╗ /tenant-admin/analytics/financial            3.6 kB         87.8 kB
+Γö£ ╬╗ /tenant-admin/analytics/hr                   3.8 kB           88 kB
+Γö£ ╬╗ /tenant-admin/analytics/sales                3.54 kB        97.8 kB
+Γö£ ╬╗ /tenant-admin/audit                          6.09 kB        84.4 kB
+Γö£ ╬╗ /tenant-admin/automation                     3.9 kB         88.1 kB
+Γö£ ╬╗ /tenant-admin/automation/history             3.59 kB        87.8 kB
+Γö£ ╬╗ /tenant-admin/automation/policies            212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/automation/rules               3.69 kB        87.9 kB
+Γö£ ╬╗ /tenant-admin/automation/triggers            212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/automation/workflows           5.25 kB        89.5 kB
+Γö£ ╬╗ /tenant-admin/bills                          5.68 kB          84 kB
+Γö£ ╬╗ /tenant-admin/crm                            307 B          94.1 kB
+Γö£ ╬╗ /tenant-admin/crm/customers                  308 B          94.1 kB
+Γö£ ╬╗ /tenant-admin/crm/leads                      305 B            94 kB
+Γö£ ╬╗ /tenant-admin/crm/pipeline                   305 B            94 kB
+Γö£ ╬╗ /tenant-admin/expenses                       5.69 kB        86.4 kB
+Γö£ ╬╗ /tenant-admin/finance                        3.02 kB        87.2 kB
+Γö£ ╬╗ /tenant-admin/finance/reports                3.72 kB        82.1 kB
+Γö£ ╬╗ /tenant-admin/health                         5.62 kB          84 kB
+Γö£ ╬╗ /tenant-admin/hr                             11.1 kB        99.5 kB
+Γö£ ╬╗ /tenant-admin/hr/attendance                  3.46 kB        81.8 kB
+Γö£ ╬╗ /tenant-admin/hr/payroll                     1.89 kB        80.2 kB
+Γö£ ╬╗ /tenant-admin/hr/staff                       3.72 kB        82.1 kB
+Γö£ ╬╗ /tenant-admin/hr/staff-reports               2.87 kB        81.2 kB
+Γö£ ╬╗ /tenant-admin/inventory                      212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/it-support                     212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/it-support/engineers           212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/it-support/incidents           212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/it-support/sla                 212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/it-support/tickets             212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/payments                       4.78 kB        85.5 kB
+Γö£ ╬╗ /tenant-admin/projects                       2.98 kB        87.2 kB
+Γö£ ╬╗ /tenant-admin/projects/active                7.34 kB        96.7 kB
+Γö£ ╬╗ /tenant-admin/projects/archive               5.47 kB        94.9 kB
+Γö£ ╬╗ /tenant-admin/projects/reports               6.69 kB        90.9 kB
+Γö£ ╬╗ /tenant-admin/purchases                      212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/revops                         212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/revops/attribution             212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/revops/campaigns               212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/revops/forecasting             212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/revops/performance             212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/sales                          2.24 kB        93.2 kB
+Γö£ ╬╗ /tenant-admin/sales/inventory                2.4 kB         93.4 kB
+Γö£ ╬╗ /tenant-admin/sales/orders                   2.35 kB        93.3 kB
+Γö£ ╬╗ /tenant-admin/sales/purchase-orders          212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/sales/suppliers                2.36 kB        93.3 kB
+Γö£ ╬╗ /tenant-admin/settings                       5.5 kB         83.8 kB
+Γö£ ╬╗ /tenant-admin/suppliers                      212 B          78.5 kB
+Γö£ ╬╗ /tenant-admin/team-data                      11.3 kB         101 kB
+Γö£ ╬╗ /tenant-admin/tenant-signin                  917 B          79.3 kB
+Γö£ ╬╗ /tenant-admin/users                          5.53 kB        83.9 kB
+Γöö ╬╗ /tenant-admin/vendors                        9.65 kB          88 kB
++ First Load JS shared by all                    78.3 kB
+  Γö£ chunks/596-2c7805a86d9630bf.js               25.7 kB
+  Γö£ chunks/fd9d1056-6b9a6afa164bbd44.js          50.6 kB
+  Γö£ chunks/main-app-3f3b94e31bb59271.js          216 B
+  Γöö chunks/webpack-3e2fe23fe7bc9b2b.js           1.82 kB
+
+Route (pages)                                    Size     First Load JS
+ΓöÇ Γùï /404                                         182 B          76.7 kB
++ First Load JS shared by all                    76.5 kB
+  Γö£ chunks/framework-964c2d6016b0d731.js         45 kB
+  Γö£ chunks/main-042e03c359b9b757.js              29.4 kB
+  Γö£ chunks/pages/_app-c39a67c97d2e85f6.js        196 B
+  Γöö chunks/webpack-3e2fe23fe7bc9b2b.js           1.82 kB
+
+╞Æ Middleware                                     19.1 kB
+
+╬╗  (Server)  server-side renders at runtime (uses getInitialProps or getServerSideProps)
+Γùï  (Static)  automatically rendered as static HTML (uses no initial props)
+

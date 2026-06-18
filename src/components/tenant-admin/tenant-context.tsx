@@ -1,0 +1,40 @@
+"use client";
+
+import { createContext, useContext, useMemo } from "react";
+
+type TenantContextValue = {
+  tenantSlug: string;
+  regionId: string;
+  regionName: string;
+  branchId: string;
+  branchName: string;
+};
+
+const TenantContext = createContext<TenantContextValue | undefined>(undefined);
+
+type TenantContextProviderProps = {
+  value: TenantContextValue;
+  children: React.ReactNode;
+};
+
+export function TenantContextProvider({ value, children }: TenantContextProviderProps) {
+  const normalized = useMemo(() => {
+    return {
+      tenantSlug: value.tenantSlug,
+      regionId: value.regionId,
+      regionName: value.regionName || "Primary Region",
+      branchId: value.branchId,
+      branchName: value.branchName || "Headquarters",
+    } satisfies TenantContextValue;
+  }, [value]);
+
+  return <TenantContext.Provider value={normalized}>{children}</TenantContext.Provider>;
+}
+
+export function useTenantContext() {
+  const context = useContext(TenantContext);
+  if (!context) {
+    throw new Error("useTenantContext must be used within a TenantContextProvider");
+  }
+  return context;
+}

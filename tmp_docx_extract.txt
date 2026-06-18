@@ -1,0 +1,299 @@
+SYSPRO
+Full End-to-End Optimization & Flow Architecture
+Business Operating System for SMEs
+Confidential — Internal Architecture Document
+Executive Summary
+Syspro is designed as a multi-tenant ERP for SMEs, built on Next.js, NeonDB (PostgreSQL), and deployed on Vercel. This document defines the full optimized flow architecture — covering all modules, their inter-connections, RBAC governance, automation chains, and recommended new modules to make Syspro a true business operating system for Nigerian and African SMEs.
+The core optimization principle is: every action is a trigger, not a dead end. Right now each module operates as an island. This document describes how to connect them into six automated chains that eliminate manual handoffs and make the system self-running for routine operations.
+The Fundamental Problem
+Modules are disconnected — a won deal does not create an invoice, a hired employee does not set up payroll, low inventory does not generate a PO
+The Finance dashboard has hardcoded ₦0 values — no live data
+Reports use setTimeout simulation instead of real API calls
+The expense submitter identity is hardcoded as "current-user" — breaking audit integrity
+There is no RBAC — every user sees everything regardless of role
+No automated workflow routing — approvals require manual intervention at every step
+1. Master System Flow
+The diagram below shows the complete Syspro architecture — all seven modules and their automated interconnections. Every arrow represents an automated trigger that fires without manual intervention.
+Figure 1: Master end-to-end flow — all modules connected through automated triggers
+The 7 Core Modules
+CRM — The revenue engine. All money starts here. Contacts → Leads → Opportunities → Deals.
+Finance — The value capture layer. Invoices, payments, reconciliation, GL.
+HR — The people layer. Every person is a cost center and a capability.
+Inventory — The fulfillment layer. Products move, costs are incurred.
+Projects — The delivery layer. Work is scoped, tracked, and billed.
+Procurement — The spend control layer. Every outgoing payment starts here.
+Approvals Engine — The governance layer. Nothing moves without the right sign-off.
+2. CRM → Finance Chain
+The most important automated chain in the system. When a deal is won in CRM, three things should happen simultaneously and automatically — no human needed to kick off the next step.
+Figure 2: CRM to Finance automated chain — deal won triggers invoice, project, and inventory simultaneously
+Chain Steps
+Step 1 — Deal Won (CRM Trigger)
+Contact progresses through Lead → Opportunity → Deal stages
+When status changes to "won", an internal event is published immediately
+Three parallel automated actions fire at the same time
+Step 2 — Three Parallel Auto-Actions
+Finance: Auto: Draft invoice
+Line items pre-populated from deal scope and pricing
+Payment terms pulled from customer profile
+Linked PO attached if one exists on the deal
+Projects: Auto: Create project
+Milestones created from deal terms and delivery schedule
+PM assigned based on deal owner or round-robin rule
+Team notified via in-app notification
+Inventory: Auto: Pick order
+Items from deal scope reserved in inventory
+Warehouse team notified for fulfillment
+Stock levels updated immediately
+Step 3 — Downstream Auto-Actions
+Finance manager reviews and sends invoice — customer receives it automatically
+Payment received → invoice auto-reconciled against Finance Account balance
+Project milestone completed → progress invoice triggered automatically
+Items shipped → COGS posted to GL instantly, no manual journal entry needed
+All events → Reports refresh automatically via the event bus
+3. HR → Finance Lifecycle
+HR is the most underconnected module for SMEs. Every hire, payroll run, and departure has direct financial consequences that currently require manual entry. The optimized flow makes every HR event a Finance trigger.
+Figure 3: HR lifecycle — every employment event auto-triggers Finance, GL, RBAC, and asset management
+Onboarding Auto-Chain
+When an employee is hired, four things should happen automatically without any Finance team involvement:
+Payroll setup — employee auto-added to the monthly payroll cycle with correct salary band, PAYE bracket, and pension contribution
+GL account mapping — employee cost center assigned and mapped to the correct department GL account
+RBAC role assignment — system access permissions granted based on role (Staff, Manager, etc.) and branch scope
+Asset assignment — laptop, tools, and equipment logged against the employee record with depreciation tracking
+Monthly Payroll Run
+PAYE, pension, and net pay calculated per employee automatically
+Finance payment queued for bank transfer on run approval
+GL journal entry posted — salary expense recorded against cost center
+Budget actuals updated — headcount cost compared against forecast
+Expense Claims Flow
+Staff expense claims connect HR and Finance. The optimized flow: Staff submits → auto-routed to correct approver by RBAC → approved → reimbursement queued as either addition to payroll or direct bank transfer → GL posted → budget actuals updated.
+4. RBAC & Approvals Engine
+RBAC is prerequisite number one before any automation is meaningful. Every automated trigger needs to know who to route to and what they are allowed to see. Without RBAC, automations fire to the wrong people or expose sensitive data incorrectly.
+Figure 4: RBAC approval routing matrix with threshold-based escalation path
+Role Definitions
+Staff / Employee
+Submits expenses, timesheets, and leave requests only
+Sees only their own submissions and approval status
+No access to invoices, bills, payments, reports, or other employees' data
+Scoped to their own branch — cannot see other branches
+Department Manager
+First-level approver for team expenses up to ₦50,000
+Approves leave requests for their team
+Sees only their department's budget and actuals — no cross-department visibility
+Submits their own expenses which escalate up to Finance Manager
+Finance Manager
+Mid-level approver for expenses and bills between ₦50,000 and ₦500,000
+Reviews, sends, and manages the invoice lifecycle
+Views all financial reports but cannot edit Chart of Accounts
+Manages PO approvals and vendor bill matching
+Finance Admin
+Processes payment runs — vendor payments and reimbursements
+Manages Chart of Accounts and GL accounts
+Performs period close and exports financial reports
+Sets budget limits and approval thresholds system-wide
+Cannot submit expenses — separation of duties
+Tenant Owner
+Full override access on all modules
+Creates and deactivates users, assigns roles
+Executive-level approver for transactions above ₦500,000
+Sees consolidated reports across all regions and branches
+Auditor (Read-Only)
+Views all modules, all history, all transactions — no exceptions
+Cannot create, edit, or approve anything
+Sees full audit logs including expense_audit_logs
+Can export all reports — ideal for external auditors or compliance reviews
+Access is time-limited per engagement
+Threshold-Based Escalation
+The auto-escalation path ensures every transaction reaches the correct approver without manual routing:
+Under ₦50,000 — Department Manager only
+₦50,000 to ₦500,000 — Department Manager → Finance Manager
+Above ₦500,000 — Department Manager → Finance Manager → Finance Admin → Tenant Owner
+Branch Scoping
+All roles are scoped to regionId and branchId. A Finance Manager in the Lagos branch cannot see Abuja branch data. A Department Manager can only approve expenses tagged to their branch. Tenant Owner and Auditor are the only roles with cross-branch visibility. This is enforced at the API route level via withRole() middleware, not just the UI.
+What Needs to Be Built
+roles table — role definitions per tenant with configurable thresholds
+user_roles table — maps users to roles with regionId and branchId scope
+permissions table — granular action permissions per role (can_approve_expenses, can_view_reports, etc.)
+useRole() hook — client-side role context for UI gating (show/hide sidebar items, action buttons)
+withRole() middleware — server-side API route protection, returns 403 for unauthorized actions
+Approval routing engine — reads user_roles to determine the correct queue for each transaction
+5. Procurement → Vendor → Payment Loop
+Procurement is the spend control gateway. Every outgoing payment — vendor invoices, service bills, equipment purchases — should pass through this loop. The 3-way match is the key automation that eliminates manual bill reconciliation.
+Figure 5: Procurement loop with budget gate, PO creation, and 3-way match auto-approval
+Flow Steps
+Step 1 — Purchase Request
+Staff or Project Manager identifies a spending need
+Request submitted with description, amount estimate, GL account, and budget category
+System immediately checks available budget allocation — auto-block if insufficient
+Step 2 — Budget Gate
+If budget available — PO creation proceeds automatically
+If budget insufficient — request flagged, manager notified, requires override approval
+Override can be granted by Finance Manager or Tenant Owner depending on amount
+Step 3 — PO Creation & Vendor Notification
+PO auto-created with all line items, terms, and delivery expectations
+Vendor notified automatically by email via the existing email.ts service
+PO linked to the originating purchase request for full audit trail
+Step 4 — Receipt Logging
+When goods or services are delivered, receipt is logged in the system
+Procurement Officer confirms receipt against PO line items
+Any discrepancies flagged immediately before vendor invoice arrives
+Step 5 — 3-Way Match
+System compares three documents automatically: PO + receipt confirmation + vendor invoice
+If all three match within tolerance — Bill is auto-approved, no manual review needed
+If mismatch detected — sent to Finance Manager for manual review with discrepancy highlighted
+Matched bill → queued for next payment run automatically
+6. Inventory → Finance Automation
+Every inventory movement has a financial consequence. The optimized flow ensures that stock sold, received, or running low all trigger the correct Finance entries automatically — no warehouse team should ever need to post a journal entry.
+Figure 6: Inventory automation — stock movements trigger COGS, balance sheet updates, and reorder POs
+Three Inventory Triggers
+Stock Sold
+Triggered when a CRM deal is completed or a pick order is fulfilled
+COGS entry posted to GL automatically against the correct expense account
+Revenue recognition linked to the related invoice
+Inventory asset value on the balance sheet updated immediately
+Stock Received
+Triggered when a vendor PO delivery is confirmed in Procurement
+Inventory asset value increases on the balance sheet
+Linked to the originating vendor bill for cost matching
+Location and batch tracking updated if warehouse management is enabled
+Stock Low — Reorder Trigger
+When stock level drops below the configured reorder threshold
+Auto-draft PO created and sent to Procurement for review
+Preferred vendor and last-purchase price pre-populated on the PO
+Procurement Officer reviews and approves — no Finance team involvement needed
+Inventory Valuation Engine
+Supports FIFO, LIFO, and weighted average cost methods
+Balance sheet inventory line item updates in real time as stock moves
+COGS on the P&L updates with every sale — no month-end manual adjustment needed
+Variance between purchase price and standard cost auto-posted to a variance GL account
+Recommended: Warehouse Management Module
+To fully automate inventory, a lightweight warehouse management module should be added with: stock locations (bin/shelf/zone), batch and expiry date tracking, serial number tracking for high-value assets, and multi-location transfers with automatic GL entries.
+7. Event-Driven Reports
+Currently the Reports page uses setTimeout simulation instead of real API calls, and the Finance dashboard has hardcoded ₦0 values. The fix is an event-driven architecture where every financial action across the system publishes to an internal event bus, and reports recalculate automatically.
+Figure 7: Event-driven report refresh — replaces all setTimeout simulation and hardcoded dashboard values
+How It Works
+Every status change across all modules — deal won, invoice paid, expense approved, payroll run, PO matched — writes a row to a finance_events table in NeonDB
+A database trigger or background job reads the event and updates a cached summary view
+The dashboard reads from the cached summary — near-zero query time, no expensive aggregations on every page load
+Full report endpoints (P&L, balance sheet, cash flow, aged receivables) recalculate on demand against the live transaction tables — no simulation
+Reports to Build / Fix
+P&L — Revenue vs cost by period, department, and branch
+Cash flow statement — Operating, investing, and financing activities
+Balance sheet — Assets, liabilities, and equity at any point in time
+Aged debtors — Overdue invoices by customer and days overdue
+Aged creditors — Overdue bills by vendor and days overdue
+Vendor spend analysis — Spend by vendor, category, and period
+Budget variance — Actuals vs budget by department and GL account
+Payroll summary — Headcount cost by department and period
+Dashboard Fixes Required
+Wire all metric cards to the NeonDB cached summary view
+Recent transactions list — fetch from API, not empty array
+Expense list — replace TODO comment with actual server-side fetch on load
+All currency displays — confirm ₦ (Naira) is applied consistently
+Date ranges — allow filtering by period (this month, last month, YTD, custom)
+8. Recommended New Modules
+Six new modules would make Syspro genuinely innovative for SMEs in Nigeria and across Africa. These go beyond fixing existing gaps into creating competitive differentiation.
+Figure 8: Recommended new modules with build priority for SME differentiation
+Now — Build Immediately
+Smart Notifications Engine
+Role-aware alerts delivered via email and in-app notifications
+Overdue invoice alerts to Finance Manager with customer contact link
+Budget breach warning at 75% and hard stop at 95% utilization
+Approval backlog alerts — if a request sits unactioned for more than 24 hours
+Payment due reminders — vendor bills approaching due date
+Tax Engine (VAT / WHT)
+VAT and Withholding Tax auto-calculated on every qualifying transaction
+Tax type pulled from vendor and customer profiles (registered vs unregistered)
+Tax GL account auto-credited or debited on transaction posting
+FIRS-ready monthly and annual tax reports generated at one click
+Handles Nigerian tax rules specifically — VAT 7.5%, WHT rates by income type
+Mobile Approvals
+Managers receive push notifications for pending approvals on mobile
+One-tap approve or reject with optional comment
+Full transaction detail visible before decision — no need to open desktop
+Audit trail records approval time, device, and location
+Next Quarter
+Customer Self-Serve Portal
+Customers log in to view their invoices, payment history, and outstanding balance
+Pay directly from the portal — integrated payment gateway (Paystack or Flutterwave)
+Download statements and receipts without calling Finance
+Dispute an invoice or flag a discrepancy — creates a ticket in Finance queue
+Vendor Portal
+Vendors submit invoices directly into the system — eliminates email invoice processing
+Track PO status — confirmed, partially received, fully received
+View payment status and history — reduces vendor payment enquiry calls
+Bank account details managed self-serve — Finance team no longer needs to update manually
+Business Analytics Dashboard
+Revenue trends by customer, product, and region
+Top customers by revenue and payment reliability
+Best-selling products or services by margin, not just volume
+Cash runway forecast — "At current burn rate, you have X days of runway"
+6 Months — AI Layer
+The AI assistant layer is what ultimately separates Syspro from a glorified spreadsheet into a genuine business operating system. Most SME software forces owners to be their own accountant and analyst. The AI layer removes that burden.
+Anomaly detection — flags expense amounts that are statistical outliers for their category, vendor, or time period
+Smart categorisation — auto-tags submitted expenses based on vendor name and description using pattern matching and ML
+Cash flow prediction — forecasts cash position 30, 60, and 90 days ahead based on confirmed receivables, outstanding payables, and historical burn
+Duplicate detection — flags potential duplicate invoices or expense claims before they are paid
+Vendor risk scoring — scores vendors on payment history, price inflation, and delivery reliability
+9. Implementation Priority Matrix
+The table below sequences all recommended work by priority, module, business impact, and what specifically needs to be built. Start from the top and work down.
+Priority
+Module
+Impact
+What to build
+🔴 Critical
+Identity — hardcoded user fix
+Data integrity across all audit logs
+Wire session identity to expenses, approvals, journal entries
+🔴 Critical
+Dashboard metrics
+Live KPIs replace hardcoded ₦0 values
+Wire all metrics to NeonDB cached summary view
+🟠 High
+Expense → Bill → Payment chain
+Reduces manual finance work ~60%
+Auto-generate bill on approval, queue payment, update GL
+🟠 High
+Invoice → Payment reconciliation
+Closes revenue loop automatically
+Match payment to invoice, update account balance, post GL
+🟠 High
+RBAC full implementation
+Enables all role-based workflows
+roles, user_roles, permissions tables + useRole() hook
+🟡 Medium
+Budget actuals auto-posting
+Prevents overspend proactively
+Post every approved expense to budget_actuals by GL account
+🟡 Medium
+PO → Bill 3-way match
+Eliminates manual PO reconciliation
+Match PO + receipt + vendor invoice, auto-approve on match
+🟡 Medium
+CRM Deal → Invoice auto-create
+Closes sales-to-finance gap
+On deal_won event, draft invoice with deal line items
+🟢 Soon
+Smart notifications engine
+Surfaces right info to right person
+finance_event table + role-aware email/in-app routing
+🟢 Soon
+Tax engine (VAT/WHT)
+FIRS compliance, auto-calculated
+Tax rules per transaction type, FIRS report export
+🔵 Later
+Customer self-serve portal
+Reduces AR chasing workload
+Invoice view, payment, statement download for customers
+🔵 Later
+AI anomaly detection
+Flags fraud and errors automatically
+Outlier detection on expenses, vendor payments, COGS
+The Six Automated Chains — Summary
+Once fully implemented, Syspro runs on six automated chains that cover the entire business operating cycle:
+Chain 1 — Revenue: Contact → Lead → Opportunity → Deal won → Draft invoice → Sent → Payment → GL reconciliation → P&L update. Zero manual handoff after deal close.
+Chain 2 — Spend control: Staff submits expense → RBAC routes to correct approver → Approved → Bill generated → Budget actuals updated → Payment queued → GL posted → Variance report refreshed.
+Chain 3 — Procurement: Need identified → Budget checked → PO raised → Vendor notified → Delivery logged → 3-way match → Bill auto-approved → Payment run → Vendor analytics updated.
+Chain 4 — Payroll: Employee hired → Payroll setup → Monthly run → GL posted → Bank transfer → Budget headcount actuals updated.
+Chain 5 — Inventory: Item sold → COGS posted → Stock level updated → Reorder threshold hit → Auto-PO drafted → Balance sheet updated.
+Chain 6 — Reporting: Every event in all five chains above writes to finance_events table → cached summary view recalculates → dashboard reads from cache → all hardcoded values become live.
+End of Document
