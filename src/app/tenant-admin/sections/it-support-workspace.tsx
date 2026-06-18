@@ -555,7 +555,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
           <button
             type="button"
             onClick={() => setRefreshToken((prev) => prev + 1)}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-[#111827] px-4 py-2 text-sm text-slate-600 shadow-sm hover:border-slate-300"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-theme-muted px-4 py-2 text-sm text-slate-600 shadow-sm hover:border-slate-300"
           >
             <RefreshCcw className="h-4 w-4" />
             Refresh data
@@ -581,7 +581,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
 
       <div className="grid gap-8 xl:grid-cols-3">
         <div className="space-y-8 xl:col-span-2">
-          <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+          <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Queues</p>
@@ -589,13 +589,13 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                 <p className="text-sm text-slate-500">Filter by SLA risk, priority, or region to focus the war room.</p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)} className="bg-[#0B1120] rounded-2xl border border-[rgba(255,255,255,0.1)] px-3 py-2 text-sm text-white">
+                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)} className="bg-theme-bg rounded-2xl border border-theme-border px-3 py-2 text-sm text-white">
                   <option value="all">All statuses</option>
                   {STATUS_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
                 </select>
-                <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value as typeof filterPriority)} className="bg-[#0B1120] rounded-2xl border border-[rgba(255,255,255,0.1)] px-3 py-2 text-sm text-white">
+                <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value as typeof filterPriority)} className="bg-theme-bg rounded-2xl border border-theme-border px-3 py-2 text-sm text-white">
                   <option value="all">All priorities</option>
                   {(["critical", "high", "medium", "low"] as SupportTicket["priority"][]).map((priority) => (
                     <option key={priority} value={priority}>{priority.toUpperCase()}</option>
@@ -654,7 +654,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+          <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Ticket detail</p>
@@ -841,7 +841,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+          <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-400">SLA radar</p>
@@ -863,7 +863,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+          <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Incident feed</p>
@@ -887,7 +887,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+          <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Assignment intelligence</p>
@@ -904,7 +904,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                       <p className="text-lg font-semibold">{assignment.primary.engineerName}</p>
                       <p className="text-sm text-white/70">Skill match {assignment.primary.skillMatch}% · Load score {assignment.primary.loadScore}%</p>
                     </div>
-                    <div className="rounded-full bg-[#111827]/10 px-3 py-1 text-xs">{assignment.primary.total}% fit</div>
+                    <div className="rounded-full bg-theme-muted/10 px-3 py-1 text-xs">{assignment.primary.total}% fit</div>
                   </div>
                 </div>
                 {assignment.backup && (
@@ -935,7 +935,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
             )}
           </div>
 
-          <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+          <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Knowledge loop</p>
@@ -1137,7 +1137,7 @@ function StatCard({
           <p className="mt-2 text-3xl font-semibold">{value}</p>
           <p className="text-sm text-white/70">{sublabel}</p>
         </div>
-        <div className="rounded-2xl bg-[#111827]/15 p-3">
+        <div className="rounded-2xl bg-theme-muted/15 p-3">
           <Icon className="h-5 w-5" />
         </div>
       </div>

@@ -143,7 +143,7 @@ export default function ProjectsBudget({ projects, tenantSlug }: ProjectsBudgetP
         </div>
       )}
 
-      <div className="rounded-lg border border-gray-200 bg-[#111827] p-6">
+      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Budget Utilization</h3>
         {selectedProject && (
           <div className="space-y-2">
@@ -165,7 +165,7 @@ export default function ProjectsBudget({ projects, tenantSlug }: ProjectsBudgetP
         )}
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-[#111827] p-6">
+      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Budget Category</h3>
         <div className="flex gap-2 flex-col md:flex-row">
           <input
@@ -194,13 +194,13 @@ export default function ProjectsBudget({ projects, tenantSlug }: ProjectsBudgetP
       {loading ? (
         <div className="text-center py-8 text-gray-500">Loading budget allocations...</div>
       ) : budgetAllocations.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-12 text-center">
-          <DollarSign className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
+          <DollarSign className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No budget categories yet</h3>
           <p className="text-gray-600">Add budget categories to track spending</p>
         </div>
       ) : (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] overflow-hidden">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -239,7 +239,7 @@ export default function ProjectsBudget({ projects, tenantSlug }: ProjectsBudgetP
                     <td className="px-6 py-4">
                       <button
                         onClick={() => handleDeleteAllocation(allocation.id)}
-                        className="text-red-600 hover:text-red-700 transition font-medium text-sm"
+                        className="text-red-600 hover:text-theme-danger transition font-medium text-sm"
                       >
                         Delete
                       </button>

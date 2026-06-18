@@ -126,7 +126,7 @@ export default function ProjectArchivePage() {
           <div>
             <label className="block text-xs font-medium text-gray-900 mb-2">Search</label>
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-theme-text-tertiary" />
               <input
                 type="text"
                 placeholder="Project name or manager..."
@@ -213,7 +213,7 @@ export default function ProjectArchivePage() {
                     <div className="flex items-center justify-center gap-2">
                       <button 
                         onClick={() => handleViewProject(project)}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover transition-colors"
                         title="View Details"
                       >
                         <Eye className="w-4 h-4" />
@@ -227,7 +227,7 @@ export default function ProjectArchivePage() {
                       </button>
                       <button 
                         onClick={() => openDeleteModal(project)}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700 transition-colors"
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-theme-danger transition-colors"
                         title="Delete Project"
                       >
                         <Trash2 className="w-4 h-4" />

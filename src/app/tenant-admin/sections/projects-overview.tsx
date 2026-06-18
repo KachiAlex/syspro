@@ -123,10 +123,10 @@ export default function ProjectsOverview({
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-6 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#818CF8] mb-1">Total Projects</p>
-              <p className="text-3xl font-bold text-[#F8FAFC]">{projects.length}</p>
+              <p className="text-sm text-theme-accent mb-1">Total Projects</p>
+              <p className="text-3xl font-bold text-theme-text-primary">{projects.length}</p>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-[#818CF8]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-theme-accent">
               <Briefcase className="w-6 h-6" />
             </div>
           </div>
@@ -135,7 +135,7 @@ export default function ProjectsOverview({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-emerald-400 mb-1">Active Projects</p>
-              <p className="text-3xl font-bold text-[#F8FAFC]">{activeProjects}</p>
+              <p className="text-3xl font-bold text-theme-text-primary">{activeProjects}</p>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-100 text-emerald-400">
               <TrendingUp className="w-6 h-6" />
@@ -146,7 +146,7 @@ export default function ProjectsOverview({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-violet-600 mb-1">Total Budget</p>
-              <p className="text-3xl font-bold text-[#F8FAFC]">${(totalBudget / 1000).toFixed(0)}K</p>
+              <p className="text-3xl font-bold text-theme-text-primary">${(totalBudget / 1000).toFixed(0)}K</p>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
               <DollarSign className="w-6 h-6" />
@@ -157,7 +157,7 @@ export default function ProjectsOverview({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-amber-600 mb-1">Budget Spent</p>
-              <p className="text-3xl font-bold text-[#F8FAFC]">${(totalSpent / 1000).toFixed(0)}K</p>
+              <p className="text-3xl font-bold text-theme-text-primary">${(totalSpent / 1000).toFixed(0)}K</p>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
               <Users className="w-6 h-6" />
@@ -167,7 +167,7 @@ export default function ProjectsOverview({
       </div>
 
       {/* Action Buttons */}
-      <div className="rounded-lg border border-gray-200 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6 shadow-sm">
         <div className="flex flex-wrap gap-3">
           <button 
             onClick={onCreateClick}
@@ -187,7 +187,7 @@ export default function ProjectsOverview({
       </div>
 
       {/* Filters */}
-      <div className="rounded-lg border border-gray-200 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <select 
             value={statusFilter} 
@@ -224,21 +224,21 @@ export default function ProjectsOverview({
           <div className="flex items-center gap-2">
             {(statusFilter || priorityFilter || searchQuery) && (
               <div className="inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 border border-blue-200">
-                <Filter className="w-4 h-4 text-[#818CF8]" />
+                <Filter className="w-4 h-4 text-theme-accent" />
                 <span className="text-xs font-semibold text-blue-800">{filteredProjects.length} results</span>
               </div>
             )}
-            <div className="flex gap-1 rounded-lg border border-gray-300 bg-[#111827] p-1">
+            <div className="flex gap-1 rounded-lg border border-gray-300 bg-theme-muted p-1">
               <button
                 onClick={() => onViewModeChange('grid')}
-                className={`p-2 rounded transition ${viewMode === 'grid' ? 'bg-blue-100 text-[#818CF8]' : 'text-[#94A3B8] hover:text-[#94A3B8]'}`}
+                className={`p-2 rounded transition ${viewMode === 'grid' ? 'bg-blue-100 text-theme-accent' : 'text-theme-text-secondary hover:text-theme-text-secondary'}`}
                 title="Grid view"
               >
                 <Grid3x3 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => onViewModeChange('list')}
-                className={`p-2 rounded transition ${viewMode === 'list' ? 'bg-blue-100 text-[#818CF8]' : 'text-[#94A3B8] hover:text-[#94A3B8]'}`}
+                className={`p-2 rounded transition ${viewMode === 'list' ? 'bg-blue-100 text-theme-accent' : 'text-theme-text-secondary hover:text-theme-text-secondary'}`}
                 title="List view"
               >
                 <List className="w-4 h-4" />
@@ -253,7 +253,7 @@ export default function ProjectsOverview({
         {loading ? (
           <>
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="rounded-lg border border-gray-200 bg-[#111827] p-6 animate-pulse">
+              <div key={i} className="rounded-lg border border-gray-200 bg-theme-muted p-6 animate-pulse">
                 <div className="space-y-4">
                   <div className="h-6 bg-gray-200 rounded w-3/4"></div>
                   <div className="h-4 bg-gray-200 rounded w-full"></div>
@@ -270,12 +270,12 @@ export default function ProjectsOverview({
             ))}
           </>
         ) : filteredProjects.length === 0 ? (
-          <div className="col-span-full rounded-lg border border-gray-200 bg-[#111827] p-12 text-center">
+          <div className="col-span-full rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 mx-auto mb-4">
-              <Briefcase className="w-8 h-8 text-gray-400" />
+              <Briefcase className="w-8 h-8 text-theme-text-tertiary" />
             </div>
-            <h3 className="text-lg font-semibold text-[#F8FAFC] mb-2">No projects found</h3>
-            <p className="text-[#94A3B8] mb-6">
+            <h3 className="text-lg font-semibold text-theme-text-primary mb-2">No projects found</h3>
+            <p className="text-theme-text-secondary mb-6">
               {searchQuery || statusFilter || priorityFilter 
                 ? "Try adjusting your filters or search criteria" 
                 : "Get started by creating your first project"}
@@ -294,11 +294,11 @@ export default function ProjectsOverview({
           filteredProjects.map(project => {
             const budgetUtilization = getBudgetUtilization(project.budgetSpent, project.budgetApproved);
             return (
-              <div key={project.id} className="group rounded-lg border border-gray-200 bg-[#111827] p-6 hover:shadow-lg transition-all shadow-sm">
+              <div key={project.id} className="group rounded-lg border border-gray-200 bg-theme-muted p-6 hover:shadow-lg transition-all shadow-sm">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-[#F8FAFC] mb-1">{project.name}</h3>
-                    <p className="text-sm text-[#94A3B8]">{project.objective}</p>
+                    <h3 className="text-lg font-semibold text-theme-text-primary mb-1">{project.name}</h3>
+                    <p className="text-sm text-theme-text-secondary">{project.objective}</p>
                   </div>
                   <div className="flex gap-2 flex-shrink-0">
                     <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(project.status)}`}>
@@ -311,25 +311,25 @@ export default function ProjectsOverview({
                 </div>
 
                 {project.description && (
-                  <p className="text-sm text-[#94A3B8] mb-4 line-clamp-2">{project.description}</p>
+                  <p className="text-sm text-theme-text-secondary mb-4 line-clamp-2">{project.description}</p>
                 )}
 
                 <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
                   <div>
-                    <p className="text-[#64748B] text-xs mb-1">Start Date</p>
-                    <p className="font-medium text-[#F8FAFC]">{project.startDate}</p>
+                    <p className="text-theme-text-tertiary text-xs mb-1">Start Date</p>
+                    <p className="font-medium text-theme-text-primary">{project.startDate}</p>
                   </div>
                   <div>
-                    <p className="text-[#64748B] text-xs mb-1">End Date</p>
-                    <p className="font-medium text-[#F8FAFC]">{project.endDate || 'N/A'}</p>
+                    <p className="text-theme-text-tertiary text-xs mb-1">End Date</p>
+                    <p className="font-medium text-theme-text-primary">{project.endDate || 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-[#64748B] text-xs mb-1">Budget</p>
-                    <p className="font-medium text-[#F8FAFC]">${project.budgetApproved.toFixed(2)}</p>
+                    <p className="text-theme-text-tertiary text-xs mb-1">Budget</p>
+                    <p className="font-medium text-theme-text-primary">${project.budgetApproved.toFixed(2)}</p>
                   </div>
                   <div>
-                    <p className="text-[#64748B] text-xs mb-1">Owner</p>
-                    <p className="font-medium text-[#F8FAFC]">{project.owner}</p>
+                    <p className="text-theme-text-tertiary text-xs mb-1">Owner</p>
+                    <p className="font-medium text-theme-text-primary">{project.owner}</p>
                   </div>
                 </div>
 
@@ -348,11 +348,11 @@ export default function ProjectsOverview({
 
                 <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2 text-sm text-[#94A3B8]">
+                    <div className="flex items-center gap-2 text-sm text-theme-text-secondary">
                       <DollarSign className="w-4 h-4" />
                       <span>${project.budgetSpent.toFixed(2)} spent</span>
                     </div>
-                    <span className="text-xs font-semibold text-[#F8FAFC]">{budgetUtilization}%</span>
+                    <span className="text-xs font-semibold text-theme-text-primary">{budgetUtilization}%</span>
                   </div>
                   <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
                     <div 

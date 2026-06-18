@@ -98,10 +98,10 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-[#F8FAFC] mb-2">Vendor Management</h2>
-          <p className="text-[#94A3B8]">Manage vendor profiles, contracts, and performance tracking</p>
+          <h2 className="text-2xl font-bold text-theme-text-primary mb-2">Vendor Management</h2>
+          <p className="text-theme-text-secondary">Manage vendor profiles, contracts, and performance tracking</p>
           {lastRefreshed && (
-            <p className="text-xs text-[#64748B] mt-1">
+            <p className="text-xs text-theme-text-tertiary mt-1">
               Last updated: {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </p>
           )}
@@ -109,7 +109,7 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
         <button
           onClick={handleRefreshVendors}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg text-[#F8FAFC] hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg text-theme-text-primary hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -118,52 +118,52 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#94A3B8]">Total Vendors</p>
-              <p className="text-xl font-bold text-[#F8FAFC]">{vendors.length}</p>
+              <p className="text-sm text-theme-text-secondary">Total Vendors</p>
+              <p className="text-xl font-bold text-theme-text-primary">{vendors.length}</p>
             </div>
-            <Building className="w-8 h-8 text-[#818CF8]" />
+            <Building className="w-8 h-8 text-theme-accent" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#94A3B8]">Active Contracts</p>
-              <p className="text-xl font-bold text-[#F8FAFC]">89</p>
+              <p className="text-sm text-theme-text-secondary">Active Contracts</p>
+              <p className="text-xl font-bold text-theme-text-primary">89</p>
             </div>
             <FileText className="w-8 h-8 text-green-400" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#94A3B8]">Avg. Performance</p>
-              <p className="text-xl font-bold text-[#F8FAFC]">4.2/5</p>
+              <p className="text-sm text-theme-text-secondary">Avg. Performance</p>
+              <p className="text-xl font-bold text-theme-text-primary">4.2/5</p>
             </div>
             <Star className="w-8 h-8 text-yellow-600" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#94A3B8]">This Month Spend</p>
-              <p className="text-xl font-bold text-[#F8FAFC]">$45,678</p>
+              <p className="text-sm text-theme-text-secondary">This Month Spend</p>
+              <p className="text-xl font-bold text-theme-text-primary">$45,678</p>
             </div>
-            <TrendingUp className="w-8 h-8 text-[#818CF8]" />
+            <TrendingUp className="w-8 h-8 text-theme-accent" />
           </div>
         </div>
       </div>
 
       {/* Actions */}
-      <div className="bg-[#111827] rounded-lg border border-gray-200 p-4 mb-6">
+      <div className="bg-theme-muted rounded-lg border border-gray-200 p-4 mb-6">
         <div className="flex flex-wrap gap-3">
           <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2 inline" />
             Add Vendor
           </button>
-          <button className="px-4 py-2 border border-gray-300 text-[#F8FAFC] rounded-lg hover:bg-gray-50">
+          <button className="px-4 py-2 border border-gray-300 text-theme-text-primary rounded-lg hover:bg-gray-50">
             <Download className="w-4 h-4 mr-2 inline" />
             Export
           </button>
@@ -171,14 +171,14 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
       </div>
 
       {/* Filters */}
-      <div className="bg-[#111827] rounded-lg border border-gray-200 p-4 mb-6">
+      <div className="bg-theme-muted rounded-lg border border-gray-200 p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-[#0B1120] px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg text-white">
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg text-white">
             <option value="All">All Status</option>
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
           </select>
-          <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="bg-[#0B1120] px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg text-white">
+          <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg text-white">
             <option value="All">All Categories</option>
             <option value="Technology">Technology</option>
             <option value="Office Supplies">Office Supplies</option>
@@ -189,9 +189,9 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
             placeholder="Search vendors..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-[#0B1120] px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg flex-1 text-white"
+            className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg flex-1 text-white"
           />
-          <button className="px-4 py-2 bg-gray-100 text-[#F8FAFC] rounded-lg hover:bg-gray-200">
+          <button className="px-4 py-2 bg-gray-100 text-theme-text-primary rounded-lg hover:bg-gray-200">
             <Filter className="w-4 h-4 mr-2 inline" />
             Filters
           </button>
@@ -201,38 +201,38 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
       {/* Vendor Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {filteredVendors.map((vendor, i) => (
-          <div key={i} className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6 hover:shadow-lg transition-shadow">
+          <div key={i} className="bg-theme-muted rounded-xl border border-theme-border p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <Building className="w-6 h-6 text-[#94A3B8]" />
+                  <Building className="w-6 h-6 text-theme-text-secondary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-[#F8FAFC]">{vendor.name}</h3>
-                  <p className="text-sm text-[#94A3B8]">{vendor.category}</p>
+                  <h3 className="font-semibold text-theme-text-primary">{vendor.name}</h3>
+                  <p className="text-sm text-theme-text-secondary">{vendor.category}</p>
                 </div>
               </div>
               <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                vendor.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-[#F8FAFC]'
+                vendor.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-theme-text-primary'
               }`}>{vendor.status}</span>
             </div>
             
             <div className="space-y-2 mb-4 text-sm">
               <div className="flex justify-between">
-                <span className="text-[#94A3B8]">Rating</span>
+                <span className="text-theme-text-secondary">Rating</span>
                 <span className="font-semibold flex items-center gap-1">
                   <Star className="w-4 h-4 text-yellow-500 fill-current" />
                   {vendor.rating}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#94A3B8]">Total Spend</span>
+                <span className="text-theme-text-secondary">Total Spend</span>
                 <span className="font-semibold">{vendor.spend}</span>
               </div>
             </div>
             
             <div className="flex gap-2 pt-3 border-t">
-              <button className="flex-1 text-[#818CF8] hover:text-blue-800">
+              <button className="flex-1 text-theme-accent hover:text-blue-800">
                 <Eye className="w-4 h-4 inline mr-2" />
                 View
               </button>
@@ -247,8 +247,8 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
 
       {/* Performance Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
-          <h3 className="text-lg font-semibold text-[#F8FAFC] mb-4">Performance Distribution</h3>
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Performance Distribution</h3>
           <div className="space-y-3">
             {[
               { level: 'Excellent', count: 45, pct: 27, color: 'bg-green-500' },
@@ -267,8 +267,8 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
           </div>
         </div>
 
-        <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
-          <h3 className="text-lg font-semibold text-[#F8FAFC] mb-4">Top Vendors by Spend</h3>
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Top Vendors by Spend</h3>
           <div className="space-y-3">
             {[
               { name: 'Manufacturing Partners Inc', spend: '$234,567', pct: 35 },
@@ -277,7 +277,7 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
             ].map((v, i) => (
               <div key={i} className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="font-medium text-[#F8FAFC] text-sm">{v.name}</p>
+                  <p className="font-medium text-theme-text-primary text-sm">{v.name}</p>
                   <div className="flex-1 bg-gray-200 rounded-full h-2 mt-1">
                     <div className="h-2 rounded-full bg-blue-500" style={{ width: `${v.pct}%` }}></div>
                   </div>

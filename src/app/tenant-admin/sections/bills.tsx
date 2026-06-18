@@ -177,48 +177,48 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-[#F8FAFC] mb-2">Bills & Payables Management</h2>
-        <p className="text-[#94A3B8]">Process vendor bills, schedule payments, and track accounts payable</p>
+        <h2 className="text-2xl font-bold text-theme-text-primary mb-2">Bills & Payables Management</h2>
+        <p className="text-theme-text-secondary">Process vendor bills, schedule payments, and track accounts payable</p>
       </div>
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-4">
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#94A3B8]">Total Bills</p>
-              <p className="text-xl font-bold text-[#F8FAFC]">{bills.length}</p>
+              <p className="text-sm text-theme-text-secondary">Total Bills</p>
+              <p className="text-xl font-bold text-theme-text-primary">{bills.length}</p>
             </div>
-            <FileText className="w-8 h-8 text-[#818CF8]" />
+            <FileText className="w-8 h-8 text-theme-accent" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-4">
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#94A3B8]">Outstanding</p>
-              <p className="text-xl font-bold text-[#F8FAFC]">
+              <p className="text-sm text-theme-text-secondary">Outstanding</p>
+              <p className="text-xl font-bold text-theme-text-primary">
                 {formatCurrency(bills.reduce((sum, b) => sum + (b.balanceDue || 0), 0))}
               </p>
             </div>
             <Calculator className="w-8 h-8 text-orange-600" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-4">
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#94A3B8]">Overdue</p>
-              <p className="text-xl font-bold text-[#F8FAFC]">
+              <p className="text-sm text-theme-text-secondary">Overdue</p>
+              <p className="text-xl font-bold text-theme-text-primary">
                 {formatCurrency(bills.filter(b => b.status === 'overdue').reduce((sum, b) => sum + (b.balanceDue || 0), 0))}
               </p>
             </div>
             <AlertCircle className="w-8 h-8 text-red-400" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-4">
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#94A3B8]">Due This Week</p>
-              <p className="text-xl font-bold text-[#F8FAFC]">
+              <p className="text-sm text-theme-text-secondary">Due This Week</p>
+              <p className="text-xl font-bold text-theme-text-primary">
                 {formatCurrency(bills.filter(b => {
                   if (!b.dueDate) return false;
                   const due = new Date(b.dueDate);
@@ -228,13 +228,13 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
                 }).reduce((sum, b) => sum + (b.balanceDue || 0), 0))}
               </p>
             </div>
-            <Calendar className="w-8 h-8 text-[#818CF8]" />
+            <Calendar className="w-8 h-8 text-theme-accent" />
           </div>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-4 mb-6">
+      <div className="bg-theme-muted rounded-xl border border-theme-border p-4 mb-6">
         <div className="flex flex-wrap gap-3">
           <button onClick={() => setShowAddModal(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2 inline" />
@@ -248,7 +248,7 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
             <Calendar className="w-4 h-4 mr-2 inline" />
             Schedule Payments
           </button>
-          <button onClick={handleExport} className="px-4 py-2 border border-[rgba(255,255,255,0.1)] text-[#F8FAFC] rounded-lg hover:bg-[rgba(255,255,255,0.02)]">
+          <button onClick={handleExport} className="px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-sidebar-hover">
             <Download className="w-4 h-4 mr-2 inline" />
             Export
           </button>
@@ -256,9 +256,9 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
       </div>
 
       {/* Filters */}
-      <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-4 mb-6">
+      <div className="bg-theme-muted rounded-xl border border-theme-border p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-[#0B1120] px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg text-white">
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg text-white">
             <option>All Status</option>
             <option>Draft</option>
             <option>Unpaid</option>
@@ -266,7 +266,7 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
             <option>Paid</option>
             <option>Overdue</option>
           </select>
-          <select value={vendorFilter} onChange={(e) => setVendorFilter(e.target.value)} className="bg-[#0B1120] px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg text-white">
+          <select value={vendorFilter} onChange={(e) => setVendorFilter(e.target.value)} className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg text-white">
             <option value="All">All Vendors</option>
             {Object.entries(vendorsMap).map(([id, name]) => (
               <option key={id} value={name}>{name}</option>
@@ -277,9 +277,9 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
             placeholder="Search bills..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-white px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg text-black"
+            className="bg-white px-3 py-2 border border-theme-border rounded-lg text-black"
           />
-          <button className="px-4 py-2 bg-[rgba(255,255,255,0.07)] text-[#F8FAFC] rounded-lg hover:bg-[rgba(255,255,255,0.1)]">
+          <button className="px-4 py-2 bg-theme-border text-theme-text-primary rounded-lg hover:bg-theme-border">
             <Filter className="w-4 h-4 mr-2 inline" />
             More Filters
           </button>
@@ -287,30 +287,30 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
       </div>
 
       {/* Bills Table */}
-      <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6 mb-8">
+      <div className="bg-theme-muted rounded-xl border border-theme-border p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-[#F8FAFC]">Vendor Bills</h3>
-          <span className="text-sm text-[#64748B]">Showing {filteredBills.length}</span>
+          <h3 className="text-lg font-semibold text-theme-text-primary">Vendor Bills</h3>
+          <span className="text-sm text-theme-text-tertiary">Showing {filteredBills.length}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-[#64748B] uppercase">Bill #</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-[#64748B] uppercase">Vendor</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-[#64748B] uppercase">Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-[#64748B] uppercase">Due Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-[#64748B] uppercase">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-[#64748B] uppercase">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-tertiary uppercase">Bill #</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-tertiary uppercase">Vendor</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-tertiary uppercase">Amount</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-tertiary uppercase">Due Date</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-tertiary uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-tertiary uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {filteredBills.map((bill, i) => (
-                <tr key={bill.id || i} className="hover:bg-[rgba(255,255,255,0.02)]">
-                  <td className="px-4 py-3 text-sm text-[#F8FAFC]">{bill.billNumber || bill.id}</td>
-                  <td className="px-4 py-3 text-sm text-[#F8FAFC]">{vendorsMap[bill.vendorId] || bill.vendorId}</td>
-                  <td className="px-4 py-3 text-sm font-semibold text-[#F8FAFC]">{formatCurrency(bill.total, bill.currency)}</td>
-                  <td className="px-4 py-3 text-sm text-[#F8FAFC]">{bill.dueDate ? new Date(bill.dueDate).toLocaleDateString() : '—'}</td>
+                <tr key={bill.id || i} className="hover:bg-theme-sidebar-hover">
+                  <td className="px-4 py-3 text-sm text-theme-text-primary">{bill.billNumber || bill.id}</td>
+                  <td className="px-4 py-3 text-sm text-theme-text-primary">{vendorsMap[bill.vendorId] || bill.vendorId}</td>
+                  <td className="px-4 py-3 text-sm font-semibold text-theme-text-primary">{formatCurrency(bill.total, bill.currency)}</td>
+                  <td className="px-4 py-3 text-sm text-theme-text-primary">{bill.dueDate ? new Date(bill.dueDate).toLocaleDateString() : '—'}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       bill.status === 'paid' ? 'bg-green-500/10 text-green-400' :
@@ -319,10 +319,10 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
-                      <button className="text-[#818CF8] hover:text-blue-800"><Eye className="w-4 h-4" /></button>
+                      <button className="text-theme-accent hover:text-blue-800"><Eye className="w-4 h-4" /></button>
                       <button className="text-green-400 hover:text-green-800"><Edit className="w-4 h-4" /></button>
-                      <button onClick={() => setShowPaymentModal(true)} className="text-[#818CF8] hover:text-purple-800"><CreditCard className="w-4 h-4" /></button>
-                      <button className="text-[#94A3B8] hover:text-[#94A3B8]"><Download className="w-4 h-4" /></button>
+                      <button onClick={() => setShowPaymentModal(true)} className="text-theme-accent hover:text-purple-800"><CreditCard className="w-4 h-4" /></button>
+                      <button className="text-theme-text-secondary hover:text-theme-text-secondary"><Download className="w-4 h-4" /></button>
                     </div>
                   </td>
                 </tr>
@@ -333,15 +333,15 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
       </div>
 
       {/* Aging Analysis */}
-      <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6 mb-8">
-        <h3 className="text-lg font-semibold text-[#F8FAFC] mb-4">Accounts Payable Aging</h3>
+      <div className="bg-theme-muted rounded-xl border border-theme-border p-6 mb-8">
+        <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Accounts Payable Aging</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {agingBuckets.map((bucket, idx) => (
             <div key={idx} className="text-center p-4 bg-gray-50 rounded-lg">
               <p className={`text-2xl font-bold ${bucket.colorClass}`}>
                 {formatCurrency(bucket.amount)}
               </p>
-              <p className="text-sm text-[#94A3B8]">{bucket.label}</p>
+              <p className="text-sm text-theme-text-secondary">{bucket.label}</p>
             </div>
           ))}
         </div>

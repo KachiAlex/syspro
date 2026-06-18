@@ -116,7 +116,7 @@ export default function StaffPage() {
           <div>
             <label className="block text-xs font-medium text-gray-900 mb-2">Search</label>
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-theme-text-tertiary" />
               <input
                 type="text"
                 placeholder="Name or email..."
@@ -186,7 +186,7 @@ export default function StaffPage() {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{emp.startDate}</td>
                   <td className="px-6 py-4 text-center">
-                    <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
+                    <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover">
                       <Eye className="w-4 h-4" />
                       View
                     </button>

@@ -48,7 +48,7 @@ export default function AutomationPage() {
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div>
-              <h1 className="text-2xl font-bold text-[#F8FAFC]">Automation Overview</h1>
+              <h1 className="text-2xl font-bold text-theme-text-primary">Automation Overview</h1>
               <p className="text-sm text-gray-600 mt-1">Monitor and manage your automation workflows</p>
             </div>
             <div className="flex items-center gap-3">
@@ -81,7 +81,7 @@ export default function AutomationPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <tab.icon className={`w-4 h-4 ${tab.id === 'overview' ? 'text-blue-600' : 'text-gray-400'}`} />
+                <tab.icon className={`w-4 h-4 ${tab.id === 'overview' ? 'text-blue-600' : 'text-theme-text-tertiary'}`} />
                 <span>{tab.name}</span>
                 {tab.count && (
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -108,7 +108,7 @@ export default function AutomationPage() {
                   <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-2">24</p>
                   <p className="text-xs text-green-600 mt-2">↑ 8.3% from last period</p>
                 </div>
-                <PlayCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-100" />
+                <PlayCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-500" />
               </div>
             </div>
 
@@ -119,7 +119,7 @@ export default function AutomationPage() {
                   <p className="text-2xl sm:text-3xl font-bold text-blue-600 mt-2">1847</p>
                   <p className="text-xs text-blue-600 mt-2">↑ 15.2% from last period</p>
                 </div>
-                <Zap className="w-8 h-8 sm:w-12 sm:h-12 text-blue-100" />
+                <Zap className="w-8 h-8 sm:w-12 sm:h-12 text-blue-500" />
               </div>
             </div>
 
@@ -141,7 +141,7 @@ export default function AutomationPage() {
                   <p className="text-2xl sm:text-3xl font-bold text-amber-600 mt-2">98</p>
                   <p className="text-xs text-amber-600 mt-2">↓ 12.4% from last period</p>
                 </div>
-                <AlertCircle className="w-8 h-8 sm:w-12 sm:h-12 text-amber-100" />
+                <AlertCircle className="w-8 h-8 sm:w-12 sm:h-12 text-amber-500" />
               </div>
             </div>
           </div>
@@ -169,7 +169,7 @@ export default function AutomationPage() {
                         }`}>
                           {activity.status}
                         </span>
-                        <button className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
+                        <button className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover">
                           View Details
                         </button>
                       </div>

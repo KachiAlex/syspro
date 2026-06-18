@@ -357,7 +357,7 @@ export default function SettingsPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#F8FAFC]">Settings</h1>
+          <h1 className="text-2xl font-bold text-theme-text-primary">Settings</h1>
           <p className="text-sm text-gray-600 mt-1">System configuration and preferences</p>
         </div>
       </div>
@@ -433,7 +433,7 @@ export default function SettingsPage() {
                         {setting.value ? (
                           <CheckCircle className="w-6 h-6 text-green-600" />
                         ) : (
-                          <AlertCircle className="w-6 h-6 text-gray-400" />
+                          <AlertCircle className="w-6 h-6 text-theme-text-tertiary" />
                         )}
                       </div>
                     ) : (

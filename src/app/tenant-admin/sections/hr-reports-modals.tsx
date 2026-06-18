@@ -320,7 +320,7 @@ export const ReportHistoryModal: React.FC<ReportHistoryModalProps> = ({
                             <button
                               onClick={() => handleDownload(report.id)}
                               disabled={loading === report.id}
-                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50"
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover disabled:opacity-50"
                             >
                               <Download className="w-4 h-4" />
                             </button>
@@ -328,7 +328,7 @@ export const ReportHistoryModal: React.FC<ReportHistoryModalProps> = ({
                           <button
                             onClick={() => handleDelete(report.id)}
                             disabled={loading === report.id}
-                            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700 disabled:opacity-50"
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-theme-danger disabled:opacity-50"
                           >
                             <X className="w-4 h-4" />
                           </button>

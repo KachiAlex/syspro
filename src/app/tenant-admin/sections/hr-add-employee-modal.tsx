@@ -312,7 +312,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
             <form onSubmit={handleExcelUpload} className="space-y-6">
               <div className="text-center">
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
-                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <Upload className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Upload Excel File</h3>
                   <p className="text-sm text-gray-600 mb-4">
                     Upload an Excel file with employee data. The file should contain columns for: Name, Email, Department, Position, Start Date, and Salary.

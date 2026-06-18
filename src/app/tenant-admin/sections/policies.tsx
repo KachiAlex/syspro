@@ -78,7 +78,7 @@ export default function PoliciesSection({ tenantSlug }: { tenantSlug: string }) 
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Policies</p>
@@ -117,7 +117,7 @@ export default function PoliciesSection({ tenantSlug }: { tenantSlug: string }) 
         </form>
       </div>
 
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Catalog</p>
@@ -140,12 +140,12 @@ export default function PoliciesSection({ tenantSlug }: { tenantSlug: string }) 
                   <div className="flex items-center gap-2">
                     <span className="rounded-full bg-slate-900/5 px-3 py-1 text-xs font-medium text-slate-700">{p.status}</span>
                     {p.status !== "published" && (
-                      <button onClick={() => publish(p)} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-[#111827]">Publish</button>
+                      <button onClick={() => publish(p)} className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-theme-muted">Publish</button>
                     )}
                   </div>
                 </div>
                 {p.versions && p.versions.length > 0 && (
-                  <div className="mt-3 rounded-xl bg-[#111827] p-3 text-xs text-slate-700">
+                  <div className="mt-3 rounded-xl bg-theme-muted p-3 text-xs text-slate-700">
                     <div className="mb-1 text-[11px] uppercase tracking-[0.2em] text-slate-400">Versions</div>
                     {p.versions.map((v) => (
                       <div key={v.id} className="flex items-center justify-between border-b border-slate-100 py-1 last:border-0">

@@ -120,7 +120,7 @@ export default function AutomationWorkflowsPage() {
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div>
-              <h1 className="text-2xl font-bold text-[#F8FAFC]">Workflows</h1>
+              <h1 className="text-2xl font-bold text-theme-text-primary">Workflows</h1>
               <p className="text-sm text-gray-600 mt-1">Manage and monitor automated workflows</p>
             </div>
             <Link
@@ -147,7 +147,7 @@ export default function AutomationWorkflowsPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <tab.icon className={`w-4 h-4 ${tab.id === 'workflows' ? 'text-blue-600' : 'text-gray-400'}`} />
+                <tab.icon className={`w-4 h-4 ${tab.id === 'workflows' ? 'text-blue-600' : 'text-theme-text-tertiary'}`} />
                 <span>{tab.name}</span>
                 {tab.count && (
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -169,7 +169,7 @@ export default function AutomationWorkflowsPage() {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1">
               <div className="relative flex-1 max-w-md w-full">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-theme-text-tertiary w-4 h-4" />
                 <input
                   type="text"
                   placeholder="Search workflows..."
@@ -214,7 +214,7 @@ export default function AutomationWorkflowsPage() {
                   <p className="text-sm font-medium text-gray-600">Total Workflows</p>
                   <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">{workflows.length}</p>
                 </div>
-                <PlayCircle className="w-8 h-8 sm:w-12 sm:h-12 text-blue-100" />
+                <PlayCircle className="w-8 h-8 sm:w-12 sm:h-12 text-blue-500" />
               </div>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
@@ -223,7 +223,7 @@ export default function AutomationWorkflowsPage() {
                   <p className="text-sm font-medium text-gray-600">Active</p>
                   <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-2">{workflows.filter(w => w.status === 'active').length}</p>
                 </div>
-                <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-100" />
+                <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-500" />
               </div>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
@@ -232,7 +232,7 @@ export default function AutomationWorkflowsPage() {
                   <p className="text-sm font-medium text-gray-600">Paused</p>
                   <p className="text-2xl sm:text-3xl font-bold text-blue-600 mt-2">{workflows.reduce((sum, w) => sum + w.executions, 0)}</p>
                 </div>
-                <Zap className="w-8 h-8 sm:w-12 sm:h-12 text-blue-100" />
+                <Zap className="w-8 h-8 sm:w-12 sm:h-12 text-blue-500" />
               </div>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
@@ -243,7 +243,7 @@ export default function AutomationWorkflowsPage() {
                     {(workflows.reduce((sum, w) => sum + w.successRate, 0) / workflows.length).toFixed(1)}%
                   </p>
                 </div>
-                <Square className="w-12 h-12 text-red-100" />
+                <Square className="w-12 h-12 text-red-500" />
               </div>
             </div>
           </div>
@@ -312,7 +312,7 @@ export default function AutomationWorkflowsPage() {
                       </td>
                       <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1 sm:gap-2">
-                          <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
+                          <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover">
                             <Play className="w-3 h-3" />
                             <span className="hidden sm:inline">Run</span>
                           </button>
@@ -320,7 +320,7 @@ export default function AutomationWorkflowsPage() {
                             <Edit className="w-3 h-3" />
                             <span className="hidden sm:inline">Edit</span>
                           </button>
-                          <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700">
+                          <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-theme-danger">
                             <Trash2 className="w-3 h-3" />
                             <span className="hidden sm:inline">Delete</span>
                           </button>

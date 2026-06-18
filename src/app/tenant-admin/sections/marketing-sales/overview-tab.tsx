@@ -123,7 +123,7 @@ export default function OverviewTab({
   if (!data) {
     return (
       <div className="p-8 text-center">
-        <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <AlertCircle className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
         <p className="text-gray-600">Unable to load overview data</p>
       </div>
     );
@@ -220,19 +220,19 @@ export default function OverviewTab({
         <div className="flex flex-wrap gap-3">
           <button
             onClick={() => onOpenCreateCampaign?.()}
-            className="flex items-center gap-2 px-4 py-2 bg-[#111827] border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-900 font-medium transition"
+            className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-900 font-medium transition"
           >
             Create Campaign <ArrowRight className="w-4 h-4" />
           </button>
           <button
             onClick={() => onNavigateTab?.("forecasting")}
-            className="flex items-center gap-2 px-4 py-2 bg-[#111827] border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-900 font-medium transition"
+            className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-900 font-medium transition"
           >
             View Forecasts <ArrowRight className="w-4 h-4" />
           </button>
           <button
             onClick={() => onExportReport?.()}
-            className="flex items-center gap-2 px-4 py-2 bg-[#111827] border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-900 font-medium transition"
+            className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-900 font-medium transition"
           >
             Export Report <ArrowRight className="w-4 h-4" />
           </button>
@@ -254,7 +254,7 @@ function KPICard({
   changePositive: boolean;
 }) {
   return (
-    <div className="bg-[#111827] border border-gray-200 rounded-lg p-4">
+    <div className="bg-theme-muted border border-gray-200 rounded-lg p-4">
       <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">{label}</p>
       <p className="text-2xl font-bold text-gray-900 mt-2">{value}</p>
       <p className={`text-sm mt-2 ${changePositive ? "text-green-600" : "text-gray-600"}`}>{change}</p>

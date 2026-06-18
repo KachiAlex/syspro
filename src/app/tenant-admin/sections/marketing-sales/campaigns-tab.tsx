@@ -233,7 +233,7 @@ export default function CampaignsTab({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Campaigns</h2>
-          <p className="text-[#94A3B8] mt-1">{filteredCampaigns.length} campaigns</p>
+          <p className="text-theme-text-secondary mt-1">{filteredCampaigns.length} campaigns</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
@@ -265,7 +265,7 @@ export default function CampaignsTab({
       {/* Campaigns Table */}
       {filteredCampaigns.length === 0 ? (
         <div className="text-center py-12">
-          <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <AlertCircle className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
           <p className="text-gray-600">No campaigns found</p>
         </div>
       ) : (

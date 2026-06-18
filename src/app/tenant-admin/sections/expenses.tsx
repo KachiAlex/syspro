@@ -31,7 +31,7 @@ const STATUS_COLORS: Record<string, string> = {
   submitted: "bg-blue-500/10 text-blue-400",
   approved: "bg-green-500/10 text-green-400",
   rejected: "bg-red-500/10 text-red-400",
-  reimbursed: "bg-[rgba(99,102,241,0.1)] text-[#818CF8]",
+  reimbursed: "bg-theme-accent-subtle text-theme-accent",
 };
 
 export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | null }) {
@@ -340,7 +340,7 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
       {/* Header with Refresh Button */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-[#F8FAFC]">Expense Management</h2>
+          <h2 className="text-2xl font-bold text-theme-text-primary">Expense Management</h2>
           {lastRefreshed && (
             <p className="text-xs text-slate-500 mt-1">
               Last updated: {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -359,32 +359,32 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="rounded-lg border border-slate-200 bg-[#111827] p-4">
+        <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
           <p className="text-sm text-slate-600">Total Expenses</p>
-          <p className="mt-2 text-2xl font-bold text-[#F8FAFC]">₦{totalAmount.toLocaleString()}</p>
+          <p className="mt-2 text-2xl font-bold text-theme-text-primary">₦{totalAmount.toLocaleString()}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-[#111827] p-4">
+        <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
           <p className="text-sm text-slate-600">Pending Approval</p>
           <p className="mt-2 text-2xl font-bold text-orange-600">{pendingCount}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-[#111827] p-4">
+        <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
           <p className="text-sm text-slate-600">Approved</p>
           <p className="mt-2 text-2xl font-bold text-green-400">{expenses.filter((e) => e.status === "approved").length}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-[#111827] p-4">
+        <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
           <p className="text-sm text-slate-600">Rejected</p>
           <p className="mt-2 text-2xl font-bold text-red-400">{expenses.filter((e) => e.status === "rejected").length}</p>
         </div>
       </div>
 
       {/* Filters and Actions */}
-      <div className="rounded-lg border border-slate-200 bg-[#111827] p-4">
+      <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
         <div className="space-y-4">
           <div className="flex flex-col md:flex-row gap-4">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-[#0B1120] rounded-lg border border-[rgba(255,255,255,0.1)] px-3 py-2 text-sm text-white"
+              className="bg-theme-bg rounded-lg border border-theme-border px-3 py-2 text-sm text-white"
             >
               <option value="all">All Status</option>
               <option value="draft">Draft</option>
@@ -396,7 +396,7 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="bg-[#0B1120] rounded-lg border border-[rgba(255,255,255,0.1)] px-3 py-2 text-sm text-white"
+              className="bg-theme-bg rounded-lg border border-theme-border px-3 py-2 text-sm text-white"
             >
               <option value="all">All Categories</option>
               <option value="travel">Travel</option>
@@ -442,7 +442,7 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
       </div>
 
       {/* Expenses Table */}
-      <div className="rounded-lg border border-slate-200 bg-[#111827] overflow-hidden">
+      <div className="rounded-lg border border-slate-200 bg-theme-muted overflow-hidden">
         {loading ? (
           <div className="p-6 space-y-3">
             {[...Array(4)].map((_, i) => (
@@ -522,12 +522,12 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
                       className="bg-white rounded border-slate-300 text-black"
                     />
                   </td>
-                  <td className="px-4 py-3 text-sm font-medium text-[#F8FAFC]">{expense.id}</td>
+                  <td className="px-4 py-3 text-sm font-medium text-theme-text-primary">{expense.id}</td>
                   <td className="px-4 py-3 text-sm text-slate-600 capitalize">{expense.category}</td>
-                  <td className="px-4 py-3 text-sm font-semibold text-[#F8FAFC]">₦{expense.amount.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-sm font-semibold text-theme-text-primary">₦{expense.amount.toLocaleString()}</td>
                   <td className="px-4 py-3 text-sm text-slate-600">{expense.employee}</td>
                   <td className="px-4 py-3">
-                    <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[expense.status] || "bg-[rgba(255,255,255,0.07)]"}`}>
+                    <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[expense.status] || "bg-theme-border"}`}>
                       {expense.status}
                     </span>
                   </td>

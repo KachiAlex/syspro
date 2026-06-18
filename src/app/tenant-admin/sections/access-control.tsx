@@ -242,7 +242,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">People & Access</p>
@@ -400,7 +400,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
       </div>
 
       {/* Existing Roles Section */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="mb-4">
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Current Roles</p>
           <h3 className="text-lg font-semibold text-gray-900">Manage your team roles</h3>
@@ -432,7 +432,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
                         const info = MODULE_INFO[mod];
                         const selected = editModules.find((m) => m.module === mod);
                         return (
-                          <div key={mod} className="rounded-lg border border-slate-200 bg-[#111827] p-3">
+                          <div key={mod} className="rounded-lg border border-slate-200 bg-theme-muted p-3">
                             <p className="mb-2 text-xs font-semibold text-slate-700">{info.icon} {info.label}</p>
                             <div className="flex flex-wrap gap-3">
                               <label className="inline-flex items-center gap-2">
@@ -539,15 +539,15 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
           <h3 className="text-lg font-semibold text-gray-900">Understanding Permissions</h3>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-lg bg-[#111827] p-3">
+          <div className="rounded-lg bg-theme-muted p-3">
             <p className="font-semibold text-gray-900">👁️ View</p>
             <p className="mt-1 text-xs text-slate-600">Can see and read information in this area</p>
           </div>
-          <div className="rounded-lg bg-[#111827] p-3">
+          <div className="rounded-lg bg-theme-muted p-3">
             <p className="font-semibold text-green-900">✏️ Edit</p>
             <p className="mt-1 text-xs text-slate-600">Can create new records and modify existing ones</p>
           </div>
-          <div className="rounded-lg bg-[#111827] p-3">
+          <div className="rounded-lg bg-theme-muted p-3">
             <p className="font-semibold text-purple-900">⚙️ Manage</p>
             <p className="mt-1 text-xs text-slate-600">Full admin access including deletion and configuration</p>
           </div>

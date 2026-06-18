@@ -410,7 +410,7 @@ function PerformanceTab({
       {loading ? (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-[#111827] rounded-lg border border-gray-200 p-4 animate-pulse">
+            <div key={i} className="bg-theme-muted rounded-lg border border-gray-200 p-4 animate-pulse">
               <div className="space-y-2">
                 <div className="h-4 bg-gray-200 rounded w-1/3"></div>
                 <div className="h-3 bg-gray-200 rounded w-1/2"></div>
@@ -419,7 +419,7 @@ function PerformanceTab({
           ))}
         </div>
       ) : (Array.isArray(reviews) ? reviews : []).length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-12 text-center">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
           <Award className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600 font-medium mb-2">No performance reviews yet</p>
           <p className="text-sm text-gray-500 mb-4">Create your first performance review to get started</p>
@@ -434,7 +434,7 @@ function PerformanceTab({
       ) : (
         <div className="space-y-3">
           {(Array.isArray(reviews) ? reviews : []).map(review => (
-            <div key={review.id} className="bg-[#111827] rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+            <div key={review.id} className="bg-theme-muted rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-900">{review.employeeName}</h4>
@@ -486,14 +486,14 @@ function PerformanceTab({
       <div className="mt-8">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Employee Goals</h3>
         {(Array.isArray(goals) ? goals : []).length === 0 ? (
-          <div className="rounded-lg border border-gray-200 bg-[#111827] p-12 text-center">
+          <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
             <Target className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-600 font-medium">No goals set yet</p>
           </div>
         ) : (
           <div className="space-y-3">
             {(Array.isArray(goals) ? goals : []).map(goal => (
-              <div key={goal.id} className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+              <div key={goal.id} className="bg-theme-muted rounded-lg border border-gray-200 p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <h4 className="font-semibold text-gray-900">{goal.title}</h4>
@@ -557,7 +557,7 @@ function RecruitmentTab({
       {loading ? (
         <div className="space-y-3">
           {[...Array(2)].map((_, i) => (
-            <div key={i} className="bg-[#111827] rounded-lg border border-gray-200 p-4 animate-pulse">
+            <div key={i} className="bg-theme-muted rounded-lg border border-gray-200 p-4 animate-pulse">
               <div className="space-y-2">
                 <div className="h-4 bg-gray-200 rounded w-1/3"></div>
                 <div className="h-3 bg-gray-200 rounded w-1/2"></div>
@@ -566,7 +566,7 @@ function RecruitmentTab({
           ))}
         </div>
       ) : (Array.isArray(jobOpenings) ? jobOpenings : []).length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-12 text-center">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
           <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600 font-medium mb-2">No job openings</p>
           <p className="text-sm text-gray-500 mb-4">Post your first job opening to start recruiting</p>
@@ -581,7 +581,7 @@ function RecruitmentTab({
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {(Array.isArray(jobOpenings) ? jobOpenings : []).map(job => (
-            <div key={job.id} className="bg-[#111827] rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+            <div key={job.id} className="bg-theme-muted rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-900">{job.title}</h4>
@@ -621,14 +621,14 @@ function RecruitmentTab({
       <div className="mt-8">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Candidate Pipeline</h3>
         {(Array.isArray(candidates) ? candidates : []).length === 0 ? (
-          <div className="rounded-lg border border-gray-200 bg-[#111827] p-12 text-center">
+          <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
             <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-600 font-medium">No candidates yet</p>
           </div>
         ) : (
           <div className="space-y-3">
             {(Array.isArray(candidates) ? candidates : []).map(candidate => (
-              <div key={candidate.id} className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+              <div key={candidate.id} className="bg-theme-muted rounded-lg border border-gray-200 p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <h4 className="font-semibold text-gray-900">{candidate.name}</h4>
@@ -678,15 +678,15 @@ function LeaveTab({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">Pending Requests</p>
           <p className="text-3xl font-bold text-gray-900">{pendingRequests.length}</p>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">Approved Requests</p>
           <p className="text-3xl font-bold text-gray-900">{approvedRequests.length}</p>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">Total Days Off</p>
           <p className="text-3xl font-bold text-gray-900">{leaveRequests.reduce((sum, r) => sum + (r.status === 'Approved' ? r.days : 0), 0)}</p>
         </div>
@@ -696,7 +696,7 @@ function LeaveTab({
       {loading ? (
         <div className="space-y-3">
           {[...Array(2)].map((_, i) => (
-            <div key={i} className="bg-[#111827] rounded-lg border border-gray-200 p-4 animate-pulse">
+            <div key={i} className="bg-theme-muted rounded-lg border border-gray-200 p-4 animate-pulse">
               <div className="space-y-2">
                 <div className="h-4 bg-gray-200 rounded w-1/3"></div>
                 <div className="h-3 bg-gray-200 rounded w-1/2"></div>
@@ -705,14 +705,14 @@ function LeaveTab({
           ))}
         </div>
       ) : pendingRequests.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-12 text-center">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
           <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600 font-medium">No pending leave requests</p>
         </div>
       ) : (
         <div className="space-y-3">
           {pendingRequests.map(request => (
-            <div key={request.id} className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+            <div key={request.id} className="bg-theme-muted rounded-lg border border-gray-200 p-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-900">{request.employeeName}</h4>
@@ -749,14 +749,14 @@ function LeaveTab({
 
       <h3 className="text-lg font-semibold text-gray-900 mt-8">Approved Requests</h3>
       {approvedRequests.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-12 text-center">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
           <CheckCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600 font-medium">No approved leave requests</p>
         </div>
       ) : (
         <div className="space-y-3">
           {approvedRequests.map(request => (
-            <div key={request.id} className="bg-[#111827] rounded-lg border border-emerald-200 p-4">
+            <div key={request.id} className="bg-theme-muted rounded-lg border border-emerald-200 p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-900">{request.employeeName}</h4>
@@ -803,7 +803,7 @@ function AnalyticsTab({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Avg. Performance Rating</p>
@@ -812,7 +812,7 @@ function AnalyticsTab({
             <Award className="w-8 h-8 text-blue-600" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Completed Goals</p>
@@ -821,7 +821,7 @@ function AnalyticsTab({
             <Target className="w-8 h-8 text-emerald-600" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Open Positions</p>
@@ -830,7 +830,7 @@ function AnalyticsTab({
             <Briefcase className="w-8 h-8 text-purple-600" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Candidates Hired</p>
@@ -842,7 +842,7 @@ function AnalyticsTab({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Distribution</h3>
           <div className="space-y-3">
             {[
@@ -863,7 +863,7 @@ function AnalyticsTab({
           </div>
         </div>
 
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recruitment Pipeline</h3>
           <div className="space-y-3">
             {[
@@ -884,7 +884,7 @@ function AnalyticsTab({
         </div>
       </div>
 
-      <div className="bg-[#111827] rounded-lg border border-gray-200 p-6">
+      <div className="bg-theme-muted rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Leave Analytics</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>

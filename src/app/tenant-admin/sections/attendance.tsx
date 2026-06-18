@@ -61,7 +61,7 @@ export default function Attendance({ tenantSlug }: { tenantSlug?: string }) {
         </button>
       </div>
 
-      <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+      <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
         {loading && (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (

@@ -56,8 +56,8 @@ export default function MarketingSalesDashboard({ tenantSlug }: { tenantSlug?: s
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-[#F8FAFC]">Marketing & Sales</h1>
-        <p className="text-[#94A3B8] mt-1">Revenue intelligence, campaigns, and sales performance</p>
+        <h1 className="text-3xl font-bold text-theme-text-primary">Marketing & Sales</h1>
+        <p className="text-theme-text-secondary mt-1">Revenue intelligence, campaigns, and sales performance</p>
       </div>
 
       {/* Error Alert */}
@@ -71,7 +71,7 @@ export default function MarketingSalesDashboard({ tenantSlug }: { tenantSlug?: s
       )}
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200 bg-[#111827] rounded-lg shadow-sm">
+      <div className="border-b border-gray-200 bg-theme-muted rounded-lg shadow-sm">
         <div className="flex flex-wrap gap-0">
           {TABS.map((tab) => {
             const Icon = tab.icon;
@@ -95,7 +95,7 @@ export default function MarketingSalesDashboard({ tenantSlug }: { tenantSlug?: s
       </div>
 
       {/* Tab Content */}
-      <div className="bg-[#111827] rounded-lg shadow-sm">
+      <div className="bg-theme-muted rounded-lg shadow-sm">
         {activeTab === "overview" && (
           <OverviewTab
             tenantSlug={ts ?? ''}

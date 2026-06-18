@@ -135,17 +135,17 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
       {/* Summary cards (fast, top-line metrics) */}
       {summary && (
         <div className="grid grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-slate-100 bg-[#111827] p-4 text-sm text-slate-700">
+          <div className="rounded-2xl border border-slate-100 bg-theme-muted p-4 text-sm text-slate-700">
             <div className="text-xs text-slate-400">Reports</div>
             <div className="text-2xl font-semibold">{summary.totalReports}</div>
             <div className="text-xs text-slate-500">Total saved reports</div>
           </div>
-          <div className="rounded-2xl border border-slate-100 bg-[#111827] p-4 text-sm text-slate-700">
+          <div className="rounded-2xl border border-slate-100 bg-theme-muted p-4 text-sm text-slate-700">
             <div className="text-xs text-slate-400">Queue</div>
             <div className="text-2xl font-semibold">{summary.queuedJobs}</div>
             <div className="text-xs text-slate-500">Jobs queued now</div>
           </div>
-          <div className="rounded-2xl border border-slate-100 bg-[#111827] p-4 text-sm text-slate-700">
+          <div className="rounded-2xl border border-slate-100 bg-theme-muted p-4 text-sm text-slate-700">
             <div className="text-xs text-slate-400">Recent</div>
             <div className="text-2xl font-semibold">{summary.runsLast7}</div>
             <div className="text-xs text-slate-500">Runs last 7 days</div>
@@ -153,7 +153,7 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
         </div>
       )}
 
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Reports</p>
@@ -193,7 +193,7 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
         </form>
       </div>
 
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Report catalog</p>
@@ -215,10 +215,10 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
                       <p className="text-xs text-slate-500">{r.reportType}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => runReport(r)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-[#111827]">
+                      <button onClick={() => runReport(r)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-theme-muted">
                         <Play className="h-3 w-3" /> Run now
                       </button>
-                      <button onClick={() => loadJobs(r.id)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-[#111827]">
+                      <button onClick={() => loadJobs(r.id)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-theme-muted">
                         History
                       </button>
                     </div>
@@ -226,7 +226,7 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
                   <div className="mt-3 flex items-center justify-between">
                     <div className="text-xs text-slate-600">{r.schedule || "On-demand"}</div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => { setSelectedDefinition(r.definition); setDefOpen(true); }} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-[#111827]">View definition</button>
+                      <button onClick={() => { setSelectedDefinition(r.definition); setDefOpen(true); }} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-theme-muted">View definition</button>
                     </div>
                   </div>
                 </div>
@@ -237,7 +237,7 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
                 <button
                   onClick={() => { if (nextCursor) loadReports(nextCursor); else loadReports(null); }}
                   disabled={loading}
-                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-[#111827]"
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-theme-muted"
                 >
                   Load more
                 </button>

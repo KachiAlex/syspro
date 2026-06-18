@@ -230,7 +230,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">People & Access</p>
@@ -388,7 +388,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
       </div>
 
       {/* Existing Roles Section */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="mb-4">
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Current Roles</p>
           <h3 className="text-lg font-semibold text-gray-900">Manage organizational roles</h3>
@@ -576,19 +576,19 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
           <h3 className="text-lg font-semibold text-gray-900">Which scope should you use?</h3>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-lg bg-[#111827] p-3">
+          <div className="rounded-lg bg-theme-muted p-3">
             <p className="font-semibold text-gray-900">🏢 Tenant-wide</p>
             <p className="mt-1 text-xs text-slate-600">
               Access applies to all regions and branches in your organization
             </p>
           </div>
-          <div className="rounded-lg bg-[#111827] p-3">
+          <div className="rounded-lg bg-theme-muted p-3">
             <p className="font-semibold text-gray-900">🗺️ Regional</p>
             <p className="mt-1 text-xs text-slate-600">
               Access limited to a specific region only (useful for regional managers)
             </p>
           </div>
-          <div className="rounded-lg bg-[#111827] p-3">
+          <div className="rounded-lg bg-theme-muted p-3">
             <p className="font-semibold text-gray-900">🏪 Branch</p>
             <p className="mt-1 text-xs text-slate-600">
               Access limited to a specific branch only (useful for branch managers)

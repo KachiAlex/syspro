@@ -94,7 +94,7 @@ export default function DepartmentManagement({ tenantSlug }: { tenantSlug?: stri
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Structure</p>

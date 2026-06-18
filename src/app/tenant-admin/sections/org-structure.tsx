@@ -444,12 +444,12 @@ export default function OrgStructureManager({
 
 function WelcomeStep({ onStart }: { onStart: () => void }) {
   return (
-    <div className="space-y-6 rounded-2xl border border-slate-100 bg-[#111827] p-8 shadow-sm">
+    <div className="space-y-6 rounded-2xl border border-slate-100 bg-theme-muted p-8 shadow-sm">
       <div className="space-y-3">
         <p className="text-sm font-semibold uppercase tracking-widest text-slate-500">
           Tier-Based Setup
         </p>
-        <h1 className="text-3xl font-bold text-[#F8FAFC]">
+        <h1 className="text-3xl font-bold text-theme-text-primary">
           Build Your Organization Hierarchy
         </h1>
         <p className="text-base text-slate-600">
@@ -516,7 +516,7 @@ function TierSelectStep({
   onBack: () => void;
 }) {
   return (
-    <div className="space-y-6 rounded-2xl border border-slate-100 bg-[#111827] p-8 shadow-sm">
+    <div className="space-y-6 rounded-2xl border border-slate-100 bg-theme-muted p-8 shadow-sm">
       <div className="space-y-2">
         <h2 className="text-2xl font-bold text-gray-900">
           Select Organization Tier
@@ -531,7 +531,7 @@ function TierSelectStep({
           <button
             key={option.tier}
             onClick={() => onSelectTier(option.tier)}
-            className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-[#111827] p-4 text-left hover:border-slate-400 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+            className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-theme-muted p-4 text-left hover:border-slate-400 hover:bg-slate-50 active:bg-slate-100 transition-colors"
           >
             <div className="space-y-1">
               <p className="font-semibold text-gray-900">{option.label}</p>
@@ -544,7 +544,7 @@ function TierSelectStep({
 
       <button
         onClick={onBack}
-        className="w-full rounded-full border border-slate-200 bg-[#111827] px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+        className="w-full rounded-full border border-slate-200 bg-theme-muted px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
       >
         Back
       </button>
@@ -574,7 +574,7 @@ function LocationStep({
   onBack: () => void;
 }) {
   return (
-    <div className="space-y-6 rounded-2xl border border-slate-100 bg-[#111827] p-8 shadow-sm">
+    <div className="space-y-6 rounded-2xl border border-slate-100 bg-theme-muted p-8 shadow-sm">
       <div className="space-y-2">
         <h2 className="text-2xl font-bold text-gray-900">
           {tier ? `Create ${getTierLabel(tier as OrgTier)}` : "Tier Details"}
@@ -632,7 +632,7 @@ function LocationStep({
           <button
             type="button"
             onClick={onBack}
-            className="flex-1 rounded-full border border-slate-200 bg-[#111827] px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+            className="flex-1 rounded-full border border-slate-200 bg-theme-muted px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
           >
             Back
           </button>
@@ -682,7 +682,7 @@ function BranchConfigStep({
   onBack: () => void;
 }) {
   return (
-    <div className="space-y-6 rounded-2xl border border-slate-100 bg-[#111827] p-8 shadow-sm">
+    <div className="space-y-6 rounded-2xl border border-slate-100 bg-theme-muted p-8 shadow-sm">
       <div className="space-y-2">
         <h2 className="text-2xl font-bold text-gray-900">
           Configure Branch Settings
@@ -790,7 +790,7 @@ function BranchConfigStep({
           <button
             type="button"
             onClick={onBack}
-            className="flex-1 rounded-full border border-slate-200 bg-[#111827] px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+            className="flex-1 rounded-full border border-slate-200 bg-theme-muted px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
           >
             Back
           </button>
@@ -861,7 +861,7 @@ function ViewStep({
   onAddMore: () => void;
 }) {
   return (
-    <div className="space-y-6 rounded-2xl border border-slate-100 bg-[#111827] p-8 shadow-sm">
+    <div className="space-y-6 rounded-2xl border border-slate-100 bg-theme-muted p-8 shadow-sm">
       <div className="space-y-2">
         <h2 className="text-2xl font-bold text-gray-900">
           Organization Structure

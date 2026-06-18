@@ -247,7 +247,7 @@ export function SubmitExpenseModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 sticky top-0 bg-white">
           <h2 className="text-lg font-semibold text-black">Submit Expense</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-400">
+          <button onClick={onClose} className="text-gray-500 hover:text-theme-text-tertiary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -363,7 +363,7 @@ export function SubmitExpenseModal({
                 className="bg-white rounded border-slate-200 text-black"
                 disabled={loading}
               />
-              <label htmlFor="receipt" className="text-sm text-gray-400">
+              <label htmlFor="receipt" className="text-sm text-theme-text-tertiary">
                 I have a receipt attached
               </label>
             </div>
@@ -382,7 +382,7 @@ export function SubmitExpenseModal({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className={`w-full flex items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-3 text-sm transition ${
-                      errors.receipt ? "border-red-300 bg-red-50 text-red-600" : "border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-gray-400"
+                      errors.receipt ? "border-red-300 bg-red-50 text-red-600" : "border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-theme-text-tertiary"
                     }`}
                     disabled={loading}
                   >
@@ -392,7 +392,7 @@ export function SubmitExpenseModal({
                 ) : (
                   <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-gray-100 px-3 py-2">
                     <FileText className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                    <span className="text-sm text-gray-400 truncate flex-1">{receiptFile.name}</span>
+                    <span className="text-sm text-theme-text-tertiary truncate flex-1">{receiptFile.name}</span>
                     <button
                       type="button"
                       onClick={() => { setReceiptFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
@@ -481,7 +481,7 @@ export function ViewExpenseModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
           <h2 className="text-lg font-semibold text-black">Expense #{expense.id}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-400">
+          <button onClick={onClose} className="text-gray-500 hover:text-theme-text-tertiary">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -491,7 +491,7 @@ export function ViewExpenseModal({
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-gray-500">Status</span>
-              <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusColor[expense.status.toLowerCase()] || "bg-gray-100 text-gray-400"}`}>
+              <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusColor[expense.status.toLowerCase()] || "bg-gray-100 text-theme-text-tertiary"}`}>
                 {expense.status}
               </span>
             </div>
@@ -511,20 +511,20 @@ export function ViewExpenseModal({
           {expense.employee && (
             <div>
               <p className="text-xs font-medium text-gray-500">Employee</p>
-              <p className="text-sm text-gray-400 mt-1">{expense.employee}</p>
+              <p className="text-sm text-theme-text-tertiary mt-1">{expense.employee}</p>
             </div>
           )}
 
           {expense.submittedDate && (
             <div>
               <p className="text-xs font-medium text-gray-500">Submitted</p>
-              <p className="text-sm text-gray-400 mt-1">{new Date(expense.submittedDate).toLocaleDateString()}</p>
+              <p className="text-sm text-theme-text-tertiary mt-1">{new Date(expense.submittedDate).toLocaleDateString()}</p>
             </div>
           )}
 
           <div>
             <p className="text-xs font-medium text-gray-500">Description</p>
-            <p className="text-sm text-gray-400 mt-1">{expense.description}</p>
+            <p className="text-sm text-theme-text-tertiary mt-1">{expense.description}</p>
           </div>
 
           {expense.notes && (
@@ -598,14 +598,14 @@ export function BulkActionsModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
           <h2 className="text-lg font-semibold text-black">Bulk Actions</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-400">
+          <button onClick={onClose} className="text-gray-500 hover:text-theme-text-tertiary">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
         <div className="space-y-4 px-6 py-6">
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-theme-text-tertiary">
             You have selected <strong>{count}</strong> expense{count !== 1 ? "s" : ""}. Choose an action:
           </p>
 
@@ -670,7 +670,7 @@ export function ExportExpensesModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
           <h2 className="text-lg font-semibold text-black">Export Expenses</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-400">
+          <button onClick={onClose} className="text-gray-500 hover:text-theme-text-tertiary">
             <X className="w-5 h-5" />
           </button>
         </div>

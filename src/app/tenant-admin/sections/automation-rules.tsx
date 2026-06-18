@@ -139,7 +139,7 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Automation</p>
@@ -194,7 +194,7 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
         </form>
       </div>
 
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Rulebook</p>
@@ -215,21 +215,21 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
                     <p className="text-xs text-slate-500">{rule.eventType}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => simulate(rule)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-[#111827]">
+                    <button onClick={() => simulate(rule)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-theme-muted">
                       <Play className="h-3 w-3" /> Simulate
                     </button>
-                    <button onClick={() => toggleRule(rule)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-[#111827]">
+                    <button onClick={() => toggleRule(rule)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-theme-muted">
                       {rule.enabled ? <ToggleRight className="h-4 w-4 text-emerald-500" /> : <ToggleLeft className="h-4 w-4 text-slate-400" />} {rule.enabled ? "Enabled" : "Disabled"}
                     </button>
                   </div>
                 </div>
                 {rule.description && <p className="mt-2 text-sm text-slate-600">{rule.description}</p>}
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  <div className="rounded-xl bg-[#111827] p-3 text-xs text-slate-700">
+                  <div className="rounded-xl bg-theme-muted p-3 text-xs text-slate-700">
                     <div className="mb-1 text-[11px] uppercase tracking-[0.2em] text-slate-400">Condition</div>
                     <pre className="whitespace-pre-wrap break-all">{JSON.stringify(rule.condition, null, 2)}</pre>
                   </div>
-                  <div className="rounded-xl bg-[#111827] p-3 text-xs text-slate-700">
+                  <div className="rounded-xl bg-theme-muted p-3 text-xs text-slate-700">
                     <div className="mb-1 text-[11px] uppercase tracking-[0.2em] text-slate-400">Actions</div>
                     <pre className="whitespace-pre-wrap break-all">{JSON.stringify(rule.actions, null, 2)}</pre>
                   </div>
@@ -240,7 +240,7 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
         )}
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           {simResult && (
-            <div className="rounded-2xl border border-slate-200 bg-[#111827] p-4 text-sm text-slate-800">
+            <div className="rounded-2xl border border-slate-200 bg-theme-muted p-4 text-sm text-slate-800">
               <div className="flex items-center justify-between">
                 <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Simulation</div>
                 <button onClick={loadAudits} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-50" disabled={auditLoading}>
@@ -251,7 +251,7 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
               <pre className="mt-2 whitespace-pre-wrap break-all text-xs text-slate-700">{JSON.stringify(simResult.result, null, 2)}</pre>
             </div>
           )}
-          <div className="rounded-2xl border border-slate-200 bg-[#111827] p-4 text-sm text-slate-800">
+          <div className="rounded-2xl border border-slate-200 bg-theme-muted p-4 text-sm text-slate-800">
             <div className="flex items-center justify-between">
               <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Audit log</div>
               <button onClick={loadAudits} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-50" disabled={auditLoading}>

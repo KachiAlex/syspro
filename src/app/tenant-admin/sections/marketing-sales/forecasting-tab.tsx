@@ -109,7 +109,7 @@ export default function ForecastingTab({
   if (!data) {
     return (
       <div className="p-8 text-center">
-        <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+        <AlertCircle className="mx-auto h-12 w-12 text-theme-text-tertiary" />
         <p className="mt-4 text-gray-600">No forecast data available</p>
       </div>
     );
@@ -147,7 +147,7 @@ export default function ForecastingTab({
 
       {/* Monthly Forecast */}
       {data.monthlyForecast && data.monthlyForecast.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-6">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
             <Calendar className="w-5 h-5" />
             Monthly Forecast
@@ -178,7 +178,7 @@ export default function ForecastingTab({
 
       {/* Scenarios */}
       {data.scenarios && data.scenarios.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-6">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
             <TrendingUp className="w-5 h-5" />
             Revenue Scenarios

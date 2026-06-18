@@ -203,7 +203,7 @@ export default function ReportsPage() {
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     {report.status}
                   </span>
-                  <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                  <button className="text-blue-600 hover:text-theme-accent-hover text-sm font-medium">
                     <Download className="w-4 h-4" />
                   </button>
                 </div>

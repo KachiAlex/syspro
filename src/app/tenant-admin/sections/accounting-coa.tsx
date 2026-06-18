@@ -109,7 +109,7 @@ export default function ChartOfAccountsWorkspace({
   };
 
   return (
-    <div className="rounded-3xl border border-slate-100 bg-[#111827] p-8 shadow-sm">
+    <div className="rounded-3xl border border-slate-100 bg-theme-muted p-8 shadow-sm">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

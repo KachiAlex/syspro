@@ -163,7 +163,7 @@ export function CreateSalesOrderModal({
                       <button
                         type="button"
                         onClick={() => handleRemoveItem(index)}
-                        className="p-1 text-red-600 hover:text-red-700"
+                        className="p-1 text-red-600 hover:text-theme-danger"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -768,15 +768,15 @@ export function ViewSupplierModal({
               <h4 className="text-sm font-medium text-gray-500 mb-3">Contact Information</h4>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <Mail className="w-4 h-4 text-gray-400" />
+                  <Mail className="w-4 h-4 text-theme-text-tertiary" />
                   <span className="text-sm text-gray-900">{supplier.email}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Phone className="w-4 h-4 text-gray-400" />
+                  <Phone className="w-4 h-4 text-theme-text-tertiary" />
                   <span className="text-sm text-gray-900">{supplier.phone}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <MapPin className="w-4 h-4 text-gray-400" />
+                  <MapPin className="w-4 h-4 text-theme-text-tertiary" />
                   <span className="text-sm text-gray-900">123 Supplier St, City, State</span>
                 </div>
               </div>

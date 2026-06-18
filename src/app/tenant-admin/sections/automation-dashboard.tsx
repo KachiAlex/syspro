@@ -42,7 +42,7 @@ export default function AutomationDashboard({ tenantSlug }: { tenantSlug?: strin
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Automation</p>
@@ -84,7 +84,7 @@ export default function AutomationDashboard({ tenantSlug }: { tenantSlug?: strin
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-        <div className="rounded-2xl border border-slate-100 bg-[#111827] p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-100 bg-theme-muted p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Queue Health</p>
@@ -112,7 +112,7 @@ export default function AutomationDashboard({ tenantSlug }: { tenantSlug?: strin
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-100 bg-[#111827] p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-100 bg-theme-muted p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Recent Activity</p>
@@ -148,7 +148,7 @@ export default function AutomationDashboard({ tenantSlug }: { tenantSlug?: strin
 function StatCard({ title, value, sub, icon, tone = "slate" }: { title: string; value: number; sub: string; icon: React.ReactNode; tone?: "slate" | "emerald" | "amber" | "rose" }) {
   const toneClasses = tone === "emerald" ? "bg-emerald-50 text-emerald-700" : tone === "amber" ? "bg-amber-50 text-amber-700" : tone === "rose" ? "bg-rose-50 text-rose-700" : "bg-slate-50 text-slate-700";
   return (
-    <div className="rounded-2xl border border-slate-100 bg-[#111827] p-5 shadow-sm">
+    <div className="rounded-2xl border border-slate-100 bg-theme-muted p-5 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="rounded-full bg-slate-50 p-2 text-slate-600">{icon}</div>
         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${toneClasses}`}>{title}</span>
@@ -168,7 +168,7 @@ function MiniMetric({ label, value, tone }: { label: string; value: number | str
     slate: "bg-slate-50 text-slate-700",
   };
   return (
-    <div className="rounded-xl border border-slate-100 bg-[#111827] px-4 py-3 shadow-sm">
+    <div className="rounded-xl border border-slate-100 bg-theme-muted px-4 py-3 shadow-sm">
       <div className="text-xs uppercase tracking-[0.2em] text-slate-500">{label}</div>
       <div className="mt-1 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold">
         <span className={`rounded-full px-2 py-1 text-xs font-semibold ${toneMap[tone]}`}>{value}</span>

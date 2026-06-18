@@ -76,8 +76,8 @@ export default function ProjectsTimeline({ projects, tenantSlug }: ProjectsTimel
 
       <div className="space-y-4">
         {sortedProjects.length === 0 ? (
-          <div className="rounded-lg border border-gray-200 bg-[#111827] p-12 text-center">
-            <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
+            <Calendar className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No projects to display</h3>
             <p className="text-gray-600">Create a project to see the timeline</p>
           </div>
@@ -87,7 +87,7 @@ export default function ProjectsTimeline({ projects, tenantSlug }: ProjectsTimel
             const progress = getProgressPercentage(project.startDate, project.endDate);
             
             return (
-              <div key={project.id} className="rounded-lg border border-gray-200 bg-[#111827] p-6 hover:shadow-md transition">
+              <div key={project.id} className="rounded-lg border border-gray-200 bg-theme-muted p-6 hover:shadow-md transition">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{project.name}</h3>

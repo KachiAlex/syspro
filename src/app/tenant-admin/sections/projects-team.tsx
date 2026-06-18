@@ -129,7 +129,7 @@ export default function ProjectsTeam({ projects, tenantSlug }: ProjectsTeamProps
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-[#111827] p-6">
+      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Team Member</h3>
         <div className="flex gap-2 flex-col md:flex-row">
           <input
@@ -161,15 +161,15 @@ export default function ProjectsTeam({ projects, tenantSlug }: ProjectsTeamProps
       {loading ? (
         <div className="text-center py-8 text-gray-500">Loading team members...</div>
       ) : teamMembers.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-12 text-center">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 mx-auto mb-4">
-            <Users className="w-8 h-8 text-gray-400" />
+            <Users className="w-8 h-8 text-theme-text-tertiary" />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No team members yet</h3>
           <p className="text-gray-600">Add team members to collaborate on this project</p>
         </div>
       ) : (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] overflow-hidden">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -200,7 +200,7 @@ export default function ProjectsTeam({ projects, tenantSlug }: ProjectsTeamProps
                   <td className="px-6 py-4">
                     <button
                       onClick={() => handleRemoveMember(member.id)}
-                      className="text-red-600 hover:text-red-700 transition font-medium text-sm"
+                      className="text-red-600 hover:text-theme-danger transition font-medium text-sm"
                     >
                       Remove
                     </button>

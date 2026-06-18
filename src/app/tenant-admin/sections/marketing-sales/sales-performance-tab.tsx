@@ -104,7 +104,7 @@ export default function SalesPerformanceTab({
   if (!data) {
     return (
       <div className="p-8 text-center">
-        <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+        <AlertCircle className="mx-auto h-12 w-12 text-theme-text-tertiary" />
         <p className="mt-4 text-gray-600">No sales performance data available</p>
       </div>
     );
@@ -114,21 +114,21 @@ export default function SalesPerformanceTab({
     <div className="space-y-6 p-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-4">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-4">
           <p className="text-sm font-medium text-gray-600">Total Deals</p>
           <p className="mt-2 text-2xl font-bold text-gray-900">{data.summary?.totalDeals}</p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-4">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-4">
           <p className="text-sm font-medium text-gray-600">Total Revenue</p>
           <p className="mt-2 text-2xl font-bold text-gray-900">
             ₦{(data.summary?.totalRevenue || 0).toLocaleString()}
           </p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-4">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-4">
           <p className="text-sm font-medium text-gray-600">Win Rate</p>
           <p className="mt-2 text-2xl font-bold text-green-600">{data.summary?.winRate}%</p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-4">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-4">
           <p className="text-sm font-medium text-gray-600">Avg Deal Size</p>
           <p className="mt-2 text-2xl font-bold text-gray-900">
             ₦{(data.summary?.avgDealSize || 0).toLocaleString()}
@@ -138,7 +138,7 @@ export default function SalesPerformanceTab({
 
       {/* By Rep */}
       {data.byRep && data.byRep.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-6">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
             <BarChart3 className="w-5 h-5" />
             Performance by Sales Rep
@@ -183,7 +183,7 @@ export default function SalesPerformanceTab({
 
       {/* By Sales Stage */}
       {data.bySalesStage && data.bySalesStage.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-6">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
             <TrendingUp className="w-5 h-5" />
             Pipeline by Sales Stage

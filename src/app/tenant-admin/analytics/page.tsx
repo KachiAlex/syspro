@@ -71,7 +71,7 @@ export default function AnalyticsPage() {
               <p className="text-3xl font-bold text-green-600 mt-2">$425K</p>
               <p className="text-xs text-green-600 mt-2">↑ 12.5% from last month</p>
             </div>
-            <DollarSign className="w-12 h-12 text-green-100" />
+            <DollarSign className="w-12 h-12 text-green-500" />
           </div>
         </div>
 
@@ -82,7 +82,7 @@ export default function AnalyticsPage() {
               <p className="text-3xl font-bold text-blue-600 mt-2">156</p>
               <p className="text-xs text-blue-600 mt-2">↑ 3.2% from last month</p>
             </div>
-            <Users className="w-12 h-12 text-blue-100" />
+            <Users className="w-12 h-12 text-blue-500" />
           </div>
         </div>
 
@@ -104,7 +104,7 @@ export default function AnalyticsPage() {
               <p className="text-3xl font-bold text-amber-600 mt-2">23.4%</p>
               <p className="text-xs text-amber-600 mt-2">↑ 2.1% from last month</p>
             </div>
-            <TrendingUp className="w-12 h-12 text-amber-100" />
+            <TrendingUp className="w-12 h-12 text-amber-500" />
           </div>
         </div>
       </div>
@@ -154,7 +154,7 @@ export default function AnalyticsPage() {
               </div>
               <Link
                 href="/tenant-admin/analytics/financial"
-                className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+                className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-theme-accent-hover"
               >
                 View Financial Reports →
               </Link>
@@ -240,7 +240,7 @@ export default function AnalyticsPage() {
                 }`}>
                   {report.status}
                 </span>
-                <button className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
+                <button className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover">
                   <Download className="w-3 h-3" />
                   Download
                 </button>

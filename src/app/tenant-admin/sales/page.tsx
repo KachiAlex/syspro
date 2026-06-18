@@ -159,7 +159,7 @@ export default function SalesPage() {
               <p className="text-sm font-medium text-gray-600">Total Sales Orders</p>
               <p className="text-3xl font-bold text-gray-900 mt-2">{stats.orders}</p>
             </div>
-            <ShoppingCart className="w-12 h-12 text-blue-100" />
+            <ShoppingCart className="w-12 h-12 text-blue-500" />
           </div>
           <p className="text-xs text-gray-500 mt-4">This month</p>
         </div>
@@ -170,7 +170,7 @@ export default function SalesPage() {
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
               <p className="text-3xl font-bold text-green-600 mt-2">${stats.revenue.toLocaleString()}</p>
             </div>
-            <TrendingUp className="w-12 h-12 text-green-100" />
+            <TrendingUp className="w-12 h-12 text-green-500" />
           </div>
           <p className="text-xs text-gray-500 mt-4">This month</p>
         </div>
@@ -192,7 +192,7 @@ export default function SalesPage() {
               <p className="text-sm font-medium text-gray-600">Inventory Value</p>
               <p className="text-3xl font-bold text-amber-600 mt-2">${stats.inventoryValue.toLocaleString()}</p>
             </div>
-            <Boxes className="w-12 h-12 text-amber-100" />
+            <Boxes className="w-12 h-12 text-amber-500" />
           </div>
           <p className="text-xs text-gray-500 mt-4">Total stock</p>
         </div>

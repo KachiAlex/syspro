@@ -393,7 +393,7 @@ export default function EnhancedWorkflowForm({
                   <h4 className="font-medium text-slate-700">Workflow Steps ({steps.length})</h4>
                   <div className="mt-2 space-y-2">
                     {steps.map((step, index) => (
-                      <div key={index} className="flex items-center gap-4 text-sm bg-[#111827] p-2 rounded border">
+                      <div key={index} className="flex items-center gap-4 text-sm bg-theme-muted p-2 rounded border">
                         <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-medium">
                           {index + 1}
                         </div>

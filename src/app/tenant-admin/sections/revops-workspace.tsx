@@ -368,7 +368,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
   };
 
   const SectionShell = ({ title, description, actions, children }: { title: string; description?: string; actions?: ReactNode; children: ReactNode }) => (
-    <div className="space-y-6 rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+    <div className="space-y-6 rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
@@ -873,14 +873,14 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
           <button
             type="button"
             onClick={handleRefresh}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-[#111827] px-4 py-2 text-sm text-slate-600"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-theme-muted px-4 py-2 text-sm text-slate-600"
           >
             <RefreshCcw className="h-4 w-4" /> Refresh data
           </button>
         </div>
       </div>
 
-      {loading && <div className="rounded-3xl border border-slate-100 bg-[#111827] p-4 text-sm text-slate-500">Syncing RevOps telemetry…</div>}
+      {loading && <div className="rounded-3xl border border-slate-100 bg-theme-muted p-4 text-sm text-slate-500">Syncing RevOps telemetry…</div>}
       {error && (
         <FormAlert
           type="error"
@@ -891,7 +891,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
       )}
 
       <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="rounded-3xl border border-slate-100 bg-[#111827] p-4">
+        <aside className="rounded-3xl border border-slate-100 bg-theme-muted p-4">
           <nav className="space-y-1">
             {navItems.map((item) => (
               <button

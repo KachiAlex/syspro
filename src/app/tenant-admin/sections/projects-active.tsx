@@ -143,13 +143,13 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
       {/* Header with Actions */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-2xl font-bold text-[#F8FAFC]">Active Projects</h3>
-          <p className="text-[#94A3B8] mt-1">{activeProjects.length} active project(s)</p>
+          <h3 className="text-2xl font-bold text-theme-text-primary">Active Projects</h3>
+          <p className="text-theme-text-secondary mt-1">{activeProjects.length} active project(s)</p>
         </div>
         <button
           onClick={fetchActiveProjects}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm border border-gray-200 rounded-lg text-[#F8FAFC] hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm border border-gray-200 rounded-lg text-theme-text-primary hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -158,7 +158,7 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
 
       {/* Bulk Actions */}
       {activeProjects.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-4">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-4">
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -167,7 +167,7 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
                 onChange={handleSelectAll}
                 className="bg-white w-4 h-4 rounded border-gray-300 text-black"
               />
-              <span className="text-sm font-medium text-[#F8FAFC]">
+              <span className="text-sm font-medium text-theme-text-primary">
                 Select All ({selectedProjects.size}/{activeProjects.length})
               </span>
             </label>
@@ -185,12 +185,12 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
 
       {/* Projects List */}
       {loading ? (
-        <div className="text-center py-8 text-[#64748B]">Loading active projects...</div>
+        <div className="text-center py-8 text-theme-text-tertiary">Loading active projects...</div>
       ) : activeProjects.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-12 text-center">
-          <Zap className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-[#F8FAFC] mb-2">No active projects</h3>
-          <p className="text-[#94A3B8]">All projects are either planned, on hold, or completed</p>
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
+          <Zap className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-2">No active projects</h3>
+          <p className="text-theme-text-secondary">All projects are either planned, on hold, or completed</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -199,7 +199,7 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
             const daysRemaining = getDaysRemaining(project.endDate);
             
             return (
-              <div key={project.id} className="rounded-lg border border-gray-200 bg-[#111827] p-6 hover:shadow-md transition">
+              <div key={project.id} className="rounded-lg border border-gray-200 bg-theme-muted p-6 hover:shadow-md transition">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-3 flex-1">
                     <input
@@ -209,8 +209,8 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
                       className="bg-white w-4 h-4 rounded border-gray-300 mt-1 text-black"
                     />
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-[#F8FAFC] mb-1">{project.name}</h3>
-                      <p className="text-sm text-[#94A3B8]">{project.objective}</p>
+                      <h3 className="text-lg font-semibold text-theme-text-primary mb-1">{project.name}</h3>
+                      <p className="text-sm text-theme-text-secondary">{project.objective}</p>
                     </div>
                   </div>
                   <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getPriorityColor(project.priority)}`}>
@@ -220,19 +220,19 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                   <div>
-                    <p className="text-[#64748B] text-xs mb-1">Owner</p>
-                    <p className="font-medium text-[#F8FAFC]">{project.owner}</p>
+                    <p className="text-theme-text-tertiary text-xs mb-1">Owner</p>
+                    <p className="font-medium text-theme-text-primary">{project.owner}</p>
                   </div>
                   <div>
-                    <p className="text-[#64748B] text-xs mb-1">Start Date</p>
-                    <p className="font-medium text-[#F8FAFC]">{new Date(project.startDate).toLocaleDateString()}</p>
+                    <p className="text-theme-text-tertiary text-xs mb-1">Start Date</p>
+                    <p className="font-medium text-theme-text-primary">{new Date(project.startDate).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <p className="text-[#64748B] text-xs mb-1">End Date</p>
-                    <p className="font-medium text-[#F8FAFC]">{new Date(project.endDate).toLocaleDateString()}</p>
+                    <p className="text-theme-text-tertiary text-xs mb-1">End Date</p>
+                    <p className="font-medium text-theme-text-primary">{new Date(project.endDate).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <p className="text-[#64748B] text-xs mb-1">Days Remaining</p>
+                    <p className="text-theme-text-tertiary text-xs mb-1">Days Remaining</p>
                     <p className={`font-medium ${daysRemaining < 0 ? 'text-red-400' : daysRemaining < 7 ? 'text-amber-600' : 'text-emerald-400'}`}>
                       {daysRemaining < 0 ? `${Math.abs(daysRemaining)}d overdue` : `${daysRemaining}d left`}
                     </p>
@@ -242,11 +242,11 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
                 {/* Budget Utilization */}
                 <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2 text-sm text-[#94A3B8]">
+                    <div className="flex items-center gap-2 text-sm text-theme-text-secondary">
                       <DollarSign className="w-4 h-4" />
                       <span>${project.budgetSpent.toFixed(2)} / ${project.budgetApproved.toFixed(2)}</span>
                     </div>
-                    <span className="text-xs font-semibold text-[#F8FAFC]">{budgetUtilization}%</span>
+                    <span className="text-xs font-semibold text-theme-text-primary">{budgetUtilization}%</span>
                   </div>
                   <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
                     <div
@@ -279,7 +279,7 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
                   </button>
                   <button
                     onClick={() => {}}
-                    className="rounded-lg border border-gray-200 bg-[#111827] px-3 py-2 text-[#F8FAFC] transition hover:bg-gray-100 flex items-center justify-center"
+                    className="rounded-lg border border-gray-200 bg-theme-muted px-3 py-2 text-theme-text-primary transition hover:bg-gray-100 flex items-center justify-center"
                     title="Duplicate project"
                   >
                     <Copy className="w-4 h-4" />

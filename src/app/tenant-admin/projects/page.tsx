@@ -28,7 +28,7 @@ export default function ProjectsPage() {
               <p className="text-sm font-medium text-gray-600">Total Projects</p>
               <p className="text-3xl font-bold text-gray-900 mt-2">12</p>
             </div>
-            <Briefcase className="w-12 h-12 text-blue-100" />
+            <Briefcase className="w-12 h-12 text-blue-500" />
           </div>
           <p className="text-xs text-gray-500 mt-4">All time</p>
         </div>
@@ -39,7 +39,7 @@ export default function ProjectsPage() {
               <p className="text-sm font-medium text-gray-600">Active</p>
               <p className="text-3xl font-bold text-green-600 mt-2">7</p>
             </div>
-            <CheckCircle className="w-12 h-12 text-green-100" />
+            <CheckCircle className="w-12 h-12 text-green-500" />
           </div>
           <p className="text-xs text-gray-500 mt-4">In progress</p>
         </div>
@@ -50,7 +50,7 @@ export default function ProjectsPage() {
               <p className="text-sm font-medium text-gray-600">Completed</p>
               <p className="text-3xl font-bold text-blue-600 mt-2">4</p>
             </div>
-            <Archive className="w-12 h-12 text-blue-100" />
+            <Archive className="w-12 h-12 text-blue-500" />
           </div>
           <p className="text-xs text-gray-500 mt-4">Archived</p>
         </div>

@@ -358,15 +358,15 @@ function StaffTab({
     <div className="space-y-6">
       {/* Staff Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">Total Staff</p>
           <p className="text-3xl font-bold text-gray-900">{employees.length}</p>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">Active</p>
           <p className="text-3xl font-bold text-emerald-600">{activeEmployees}</p>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">On Leave</p>
           <p className="text-3xl font-bold text-amber-600">{onLeaveEmployees}</p>
         </div>
@@ -374,7 +374,7 @@ function StaffTab({
 
       {/* Department Distribution */}
       {departmentDistribution.length > 0 && (
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-6">
           <h4 className="text-lg font-semibold text-gray-900 mb-4">Department Distribution</h4>
           <div className="space-y-3">
             {departmentDistribution.map(d => (
@@ -423,7 +423,7 @@ function StaffTab({
       {loading ? (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-[#111827] rounded-lg border border-gray-200 p-4 animate-pulse">
+            <div key={i} className="bg-theme-muted rounded-lg border border-gray-200 p-4 animate-pulse">
               <div className="space-y-2">
                 <div className="h-4 bg-gray-200 rounded w-1/3"></div>
                 <div className="h-3 bg-gray-200 rounded w-1/2"></div>
@@ -432,7 +432,7 @@ function StaffTab({
           ))}
         </div>
       ) : empArray.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-12 text-center">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
           <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600 font-medium mb-2">No employees found</p>
           <p className="text-sm text-gray-500 mb-4">Add your first employee to get started</p>
@@ -447,7 +447,7 @@ function StaffTab({
       ) : (
         <div className="space-y-3">
           {empArray.map(emp => (
-            <div key={emp.id} className="bg-[#111827] rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+            <div key={emp.id} className="bg-theme-muted rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-900">{emp.name}</h4>
@@ -534,19 +534,19 @@ function AttendanceTab({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">Present</p>
           <p className="text-3xl font-bold text-emerald-600">{presentCount}</p>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">Absent</p>
           <p className="text-3xl font-bold text-red-600">{absentCount}</p>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">Late</p>
           <p className="text-3xl font-bold text-amber-600">{lateCount}</p>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">On Leave</p>
           <p className="text-3xl font-bold text-blue-600">{(Array.isArray(attendanceRecords) ? attendanceRecords : []).filter(r => r.status === 'Leave').length}</p>
         </div>
@@ -555,7 +555,7 @@ function AttendanceTab({
       {loading ? (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-[#111827] rounded-lg border border-gray-200 p-4 animate-pulse">
+            <div key={i} className="bg-theme-muted rounded-lg border border-gray-200 p-4 animate-pulse">
               <div className="space-y-2">
                 <div className="h-4 bg-gray-200 rounded w-1/3"></div>
                 <div className="h-3 bg-gray-200 rounded w-1/2"></div>
@@ -564,7 +564,7 @@ function AttendanceTab({
           ))}
         </div>
       ) : (Array.isArray(attendanceRecords) ? attendanceRecords : []).length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-12 text-center">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
           <Clock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600 font-medium mb-2">No attendance records</p>
           <p className="text-sm text-gray-500">Mark attendance for employees on this date</p>
@@ -572,7 +572,7 @@ function AttendanceTab({
       ) : (
         <div className="space-y-3">
           {(Array.isArray(attendanceRecords) ? attendanceRecords : []).map(record => (
-            <div key={record.id} className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+            <div key={record.id} className="bg-theme-muted rounded-lg border border-gray-200 p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-900">{record.employeeName}</h4>
@@ -639,7 +639,7 @@ function ReportsTab({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Total Employees</p>
@@ -648,7 +648,7 @@ function ReportsTab({
             <Users className="w-8 h-8 text-blue-600" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Active Employees</p>
@@ -657,7 +657,7 @@ function ReportsTab({
             <CheckCircle className="w-8 h-8 text-emerald-600" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Avg Attendance</p>
@@ -666,7 +666,7 @@ function ReportsTab({
             <TrendingUp className="w-8 h-8 text-blue-600" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Total Payroll</p>
@@ -677,7 +677,7 @@ function ReportsTab({
         </div>
       </div>
 
-      <div className="bg-[#111827] rounded-lg border border-gray-200 p-6">
+      <div className="bg-theme-muted rounded-lg border border-gray-200 p-6">
         <h4 className="text-lg font-semibold text-gray-900 mb-4">Available Reports</h4>
         <div className="space-y-3">
           <button className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between">
@@ -758,19 +758,19 @@ function PayrollTab({
 
       {/* Payroll Status */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">Pending</p>
           <p className="text-3xl font-bold text-amber-600">{pendingCount}</p>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">Processed</p>
           <p className="text-3xl font-bold text-blue-600">{processedCount}</p>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">Paid</p>
           <p className="text-3xl font-bold text-emerald-600">{paidCount}</p>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <p className="text-sm text-gray-600 mb-1">Total Deductions</p>
           <p className="text-3xl font-bold text-red-600">-${(totalDeductions / 1000).toFixed(0)}K</p>
         </div>
@@ -779,7 +779,7 @@ function PayrollTab({
       {loading ? (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-[#111827] rounded-lg border border-gray-200 p-4 animate-pulse">
+            <div key={i} className="bg-theme-muted rounded-lg border border-gray-200 p-4 animate-pulse">
               <div className="space-y-2">
                 <div className="h-4 bg-gray-200 rounded w-1/3"></div>
                 <div className="h-3 bg-gray-200 rounded w-1/2"></div>
@@ -788,7 +788,7 @@ function PayrollTab({
           ))}
         </div>
       ) : (Array.isArray(payrollRecords) ? payrollRecords : []).length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-12 text-center">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
           <DollarSign className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600 font-medium mb-2">No payroll records</p>
           <p className="text-sm text-gray-500 mb-4">Run payroll to generate records for this period</p>
@@ -803,7 +803,7 @@ function PayrollTab({
       ) : (
         <div className="space-y-3">
           {(Array.isArray(payrollRecords) ? payrollRecords : []).map(record => (
-            <div key={record.id} className="bg-[#111827] rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+            <div key={record.id} className="bg-theme-muted rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-900">{record.employeeName}</h4>

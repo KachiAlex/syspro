@@ -104,7 +104,7 @@ export default function AdminRestrictions({ tenantSlug }: { tenantSlug?: string 
   ].sort();
 
   return (
-    <div className="rounded-3xl border border-slate-100 bg-[#111827] p-8 shadow-sm">
+    <div className="rounded-3xl border border-slate-100 bg-theme-muted p-8 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -171,7 +171,7 @@ export default function AdminRestrictions({ tenantSlug }: { tenantSlug?: string 
                       className={`flex items-center justify-between rounded-2xl border-2 p-4 transition ${
                         isRestricted
                           ? "border-rose-200 bg-rose-50"
-                          : "border-slate-100 bg-[#111827] hover:border-slate-200"
+                          : "border-slate-100 bg-theme-muted hover:border-slate-200"
                       }`}
                     >
                       <div className="flex items-center gap-3">

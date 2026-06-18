@@ -90,7 +90,7 @@ export default function AttendancePage() {
               <p className="text-sm font-medium text-gray-600">Present Today</p>
               <p className="text-3xl font-bold text-green-600 mt-2">{attendanceStats.present}</p>
             </div>
-            <CheckCircle className="w-12 h-12 text-green-100" />
+            <CheckCircle className="w-12 h-12 text-green-500" />
           </div>
           <p className="text-xs text-gray-500 mt-4">Employees present</p>
         </div>
@@ -101,7 +101,7 @@ export default function AttendancePage() {
               <p className="text-sm font-medium text-gray-600">Absent</p>
               <p className="text-3xl font-bold text-red-600 mt-2">{attendanceStats.absent}</p>
             </div>
-            <AlertCircle className="w-12 h-12 text-red-100" />
+            <AlertCircle className="w-12 h-12 text-red-500" />
           </div>
           <p className="text-xs text-gray-500 mt-4">Not present</p>
         </div>
@@ -112,7 +112,7 @@ export default function AttendancePage() {
               <p className="text-sm font-medium text-gray-600">Late</p>
               <p className="text-3xl font-bold text-amber-600 mt-2">{attendanceStats.late}</p>
             </div>
-            <Clock className="w-12 h-12 text-amber-100" />
+            <Clock className="w-12 h-12 text-amber-500" />
           </div>
           <p className="text-xs text-gray-500 mt-4">Arrived late</p>
         </div>
@@ -125,7 +125,7 @@ export default function AttendancePage() {
                 {attendanceStats.total > 0 ? `${Math.round((attendanceStats.present / attendanceStats.total) * 100)}%` : '—'}
               </p>
             </div>
-            <Calendar className="w-12 h-12 text-blue-100" />
+            <Calendar className="w-12 h-12 text-blue-500" />
           </div>
           <p className="text-xs text-gray-500 mt-4">Daily average</p>
         </div>

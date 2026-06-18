@@ -161,7 +161,7 @@ export default function ProjectsArchive({ tenantSlug, onRefresh }: ProjectsArchi
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-2xl font-bold text-gray-900">Archived Projects</h3>
-          <p className="text-[#94A3B8] mt-1">{archivedProjects.length} archived project(s)</p>
+          <p className="text-theme-text-secondary mt-1">{archivedProjects.length} archived project(s)</p>
         </div>
         <button
           onClick={fetchArchivedProjects}
@@ -175,7 +175,7 @@ export default function ProjectsArchive({ tenantSlug, onRefresh }: ProjectsArchi
 
       {/* Search */}
       {archivedProjects.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-4">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-4">
           <input
             type="text"
             placeholder="Search archived projects..."
@@ -188,7 +188,7 @@ export default function ProjectsArchive({ tenantSlug, onRefresh }: ProjectsArchi
 
       {/* Bulk Actions */}
       {filteredProjects.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-4">
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -227,8 +227,8 @@ export default function ProjectsArchive({ tenantSlug, onRefresh }: ProjectsArchi
       {loading ? (
         <div className="text-center py-8 text-gray-500">Loading archived projects...</div>
       ) : filteredProjects.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-[#111827] p-12 text-center">
-          <Archive className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <div className="rounded-lg border border-gray-200 bg-theme-muted p-12 text-center">
+          <Archive className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No archived projects</h3>
           <p className="text-gray-600">Archive completed or inactive projects to keep your workspace organized</p>
         </div>
@@ -238,7 +238,7 @@ export default function ProjectsArchive({ tenantSlug, onRefresh }: ProjectsArchi
             const budgetUtilization = getBudgetUtilization(project.budgetSpent, project.budgetApproved);
             
             return (
-              <div key={project.id} className="rounded-lg border border-gray-200 bg-[#111827] p-6 hover:shadow-md transition">
+              <div key={project.id} className="rounded-lg border border-gray-200 bg-theme-muted p-6 hover:shadow-md transition">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-3 flex-1">
                     <input

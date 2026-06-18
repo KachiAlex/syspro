@@ -148,9 +148,9 @@ export default function ProjectsTasks({ projects, tenantSlug }: ProjectsTasksPro
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* To Do Column */}
-          <div className="rounded-lg border border-gray-200 bg-[#111827] p-4">
+          <div className="rounded-lg border border-gray-200 bg-theme-muted p-4">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Circle className="w-4 h-4 text-gray-400" />
+              <Circle className="w-4 h-4 text-theme-text-tertiary" />
               To Do ({todoTasks.length})
             </h3>
             <div className="space-y-2">
@@ -160,7 +160,7 @@ export default function ProjectsTasks({ projects, tenantSlug }: ProjectsTasksPro
                     <p className="text-sm font-medium text-gray-900 flex-1">{task.title}</p>
                     <button
                       onClick={() => handleDeleteTask(task.id)}
-                      className="text-red-600 hover:text-red-700 transition"
+                      className="text-red-600 hover:text-theme-danger transition"
                       title="Delete task"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -185,12 +185,12 @@ export default function ProjectsTasks({ projects, tenantSlug }: ProjectsTasksPro
             </h3>
             <div className="space-y-2">
               {inProgressTasks.map(task => (
-                <div key={task.id} className="rounded-lg border border-blue-200 bg-[#111827] p-3 hover:shadow-md transition">
+                <div key={task.id} className="rounded-lg border border-blue-200 bg-theme-muted p-3 hover:shadow-md transition">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <p className="text-sm font-medium text-gray-900 flex-1">{task.title}</p>
                     <button
                       onClick={() => handleDeleteTask(task.id)}
-                      className="text-red-600 hover:text-red-700 transition"
+                      className="text-red-600 hover:text-theme-danger transition"
                       title="Delete task"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -223,12 +223,12 @@ export default function ProjectsTasks({ projects, tenantSlug }: ProjectsTasksPro
             </h3>
             <div className="space-y-2">
               {doneTasks.map(task => (
-                <div key={task.id} className="rounded-lg border border-emerald-200 bg-[#111827] p-3 hover:shadow-md transition opacity-75">
+                <div key={task.id} className="rounded-lg border border-emerald-200 bg-theme-muted p-3 hover:shadow-md transition opacity-75">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <p className="text-sm font-medium text-gray-900 line-through flex-1">{task.title}</p>
                     <button
                       onClick={() => handleDeleteTask(task.id)}
-                      className="text-red-600 hover:text-red-700 transition"
+                      className="text-red-600 hover:text-theme-danger transition"
                       title="Delete task"
                     >
                       <Trash2 className="w-4 h-4" />

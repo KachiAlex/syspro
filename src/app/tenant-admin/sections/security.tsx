@@ -218,7 +218,7 @@ export default function SecuritySection({ tenantSlug }: { tenantSlug?: string | 
       {success && <FormAlert type="success" message={success} onClose={() => setSuccess(null)} />}
 
       {/* Security Dashboard */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Security Overview</p>
@@ -323,7 +323,7 @@ export default function SecuritySection({ tenantSlug }: { tenantSlug?: string | 
       </div>
 
       {/* Multi-Factor Authentication */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Access Control</p>
@@ -399,7 +399,7 @@ export default function SecuritySection({ tenantSlug }: { tenantSlug?: string | 
               <h3 className="font-semibold text-gray-900">Available Methods</h3>
               <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3">
                 {mfaSettings.methods.map((method) => (
-                  <div key={method} className="rounded-lg bg-[#111827] p-3 text-center">
+                  <div key={method} className="rounded-lg bg-theme-muted p-3 text-center">
                     <div className="text-2xl mb-2">
                       {method === "totp" && <Smartphone className="w-6 h-6 mx-auto text-blue-600" />}
                       {method === "sms" && <Smartphone className="w-6 h-6 mx-auto text-green-600" />}
@@ -451,7 +451,7 @@ export default function SecuritySection({ tenantSlug }: { tenantSlug?: string | 
       </div>
 
       {/* Security Policies */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Security Policies</p>
@@ -514,7 +514,7 @@ export default function SecuritySection({ tenantSlug }: { tenantSlug?: string | 
       </div>
 
       {/* Audit Logs */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Compliance</p>
@@ -529,12 +529,12 @@ export default function SecuritySection({ tenantSlug }: { tenantSlug?: string | 
 
         {/* Filters */}
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="rounded-lg bg-[#0B1120] p-3">
+          <div className="rounded-lg bg-theme-bg p-3">
             <label className="block text-sm font-medium text-white mb-2">Filter by Action</label>
             <select
               value={filterAction}
               onChange={(e) => setFilterAction(e.target.value)}
-              className="bg-[#0B1120] w-full rounded-lg border border-[rgba(255,255,255,0.1)] px-3 py-2 text-sm text-white"
+              className="bg-theme-bg w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-white"
             >
               <option value="">All Actions</option>
               {Object.entries(AUDIT_ACTIONS).map(([key, { label }]) => (
@@ -544,12 +544,12 @@ export default function SecuritySection({ tenantSlug }: { tenantSlug?: string | 
               ))}
             </select>
           </div>
-          <div className="rounded-lg bg-[#0B1120] p-3">
+          <div className="rounded-lg bg-theme-bg p-3">
             <label className="block text-sm font-medium text-white mb-2">Filter by Status</label>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="bg-[#0B1120] w-full rounded-lg border border-[rgba(255,255,255,0.1)] px-3 py-2 text-sm text-white"
+              className="bg-theme-bg w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-white"
             >
               <option value="">All Status</option>
               <option value="success">Success</option>

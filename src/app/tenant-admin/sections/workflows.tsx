@@ -276,7 +276,7 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
       )}
 
       {/* Workflow Analytics Dashboard */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Dashboard</p>
@@ -376,7 +376,7 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
 
       {/* Workflow Templates */}
       {showTemplates && (
-        <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+        <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Workflow Templates</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {WORKFLOW_TYPES.map((type) => (
@@ -404,7 +404,7 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
       )}
 
       {/* Create Workflow */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Automation</p>
@@ -489,7 +489,7 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
       </div>
 
       {/* Active Workflows */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Active Workflows</p>

@@ -1309,12 +1309,12 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
 
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-[#F8FAFC]">CRM Dashboard</h1>
-        <p className="text-[#94A3B8] mt-1">Manage customer relationships, sales pipeline, and business growth</p>
+        <h1 className="text-3xl font-bold text-theme-text-primary">CRM Dashboard</h1>
+        <p className="text-theme-text-secondary mt-1">Manage customer relationships, sales pipeline, and business growth</p>
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200 bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)]">
+      <div className="border-b border-gray-200 bg-theme-muted rounded-xl border border-theme-border">
         <div className="flex flex-wrap gap-0">
           {[
             { key: "overview" as const, label: "Overview", icon: BarChart3 },
@@ -1331,8 +1331,8 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
                 onClick={() => setActiveTab(tab.key)}
                 className={`flex items-center gap-2 px-6 py-4 font-medium border-b-2 transition-colors ${
                   isActive
-                    ? "border-blue-500 text-[#818CF8]"
-                    : "border-transparent text-[#F8FAFC] hover:text-[#94A3B8] hover:bg-gray-50"
+                    ? "border-blue-500 text-theme-accent"
+                    : "border-transparent text-theme-text-primary hover:text-theme-text-secondary hover:bg-gray-50"
                 }`}
               >
                 <Icon className="w-5 h-5" />
@@ -1342,7 +1342,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
           })}
           <button
             onClick={loadData}
-            className="ml-auto mr-4 my-3 inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-[#94A3B8] hover:text-[#94A3B8]"
+            className="ml-auto mr-4 my-3 inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-theme-text-secondary hover:text-theme-text-secondary"
             disabled={isLoading}
           >
             {isLoading ? "Refreshing..." : "Refresh"}
@@ -1351,72 +1351,72 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
       </div>
 
       {/* Tab Content */}
-      <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)]">
+      <div className="bg-theme-muted rounded-xl border border-theme-border">
         {/* Overview Tab */}
         {activeTab === "overview" && (
           <div className="p-8 space-y-6">
             {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
+              <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-[#94A3B8]">Total Leads</p>
-                    <p className="text-2xl font-bold text-[#F8FAFC]">{stats.totalLeads}</p>
-                    <p className="text-xs text-[#64748B]">Showing last 50 records</p>
+                    <p className="text-sm font-medium text-theme-text-secondary">Total Leads</p>
+                    <p className="text-2xl font-bold text-theme-text-primary">{stats.totalLeads}</p>
+                    <p className="text-xs text-theme-text-tertiary">Showing last 50 records</p>
                   </div>
-                  <div className="w-12 h-12 bg-[rgba(99,102,241,0.1)] rounded-lg flex items-center justify-center">
-                    <Users className="w-6 h-6 text-[#818CF8]" />
+                  <div className="w-12 h-12 bg-theme-accent-subtle rounded-lg flex items-center justify-center">
+                    <Users className="w-6 h-6 text-theme-accent" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
+              <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-[#94A3B8]">Active Deals</p>
-                    <p className="text-2xl font-bold text-[#F8FAFC]">{stats.totalDeals}</p>
-                    <p className="text-xs text-[#64748B]">In all pipeline stages</p>
+                    <p className="text-sm font-medium text-theme-text-secondary">Active Deals</p>
+                    <p className="text-2xl font-bold text-theme-text-primary">{stats.totalDeals}</p>
+                    <p className="text-xs text-theme-text-tertiary">In all pipeline stages</p>
                   </div>
-                  <div className="w-12 h-12 bg-[rgba(16,185,129,0.1)] rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-theme-success-bg rounded-lg flex items-center justify-center">
                     <Target className="w-6 h-6 text-green-400" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
+              <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-[#94A3B8]">Pipeline Value</p>
-                    <p className="text-2xl font-bold text-[#F8FAFC]">{formatCurrency(stats.pipelineValue, pipelineCurrency)}</p>
-                    <p className="text-xs text-[#64748B]">Currency based on recorded deals</p>
+                    <p className="text-sm font-medium text-theme-text-secondary">Pipeline Value</p>
+                    <p className="text-2xl font-bold text-theme-text-primary">{formatCurrency(stats.pipelineValue, pipelineCurrency)}</p>
+                    <p className="text-xs text-theme-text-tertiary">Currency based on recorded deals</p>
                   </div>
-                  <div className="w-12 h-12 bg-[rgba(129,140,248,0.1)] rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-[#818CF8]" />
+                  <div className="w-12 h-12 bg-theme-accent-subtle rounded-lg flex items-center justify-center">
+                    <TrendingUp className="w-6 h-6 text-theme-accent" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
+              <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-[#94A3B8]">Customers</p>
-                    <p className="text-2xl font-bold text-[#F8FAFC]">{stats.totalCustomers}</p>
-                    <p className="text-xs text-[#64748B]">Active & prospect customers</p>
+                    <p className="text-sm font-medium text-theme-text-secondary">Customers</p>
+                    <p className="text-2xl font-bold text-theme-text-primary">{stats.totalCustomers}</p>
+                    <p className="text-xs text-theme-text-tertiary">Active & prospect customers</p>
                   </div>
-                  <div className="w-12 h-12 bg-[rgba(129,140,248,0.1)] rounded-lg flex items-center justify-center">
-                    <Building2 className="w-6 h-6 text-[#818CF8]" />
+                  <div className="w-12 h-12 bg-theme-accent-subtle rounded-lg flex items-center justify-center">
+                    <Building2 className="w-6 h-6 text-theme-accent" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
+              <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-[#94A3B8]">Conversion Rate</p>
-                    <p className="text-2xl font-bold text-[#F8FAFC]">{stats.conversionRate}%</p>
-                    <p className="text-xs text-[#64748B]">{stats.totalConverted} leads → customers</p>
+                    <p className="text-sm font-medium text-theme-text-secondary">Conversion Rate</p>
+                    <p className="text-2xl font-bold text-theme-text-primary">{stats.conversionRate}%</p>
+                    <p className="text-xs text-theme-text-tertiary">{stats.totalConverted} leads → customers</p>
                   </div>
-                  <div className="w-12 h-12 bg-[rgba(16,185,129,0.1)] rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-theme-success-bg rounded-lg flex items-center justify-center">
                     <CheckCircle className="w-6 h-6 text-emerald-400" />
                   </div>
                 </div>
@@ -1424,24 +1424,24 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
-              <h3 className="text-lg font-semibold text-[#F8FAFC] mb-4">Quick Actions</h3>
+            <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
+              <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Quick Actions</h3>
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => openLeadModal("create")}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#111827] border border-gray-200 rounded-lg hover:bg-blue-50 text-[#F8FAFC] font-medium transition"
+                  className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-gray-200 rounded-lg hover:bg-blue-50 text-theme-text-primary font-medium transition"
                 >
                   Add New Lead <ChevronRight className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => openDealModal("create")}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#111827] border border-gray-200 rounded-lg hover:bg-blue-50 text-[#F8FAFC] font-medium transition"
+                  className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-gray-200 rounded-lg hover:bg-blue-50 text-theme-text-primary font-medium transition"
                 >
                   Create Deal <ChevronRight className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setActiveTab("leads")}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#111827] border border-gray-200 rounded-lg hover:bg-blue-50 text-[#F8FAFC] font-medium transition"
+                  className="flex items-center gap-2 px-4 py-2 bg-theme-muted border border-gray-200 rounded-lg hover:bg-blue-50 text-theme-text-primary font-medium transition"
                 >
                   View All Leads <ChevronRight className="w-4 h-4" />
                 </button>
@@ -1449,10 +1449,10 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
             </div>
 
             {/* Activity Timeline */}
-            <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
-              <h3 className="text-lg font-semibold text-[#F8FAFC] mb-4">Recent Activity</h3>
+            <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
+              <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Recent Activity</h3>
               {activities.length === 0 ? (
-                <p className="text-sm text-[#64748B]">No activity yet. Convert contacts, create deals, or manage leads to see activity here.</p>
+                <p className="text-sm text-theme-text-tertiary">No activity yet. Convert contacts, create deals, or manage leads to see activity here.</p>
               ) : (
                 <div className="space-y-4">
                   {activities.map((activity) => {
@@ -1461,9 +1461,9 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
                       : activity.entityType === "customer" ? Building2
                       : Users;
                     const color = activity.entityType === "deal" ? "text-green-400 bg-green-100"
-                      : activity.entityType === "lead" ? "text-[#818CF8] bg-blue-100"
-                      : activity.entityType === "customer" ? "text-[#818CF8] bg-purple-100"
-                      : "text-[#94A3B8] bg-gray-100";
+                      : activity.entityType === "lead" ? "text-theme-accent bg-blue-100"
+                      : activity.entityType === "customer" ? "text-theme-accent bg-purple-100"
+                      : "text-theme-text-secondary bg-gray-100";
                     const Icon = icon;
                     const timeAgo = (() => {
                       const diff = Date.now() - new Date(activity.createdAt).getTime();
@@ -1481,8 +1481,8 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
                           <Icon className="w-4 h-4" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-[#F8FAFC]">{activity.description || activity.action.replace(/_/g, " ")}</p>
-                          <p className="text-xs text-[#64748B]">{timeAgo}</p>
+                          <p className="text-sm text-theme-text-primary">{activity.description || activity.action.replace(/_/g, " ")}</p>
+                          <p className="text-xs text-theme-text-tertiary">{timeAgo}</p>
                         </div>
                       </div>
                     );
@@ -1498,8 +1498,8 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
           <div className="p-8 space-y-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-[#F8FAFC]">Leads</h2>
-                <p className="text-[#94A3B8]">{filteredLeads.length} shown • {totalLeads} total</p>
+                <h2 className="text-2xl font-bold text-theme-text-primary">Leads</h2>
+                <p className="text-theme-text-secondary">{filteredLeads.length} shown • {totalLeads} total</p>
               </div>
               <div className="flex gap-2">
                 <button
@@ -1510,7 +1510,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
                 </button>
                 <button
                   onClick={handleExportLeads}
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-[#F8FAFC] rounded-lg hover:bg-gray-50 font-medium transition"
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-theme-text-primary rounded-lg hover:bg-gray-50 font-medium transition"
                 >
                   <Download className="w-4 h-4" /> Export
                 </button>
@@ -1537,42 +1537,42 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
             {/* Leads Table */}
             <div className="overflow-x-auto border border-gray-200 rounded-lg">
               <table className="w-full">
-                <thead className="bg-[#0B1120] border-b border-[rgba(255,255,255,0.07)]">
+                <thead className="bg-theme-bg border-b border-theme-border">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Contact</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Company</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Stage</th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-[#F8FAFC]">Score</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Source</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Assigned</th>
-                    <th className="px-6 py-3 text-center text-xs font-semibold text-[#F8FAFC]">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Contact</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Company</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Stage</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-theme-text-primary">Score</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Source</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Assigned</th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-primary">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[rgba(255,255,255,0.07)]">
+                <tbody className="divide-y divide-theme-border">
                   {filteredLeads.length === 0 && !isLoading && (
                     <tr>
-                      <td colSpan={7} className="px-6 py-8 text-center text-sm text-[#64748B]">
+                      <td colSpan={7} className="px-6 py-8 text-center text-sm text-theme-text-tertiary">
                         No leads match the selected filters.
                       </td>
                     </tr>
                   )}
                   {filteredLeads.map((lead) => (
                     <tr key={lead.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 font-medium text-[#F8FAFC]">
+                      <td className="px-6 py-4 font-medium text-theme-text-primary">
                         <div className="flex flex-col">
                           <span>{lead.contactName}</span>
-                          {lead.contactEmail && <span className="text-xs text-[#64748B]">{lead.contactEmail}</span>}
+                          {lead.contactEmail && <span className="text-xs text-theme-text-tertiary">{lead.contactEmail}</span>}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-[#94A3B8]">{lead.companyName}</td>
+                      <td className="px-6 py-4 text-theme-text-secondary">{lead.companyName}</td>
                       <td className="px-6 py-4">
                         <span className="px-2 py-1 rounded text-xs font-semibold bg-blue-50 text-blue-700">
                           {LEAD_STAGE_LABELS[lead.stage] ?? lead.stage}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right font-semibold text-[#F8FAFC]">{lead.score}</td>
-                      <td className="px-6 py-4 text-[#94A3B8]">{LEAD_SOURCE_LABELS[lead.source] ?? lead.source}</td>
-                      <td className="px-6 py-4 text-[#94A3B8]">{lead.assignedTo}</td>
+                      <td className="px-6 py-4 text-right font-semibold text-theme-text-primary">{lead.score}</td>
+                      <td className="px-6 py-4 text-theme-text-secondary">{LEAD_SOURCE_LABELS[lead.source] ?? lead.source}</td>
+                      <td className="px-6 py-4 text-theme-text-secondary">{lead.assignedTo}</td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button
@@ -1580,14 +1580,14 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
                             className="p-1 hover:bg-gray-200 rounded transition"
                             onClick={() => openLeadModal("view", lead)}
                           >
-                            <Eye className="w-4 h-4 text-[#94A3B8]" />
+                            <Eye className="w-4 h-4 text-theme-text-secondary" />
                           </button>
                           <button
                             title="Edit"
                             className="p-1 hover:bg-gray-200 rounded transition"
                             onClick={() => openLeadModal("edit", lead)}
                           >
-                            <Edit2 className="w-4 h-4 text-[#94A3B8]" />
+                            <Edit2 className="w-4 h-4 text-theme-text-secondary" />
                           </button>
                           <button
                             title="Create Deal"
@@ -1610,7 +1610,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
                               setIsConvertToCustomerModalOpen(true);
                             }}
                           >
-                            <Building2 className="w-4 h-4 text-[#818CF8]" />
+                            <Building2 className="w-4 h-4 text-theme-accent" />
                           </button>
                           <button
                             title="Delete"
@@ -1637,8 +1637,8 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
           <div className="p-8 space-y-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-[#F8FAFC]">Contacts</h2>
-                <p className="text-[#94A3B8]">{filteredContacts.length} shown • {totalContacts} total</p>
+                <h2 className="text-2xl font-bold text-theme-text-primary">Contacts</h2>
+                <p className="text-theme-text-secondary">{filteredContacts.length} shown • {totalContacts} total</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -1655,7 +1655,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
                 </button>
                 <button
                   onClick={handleExportContacts}
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-[#F8FAFC] rounded-lg hover:bg-gray-50 font-medium transition"
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-theme-text-primary rounded-lg hover:bg-gray-50 font-medium transition"
                 >
                   <Download className="w-4 h-4" /> Export
                 </button>
@@ -1682,31 +1682,31 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
             {/* Contacts Table */}
             <div className="overflow-x-auto border border-gray-200 rounded-lg">
               <table className="w-full">
-                <thead className="bg-[#0B1120] border-b border-[rgba(255,255,255,0.07)]">
+                <thead className="bg-theme-bg border-b border-theme-border">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Contact</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Company</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Source</th>
-                    <th className="px-6 py-3 text-center text-xs font-semibold text-[#F8FAFC]">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Contact</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Company</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Source</th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-primary">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[rgba(255,255,255,0.07)]">
+                <tbody className="divide-y divide-theme-border">
                   {filteredContacts.length === 0 && !isLoading && (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-sm text-[#64748B]">
+                      <td colSpan={6} className="px-6 py-8 text-center text-sm text-theme-text-tertiary">
                         No contacts yet. Import or create a new contact to get started.
                       </td>
                     </tr>
                   )}
                   {filteredContacts.map((contact) => (
                     <tr key={contact.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 font-medium text-[#F8FAFC]">{contact.contactName}</td>
-                      <td className="px-6 py-4 text-[#94A3B8]">{contact.company}</td>
-                      <td className="px-6 py-4 text-[#94A3B8]">{contact.contactEmail ?? "—"}</td>
-                      <td className="px-6 py-4 text-[#94A3B8]">{contact.status ?? "—"}</td>
-                      <td className="px-6 py-4 text-[#94A3B8]">{contact.source ?? "—"}</td>
+                      <td className="px-6 py-4 font-medium text-theme-text-primary">{contact.contactName}</td>
+                      <td className="px-6 py-4 text-theme-text-secondary">{contact.company}</td>
+                      <td className="px-6 py-4 text-theme-text-secondary">{contact.contactEmail ?? "—"}</td>
+                      <td className="px-6 py-4 text-theme-text-secondary">{contact.status ?? "—"}</td>
+                      <td className="px-6 py-4 text-theme-text-secondary">{contact.source ?? "—"}</td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button
@@ -1714,14 +1714,14 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
                             className="p-1 hover:bg-gray-200 rounded transition"
                             onClick={() => openContactModal("view", contact)}
                           >
-                            <Eye className="w-4 h-4 text-[#94A3B8]" />
+                            <Eye className="w-4 h-4 text-theme-text-secondary" />
                           </button>
                           <button
                             title="Edit"
                             className="p-1 hover:bg-gray-200 rounded transition"
                             onClick={() => openContactModal("edit", contact)}
                           >
-                            <Edit2 className="w-4 h-4 text-[#94A3B8]" />
+                            <Edit2 className="w-4 h-4 text-theme-text-secondary" />
                           </button>
                           <button
                             title="Convert to Lead"
@@ -1758,8 +1758,8 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
           <div className="p-8 space-y-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-[#F8FAFC]">Customers</h2>
-                <p className="text-[#94A3B8]">{customers.length} shown • {totalCustomers} total</p>
+                <h2 className="text-2xl font-bold text-theme-text-primary">Customers</h2>
+                <p className="text-theme-text-secondary">{customers.length} shown • {totalCustomers} total</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button onClick={() => openCustomerModal("create")}
@@ -1771,7 +1771,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
                   <Upload className="w-4 h-4" /> Import CSV
                 </button>
                 <button onClick={handleExportCustomers}
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-[#F8FAFC] rounded-lg hover:bg-gray-50 font-medium transition">
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-theme-text-primary rounded-lg hover:bg-gray-50 font-medium transition">
                   <Download className="w-4 h-4" /> Export
                 </button>
               </div>
@@ -1779,47 +1779,47 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
 
             <div className="overflow-x-auto border border-gray-200 rounded-lg">
               <table className="w-full">
-                <thead className="bg-[#0B1120] border-b border-[rgba(255,255,255,0.07)]">
+                <thead className="bg-theme-bg border-b border-theme-border">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Customer</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Primary Contact</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Phone</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Status</th>
-                    <th className="px-6 py-3 text-center text-xs font-semibold text-[#F8FAFC]">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Customer</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Primary Contact</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Phone</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Status</th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-primary">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[rgba(255,255,255,0.07)]">
+                <tbody className="divide-y divide-theme-border">
                   {customers.length === 0 && !isLoading && (
-                    <tr><td colSpan={6} className="px-6 py-8 text-center text-sm text-[#64748B]">No customers yet. Add manually, import from CSV, or convert a lead.</td></tr>
+                    <tr><td colSpan={6} className="px-6 py-8 text-center text-sm text-theme-text-tertiary">No customers yet. Add manually, import from CSV, or convert a lead.</td></tr>
                   )}
                   {customers.map((customer) => (
                     <tr key={customer.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 font-medium text-[#F8FAFC]">
+                      <td className="px-6 py-4 font-medium text-theme-text-primary">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                            <Building2 className="w-4 h-4 text-[#818CF8]" />
+                            <Building2 className="w-4 h-4 text-theme-accent" />
                           </div>
                           {customer.name}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-[#94A3B8]">{customer.contactName || "—"}</td>
-                      <td className="px-6 py-4 text-[#94A3B8]">{customer.contactEmail || "—"}</td>
-                      <td className="px-6 py-4 text-[#94A3B8]">{customer.contactPhone || "—"}</td>
+                      <td className="px-6 py-4 text-theme-text-secondary">{customer.contactName || "—"}</td>
+                      <td className="px-6 py-4 text-theme-text-secondary">{customer.contactEmail || "—"}</td>
+                      <td className="px-6 py-4 text-theme-text-secondary">{customer.contactPhone || "—"}</td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 rounded text-xs font-semibold ${
                           customer.status === "active" ? "bg-green-100 text-green-700"
                           : customer.status === "prospect" ? "bg-blue-100 text-blue-700"
-                          : "bg-gray-100 text-[#94A3B8]"
+                          : "bg-gray-100 text-theme-text-secondary"
                         }`}>{customer.status}</span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button title="View" className="p-1 hover:bg-gray-200 rounded transition" onClick={() => openCustomerModal("view", customer)}>
-                            <Eye className="w-4 h-4 text-[#94A3B8]" />
+                            <Eye className="w-4 h-4 text-theme-text-secondary" />
                           </button>
                           <button title="Edit" className="p-1 hover:bg-gray-200 rounded transition" onClick={() => openCustomerModal("edit", customer)}>
-                            <Edit2 className="w-4 h-4 text-[#94A3B8]" />
+                            <Edit2 className="w-4 h-4 text-theme-text-secondary" />
                           </button>
                           <button title="Delete" className="p-1 hover:bg-red-100 rounded transition" onClick={() => { setSelectedCustomer(customer); setShowDeleteCustomerModal(true); }}>
                             <Trash2 className="w-4 h-4 text-red-400" />
@@ -1839,8 +1839,8 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
           <div className="p-8 space-y-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-[#F8FAFC]">Deals</h2>
-                <p className="text-[#94A3B8]">{filteredDeals.length} shown • {totalDeals} total • {formatCurrency(totalPipelineValue, pipelineCurrency)} pipeline</p>
+                <h2 className="text-2xl font-bold text-theme-text-primary">Deals</h2>
+                <p className="text-theme-text-secondary">{filteredDeals.length} shown • {totalDeals} total • {formatCurrency(totalPipelineValue, pipelineCurrency)} pipeline</p>
               </div>
               <div className="flex gap-2">
                 <button
@@ -1851,7 +1851,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
                 </button>
                 <button
                   onClick={handleExportDeals}
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-[#F8FAFC] rounded-lg hover:bg-gray-50 font-medium transition"
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-theme-text-primary rounded-lg hover:bg-gray-50 font-medium transition"
                 >
                   <Download className="w-4 h-4" /> Export
                 </button>
@@ -1878,30 +1878,30 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
             {/* Deals Table */}
             <div className="overflow-x-auto border border-gray-200 rounded-lg">
               <table className="w-full">
-                <thead className="bg-[#0B1120] border-b border-[rgba(255,255,255,0.07)]">
+                <thead className="bg-theme-bg border-b border-theme-border">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Deal</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Company</th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-[#F8FAFC]">Amount</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Stage</th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-[#F8FAFC]">Probability</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-[#F8FAFC]">Closing Date</th>
-                    <th className="px-6 py-3 text-center text-xs font-semibold text-[#F8FAFC]">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Deal</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Company</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-theme-text-primary">Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Stage</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-theme-text-primary">Probability</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Closing Date</th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-theme-text-primary">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[rgba(255,255,255,0.07)]">
+                <tbody className="divide-y divide-theme-border">
                   {filteredDeals.length === 0 && !isLoading && (
                     <tr>
-                      <td colSpan={7} className="px-6 py-8 text-center text-sm text-[#64748B]">
+                      <td colSpan={7} className="px-6 py-8 text-center text-sm text-theme-text-tertiary">
                         No deals yet. Create a deal to begin tracking your pipeline.
                       </td>
                     </tr>
                   )}
                   {filteredDeals.map((deal) => (
                     <tr key={deal.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 font-medium text-[#F8FAFC]">{deal.name}</td>
-                      <td className="px-6 py-4 text-[#94A3B8]">{deal.company}</td>
-                      <td className="px-6 py-4 text-right font-semibold text-[#F8FAFC]">
+                      <td className="px-6 py-4 font-medium text-theme-text-primary">{deal.name}</td>
+                      <td className="px-6 py-4 text-theme-text-secondary">{deal.company}</td>
+                      <td className="px-6 py-4 text-right font-semibold text-theme-text-primary">
                         {formatCurrency(deal.amount, deal.currency)}
                       </td>
                       <td className="px-6 py-4">
@@ -1909,21 +1909,21 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
                           {DEAL_STAGE_LABELS[deal.stage] ?? deal.stage}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right font-semibold text-[#F8FAFC]">{deal.probability ?? "—"}%</td>
-                      <td className="px-6 py-4 text-[#94A3B8]">{deal.closingDate ?? "—"}</td>
+                      <td className="px-6 py-4 text-right font-semibold text-theme-text-primary">{deal.probability ?? "—"}%</td>
+                      <td className="px-6 py-4 text-theme-text-secondary">{deal.closingDate ?? "—"}</td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button
                             className="p-1 hover:bg-gray-200 rounded transition"
                             onClick={() => openDealModal("view", deal)}
                           >
-                            <Eye className="w-4 h-4 text-[#94A3B8]" />
+                            <Eye className="w-4 h-4 text-theme-text-secondary" />
                           </button>
                           <button
                             className="p-1 hover:bg-gray-200 rounded transition"
                             onClick={() => openDealModal("edit", deal)}
                           >
-                            <Edit2 className="w-4 h-4 text-[#94A3B8]" />
+                            <Edit2 className="w-4 h-4 text-theme-text-secondary" />
                           </button>
                           <button
                             onClick={() => {
@@ -1947,13 +1947,13 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
 
       {/* Loading overlay */}
       {isLoading && (
-        <div className="fixed inset-0 bg-[#111827]/40 backdrop-blur-sm flex items-center justify-center z-40">
+        <div className="fixed inset-0 bg-theme-muted/40 backdrop-blur-sm flex items-center justify-center z-40">
           <div className="flex flex-col items-center gap-3">
-            <svg className="animate-spin h-6 w-6 text-[#818CF8]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin h-6 w-6 text-theme-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
             </svg>
-            <span className="text-sm text-[#94A3B8]">Syncing CRM data…</span>
+            <span className="text-sm text-theme-text-secondary">Syncing CRM data…</span>
           </div>
         </div>
       )}

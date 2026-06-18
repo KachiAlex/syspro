@@ -272,7 +272,7 @@ export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Products</p>
@@ -281,7 +281,7 @@ export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
             <Package className="w-8 h-8 text-blue-600" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Inventory Value</p>
@@ -290,7 +290,7 @@ export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
             <TrendingUp className="w-8 h-8 text-green-600" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Low Stock Items</p>
@@ -299,7 +299,7 @@ export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
             <AlertCircle className="w-8 h-8 text-orange-600" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Categories</p>
@@ -311,7 +311,7 @@ export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
       </div>
 
       {/* Action Buttons */}
-      <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+      <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
         <div className="flex flex-wrap gap-3">
           <button 
             onClick={() => setShowCreateModal(true)}
@@ -343,12 +343,12 @@ export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
       </div>
 
       {/* Filters */}
-      <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+      <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <select 
             value={categoryFilter} 
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="bg-[#0B1120] px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+            className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
           >
             <option value="">All Categories</option>
             {Array.from(new Set(products.map(p => p.category))).map(cat => (
@@ -359,7 +359,7 @@ export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
           <select 
             value={stockStatusFilter} 
             onChange={(e) => setStockStatusFilter(e.target.value)}
-            className="bg-[#0B1120] px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+            className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
           >
             <option value="">All Stock Levels</option>
             <option value="zero">Out of Stock</option>
@@ -373,13 +373,13 @@ export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
             placeholder="Search by SKU or name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-[#0B1120] flex-1 px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+            className="bg-theme-bg flex-1 px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
           />
         </div>
       </div>
 
       {/* Products Table */}
-      <div className="bg-[#111827] rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-theme-muted rounded-lg border border-gray-200 overflow-hidden">
         {loading ? (
           <div className="p-6 space-y-3">
             {[...Array(4)].map((_, i) => (

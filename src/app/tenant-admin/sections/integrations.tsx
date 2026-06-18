@@ -116,7 +116,7 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
       {success && <FormAlert type="success" message={success} onClose={() => setSuccess(null)} />}
 
       {/* Connectors */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="mb-4">
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Integrations</p>
           <h2 className="text-lg font-semibold text-gray-900">Connected Services</h2>
@@ -162,7 +162,7 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
       </div>
 
       {/* API Keys */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">API Access</p>

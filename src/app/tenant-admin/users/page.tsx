@@ -216,7 +216,7 @@ export default function UsersPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#F8FAFC]">Users & Roles</h1>
+          <h1 className="text-2xl font-bold text-theme-text-primary">Users & Roles</h1>
           <p className="text-sm text-gray-600 mt-1">User management and permissions</p>
         </div>
       </div>
@@ -254,7 +254,7 @@ export default function UsersPage() {
                   <p className="text-3xl font-bold text-gray-900 mt-2">{users.length}</p>
                   <p className="text-xs text-blue-600 mt-2">↑ 4 new this month</p>
                 </div>
-                <Users className="w-12 h-12 text-blue-100" />
+                <Users className="w-12 h-12 text-blue-500" />
               </div>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -264,7 +264,7 @@ export default function UsersPage() {
                   <p className="text-3xl font-bold text-green-600 mt-2">{activeUsers}</p>
                   <p className="text-xs text-green-600 mt-2">{((activeUsers / users.length) * 100).toFixed(1)}% active</p>
                 </div>
-                <UserCheck className="w-12 h-12 text-green-100" />
+                <UserCheck className="w-12 h-12 text-green-500" />
               </div>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -284,7 +284,7 @@ export default function UsersPage() {
                   <p className="text-3xl font-bold text-red-600 mt-2">{suspendedUsers}</p>
                   <p className="text-xs text-red-600 mt-2">Access restricted</p>
                 </div>
-                <UserX className="w-12 h-12 text-red-100" />
+                <UserX className="w-12 h-12 text-red-500" />
               </div>
             </div>
           </div>
@@ -292,7 +292,7 @@ export default function UsersPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4 flex-1">
               <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-theme-text-tertiary w-4 h-4" />
                 <input
                   type="text"
                   placeholder="Search users..."
@@ -389,7 +389,7 @@ export default function UsersPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
+                          <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover">
                             <Eye className="w-3 h-3" />
                             View
                           </button>
@@ -397,7 +397,7 @@ export default function UsersPage() {
                             <Edit className="w-3 h-3" />
                             Edit
                           </button>
-                          <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700">
+                          <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-theme-danger">
                             <Trash2 className="w-3 h-3" />
                             Delete
                           </button>
@@ -416,7 +416,7 @@ export default function UsersPage() {
         <>
           <div className="flex items-center justify-between">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-theme-text-tertiary w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search roles..."
@@ -442,7 +442,7 @@ export default function UsersPage() {
                       <span className="text-xs text-gray-500">{role.userCount} users</span>
                     </div>
                   </div>
-                  <button className="text-gray-400 hover:text-gray-600">
+                  <button className="text-theme-text-tertiary hover:text-gray-600">
                     <Edit className="w-4 h-4" />
                   </button>
                 </div>
@@ -461,10 +461,10 @@ export default function UsersPage() {
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
-                  <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                  <button className="text-sm text-blue-600 hover:text-theme-accent-hover font-medium">
                     Edit Role
                   </button>
-                  <button className="text-sm text-red-600 hover:text-red-700 font-medium">
+                  <button className="text-sm text-red-600 hover:text-theme-danger font-medium">
                     Delete
                   </button>
                 </div>

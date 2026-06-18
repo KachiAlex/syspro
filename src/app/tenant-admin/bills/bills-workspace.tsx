@@ -120,7 +120,7 @@ export default function BillsWorkspace() {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Financial Management</p>
-          <h1 className="text-2xl font-semibold text-[#F8FAFC]">Bills & Payables</h1>
+          <h1 className="text-2xl font-semibold text-theme-text-primary">Bills & Payables</h1>
           <p className="mt-1 text-sm text-slate-600">Track and manage all vendor bills and payment schedules</p>
         </div>
         <button

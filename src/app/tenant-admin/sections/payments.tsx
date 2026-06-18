@@ -221,29 +221,29 @@ export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | 
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="rounded-lg border border-slate-200 bg-[#111827] p-4">
+        <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
           <p className="text-sm text-slate-600">Total Payments</p>
-          <p className="mt-2 text-2xl font-bold text-[#F8FAFC]">{formatCurrency(totalAmount)}</p>
+          <p className="mt-2 text-2xl font-bold text-theme-text-primary">{formatCurrency(totalAmount)}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-[#111827] p-4">
+        <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
           <p className="text-sm text-slate-600">Pending</p>
           <p className="mt-2 text-2xl font-bold text-orange-600">{formatCurrency(pendingAmount)}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-[#111827] p-4">
+        <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
           <p className="text-sm text-slate-600">Completed</p>
           <p className="mt-2 text-2xl font-bold text-green-400">{completedCount}</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-[#111827] p-4">
+        <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
           <p className="text-sm text-slate-600">Failed</p>
           <p className="mt-2 text-2xl font-bold text-red-400">{failedCount}</p>
         </div>
       </div>
 
       {/* Filters and Actions */}
-      <div className="rounded-lg border border-slate-200 bg-[#111827] p-4">
+      <div className="rounded-lg border border-slate-200 bg-theme-muted p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-[#F8FAFC]">Payments</h3>
+            <h3 className="text-lg font-semibold text-theme-text-primary">Payments</h3>
             {lastRefreshed && (
               <p className="text-xs text-slate-500 mt-1">
                 Last updated: {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -315,7 +315,7 @@ export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | 
       </div>
 
       {/* Payments Table */}
-      <div className="rounded-lg border border-slate-200 bg-[#111827] overflow-hidden">
+      <div className="rounded-lg border border-slate-200 bg-theme-muted overflow-hidden">
         <div className="overflow-x-auto">
           {loading ? (
             <div className="space-y-3 p-6">
@@ -367,12 +367,12 @@ export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | 
               <tbody className="divide-y divide-slate-200">
                 {filteredPayments.map((payment) => (
                   <tr key={payment.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 text-sm font-medium text-[#F8FAFC]">{payment.id}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-theme-text-primary">{payment.id}</td>
                     <td className="px-4 py-3 text-sm text-slate-600">{payment.reference}</td>
-                    <td className="px-4 py-3 text-sm font-semibold text-[#F8FAFC]">{formatCurrency(payment.amount, payment.currency)}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-theme-text-primary">{formatCurrency(payment.amount, payment.currency)}</td>
                     <td className="px-4 py-3 text-sm text-slate-600 capitalize">{payment.method}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[payment.status] || "bg-[rgba(255,255,255,0.07)]"}`}>
+                      <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[payment.status] || "bg-theme-border"}`}>
                         {payment.status}
                       </span>
                     </td>

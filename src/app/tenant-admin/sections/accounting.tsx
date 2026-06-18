@@ -58,7 +58,7 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
 
       {/* Financial Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-4">
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-black">Total Revenue</p>
@@ -67,7 +67,7 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
             <TrendingUp className="w-8 h-8 text-green-400" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-4">
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-black">Total Expenses</p>
@@ -76,28 +76,28 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
             <Calculator className="w-8 h-8 text-red-400" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-4">
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-black">Net Income</p>
               <p className="text-xl font-bold text-black">$88,677</p>
             </div>
-            <TrendingUp className="w-8 h-8 text-[#818CF8]" />
+            <TrendingUp className="w-8 h-8 text-theme-accent" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-4">
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-black">Cash Balance</p>
               <p className="text-xl font-bold text-black">$67,234</p>
             </div>
-            <Database className="w-8 h-8 text-[#818CF8]" />
+            <Database className="w-8 h-8 text-theme-accent" />
           </div>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-4 mb-6">
+      <div className="bg-theme-muted rounded-xl border border-theme-border p-4 mb-6">
         <div className="flex flex-wrap gap-3">
           <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2 inline" />
@@ -111,7 +111,7 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
             <Database className="w-4 h-4 mr-2 inline" />
             Chart of Accounts
           </button>
-          <button onClick={handleExportData} className="px-4 py-2 border border-[rgba(255,255,255,0.1)] text-[#F8FAFC] rounded-lg hover:bg-[rgba(255,255,255,0.02)]">
+          <button onClick={handleExportData} className="px-4 py-2 border border-theme-border text-theme-text-primary rounded-lg hover:bg-theme-sidebar-hover">
             <Download className="w-4 h-4 mr-2 inline" />
             Export Data
           </button>
@@ -120,7 +120,7 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
 
       {/* Financial Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
           <h3 className="text-lg font-semibold text-black mb-4">Income Statement (YTD)</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center py-2 border-b">
@@ -142,7 +142,7 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
           </div>
         </div>
 
-        <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
           <h3 className="text-lg font-semibold text-black mb-4">Balance Sheet</h3>
           <div className="space-y-3">
             <div className="border-b pb-3">
@@ -176,26 +176,26 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
       </div>
 
       {/* Recent Journal Entries */}
-      <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6 mb-8">
+      <div className="bg-theme-muted rounded-xl border border-theme-border p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-black">Recent Journal Entries</h3>
-          <button className="text-[#818CF8] hover:text-blue-800 text-sm">View All</button>
+          <button className="text-theme-accent hover:text-blue-800 text-sm">View All</button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-[#64748B] uppercase">Entry ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-[#64748B] uppercase">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-[#64748B] uppercase">Account</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-[#64748B] uppercase">Description</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-[#64748B] uppercase">Debit</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-[#64748B] uppercase">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-tertiary uppercase">Entry ID</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-tertiary uppercase">Date</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-tertiary uppercase">Account</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-tertiary uppercase">Description</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-tertiary uppercase">Debit</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-tertiary uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {journalEntries.map((entry, i) => (
-                <tr key={i} className="hover:bg-[rgba(255,255,255,0.02)]">
+                <tr key={i} className="hover:bg-theme-sidebar-hover">
                   <td className="px-4 py-3 text-black">{entry.id}</td>
                   <td className="px-4 py-3 text-black">{entry.date}</td>
                   <td className="px-4 py-3 text-black">{entry.account}</td>
@@ -203,7 +203,7 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
                   <td className="px-4 py-3 font-semibold text-green-400">{entry.debit}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
-                      <button className="text-[#818CF8]"><Eye className="w-4 h-4" /></button>
+                      <button className="text-theme-accent"><Eye className="w-4 h-4" /></button>
                       <button className="text-green-400"><Edit className="w-4 h-4" /></button>
                     </div>
                   </td>
@@ -216,7 +216,7 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
 
       {/* Chart of Accounts */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
           <h3 className="text-lg font-semibold text-black mb-4">Assets</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between py-2 border-b"><span className="text-black">Cash</span><span className="font-semibold text-black">$67,234</span></div>
@@ -225,7 +225,7 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
           </div>
         </div>
 
-        <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
           <h3 className="text-lg font-semibold text-black mb-4">Liabilities</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between py-2 border-b"><span className="text-black">Accounts Payable</span><span className="font-semibold text-black">$23,456</span></div>
@@ -234,7 +234,7 @@ const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
           </div>
         </div>
 
-        <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-6">
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
           <h3 className="text-lg font-semibold text-black mb-4">Equity</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between py-2 border-b"><span className="text-black">Owner's Equity</span><span className="font-semibold text-black">$100,567</span></div>

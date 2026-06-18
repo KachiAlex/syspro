@@ -1195,15 +1195,15 @@ export function ImportContactsModal({
               className="border-2 border-dashed border-gray-300 rounded-lg p-10 text-center hover:border-blue-400 transition cursor-pointer"
               onClick={() => fileInputRef.current?.click()}
             >
-              <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+              <Upload className="w-10 h-10 text-theme-text-tertiary mx-auto mb-3" />
               <p className="text-gray-600 font-medium">Drop a file here or <span className="text-blue-600 underline">browse</span></p>
-              <p className="text-xs text-gray-400 mt-2">Accepts <span className="font-medium">.csv, .tsv, .txt</span> — any column order is fine</p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-theme-text-tertiary mt-2">Accepts <span className="font-medium">.csv, .tsv, .txt</span> — any column order is fine</p>
+              <p className="text-xs text-theme-text-tertiary mt-1">
                 or{" "}
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); downloadSampleCsv(); }}
-                  className="text-blue-500 underline hover:text-blue-700"
+                  className="text-blue-500 underline hover:text-theme-accent-hover"
                 >
                   download the sample template
                 </button>
@@ -1857,9 +1857,9 @@ export function ImportCustomersModal({
             <div onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }} onDragOver={(e) => e.preventDefault()}
               className="border-2 border-dashed border-gray-300 rounded-lg p-10 text-center hover:border-purple-400 transition cursor-pointer"
               onClick={() => fileInputRef.current?.click()}>
-              <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+              <Upload className="w-10 h-10 text-theme-text-tertiary mx-auto mb-3" />
               <p className="text-gray-600 font-medium">Drop a file here or <span className="text-purple-600 underline">browse</span></p>
-              <p className="text-xs text-gray-400 mt-2">Accepts .csv, .tsv, .txt — any column order</p>
+              <p className="text-xs text-theme-text-tertiary mt-2">Accepts .csv, .tsv, .txt — any column order</p>
               <input ref={fileInputRef} type="file" accept=".csv,.tsv,.txt" className="bg-white hidden text-black" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
             </div>
           ) : (

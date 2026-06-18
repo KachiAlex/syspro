@@ -21,7 +21,7 @@ const ProcurementComponent: React.FC<Procurement> = ({ tenantSlug }) => {
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Requisitions</p>
@@ -30,7 +30,7 @@ const ProcurementComponent: React.FC<Procurement> = ({ tenantSlug }) => {
             <Package className="w-8 h-8 text-blue-600" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Pending Approval</p>
@@ -39,7 +39,7 @@ const ProcurementComponent: React.FC<Procurement> = ({ tenantSlug }) => {
             <Target className="w-8 h-8 text-orange-600" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">This Month Spend</p>
@@ -48,7 +48,7 @@ const ProcurementComponent: React.FC<Procurement> = ({ tenantSlug }) => {
             <TrendingUp className="w-8 h-8 text-green-600" />
           </div>
         </div>
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-4">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Active Vendors</p>
@@ -60,7 +60,7 @@ const ProcurementComponent: React.FC<Procurement> = ({ tenantSlug }) => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-[#111827] rounded-lg border border-gray-200 p-4 mb-6">
+      <div className="bg-theme-muted rounded-lg border border-gray-200 p-4 mb-6">
         <div className="flex flex-wrap gap-3">
           <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2 inline" />
@@ -82,7 +82,7 @@ const ProcurementComponent: React.FC<Procurement> = ({ tenantSlug }) => {
       </div>
 
       {/* Requisitions Table */}
-      <div className="bg-[#111827] rounded-lg border border-gray-200 p-6 mb-8">
+      <div className="bg-theme-muted rounded-lg border border-gray-200 p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Purchase Requisitions</h3>
           <button className="text-blue-600 hover:text-blue-800 text-sm">View All</button>
@@ -129,7 +129,7 @@ const ProcurementComponent: React.FC<Procurement> = ({ tenantSlug }) => {
 
       {/* Workflow & Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Pending Approvals</h3>
           <div className="space-y-3">
             {[
@@ -155,7 +155,7 @@ const ProcurementComponent: React.FC<Procurement> = ({ tenantSlug }) => {
           </div>
         </div>
 
-        <div className="bg-[#111827] rounded-lg border border-gray-200 p-6">
+        <div className="bg-theme-muted rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Spending by Department</h3>
           <div className="space-y-3">
             {[

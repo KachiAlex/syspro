@@ -130,7 +130,7 @@ export default function HRAnalyticsPage() {
                 </p>
               </div>
               <metric.icon className={`w-12 h-12 ${
-                metric.trend === 'up' ? 'text-green-100' : 'text-red-100'
+                metric.trend === 'up' ? 'text-green-500' : 'text-red-500'
               }`} />
             </div>
           </div>
@@ -199,7 +199,7 @@ export default function HRAnalyticsPage() {
                 }`}>
                   {report.status}
                 </span>
-                <button className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
+                <button className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover">
                   <Download className="w-3 h-3" />
                   Download
                 </button>

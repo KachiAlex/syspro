@@ -207,7 +207,7 @@ export default function ProjectReportsPage() {
                   }`}>
                     {report.status}
                   </span>
-                  <button className="text-blue-600 hover:text-blue-700">
+                  <button className="text-blue-600 hover:text-theme-accent-hover">
                     <Download className="w-4 h-4" />
                   </button>
                 </div>

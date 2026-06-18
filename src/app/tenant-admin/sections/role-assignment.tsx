@@ -263,7 +263,7 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
   return (
     <div className="space-y-6">
       {/* Assignment Section */}
-      <div className="border rounded-lg p-6 bg-[#111827]">
+      <div className="border rounded-lg p-6 bg-theme-muted">
         <h3 className="text-lg font-semibold mb-4">Assign Users to Roles</h3>
 
         {serverError && <FormAlert type="error" message={serverError} />}
@@ -291,7 +291,7 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
                   </option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none" />
+              <ChevronDown className="absolute right-3 top-2.5 w-4 h-4 text-theme-text-tertiary pointer-events-none" />
             </div>
           </div>
 
@@ -333,7 +333,7 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
                           <Check className="w-4 h-4 mt-0.5" />
                         )}
                         {isCurrent && (
-                          <div className="text-xs bg-[#111827] px-2 py-1 rounded border border-gray-300">
+                          <div className="text-xs bg-theme-muted px-2 py-1 rounded border border-gray-300">
                             Current
                           </div>
                         )}
@@ -368,12 +368,12 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
       </div>
 
       {/* Users List */}
-      <div className="border rounded-lg p-6 bg-[#111827]">
+      <div className="border rounded-lg p-6 bg-theme-muted">
         <h3 className="text-lg font-semibold mb-4">Users by Role</h3>
 
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader className="w-5 h-5 animate-spin text-gray-400" />
+            <Loader className="w-5 h-5 animate-spin text-theme-text-tertiary" />
           </div>
         ) : users.length === 0 ? (
           <p className="text-gray-500 py-4">No users found</p>
@@ -391,7 +391,7 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
                     <div className="font-medium">{user.name || user.email}</div>
                     <div className="text-sm opacity-75">{user.email}</div>
                   </div>
-                  <div className="text-sm font-medium px-3 py-1 bg-[#111827] rounded border border-current">
+                  <div className="text-sm font-medium px-3 py-1 bg-theme-muted rounded border border-current">
                     {getRoleLabel(user.roleId)}
                   </div>
                 </div>
@@ -401,7 +401,7 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
       </div>
 
       {/* History Section */}
-      <div className="border rounded-lg p-6 bg-[#111827]">
+      <div className="border rounded-lg p-6 bg-theme-muted">
         <button
           onClick={toggleHistory}
           className="flex items-center justify-between w-full mb-4 hover:text-blue-600 transition-colors"
@@ -419,7 +419,7 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
           <div className="space-y-3">
             {historyLoading ? (
               <div className="flex items-center justify-center py-6">
-                <Loader className="w-5 h-5 animate-spin text-gray-400" />
+                <Loader className="w-5 h-5 animate-spin text-theme-text-tertiary" />
               </div>
             ) : history.length === 0 ? (
               <p className="text-gray-500 py-4">No role changes recorded</p>

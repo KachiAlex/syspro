@@ -142,7 +142,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
       {success && <FormAlert type="success" message={success} onClose={() => setSuccess(null)} />}
 
       {/* Reports */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Insights</p>
@@ -267,7 +267,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
       </div>
 
       {/* Scheduled Exports */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Automation</p>

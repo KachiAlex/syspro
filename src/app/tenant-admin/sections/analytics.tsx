@@ -298,7 +298,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
       {success && <FormAlert type="success" message={success} onClose={() => setSuccess(null)} />}
 
       {/* Analytics Dashboard Header */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Dashboard</p>
@@ -360,7 +360,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
             color: "text-orange-600"
           }
         ].map((metric, index) => (
-          <div key={index} className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+          <div key={index} className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600">{metric.title}</p>
@@ -386,7 +386,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue Chart */}
-        <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+        <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Revenue Trend</h3>
             <BarChart3 className="w-5 h-5 text-slate-400" />
@@ -401,7 +401,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
         </div>
 
         {/* Sales Distribution */}
-        <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+        <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Sales Distribution</h3>
             <PieChart className="w-5 h-5 text-slate-400" />
@@ -419,7 +419,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
       {/* Top Products and Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Products */}
-        <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+        <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Top Products</h3>
             <TrendingUp className="w-5 h-5 text-slate-400" />
@@ -445,7 +445,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
         </div>
 
         {/* Recent Activity */}
-        <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+        <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
             <Activity className="w-5 h-5 text-slate-400" />
@@ -480,7 +480,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
       </div>
 
       {/* Reports */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Insights</p>
@@ -619,7 +619,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
       </div>
 
       {/* Scheduled Exports */}
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Automation</p>

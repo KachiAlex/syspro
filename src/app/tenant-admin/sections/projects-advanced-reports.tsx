@@ -130,7 +130,7 @@ export default function ProjectsAdvancedReports({ projects, tenantSlug }: Projec
       {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 text-sm">{error}</div>}
 
       {/* Report Generator */}
-      <div className="rounded-lg border border-gray-200 bg-[#111827] p-6">
+      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Advanced Report Generator</h3>
         <div className="flex gap-4 flex-col md:flex-row items-end">
           <div className="flex-1">
@@ -158,7 +158,7 @@ export default function ProjectsAdvancedReports({ projects, tenantSlug }: Projec
       </div>
 
       {/* Export Options */}
-      <div className="rounded-lg border border-gray-200 bg-[#111827] p-6">
+      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Export Report</h3>
         <div className="flex gap-2 flex-wrap">
           <button
@@ -186,7 +186,7 @@ export default function ProjectsAdvancedReports({ projects, tenantSlug }: Projec
       </div>
 
       {/* Performance Metrics */}
-      <div className="rounded-lg border border-gray-200 bg-[#111827] p-6">
+      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <TrendingUp className="w-5 h-5" />
           Performance Metrics
@@ -212,7 +212,7 @@ export default function ProjectsAdvancedReports({ projects, tenantSlug }: Projec
       </div>
 
       {/* Financial Metrics */}
-      <div className="rounded-lg border border-gray-200 bg-[#111827] p-6">
+      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <DollarSign className="w-5 h-5" />
           Financial Metrics
@@ -250,7 +250,7 @@ export default function ProjectsAdvancedReports({ projects, tenantSlug }: Projec
       </div>
 
       {/* Timeline Metrics */}
-      <div className="rounded-lg border border-gray-200 bg-[#111827] p-6">
+      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <Calendar className="w-5 h-5" />
           Timeline Metrics
@@ -268,7 +268,7 @@ export default function ProjectsAdvancedReports({ projects, tenantSlug }: Projec
       </div>
 
       {/* Resource Metrics */}
-      <div className="rounded-lg border border-gray-200 bg-[#111827] p-6">
+      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <Users className="w-5 h-5" />
           Resource Metrics

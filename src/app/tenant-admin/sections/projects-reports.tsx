@@ -64,7 +64,7 @@ export default function ProjectsReports({ projects, tenantSlug }: ProjectsReport
     <div className="space-y-6">
       {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 text-sm">{error}</div>}
 
-      <div className="rounded-lg border border-gray-200 bg-[#111827] p-6">
+      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Report Generator</h3>
         <div className="flex gap-4 flex-col md:flex-row">
           <select
@@ -137,7 +137,7 @@ export default function ProjectsReports({ projects, tenantSlug }: ProjectsReport
       </div>
 
       {/* Budget Analysis */}
-      <div className="rounded-lg border border-gray-200 bg-[#111827] p-6">
+      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Budget Analysis</h3>
         <div className="space-y-4">
           <div>
@@ -178,7 +178,7 @@ export default function ProjectsReports({ projects, tenantSlug }: ProjectsReport
       </div>
 
       {/* Project Status Distribution */}
-      <div className="rounded-lg border border-gray-200 bg-[#111827] p-6">
+      <div className="rounded-lg border border-gray-200 bg-theme-muted p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Status Distribution</h3>
         <div className="space-y-3">
           {['Active', 'Planned', 'On Hold', 'Completed'].map(status => {

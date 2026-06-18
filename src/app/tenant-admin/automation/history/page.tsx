@@ -92,7 +92,7 @@ export default function HistoryPage() {
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div>
-              <h1 className="text-2xl font-bold text-[#F8FAFC]">History</h1>
+              <h1 className="text-2xl font-bold text-theme-text-primary">History</h1>
               <p className="text-sm text-gray-600 mt-1">View execution history and performance analytics</p>
             </div>
             <Link
@@ -119,7 +119,7 @@ export default function HistoryPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <tab.icon className={`w-4 h-4 ${tab.id === 'history' ? 'text-blue-600' : 'text-gray-400'}`} />
+                <tab.icon className={`w-4 h-4 ${tab.id === 'history' ? 'text-blue-600' : 'text-theme-text-tertiary'}`} />
                 <span>{tab.name}</span>
                 {tab.count && (
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -145,7 +145,7 @@ export default function HistoryPage() {
                   <p className="text-sm font-medium text-gray-600">Total Executions</p>
                   <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">{executions.length}</p>
                 </div>
-                <Clock className="w-8 h-8 sm:w-12 sm:h-12 text-blue-100" />
+                <Clock className="w-8 h-8 sm:w-12 sm:h-12 text-blue-500" />
               </div>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
@@ -154,7 +154,7 @@ export default function HistoryPage() {
                   <p className="text-sm font-medium text-gray-600">Successful</p>
                   <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-2">{executions.filter(e => e.status === 'success').length}</p>
                 </div>
-                <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-100" />
+                <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-500" />
               </div>
             </div>
           </div>

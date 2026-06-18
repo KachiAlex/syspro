@@ -98,7 +98,7 @@ export default function AttributionTab({
   if (!data) {
     return (
       <div className="p-8 text-center">
-        <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <AlertCircle className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
         <p className="text-gray-600">Unable to load attribution data</p>
       </div>
     );
@@ -210,7 +210,7 @@ export default function AttributionTab({
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-[#111827] border border-gray-200 rounded-lg p-4">
+    <div className="bg-theme-muted border border-gray-200 rounded-lg p-4">
       <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">{label}</p>
       <p className="text-2xl font-bold text-gray-900 mt-2">{value}</p>
     </div>

@@ -333,10 +333,10 @@ export default function BudgetPlanningWorkspace({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-[#F8FAFC]">
+          <h1 className="text-3xl font-bold text-theme-text-primary">
             Budget Planning & Forecasting
           </h1>
-          <p className="text-[#94A3B8] mt-1">
+          <p className="text-theme-text-secondary mt-1">
             Manage budgets, track actuals, and forecast future spending
           </p>
         </div>
@@ -376,7 +376,7 @@ export default function BudgetPlanningWorkspace({
             {/* Budget List */}
             <div className="grid gap-4">
               {summaries.length === 0 ? (
-                <div className="text-center p-12 bg-[#111827] rounded-lg border border-gray-200">
+                <div className="text-center p-12 bg-theme-muted rounded-lg border border-gray-200">
                   <BarChart3 className="h-12 w-12 mx-auto text-gray-300 mb-4" />
                   <p className="text-gray-600">No budgets created yet</p>
                   <p className="text-sm text-gray-500 mt-1">
@@ -387,7 +387,7 @@ export default function BudgetPlanningWorkspace({
                 summaries.map((summary) => (
                   <div
                     key={summary.id}
-                    className="bg-[#111827] rounded-lg border border-gray-200 p-4 hover:border-gray-300"
+                    className="bg-theme-muted rounded-lg border border-gray-200 p-4 hover:border-gray-300"
                   >
                     <div
                       className="cursor-pointer flex items-center justify-between"
@@ -438,9 +438,9 @@ export default function BudgetPlanningWorkspace({
                       </div>
                       <div className="ml-4">
                         {selectedBudget?.id === summary.id ? (
-                          <ChevronUp className="h-5 w-5 text-gray-400" />
+                          <ChevronUp className="h-5 w-5 text-theme-text-tertiary" />
                         ) : (
-                          <ChevronDown className="h-5 w-5 text-gray-400" />
+                          <ChevronDown className="h-5 w-5 text-theme-text-tertiary" />
                         )}
                       </div>
                     </div>
@@ -624,7 +624,7 @@ export default function BudgetPlanningWorkspace({
                       {!variance.isAcknowledged && (
                         <button
                           onClick={() => acknowledgeVariance(BigInt(variance.id!))}
-                          className="text-sm bg-[#111827] px-3 py-1 rounded hover:bg-gray-100 ml-4"
+                          className="text-sm bg-theme-muted px-3 py-1 rounded hover:bg-gray-100 ml-4"
                         >
                           Acknowledge
                         </button>
@@ -636,8 +636,8 @@ export default function BudgetPlanningWorkspace({
             )}
 
             {variances.length === 0 && (
-              <div className="text-center p-6 bg-[#111827] rounded-lg border border-gray-200">
-                <AlertCircle className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+              <div className="text-center p-6 bg-theme-muted rounded-lg border border-gray-200">
+                <AlertCircle className="h-8 w-8 mx-auto text-theme-text-tertiary mb-2" />
                 <p className="text-gray-600">No variances detected</p>
               </div>
             )}
@@ -661,7 +661,7 @@ export default function BudgetPlanningWorkspace({
             </div>
 
             {forecasts.length === 0 ? (
-              <div className="text-center p-12 bg-[#111827] rounded-lg border border-gray-200">
+              <div className="text-center p-12 bg-theme-muted rounded-lg border border-gray-200">
                 <TrendingUp className="h-12 w-12 mx-auto text-gray-300 mb-4" />
                 <p className="text-gray-600">No forecasts available</p>
                 <p className="text-sm text-gray-500 mt-1">
@@ -673,7 +673,7 @@ export default function BudgetPlanningWorkspace({
                 {forecasts.map((forecast) => (
                   <div
                     key={forecast.id}
-                    className="bg-[#111827] rounded-lg border border-gray-200 p-4"
+                    className="bg-theme-muted rounded-lg border border-gray-200 p-4"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
@@ -740,7 +740,7 @@ export default function BudgetPlanningWorkspace({
               </h2>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-theme-text-tertiary hover:text-gray-600"
               >
                 <X className="h-6 w-6" />
               </button>
@@ -975,7 +975,7 @@ export default function BudgetPlanningWorkspace({
                           </span>
                           <button
                             onClick={() => removeBudgetLine(idx)}
-                            className="text-red-600 hover:text-red-700"
+                            className="text-red-600 hover:text-theme-danger"
                           >
                             <X className="h-4 w-4" />
                           </button>
@@ -1017,7 +1017,7 @@ export default function BudgetPlanningWorkspace({
               </h2>
               <button
                 onClick={() => setShowForecastModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-theme-text-tertiary hover:text-gray-600"
               >
                 <X className="h-6 w-6" />
               </button>

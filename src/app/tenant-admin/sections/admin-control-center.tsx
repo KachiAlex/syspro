@@ -64,7 +64,7 @@ const SECTIONS = [
 export default function AdminControlCenter() {
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-100 bg-[#111827] p-6 shadow-sm">
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
         <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Admin</p>
         <h2 className="text-xl font-semibold text-gray-900">Tenant Control Center</h2>
         <p className="mt-1 text-sm text-slate-500">Calm, governed starting point for tenant owners, super admins, and global leads.</p>
@@ -72,7 +72,7 @@ export default function AdminControlCenter() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {SECTIONS.map((section) => (
-          <div key={section.key} className="rounded-2xl border border-slate-100 bg-[#111827] p-5 shadow-sm">
+          <div key={section.key} className="rounded-2xl border border-slate-100 bg-theme-muted p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-slate-700">
                 <section.icon className="h-5 w-5" />
