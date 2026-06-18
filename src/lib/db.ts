@@ -5,6 +5,7 @@ const globalForSql = globalThis as typeof globalThis & {
   usesMock?: boolean;
 };
 
+// Db client singleton
 export function getSql() {
   const connectionString = process.env.DATABASE_URL;
   const isProduction = process.env.NODE_ENV === "production";
