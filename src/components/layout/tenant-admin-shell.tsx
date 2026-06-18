@@ -4,7 +4,8 @@ import React, { useState, useEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { SidebarNav } from "./sidebar-nav";
-import { Menu, X, ChevronDown, User, Bell, Settings, Search, Command, Home, ArrowRight } from "lucide-react";
+import { useTheme } from "@/components/theme/theme-provider";
+import { Menu, X, ChevronDown, User, Bell, Settings, Search, Command, Home, ArrowRight, Sun, Moon } from "lucide-react";
 
 interface TenantAdminShellProps {
   children: React.ReactNode;
@@ -93,20 +94,22 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [toggleSidebar]);
 
+  const { theme, mounted: themeMounted, toggleTheme } = useTheme();
+
   return (
-    <div className="min-h-screen flex bg-[#0B1120] relative">
+    <div className="min-h-screen flex bg-theme-bg relative">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-theme-overlay backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
-      
+
       {/* Search Overlay */}
       {searchOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+          className="fixed inset-0 bg-theme-overlay backdrop-blur-sm z-50"
           onClick={() => setSearchOpen(false)}
         >
           <div className="flex items-start justify-center pt-20">
@@ -181,65 +184,65 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
       
       {/* Sidebar */}
       <aside className={`
-        fixed lg:static inset-y-0 left-0 z-50 border-r border-[rgba(255,255,255,0.07)] bg-[#0B1120]
+        fixed lg:static inset-y-0 left-0 z-50 border-r border-theme-sidebar-border bg-theme-sidebar-bg
         transform transition-all duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'}
         w-64 flex flex-col h-screen
       `}>
         {/* Mobile header */}
-        <div className="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.07)] lg:hidden">
-          <span className="text-lg font-semibold text-[#F8FAFC] font-jakarta">Navigation</span>
+        <div className="flex items-center justify-between p-4 border-b border-theme-sidebar-border lg:hidden">
+          <span className="text-lg font-semibold text-theme-sidebar-text-active font-jakarta">Navigation</span>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="p-2 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-colors"
+            className="p-2 rounded-lg hover:bg-theme-sidebar-hover transition-colors"
           >
-            <X className="h-5 w-5 text-[#94A3B8]" />
+            <X className="h-5 w-5 text-theme-sidebar-text" />
           </button>
         </div>
 
         {/* Sidebar Header - Desktop */}
-        <div className="hidden lg:block p-6 border-b border-[rgba(255,255,255,0.07)]">
+        <div className="hidden lg:block p-6 border-b border-theme-sidebar-border">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-[10px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#6366F1,#4F46E5)', boxShadow: '0 0 16px rgba(99,102,241,.4)' }}>
               <span className="text-white font-bold text-lg font-jakarta">S</span>
             </div>
             <div>
-              <h2 className="text-lg font-bold text-[#F8FAFC] font-jakarta">Syspro</h2>
-              <p className="text-sm text-[#94A3B8]">Admin Dashboard</p>
+              <h2 className="text-lg font-bold text-theme-sidebar-text-active font-jakarta">Syspro</h2>
+              <p className="text-sm text-theme-sidebar-text">Admin Dashboard</p>
             </div>
           </div>
         </div>
 
         {/* Scrollable Navigation */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[rgba(255,255,255,0.1)] scrollbar-track-transparent">
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[rgba(128,128,128,0.2)] scrollbar-track-transparent">
           <div className="p-4 lg:p-6">
             <SidebarNav />
           </div>
         </div>
 
         {/* Sidebar Footer - Desktop */}
-        <div className="hidden lg:block border-t border-[rgba(255,255,255,0.07)] p-4 bg-[#111827]">
+        <div className="hidden lg:block border-t border-theme-sidebar-border p-4 bg-theme-muted">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#1A2438] rounded-full flex items-center justify-center border border-[rgba(255,255,255,0.07)]">
-                <User className="w-4 h-4 text-[#94A3B8]" />
+              <div className="w-8 h-8 bg-theme-surface rounded-full flex items-center justify-center border border-theme-border">
+                <User className="w-4 h-4 text-theme-sidebar-text" />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#F8FAFC]">{user?.name || "Admin User"}</p>
-                <p className="text-xs text-[#64748B]">{user?.email || "admin@company.com"}</p>
+                <p className="text-sm font-medium text-theme-sidebar-text-active">{user?.name || "Admin User"}</p>
+                <p className="text-xs text-theme-text-tertiary">{user?.email || "admin@company.com"}</p>
               </div>
             </div>
-            <button className="p-1.5 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-colors">
-              <ChevronDown className="w-4 h-4 text-[#64748B]" />
+            <button className="p-1.5 rounded-lg hover:bg-theme-sidebar-hover transition-colors">
+              <ChevronDown className="w-4 h-4 text-theme-text-tertiary" />
             </button>
           </div>
           <div className="flex items-center gap-2">
-            <button className="flex-1 flex items-center justify-center gap-2 p-2 text-sm text-[#94A3B8] hover:bg-[rgba(255,255,255,0.05)] rounded-lg transition-colors">
+            <button className="flex-1 flex items-center justify-center gap-2 p-2 text-sm text-theme-sidebar-text hover:bg-theme-sidebar-hover rounded-lg transition-colors">
               <Bell className="w-4 h-4" />
               <span className="hidden lg:inline">Notifications</span>
             </button>
-            <button className="flex-1 flex items-center justify-center gap-2 p-2 text-sm text-[#94A3B8] hover:bg-[rgba(255,255,255,0.05)] rounded-lg transition-colors">
+            <button className="flex-1 flex items-center justify-center gap-2 p-2 text-sm text-theme-sidebar-text hover:bg-theme-sidebar-hover rounded-lg transition-colors">
               <Settings className="w-4 h-4" />
               <span className="hidden lg:inline">Settings</span>
             </button>
@@ -250,52 +253,48 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
       {/* Main content */}
       <main className="flex-1 min-w-0 overflow-hidden flex flex-col">
         {/* Top Bar */}
-        <header className="bg-[#0B1120] border-b border-[rgba(255,255,255,0.07)] px-4 sm:px-6 lg:px-8 py-4">
+        <header className="bg-theme-bg border-b border-theme-border px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {/* Mobile menu button */}
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-colors"
+                className="lg:hidden p-2 rounded-lg hover:bg-theme-sidebar-hover transition-colors"
               >
-                <Menu className="h-5 w-5 text-[#94A3B8]" />
+                <Menu className="h-5 w-5 text-theme-sidebar-text" />
               </button>
 
               {/* Desktop sidebar collapse toggle */}
               <button
                 onClick={toggleSidebar}
-                className="hidden lg:flex p-2 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-colors"
+                className="hidden lg:flex p-2 rounded-lg hover:bg-theme-sidebar-hover transition-colors"
                 title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
-                {sidebarCollapsed ? (
-                  <Menu className="h-5 w-5 text-[#94A3B8]" />
-                ) : (
-                  <Menu className="h-5 w-5 text-[#94A3B8]" />
-                )}
+                <Menu className="h-5 w-5 text-theme-sidebar-text" />
               </button>
 
               {/* Search Bar */}
               <button
                 onClick={() => setSearchOpen(true)}
-                className="hidden sm:flex items-center gap-2 px-3 py-2 bg-[#111827] border border-[rgba(255,255,255,0.07)] rounded-[10px] hover:bg-[#1A2438] transition-colors min-w-0 max-w-xs"
+                className="hidden sm:flex items-center gap-2 px-3 py-2 bg-theme-muted border border-theme-border rounded-[10px] hover:bg-theme-surface transition-colors min-w-0 max-w-xs"
               >
-                <Search className="w-4 h-4 text-[#64748B]" />
-                <span className="text-sm text-[#64748B] truncate">Search...</span>
-                <kbd className="hidden md:flex items-center gap-1 px-1.5 py-0.5 bg-[#111827] border border-[rgba(255,255,255,0.07)] rounded text-xs text-[#94A3B8]">
+                <Search className="w-4 h-4 text-theme-text-tertiary" />
+                <span className="text-sm text-theme-text-tertiary truncate">Search...</span>
+                <kbd className="hidden md:flex items-center gap-1 px-1.5 py-0.5 bg-theme-muted border border-theme-border rounded text-xs text-theme-sidebar-text">
                   <Command className="w-3 h-3" />
                   K
                 </kbd>
               </button>
 
               {/* Breadcrumb */}
-              <nav className="hidden sm:flex items-center gap-2 text-sm text-[#64748B] font-jakarta">
+              <nav className="hidden sm:flex items-center gap-2 text-sm text-theme-text-tertiary font-jakarta">
                 {breadcrumbs.map((crumb, idx) => (
                   <React.Fragment key={crumb.href}>
-                    {idx > 0 && <span className="text-[#94A3B8]">/</span>}
+                    {idx > 0 && <span className="text-theme-sidebar-text">/</span>}
                     {idx === breadcrumbs.length - 1 ? (
-                      <span className="text-[#F8FAFC]">{crumb.label}</span>
+                      <span className="text-theme-sidebar-text-active">{crumb.label}</span>
                     ) : (
-                      <Link href={crumb.href} className="hover:text-[#F8FAFC] transition-colors">
+                      <Link href={crumb.href} className="hover:text-theme-sidebar-text-active transition-colors">
                         {crumb.label}
                       </Link>
                     )}
@@ -306,20 +305,32 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
 
             {/* Top bar actions */}
             <div className="flex items-center gap-3">
-              <button className="relative p-2 text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[rgba(255,255,255,0.05)] rounded-lg transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-[#EF4444] rounded-full"></span>
+              {/* Theme toggle */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 text-theme-sidebar-text hover:text-theme-sidebar-text-active hover:bg-theme-sidebar-hover rounded-lg transition-colors"
+                title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {themeMounted ? (
+                  theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />
+                ) : (
+                  <span className="block w-5 h-5" />
+                )}
               </button>
-              <button className="p-2 text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[rgba(255,255,255,0.05)] rounded-lg transition-colors">
+              <button className="relative p-2 text-theme-sidebar-text hover:text-theme-sidebar-text-active hover:bg-theme-sidebar-hover rounded-lg transition-colors">
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-theme-danger rounded-full"></span>
+              </button>
+              <button className="p-2 text-theme-sidebar-text hover:text-theme-sidebar-text-active hover:bg-theme-sidebar-hover rounded-lg transition-colors">
                 <Settings className="w-5 h-5" />
               </button>
-              <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-[rgba(255,255,255,0.07)]">
-                <div className="w-8 h-8 bg-[#1A2438] rounded-full flex items-center justify-center border border-[rgba(255,255,255,0.07)]">
-                  <User className="w-4 h-4 text-[#94A3B8]" />
+              <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-theme-border">
+                <div className="w-8 h-8 bg-theme-surface rounded-full flex items-center justify-center border border-theme-border">
+                  <User className="w-4 h-4 text-theme-sidebar-text" />
                 </div>
                 <div className="hidden md:block">
-                  <p className="text-sm font-medium text-[#F8FAFC]">{user?.name || "Admin User"}</p>
-                  <p className="text-xs text-[#64748B]">{user?.roleId ? user.roleId.charAt(0).toUpperCase() + user.roleId.slice(1) : "Administrator"}</p>
+                  <p className="text-sm font-medium text-theme-sidebar-text-active">{user?.name || "Admin User"}</p>
+                  <p className="text-xs text-theme-text-tertiary">{user?.roleId ? user.roleId.charAt(0).toUpperCase() + user.roleId.slice(1) : "Administrator"}</p>
                 </div>
               </div>
             </div>
@@ -327,7 +338,7 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
         </header>
 
         {/* Page content - independently scrollable */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[rgba(255,255,255,0.1)] scrollbar-track-transparent dashboard-content">
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[rgba(128,128,128,0.2)] scrollbar-track-transparent dashboard-content">
           <div className="p-4 sm:p-6 lg:p-8">
             {children}
           </div>

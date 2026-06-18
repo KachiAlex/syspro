@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AppShell } from "@/components/layout/app-shell";
+import { ThemeProvider } from "@/components/theme/theme-provider";
 import "./globals.css";
 
 // Automation engine startup is intentionally disabled in the frontend build.
@@ -19,10 +20,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${BODY_FONT_STACK}`} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${BODY_FONT_STACK}`}>
         <a href="#main-content" className="skip-link">Skip to main content</a>
-        <AppShell>{children}</AppShell>
+        <ThemeProvider>
+          <AppShell>{children}</AppShell>
+        </ThemeProvider>
       </body>
     </html>
   );

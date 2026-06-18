@@ -154,17 +154,17 @@ export function SidebarNav({ className }: SidebarNavProps) {
                 "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200",
                 "touch-manipulation relative",
                 isActive
-                  ? "bg-[rgba(99,102,241,.15)] text-[#818CF8] shadow-sm"
-                  : "text-[#94A3B8] hover:bg-[rgba(255,255,255,0.04)] hover:text-[#F8FAFC] hover:translate-x-1"
+                  ? "bg-theme-accent-subtle text-theme-accent shadow-sm"
+                  : "text-theme-sidebar-text hover:bg-theme-sidebar-hover hover:text-theme-sidebar-text-active hover:translate-x-1"
               )}
             >
               <Icon className={cn(
                 "h-5 w-5 flex-shrink-0 transition-colors",
-                isActive ? "text-[#818CF8]" : "text-[#64748B] group-hover:text-[#94A3B8]"
+                isActive ? "text-theme-accent" : "text-theme-text-tertiary group-hover:text-theme-sidebar-text"
               )} />
               <span className="truncate font-medium">{item.title}</span>
               {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#6366F1] rounded-r-full"></div>
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-theme-primary rounded-r-full"></div>
               )}
               {item.children && (
                 <button
@@ -172,7 +172,7 @@ export function SidebarNav({ className }: SidebarNavProps) {
                     e.preventDefault();
                     toggleSection(item.title);
                   }}
-                  className="ml-auto p-1 hover:bg-[rgba(255,255,255,0.05)] rounded transition-colors"
+                  className="ml-auto p-1 hover:bg-theme-sidebar-hover rounded transition-colors"
                 >
                   <ChevronDown className={cn(
                     "w-4 h-4 transition-transform duration-200",
@@ -193,13 +193,13 @@ export function SidebarNav({ className }: SidebarNavProps) {
                       className={cn(
                         "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200 touch-manipulation relative",
                         isChildActive
-                          ? "bg-[rgba(99,102,241,.1)] text-[#818CF8] font-medium shadow-sm"
-                          : "text-[#64748B] hover:bg-[rgba(255,255,255,0.04)] hover:text-[#94A3B8] hover:translate-x-1"
+                          ? "bg-theme-accent-subtle text-theme-accent font-medium shadow-sm"
+                          : "text-theme-text-tertiary hover:bg-theme-sidebar-hover hover:text-theme-sidebar-text hover:translate-x-1"
                       )}
                     >
                       <span className="truncate">{child.title}</span>
                       {isChildActive && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-[#6366F1] rounded-r-full"></div>
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-theme-primary rounded-r-full"></div>
                       )}
                     </Link>
                   );
