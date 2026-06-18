@@ -1107,6 +1107,360 @@ export function ViewInventoryItemModal({
   );
 }
 
+// Edit Sales Order Modal
+export function EditSalesOrderModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  isLoading,
+  order,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: SalesOrderFormData) => Promise<void>;
+  isLoading: boolean;
+  order: any;
+}) {
+  const [formData, setFormData] = useState<SalesOrderFormData>({
+    customerId: order?.customer || "",
+    orderDate: order?.orderDate ? new Date(order.orderDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+    expectedDeliveryDate: order?.dueDate ? new Date(order.dueDate).toISOString().split("T")[0] : "",
+    items: [],
+    notes: "",
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    try {
+      await onSubmit(formData);
+      onClose();
+    } catch (err) {
+      setError("Failed to update sales order");
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">Edit Sales Order</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5 text-gray-500" /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
+              <span className="text-sm text-red-700">{error}</span>
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Customer</label>
+              <input type="text" value={formData.customerId} onChange={(e) => setFormData({ ...formData, customerId: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Order Date</label>
+              <input type="date" value={formData.orderDate} onChange={(e) => setFormData({ ...formData, orderDate: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Expected Delivery</label>
+              <input type="date" value={formData.expectedDeliveryDate} onChange={(e) => setFormData({ ...formData, expectedDeliveryDate: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-3 pt-4">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-900 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
+            <button type="submit" disabled={isLoading} className="px-4 py-2 text-sm font-medium text-gray-900 bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">{isLoading ? "Saving..." : "Save Changes"}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// Edit Inventory Item Modal
+export function EditInventoryItemModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  isLoading,
+  item,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: InventoryFormData) => Promise<void>;
+  isLoading: boolean;
+  item: any;
+}) {
+  const [formData, setFormData] = useState<InventoryFormData>({
+    productName: item?.name || "",
+    sku: item?.sku || "",
+    category: "general",
+    quantity: item?.quantity || 0,
+    unitPrice: item?.unitPrice || 0,
+    reorderLevel: item?.reorderLevel || 10,
+    location: item?.location || "",
+    description: "",
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    try {
+      await onSubmit(formData);
+      onClose();
+    } catch (err) {
+      setError("Failed to update inventory item");
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">Edit Inventory Item</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5 text-gray-500" /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
+              <span className="text-sm text-red-700">{error}</span>
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Product Name</label>
+              <input type="text" value={formData.productName} onChange={(e) => setFormData({ ...formData, productName: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">SKU</label>
+              <input type="text" value={formData.sku} onChange={(e) => setFormData({ ...formData, sku: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Quantity</label>
+              <input type="number" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Unit Price</label>
+              <input type="number" step="0.01" value={formData.unitPrice} onChange={(e) => setFormData({ ...formData, unitPrice: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Reorder Level</label>
+              <input type="number" value={formData.reorderLevel} onChange={(e) => setFormData({ ...formData, reorderLevel: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Location</label>
+              <input type="text" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-3 pt-4">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-900 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
+            <button type="submit" disabled={isLoading} className="px-4 py-2 text-sm font-medium text-gray-900 bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">{isLoading ? "Saving..." : "Save Changes"}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// View Purchase Order Modal
+export function ViewPurchaseOrderModal({
+  isOpen,
+  onClose,
+  po,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  po: any;
+}) {
+  if (!isOpen || !po) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg w-full max-w-lg mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">Purchase Order Details</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5 text-gray-500" /></button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div><p className="text-sm text-gray-500">PO Number</p><p className="font-medium text-gray-900">{po.poNumber}</p></div>
+            <div><p className="text-sm text-gray-500">Supplier</p><p className="font-medium text-gray-900">{po.supplier}</p></div>
+            <div><p className="text-sm text-gray-500">Status</p><p className="font-medium text-gray-900">{po.status}</p></div>
+            <div><p className="text-sm text-gray-500">Amount</p><p className="font-medium text-gray-900">${po.amount?.toLocaleString?.() || po.amount}</p></div>
+            <div><p className="text-sm text-gray-500">PO Date</p><p className="font-medium text-gray-900">{po.poDate ? new Date(po.poDate).toLocaleDateString() : "-"}</p></div>
+            <div><p className="text-sm text-gray-500">Due Date</p><p className="font-medium text-gray-900">{po.dueDate ? new Date(po.dueDate).toLocaleDateString() : "-"}</p></div>
+            <div><p className="text-sm text-gray-500">Items</p><p className="font-medium text-gray-900">{po.items}</p></div>
+          </div>
+          <div className="flex justify-end pt-4 border-t border-gray-200">
+            <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-900 bg-gray-100 rounded-lg hover:bg-gray-200">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Edit Purchase Order Modal
+export function EditPurchaseOrderModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  isLoading,
+  po,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: PurchaseOrderFormData) => Promise<void>;
+  isLoading: boolean;
+  po: any;
+}) {
+  const [formData, setFormData] = useState<PurchaseOrderFormData>({
+    supplierId: po?.supplier || "",
+    orderDate: po?.poDate ? new Date(po.poDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+    expectedDeliveryDate: po?.dueDate ? new Date(po.dueDate).toISOString().split("T")[0] : "",
+    items: [],
+    notes: "",
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    try {
+      await onSubmit(formData);
+      onClose();
+    } catch (err) {
+      setError("Failed to update purchase order");
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">Edit Purchase Order</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5 text-gray-500" /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
+              <span className="text-sm text-red-700">{error}</span>
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Supplier</label>
+              <input type="text" value={formData.supplierId} onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Order Date</label>
+              <input type="date" value={formData.orderDate} onChange={(e) => setFormData({ ...formData, orderDate: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Expected Delivery</label>
+              <input type="date" value={formData.expectedDeliveryDate} onChange={(e) => setFormData({ ...formData, expectedDeliveryDate: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-3 pt-4">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-900 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
+            <button type="submit" disabled={isLoading} className="px-4 py-2 text-sm font-medium text-gray-900 bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">{isLoading ? "Saving..." : "Save Changes"}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// Edit Supplier Modal
+export function EditSupplierModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  isLoading,
+  supplier,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: SupplierFormData) => Promise<void>;
+  isLoading: boolean;
+  supplier: any;
+}) {
+  const [formData, setFormData] = useState<SupplierFormData>({
+    name: supplier?.name || "",
+    email: supplier?.email || "",
+    phone: supplier?.phone || "",
+    address: "",
+    category: "general",
+    paymentTerms: "NET 30",
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!formData.name.trim()) {
+      setError("Supplier name is required");
+      return;
+    }
+    try {
+      await onSubmit(formData);
+      onClose();
+    } catch (err) {
+      setError("Failed to update supplier");
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">Edit Supplier</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5 text-gray-500" /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
+              <span className="text-sm text-red-700">{error}</span>
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Supplier Name</label>
+              <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Email</label>
+              <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Phone</label>
+              <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-3 pt-4">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-900 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
+            <button type="submit" disabled={isLoading} className="px-4 py-2 text-sm font-medium text-gray-900 bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50">{isLoading ? "Saving..." : "Save Changes"}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // Add Item Modal for Sales Order
 export function AddItemModal({
   isOpen,

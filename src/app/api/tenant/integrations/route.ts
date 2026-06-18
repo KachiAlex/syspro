@@ -10,6 +10,7 @@ import {
 } from "@/lib/tenant-admin/utils";
 import { AuditService, IntegrationService, APIKeyService } from "@/lib/tenant-admin/service";
 import { asTenantSlug } from "@/lib/tenant-admin/utils";
+import type { UserId, ResourceId, AuditAction, Permission } from "@/lib/tenant-admin/types";
 import { z } from "zod";
 
 const CreateIntegrationSchema = z.object({
@@ -138,7 +139,7 @@ export async function POST(request: NextRequest) {
       const service = new APIKeyService();
       const apiKey = await service.create(asTenantSlug(context.tenantSlug), {
         name: parsed.data.label,
-        permissions: (parsed.data.permissions || []).map((p: string) => ({ module: "all", action: p })),
+        permissions: (parsed.data.permissions || []).map((p: string) => ({ id: p, module: "all", action: p as any, description: "" })),
         expiresAt: parsed.data.expiresAt ? new Date(parsed.data.expiresAt) : undefined,
       }, context.userId as UserId);
 

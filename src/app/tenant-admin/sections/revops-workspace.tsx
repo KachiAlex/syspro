@@ -166,7 +166,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
   const [formError, setFormError] = useState<string | null>(null);
 
   const tenantQuery = useMemo(() => {
-    const params = new URLSearchParams({ tenantSlug: slug });
+    const params = new URLSearchParams({ tenantSlug: slug ?? '' });
     return params.toString();
   }, [slug]);
 

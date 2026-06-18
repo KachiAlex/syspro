@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { format } from "date-fns";
 import { FormAlert } from "@/components/form";
 import { useTenantContext } from "@/components/tenant-admin/tenant-context";
@@ -36,6 +37,7 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const currentUser = useCurrentUser();
   const [filters, setFilters] = useState({
     status: "",
     entityType: ""
@@ -86,7 +88,7 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
         body: JSON.stringify({
           action: "decision",
           approvalId,
-          userId: "current-user-id", // TODO: Get from auth context
+          userId: currentUser?.id || "unknown",
           decision,
           comments
         })

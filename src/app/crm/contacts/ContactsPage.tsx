@@ -52,7 +52,7 @@ export default function ContactsPage({ tenantSlug }: { tenantSlug?: string | nul
     setError(null);
     const offset = p * size;
     const params = new URLSearchParams({
-      tenantSlug: ts,
+      tenantSlug: ts ?? '',
       limit: String(size),
       offset: String(offset),
       ...(filterTag !== "all" && { tag: filterTag }),

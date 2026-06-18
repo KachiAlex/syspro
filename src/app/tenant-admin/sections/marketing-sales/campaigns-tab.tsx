@@ -123,22 +123,19 @@ export default function CampaignsTab({
   const handleCreateCampaign = async (data: CampaignFormData) => {
     setIsSubmitting(true);
     try {
-      // In a real app, this would POST to /api/revops/campaigns
-      const newCampaign: Campaign = {
-        id: Date.now().toString(),
-        name: data.name,
-        channel: data.channel,
-        status: data.status,
-        budget: data.budget,
-        actualSpend: 0,
-        revenue: 0,
-        roi: 0,
-        startDate: data.startDate,
-        endDate: data.endDate,
-      };
-      setCampaigns([newCampaign, ...campaigns]);
+      const res = await fetch('/api/revops/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, tenantSlug }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to create campaign');
+      setCampaigns([payload.campaign, ...campaigns]);
       setSuccessMessage("Campaign created successfully!");
       setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create campaign';
+      onError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -148,23 +145,23 @@ export default function CampaignsTab({
     if (!selectedCampaign) return;
     setIsSubmitting(true);
     try {
-      // In a real app, this would PUT to /api/revops/campaigns/:id
-      const updated = campaigns.map((c) =>
-        c.id === selectedCampaign.id
-          ? {
-              ...c,
-              name: data.name,
-              channel: data.channel,
-              status: data.status,
-              budget: data.budget,
-              startDate: data.startDate,
-              endDate: data.endDate,
-            }
-          : c
+      const res = await fetch(`/api/revops/campaigns/${selectedCampaign.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, tenantSlug }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to update campaign');
+      setCampaigns(
+        campaigns.map((c) =>
+          c.id === selectedCampaign.id ? { ...c, ...payload.campaign } : c
+        )
       );
-      setCampaigns(updated);
       setSuccessMessage("Campaign updated successfully!");
       setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to update campaign';
+      onError(message);
     } finally {
       setIsSubmitting(false);
       setSelectedCampaign(null);
@@ -175,10 +172,19 @@ export default function CampaignsTab({
     if (!selectedCampaign) return;
     setIsSubmitting(true);
     try {
-      // In a real app, this would DELETE /api/revops/campaigns/:id
+      const res = await fetch(`/api/revops/campaigns/${selectedCampaign.id}?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.error || 'Failed to delete campaign');
+      }
       setCampaigns(campaigns.filter((c) => c.id !== selectedCampaign.id));
       setSuccessMessage("Campaign deleted successfully!");
       setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete campaign';
+      onError(message);
     } finally {
       setIsSubmitting(false);
       setSelectedCampaign(null);
@@ -248,7 +254,7 @@ export default function CampaignsTab({
             className={`px-3 py-1 rounded-full text-sm font-medium transition ${
               filterStatus === status
                 ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-900 hover:bg-gray-300"
+                : "bg-blue-100 text-blue-700 hover:bg-blue-200"
             }`}
           >
             {status.charAt(0).toUpperCase() + status.slice(1)}

@@ -134,7 +134,7 @@ export default function VendorPaymentsWorkspace() {
           <select
             value={filters.status}
             onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="bg-blue-50 rounded-lg border border-blue-200 px-3 py-2 text-sm text-blue-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
           >
             <option value="">All Status</option>
             <option value="draft">Draft</option>
@@ -146,7 +146,7 @@ export default function VendorPaymentsWorkspace() {
           <select
             value={filters.method}
             onChange={(e) => setFilters({ ...filters, method: e.target.value })}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="bg-blue-50 rounded-lg border border-blue-200 px-3 py-2 text-sm text-blue-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
           >
             <option value="">All Methods</option>
             <option value="bank_transfer">Bank Transfer</option>

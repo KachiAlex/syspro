@@ -48,7 +48,7 @@ export default function AccountsPage({ tenantSlug, regionId }: { tenantSlug?: st
     setError(null);
     const offset = p * size;
     const params = new URLSearchParams({
-      tenantSlug: ts,
+      tenantSlug: ts ?? '',
       limit: String(size),
       ...(rid && { regionId: rid }),
     });

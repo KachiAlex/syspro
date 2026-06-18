@@ -27,7 +27,7 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/tenant/approvals?tenantSlug=${encodeURIComponent(ts)}`, { cache: "no-store" });
+      const res = await fetch(`/api/tenant/approvals?tenantSlug=${encodeURIComponent(ts ?? '')}`, { cache: "no-store" });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
         setApprovals([]);
@@ -67,7 +67,7 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
         name: name.trim(),
         steps: steps.map((s, i) => ({ step: i + 1, owners: s.owners.split(/[,;|]/).map((o) => o.trim()).filter(Boolean), slaHours: s.slaHours })),
       };
-      const res = await fetch(`/api/tenant/approvals?tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/approvals?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -86,7 +86,7 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
   async function handleDelete(id: string) {
     if (!confirm("Delete approval route?")) return;
     try {
-      const res = await fetch(`/api/tenant/approvals?tenantSlug=${encodeURIComponent(ts)}&id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      const res = await fetch(`/api/tenant/approvals?tenantSlug=${encodeURIComponent(ts ?? '')}&id=${encodeURIComponent(id)}`, { method: "DELETE" });
       const errData = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(errData?.error || "Delete failed");
       await load();

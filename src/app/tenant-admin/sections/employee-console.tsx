@@ -51,7 +51,7 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
     setLoading(true);
     setServerError(null);
     try {
-      const res = await fetch(`/api/tenant/employees?tenantSlug=${encodeURIComponent(ts)}`, { cache: "no-store" });
+      const res = await fetch(`/api/tenant/employees?tenantSlug=${encodeURIComponent(ts ?? '')}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load employees");
       const payload = await res.json();
       setEmployees(Array.isArray(payload.employees) ? payload.employees : []);
@@ -74,7 +74,7 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
 
     try {
       const payload = { name: form.values.name.trim(), email: form.values.email.trim(), department: form.values.department || undefined, branch: form.values.branch || undefined, region: form.values.region || undefined };
-      const res = await fetch(`/api/tenant/employees?tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/employees?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -113,7 +113,7 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
   async function saveEdit(id: string) {
     try {
       const payload = { department: editForm.department || undefined, branch: editForm.branch || undefined, region: editForm.region || undefined };
-      const res = await fetch(`/api/tenant/employees?tenantSlug=${encodeURIComponent(ts)}&id=${encodeURIComponent(id)}`, {
+      const res = await fetch(`/api/tenant/employees?tenantSlug=${encodeURIComponent(ts ?? '')}&id=${encodeURIComponent(id)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -133,7 +133,7 @@ export default function EmployeeConsole({ tenantSlug }: { tenantSlug?: string | 
   async function handleDelete(id: string) {
     if (!confirm("Delete employee?")) return;
     try {
-      const res = await fetch(`/api/tenant/employees?tenantSlug=${encodeURIComponent(ts)}&id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      const res = await fetch(`/api/tenant/employees?tenantSlug=${encodeURIComponent(ts ?? '')}&id=${encodeURIComponent(id)}`, { method: "DELETE" });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || "Delete failed");

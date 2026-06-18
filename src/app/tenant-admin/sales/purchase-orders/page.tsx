@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Eye, Edit, Trash2, Search } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { 
   CreatePurchaseOrderModal, 
+  ViewPurchaseOrderModal,
+  EditPurchaseOrderModal,
   DeleteConfirmationModal 
 } from '@/app/tenant-admin/sections/sales-procurement-modals';
 
@@ -28,9 +30,12 @@ export default function PurchaseOrdersPage() {
   
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const statuses = ['All', 'Pending', 'In Transit', 'Received', 'Cancelled'];
 
@@ -43,14 +48,44 @@ export default function PurchaseOrdersPage() {
     return true;
   });
 
+  // Load purchase orders on mount
+  useEffect(() => {
+    if (!tenantSlug) return;
+    async function loadPOs() {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/purchases/orders?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPurchaseOrders(data.orders || []);
+        } else {
+          throw new Error('Failed to fetch purchase orders');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load purchase orders');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadPOs();
+  }, [tenantSlug]);
+
   // Modal handlers
   const handleCreatePO = async (data: any) => {
+    if (!tenantSlug) return;
     setIsLoading(true);
     try {
-      console.log('Creating purchase order:', data);
-      // TODO: API call to create purchase order
-    } catch (error) {
-      console.error('Error creating purchase order:', error);
+      const res = await fetch('/api/purchases/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, tenantSlug }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to create purchase order');
+      setPurchaseOrders(prev => [payload.order, ...prev]);
+      setShowCreateModal(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create purchase order');
     } finally {
       setIsLoading(false);
     }
@@ -58,17 +93,19 @@ export default function PurchaseOrdersPage() {
 
   const handleDeletePO = async () => {
     if (!selectedPO) return;
-    
     setIsLoading(true);
     try {
-      console.log('Deleting purchase order:', selectedPO);
-      // TODO: API call to delete purchase order
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      
-      // Remove PO from local state
-      setPurchaseOrders(purchaseOrders.filter(po => po.id !== selectedPO.id));
-    } catch (error) {
-      console.error('Error deleting purchase order:', error);
+      const res = await fetch(`/api/purchases/orders/${selectedPO.id}?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.error || 'Failed to delete purchase order');
+      }
+      setPurchaseOrders(prev => prev.filter(po => po.id !== selectedPO.id));
+      setShowDeleteModal(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete purchase order');
     } finally {
       setIsLoading(false);
     }
@@ -76,14 +113,32 @@ export default function PurchaseOrdersPage() {
 
   const handleViewPO = (po: PurchaseOrder) => {
     setSelectedPO(po);
-    // TODO: Implement view modal
-    console.log('View PO:', po);
+    setShowViewModal(true);
   };
 
   const handleEditPO = (po: PurchaseOrder) => {
     setSelectedPO(po);
-    // TODO: Implement edit modal
-    console.log('Edit PO:', po);
+    setShowEditModal(true);
+  };
+
+  const handleUpdatePO = async (data: any) => {
+    if (!selectedPO || !tenantSlug) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/purchases/orders/${selectedPO.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, tenantSlug }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to update purchase order');
+      setPurchaseOrders(prev => prev.map(p => p.id === selectedPO.id ? { ...p, ...payload.order } : p));
+      setShowEditModal(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update purchase order');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDeleteClick = (po: PurchaseOrder) => {
@@ -262,6 +317,20 @@ export default function PurchaseOrdersPage() {
         onClose={() => setShowCreateModal(false)}
         onSubmit={handleCreatePO}
         isLoading={isLoading}
+      />
+
+      <ViewPurchaseOrderModal
+        isOpen={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        po={selectedPO}
+      />
+
+      <EditPurchaseOrderModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSubmit={handleUpdatePO}
+        isLoading={isLoading}
+        po={selectedPO}
       />
 
       <DeleteConfirmationModal

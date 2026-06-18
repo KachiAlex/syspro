@@ -87,7 +87,7 @@ export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | 
     if (!ts) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/finance/payments?tenantSlug=${encodeURIComponent(ts)}&limit=100`);
+      const res = await fetch(`/api/finance/payments?tenantSlug=${encodeURIComponent(ts ?? '')}&limit=100`);
       const data = await res.json();
       const apiPayments: ApiPayment[] = data.payments || [];
       setPayments(apiPayments.map(mapApiToPayment));
@@ -279,7 +279,7 @@ export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | 
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-white rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="bg-blue-50 rounded-lg border border-blue-200 px-3 py-2 text-sm text-blue-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             >
               <option value="all">All Status</option>
               <option value="completed">Completed</option>
@@ -290,7 +290,7 @@ export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | 
             <select
               value={methodFilter}
               onChange={(e) => setMethodFilter(e.target.value)}
-              className="bg-white rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="bg-blue-50 rounded-lg border border-blue-200 px-3 py-2 text-sm text-blue-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             >
               <option value="all">All Methods</option>
               <option value="bank_transfer">Bank Transfer</option>

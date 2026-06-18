@@ -28,8 +28,6 @@ export default function ProjectsReports({ projects, tenantSlug }: ProjectsReport
     try {
       setLoading(true);
       const response = await apiClient.get(`/api/projects/reports?type=${reportType}&tenantSlug=${tenantSlug}`);
-      // Report data is in response.data
-      console.log('Report generated:', response.data);
     } catch (err) {
       console.error('Failed to generate report:', err);
       setError('Failed to generate report');

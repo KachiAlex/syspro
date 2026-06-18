@@ -42,22 +42,53 @@ export default function ProjectReportsPage() {
   const [showStaffReportModal, setShowStaffReportModal] = useState(false);
   const [showAdminReportModal, setShowAdminReportModal] = useState(false);
 
+  const [stats, setStats] = useState({ totalProjects: 0, completionRate: 0, totalBudget: 0, avgDuration: 0 });
+  const [reports, setReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    setUserRole({
-      canViewReports: true,
-      canSubmitReports: false,
-      canCreateReports: false,
-      reportingLevel: 'staff'
-    });
-    setProjects([]);
-    setAvailableRecipients([]);
-  }, []);
+    if (!tenantSlug) return;
+    async function load() {
+      try {
+        const [projectsRes, statsRes, reportsRes, recipientsRes] = await Promise.all([
+          fetch(`/api/projects?tenantSlug=${encodeURIComponent(tenantSlug)}`),
+          fetch(`/api/projects/stats?tenantSlug=${encodeURIComponent(tenantSlug)}`),
+          fetch(`/api/projects/reports?tenantSlug=${encodeURIComponent(tenantSlug)}`),
+          fetch(`/api/projects/recipients?tenantSlug=${encodeURIComponent(tenantSlug)}`),
+        ]);
+        const projectsData = await projectsRes.json().catch(() => ({}));
+        const statsData = await statsRes.json().catch(() => ({}));
+        const reportsData = await reportsRes.json().catch(() => ({}));
+        const recipientsData = await recipientsRes.json().catch(() => ({}));
+
+        setProjects(projectsData.projects || []);
+        setStats({
+          totalProjects: statsData.totalProjects || 0,
+          completionRate: statsData.completionRate || 0,
+          totalBudget: statsData.totalBudget || 0,
+          avgDuration: statsData.avgDuration || 0,
+        });
+        setReports(reportsData.reports || []);
+        setAvailableRecipients(recipientsData.recipients || []);
+      } catch (err) {
+        console.error('Failed to load project reports data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [tenantSlug]);
 
   const handleStaffReportSubmit = async (reportData: any) => {
     try {
-      // API call to submit staff report
-      console.log('Submitting staff report:', reportData);
-      // In real app: await apiClient.post('/api/projects/reports/submit', reportData);
+      const res = await fetch('/api/projects/reports/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...reportData, tenantSlug }),
+      });
+      if (!res.ok) throw new Error('Failed to submit staff report');
+      const data = await res.json();
+      setReports(prev => [data.report, ...prev]);
     } catch (error) {
       console.error('Failed to submit staff report:', error);
       throw error;
@@ -66,9 +97,14 @@ export default function ProjectReportsPage() {
 
   const handleAdminReportSubmit = async (reportData: any) => {
     try {
-      // API call to create admin report
-      console.log('Creating admin report:', reportData);
-      // In real app: await apiClient.post('/api/projects/reports/create', reportData);
+      const res = await fetch('/api/projects/reports/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...reportData, tenantSlug }),
+      });
+      if (!res.ok) throw new Error('Failed to create admin report');
+      const data = await res.json();
+      setReports(prev => [data.report, ...prev]);
     } catch (error) {
       console.error('Failed to create admin report:', error);
       throw error;
@@ -130,22 +166,22 @@ export default function ProjectReportsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-sm font-medium text-gray-600 mb-2">Total Projects</p>
-          <p className="text-3xl font-bold text-gray-900">12</p>
+          <p className="text-3xl font-bold text-gray-900">{stats.totalProjects}</p>
           <p className="text-xs text-gray-500 mt-2">All time</p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-sm font-medium text-gray-600 mb-2">Completion Rate</p>
-          <p className="text-3xl font-bold text-green-600">65%</p>
+          <p className="text-3xl font-bold text-green-600">{stats.completionRate}%</p>
           <p className="text-xs text-gray-500 mt-2">Overall progress</p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-sm font-medium text-gray-600 mb-2">Total Budget</p>
-          <p className="text-3xl font-bold text-blue-600">$455K</p>
+          <p className="text-3xl font-bold text-blue-600">${stats.totalBudget}K</p>
           <p className="text-xs text-gray-500 mt-2">Allocated</p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-sm font-medium text-gray-600 mb-2">Avg Duration</p>
-          <p className="text-3xl font-bold text-purple-600">4.5mo</p>
+          <p className="text-3xl font-bold text-purple-600">{stats.avgDuration}mo</p>
           <p className="text-xs text-gray-500 mt-2">Per project</p>
         </div>
       </div>
@@ -155,37 +191,12 @@ export default function ProjectReportsPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Reports Received from Staff</h3>
           <div className="space-y-3">
-            {[
-              { 
-                id: '1', 
-                project: 'Website Redesign', 
-                submittedBy: 'John Smith', 
-                type: 'Daily Report', 
-                date: '2026-04-04',
-                status: 'reviewed'
-              },
-              { 
-                id: '2', 
-                project: 'Mobile App Development', 
-                submittedBy: 'Sarah Johnson', 
-                type: 'Weekly Report', 
-                date: '2026-04-03',
-                status: 'pending'
-              },
-              { 
-                id: '3', 
-                project: 'API Integration', 
-                submittedBy: 'Mike Davis', 
-                type: 'Milestone Report', 
-                date: '2026-04-02',
-                status: 'reviewed'
-              },
-            ].map((report) => (
+            {reports.map((report: any) => (
               <div key={report.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
                 <div>
-                  <p className="font-medium text-gray-900">{report.project}</p>
+                  <p className="font-medium text-gray-900">{report.project || report.title || 'Project Report'}</p>
                   <p className="text-sm text-gray-600">
-                    {report.type} by {report.submittedBy} • {report.date}
+                    {report.type} by {report.submittedBy || report.createdBy || 'Staff'} • {new Date(report.date || report.createdAt).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -202,6 +213,7 @@ export default function ProjectReportsPage() {
                 </div>
               </div>
             ))}
+            {reports.length === 0 && <p className="text-sm text-gray-500 text-center py-4">No reports found</p>}
           </div>
         </div>
       )}

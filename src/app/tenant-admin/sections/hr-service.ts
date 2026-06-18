@@ -237,6 +237,47 @@ export class HRService {
     }
   }
 
+  static async updateEmployee(tenantSlug: string, employeeId: string, employeeData: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    department?: string;
+    position?: string;
+    startDate?: string;
+    status?: string;
+    salary?: string;
+  }): Promise<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    department: string;
+    position: string;
+    startDate: string;
+    status: string;
+    salary?: string;
+  }> {
+    try {
+      const response = await apiClient.patch(`/hr/employees/${employeeId}`, {
+        ...employeeData,
+        tenantSlug
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to update employee:', error);
+      throw new Error('Failed to update employee. Please try again.');
+    }
+  }
+
+  static async deleteEmployee(tenantSlug: string, employeeId: string): Promise<void> {
+    try {
+      await apiClient.delete(`/hr/employees/${employeeId}?tenantSlug=${tenantSlug}`);
+    } catch (error) {
+      console.error('Failed to delete employee:', error);
+      throw new Error('Failed to delete employee. Please try again.');
+    }
+  }
+
   static async importEmployeesFromExcel(tenantSlug: string, file: File): Promise<{
   imported: number;
   failed: number;
@@ -390,6 +431,31 @@ export class HRService {
     } catch (error) {
       console.error('Failed to fetch training sessions:', error);
       return [];
+    }
+  }
+
+  static async postJob(tenantSlug: string, jobData: {
+    title: string;
+    department: string;
+    description: string;
+    requirements: string;
+    location: string;
+    employmentType: string;
+    salaryRange?: string;
+  }): Promise<{
+    id: string;
+    title: string;
+    status: string;
+  }> {
+    try {
+      const response = await apiClient.post('/hr/jobs', {
+        ...jobData,
+        tenantSlug
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to post job:', error);
+      throw new Error('Failed to post job. Please try again.');
     }
   }
 }

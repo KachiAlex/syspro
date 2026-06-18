@@ -93,7 +93,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/tenant/billing?tenantSlug=${encodeURIComponent(ts)}`);
+      const res = await fetch(`/api/tenant/billing?tenantSlug=${encodeURIComponent(ts ?? '')}`);
       const payload = await res.json().catch(() => null);
       if (res.ok && payload) {
         // API returns { success: true, data: {...} }
@@ -116,7 +116,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
 
   async function handlePay(id: string) {
     try {
-      const res = await fetch(`/api/tenant/billing?tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/billing?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ invoiceId: id, updates: { status: "paid" } }),
@@ -134,7 +134,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
   async function handleCancelSubscription(id: string) {
     setCancelingSubscription(true);
     try {
-      const res = await fetch(`/api/tenant/billing?id=${encodeURIComponent(id)}&type=subscription&tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/billing?id=${encodeURIComponent(id)}&type=subscription&tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -156,7 +156,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
     setDownloadingInvoice(true);
     try {
       const res = await fetch(
-        `/api/tenant/billing?action=download&invoiceId=${encodeURIComponent(invoiceId)}&tenantSlug=${encodeURIComponent(ts)}`
+        `/api/tenant/billing?action=download&invoiceId=${encodeURIComponent(invoiceId)}&tenantSlug=${encodeURIComponent(ts ?? '')}`
       );
       if (res.ok) {
         const blob = await res.blob();
@@ -182,7 +182,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
   async function handleUpgradeSubscription(newPlan: string) {
     setUpgradingPlan(true);
     try {
-      const res = await fetch(`/api/tenant/billing?action=upgrade&tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/billing?action=upgrade&tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -463,7 +463,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
         onClose={() => setShowCreateInvoice(false)}
         onSubmit={async (invoiceData: any) => {
           try {
-            const res = await fetch(`/api/tenant/billing?action=create_invoice&tenantSlug=${encodeURIComponent(ts)}`, {
+            const res = await fetch(`/api/tenant/billing?action=create_invoice&tenantSlug=${encodeURIComponent(ts ?? '')}`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ action: "create_invoice", invoice: invoiceData }),

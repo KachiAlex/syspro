@@ -63,7 +63,7 @@ export default function DealsPage({ tenantSlug }: { tenantSlug?: string | null }
     setLoading(true);
     setError(null);
     const params = new URLSearchParams({
-      tenantSlug: ts,
+      tenantSlug: ts ?? '',
       limit: "1000",
       offset: "0",
     });

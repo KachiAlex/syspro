@@ -37,7 +37,7 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/tenant/modules?tenantSlug=${encodeURIComponent(ts)}`, { cache: "no-store" });
+      const res = await fetch(`/api/tenant/modules?tenantSlug=${encodeURIComponent(ts ?? '')}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load modules");
       const payload = await res.json();
       setModules(Array.isArray(payload.modules) ? payload.modules : []);

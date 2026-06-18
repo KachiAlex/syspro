@@ -90,7 +90,7 @@ export default function LeadsPage() {
     setError(null);
     const offset = p * size;
     fetch(
-      `/api/crm/leads?tenantSlug=${encodeURIComponent(ts)}&limit=${encodeURIComponent(String(size))}&offset=${encodeURIComponent(String(offset))}`,
+      `/api/crm/leads?tenantSlug=${encodeURIComponent(ts ?? '')}&limit=${encodeURIComponent(String(size))}&offset=${encodeURIComponent(String(offset))}`,
       { cache: "no-store" }
     )
       .then((r) => r.json())
@@ -145,7 +145,7 @@ export default function LeadsPage() {
   const handleDeleteLead = async (id: string) => {
     if (!deleteConfirm) return;
     try {
-      const res = await fetch(`/api/crm/leads/${id}?tenantSlug=${encodeURIComponent(ts)}`, { method: "DELETE" });
+      const res = await fetch(`/api/crm/leads/${id}?tenantSlug=${encodeURIComponent(ts ?? '')}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete");
       setLeads((prev) => prev.filter((l) => l.id !== id));
       setDeleteConfirm(null);
@@ -360,7 +360,7 @@ export default function LeadsPage() {
               if (confirm("Delete selected leads?")) {
                 Promise.all(
                   Array.from(selectedLeads).map((id) =>
-                    fetch(`/api/crm/leads/${id}?tenantSlug=${encodeURIComponent(ts)}`, { method: "DELETE" })
+                    fetch(`/api/crm/leads/${id}?tenantSlug=${encodeURIComponent(ts ?? '')}`, { method: "DELETE" })
                   )
                 ).then(() => {
                   loadLeads();
@@ -787,7 +787,7 @@ export default function LeadsPage() {
       {showNew && (
         <NewLeadModal
           isOpen={showNew}
-          tenantSlug={ts}
+          tenantSlug={ts ?? ''}
           onClose={() => setShowNew(false)}
           onSuccess={() => {
             setShowNew(false);
@@ -799,7 +799,7 @@ export default function LeadsPage() {
       {showEdit && editingLead && (
         <NewLeadModal
           isOpen={showEdit}
-          tenantSlug={ts}
+          tenantSlug={ts ?? ''}
           initialData={editingLead}
           onClose={() => {
             setShowEdit(false);

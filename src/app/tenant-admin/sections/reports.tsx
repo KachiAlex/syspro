@@ -39,7 +39,7 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
     setError(null);
     try {
       const qp = cursorToLoad ? `cursor=${encodeURIComponent(cursorToLoad)}&` : `page=1&`;
-      const res = await fetch(`/api/reports?tenantSlug=${encodeURIComponent(tenantSlug)}&${qp}limit=20`);
+      const res = await fetch(`/api/reports?tenantSlug=${encodeURIComponent(tenantSlug ?? '')}&${qp}limit=20`);
       if (!res.ok) throw new Error("Unable to load reports");
       const json = await res.json();
       const items: Report[] = json.reports || json.items || [];
@@ -56,7 +56,7 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
 
   async function fetchSummary() {
     try {
-      const res = await fetch(`/api/reports/summary?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+      const res = await fetch(`/api/reports/summary?tenantSlug=${encodeURIComponent(tenantSlug ?? '')}`);
       if (!res.ok) return;
       const json = await res.json();
       if (!json.error) setSummary({ totalReports: json.totalReports || 0, queuedJobs: json.queuedJobs || 0, runsLast7: json.runsLast7 || 0, avgRunSecs: json.avgRunSecs });
@@ -99,7 +99,7 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
     try {
       const definition = JSON.parse(form.definition || "{}");
       const schedule = form.schedule || undefined;
-      const res = await fetch(`/api/reports?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+      const res = await fetch(`/api/reports?tenantSlug=${encodeURIComponent(tenantSlug ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: form.name, reportType: form.reportType, definition, schedule }),
@@ -115,7 +115,7 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
   }
 
   async function runReport(report: Report) {
-    const res = await fetch(`/api/reports/${report.id}/run?tenantSlug=${encodeURIComponent(tenantSlug)}`, { method: "POST", headers: { "Content-Type": "application/json" } });
+    const res = await fetch(`/api/reports/${report.id}/run?tenantSlug=${encodeURIComponent(tenantSlug ?? '')}`, { method: "POST", headers: { "Content-Type": "application/json" } });
     if (res.ok) {
       const json = await res.json();
       setJobs((prev) => ({ ...prev, [report.id]: [json.job, ...(prev[report.id] || [])] }));
@@ -123,7 +123,7 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
   }
 
   async function loadJobs(reportId: string) {
-    const res = await fetch(`/api/reports/${reportId}/run?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+    const res = await fetch(`/api/reports/${reportId}/run?tenantSlug=${encodeURIComponent(tenantSlug ?? '')}`);
     if (res.ok) {
       const json = await res.json();
       setJobs((prev) => ({ ...prev, [reportId]: json.jobs || [] }));

@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Eye, Edit, Trash2, Search } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { 
   AddInventoryItemModal, 
   ViewInventoryItemModal, 
+  EditInventoryItemModal,
   DeleteConfirmationModal 
 } from '@/app/tenant-admin/sections/sales-procurement-modals';
 
@@ -30,9 +31,11 @@ export default function InventoryPage() {
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const statuses = ['All', 'In Stock', 'Low Stock', 'Out of Stock'];
 
@@ -45,14 +48,44 @@ export default function InventoryPage() {
     return true;
   });
 
+  // Load inventory on mount
+  useEffect(() => {
+    if (!tenantSlug) return;
+    async function loadInventory() {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/inventory?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setInventoryItems(data.items || []);
+        } else {
+          throw new Error('Failed to fetch inventory');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load inventory');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadInventory();
+  }, [tenantSlug]);
+
   // Modal handlers
   const handleAddItem = async (data: any) => {
+    if (!tenantSlug) return;
     setIsLoading(true);
     try {
-      console.log('Adding inventory item:', data);
-      // TODO: API call to add inventory item
-    } catch (error) {
-      console.error('Error adding inventory item:', error);
+      const res = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, tenantSlug }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to add inventory item');
+      setInventoryItems(prev => [payload.item, ...prev]);
+      setShowCreateModal(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add inventory item');
     } finally {
       setIsLoading(false);
     }
@@ -60,17 +93,19 @@ export default function InventoryPage() {
 
   const handleDeleteItem = async () => {
     if (!selectedItem) return;
-    
     setIsLoading(true);
     try {
-      console.log('Deleting inventory item:', selectedItem);
-      // TODO: API call to delete inventory item
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      
-      // Remove item from local state
-      setInventoryItems(inventoryItems.filter(item => item.id !== selectedItem.id));
-    } catch (error) {
-      console.error('Error deleting inventory item:', error);
+      const res = await fetch(`/api/inventory/${selectedItem.id}?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.error || 'Failed to delete inventory item');
+      }
+      setInventoryItems(prev => prev.filter(item => item.id !== selectedItem.id));
+      setShowDeleteModal(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete inventory item');
     } finally {
       setIsLoading(false);
     }
@@ -83,8 +118,27 @@ export default function InventoryPage() {
 
   const handleEditItem = (item: InventoryItem) => {
     setSelectedItem(item);
-    // TODO: Implement edit modal
-    console.log('Edit item:', item);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateItem = async (data: any) => {
+    if (!selectedItem || !tenantSlug) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/inventory/${selectedItem.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, tenantSlug }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to update inventory item');
+      setInventoryItems(prev => prev.map(i => i.id === selectedItem.id ? { ...i, ...payload.item } : i));
+      setShowEditModal(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update inventory item');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDeleteClick = (item: InventoryItem) => {
@@ -275,6 +329,14 @@ export default function InventoryPage() {
       <ViewInventoryItemModal
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
+        item={selectedItem}
+      />
+
+      <EditInventoryItemModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSubmit={handleUpdateItem}
+        isLoading={isLoading}
         item={selectedItem}
       />
 

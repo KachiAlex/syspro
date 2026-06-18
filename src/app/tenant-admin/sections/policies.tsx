@@ -23,7 +23,7 @@ export default function PoliciesSection({ tenantSlug }: { tenantSlug: string }) 
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/policies?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+      const res = await fetch(`/api/policies?tenantSlug=${encodeURIComponent(tenantSlug ?? '')}`);
       if (!res.ok) throw new Error("Unable to load policies");
       const json = await res.json();
       setPolicies(json.policies || []);
@@ -44,7 +44,7 @@ export default function PoliciesSection({ tenantSlug }: { tenantSlug: string }) 
     setError(null);
     try {
       const document = JSON.parse(form.document || "{}");
-      const res = await fetch(`/api/policies?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+      const res = await fetch(`/api/policies?tenantSlug=${encodeURIComponent(tenantSlug ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ key: form.key, name: form.name, category: form.category, document }),
@@ -62,7 +62,7 @@ export default function PoliciesSection({ tenantSlug }: { tenantSlug: string }) 
   async function publish(policy: Policy) {
     setSaving(true);
     try {
-      const res = await fetch(`/api/policies/${policy.id}?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+      const res = await fetch(`/api/policies/${policy.id}?tenantSlug=${encodeURIComponent(tenantSlug ?? '')}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "published" }),

@@ -29,7 +29,7 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/tenant/integrations?tenantSlug=${encodeURIComponent(ts)}`);
+      const res = await fetch(`/api/tenant/integrations?tenantSlug=${encodeURIComponent(ts ?? '')}`);
       const payload = await res.json().catch(() => null);
       if (res.ok && payload) {
         setConnectors(payload.connectors ?? []);
@@ -49,7 +49,7 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
 
   async function toggleConnector(id: string, currentState: boolean) {
     try {
-      const res = await fetch(`/api/tenant/integrations?id=${encodeURIComponent(id)}&type=connector&tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/integrations?id=${encodeURIComponent(id)}&type=connector&tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled: !currentState }),
@@ -70,7 +70,7 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
       return;
     }
     try {
-      const res = await fetch(`/api/tenant/integrations?tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/integrations?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "apikey", label: newKeyName }),
@@ -91,7 +91,7 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
     if (!confirm("Are you sure? This will block any access using this key.")) return;
     try {
       const res = await fetch(
-        `/api/tenant/integrations?id=${encodeURIComponent(id)}&type=apikey&tenantSlug=${encodeURIComponent(ts)}`,
+        `/api/tenant/integrations?id=${encodeURIComponent(id)}&type=apikey&tenantSlug=${encodeURIComponent(ts ?? '')}`,
         { method: "DELETE" }
       );
       if (!res.ok) throw new Error("Failed to revoke key");

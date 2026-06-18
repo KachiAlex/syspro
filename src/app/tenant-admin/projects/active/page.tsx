@@ -59,7 +59,6 @@ export default function ActiveProjectsPage() {
       };
       
       setProjects(prev => [localProject, ...prev]);
-      console.log('Project created successfully:', newProject);
     } catch (error) {
       console.error('Failed to create project:', error);
       throw error;
@@ -101,8 +100,6 @@ export default function ActiveProjectsPage() {
           ? { ...p, ...updatedProject }
           : p
       ));
-      
-      console.log('Project updated successfully:', updatedProject);
     } catch (error) {
       console.error('Failed to update project:', error);
       throw error;
@@ -117,8 +114,6 @@ export default function ActiveProjectsPage() {
       
       // Update local state
       setProjects(prev => prev.filter(p => p.id !== selectedProject.id));
-      
-      console.log('Project deleted successfully:', selectedProject.name);
     } catch (error) {
       console.error('Failed to delete project:', error);
       throw error;

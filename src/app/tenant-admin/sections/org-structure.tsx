@@ -108,8 +108,8 @@ type BranchFormData = {
 // UTILITIES
 // ============================================================================
 
-function buildTenantQuery(tenantSlug: string): string {
-  return `tenantSlug=${encodeURIComponent(tenantSlug)}&userRole=admin&userId=console`;
+function buildTenantQuery(tenantSlug: string | null | undefined): string {
+  return `tenantSlug=${encodeURIComponent(tenantSlug ?? '')}&userRole=admin&userId=console`;
 }
 
 function getTierLabel(tier: OrgTier | 0): string {

@@ -41,7 +41,7 @@ export default function AdminRestrictions({ tenantSlug }: { tenantSlug?: string 
     setError(null);
     try {
       const res = await fetch(
-        `/api/tenant/access-restrictions?tenantSlug=${encodeURIComponent(ts)}`,
+        `/api/tenant/access-restrictions?tenantSlug=${encodeURIComponent(ts ?? '')}`,
         { cache: "no-store" }
       );
 

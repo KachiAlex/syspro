@@ -236,6 +236,7 @@ export type Expense = {
   amount: number;
   taxAmount: number;
   totalAmount: number;
+  currency: string;
   taxType: ExpenseTaxType;
   category: string;
   categoryId: string;

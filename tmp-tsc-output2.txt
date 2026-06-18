@@ -1,0 +1,159 @@
+﻿npm warn config optional Use `--omit=optional` to exclude optional dependencies, or
+npm warn config `--include=optional` to include them.
+npm warn config
+npm warn config       Default value does install optional deps unless otherwise omitted.
+src/app/crm/accounts/AccountsPage.tsx(50,40): error TS2345: Argument of type '{ regionId?: string | undefined; tenantSlug: string | null | undefined; limit: string; }' is not assignable to parameter of type 'string | URLSearchParams | Record<string, string> | string[][] | undefined'.
+  Types of property 'tenantSlug' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+      Type 'null' is not assignable to type 'string | undefined'.
+src/app/crm/activities/ActivitiesPage.tsx(66,40): error TS2345: Argument of type '{ search?: string | undefined; relatedTo?: string | undefined; status?: string | undefined; type?: string | undefined; tenantSlug: string | null | undefined; }' is not assignable to parameter of type 'string | URLSearchParams | Record<string, string> | string[][] | undefined'.
+  Types of property 'tenantSlug' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+      Type 'null' is not assignable to type 'string | undefined'.
+src/app/crm/contacts/ContactsPage.tsx(54,40): error TS2345: Argument of type '{ tag?: string | undefined; tenantSlug: string | null | undefined; limit: string; offset: string; }' is not assignable to parameter of type 'string | URLSearchParams | Record<string, string> | string[][] | undefined'.
+  Types of property 'tenantSlug' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+      Type 'null' is not assignable to type 'string | undefined'.
+src/app/crm/deals/DealsPage.tsx(65,40): error TS2345: Argument of type '{ tenantSlug: string | null | undefined; limit: string; offset: string; }' is not assignable to parameter of type 'string | URLSearchParams | Record<string, string> | string[][] | undefined'.
+  Types of property 'tenantSlug' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+      Type 'null' is not assignable to type 'string | undefined'.
+src/app/tenant-admin/sections/access-control.tsx(116,91): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/admin-restrictions.tsx(44,74): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/analytics-original.tsx(39,86): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/analytics-original.tsx(64,86): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/analytics-original.tsx(85,105): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/analytics-original.tsx(105,86): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/analytics-original.tsx(126,105): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/analytics.tsx(82,86): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/analytics.tsx(116,86): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/analytics.tsx(137,105): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/analytics.tsx(157,86): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/analytics.tsx(178,105): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/analytics.tsx(200,167): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/analytics.tsx(228,120): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/analytics.tsx(254,194): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/analytics.tsx(275,120): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/approval-designer.tsx(30,86): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/approval-designer.tsx(70,86): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/approval-designer.tsx(89,86): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/automation-dashboard.tsx(21,88): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/billing.tsx(96,84): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/billing.tsx(119,84): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/billing.tsx(137,131): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/billing.tsx(159,121): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/billing.tsx(185,99): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/billing.tsx(466,112): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/cost-allocation.tsx(43,92): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/cost-allocation.tsx(66,92): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/cost-allocation.tsx(93,116): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/department-management.tsx(39,88): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/department-management.tsx(62,88): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/department-management.tsx(83,88): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/employee-console.tsx(54,86): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/employee-console.tsx(77,86): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/employee-console.tsx(116,86): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/employee-console.tsx(136,86): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/expenses.tsx(564,9): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/app/tenant-admin/sections/integrations.tsx(32,89): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/integrations.tsx(52,133): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/integrations.tsx(73,89): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/integrations.tsx(94,108): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/it-support-workspace.tsx(311,44): error TS2345: Argument of type '{ tenantSlug: string | undefined; }' is not assignable to parameter of type 'string | URLSearchParams | string[][] | Record<string, string> | undefined'.
+  Type '{ tenantSlug: string | undefined; }' is not assignable to type 'undefined'.
+src/app/tenant-admin/sections/it-support-workspace.tsx(360,44): error TS2345: Argument of type '{ tenantSlug: string | undefined; }' is not assignable to parameter of type 'string | URLSearchParams | string[][] | Record<string, string> | undefined'.
+  Type '{ tenantSlug: string | undefined; }' is not assignable to type 'undefined'.
+src/app/tenant-admin/sections/it-support-workspace.tsx(367,73): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/it-support-workspace.tsx(368,78): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/it-support-workspace.tsx(369,81): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/marketing-sales-dashboard.tsx(101,13): error TS2322: Type 'string | null | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/tenant-admin/sections/marketing-sales-dashboard.tsx(110,13): error TS2322: Type 'string | null | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/tenant-admin/sections/marketing-sales-dashboard.tsx(116,57): error TS2322: Type 'string | null | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/tenant-admin/sections/marketing-sales-dashboard.tsx(117,62): error TS2322: Type 'string | null | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/tenant-admin/sections/marketing-sales-dashboard.tsx(118,57): error TS2322: Type 'string | null | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/tenant-admin/sections/module-registry.tsx(40,84): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/org-structure.tsx(134,54): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/tenant-admin/sections/revops-workspace.tsx(169,40): error TS2345: Argument of type '{ tenantSlug: string | undefined; }' is not assignable to parameter of type 'string | URLSearchParams | string[][] | Record<string, string> | undefined'.
+  Type '{ tenantSlug: string | undefined; }' is not assignable to type 'undefined'.
+src/app/tenant-admin/sections/role-builder.tsx(117,82): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/role-builder.tsx(157,82): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/role-builder.tsx(196,121): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/role-builder.tsx(215,121): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/security-original.tsx(42,85): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/security-original.tsx(63,85): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/security.tsx(130,85): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/security.tsx(153,85): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/security.tsx(173,126): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/security.tsx(190,90): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/workflows-enhanced-form.tsx(163,72): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/workflows-enhanced-form.tsx(465,76): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/workflows-original.tsx(55,86): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/app/tenant-admin/sections/workflows.tsx(97,86): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | number | boolean'.
+  Type 'undefined' is not assignable to type 'string | number | boolean'.
+src/lib/finance/db.ts(1333,3): error TS2741: Property 'currency' is missing in type '{ id: string; tenantSlug: string; regionId: string | null; branchId: string | null; type: any; amount: number; taxAmount: number; totalAmount: number; taxType: any; category: string; categoryId: string; ... 14 more ...; createdBy: string; }' but required in type 'Expense'.
+src/lib/itsupport/automation.ts(41,26): error TS2339: Property 'slaPolicies' does not exist on type 'Promise<{ slaPolicies: SlaPolicy[]; engineers: EngineerProfile[]; tickets: SupportTicket[]; comments: never[]; activities: never[]; fieldJobs: FieldJob[]; incidents: SupportIncident[]; knowledgeBase: KnowledgeBaseArticle[]; }>'.
+src/lib/itsupport/automation.ts(41,44): error TS7006: Parameter 'p' implicitly has an 'any' type.

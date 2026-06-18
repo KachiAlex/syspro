@@ -117,7 +117,7 @@ export default function AttributionTab({
               className={`px-4 py-2 rounded-lg font-medium transition ${
                 model === m
                   ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-900 hover:bg-gray-300"
+                  : "bg-blue-100 text-blue-700 hover:bg-blue-200"
               }`}
             >
               {m === "first_touch"

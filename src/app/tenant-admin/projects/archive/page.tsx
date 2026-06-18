@@ -50,7 +50,6 @@ export default function ProjectArchivePage() {
     try {
       await ProjectService.restoreProject(tenantSlug, project.id);
       setProjects(prev => prev.filter(p => p.id !== project.id));
-      console.log('Project restored successfully:', project.name);
     } catch (error) {
       console.error('Failed to restore project:', error);
       throw error;
@@ -63,7 +62,6 @@ export default function ProjectArchivePage() {
     try {
       await ProjectService.deleteProject(tenantSlug, project.id);
       setProjects(prev => prev.filter(p => p.id !== project.id));
-      console.log('Project deleted successfully:', project.name);
     } catch (error) {
       console.error('Failed to delete project:', error);
       throw error;
@@ -78,7 +76,6 @@ export default function ProjectArchivePage() {
       await ProjectService.bulkRestoreProjects(tenantSlug, projectIds);
       setProjects(prev => prev.filter(p => !selectedProjects.has(p.id)));
       setSelectedProjects(new Set());
-      console.log('Bulk restore successful');
     } catch (error) {
       console.error('Failed to bulk restore projects:', error);
       throw error;

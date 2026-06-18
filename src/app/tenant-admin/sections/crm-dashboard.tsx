@@ -1671,7 +1671,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
                   className={`px-3 py-1 rounded-full text-sm font-medium transition ${
                     contactFilter === option.value
                       ? "bg-blue-600 text-white"
-                      : "bg-gray-200 text-[#F8FAFC] hover:bg-gray-300"
+                      : "bg-blue-100 text-blue-700 hover:bg-blue-200"
                   }`}
                 >
                   {option.label}

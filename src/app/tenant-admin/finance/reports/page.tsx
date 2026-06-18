@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useTenantContext } from "@/components/tenant-admin/tenant-context";
 import {
   Download,
   BarChart3,
@@ -18,24 +19,79 @@ interface Report {
   description: string;
   type: "income_statement" | "balance_sheet" | "cash_flow" | "expense_breakdown";
   lastGenerated: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
 }
 
 export default function FinanceReportsPage() {
+  const { tenantSlug } = useTenantContext();
   const [selectedPeriod, setSelectedPeriod] = useState("month");
   const [startDate, setStartDate] = useState("2024-03-01");
   const [endDate, setEndDate] = useState("2024-03-31");
   const [isGenerating, setIsGenerating] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!tenantSlug) return;
+    async function loadReports() {
+      try {
+        const res = await fetch(`/api/finance/reports?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setReports(data.reports || []);
+        }
+      } catch (err) {
+        console.error('Failed to load reports:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadReports();
+  }, [tenantSlug]);
+
+  const getReportIcon = (type?: string) => {
+    switch (type) {
+      case 'income_statement': return <TrendingUp className="h-8 w-8 text-blue-600" />;
+      case 'balance_sheet': return <DollarSign className="h-8 w-8 text-green-600" />;
+      case 'cash_flow': return <LineChart className="h-8 w-8 text-purple-600" />;
+      case 'expense_breakdown': return <PieChart className="h-8 w-8 text-orange-600" />;
+      default: return <FileText className="h-8 w-8 text-gray-600" />;
+    }
+  };
+
+  const handleExportReport = async (report: Report) => {
+    if (!tenantSlug) return;
+    try {
+      const res = await fetch(`/api/finance/reports/${encodeURIComponent(report.id)}/export?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${report.name.replace(/\s+/g, '_')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      setAlert({ type: 'success', message: `${report.name} exported successfully` });
+    } catch (err) {
+      setAlert({ type: 'error', message: err instanceof Error ? err.message : 'Export failed' });
+    }
+  };
 
   const handleGenerateReport = async () => {
+    if (!tenantSlug) return;
     setIsGenerating(true);
     setAlert(null);
-    
     try {
-      // Simulate API call to generate report
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      const res = await fetch('/api/finance/reports/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantSlug, period: selectedPeriod, startDate, endDate }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to generate report');
       setAlert({
         type: 'success',
         message: `Financial report generated successfully for ${selectedPeriod} period (${startDate} to ${endDate})`
@@ -43,14 +99,14 @@ export default function FinanceReportsPage() {
     } catch (error) {
       setAlert({
         type: 'error',
-        message: 'Failed to generate report. Please try again.'
+        message: error instanceof Error ? error.message : 'Failed to generate report. Please try again.'
       });
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const reports: Report[] = [
+  const defaultReports: Report[] = [
     {
       id: "1",
       name: "Income Statement",
@@ -84,6 +140,8 @@ export default function FinanceReportsPage() {
       icon: <PieChart className="h-8 w-8 text-orange-600" />,
     },
   ];
+
+  const displayReports = reports.length > 0 ? reports : defaultReports;
 
   const incomeStatementData = {
     totalRevenue: 125430,
@@ -194,14 +252,14 @@ export default function FinanceReportsPage() {
 
         {/* Reports Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {reports.map((report) => (
+          {displayReports.map((report) => (
             <div
               key={report.id}
               className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
-                  {report.icon}
+                  {report.icon || getReportIcon(report.type)}
                   <div>
                     <h3 className="text-lg font-bold text-black">{report.name}</h3>
                     <p className="text-sm text-black mt-1">{report.description}</p>
@@ -213,7 +271,10 @@ export default function FinanceReportsPage() {
                 <p className="text-xs text-black">
                   Last generated: {new Date(report.lastGenerated).toLocaleDateString()}
                 </p>
-                <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-lg transition">
+                <button
+                  onClick={() => handleExportReport(report)}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-lg transition"
+                >
                   <Download className="h-4 w-4" />
                   Export
                 </button>

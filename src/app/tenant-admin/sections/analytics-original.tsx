@@ -36,7 +36,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts)}`);
+      const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts ?? '')}`);
       const payload = await res.json().catch(() => null);
       if (res.ok && payload) {
         setReports(payload.reports ?? []);
@@ -61,7 +61,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
     }
     try {
       const payload = Object.assign({}, reportForm, { type: "report" });
-      const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -82,7 +82,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
     if (!confirm("Delete this report? This action cannot be undone.")) return;
     try {
       const res = await fetch(
-        `/api/tenant/analytics?id=${encodeURIComponent(id)}&type=report&tenantSlug=${encodeURIComponent(ts)}`,
+        `/api/tenant/analytics?id=${encodeURIComponent(id)}&type=report&tenantSlug=${encodeURIComponent(ts ?? '')}`,
         { method: "DELETE" }
       );
       if (!res.ok) throw new Error("Failed to delete report");
@@ -102,7 +102,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
     }
     try {
       const payload = Object.assign({}, exportForm, { type: "export" });
-      const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -123,7 +123,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
     if (!confirm("Stop this export? It will no longer be sent.")) return;
     try {
       const res = await fetch(
-        `/api/tenant/analytics?id=${encodeURIComponent(id)}&type=export&tenantSlug=${encodeURIComponent(ts)}`,
+        `/api/tenant/analytics?id=${encodeURIComponent(id)}&type=export&tenantSlug=${encodeURIComponent(ts ?? '')}`,
         { method: "DELETE" }
       );
       if (!res.ok) throw new Error("Failed to delete export");

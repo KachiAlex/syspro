@@ -561,7 +561,7 @@ export default function ExpensesSection({ tenantSlug }: { tenantSlug?: string | 
         onClose={() => setShowSubmitExpense(false)}
         onSubmit={handleSubmitExpense}
         isLoading={submittingExpense}
-        tenantSlug={ts}
+        tenantSlug={ts ?? ''}
       />
 
       <ViewExpenseModal

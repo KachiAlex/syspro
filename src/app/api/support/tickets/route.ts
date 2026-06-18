@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import {
-  type CreateTicketInput,
-  type TicketFilters,
   type TicketStatus,
   type TicketType,
   type SupportTicket,
@@ -11,6 +9,8 @@ import {
   createTicket,
   listTickets,
   getTenantSupportData,
+  type CreateTicketInput,
+  type TicketFilters,
 } from "@/lib/support-db";
 import { autoTriageTicket } from '@/lib/itsupport/automation';
 import { validateTenantContext } from "@/lib/tenant-admin/utils";

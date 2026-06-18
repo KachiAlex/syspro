@@ -40,7 +40,7 @@ export default function CostAllocationSection({ tenantSlug }: { tenantSlug?: str
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/tenant/cost-allocation?tenantSlug=${encodeURIComponent(ts)}`);
+      const res = await fetch(`/api/tenant/cost-allocation?tenantSlug=${encodeURIComponent(ts ?? '')}`);
       const payload = await res.json().catch(() => null);
       if (res.ok && payload) {
         setCostCenters(payload.costCenters ?? []);
@@ -63,7 +63,7 @@ export default function CostAllocationSection({ tenantSlug }: { tenantSlug?: str
     if (errors.length > 0) return;
 
     try {
-      const res = await fetch(`/api/tenant/cost-allocation?tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/cost-allocation?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -90,7 +90,7 @@ export default function CostAllocationSection({ tenantSlug }: { tenantSlug?: str
     if (!confirm("Are you sure? This will remove the cost center and its budget allocation.")) return;
     try {
       const res = await fetch(
-        `/api/tenant/cost-allocation?id=${encodeURIComponent(id)}&type=cost_center&tenantSlug=${encodeURIComponent(ts)}`,
+        `/api/tenant/cost-allocation?id=${encodeURIComponent(id)}&type=cost_center&tenantSlug=${encodeURIComponent(ts ?? '')}`,
         { method: "DELETE" }
       );
       if (!res.ok) throw new Error("Failed to delete cost center");

@@ -52,7 +52,7 @@ export default function StaffReportsViewer({
         setLoading(true);
 
         // Fetch staff reports
-        const reportsParams = new URLSearchParams({ tenantSlug });
+        const reportsParams = new URLSearchParams({ tenantSlug: tenantSlug ?? '' });
         if (viewMode === 'hr') {
           reportsParams.set('status', 'pending'); // HR sees pending reports
         }
@@ -64,11 +64,11 @@ export default function StaffReportsViewer({
         const reportsData = await reportsResponse.json();
 
         // Fetch staff members for name resolution
-        const staffResponse = await fetch(`/api/hr/employees?tenantSlug=${tenantSlug}`);
+        const staffResponse = await fetch(`/api/hr/employees?tenantSlug=${tenantSlug ?? ''}`);
         let staffData: StaffMember[] = [];
         if (staffResponse.ok) {
           const staffResult = await staffResponse.json();
-          staffData = staffResult.employees?.[tenantSlug] || [];
+          staffData = tenantSlug ? (staffResult.employees?.[tenantSlug] || []) : [];
         }
 
         setReports(reportsData.reports || []);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ShoppingCart, Users, Package, Boxes, TrendingUp, Plus, Search, Filter, Download } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
@@ -20,51 +20,110 @@ export default function SalesPage() {
   const [showSupplierModal, setShowSupplierModal] = useState(false);
   const [showInventoryModal, setShowInventoryModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [stats, setStats] = useState({ orders: 0, revenue: 0, suppliers: 0, inventoryValue: 0 });
+
+  // Load overview stats
+  useEffect(() => {
+    if (!tenantSlug) return;
+    async function loadStats() {
+      try {
+        const [ordersRes, inventoryRes, suppliersRes] = await Promise.all([
+          fetch(`/api/sales/orders?tenantSlug=${encodeURIComponent(tenantSlug)}&limit=1`),
+          fetch(`/api/inventory?tenantSlug=${encodeURIComponent(tenantSlug)}&limit=1`),
+          fetch(`/api/suppliers?tenantSlug=${encodeURIComponent(tenantSlug)}&limit=1`),
+        ]);
+        const ordersData = ordersRes.ok ? await ordersRes.json() : {};
+        const inventoryData = inventoryRes.ok ? await inventoryRes.json() : {};
+        const suppliersData = suppliersRes.ok ? await suppliersRes.json() : {};
+        setStats({
+          orders: ordersData.total || ordersData.orders?.length || 0,
+          revenue: ordersData.revenue || 0,
+          suppliers: suppliersData.total || suppliersData.suppliers?.length || 0,
+          inventoryValue: inventoryData.totalValue || 0,
+        });
+      } catch (err) {
+        console.error('Failed to load sales stats:', err);
+      }
+    }
+    loadStats();
+  }, [tenantSlug]);
 
   // Modal handlers
   const handleCreateSalesOrder = async (data: any) => {
+    if (!tenantSlug) return;
     setIsLoading(true);
     try {
-      console.log('Creating sales order:', data);
-      // TODO: API call to create sales order
+      const res = await fetch('/api/sales/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, tenantSlug }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to create sales order');
+      setShowSalesOrderModal(false);
     } catch (error) {
       console.error('Error creating sales order:', error);
+      alert(error instanceof Error ? error.message : 'Failed to create sales order');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCreatePurchaseOrder = async (data: any) => {
+    if (!tenantSlug) return;
     setIsLoading(true);
     try {
-      console.log('Creating purchase order:', data);
-      // TODO: API call to create purchase order
+      const res = await fetch('/api/purchases/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, tenantSlug }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to create purchase order');
+      setShowPurchaseOrderModal(false);
     } catch (error) {
       console.error('Error creating purchase order:', error);
+      alert(error instanceof Error ? error.message : 'Failed to create purchase order');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCreateSupplier = async (data: any) => {
+    if (!tenantSlug) return;
     setIsLoading(true);
     try {
-      console.log('Creating supplier:', data);
-      // TODO: API call to create supplier
+      const res = await fetch('/api/suppliers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, tenantSlug }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to create supplier');
+      setShowSupplierModal(false);
     } catch (error) {
       console.error('Error creating supplier:', error);
+      alert(error instanceof Error ? error.message : 'Failed to create supplier');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleAddInventoryItem = async (data: any) => {
+    if (!tenantSlug) return;
     setIsLoading(true);
     try {
-      console.log('Adding inventory item:', data);
-      // TODO: API call to add inventory item
+      const res = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, tenantSlug }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to add inventory item');
+      setShowInventoryModal(false);
     } catch (error) {
       console.error('Error adding inventory item:', error);
+      alert(error instanceof Error ? error.message : 'Failed to add inventory item');
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +157,7 @@ export default function SalesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Sales Orders</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">0</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{stats.orders}</p>
             </div>
             <ShoppingCart className="w-12 h-12 text-blue-100" />
           </div>
@@ -109,7 +168,7 @@ export default function SalesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-              <p className="text-3xl font-bold text-green-600 mt-2">$0</p>
+              <p className="text-3xl font-bold text-green-600 mt-2">${stats.revenue.toLocaleString()}</p>
             </div>
             <TrendingUp className="w-12 h-12 text-green-100" />
           </div>
@@ -120,7 +179,7 @@ export default function SalesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Active Suppliers</p>
-              <p className="text-3xl font-bold text-purple-600 mt-2">0</p>
+              <p className="text-3xl font-bold text-purple-600 mt-2">{stats.suppliers}</p>
             </div>
             <Users className="w-12 h-12 text-purple-100" />
           </div>
@@ -131,7 +190,7 @@ export default function SalesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Inventory Value</p>
-              <p className="text-3xl font-bold text-amber-600 mt-2">$0</p>
+              <p className="text-3xl font-bold text-amber-600 mt-2">${stats.inventoryValue.toLocaleString()}</p>
             </div>
             <Boxes className="w-12 h-12 text-amber-100" />
           </div>

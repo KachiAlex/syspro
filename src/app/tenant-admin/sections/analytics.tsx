@@ -58,6 +58,14 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
   const [selectedPeriod, setSelectedPeriod] = useState("30d");
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [showViewReport, setShowViewReport] = useState(false);
+  const [dashboardMetrics, setDashboardMetrics] = useState<{
+    revenue?: { current: number; previous: number; growth: number; trend: string };
+    customers?: { current: number; previous: number; growth: number; trend: string };
+    orders?: { current: number; previous: number; growth: number; trend: string };
+    conversion?: { current: number; previous: number; growth: number; trend: string };
+    topProducts?: Array<{ name: string; sales: number; revenue: number }>;
+    recentActivity?: Array<{ type: string; description: string; amount: string; time: string }>;
+  }>({});
   const [showEditReport, setShowEditReport] = useState(false);
   const [selectedExport, setSelectedExport] = useState<Export | null>(null);
   const [showRunExport, setShowRunExport] = useState(false);
@@ -71,12 +79,20 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts)}`);
+      const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts ?? '')}`);
       const payload = await res.json().catch(() => null);
       if (res.ok && payload) {
         const data = payload.data || payload;
         setReports(data.reports ?? []);
         setExports(data.exports ?? []);
+        setDashboardMetrics({
+          revenue: data.revenue,
+          customers: data.customers,
+          orders: data.orders,
+          conversion: data.conversion,
+          topProducts: data.topProducts,
+          recentActivity: data.recentActivity,
+        });
       }
     } catch (err) {
       console.error(err);
@@ -97,7 +113,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
     }
     try {
       const payload = Object.assign({}, reportForm, { type: "report" });
-      const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -118,7 +134,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
     if (!confirm("Delete this report? This action cannot be undone.")) return;
     try {
       const res = await fetch(
-        `/api/tenant/analytics?id=${encodeURIComponent(id)}&type=report&tenantSlug=${encodeURIComponent(ts)}`,
+        `/api/tenant/analytics?id=${encodeURIComponent(id)}&type=report&tenantSlug=${encodeURIComponent(ts ?? '')}`,
         { method: "DELETE" }
       );
       if (!res.ok) throw new Error("Failed to delete report");
@@ -138,7 +154,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
     }
     try {
       const payload = Object.assign({}, exportForm, { type: "export" });
-      const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -159,7 +175,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
     if (!confirm("Stop this export? It will no longer be sent.")) return;
     try {
       const res = await fetch(
-        `/api/tenant/analytics?id=${encodeURIComponent(id)}&type=export&tenantSlug=${encodeURIComponent(ts)}`,
+        `/api/tenant/analytics?id=${encodeURIComponent(id)}&type=export&tenantSlug=${encodeURIComponent(ts ?? '')}`,
         { method: "DELETE" }
       );
       if (!res.ok) throw new Error("Failed to delete export");
@@ -181,7 +197,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
     if (!selectedReport) return;
     try {
       const res = await fetch(
-        `/api/tenant/analytics?action=download&reportId=${encodeURIComponent(selectedReport.id)}&format=${encodeURIComponent(format)}&tenantSlug=${encodeURIComponent(ts)}`
+        `/api/tenant/analytics?action=download&reportId=${encodeURIComponent(selectedReport.id)}&format=${encodeURIComponent(format)}&tenantSlug=${encodeURIComponent(ts ?? '')}`
       );
       if (res.ok) {
         const blob = await res.blob();
@@ -209,7 +225,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
     setUpdatingReport(true);
     try {
       const res = await fetch(
-        `/api/tenant/analytics?id=${encodeURIComponent(selectedReport.id)}&type=report&tenantSlug=${encodeURIComponent(ts)}`,
+        `/api/tenant/analytics?id=${encodeURIComponent(selectedReport.id)}&type=report&tenantSlug=${encodeURIComponent(ts ?? '')}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -235,7 +251,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
     setRunningExport(true);
     try {
       const res = await fetch(
-        `/api/tenant/analytics?action=run_export&exportId=${encodeURIComponent(selectedExport.id)}&format=${encodeURIComponent(format || selectedExport.format)}&tenantSlug=${encodeURIComponent(ts)}`,
+        `/api/tenant/analytics?action=run_export&exportId=${encodeURIComponent(selectedExport.id)}&format=${encodeURIComponent(format || selectedExport.format)}&tenantSlug=${encodeURIComponent(ts ?? '')}`,
         { method: "POST" }
       );
       if (!res.ok) throw new Error("Failed to run export");
@@ -256,7 +272,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
     setUpdatingExport(true);
     try {
       const res = await fetch(
-        `/api/tenant/analytics?id=${encodeURIComponent(selectedExport.id)}&type=export&tenantSlug=${encodeURIComponent(ts)}`,
+        `/api/tenant/analytics?id=${encodeURIComponent(selectedExport.id)}&type=export&tenantSlug=${encodeURIComponent(ts ?? '')}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -275,47 +291,6 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
       setUpdatingExport(false);
     }
   }
-
-  // Mock analytics data for demonstration
-  const analyticsData = {
-    revenue: {
-      current: 245678,
-      previous: 198456,
-      growth: 23.8,
-      trend: "up"
-    },
-    customers: {
-      current: 1234,
-      previous: 1156,
-      growth: 6.7,
-      trend: "up"
-    },
-    orders: {
-      current: 3456,
-      previous: 3234,
-      growth: 6.9,
-      trend: "up"
-    },
-    conversion: {
-      current: 3.2,
-      previous: 2.8,
-      growth: 14.3,
-      trend: "up"
-    },
-    topProducts: [
-      { name: "Dell Latitude Laptop", sales: 234, revenue: 304866 },
-      { name: "27\" Monitor", sales: 189, revenue: 56511 },
-      { name: "Ergonomic Chair", sales: 156, revenue: 70200 },
-      { name: "Wireless Mouse", sales: 145, revenue: 7250 },
-      { name: "Mechanical Keyboard", sales: 123, revenue: 24600 }
-    ],
-    recentActivity: [
-      { type: "sale", description: "New order #1234", amount: "$1,299", time: "2 hours ago" },
-      { type: "customer", description: "New customer registered", amount: "", time: "3 hours ago" },
-      { type: "sale", description: "Order #1233 shipped", amount: "$450", time: "5 hours ago" },
-      { type: "alert", description: "Low stock alert", amount: "", time: "6 hours ago" }
-    ]
-  };
 
   return (
     <div className="space-y-6">
@@ -354,33 +329,33 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
         {[
           {
             title: "Revenue",
-            value: `$${analyticsData.revenue.current.toLocaleString()}`,
-            change: analyticsData.revenue.growth,
-            trend: analyticsData.revenue.trend,
+            value: `$${(dashboardMetrics.revenue?.current ?? 0).toLocaleString()}`,
+            change: dashboardMetrics.revenue?.growth ?? 0,
+            trend: dashboardMetrics.revenue?.trend ?? "up",
             icon: DollarSign,
             color: "text-green-600"
           },
           {
             title: "Customers",
-            value: analyticsData.customers.current.toLocaleString(),
-            change: analyticsData.customers.growth,
-            trend: analyticsData.customers.trend,
+            value: (dashboardMetrics.customers?.current ?? 0).toLocaleString(),
+            change: dashboardMetrics.customers?.growth ?? 0,
+            trend: dashboardMetrics.customers?.trend ?? "up",
             icon: Users,
             color: "text-blue-600"
           },
           {
             title: "Orders",
-            value: analyticsData.orders.current.toLocaleString(),
-            change: analyticsData.orders.growth,
-            trend: analyticsData.orders.trend,
+            value: (dashboardMetrics.orders?.current ?? 0).toLocaleString(),
+            change: dashboardMetrics.orders?.growth ?? 0,
+            trend: dashboardMetrics.orders?.trend ?? "up",
             icon: ShoppingCart,
             color: "text-purple-600"
           },
           {
             title: "Conversion Rate",
-            value: `${analyticsData.conversion.current}%`,
-            change: analyticsData.conversion.growth,
-            trend: analyticsData.conversion.trend,
+            value: `${dashboardMetrics.conversion?.current ?? 0}%`,
+            change: dashboardMetrics.conversion?.growth ?? 0,
+            trend: dashboardMetrics.conversion?.trend ?? "up",
             icon: Target,
             color: "text-orange-600"
           }
@@ -450,7 +425,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
             <TrendingUp className="w-5 h-5 text-slate-400" />
           </div>
           <div className="space-y-3">
-            {analyticsData.topProducts.map((product, index) => (
+            {(dashboardMetrics.topProducts ?? []).map((product, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
@@ -476,7 +451,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
             <Activity className="w-5 h-5 text-slate-400" />
           </div>
           <div className="space-y-3">
-            {analyticsData.recentActivity.map((activity, index) => (
+            {(dashboardMetrics.recentActivity ?? []).map((activity, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center ${

@@ -160,7 +160,7 @@ export default function EnhancedWorkflowForm({
         };
 
         const response = await handleApiCall(() => 
-          fetch(`/api/tenant/workflows?tenantSlug=${encodeURIComponent(tenantSlug )}`, {
+          fetch(`/api/tenant/workflows?tenantSlug=${encodeURIComponent(tenantSlug ?? '')}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
@@ -182,11 +182,8 @@ export default function EnhancedWorkflowForm({
         setIsSubmitting(false);
       }
     },
-    onSuccess: (values) => {
-      console.log("Form submitted successfully:", values);
-    },
+    onSuccess: () => {},
     onError: (errors) => {
-      console.log("Form validation errors:", errors);
       toast.error("Validation Error", "Please fix the errors and try again");
     },
   });
@@ -464,35 +461,21 @@ export default function EnhancedWorkflowForm({
               })),
             };
 
-            // TODO: Replace with actual API call
-            console.log("Creating workflow:", payload);
-            
-            // Create a mock Workflow object for the success callback
-            const workflow: Workflow = {
-              id: `workflow-${Date.now()}` as ResourceId,
-              tenantSlug: tenantSlug as TenantSlug,
-              name: values.name,
-              type: values.type,
-              trigger: 'manual',
-              status: 'draft',
-              description: values.description,
-              isActive: false,
-              steps: steps.map((s, i) => ({
-                id: `step-${i + 1}`,
-                name: s.title,
-                type: 'manual',
-                action: { type: 'assign', assignee: s.assignee },
-                conditions: [],
-                nextStepId: i < steps.length - 1 ? `step-${i + 2}` : undefined,
-              })),
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            };
-            
-            toast.success("Workflow Created", "Workflow has been created successfully");
-            
-            if (onSuccess) {
-              onSuccess(workflow);
+            const response = await handleApiCall(() =>
+              fetch(`/api/tenant/workflows?tenantSlug=${encodeURIComponent(tenantSlug ?? '')}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              }),
+              {
+                context: "Workflow Creation",
+                showUserMessage: true,
+              }
+            );
+
+            if (response.success && response.data) {
+              toast.success("Workflow Created", "Workflow has been created successfully");
+              onSuccess?.(response.data as Workflow);
             }
           } catch (error) {
             console.error("Workflow creation error:", error);

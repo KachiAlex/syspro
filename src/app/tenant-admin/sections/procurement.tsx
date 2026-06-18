@@ -8,7 +8,7 @@ interface Procurement {
 }
 
 const ProcurementComponent: React.FC<Procurement> = ({ tenantSlug }) => {
-  const [requisitions] = useState([]);
+  const [requisitions] = useState<any[]>([]);
 
   const [alert, setAlert] = useState<{ type: 'success' | 'info'; message: string } | null>(null);
 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getTenantSupportData } from '@/lib/support-data';
+import { getTenantSupportData } from '@/lib/support-db';
 
 export async function GET(request: Request) {
   try {
@@ -8,9 +8,9 @@ export async function GET(request: Request) {
     // WARNING: Do not enable in production.
     // Build list of tenants by attempting common keys (seed creates many on demand)
     const tenants = Object.keys((require('@/lib/support-data') as any).store || {});
-    const summary = tenants.map((t) => {
+    const summary = await Promise.all(tenants.map(async (t) => {
       try {
-        const data = getTenantSupportData(t as string);
+        const data = await getTenantSupportData(t as string);
         return {
           tenant: t,
           tickets: data.tickets.length,
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
       } catch (e) {
         return { tenant: t, error: String(e) };
       }
-    });
+    }));
 
     return NextResponse.json({ ok: true, tenants: summary });
   } catch (err) {

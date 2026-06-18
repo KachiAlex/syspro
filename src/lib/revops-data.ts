@@ -291,6 +291,18 @@ export function listCampaigns(tenantSlug: string, filters: CampaignFilters = {})
   });
 }
 
+function getCampaignRecord(tenantSlug: string, campaignId: string): Campaign | null {
+  const store = ensureStore(tenantSlug);
+  return store.campaigns.find((c) => c.id === campaignId) || null;
+}
+
+function recalcCampaignFinancials(store: RevOpsTenantStore, campaignId: string): void {
+  const campaign = store.campaigns.find((c) => c.id === campaignId);
+  if (!campaign) return;
+  const costs = store.campaignCosts.filter((c) => c.campaignId === campaignId);
+  campaign.committedSpend = costs.reduce((sum, c) => sum + c.amount, 0);
+}
+
 export function getCampaign(tenantSlug: string, campaignId: string): Campaign | null {
   return getCampaignRecord(tenantSlug, campaignId);
 }

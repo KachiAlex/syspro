@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Eye, Edit, Trash2, Search, Mail, Phone } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { 
   CreateSupplierModal, 
   ViewSupplierModal, 
+  EditSupplierModal,
   DeleteConfirmationModal 
 } from '@/app/tenant-admin/sections/sales-procurement-modals';
 
@@ -30,9 +31,11 @@ export default function SuppliersPage() {
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const statuses = ['All', 'Active', 'Inactive', 'On Hold'];
 
@@ -45,14 +48,44 @@ export default function SuppliersPage() {
     return true;
   });
 
+  // Load suppliers on mount
+  useEffect(() => {
+    if (!tenantSlug) return;
+    async function loadSuppliers() {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/suppliers?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSuppliers(data.suppliers || []);
+        } else {
+          throw new Error('Failed to fetch suppliers');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load suppliers');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadSuppliers();
+  }, [tenantSlug]);
+
   // Modal handlers
   const handleCreateSupplier = async (data: any) => {
+    if (!tenantSlug) return;
     setIsLoading(true);
     try {
-      console.log('Creating supplier:', data);
-      // TODO: API call to create supplier
-    } catch (error) {
-      console.error('Error creating supplier:', error);
+      const res = await fetch('/api/suppliers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, tenantSlug }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to create supplier');
+      setSuppliers(prev => [payload.supplier, ...prev]);
+      setShowCreateModal(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create supplier');
     } finally {
       setIsLoading(false);
     }
@@ -60,17 +93,19 @@ export default function SuppliersPage() {
 
   const handleDeleteSupplier = async () => {
     if (!selectedSupplier) return;
-    
     setIsLoading(true);
     try {
-      console.log('Deleting supplier:', selectedSupplier);
-      // TODO: API call to delete supplier
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      
-      // Remove supplier from local state
-      setSuppliers(suppliers.filter(supplier => supplier.id !== selectedSupplier.id));
-    } catch (error) {
-      console.error('Error deleting supplier:', error);
+      const res = await fetch(`/api/suppliers/${selectedSupplier.id}?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.error || 'Failed to delete supplier');
+      }
+      setSuppliers(prev => prev.filter(supplier => supplier.id !== selectedSupplier.id));
+      setShowDeleteModal(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete supplier');
     } finally {
       setIsLoading(false);
     }
@@ -83,8 +118,27 @@ export default function SuppliersPage() {
 
   const handleEditSupplier = (supplier: Supplier) => {
     setSelectedSupplier(supplier);
-    // TODO: Implement edit modal
-    console.log('Edit supplier:', supplier);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateSupplier = async (data: any) => {
+    if (!selectedSupplier || !tenantSlug) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/suppliers/${selectedSupplier.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, tenantSlug }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to update supplier');
+      setSuppliers(prev => prev.map(s => s.id === selectedSupplier.id ? { ...s, ...payload.supplier } : s));
+      setShowEditModal(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update supplier');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDeleteClick = (supplier: Supplier) => {
@@ -274,6 +328,14 @@ export default function SuppliersPage() {
       <ViewSupplierModal
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
+        supplier={selectedSupplier}
+      />
+
+      <EditSupplierModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSubmit={handleUpdateSupplier}
+        isLoading={isLoading}
         supplier={selectedSupplier}
       />
 

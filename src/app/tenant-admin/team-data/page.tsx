@@ -311,25 +311,74 @@ export default function TeamDataPage() {
           {/* Analytics Tab */}
           {activeTab === 'analytics' && (
             <div className="space-y-6">
-              <div className="text-center py-12">
-                <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Advanced Analytics</h3>
-                <p className="text-gray-600 mb-4">
-                  Detailed analytics and insights coming soon
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Performance Metrics</h4>
-                    <p className="text-sm text-gray-600">Track team performance over time</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Data Quality Trends</h4>
-                    <p className="text-sm text-gray-600">Monitor data quality improvements</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Comparative Analysis</h4>
-                    <p className="text-sm text-gray-600">Compare performance across teams</p>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-2">Total Submissions</h4>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalSubmissions}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-2">Avg Quality Score</h4>
+                  <p className="text-2xl font-bold text-gray-900">{stats.avgQuality}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-2">Top Performer</h4>
+                  <p className="text-xl font-bold text-gray-900">{topPerformers[0]?.name || 'N/A'}</p>
+                  <p className="text-sm text-gray-600">Score: {topPerformers[0]?.score || 0}</p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performers</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Department</th>
+                        <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Submissions</th>
+                        <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Quality Score</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topPerformers.map((p, idx) => (
+                        <tr key={idx} className="border-t">
+                          <td className="px-4 py-2 text-sm text-gray-900">{p.name}</td>
+                          <td className="px-4 py-2 text-sm text-gray-600 capitalize">{p.department}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900 text-right">{p.submissions}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900 text-right">{p.score.toFixed(1)}</td>
+                        </tr>
+                      ))}
+                      {topPerformers.length === 0 && (
+                        <tr><td colSpan={4} className="px-4 py-6 text-center text-sm text-gray-500">No analytics data available</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Department Breakdown</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Department</th>
+                        <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Members</th>
+                        <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Submissions</th>
+                        <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Avg Quality</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {departmentStats.map((dept) => (
+                        <tr key={dept.name} className="border-t">
+                          <td className="px-4 py-2 text-sm text-gray-900">{dept.name}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900 text-right">{dept.members}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900 text-right">{dept.submissions}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900 text-right">{dept.avgQuality.toFixed(1)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>

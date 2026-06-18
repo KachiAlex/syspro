@@ -127,7 +127,7 @@ export default function SecuritySection({ tenantSlug }: { tenantSlug?: string | 
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/tenant/security?tenantSlug=${encodeURIComponent(ts)}&limit=100&timeRange=${selectedTimeRange}`);
+      const res = await fetch(`/api/tenant/security?tenantSlug=${encodeURIComponent(ts ?? '')}&limit=100&timeRange=${selectedTimeRange}`);
       const payload = await res.json().catch(() => null);
       if (res.ok && payload) {
         setLogs(payload.auditLogs ?? []);
@@ -150,7 +150,7 @@ export default function SecuritySection({ tenantSlug }: { tenantSlug?: string | 
   async function toggleMfaEnforcement() {
     const newEnforcement = mfaSettings?.enforcement === "optional" ? "required" : "optional";
     try {
-      const res = await fetch(`/api/tenant/security?tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/security?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mfaUpdates: { enforcement: newEnforcement } }),
@@ -170,7 +170,7 @@ export default function SecuritySection({ tenantSlug }: { tenantSlug?: string | 
       const policy = securityPolicies.find(p => p.id === policyId);
       if (!policy) return;
       
-      const res = await fetch(`/api/tenant/security/policies/${encodeURIComponent(policyId)}?tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/security/policies/${encodeURIComponent(policyId)}?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled: !policy.enabled }),
@@ -187,7 +187,7 @@ export default function SecuritySection({ tenantSlug }: { tenantSlug?: string | 
 
   async function runSecurityScan() {
     try {
-      const res = await fetch(`/api/tenant/security/scan?tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/security/scan?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "POST",
       });
       if (!res.ok) throw new Error("Failed to start security scan");

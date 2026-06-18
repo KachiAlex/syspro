@@ -98,7 +98,7 @@ export default function MarketingSalesDashboard({ tenantSlug }: { tenantSlug?: s
       <div className="bg-[#111827] rounded-lg shadow-sm">
         {activeTab === "overview" && (
           <OverviewTab
-            tenantSlug={ts}
+            tenantSlug={ts ?? ''}
             onError={setError}
             onNavigateTab={handleNavigateTab}
             onOpenCreateCampaign={handleOpenCreateCampaign}
@@ -107,15 +107,15 @@ export default function MarketingSalesDashboard({ tenantSlug }: { tenantSlug?: s
         )}
         {activeTab === "campaigns" && (
           <CampaignsTab
-            tenantSlug={ts}
+            tenantSlug={ts ?? ''}
             onError={setError}
             autoOpenCreate={showCreateCampaignFromOverview}
             onAutoOpenCleared={() => setShowCreateCampaignFromOverview(false)}
           />
         )}
-        {activeTab === "attribution" && <AttributionTab tenantSlug={ts} onError={setError} />}
-        {activeTab === "performance" && <SalesPerformanceTab tenantSlug={ts} onError={setError} />}
-        {activeTab === "forecasting" && <ForecastingTab tenantSlug={ts} onError={setError} />}
+        {activeTab === "attribution" && <AttributionTab tenantSlug={ts ?? ''} onError={setError} />}
+        {activeTab === "performance" && <SalesPerformanceTab tenantSlug={ts ?? ''} onError={setError} />}
+        {activeTab === "forecasting" && <ForecastingTab tenantSlug={ts ?? ''} onError={setError} />}
       </div>
     </div>
   );

@@ -94,7 +94,7 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
     setLoading(true);
     setServerError(null);
     try {
-      const res = await fetch(`/api/tenant/workflows?tenantSlug=${encodeURIComponent(ts)}`, { cache: "no-store" });
+      const res = await fetch(`/api/tenant/workflows?tenantSlug=${encodeURIComponent(ts ?? '')}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load workflows");
       const payload = await res.json();
       setWorkflows(Array.isArray(payload.workflows) ? payload.workflows : []);

@@ -39,7 +39,7 @@ export default function SecuritySection({ tenantSlug }: { tenantSlug?: string | 
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/tenant/security?tenantSlug=${encodeURIComponent(ts)}&limit=50`);
+      const res = await fetch(`/api/tenant/security?tenantSlug=${encodeURIComponent(ts ?? '')}&limit=50`);
       const payload = await res.json().catch(() => null);
       if (res.ok && payload) {
         setLogs(payload.auditLogs ?? []);
@@ -60,7 +60,7 @@ export default function SecuritySection({ tenantSlug }: { tenantSlug?: string | 
   async function toggleMfaEnforcement() {
     const newEnforcement = mfaSettings?.enforcement === "optional" ? "required" : "optional";
     try {
-      const res = await fetch(`/api/tenant/security?tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/security?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mfaUpdates: { enforcement: newEnforcement } }),

@@ -53,7 +53,7 @@ export default function LeadsPage({ tenantSlug }: { tenantSlug?: string | null }
     setError(null);
     const offset = p * size;
     const params = new URLSearchParams({
-      tenantSlug: ts,
+      tenantSlug: ts ?? '',
       limit: String(size),
       offset: String(offset),
       ...(searchTerm && { search: searchTerm }),
@@ -478,7 +478,7 @@ export default function LeadsPage({ tenantSlug }: { tenantSlug?: string | null }
           loadLeads(0, pageSize);
           setTimeout(() => setSuccess(null), 3000);
         }}
-        tenantSlug={ts}
+        tenantSlug={ts ?? ''}
       />
 
       {selectedLead && (
@@ -495,7 +495,7 @@ export default function LeadsPage({ tenantSlug }: { tenantSlug?: string | null }
             loadLeads(page, pageSize);
             setTimeout(() => setSuccess(null), 3000);
           }}
-          tenantSlug={ts}
+          tenantSlug={ts ?? ''}
           initialData={selectedLead}
         />
       )}

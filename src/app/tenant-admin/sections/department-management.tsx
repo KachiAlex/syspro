@@ -36,7 +36,7 @@ export default function DepartmentManagement({ tenantSlug }: { tenantSlug?: stri
     setLoading(true);
     setServerError(null);
     try {
-      const res = await fetch(`/api/tenant/departments?tenantSlug=${encodeURIComponent(ts)}`, { cache: "no-store" });
+      const res = await fetch(`/api/tenant/departments?tenantSlug=${encodeURIComponent(ts ?? '')}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load departments");
       const payload = await res.json();
       setDepartments(Array.isArray(payload.departments) ? payload.departments : []);
@@ -59,7 +59,7 @@ export default function DepartmentManagement({ tenantSlug }: { tenantSlug?: stri
 
     try {
       const payload = { name: form.values.name.trim(), scope: form.values.scope };
-      const res = await fetch(`/api/tenant/departments?tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/departments?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -80,7 +80,7 @@ export default function DepartmentManagement({ tenantSlug }: { tenantSlug?: stri
   async function handleDelete(id: string) {
     if (!confirm("Delete department?")) return;
     try {
-      const res = await fetch(`/api/tenant/departments?tenantSlug=${encodeURIComponent(ts)}&id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      const res = await fetch(`/api/tenant/departments?tenantSlug=${encodeURIComponent(ts ?? '')}&id=${encodeURIComponent(id)}`, { method: "DELETE" });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || "Delete failed");

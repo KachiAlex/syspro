@@ -1,5 +1,5 @@
-type ImpactLevel = "critical" | "high" | "medium" | "low";
-type Priority = ImpactLevel;
+export type ImpactLevel = "critical" | "high" | "medium" | "low";
+export type Priority = ImpactLevel;
 export type TicketStatus =
   | "new"
   | "acknowledged"

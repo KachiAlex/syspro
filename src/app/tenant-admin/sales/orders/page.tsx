@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Eye, Edit, Trash2, Search } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { 
   CreateSalesOrderModal, 
   ViewSalesOrderModal, 
+  EditSalesOrderModal,
   DeleteConfirmationModal 
 } from '@/app/tenant-admin/sections/sales-procurement-modals';
 
@@ -30,9 +31,11 @@ export default function SalesOrdersPage() {
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const statuses = ['All', 'Pending', 'In Transit', 'Completed', 'Cancelled'];
 
@@ -45,14 +48,44 @@ export default function SalesOrdersPage() {
     return true;
   });
 
+  // Load orders on mount
+  useEffect(() => {
+    if (!tenantSlug) return;
+    async function loadOrders() {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/sales/orders?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setOrders(data.orders || []);
+        } else {
+          throw new Error('Failed to fetch orders');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load orders');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadOrders();
+  }, [tenantSlug]);
+
   // Modal handlers
   const handleCreateOrder = async (data: any) => {
+    if (!tenantSlug) return;
     setIsLoading(true);
     try {
-      console.log('Creating sales order:', data);
-      // TODO: API call to create sales order
-    } catch (error) {
-      console.error('Error creating sales order:', error);
+      const res = await fetch('/api/sales/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, tenantSlug }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to create sales order');
+      setOrders(prev => [payload.order, ...prev]);
+      setShowCreateModal(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create sales order');
     } finally {
       setIsLoading(false);
     }
@@ -60,17 +93,19 @@ export default function SalesOrdersPage() {
 
   const handleDeleteOrder = async () => {
     if (!selectedOrder) return;
-    
     setIsLoading(true);
     try {
-      console.log('Deleting sales order:', selectedOrder);
-      // TODO: API call to delete sales order
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      
-      // Remove order from local state
-      setOrders(orders.filter(order => order.id !== selectedOrder.id));
-    } catch (error) {
-      console.error('Error deleting sales order:', error);
+      const res = await fetch(`/api/sales/orders/${selectedOrder.id}?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.error || 'Failed to delete sales order');
+      }
+      setOrders(prev => prev.filter(order => order.id !== selectedOrder.id));
+      setShowDeleteModal(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete sales order');
     } finally {
       setIsLoading(false);
     }
@@ -83,8 +118,27 @@ export default function SalesOrdersPage() {
 
   const handleEditOrder = (order: SalesOrder) => {
     setSelectedOrder(order);
-    // TODO: Implement edit modal
-    console.log('Edit order:', order);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateOrder = async (data: any) => {
+    if (!selectedOrder || !tenantSlug) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/sales/orders/${selectedOrder.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, tenantSlug }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to update sales order');
+      setOrders(prev => prev.map(o => o.id === selectedOrder.id ? { ...o, ...payload.order } : o));
+      setShowEditModal(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update sales order');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDeleteClick = (order: SalesOrder) => {
@@ -268,6 +322,14 @@ export default function SalesOrdersPage() {
       <ViewSalesOrderModal
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
+        order={selectedOrder}
+      />
+
+      <EditSalesOrderModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSubmit={handleUpdateOrder}
+        isLoading={isLoading}
         order={selectedOrder}
       />
 

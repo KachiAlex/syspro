@@ -64,7 +64,7 @@ export default function ActivitiesPage({ tenantSlug }: { tenantSlug?: string | n
     setLoading(true);
     setError(null);
     const params = new URLSearchParams({
-      tenantSlug: ts,
+      tenantSlug: ts ?? '',
       ...(filterType !== "all" && { type: filterType }),
       ...(filterStatus !== "all" && { status: filterStatus }),
       ...(filterRelatedTo !== "all" && { relatedTo: filterRelatedTo }),

@@ -18,7 +18,7 @@ export default function AutomationDashboard({ tenantSlug }: { tenantSlug?: strin
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/automation/summary?tenantSlug=${encodeURIComponent(tenantSlug )}`, { cache: "no-store" });
+      const res = await fetch(`/api/automation/summary?tenantSlug=${encodeURIComponent(tenantSlug ?? '')}`, { cache: "no-store" });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "Failed to load automation summary");
       setSummary(json.summary as AutomationSummary);

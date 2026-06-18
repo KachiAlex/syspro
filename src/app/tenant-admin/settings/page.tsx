@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Settings, Save, RotateCcw, Download, Upload, Bell, Shield, Database, Globe, Mail, Phone, MapPin, Building, Users, Calendar, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
@@ -194,6 +194,7 @@ export default function SettingsPage() {
   const [settingsState, setSettingsState] = useState(settings);
   const [selectedCategory, setSelectedCategory] = useState('General');
   const [hasChanges, setHasChanges] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const categories = [...new Set(settings.map(s => s.category))];
 
@@ -206,11 +207,51 @@ export default function SettingsPage() {
     setHasChanges(true);
   };
 
-  const saveSettings = () => {
-    // TODO: API call
-    console.log('Saving settings:', settingsState); // TODO: persist to API
-    setHasChanges(false);
-    alert('Settings saved successfully!'); // TODO: remove alert when API is wired
+  const loadSettings = async () => {
+    if (!tenantSlug) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/tenant/settings?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.settings && Array.isArray(data.settings)) {
+          setSettingsState(prev =>
+            prev.map(s => {
+              const remote = data.settings.find((r: any) => r.id === s.id);
+              return remote ? { ...s, value: remote.value } : s;
+            })
+          );
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load settings:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSettings();
+  }, [tenantSlug]);
+
+  const saveSettings = async () => {
+    if (!tenantSlug) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/tenant/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings: settingsState, tenantSlug }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to save settings');
+      setHasChanges(false);
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+      alert(err instanceof Error ? err.message : 'Failed to save settings');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const resetSettings = () => {

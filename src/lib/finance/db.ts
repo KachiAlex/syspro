@@ -1123,6 +1123,7 @@ export type ExpenseRecord = {
   amount: number;
   tax_amount: number;
   total_amount: number;
+  currency: string | null;
   tax_type: string;
   category: string;
   category_id: string;
@@ -1339,6 +1340,7 @@ function normalizeExpenseRecord(
     amount: Number(record.amount),
     taxAmount: Number(record.tax_amount),
     totalAmount: Number(record.total_amount),
+    currency: record.currency ?? "NGN",
     taxType: record.tax_type as any,
     category: record.category,
     categoryId: record.category_id,

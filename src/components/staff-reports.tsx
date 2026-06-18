@@ -62,10 +62,10 @@ export default function StaffReports({
   useEffect(() => {
     const fetchStaffMembers = async () => {
       try {
-        const response = await fetch(`/api/hr/employees?tenantSlug=${tenantSlug}`);
+        const response = await fetch(`/api/hr/employees?tenantSlug=${tenantSlug ?? ''}`);
         if (response.ok) {
           const data = await response.json();
-          const employees = data.employees?.[tenantSlug] || [];
+          const employees = tenantSlug ? (data.employees?.[tenantSlug] || []) : [];
           setStaffMembers(employees);
         }
       } catch (error) {

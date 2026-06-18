@@ -308,7 +308,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
       setDetailLoading(true);
       setDetailError(null);
       try {
-        const params = new URLSearchParams({ tenantSlug: tenantKey });
+        const params = new URLSearchParams({ tenantSlug: tenantKey ?? '' });
         const [ticketRes, commentsRes, activityRes, jobsRes] = await Promise.all([
           fetch(`/api/support/tickets/${encodeURIComponent(ticketId)}?${params.toString()}`, { cache: "no-store" }),
           fetch(`/api/support/tickets/${encodeURIComponent(ticketId)}/comments?${params.toString()}`, { cache: "no-store" }),
@@ -357,16 +357,16 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
       setWorkspaceLoading(true);
       setWorkspaceError(null);
       try {
-        const params = new URLSearchParams({ tenantSlug: tenantKey });
+        const params = new URLSearchParams({ tenantSlug: tenantKey ?? '' });
         if (region && region !== "Global HQ") {
           params.set("region", region);
         }
 
         const [ticketsRes, incidentsRes, knowledgeRes, metricsRes] = await Promise.all([
           fetch(`/api/support/tickets?${params.toString()}`, { cache: "no-store" }),
-          fetch(`/api/support/incidents?tenantSlug=${encodeURIComponent(tenantKey)}`, { cache: "no-store" }),
-          fetch(`/api/support/knowledge-base?tenantSlug=${encodeURIComponent(tenantKey)}`, { cache: "no-store" }),
-          fetch(`/api/support/dashboard/metrics?tenantSlug=${encodeURIComponent(tenantKey)}`, { cache: "no-store" }),
+          fetch(`/api/support/incidents?tenantSlug=${encodeURIComponent(tenantKey ?? '')}`, { cache: "no-store" }),
+          fetch(`/api/support/knowledge-base?tenantSlug=${encodeURIComponent(tenantKey ?? '')}`, { cache: "no-store" }),
+          fetch(`/api/support/dashboard/metrics?tenantSlug=${encodeURIComponent(tenantKey ?? '')}`, { cache: "no-store" }),
         ]);
 
         const [ticketPayload, incidentPayload, knowledgePayload, metricsPayload] = await Promise.all([

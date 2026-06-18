@@ -114,7 +114,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
     setLoading(true);
     setServerError(null);
     try {
-      const res = await fetch(`/api/tenant/roles?tenantSlug=${encodeURIComponent(ts)}`, { cache: "no-store" });
+      const res = await fetch(`/api/tenant/roles?tenantSlug=${encodeURIComponent(ts ?? '')}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load roles");
       const payload = await res.json();
       setRoles(Array.isArray(payload.roles) ? payload.roles : []);
@@ -154,7 +154,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
 
     try {
       const payload = { name: form.values.name.trim(), scope: form.values.scope, permissions: form.values.permissions };
-      const res = await fetch(`/api/tenant/roles?tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/roles?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -193,7 +193,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
   async function saveEdit(id: string) {
     try {
       const payload = { name: editForm.name.trim(), scope: editForm.scope, permissions: editForm.permissions };
-      const res = await fetch(`/api/tenant/roles?id=${encodeURIComponent(id)}&type=role&tenantSlug=${encodeURIComponent(ts)}`, {
+      const res = await fetch(`/api/tenant/roles?id=${encodeURIComponent(id)}&type=role&tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -212,7 +212,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
   async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this role? Users with this role will lose access.")) return;
     try {
-      const res = await fetch(`/api/tenant/roles?id=${encodeURIComponent(id)}&type=role&tenantSlug=${encodeURIComponent(ts)}`, { 
+      const res = await fetch(`/api/tenant/roles?id=${encodeURIComponent(id)}&type=role&tenantSlug=${encodeURIComponent(ts ?? '')}`, { 
         method: "DELETE" 
       });
       if (!res.ok) throw new Error("Failed to delete role");

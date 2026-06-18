@@ -80,7 +80,6 @@ export default function SalesAnalyticsPage() {
         tenantSlug
       });
 
-      console.log('Sales report generated:', report);
       setShowReportModal(false);
     } catch (error) {
       console.error('Failed to generate sales report:', error);
@@ -316,9 +315,7 @@ export default function SalesAnalyticsPage() {
         onClose={() => setShowReportModal(false)}
         module="sales"
         tenantSlug={tenantSlug || ''}
-        onReportGenerated={(report) => {
-          console.log('Sales report generated:', report);
-        }}
+        onReportGenerated={() => {}}
       />
     </div>
   );

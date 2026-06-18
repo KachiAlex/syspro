@@ -80,12 +80,7 @@ export default async function TenantAdminLayout({ children, searchParams }: { ch
     NODE_ENV: process.env.NODE_ENV,
   };
 
-  try {
-    // eslint-disable-next-line no-console
-    console.log("TENANT_ADMIN_DEBUG_EARLY:", JSON.stringify(debugInfoEarly));
-  } catch (e) {
-    // ignore
-  }
+  // Debug info available if needed
 
   if (!tenantSlug) {
     if (process.env.NODE_ENV !== "production") {

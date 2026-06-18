@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Plus, Eye, Search, RefreshCw, Clock, DollarSign, BarChart2, Users, CheckCircle, Calendar,
@@ -78,7 +78,8 @@ const DEFAULT_TRAINING_SESSIONS: TrainingSession[] = [
 const HRComponent: React.FC = () => {
   const { tenantSlug } = useTenantContext();
   const [activeTab, setActiveTab] = useState<HRTab>('overview');
-  const [employees, setEmployees] = useState<Employee[]>(DEFAULT_EMPLOYEES);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('All Departments');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
@@ -128,7 +129,6 @@ const HRComponent: React.FC = () => {
     
     try {
       await HRService.markAttendance(tenantSlug, attendanceData);
-      console.log('Attendance marked successfully');
     } catch (error) {
       console.error('Failed to mark attendance:', error);
       throw error;
@@ -140,7 +140,6 @@ const HRComponent: React.FC = () => {
     
     try {
       await HRService.submitLeaveRequest(tenantSlug, leaveData);
-      console.log('Leave request submitted successfully');
     } catch (error) {
       console.error('Failed to submit leave request:', error);
       throw error;
@@ -162,7 +161,6 @@ const HRComponent: React.FC = () => {
       });
       
       setReports(prev => [report, ...prev]);
-      console.log('HR report generated successfully');
     } catch (error) {
       console.error('Failed to generate report:', error);
       throw error;
@@ -171,10 +169,10 @@ const HRComponent: React.FC = () => {
 
   const handleAddEmployee = async (employeeData: any) => {
     if (!tenantSlug) return;
-    
+
     try {
       const newEmployee = await HRService.addEmployee(tenantSlug, employeeData);
-      
+
       // Convert to local Employee interface
       const localEmployee: Employee = {
         id: newEmployee.id,
@@ -186,14 +184,89 @@ const HRComponent: React.FC = () => {
         status: 'Active',
         salary: newEmployee.salary || ''
       };
-      
+
       setEmployees(prev => [localEmployee, ...prev]);
-      console.log('Employee added successfully:', newEmployee);
     } catch (error) {
       console.error('Failed to add employee:', error);
       throw error;
     }
   };
+
+  const handleUpdateEmployee = async (data: any) => {
+    if (!tenantSlug || !selectedEmployee) return;
+
+    try {
+      const updated = await HRService.updateEmployee(tenantSlug, selectedEmployee.id, data);
+      setEmployees(prev =>
+        prev.map(emp =>
+          emp.id === selectedEmployee.id
+            ? {
+                id: updated.id,
+                name: `${updated.firstName} ${updated.lastName}`,
+                email: updated.email,
+                department: updated.department,
+                position: updated.position,
+                startDate: updated.startDate,
+                status: updated.status,
+                salary: updated.salary || ''
+              }
+            : emp
+        )
+      );
+      setSelectedEmployee(null);
+    } catch (error) {
+      console.error('Failed to update employee:', error);
+      throw error;
+    }
+  };
+
+  const handleConfirmDeleteEmployee = async () => {
+    if (!tenantSlug || !selectedEmployee) return;
+
+    try {
+      await HRService.deleteEmployee(tenantSlug, selectedEmployee.id);
+      setEmployees(prev => prev.filter(emp => emp.id !== selectedEmployee.id));
+      setSelectedEmployee(null);
+    } catch (error) {
+      console.error('Failed to delete employee:', error);
+      throw error;
+    }
+  };
+
+  const loadData = useCallback(async () => {
+    if (!tenantSlug) return;
+    setLoading(true);
+    try {
+      const [fetchedEmployees, fetchedDepartments, fetchedReports] = await Promise.all([
+        HRService.getEmployees(tenantSlug),
+        HRService.getDepartments(tenantSlug),
+        HRService.getReports(tenantSlug).catch(() => []),
+      ]);
+
+      setEmployees(
+        fetchedEmployees.map(emp => ({
+          id: emp.id,
+          name: emp.name,
+          email: emp.email,
+          department: emp.department,
+          position: emp.position,
+          startDate: emp.startDate,
+          status: emp.status,
+          salary: emp.salary ? `$${Number(emp.salary).toLocaleString()}` : ''
+        }))
+      );
+      setDepartments(fetchedDepartments);
+      setReports(fetchedReports);
+    } catch (error) {
+      console.error('Failed to load HR data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [tenantSlug]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const renderOverviewTab = () => (
     <div className="space-y-6">
@@ -202,8 +275,12 @@ const HRComponent: React.FC = () => {
           <h2 className="text-2xl font-bold text-[#F8FAFC]">HR & Operations Overview</h2>
           <p className="text-[#94A3B8] mt-1">Enterprise-wide human resources management and analytics</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#F8FAFC] bg-[#111827] border border-[rgba(255,255,255,0.1)] rounded-lg hover:bg-[rgba(255,255,255,0.02)]">
-          <RefreshCw className="w-4 h-4" />
+        <button
+          onClick={loadData}
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#F8FAFC] bg-[#111827] border border-[rgba(255,255,255,0.1)] rounded-lg hover:bg-[rgba(255,255,255,0.02)] disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </button>
       </div>
@@ -873,10 +950,7 @@ const HRComponent: React.FC = () => {
       <EditEmployeeModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
-        onSubmit={async (data) => {
-          // Handle edit employee
-          console.log('Edit employee:', data);
-        }}
+        onSubmit={handleUpdateEmployee}
         employee={selectedEmployee}
         departments={departments}
         statuses={statuses}
@@ -894,10 +968,7 @@ const HRComponent: React.FC = () => {
       <DeleteEmployeeModal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
-        onConfirm={async () => {
-          // Handle delete employee
-          console.log('Delete employee:', selectedEmployee?.name);
-        }}
+        onConfirm={handleConfirmDeleteEmployee}
         employeeName={selectedEmployee?.name}
       />
 
@@ -906,8 +977,9 @@ const HRComponent: React.FC = () => {
         isOpen={showRunPayrollModal}
         onClose={() => setShowRunPayrollModal(false)}
         onSubmit={async (data) => {
-          // Handle run payroll
-          console.log('Run payroll:', data);
+          if (!tenantSlug) return;
+          await HRService.runPayroll(tenantSlug, data);
+          setShowRunPayrollModal(false);
         }}
       />
 
@@ -915,8 +987,9 @@ const HRComponent: React.FC = () => {
         isOpen={showPostJobModal}
         onClose={() => setShowPostJobModal(false)}
         onSubmit={async (data) => {
-          // Handle post job
-          console.log('Post job:', data);
+          if (!tenantSlug) return;
+          await HRService.postJob(tenantSlug, data);
+          setShowPostJobModal(false);
         }}
         departments={departments}
       />
@@ -925,8 +998,9 @@ const HRComponent: React.FC = () => {
         isOpen={showTrainingModal}
         onClose={() => setShowTrainingModal(false)}
         onSubmit={async (data) => {
-          // Handle training session
-          console.log('Create training:', data);
+          if (!tenantSlug) return;
+          await HRService.createTrainingSession(tenantSlug, data);
+          setShowTrainingModal(false);
         }}
       />
 
@@ -961,7 +1035,6 @@ const HRComponent: React.FC = () => {
         tenantSlug={tenantSlug || ''}
         onReportGenerated={(report) => {
           setReports(prev => [report, ...prev]);
-          console.log('HR report generated:', report);
         }}
       />
     </div>

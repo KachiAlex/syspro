@@ -113,7 +113,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
     setLoading(true);
     setServerError(null);
     try {
-      const res = await fetch(`/api/tenant/access-control?tenantSlug=${encodeURIComponent(ts)}`, { cache: "no-store" });
+      const res = await fetch(`/api/tenant/access-control?tenantSlug=${encodeURIComponent(ts ?? '')}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load permissions");
       const payload = await res.json();
       setAccessControls(Array.isArray(payload.accessControls) ? payload.accessControls : []);

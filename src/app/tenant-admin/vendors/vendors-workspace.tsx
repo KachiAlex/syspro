@@ -55,6 +55,14 @@ interface VendorProfile {
     appliedAmount: number;
     status: string;
   }>;
+  purchaseOrders: Array<{
+    id: string;
+    poNumber: string;
+    poDate: string;
+    dueDate?: string;
+    total: number;
+    status: string;
+  }>;
 }
 
 export default function VendorsWorkspace() {
@@ -105,9 +113,19 @@ export default function VendorsWorkspace() {
       const paymentsResponse = await fetch(`/api/finance/vendor-payments?tenantSlug=${encodeURIComponent(tenantSlug)}&vendorId=${vendorId}`);
       const paymentsData = await paymentsResponse.json();
 
+      // Load vendor contacts
+      const contactsResponse = await fetch(`/api/finance/vendors/${encodeURIComponent(vendorId)}/contacts?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+      const contactsData = await contactsResponse.json().catch(() => ({}));
+
+      // Load vendor purchase orders
+      const poResponse = await fetch(`/api/purchases/orders?tenantSlug=${encodeURIComponent(tenantSlug)}&vendorId=${vendorId}`);
+      const poData = await poResponse.json().catch(() => ({}));
+
       const vendor = vendorData.vendor;
       const bills = billsData.bills || [];
       const payments = paymentsData.payments || [];
+      const contacts = contactsData.contacts || [];
+      const pos = poData.orders || [];
 
       // Calculate stats
       const totalSpend = bills.reduce((sum: number, bill: any) => sum + bill.total, 0);
@@ -125,7 +143,7 @@ export default function VendorsWorkspace() {
           billCount: bills.length,
           paymentCount: payments.length
         },
-        contacts: [], // TODO: Load from vendor contacts API
+        contacts,
         bills: bills.map((bill: any) => ({
           id: bill.id,
           billNumber: bill.billNumber,
@@ -142,6 +160,14 @@ export default function VendorsWorkspace() {
           amount: payment.amount,
           appliedAmount: payment.appliedAmount,
           status: payment.status
+        })),
+        purchaseOrders: pos.map((po: any) => ({
+          id: po.id,
+          poNumber: po.poNumber || po.number || "PO-" + po.id.slice(0, 6),
+          poDate: po.poDate || po.orderDate || po.createdAt,
+          dueDate: po.dueDate || po.expectedDeliveryDate,
+          total: po.total || po.amount || 0,
+          status: po.status || "Pending",
         }))
       });
     } catch (error) {
@@ -330,13 +356,82 @@ export default function VendorsWorkspace() {
                   <VendorPayments payments={vendorProfile.payments} />
                 )}
                 {activeTab === "purchase-orders" && (
-                  <div className="text-center py-8 text-gray-500">
-                    Purchase Orders tab - Coming soon
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm text-left">
+                      <thead className="bg-gray-50 text-gray-700 font-medium">
+                        <tr>
+                          <th className="px-4 py-2">PO Number</th>
+                          <th className="px-4 py-2">Date</th>
+                          <th className="px-4 py-2">Due</th>
+                          <th className="px-4 py-2 text-right">Total</th>
+                          <th className="px-4 py-2">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {vendorProfile.purchaseOrders.length > 0 ? vendorProfile.purchaseOrders.map((po) => (
+                          <tr key={po.id} className="border-t">
+                            <td className="px-4 py-2 font-medium">{po.poNumber}</td>
+                            <td className="px-4 py-2">{po.poDate ? new Date(po.poDate).toLocaleDateString() : "-"}</td>
+                            <td className="px-4 py-2">{po.dueDate ? new Date(po.dueDate).toLocaleDateString() : "-"}</td>
+                            <td className="px-4 py-2 text-right">${po.total.toLocaleString()}</td>
+                            <td className="px-4 py-2">
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                po.status === "Received" ? "bg-green-100 text-green-800" :
+                                po.status === "Pending" ? "bg-amber-100 text-amber-800" :
+                                po.status === "In Transit" ? "bg-blue-100 text-blue-800" :
+                                "bg-gray-100 text-gray-800"
+                              }`}>{po.status}</span>
+                            </td>
+                          </tr>
+                        )) : (
+                          <tr><td colSpan={5} className="px-4 py-6 text-center text-gray-500">No purchase orders found</td></tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 )}
                 {activeTab === "accounting" && (
-                  <div className="text-center py-8 text-gray-500">
-                    Accounting tab - Coming soon
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="text-lg font-semibold text-gray-900">${vendorProfile.stats.totalSpend.toLocaleString()}</div>
+                        <div className="text-sm text-gray-600">Total Spend</div>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="text-lg font-semibold text-gray-900">${vendorProfile.stats.outstandingBalance.toLocaleString()}</div>
+                        <div className="text-sm text-gray-600">Outstanding</div>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="text-lg font-semibold text-gray-900">{vendorProfile.stats.paymentCount}</div>
+                        <div className="text-sm text-gray-600">Payments Made</div>
+                      </div>
+                    </div>
+                    <h4 className="font-semibold text-gray-900">Recent Bills</h4>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm text-left">
+                        <thead className="bg-gray-50 text-gray-700 font-medium">
+                          <tr>
+                            <th className="px-4 py-2">Bill #</th>
+                            <th className="px-4 py-2">Date</th>
+                            <th className="px-4 py-2 text-right">Total</th>
+                            <th className="px-4 py-2 text-right">Balance</th>
+                            <th className="px-4 py-2">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {vendorProfile.bills.slice(0, 5).map((bill) => (
+                            <tr key={bill.id} className="border-t">
+                              <td className="px-4 py-2 font-medium">{bill.billNumber}</td>
+                              <td className="px-4 py-2">{new Date(bill.billDate).toLocaleDateString()}</td>
+                              <td className="px-4 py-2 text-right">${bill.total.toLocaleString()}</td>
+                              <td className="px-4 py-2 text-right">${bill.balanceDue.toLocaleString()}</td>
+                              <td className="px-4 py-2"><span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">{bill.status}</span></td>
+                            </tr>
+                          ))}
+                          {vendorProfile.bills.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-gray-500">No bills found</td></tr>}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
               </div>

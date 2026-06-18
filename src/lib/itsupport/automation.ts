@@ -1,6 +1,6 @@
 // Auto-triage and simple automation helpers
 import { sendNotification } from './integrations/notifications';
-import { getTenantSupportData } from '@/lib/support-data';
+import { getTenantSupportData } from '@/lib/support-db';
 
 export async function autoTriageTicket(ticket: any, engineers: any[] = []) {
   // Example rules-based triage
@@ -37,8 +37,8 @@ export async function autoTriageTicket(ticket: any, engineers: any[] = []) {
 export async function autoEscalate(ticket: any) {
   const tenantSlug = ticket.tenantSlug;
   if (!tenantSlug) return ticket;
-  const data = getTenantSupportData(tenantSlug);
-  const slaPolicy = data.slaPolicies.find((p) => p.id === ticket.slaPolicyId);
+  const data = await getTenantSupportData(tenantSlug);
+  const slaPolicy = data.slaPolicies.find((p: any) => p.id === ticket.slaPolicyId);
   if (!slaPolicy || !slaPolicy.autoEscalate) return ticket;
 
   const chain = slaPolicy.escalationChain || [];

@@ -10,7 +10,7 @@ interface Accounting {
 }
 
 const AccountingComponent: React.FC<Accounting> = ({ tenantSlug }) => {
-  const [journalEntries] = useState([]);
+  const [journalEntries] = useState<any[]>([]);
 
   const [alert, setAlert] = useState<{ type: 'success' | 'info'; message: string } | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);

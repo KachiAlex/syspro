@@ -43,7 +43,7 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
     if (!tenantSlug) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/finance/vendors?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+      const res = await fetch(`/api/finance/vendors?tenantSlug=${encodeURIComponent(tenantSlug ?? '')}`);
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(payload.error || "Failed to load vendors");
       const rawVendors = payload.vendors || [];

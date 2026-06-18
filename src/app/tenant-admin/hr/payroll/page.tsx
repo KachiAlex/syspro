@@ -71,8 +71,7 @@ export default function PayrollPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {[
-            ].map((run, idx) => (
+            {([] as any[]).map((run, idx) => (
               <tr key={idx} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-sm font-medium text-gray-900">{run.period}</td>
                 <td className="px-6 py-4 text-sm text-gray-600">{run.employees}</td>
@@ -93,8 +92,7 @@ export default function PayrollPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h4 className="font-semibold text-gray-900 mb-4">Deductions & Taxes</h4>
           <div className="space-y-3">
-            {[
-            ].map((item, idx) => (
+            {([] as any[]).map((item, idx) => (
               <div key={idx} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
                 <div>
                   <p className="font-medium text-gray-900">{item.name}</p>
@@ -109,8 +107,7 @@ export default function PayrollPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h4 className="font-semibold text-gray-900 mb-4">Benefits Administration</h4>
           <div className="space-y-3">
-            {[
-            ].map((benefit, idx) => (
+            {([] as any[]).map((benefit, idx) => (
               <div key={idx} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
                 <div>
                   <p className="font-medium text-gray-900">{benefit.name}</p>
