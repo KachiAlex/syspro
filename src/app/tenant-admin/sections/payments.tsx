@@ -135,31 +135,16 @@ export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | 
     return true;
   });
 
-  // Handler: Create payment
+  // Handler: Create payment (modal already creates via API; this just updates state)
   async function handleCreatePayment(data: any) {
     setCreatingPayment(true);
     try {
-      const res = await fetch('/api/finance/payments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tenantSlug: ts,
-          reference: data.reference || `PAY-${Date.now()}`,
-          grossAmount: parseFloat(data.amount) || 0,
-          fees: 0,
-          method: data.method || 'bank_transfer',
-          paymentDate: new Date().toISOString(),
-          confirmationDetails: data.description || '',
-        }),
-      });
-      if (!res.ok) throw new Error('Failed to create payment');
-      const result = await res.json();
-      const created = mapApiToPayment(result.payment);
+      const created = mapApiToPayment(data);
       setPayments([created, ...payments]);
       setSuccess("Payment created successfully");
       setShowCreatePayment(false);
     } catch (err) {
-      setError("Failed to create payment");
+      setError("Failed to process payment");
     } finally {
       setCreatingPayment(false);
     }

@@ -366,11 +366,30 @@ export function CreatePaymentModal({ isOpen = true, onClose, onSuccess, onError 
     currency: "NGN"
   });
 
+  // Format number with commas for display
+  const formatAmount = (value: string) => {
+    const cleaned = value.replace(/[^0-9.]/g, '');
+    const parts = cleaned.split('.');
+    if (parts.length > 2) parts[1] = parts.slice(1).join('');
+    const whole = parts[0];
+    const decimal = parts[1] ? `.${parts[1].slice(0, 2)}` : '';
+    const withCommas = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return `${withCommas}${decimal}`;
+  };
+
+  const parseAmount = (value: string) => parseFloat(value.replace(/,/g, ''));
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.vendorId.trim() || !formData.amount) {
       onError("Vendor ID and amount are required");
+      return;
+    }
+
+    const numericAmount = parseAmount(formData.amount);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      onError("Please enter a valid amount greater than 0");
       return;
     }
 
@@ -384,8 +403,8 @@ export function CreatePaymentModal({ isOpen = true, onClose, onSuccess, onError 
           tenantSlug,
           vendorId: formData.vendorId,
           method: formData.method,
-          amount: parseFloat(formData.amount),
-          paymentDate: formData.paymentDate,
+          amount: numericAmount,
+          paymentDate: new Date(formData.paymentDate).toISOString(),
           currency: formData.currency
         })
       });
@@ -449,9 +468,10 @@ export function CreatePaymentModal({ isOpen = true, onClose, onSuccess, onError 
             <input
               type="text"
               inputMode="decimal"
+              autoComplete="off"
               required
               value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, amount: formatAmount(e.target.value) })}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black bg-white"
               placeholder="0.00"
             />

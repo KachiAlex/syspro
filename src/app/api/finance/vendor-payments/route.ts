@@ -22,14 +22,14 @@ const paymentListSchema = z.object({
 
 const paymentCreateSchema = z.object({
   tenantSlug: z.string().min(1),
-  vendorId: z.string().uuid(),
+  vendorId: z.string().min(1),
   method: z.enum(["bank_transfer", "cash", "corporate_card", "other"]),
   amount: z.number().positive(),
-  paymentDate: z.string().datetime(),
+  paymentDate: z.string().min(1),
   currency: z.string().default("NGN"),
   bankDetails: z.record(z.any()).optional(),
   applications: z.array(z.object({
-    billId: z.string().uuid(),
+    billId: z.string().min(1),
     appliedAmount: z.number().positive(),
   })).optional(),
   metadata: z.record(z.any()).optional(),

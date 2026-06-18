@@ -284,10 +284,39 @@ export const MakePaymentModal: React.FC<MakePaymentModalProps> = ({ isOpen, onCl
     billNumber: '',
     amount: '',
     paymentDate: '',
-    method: 'Bank Transfer'
+    method: 'bank_transfer'
   });
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+
+  // Map UI method to valid API enum
+  const mapMethodToApi = (method: string) => {
+    const map: Record<string, string> = {
+      bank_transfer: 'bank_transfer',
+      check: 'check',
+      cash: 'cash',
+      pos: 'pos',
+      mobile_money: 'mobile_money',
+      wire: 'wire',
+      paystack: 'paystack',
+      flutterwave: 'flutterwave',
+      stripe: 'stripe',
+    };
+    return map[method] || 'bank_transfer';
+  };
+
+  // Format number with commas
+  const formatAmount = (value: string) => {
+    const cleaned = value.replace(/[^0-9.]/g, '');
+    const parts = cleaned.split('.');
+    if (parts.length > 2) parts[1] = parts.slice(1).join('');
+    const whole = parts[0];
+    const decimal = parts[1] ? `.${parts[1].slice(0, 2)}` : '';
+    const withCommas = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return `${withCommas}${decimal}`;
+  };
+
+  const parseAmount = (value: string) => parseFloat(value.replace(/,/g, ''));
 
   useEffect(() => {
     if (!isOpen || !tenantSlug) return;
@@ -322,9 +351,9 @@ export const MakePaymentModal: React.FC<MakePaymentModalProps> = ({ isOpen, onCl
           tenantSlug,
           reference: formData.billNumber,
           billId: formData.billId,
-          grossAmount: parseFloat(formData.amount),
+          grossAmount: parseAmount(formData.amount),
           fees: 0,
-          method: formData.method === 'Bank Transfer' ? 'bank_transfer' : formData.method.toLowerCase(),
+          method: mapMethodToApi(formData.method),
           paymentDate: formData.paymentDate,
           confirmationDetails: `Payment for bill ${formData.billNumber}`,
         }),
@@ -364,7 +393,7 @@ export const MakePaymentModal: React.FC<MakePaymentModalProps> = ({ isOpen, onCl
                 ...formData,
                 billId,
                 billNumber: selected?.billNumber || selected?.id || '',
-                amount: selected?.balanceDue ? selected.balanceDue.toString() : selected?.total ? selected.total.toString() : ''
+                amount: selected?.balanceDue ? formatAmount(selected.balanceDue.toString()) : selected?.total ? formatAmount(selected.total.toString()) : ''
               });
             }}
             className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black"
@@ -376,13 +405,18 @@ export const MakePaymentModal: React.FC<MakePaymentModalProps> = ({ isOpen, onCl
               <option key={b.id} value={b.id}>{b.billNumber || b.id} — {b.vendorId ? (b.vendorId) : ''} — ₦{(b.balanceDue || b.total || 0).toLocaleString()}</option>
             ))}
           </select>
-          <input type="text" placeholder="Amount to Pay *" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black" required />
+          <input type="text" inputMode="decimal" autoComplete="off" placeholder="Amount to Pay *" value={formData.amount} onChange={(e) => setFormData({...formData, amount: formatAmount(e.target.value)})} className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black" required />
           <input type="date" value={formData.paymentDate} onChange={(e) => setFormData({...formData, paymentDate: e.target.value})} className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black" required />
           <select value={formData.method} onChange={(e) => setFormData({...formData, method: e.target.value})} className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black">
-            <option value="Bank Transfer">Bank Transfer</option>
-            <option value="Check">Check</option>
-            <option value="Credit Card">Credit Card</option>
-            <option value="ACH">ACH</option>
+            <option value="bank_transfer">Bank Transfer</option>
+            <option value="check">Check</option>
+            <option value="cash">Cash</option>
+            <option value="pos">POS Terminal</option>
+            <option value="mobile_money">Mobile Money</option>
+            <option value="wire">Wire Transfer</option>
+            <option value="paystack">Paystack</option>
+            <option value="flutterwave">Flutterwave</option>
+            <option value="stripe">Stripe</option>
           </select>
           <div className="flex gap-3 pt-4">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">Cancel</button>

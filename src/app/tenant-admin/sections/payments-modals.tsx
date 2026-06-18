@@ -19,16 +19,53 @@ export function CreatePaymentModalV2({
   const { tenantSlug } = useTenantContext();
   const [formData, setFormData] = useState({
     amount: "",
-    method: "card",
+    method: "bank_transfer",
     reference: "",
     description: "",
     date: new Date().toISOString().split("T")[0],
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string>("");
+
+  // Map UI method values to valid API enum values
+  const mapMethodToApi = (method: string) => {
+    const map: Record<string, string> = {
+      bank_transfer: "bank_transfer",
+      check: "check",
+      cash: "cash",
+      pos: "pos",
+      mobile_money: "mobile_money",
+      wire: "wire",
+      paystack: "paystack",
+      flutterwave: "flutterwave",
+      stripe: "stripe",
+    };
+    return map[method] || "bank_transfer";
+  };
+
+  // Format number with commas for display
+  const formatAmount = (value: string) => {
+    // Remove all non-numeric chars except decimal point
+    const cleaned = value.replace(/[^0-9.]/g, "");
+    // Prevent multiple decimal points
+    const parts = cleaned.split(".");
+    if (parts.length > 2) {
+      parts[1] = parts.slice(1).join("");
+    }
+    const whole = parts[0];
+    const decimal = parts[1] ? `.${parts[1].slice(0, 2)}` : "";
+    // Add commas to whole number part
+    const withCommas = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return `${withCommas}${decimal}`;
+  };
+
+  // Strip commas for parsing
+  const parseAmount = (value: string) => parseFloat(value.replace(/,/g, ""));
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.amount || parseFloat(formData.amount) <= 0) newErrors.amount = "Amount must be greater than 0";
+    const numericAmount = parseAmount(formData.amount);
+    if (!formData.amount || numericAmount <= 0) newErrors.amount = "Amount must be greater than 0";
     if (!formData.method) newErrors.method = "Payment method is required";
     if (!formData.reference.trim()) newErrors.reference = "Reference is required";
     setErrors(newErrors);
@@ -36,6 +73,7 @@ export function CreatePaymentModalV2({
   };
 
   const handleSubmit = async () => {
+    setSubmitError("");
     if (!validateForm()) return;
     try {
       const response = await fetch('/api/finance/payments', {
@@ -46,22 +84,26 @@ export function CreatePaymentModalV2({
         body: JSON.stringify({
           tenantSlug,
           reference: formData.reference,
-          grossAmount: parseFloat(formData.amount),
+          grossAmount: parseAmount(formData.amount),
           fees: 0,
-          method: formData.method,
+          method: mapMethodToApi(formData.method),
           paymentDate: formData.date,
           confirmationDetails: formData.description || 'Payment transaction',
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create payment');
+        const errorData = await response.json().catch(() => ({ error: 'Failed to create payment' }));
+        throw new Error(errorData.error || 'Failed to create payment');
       }
 
       const result = await response.json();
       await onSubmit(result.payment);
-      setFormData({ amount: "", method: "card", reference: "", description: "", date: new Date().toISOString().split("T")[0] });
+      setFormData({ amount: "", method: "bank_transfer", reference: "", description: "", date: new Date().toISOString().split("T")[0] });
+      setSubmitError("");
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create payment';
+      setSubmitError(message);
       console.error('Payment creation error:', err);
     }
   };
@@ -81,19 +123,24 @@ export function CreatePaymentModalV2({
 
         {/* Content */}
         <div className="space-y-4 px-6 py-6">
+          {submitError && (
+            <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+              {submitError}
+            </div>
+          )}
           <div>
             <label htmlFor="amount" className="block text-sm font-medium text-gray-900 mb-2">
               Amount
             </label>
             <input
               id="amount"
-              type="number"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
               value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+              onChange={(e) => { setSubmitError(""); setFormData({ ...formData, amount: formatAmount(e.target.value) }); }}
               placeholder="0.00"
-              step="0.01"
-              min="0"
-              className={`bg-white w-full rounded-lg border px-3 py-2 text-sm ${ errors.amount ? "border-rose-300 bg-rose-50" : "border-slate-200" }`}
+              className={`bg-white w-full rounded-lg border px-3 py-2 text-sm text-black ${ errors.amount ? "border-rose-300 bg-rose-50" : "border-slate-200" }`}
             />
             {errors.amount && <p className="text-xs text-rose-600 mt-1">{errors.amount}</p>}
           </div>
@@ -105,14 +152,18 @@ export function CreatePaymentModalV2({
             <select
               id="method"
               value={formData.method}
-              onChange={(e) => setFormData({ ...formData, method: e.target.value })}
+              onChange={(e) => { setSubmitError(""); setFormData({ ...formData, method: e.target.value }); }}
               className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
             >
-              <option value="card">Credit Card</option>
-              <option value="bank">Bank Transfer</option>
-              <option value="paypal">PayPal</option>
+              <option value="bank_transfer">Bank Transfer</option>
               <option value="check">Check</option>
               <option value="cash">Cash</option>
+              <option value="pos">POS Terminal</option>
+              <option value="mobile_money">Mobile Money</option>
+              <option value="wire">Wire Transfer</option>
+              <option value="paystack">Paystack</option>
+              <option value="flutterwave">Flutterwave</option>
+              <option value="stripe">Stripe</option>
             </select>
           </div>
 
@@ -124,7 +175,7 @@ export function CreatePaymentModalV2({
               id="reference"
               type="text"
               value={formData.reference}
-              onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
+              onChange={(e) => { setSubmitError(""); setFormData({ ...formData, reference: e.target.value }); }}
               placeholder="e.g., INV-2024-001"
               className={`bg-white w-full rounded-lg border px-3 py-2 text-sm text-black ${ errors.reference ? "border-rose-300 bg-rose-50" : "border-slate-200" }`}
             />
@@ -139,7 +190,7 @@ export function CreatePaymentModalV2({
               id="date"
               type="date"
               value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              onChange={(e) => { setSubmitError(""); setFormData({ ...formData, date: e.target.value }); }}
               className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
             />
           </div>
@@ -151,7 +202,7 @@ export function CreatePaymentModalV2({
             <textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) => { setSubmitError(""); setFormData({ ...formData, description: e.target.value }); }}
               placeholder="Additional notes..."
               rows={2}
               className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
