@@ -171,4 +171,17 @@ input:focus, textarea:focus, select:focus {
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
+/* Ensure form elements inside white-background containers (e.g., modals) have black text */
+[class*="bg-white"] input,
+[class*="bg-white"] textarea,
+[class*="bg-white"] select,
+[class*="bg-white"] input[type="text"],
+[class*="bg-white"] input[type="email"],
+[class*="bg-white"] input[type="password"],
+[class*="bg-white"] input[type="search"],
+[class*="bg-white"] input[type="number"],
+[class*="bg-white"] input[type="date"] {
+  color: #000000;
+}
+
 

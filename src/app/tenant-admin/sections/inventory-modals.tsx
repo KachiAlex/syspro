@@ -92,7 +92,7 @@ export function CreateProductModal({
       <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">Create New Product</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-white">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -251,7 +251,7 @@ export function CreateProductModal({
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
             >
               {loading ? 'Creating...' : 'Create Product'}
             </button>
@@ -285,7 +285,7 @@ export function ViewProductModal({
       <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4">
         <div className="border-b border-gray-200 p-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">Product Details</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-white">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -338,7 +338,7 @@ export function ViewProductModal({
           {product.description && (
             <div>
               <p className="text-sm text-gray-600">Description</p>
-              <p className="text-white">{product.description}</p>
+              <p className="text-gray-900">{product.description}</p>
             </div>
           )}
 
@@ -351,7 +351,7 @@ export function ViewProductModal({
             </button>
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors"
             >
               Close
             </button>
@@ -419,7 +419,7 @@ export function AdjustStockModal({
             <h2 className="text-2xl font-bold text-gray-900">Adjust Stock</h2>
             <p className="text-sm text-gray-600">{product.name}</p>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -508,7 +508,7 @@ export function AdjustStockModal({
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
             >
               {loading ? 'Adjusting...' : 'Adjust Stock'}
             </button>
@@ -591,7 +591,7 @@ export function ImportInventoryModal({
       <div className="bg-white rounded-lg shadow-lg max-w-lg w-full mx-4">
         <div className="border-b border-gray-200 p-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">Import Inventory</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-white">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -663,7 +663,7 @@ export function ImportInventoryModal({
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
             >
               {loading ? 'Importing...' : 'Import'}
             </button>

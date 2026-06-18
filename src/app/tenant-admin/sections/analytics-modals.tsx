@@ -401,7 +401,7 @@ export function EditExportModal({
                 id="frequency"
                 value={frequency}
                 onChange={(e) => setFrequency(e.target.value)}
-                className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
               >
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
@@ -417,7 +417,7 @@ export function EditExportModal({
                 id="format"
                 value={format}
                 onChange={(e) => setFormat(e.target.value)}
-                className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
               >
                 <option value="csv">CSV</option>
                 <option value="excel">Excel</option>

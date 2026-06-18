@@ -348,7 +348,7 @@ export default function DealsPage({ tenantSlug }: { tenantSlug?: string | null }
               </button>
               <button
                 onClick={() => handleDelete(deleteConfirm)}
-                className="px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+                className="px-3 py-2 text-sm font-medium text-black bg-red-600 rounded-lg hover:bg-red-700"
               >
                 Delete
               </button>

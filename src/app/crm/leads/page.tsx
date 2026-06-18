@@ -738,7 +738,7 @@ export default function LeadsPage() {
                   setDetailLead(null);
                   setShowEdit(true);
                 }}
-                className="flex-1 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                className="flex-1 px-3 py-2 bg-blue-600 text-black rounded hover:bg-blue-700 text-sm"
               >
                 Edit
               </button>
@@ -774,7 +774,7 @@ export default function LeadsPage() {
               </button>
               <button
                 onClick={() => handleDeleteLead(deleteConfirm)}
-                className="flex-1 px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                className="flex-1 px-3 py-2 bg-red-600 text-black rounded hover:bg-red-700"
               >
                 Delete
               </button>

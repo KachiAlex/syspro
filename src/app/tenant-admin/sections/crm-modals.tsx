@@ -283,7 +283,7 @@ export function CreateLeadModal({
             {!isViewMode && (
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
                 disabled={isLoading}
               >
                 {isLoading ? (mode === "edit" ? "Saving..." : "Adding...") : submitLabel}
@@ -539,7 +539,7 @@ export function CreateContactModal({
             {!isViewMode && (
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
                 disabled={isLoading}
               >
                 {isLoading ? (mode === "edit" ? "Saving..." : "Adding...") : submitLabel}
@@ -853,7 +853,7 @@ export function CreateDealModal({
             {!isViewMode && (
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-green-600 text-black rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50"
                 disabled={isLoading}
               >
                 {isLoading ? (mode === "edit" ? "Saving..." : "Creating...") : submitLabel}
@@ -917,7 +917,7 @@ export function DeleteConfirmModal({
           </button>
           <button
             onClick={handleConfirm}
-            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-red-600 text-black rounded-lg font-medium hover:bg-red-700 transition disabled:opacity-50"
             disabled={isLoading}
           >
             {isLoading ? "Deleting..." : "Delete"}
@@ -1176,7 +1176,7 @@ export function ImportContactsModal({
             </div>
             <button
               onClick={downloadSampleCsv}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition whitespace-nowrap"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-black text-sm font-medium rounded-lg hover:bg-blue-700 transition whitespace-nowrap"
             >
               <FileDown className="w-4 h-4" /> Download Sample
             </button>
@@ -1291,7 +1291,7 @@ export function ImportContactsModal({
           </button>
           <button
             onClick={handleSubmit}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
             disabled={isLoading || rows.length === 0}
           >
             {isLoading ? "Importing..." : `Import ${rows.length > 0 ? rows.length : ""} Contact${rows.length !== 1 ? "s" : ""}`}
@@ -1440,7 +1440,7 @@ export function ConvertToLeadModal({
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-green-600 text-black rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50"
               disabled={isLoading}
             >
               {isLoading ? "Converting..." : "Convert to Lead"}

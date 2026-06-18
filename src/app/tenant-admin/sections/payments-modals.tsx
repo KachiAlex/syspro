@@ -106,7 +106,7 @@ export function CreatePaymentModalV2({
               id="method"
               value={formData.method}
               onChange={(e) => setFormData({ ...formData, method: e.target.value })}
-              className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
             >
               <option value="card">Credit Card</option>
               <option value="bank">Bank Transfer</option>
@@ -126,7 +126,7 @@ export function CreatePaymentModalV2({
               value={formData.reference}
               onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
               placeholder="e.g., INV-2024-001"
-              className={`bg-white w-full rounded-lg border px-3 py-2 text-sm ${ errors.reference ? "border-rose-300 bg-rose-50" : "border-slate-200" }`}
+              className={`bg-white w-full rounded-lg border px-3 py-2 text-sm text-black ${ errors.reference ? "border-rose-300 bg-rose-50" : "border-slate-200" }`}
             />
             {errors.reference && <p className="text-xs text-rose-600 mt-1">{errors.reference}</p>}
           </div>
@@ -140,7 +140,7 @@ export function CreatePaymentModalV2({
               type="date"
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
             />
           </div>
 
@@ -154,7 +154,7 @@ export function CreatePaymentModalV2({
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Additional notes..."
               rows={2}
-              className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
             />
           </div>
         </div>
@@ -345,7 +345,7 @@ export function RefundPaymentModal({
               onChange={(e) => setReason(e.target.value)}
               placeholder="Why are you requesting this refund?"
               rows={4}
-              className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
             />
           </div>
         </div>

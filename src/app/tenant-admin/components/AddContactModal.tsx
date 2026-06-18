@@ -125,7 +125,7 @@ export default function AddContactModal({
           <h2 className="text-xl font-bold text-gray-900">Add New Contact</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-white transition"
+            className="text-gray-500 hover:text-gray-700 transition"
             disabled={isSubmitting}
           >
             <X className="w-6 h-6" />
@@ -163,7 +163,7 @@ export default function AddContactModal({
                 value={formData.firstName}
                 onChange={handleInputChange}
                 placeholder="John"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${
                   errors.firstName
                     ? "border-red-300 focus:ring-red-500"
                     : "border-gray-300 focus:ring-blue-500"
@@ -186,7 +186,7 @@ export default function AddContactModal({
                 value={formData.lastName}
                 onChange={handleInputChange}
                 placeholder="Smith"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${
                   errors.lastName
                     ? "border-red-300 focus:ring-red-500"
                     : "border-gray-300 focus:ring-blue-500"
@@ -212,7 +212,7 @@ export default function AddContactModal({
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="john@example.com"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${
                   errors.email
                     ? "border-red-300 focus:ring-red-500"
                     : "border-gray-300 focus:ring-blue-500"
@@ -235,7 +235,7 @@ export default function AddContactModal({
                 value={formData.phone}
                 onChange={handleInputChange}
                 placeholder="+1 (555) 123-4567"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${
                   errors.phone
                     ? "border-red-300 focus:ring-red-500"
                     : "border-gray-300 focus:ring-blue-500"
@@ -261,7 +261,7 @@ export default function AddContactModal({
                 value={formData.company}
                 onChange={handleInputChange}
                 placeholder="Tech Corp"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${
                   errors.company
                     ? "border-red-300 focus:ring-red-500"
                     : "border-gray-300 focus:ring-blue-500"
@@ -284,7 +284,7 @@ export default function AddContactModal({
                 value={formData.title}
                 onChange={handleInputChange}
                 placeholder="CEO"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 text-black ${
                   errors.title
                     ? "border-red-300 focus:ring-red-500"
                     : "border-gray-300 focus:ring-blue-500"
@@ -366,7 +366,7 @@ export default function AddContactModal({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Creating..." : "Create Contact"}

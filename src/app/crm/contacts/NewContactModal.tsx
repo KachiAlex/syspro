@@ -106,7 +106,7 @@ export default function NewContactModal({
                 name="company"
                 value={formData.company}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 placeholder="Company name"
                 required
               />
@@ -119,7 +119,7 @@ export default function NewContactModal({
                 name="contactName"
                 value={formData.contactName}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 placeholder="Contact name"
                 required
               />
@@ -132,7 +132,7 @@ export default function NewContactModal({
                 name="contactEmail"
                 value={formData.contactEmail || ""}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 placeholder="email@example.com"
               />
             </div>
@@ -144,7 +144,7 @@ export default function NewContactModal({
                 name="contactPhone"
                 value={formData.contactPhone || ""}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 placeholder="+234 12345 67890"
               />
             </div>
@@ -155,7 +155,7 @@ export default function NewContactModal({
                 name="source"
                 value={formData.source || ""}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               >
                 <option value="">Select source</option>
                 {CONTACT_SOURCES.map((source) => (
@@ -172,7 +172,7 @@ export default function NewContactModal({
                 name="status"
                 value={formData.status || "New"}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               >
                 {CONTACT_STATUSES.map((status) => (
                   <option key={status} value={status}>

@@ -101,7 +101,7 @@ export default function NewDealModal({
                 name="stage"
                 value={formData.stage}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 required
               >
                 {DEAL_STAGES.map((stage) => (
@@ -120,7 +120,7 @@ export default function NewDealModal({
                   name="value"
                   value={formData.value || ""}
                   onChange={handleChange}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   placeholder="0"
                   required
                   step="1000"
@@ -130,7 +130,7 @@ export default function NewDealModal({
                   name="currency"
                   value={formData.currency || "₦"}
                   onChange={handleChange}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
                 >
                   <option value="₦">₦ (Naira)</option>
                   <option value="$">$ (USD)</option>
@@ -158,7 +158,7 @@ export default function NewDealModal({
                   name="probability"
                   value={formData.probability || 50}
                   onChange={handleChange}
-                  className="w-16 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-16 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   min="0"
                   max="100"
                 />
@@ -172,7 +172,7 @@ export default function NewDealModal({
                 name="expectedClose"
                 value={formData.expectedClose || ""}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               />
             </div>
 
@@ -183,7 +183,7 @@ export default function NewDealModal({
                 name="leadId"
                 value={formData.leadId || ""}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 placeholder="Optional: Link to a lead"
               />
             </div>
@@ -195,7 +195,7 @@ export default function NewDealModal({
                 name="customerId"
                 value={formData.customerId || ""}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 placeholder="Optional: Link to a customer"
               />
             </div>
@@ -207,7 +207,7 @@ export default function NewDealModal({
                 name="assignedOfficerId"
                 value={formData.assignedOfficerId || ""}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 placeholder="Optional: Assign to a sales officer"
               />
             </div>
@@ -218,7 +218,7 @@ export default function NewDealModal({
                 name="status"
                 value={formData.status || "open"}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               >
                 <option value="open">Open</option>
                 <option value="stalled">Stalled</option>
@@ -239,7 +239,7 @@ export default function NewDealModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm disabled:opacity-50"
+              className="px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 font-medium text-sm disabled:opacity-50"
             >
               {loading ? "Saving..." : isEdit ? "Update" : "Create"}
             </button>

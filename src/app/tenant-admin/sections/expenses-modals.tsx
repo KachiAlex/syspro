@@ -243,11 +243,11 @@ export function SubmitExpenseModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-[#111827] shadow-xl border border-[rgba(255,255,255,0.07)] max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-md rounded-xl bg-white shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.07)] px-6 py-4 sticky top-0 bg-[#111827]">
-          <h2 className="text-lg font-semibold text-[#F8FAFC]">Submit Expense</h2>
-          <button onClick={onClose} className="text-[#64748B] hover:text-[#94A3B8]">
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 sticky top-0 bg-white">
+          <h2 className="text-lg font-semibold text-black">Submit Expense</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-400">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -255,20 +255,20 @@ export function SubmitExpenseModal({
         {/* Content */}
         <div className="space-y-4 px-6 py-6">
           {submitError && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <p className="text-sm text-red-400">{submitError}</p>
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{submitError}</p>
             </div>
           )}
 
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-[#F8FAFC] mb-2">
+            <label htmlFor="category" className="block text-sm font-medium text-black mb-2">
               Category
             </label>
             <select
               id="category"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value, otherCategoryDetail: "" })}
-              className="w-full rounded-lg border border-[rgba(255,255,255,0.07)] bg-white text-black px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-slate-200 bg-white text-black px-3 py-2 text-sm"
               disabled={loading}
             >
               {CATEGORY_GROUPS.map((grp) => (
@@ -283,7 +283,7 @@ export function SubmitExpenseModal({
 
           {formData.category === "cat_other" && (
             <div>
-              <label htmlFor="otherCategoryDetail" className="block text-sm font-medium text-[#F8FAFC] mb-2">
+              <label htmlFor="otherCategoryDetail" className="block text-sm font-medium text-black mb-2">
                 Specify Category
               </label>
               <input
@@ -292,19 +292,19 @@ export function SubmitExpenseModal({
                 value={formData.otherCategoryDetail}
                 onChange={(e) => setFormData({ ...formData, otherCategoryDetail: e.target.value })}
                 placeholder="Enter expense category details..."
-                className={`w-full rounded-lg border px-3 py-2 text-sm bg-white text-black ${ errors.otherCategoryDetail ? "border-red-400/30 bg-red-500/10" : "border-[rgba(255,255,255,0.07)] bg-white" }`}
+                className={`w-full rounded-lg border px-3 py-2 text-sm bg-white text-black ${ errors.otherCategoryDetail ? "border-red-300 bg-red-50" : "border-slate-200 bg-white" }`}
                 disabled={loading}
               />
-              {errors.otherCategoryDetail && <p className="text-xs text-red-400 mt-1">{errors.otherCategoryDetail}</p>}
+              {errors.otherCategoryDetail && <p className="text-xs text-red-600 mt-1">{errors.otherCategoryDetail}</p>}
             </div>
           )}
 
           <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-[#F8FAFC] mb-2">
+            <label htmlFor="amount" className="block text-sm font-medium text-black mb-2">
               Amount
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#64748B]">₦</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">₦</span>
               <input
                 id="amount"
                 type="text"
@@ -312,15 +312,15 @@ export function SubmitExpenseModal({
                 value={formData.amount}
                 onChange={handleAmountChange}
                 placeholder="0"
-                className={`w-full rounded-lg border pl-7 pr-3 py-2 text-sm bg-white text-black ${ errors.amount ? "border-red-400/30 bg-red-500/10" : "border-[rgba(255,255,255,0.07)]" }`}
+                className={`w-full rounded-lg border pl-7 pr-3 py-2 text-sm bg-white text-black ${ errors.amount ? "border-red-300 bg-red-50" : "border-slate-200" }`}
                 disabled={loading}
               />
             </div>
-            {errors.amount && <p className="text-xs text-red-400 mt-1">{errors.amount}</p>}
+            {errors.amount && <p className="text-xs text-red-600 mt-1">{errors.amount}</p>}
           </div>
 
           <div>
-            <label htmlFor="date" className="block text-sm font-medium text-[#F8FAFC] mb-2">
+            <label htmlFor="date" className="block text-sm font-medium text-black mb-2">
               Date
             </label>
             <input
@@ -328,14 +328,14 @@ export function SubmitExpenseModal({
               type="date"
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className={`w-full rounded-lg border px-3 py-2 text-sm bg-white text-black ${ errors.date ? "border-red-400/30 bg-red-500/10" : "border-[rgba(255,255,255,0.07)]" }`}
+              className={`w-full rounded-lg border px-3 py-2 text-sm bg-white text-black ${ errors.date ? "border-red-300 bg-red-50" : "border-slate-200" }`}
               disabled={loading}
             />
-            {errors.date && <p className="text-xs text-red-400 mt-1">{errors.date}</p>}
+            {errors.date && <p className="text-xs text-red-600 mt-1">{errors.date}</p>}
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-[#F8FAFC] mb-2">
+            <label htmlFor="description" className="block text-sm font-medium text-black mb-2">
               Description
             </label>
             <textarea
@@ -344,10 +344,10 @@ export function SubmitExpenseModal({
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="What was this expense for?"
               rows={3}
-              className={`w-full rounded-lg border px-3 py-2 text-sm bg-white text-black ${ errors.description ? "border-red-400/30 bg-red-500/10" : "border-[rgba(255,255,255,0.07)]" }`}
+              className={`w-full rounded-lg border px-3 py-2 text-sm bg-white text-black ${ errors.description ? "border-red-300 bg-red-50" : "border-slate-200" }`}
               disabled={loading}
             />
-            {errors.description && <p className="text-xs text-red-400 mt-1">{errors.description}</p>}
+            {errors.description && <p className="text-xs text-red-600 mt-1">{errors.description}</p>}
           </div>
 
           <div className="space-y-3">
@@ -360,10 +360,10 @@ export function SubmitExpenseModal({
                   setFormData({ ...formData, receipt: e.target.checked });
                   if (!e.target.checked) setReceiptFile(null);
                 }}
-                className="bg-white rounded border-[rgba(255,255,255,0.1)] text-black"
+                className="bg-white rounded border-slate-200 text-black"
                 disabled={loading}
               />
-              <label htmlFor="receipt" className="text-sm text-[#94A3B8]">
+              <label htmlFor="receipt" className="text-sm text-gray-400">
                 I have a receipt attached
               </label>
             </div>
@@ -382,7 +382,7 @@ export function SubmitExpenseModal({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className={`w-full flex items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-3 text-sm transition ${
-                      errors.receipt ? "border-red-400/30 bg-red-500/10 text-red-400" : "border-[rgba(255,255,255,0.1)] hover:border-[#818CF8] hover:bg-[rgba(99,102,241,0.1)] text-[#94A3B8]"
+                      errors.receipt ? "border-red-300 bg-red-50 text-red-600" : "border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-gray-400"
                     }`}
                     disabled={loading}
                   >
@@ -390,38 +390,38 @@ export function SubmitExpenseModal({
                     Click to upload receipt
                   </button>
                 ) : (
-                  <div className="flex items-center gap-2 rounded-lg border border-[rgba(255,255,255,0.07)] bg-[#0B1120] px-3 py-2">
-                    <FileText className="w-4 h-4 text-[#818CF8] flex-shrink-0" />
-                    <span className="text-sm text-[#94A3B8] truncate flex-1">{receiptFile.name}</span>
+                  <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-gray-100 px-3 py-2">
+                    <FileText className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                    <span className="text-sm text-gray-400 truncate flex-1">{receiptFile.name}</span>
                     <button
                       type="button"
                       onClick={() => { setReceiptFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
-                      className="text-[#64748B] hover:text-red-400 flex-shrink-0"
+                      className="text-gray-500 hover:text-red-600 flex-shrink-0"
                       disabled={loading}
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 )}
-                {errors.receipt && <p className="text-xs text-red-400 mt-1">{errors.receipt}</p>}
+                {errors.receipt && <p className="text-xs text-red-600 mt-1">{errors.receipt}</p>}
               </div>
             )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="border-t border-[rgba(255,255,255,0.07)] px-6 py-4 flex gap-3 sticky bottom-0 bg-[#111827]">
+        <div className="border-t border-slate-200 px-6 py-4 flex gap-3 sticky bottom-0 bg-white">
           <button
             onClick={onClose}
             disabled={loading}
-            className="flex-1 rounded-lg bg-[#0B1120] px-4 py-2 text-sm font-medium text-[#F8FAFC] hover:bg-[rgba(255,255,255,0.07)] disabled:opacity-50"
+            className="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-black hover:bg-gray-100 disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-[#F8FAFC] hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-black hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -469,19 +469,19 @@ export function ViewExpenseModal({
   if (!isOpen || !expense) return null;
 
   const statusColor: Record<string, string> = {
-    approved: "bg-green-500/10 text-green-400",
-    rejected: "bg-red-500/10 text-red-400",
-    pending: "bg-amber-500/10 text-amber-400",
-    reimbursed: "bg-[rgba(99,102,241,0.1)] text-[#818CF8]",
+    approved: "bg-green-50 text-green-600",
+    rejected: "bg-red-50 text-red-600",
+    pending: "bg-amber-50 text-amber-600",
+    reimbursed: "bg-blue-50 text-blue-600",
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-[#111827] shadow-xl border border-[rgba(255,255,255,0.07)] max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-md rounded-xl bg-white shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.07)] px-6 py-4">
-          <h2 className="text-lg font-semibold text-[#F8FAFC]">Expense #{expense.id}</h2>
-          <button onClick={onClose} className="text-[#64748B] hover:text-[#94A3B8]">
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+          <h2 className="text-lg font-semibold text-black">Expense #{expense.id}</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-400">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -490,8 +490,8 @@ export function ViewExpenseModal({
         <div className="space-y-6 px-6 py-6">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-[#64748B]">Status</span>
-              <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusColor[expense.status.toLowerCase()] || "bg-[rgba(255,255,255,0.07)] text-[#94A3B8]"}`}>
+              <span className="text-xs font-medium text-gray-500">Status</span>
+              <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusColor[expense.status.toLowerCase()] || "bg-gray-100 text-gray-400"}`}>
                 {expense.status}
               </span>
             </div>
@@ -499,55 +499,55 @@ export function ViewExpenseModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-xs font-medium text-[#64748B]">Category</p>
-              <p className="text-sm font-semibold text-[#F8FAFC] mt-1 capitalize">{expense.category}</p>
+              <p className="text-xs font-medium text-gray-500">Category</p>
+              <p className="text-sm font-semibold text-black mt-1 capitalize">{expense.category}</p>
             </div>
             <div>
-              <p className="text-xs font-medium text-[#64748B]">Amount</p>
-              <p className="text-sm font-semibold text-[#F8FAFC] mt-1">₦{expense.amount.toLocaleString()}</p>
+              <p className="text-xs font-medium text-gray-500">Amount</p>
+              <p className="text-sm font-semibold text-black mt-1">₦{expense.amount.toLocaleString()}</p>
             </div>
           </div>
 
           {expense.employee && (
             <div>
-              <p className="text-xs font-medium text-[#64748B]">Employee</p>
-              <p className="text-sm text-[#94A3B8] mt-1">{expense.employee}</p>
+              <p className="text-xs font-medium text-gray-500">Employee</p>
+              <p className="text-sm text-gray-400 mt-1">{expense.employee}</p>
             </div>
           )}
 
           {expense.submittedDate && (
             <div>
-              <p className="text-xs font-medium text-[#64748B]">Submitted</p>
-              <p className="text-sm text-[#94A3B8] mt-1">{new Date(expense.submittedDate).toLocaleDateString()}</p>
+              <p className="text-xs font-medium text-gray-500">Submitted</p>
+              <p className="text-sm text-gray-400 mt-1">{new Date(expense.submittedDate).toLocaleDateString()}</p>
             </div>
           )}
 
           <div>
-            <p className="text-xs font-medium text-[#64748B]">Description</p>
-            <p className="text-sm text-[#94A3B8] mt-1">{expense.description}</p>
+            <p className="text-xs font-medium text-gray-500">Description</p>
+            <p className="text-sm text-gray-400 mt-1">{expense.description}</p>
           </div>
 
           {expense.notes && (
-            <div className="rounded-lg bg-[rgba(99,102,241,0.1)] p-3">
-              <p className="text-xs font-medium text-[#F8FAFC]">Approver Notes</p>
-              <p className="text-sm text-[#818CF8] mt-1">{expense.notes}</p>
+            <div className="rounded-lg bg-blue-50 p-3">
+              <p className="text-xs font-medium text-black">Approver Notes</p>
+              <p className="text-sm text-blue-600 mt-1">{expense.notes}</p>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="border-t border-[rgba(255,255,255,0.07)] px-6 py-4 space-y-3 sticky bottom-0 bg-[#111827]">
+        <div className="border-t border-slate-200 px-6 py-4 space-y-3 sticky bottom-0 bg-white">
           {expense.status === "pending" && (
             <div className="flex gap-2">
               <button
                 onClick={onReject}
-                className="w-full px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-[#F8FAFC] bg-[#0B1120]"
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-gray-100"
               >
                 Reject
               </button>
               <button
                 onClick={onApprove}
-                className="w-full px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-[#F8FAFC] bg-[#0B1120]"
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-gray-100"
               >
                 <Check className="w-4 h-4" />
                 Approve
@@ -557,14 +557,14 @@ export function ViewExpenseModal({
           {onEdit && expense.status === "draft" && (
             <button
               onClick={onEdit}
-              className="w-full rounded-lg bg-[#0B1120] px-4 py-2 text-sm font-medium text-[#F8FAFC] hover:bg-[rgba(255,255,255,0.07)]"
+              className="w-full rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-black hover:bg-gray-100"
             >
               Edit
             </button>
           )}
           <button
             onClick={onClose}
-            className="w-full rounded-lg bg-[#0B1120] px-4 py-2 text-sm font-medium text-[#F8FAFC] hover:bg-[rgba(255,255,255,0.07)]"
+            className="w-full rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-black hover:bg-gray-100"
           >
             Close
           </button>
@@ -594,22 +594,22 @@ export function BulkActionsModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-[#111827] shadow-xl border border-[rgba(255,255,255,0.07)]">
+      <div className="w-full max-w-md rounded-xl bg-white shadow-xl border border-slate-200">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.07)] px-6 py-4">
-          <h2 className="text-lg font-semibold text-[#F8FAFC]">Bulk Actions</h2>
-          <button onClick={onClose} className="text-[#64748B] hover:text-[#94A3B8]">
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+          <h2 className="text-lg font-semibold text-black">Bulk Actions</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-400">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
         <div className="space-y-4 px-6 py-6">
-          <p className="text-sm text-[#94A3B8]">
+          <p className="text-sm text-gray-400">
             You have selected <strong>{count}</strong> expense{count !== 1 ? "s" : ""}. Choose an action:
           </p>
 
-          <div className="rounded-lg bg-[rgba(99,102,241,0.1)] p-3 text-sm text-[#F8FAFC]">
+          <div className="rounded-lg bg-blue-50 p-3 text-sm text-black">
             <p className="font-medium">Bulk operations will:</p>
             <ul className="list-disc list-inside mt-2 space-y-1 text-xs">
               <li>Apply the same action to all selected expenses</li>
@@ -620,25 +620,25 @@ export function BulkActionsModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-[rgba(255,255,255,0.07)] px-6 py-4 flex gap-3">
+        <div className="border-t border-slate-200 px-6 py-4 flex gap-3">
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-[#0B1120] px-4 py-2 text-sm font-medium text-[#F8FAFC] hover:bg-[rgba(255,255,255,0.07)] disabled:opacity-50"
+            className="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-black hover:bg-gray-100 disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={onRejectAll}
             disabled={isLoading}
-            className="flex-1 rounded-lg border border-red-500/20 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+            className="flex-1 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
           >
             {isLoading ? "Processing..." : "Reject All"}
           </button>
           <button
             onClick={onApproveAll}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-[#F8FAFC] hover:bg-green-700 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-black hover:bg-green-700 disabled:opacity-50"
           >
             {isLoading ? "Processing..." : "Approve All"}
           </button>
@@ -666,11 +666,11 @@ export function ExportExpensesModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-xl bg-[#111827] shadow-xl border border-[rgba(255,255,255,0.07)]">
+      <div className="w-full max-w-md rounded-xl bg-white shadow-xl border border-slate-200">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.07)] px-6 py-4">
-          <h2 className="text-lg font-semibold text-[#F8FAFC]">Export Expenses</h2>
-          <button onClick={onClose} className="text-[#64748B] hover:text-[#94A3B8]">
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+          <h2 className="text-lg font-semibold text-black">Export Expenses</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-400">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -678,14 +678,14 @@ export function ExportExpensesModal({
         {/* Content */}
         <div className="space-y-4 px-6 py-6">
           <div>
-            <label htmlFor="format" className="block text-sm font-medium text-[#F8FAFC] mb-2">
+            <label htmlFor="format" className="block text-sm font-medium text-black mb-2">
               Format
             </label>
             <select
               id="format"
               value={format}
               onChange={(e) => setFormat(e.target.value)}
-              className="w-full rounded-lg border border-[rgba(255,255,255,0.07)] bg-white text-black px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-slate-200 bg-white text-black px-3 py-2 text-sm"
             >
               <option value="csv">CSV</option>
               <option value="excel">Excel</option>
@@ -693,7 +693,7 @@ export function ExportExpensesModal({
             </select>
           </div>
 
-          <div className="rounded-lg bg-[rgba(99,102,241,0.1)] p-3 text-sm text-[#F8FAFC]">
+          <div className="rounded-lg bg-blue-50 p-3 text-sm text-black">
             <p className="font-medium">The export will include:</p>
             <ul className="list-disc list-inside mt-2 space-y-1 text-xs">
               <li>All selected expenses</li>
@@ -704,18 +704,18 @@ export function ExportExpensesModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-[rgba(255,255,255,0.07)] px-6 py-4 flex gap-3">
+        <div className="border-t border-slate-200 px-6 py-4 flex gap-3">
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-[#0B1120] px-4 py-2 text-sm font-medium text-[#F8FAFC] hover:bg-[rgba(255,255,255,0.07)] disabled:opacity-50"
+            className="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-black hover:bg-gray-100 disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={() => onExport(format)}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-[#F8FAFC] hover:bg-blue-700 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-black hover:bg-blue-700 disabled:opacity-50"
           >
             {isLoading ? "Exporting..." : "Export"}
           </button>

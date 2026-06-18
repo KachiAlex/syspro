@@ -733,8 +733,8 @@ export default function BudgetPlanningWorkspace({
       {/* CREATE BUDGET MODAL */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-[#111827] rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-[#111827] border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">
                 Create New Budget
               </h2>
@@ -759,7 +759,7 @@ export default function BudgetPlanningWorkspace({
                     onChange={(e) =>
                       setFormData({ ...formData, code: e.target.value })
                     }
-                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-black"
                     placeholder="BUDGET-2024-01"
                   />
                 </div>
@@ -773,7 +773,7 @@ export default function BudgetPlanningWorkspace({
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
-                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-black"
                     placeholder="Q1 2024 Budget"
                   />
                 </div>
@@ -808,7 +808,7 @@ export default function BudgetPlanningWorkspace({
                         periodType: e.target.value as any,
                       })
                     }
-                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-black"
                   >
                     {BUDGET_PERIOD_TYPES.map((t) => (
                       <option key={t} value={t}>
@@ -826,7 +826,7 @@ export default function BudgetPlanningWorkspace({
                     onChange={(e) =>
                       setFormData({ ...formData, budgetType: e.target.value as any })
                     }
-                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-black"
                   >
                     {BUDGET_TYPES.map((t) => (
                       <option key={t} value={t}>
@@ -848,7 +848,7 @@ export default function BudgetPlanningWorkspace({
                         fiscalYear: parseInt(e.target.value),
                       })
                     }
-                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-black"
                   />
                 </div>
               </div>
@@ -886,7 +886,7 @@ export default function BudgetPlanningWorkspace({
                         enforcementMode: e.target.value as any,
                       })
                     }
-                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="bg-white w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-black"
                   >
                     {ENFORCEMENT_MODES.map((m) => (
                       <option key={m} value={m}>
@@ -950,7 +950,7 @@ export default function BudgetPlanningWorkspace({
                     </div>
                     <button
                       onClick={addBudgetLine}
-                      className="bg-blue-600 text-white px-4 py-1 rounded text-sm hover:bg-blue-700"
+                      className="bg-blue-600 text-black px-4 py-1 rounded text-sm hover:bg-blue-700"
                     >
                       Add Line
                     </button>
@@ -991,14 +991,14 @@ export default function BudgetPlanningWorkspace({
             <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 text-gray-900 bg-[#111827] border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-gray-900 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 onClick={createBudget}
                 disabled={loading}
-                className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-black shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? "Creating..." : "Create Budget"}
               </button>
@@ -1010,7 +1010,7 @@ export default function BudgetPlanningWorkspace({
       {/* FORECAST MODAL */}
       {showForecastModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-[#111827] rounded-lg shadow-lg w-full max-w-md">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
             <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900">
                 Generate Forecast

@@ -386,13 +386,13 @@ export default function StaffReportsViewer({
                   <>
                     <button
                       onClick={() => updateReportStatus(selectedReport.id, 'reviewed')}
-                      className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+                      className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-black shadow-sm transition hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
                     >
                       Mark as Reviewed
                     </button>
                     <button
                       onClick={() => updateReportStatus(selectedReport.id, 'approved')}
-                      className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+                      className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-black shadow-sm transition hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
                     >
                       Approve Report
                     </button>

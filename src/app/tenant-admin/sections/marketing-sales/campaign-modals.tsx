@@ -194,7 +194,7 @@ export function CreateCampaignModal({
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
               disabled={isLoading}
             >
               {isLoading ? "Creating..." : "Create Campaign"}
@@ -397,7 +397,7 @@ export function EditCampaignModal({
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
               disabled={isLoading}
             >
               {isLoading ? "Saving..." : "Save Changes"}
@@ -578,7 +578,7 @@ export function DeleteConfirmModal({
           </button>
           <button
             onClick={handleConfirm}
-            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-red-600 text-black rounded-lg font-medium hover:bg-red-700 transition disabled:opacity-50"
             disabled={isLoading}
           >
             {isLoading ? "Deleting..." : "Delete"}

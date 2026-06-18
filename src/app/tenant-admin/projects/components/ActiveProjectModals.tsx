@@ -37,7 +37,7 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
           <h2 className="text-2xl font-bold text-gray-900">Project Details</h2>
           <button 
             onClick={onClose} 
-            className="text-gray-500 hover:text-white transition-colors"
+            className="text-gray-500 hover:text-gray-700 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
@@ -145,7 +145,7 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
             <div className="flex justify-end">
               <button
                 onClick={onClose}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Close
               </button>
@@ -213,7 +213,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
           <h2 className="text-2xl font-bold text-gray-900">Edit Project</h2>
           <button 
             onClick={onClose} 
-            className="text-gray-500 hover:text-white transition-colors"
+            className="text-gray-500 hover:text-gray-700 transition-colors"
             disabled={loading}
           >
             <X className="w-6 h-6" />
@@ -340,7 +340,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Updating...' : 'Update Project'}
@@ -406,7 +406,7 @@ export const DeleteProjectModal: React.FC<DeleteProjectModalProps> = ({
             </button>
             <button
               onClick={handleConfirm}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-red-600 text-black rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Deleting...' : 'Delete'}

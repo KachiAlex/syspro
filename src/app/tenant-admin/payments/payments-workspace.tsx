@@ -421,7 +421,7 @@ export function CreatePaymentModal({ isOpen = true, onClose, onSuccess, onError 
               required
               value={formData.vendorId}
               onChange={(e) => setFormData({ ...formData, vendorId: e.target.value })}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black bg-white"
               placeholder="Enter vendor ID"
             />
           </div>
@@ -433,7 +433,7 @@ export function CreatePaymentModal({ isOpen = true, onClose, onSuccess, onError 
             <select
               value={formData.method}
               onChange={(e) => setFormData({ ...formData, method: e.target.value as any })}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black bg-white"
             >
               <option value="bank_transfer">Bank Transfer</option>
               <option value="cash">Cash</option>
@@ -447,12 +447,12 @@ export function CreatePaymentModal({ isOpen = true, onClose, onSuccess, onError 
               Amount
             </label>
             <input
-              type="number"
-              step="0.01"
+              type="text"
+              inputMode="decimal"
               required
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black bg-white"
               placeholder="0.00"
             />
           </div>
@@ -466,7 +466,7 @@ export function CreatePaymentModal({ isOpen = true, onClose, onSuccess, onError 
               required
               value={formData.paymentDate}
               onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black bg-white"
             />
           </div>
 
@@ -481,7 +481,7 @@ export function CreatePaymentModal({ isOpen = true, onClose, onSuccess, onError 
             </button>
             <button
               type="submit"
-              className="rounded-full bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+              className="rounded-full bg-green-600 px-4 py-2 text-sm font-medium text-black hover:bg-green-700 disabled:opacity-50"
               disabled={loading}
             >
               {loading ? "Creating..." : "Create Payment"}

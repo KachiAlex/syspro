@@ -239,7 +239,7 @@ export default function ChartOfAccountsWorkspace({
               className="fixed inset-0 bg-black/40 z-40"
               onClick={() => setShowForm(false)}
             />
-            <div className="fixed right-0 top-0 h-full w-full max-w-md bg-[#111827] shadow-xl z-50 overflow-y-auto rounded-l-3xl">
+            <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-xl z-50 overflow-y-auto rounded-l-3xl">
               <div className="p-8 space-y-6">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-semibold text-gray-900">New Account</h3>
@@ -263,7 +263,7 @@ export default function ChartOfAccountsWorkspace({
                       onChange={(e) =>
                         setFormData({ ...formData, accountCode: e.target.value })
                       }
-                      className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-300"
+                      className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-300 text-black"
                       placeholder="1000"
                     />
                   </div>
@@ -279,7 +279,7 @@ export default function ChartOfAccountsWorkspace({
                       onChange={(e) =>
                         setFormData({ ...formData, accountName: e.target.value })
                       }
-                      className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-300"
+                      className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-300 text-black"
                       placeholder="Cash"
                     />
                   </div>
@@ -294,7 +294,7 @@ export default function ChartOfAccountsWorkspace({
                       onChange={(e) =>
                         setFormData({ ...formData, accountType: e.target.value as any })
                       }
-                      className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
                     >
                       <option value="ASSET">Asset</option>
                       <option value="LIABILITY">Liability</option>
@@ -314,7 +314,7 @@ export default function ChartOfAccountsWorkspace({
                       onChange={(e) =>
                         setFormData({ ...formData, description: e.target.value })
                       }
-                      className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-300"
+                      className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-300 text-black"
                       rows={3}
                     />
                   </div>
@@ -330,7 +330,7 @@ export default function ChartOfAccountsWorkspace({
                   </button>
                   <button
                     onClick={handleSaveAccount}
-                    className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 flex items-center justify-center gap-2"
+                    className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-black hover:bg-blue-700 flex items-center justify-center gap-2"
                   >
                     <Check className="h-4 w-4" />
                     Create Account

@@ -124,7 +124,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
           <h2 className="text-2xl font-bold text-gray-900">Submit Project Report</h2>
           <button 
             onClick={onClose} 
-            className="text-gray-500 hover:text-white transition-colors"
+            className="text-gray-500 hover:text-gray-700 transition-colors"
             disabled={loading}
           >
             <X className="w-6 h-6" />
@@ -150,7 +150,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
               <select
                 value={formData.projectId}
                 onChange={(e) => setFormData(prev => ({ ...prev, projectId: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                   errors.projectId ? 'border-red-500' : 'border-gray-300'
                 }`}
                 disabled={loading}
@@ -196,7 +196,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
               value={formData.content}
               onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
               rows={4}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                 errors.content ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="Describe your work, achievements, and any important updates..."
@@ -240,7 +240,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
                 value={blockerInput}
                 onChange={(e) => setBlockerInput(e.target.value)}
                 onKeyPress={handleBlockerKeyPress}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 placeholder="Enter blocker/issue and press Enter"
                 disabled={loading}
               />
@@ -313,7 +313,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Submitting...' : 'Submit Report'}

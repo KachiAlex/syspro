@@ -103,7 +103,7 @@ export default function NewActivityModal({
                   name="type"
                   value={formData.type}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   required
                 >
                   {ACTIVITY_TYPES.map((type) => (
@@ -120,7 +120,7 @@ export default function NewActivityModal({
                   name="status"
                   value={formData.status || "pending"}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 >
                   {ACTIVITY_STATUSES.map((status) => (
                     <option key={status} value={status}>
@@ -137,7 +137,7 @@ export default function NewActivityModal({
                   name="title"
                   value={formData.title}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   placeholder="Activity title"
                   required
                 />
@@ -149,7 +149,7 @@ export default function NewActivityModal({
                   name="description"
                   value={formData.description || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   placeholder="Activity description"
                   rows={3}
                 />
@@ -167,7 +167,7 @@ export default function NewActivityModal({
                   name="relatedTo"
                   value={formData.relatedTo}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   required
                 >
                   {RELATED_TO_OPTIONS.map((option) => (
@@ -185,7 +185,7 @@ export default function NewActivityModal({
                   name="relatedId"
                   value={formData.relatedId}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   placeholder="ID of the related item"
                   required
                 />
@@ -198,7 +198,7 @@ export default function NewActivityModal({
                   name="relatedName"
                   value={formData.relatedName}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   placeholder="Name of the related item"
                   required
                 />
@@ -217,7 +217,7 @@ export default function NewActivityModal({
                   name="assignedTo"
                   value={formData.assignedTo || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   placeholder="Officer or team member name"
                 />
               </div>
@@ -229,7 +229,7 @@ export default function NewActivityModal({
                   name="dueDate"
                   value={formData.dueDate || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 />
               </div>
 
@@ -241,7 +241,7 @@ export default function NewActivityModal({
                     name="completedAt"
                     value={formData.completedAt || ""}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   />
                 </div>
               )}

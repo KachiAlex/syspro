@@ -113,7 +113,7 @@ export default function NewAccountModal({
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   placeholder="Company or account name"
                   required
                 />
@@ -125,7 +125,7 @@ export default function NewAccountModal({
                   name="status"
                   value={formData.status || "active"}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 >
                   {ACCOUNT_STATUSES.map((status) => (
                     <option key={status} value={status}>
@@ -142,7 +142,7 @@ export default function NewAccountModal({
                   name="regionId"
                   value={formData.regionId || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   placeholder="Optional region identifier"
                 />
               </div>
@@ -154,7 +154,7 @@ export default function NewAccountModal({
                   name="branchId"
                   value={formData.branchId || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   placeholder="Optional branch identifier"
                 />
               </div>
@@ -172,7 +172,7 @@ export default function NewAccountModal({
                   name="contact_name"
                   value={formData.primaryContact?.name || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   placeholder="Contact person name"
                 />
               </div>
@@ -184,7 +184,7 @@ export default function NewAccountModal({
                   name="contact_email"
                   value={formData.primaryContact?.email || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   placeholder="contact@example.com"
                   required
                 />
@@ -197,7 +197,7 @@ export default function NewAccountModal({
                   name="contact_phone"
                   value={formData.primaryContact?.phone || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   placeholder="+234 12345 67890"
                 />
               </div>
@@ -216,7 +216,7 @@ export default function NewAccountModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm disabled:opacity-50"
+              className="px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 font-medium text-sm disabled:opacity-50"
             >
               {loading ? "Saving..." : isEdit ? "Update" : "Create"}
             </button>

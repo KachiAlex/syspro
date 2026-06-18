@@ -139,7 +139,7 @@ export default function BillsWorkspace() {
           <select
             value={filters.status}
             onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
           >
             <option value="">All Status</option>
             <option value="draft">Draft</option>
@@ -154,7 +154,7 @@ export default function BillsWorkspace() {
             placeholder="Search vendor…"
             value={filters.vendorId}
             onChange={(e) => setFilters({ ...filters, vendorId: e.target.value })}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
           />
           
           <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2">

@@ -151,7 +151,7 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
           <h2 className="text-2xl font-bold text-gray-900">Create Project Report</h2>
           <button 
             onClick={onClose} 
-            className="text-gray-500 hover:text-white transition-colors"
+            className="text-gray-500 hover:text-gray-700 transition-colors"
             disabled={loading}
           >
             <X className="w-6 h-6" />
@@ -178,7 +178,7 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
                 type="text"
                 value={formData.reportTitle}
                 onChange={(e) => setFormData(prev => ({ ...prev, reportTitle: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                   errors.reportTitle ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Enter report title"
@@ -222,7 +222,7 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
                     ...prev, 
                     dateRange: { ...prev.dateRange, start: e.target.value }
                   }))}
-                  className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                     errors.dateRange ? 'border-red-500' : 'border-gray-300'
                   }`}
                   disabled={loading}
@@ -234,7 +234,7 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
                     ...prev, 
                     dateRange: { ...prev.dateRange, end: e.target.value }
                   }))}
-                  className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                     errors.dateRange ? 'border-red-500' : 'border-gray-300'
                   }`}
                   min={formData.dateRange.start}
@@ -308,7 +308,7 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
                   placeholder="Metric name"
                   value={newMetric.name}
                   onChange={(e) => setNewMetric(prev => ({ ...prev, name: e.target.value }))}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   disabled={loading}
                 />
                 <input
@@ -316,7 +316,7 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
                   placeholder="Value"
                   value={newMetric.value}
                   onChange={(e) => setNewMetric(prev => ({ ...prev, value: e.target.value }))}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   disabled={loading}
                 />
                 <select
@@ -325,7 +325,7 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
                     ...prev, 
                     trend: e.target.value as 'up' | 'down' | 'stable'
                   }))}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   disabled={loading}
                 >
                   <option value="up">Up</option>
@@ -337,13 +337,13 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
                   placeholder="Description (optional)"
                   value={newMetric.description}
                   onChange={(e) => setNewMetric(prev => ({ ...prev, description: e.target.value }))}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={addMetric}
-                  className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+                  className="px-3 py-1 bg-blue-600 text-black rounded text-sm hover:bg-blue-700 disabled:opacity-50"
                   disabled={loading || !newMetric.name.trim() || !newMetric.value.trim()}
                 >
                   Add
@@ -401,7 +401,7 @@ export const AdminReportModal: React.FC<AdminReportModalProps> = ({
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Creating...' : 'Create Report'}

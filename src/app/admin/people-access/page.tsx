@@ -147,7 +147,7 @@ export default function PeopleAccessPage() {
                 <h2 className="text-lg font-bold mb-2">Invite User</h2>
                 <input
                   type="email"
-                  className="border p-2 w-full mb-2"
+                  className="border p-2 w-full mb-2 text-black"
                   placeholder="user@email.com"
                   value={inviteEmail}
                   onChange={e => setInviteEmail(e.target.value)}
@@ -160,7 +160,7 @@ export default function PeopleAccessPage() {
                 <div className="flex gap-2 justify-end">
                   <button className="px-3 py-1" onClick={() => setInviteOpen(false)} disabled={inviteLoading}>Cancel</button>
                   <button
-                    className="bg-blue-600 text-white px-4 py-1 rounded"
+                    className="bg-blue-600 text-black px-4 py-1 rounded"
                     disabled={inviteLoading || !validateEmail(inviteEmail)}
                     onClick={async () => {
                       setInviteLoading(true);
@@ -201,7 +201,7 @@ export default function PeopleAccessPage() {
                   type="file"
                   accept=".csv"
                   ref={fileInputRef}
-                  className="mb-2"
+                  className="mb-2 text-black"
                   disabled={csvLoading}
                   onChange={async (e) => {
                     setCsvError('');

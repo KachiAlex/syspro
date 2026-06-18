@@ -286,14 +286,14 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                 placeholder="Search team members..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               />
             </div>
           </div>
           <select
             value={departmentFilter}
             onChange={(e) => setDepartmentFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
           >
             <option value="all">All Departments</option>
             <option value="sales">Sales</option>
@@ -305,7 +305,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
           >
             <option value="all">All Roles</option>
             <option value="admin">Admin</option>
@@ -459,7 +459,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                     type="text"
                     value={formData.firstName}
                     onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                       errors.firstName ? 'border-red-500' : 'border-gray-300'
                     }`}
                     disabled={loading}
@@ -475,7 +475,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                     type="text"
                     value={formData.lastName}
                     onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                       errors.lastName ? 'border-red-500' : 'border-gray-300'
                     }`}
                     disabled={loading}
@@ -491,7 +491,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                       errors.email ? 'border-red-500' : 'border-gray-300'
                     }`}
                     disabled={loading}
@@ -507,7 +507,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                     type="text"
                     value={formData.position}
                     onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                       errors.position ? 'border-red-500' : 'border-gray-300'
                     }`}
                     disabled={loading}
@@ -522,7 +522,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                   <select
                     value={formData.department}
                     onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value as TeamMember['department'] }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                     disabled={loading}
                   >
                     <option value="sales">Sales</option>
@@ -538,7 +538,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as TeamMember['role'] }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                     disabled={loading}
                   >
                     <option value="viewer">Viewer</option>
@@ -563,7 +563,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                   disabled={loading}
                 >
                   {loading ? 'Adding...' : 'Add Member'}
@@ -612,7 +612,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                     type="text"
                     value={formData.firstName}
                     onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                       errors.firstName ? 'border-red-500' : 'border-gray-300'
                     }`}
                     disabled={loading}
@@ -628,7 +628,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                     type="text"
                     value={formData.lastName}
                     onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                       errors.lastName ? 'border-red-500' : 'border-gray-300'
                     }`}
                     disabled={loading}
@@ -644,7 +644,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                       errors.email ? 'border-red-500' : 'border-gray-300'
                     }`}
                     disabled={loading}
@@ -660,7 +660,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                     type="text"
                     value={formData.position}
                     onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                       errors.position ? 'border-red-500' : 'border-gray-300'
                     }`}
                     disabled={loading}
@@ -675,7 +675,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                   <select
                     value={formData.department}
                     onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value as TeamMember['department'] }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                     disabled={loading}
                   >
                     <option value="sales">Sales</option>
@@ -691,7 +691,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as TeamMember['role'] }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                     disabled={loading}
                   >
                     <option value="viewer">Viewer</option>
@@ -717,7 +717,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                   disabled={loading}
                 >
                   {loading ? 'Updating...' : 'Update Member'}

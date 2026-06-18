@@ -136,7 +136,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
         <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-900">Add Employee</h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-white">
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -148,7 +148,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'manual'
                   ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-white'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               Manual Entry
@@ -158,7 +158,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'excel'
                   ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-white'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               Excel Import
@@ -168,7 +168,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'invite'
                   ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-white'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               Invite Link
@@ -298,7 +298,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                   disabled={loading}
                 >
                   {loading ? 'Adding...' : 'Add Employee'}
@@ -328,7 +328,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                   
                   <label
                     htmlFor="excel-upload"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 cursor-pointer"
                   >
                     <Upload className="w-4 h-4" />
                     Choose File
@@ -377,7 +377,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                   disabled={loading || !excelFile}
                 >
                   {loading ? 'Uploading...' : 'Upload Employees'}
@@ -410,7 +410,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                 <button
                   onClick={generateInviteLink}
                   disabled={loading || !inviteEmails.trim()}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="w-full px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
                   {loading ? 'Generating...' : 'Generate Invite Link'}
                 </button>
@@ -429,11 +429,11 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                         type="text"
                         value={inviteLink}
                         readOnly
-                        className="flex-1 px-3 py-2 bg-white border border-green-300 rounded-lg text-sm"
+                        className="flex-1 px-3 py-2 bg-white border border-green-300 rounded-lg text-sm text-black"
                       />
                       <button
                         onClick={copyInviteLink}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        className="px-4 py-2 bg-green-600 text-black rounded-lg hover:bg-green-700 transition-colors"
                       >
                         Copy Link
                       </button>

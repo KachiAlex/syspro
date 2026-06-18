@@ -939,7 +939,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
               <button type="button" onClick={() => setCampaignModalOpen(false)} className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">
                 Cancel
               </button>
-              <button type="submit" className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
+              <button type="submit" className="rounded-full bg-gray-100 px-4 py-2 text-sm font-semibold text-black">
                 Create campaign
               </button>
             </div>
@@ -985,7 +985,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
               <button type="button" onClick={() => setLeadSourceModalOpen(false)} className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">
                 Cancel
               </button>
-              <button type="submit" className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
+              <button type="submit" className="rounded-full bg-gray-100 px-4 py-2 text-sm font-semibold text-black">
                 Register
               </button>
             </div>
@@ -1019,7 +1019,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
               <button type="button" onClick={() => setAssetModalOpen(false)} className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600">
                 Cancel
               </button>
-              <button type="submit" className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
+              <button type="submit" className="rounded-full bg-gray-100 px-4 py-2 text-sm font-semibold text-black">
                 Publish asset
               </button>
             </div>
@@ -1111,7 +1111,7 @@ const Select = ({ label, value, onChange, options }: { label: string; value: str
 
 const Modal = ({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-    <div className="w-full max-w-3xl rounded-3xl bg-[#111827] p-6 shadow-2xl">
+    <div className="w-full max-w-3xl rounded-3xl bg-white p-6 shadow-2xl">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
         <button onClick={onClose} className="text-slate-500 hover:text-slate-700">

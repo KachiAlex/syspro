@@ -171,7 +171,7 @@ export default function ImportContactsModal({
           <h2 className="text-xl font-bold text-gray-900">Import Contacts</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-white transition"
+            className="text-gray-500 hover:text-gray-700 transition"
             disabled={step === "importing"}
           >
             <X className="w-6 h-6" />
@@ -234,7 +234,7 @@ export default function ImportContactsModal({
                   </p>
                   <button
                     onClick={downloadSample}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                   >
                     <Download className="w-4 h-4" />
                     Download Sample
@@ -344,7 +344,7 @@ export default function ImportContactsModal({
                 </button>
                 <button
                   onClick={handleImport}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  className="px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
                   Import {contacts.length} Contacts
                 </button>

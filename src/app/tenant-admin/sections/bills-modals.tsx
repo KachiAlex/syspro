@@ -23,7 +23,7 @@ const FormAlert: React.FC<FormAlertProps> = ({ type, message, onClose }) => {
   return (
     <div className={`${bgColor} border ${borderColor} rounded-lg p-4 mb-4 flex justify-between items-center`}>
       <p className={`text-sm font-medium ${textColor}`}>{message}</p>
-      <button onClick={onClose} className="text-gray-500 hover:text-white">
+      <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
         <X className="w-4 h-4" />
       </button>
     </div>
@@ -222,7 +222,7 @@ export const AddBillModal: React.FC<AddBillModalProps> = ({ isOpen, onClose, onS
               <button
                 type="submit"
                 disabled={creatingVendor}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 {creatingVendor ? 'Creating...' : 'Create Vendor'}
               </button>
@@ -260,7 +260,7 @@ export const AddBillModal: React.FC<AddBillModalProps> = ({ isOpen, onClose, onS
             <textarea placeholder="Description" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg text-black" rows={3} />
             <div className="flex gap-3 pt-4">
               <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">Cancel</button>
-              <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{loading ? 'Adding...' : 'Add Bill'}</button>
+              <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:opacity-50">{loading ? 'Adding...' : 'Add Bill'}</button>
             </div>
           </form>
         )}
@@ -386,7 +386,7 @@ export const MakePaymentModal: React.FC<MakePaymentModalProps> = ({ isOpen, onCl
           </select>
           <div className="flex gap-3 pt-4">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? 'Processing...' : 'Pay Bill'}</button>
+            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-green-600 text-black rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? 'Processing...' : 'Pay Bill'}</button>
           </div>
         </form>
       </div>

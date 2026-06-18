@@ -190,7 +190,7 @@ export const UnifiedReportModal: React.FC<UnifiedReportModalProps> = ({
                 <p className="text-gray-600">Generate and manage reports</p>
               </div>
             </div>
-            <button onClick={onClose} className="text-gray-500 hover:text-white">
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -202,7 +202,7 @@ export const UnifiedReportModal: React.FC<UnifiedReportModalProps> = ({
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'generate'
                   ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-white'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               <FileText className="w-4 h-4 inline mr-1" />
@@ -213,7 +213,7 @@ export const UnifiedReportModal: React.FC<UnifiedReportModalProps> = ({
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'templates'
                   ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-white'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               <Settings className="w-4 h-4 inline mr-1" />
@@ -224,7 +224,7 @@ export const UnifiedReportModal: React.FC<UnifiedReportModalProps> = ({
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'scheduled'
                   ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-white'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               <Clock className="w-4 h-4 inline mr-1" />
@@ -256,7 +256,7 @@ export const UnifiedReportModal: React.FC<UnifiedReportModalProps> = ({
                   <select
                     value={formData.reportType}
                     onChange={(e) => setFormData(prev => ({ ...prev, reportType: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                       errors.reportType ? 'border-red-500' : 'border-gray-300'
                     }`}
                     disabled={loading}
@@ -284,7 +284,7 @@ export const UnifiedReportModal: React.FC<UnifiedReportModalProps> = ({
                       type="date"
                       value={formData.startDate}
                       onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                         errors.startDate ? 'border-red-500' : 'border-gray-300'
                       }`}
                       disabled={loading}
@@ -303,7 +303,7 @@ export const UnifiedReportModal: React.FC<UnifiedReportModalProps> = ({
                       type="date"
                       value={formData.endDate}
                       onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                         errors.endDate ? 'border-red-500' : 'border-gray-300'
                       }`}
                       min={formData.startDate}
@@ -418,7 +418,7 @@ export const UnifiedReportModal: React.FC<UnifiedReportModalProps> = ({
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     disabled={loading}
                   >
                     {loading ? (
@@ -539,7 +539,7 @@ export const UnifiedReportModal: React.FC<UnifiedReportModalProps> = ({
                         setFormData(prev => ({ ...prev, reportType: template.type }));
                         setActiveTab('generate');
                       }}
-                      className="mt-3 w-full px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                      className="mt-3 w-full px-3 py-2 bg-blue-600 text-black text-sm rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       Use Template
                     </button>
@@ -558,7 +558,7 @@ export const UnifiedReportModal: React.FC<UnifiedReportModalProps> = ({
                 <p className="text-gray-600 mb-4">
                   Set up automated report generation and delivery
                 </p>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <button className="px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700">
                   Create Schedule
                 </button>
               </div>

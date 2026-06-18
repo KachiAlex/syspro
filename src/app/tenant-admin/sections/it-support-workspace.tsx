@@ -961,7 +961,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
 
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 px-4 py-6">
-          <div className="w-full max-w-3xl rounded-3xl bg-[#111827] p-8 shadow-2xl">
+          <div className="w-full max-w-3xl rounded-3xl bg-white p-8 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Ticket intake</p>
@@ -1102,7 +1102,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                 <button
                   type="submit"
                   disabled={isCreateDisabled || createLoading}
-                  className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-5 py-2 text-sm font-semibold text-black hover:bg-gray-200 disabled:opacity-50"
                 >
                   {createLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <SendHorizontal className="h-4 w-4" />}
                   Create ticket

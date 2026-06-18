@@ -456,7 +456,7 @@ export default function VendorsWorkspace() {
                   type="text"
                   value={editForm.name || ""}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
                 />
               </div>
               <div>
@@ -465,7 +465,7 @@ export default function VendorsWorkspace() {
                   type="email"
                   value={editForm.email || ""}
                   onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
                 />
               </div>
               <div>
@@ -474,7 +474,7 @@ export default function VendorsWorkspace() {
                   type="text"
                   value={editForm.phone || ""}
                   onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
                 />
               </div>
               <div>
@@ -483,7 +483,7 @@ export default function VendorsWorkspace() {
                   type="text"
                   value={editForm.address || ""}
                   onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
                 />
               </div>
               <div>
@@ -492,7 +492,7 @@ export default function VendorsWorkspace() {
                   type="text"
                   value={editForm.city || ""}
                   onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
                 />
               </div>
               <div>
@@ -501,7 +501,7 @@ export default function VendorsWorkspace() {
                   type="text"
                   value={editForm.country || ""}
                   onChange={(e) => setEditForm({ ...editForm, country: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
                 />
               </div>
               <div>
@@ -510,7 +510,7 @@ export default function VendorsWorkspace() {
                   type="text"
                   value={editForm.paymentTerms || ""}
                   onChange={(e) => setEditForm({ ...editForm, paymentTerms: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-black"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -554,7 +554,7 @@ export default function VendorsWorkspace() {
                     setLoading(false);
                   }
                 }}
-                className="rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                className="rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-black hover:bg-blue-700"
               >
                 Save
               </button>

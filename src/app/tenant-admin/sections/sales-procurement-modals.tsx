@@ -142,7 +142,7 @@ export function CreateSalesOrderModal({
               <button
                 type="button"
                 onClick={handleAddItem}
-                className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-600 text-black rounded-lg hover:bg-blue-700"
               >
                 <Plus className="w-4 h-4" />
                 Add Item
@@ -521,7 +521,7 @@ export function CreatePurchaseOrderModal({
             <div className="border border-gray-200 rounded-lg p-4">
               <button
                 type="button"
-                className="flex items-center gap-2 px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-green-600 text-black rounded-lg hover:bg-green-700"
               >
                 <Plus className="w-4 h-4" />
                 Add Item

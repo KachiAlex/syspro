@@ -139,7 +139,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
           <h2 className="text-2xl font-bold text-gray-900">Create New Project</h2>
           <button 
             onClick={onClose} 
-            className="text-gray-500 hover:text-white transition-colors"
+            className="text-gray-500 hover:text-gray-700 transition-colors"
             disabled={loading}
           >
             <X className="w-6 h-6" />
@@ -165,7 +165,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                   errors.name ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Enter project name"
@@ -184,7 +184,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                   errors.description ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Describe the project objectives and scope"
@@ -204,7 +204,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 type="date"
                 value={formData.startDate}
                 onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                   errors.startDate ? 'border-red-500' : 'border-gray-300'
                 }`}
                 disabled={loading}
@@ -223,7 +223,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 type="date"
                 value={formData.dueDate}
                 onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                   errors.dueDate ? 'border-red-500' : 'border-gray-300'
                 }`}
                 min={formData.startDate}
@@ -243,7 +243,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 type="text"
                 value={formData.budget}
                 onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                   errors.budget ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="$50,000"
@@ -263,7 +263,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 type="text"
                 value={formData.manager}
                 onChange={(e) => setFormData(prev => ({ ...prev, manager: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                   errors.manager ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Manager name"
@@ -324,7 +324,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 value={teamMemberInput}
                 onChange={(e) => setTeamMemberInput(e.target.value)}
                 onKeyPress={handleTeamMemberKeyPress}
-                className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                   errors.teamMembers ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Enter team member name and press Enter"
@@ -333,7 +333,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               <button
                 type="button"
                 onClick={addTeamMember}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                 disabled={loading || !teamMemberInput.trim()}
               >
                 Add
@@ -377,7 +377,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Creating...' : 'Create Project'}

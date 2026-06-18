@@ -102,7 +102,7 @@ export function CreateProjectModal({
       <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">Create New Project</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-white">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -283,7 +283,7 @@ export function CreateProjectModal({
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
             >
               {loading ? 'Creating...' : 'Create Project'}
             </button>
@@ -317,7 +317,7 @@ export function ViewProjectModal({
       <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4">
         <div className="border-b border-gray-200 p-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">Project Details</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-white">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -342,7 +342,7 @@ export function ViewProjectModal({
           {project.description && (
             <div>
               <p className="text-sm text-gray-600">Description</p>
-              <p className="text-white">{project.description}</p>
+              <p className="text-gray-900">{project.description}</p>
             </div>
           )}
 
@@ -400,7 +400,7 @@ export function ViewProjectModal({
           {project.departments && project.departments.length > 0 && (
             <div>
               <p className="text-sm text-gray-600">Departments</p>
-              <p className="text-white">{project.departments.join(', ')}</p>
+              <p className="text-gray-900">{project.departments.join(', ')}</p>
             </div>
           )}
 
@@ -413,7 +413,7 @@ export function ViewProjectModal({
             </button>
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors"
             >
               Close
             </button>
@@ -479,7 +479,7 @@ export function ManageTeamModal({
             <h2 className="text-2xl font-bold text-gray-900">Manage Team</h2>
             <p className="text-sm text-gray-600">{project.name}</p>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -526,7 +526,7 @@ export function ManageTeamModal({
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
             >
               {loading ? 'Assigning...' : 'Assign Team'}
             </button>
@@ -601,7 +601,7 @@ export function ManageTasksModal({
             <h2 className="text-2xl font-bold text-gray-900">Add Task</h2>
             <p className="text-sm text-gray-600">{project.name}</p>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white">
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -679,7 +679,7 @@ export function ManageTasksModal({
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+              className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
             >
               {loading ? 'Creating...' : 'Create Task'}
             </button>

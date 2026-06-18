@@ -111,63 +111,63 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
         >
           <div className="flex items-start justify-center pt-20">
             <div
-              className="bg-[#1A2438] rounded-[14px] border border-[rgba(255,255,255,0.07)] shadow-2xl w-full max-w-2xl mx-4"
+              className="bg-white rounded-[14px] border border-slate-200 shadow-2xl w-full max-w-2xl mx-4"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4">
                 <div className="flex items-center gap-3 mb-4">
-                  <Search className="w-5 h-5 text-[#64748B]" />
+                  <Search className="w-5 h-5 text-gray-500" />
                   <input
                     type="text"
                     placeholder="Search anything..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 px-3 py-2 text-lg border-0 outline-none bg-transparent text-[#F8FAFC] placeholder-[#64748B]"
+                    className="flex-1 px-3 py-2 text-lg border-0 outline-none bg-transparent text-black placeholder-gray-500"
                     autoFocus
                   />
                   <button
                     onClick={() => setSearchOpen(false)}
-                    className="p-2 hover:bg-[rgba(255,255,255,0.05)] rounded-lg transition-colors"
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   >
-                    <X className="w-4 h-4 text-[#64748B]" />
+                    <X className="w-4 h-4 text-gray-500" />
                   </button>
                 </div>
-                <div className="text-xs text-[#64748B] mb-2">
-                  Press <kbd className="px-1 py-0.5 bg-[#111827] rounded text-xs text-[#94A3B8] border border-[rgba(255,255,255,0.07)]">Ctrl</kbd> + <kbd className="px-1 py-0.5 bg-[#111827] rounded text-xs text-[#94A3B8] border border-[rgba(255,255,255,0.07)]">K</kbd> to open search
+                <div className="text-xs text-gray-500 mb-2">
+                  Press <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs text-gray-500 border border-gray-200">Ctrl</kbd> + <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs text-gray-500 border border-gray-200">K</kbd> to open search
                 </div>
                 {/* Search Results */}
-                <div className="border-t border-[rgba(255,255,255,0.07)] pt-2 max-h-80 overflow-y-auto">
+                <div className="border-t border-slate-200 pt-2 max-h-80 overflow-y-auto">
                   {filteredLinks.length > 0 ? (
                     <div className="py-2">
-                      <p className="text-xs text-[#64748B] px-2 mb-1">Quick Links</p>
+                      <p className="text-xs text-gray-500 px-2 mb-1">Quick Links</p>
                       {filteredLinks.map((link) => (
                         <Link
                           key={link.href}
                           href={link.href}
                           onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[rgba(99,102,241,0.08)] transition-colors group"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 transition-colors group"
                         >
-                          <ArrowRight className="w-4 h-4 text-[#64748B] group-hover:text-[#818CF8]" />
-                          <span className="text-sm text-[#F8FAFC]">{link.label}</span>
+                          <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-blue-600" />
+                          <span className="text-sm text-black">{link.label}</span>
                         </Link>
                       ))}
                     </div>
                   ) : searchQuery ? (
-                    <p className="text-sm text-[#64748B] text-center py-4">
+                    <p className="text-sm text-gray-500 text-center py-4">
                       No results for &quot;{searchQuery}&quot;
                     </p>
                   ) : (
                     <div className="py-2">
-                      <p className="text-xs text-[#64748B] px-2 mb-1">Quick Links</p>
+                      <p className="text-xs text-gray-500 px-2 mb-1">Quick Links</p>
                       {QUICK_LINKS.slice(0, 5).map((link) => (
                         <Link
                           key={link.href}
                           href={link.href}
                           onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[rgba(99,102,241,0.08)] transition-colors group"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 transition-colors group"
                         >
-                          <ArrowRight className="w-4 h-4 text-[#64748B] group-hover:text-[#818CF8]" />
-                          <span className="text-sm text-[#F8FAFC]">{link.label}</span>
+                          <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-blue-600" />
+                          <span className="text-sm text-black">{link.label}</span>
                         </Link>
                       ))}
                     </div>

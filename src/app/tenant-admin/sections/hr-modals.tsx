@@ -22,7 +22,7 @@ const FormAlert: React.FC<FormAlertProps> = ({ type, message, onClose }) => {
   return (
     <div className={`${bgColor} border ${borderColor} rounded-lg p-4 mb-4 flex justify-between items-center`}>
       <p className={`text-sm font-medium ${textColor}`}>{message}</p>
-      <button onClick={onClose} className="text-gray-500 hover:text-white">
+      <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
         <X className="w-4 h-4" />
       </button>
     </div>
@@ -115,7 +115,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
           </select>
           <div className="flex gap-3 pt-4">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{loading ? 'Adding...' : 'Add Employee'}</button>
+            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:opacity-50">{loading ? 'Adding...' : 'Add Employee'}</button>
           </div>
         </form>
       </div>
@@ -243,7 +243,7 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, on
           </select>
           <div className="flex gap-3 pt-4">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? 'Updating...' : 'Update Employee'}</button>
+            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-green-600 text-black rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? 'Updating...' : 'Update Employee'}</button>
           </div>
         </form>
       </div>
@@ -316,7 +316,7 @@ export const RunPayrollModal: React.FC<RunPayrollModalProps> = ({ isOpen, onClos
           </label>
           <div className="flex gap-3 pt-4">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? 'Processing...' : 'Run Payroll'}</button>
+            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-green-600 text-black rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? 'Processing...' : 'Run Payroll'}</button>
           </div>
         </form>
       </div>
@@ -482,9 +482,9 @@ export const ViewEmployeeModal: React.FC<ViewEmployeeModalProps> = ({ isOpen, on
         </div>
         <div className="flex flex-wrap gap-3">
           <button onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">Close</button>
-          <button onClick={handleEdit} disabled={loading} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? '...' : 'Edit'}</button>
+          <button onClick={handleEdit} disabled={loading} className="flex-1 px-4 py-2 bg-green-600 text-black rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? '...' : 'Edit'}</button>
           <button onClick={handleAward} disabled={loading} className="flex-1 px-4 py-2 bg-purple-600 text-gray-900 rounded-lg hover:bg-purple-700 disabled:opacity-50">{loading ? '...' : 'Award'}</button>
-          <button onClick={handleDelete} disabled={loading} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">Delete</button>
+          <button onClick={handleDelete} disabled={loading} className="flex-1 px-4 py-2 bg-red-600 text-black rounded-lg hover:bg-red-700 disabled:opacity-50">Delete</button>
         </div>
       </div>
     </div>
@@ -538,7 +538,7 @@ export const DeleteEmployeeModal: React.FC<DeleteEmployeeModalProps> = ({ isOpen
           <button
             onClick={handleConfirm}
             disabled={loading}
-            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-red-600 text-black rounded-lg hover:bg-red-700 disabled:opacity-50"
           >
             {loading ? 'Removing...' : 'Delete' }
           </button>
@@ -604,7 +604,7 @@ export const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, o
           <input type="text" placeholder="Instructor" value={formData.instructor} onChange={(e) => setFormData({...formData, instructor: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white" />
           <div className="flex gap-3 pt-4">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{loading ? 'Scheduling...' : 'Schedule'}</button>
+            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 disabled:opacity-50">{loading ? 'Scheduling...' : 'Schedule'}</button>
           </div>
         </form>
       </div>

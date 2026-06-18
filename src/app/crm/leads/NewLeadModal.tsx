@@ -101,7 +101,7 @@ export default function NewLeadModal({
                 required
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
+                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300 text-black"
               />
             </div>
 
@@ -111,7 +111,7 @@ export default function NewLeadModal({
                 required
                 value={contactName}
                 onChange={(e) => setContactName(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
+                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300 text-black"
               />
             </div>
           </div>
@@ -123,7 +123,7 @@ export default function NewLeadModal({
                 type="email"
                 value={contactEmail}
                 onChange={(e) => setContactEmail(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
+                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300 text-black"
               />
             </div>
             <div>
@@ -131,7 +131,7 @@ export default function NewLeadModal({
               <input
                 value={contactPhone}
                 onChange={(e) => setContactPhone(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
+                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300 text-black"
               />
             </div>
           </div>
@@ -143,7 +143,7 @@ export default function NewLeadModal({
                 value={regionId}
                 onChange={(e) => setRegionId(e.target.value)}
                 placeholder="Optional"
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
+                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300 text-black"
               />
             </div>
             <div>
@@ -152,7 +152,7 @@ export default function NewLeadModal({
                 value={branchId}
                 onChange={(e) => setBranchId(e.target.value)}
                 placeholder="Optional"
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
+                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300 text-black"
               />
             </div>
             <div>
@@ -160,7 +160,7 @@ export default function NewLeadModal({
               <input
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
+                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300 text-black"
               />
             </div>
           </div>
@@ -171,7 +171,7 @@ export default function NewLeadModal({
               <select
                 value={stage}
                 onChange={(e) => setStage(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
+                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300 text-black"
               >
                 <option value="new">New</option>
                 <option value="contacted">Contacted</option>
@@ -187,7 +187,7 @@ export default function NewLeadModal({
               <select
                 value={source}
                 onChange={(e) => setSource(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
+                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300 text-black"
               >
                 <option value="website">Website</option>
                 <option value="walk_in">Walk-in</option>
@@ -218,7 +218,7 @@ export default function NewLeadModal({
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50"
+              className="px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50"
             >
               {submitting ? "Saving…" : isEdit ? "Update" : "Create"}
             </button>
