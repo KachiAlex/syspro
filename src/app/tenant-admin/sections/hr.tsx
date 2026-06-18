@@ -13,8 +13,9 @@ import { AttendanceModal, LeaveModal } from './hr-attendance-modals';
 import { UnifiedReportModal } from '../components/unified-report-modal';
 import { ReportService } from '../services/report-service';
 import { HRService } from './hr-service';
+import { RecruitmentDashboard } from './recruitment-dashboard';
 
-type HRTab = 'overview';
+type HRTab = 'overview' | 'recruitment';
 
 interface Employee {
   id: string;
@@ -175,13 +176,13 @@ const HRComponent: React.FC = () => {
       // Convert to local Employee interface
       const localEmployee: Employee = {
         id: newEmployee.id,
-        name: `${newEmployee.firstName} ${newEmployee.lastName}`,
+        name: newEmployee.name,
         email: newEmployee.email,
-        department: newEmployee.department,
-        position: newEmployee.position,
-        startDate: newEmployee.startDate,
+        department: employeeData.department,
+        position: employeeData.position,
+        startDate: employeeData.startDate,
         status: 'Active',
-        salary: newEmployee.salary || ''
+        salary: employeeData.salary || ''
       };
 
       setEmployees(prev => [localEmployee, ...prev]);
@@ -201,13 +202,13 @@ const HRComponent: React.FC = () => {
           emp.id === selectedEmployee.id
             ? {
                 id: updated.id,
-                name: `${updated.firstName} ${updated.lastName}`,
-                email: updated.email,
-                department: updated.department,
-                position: updated.position,
-                startDate: updated.startDate,
-                status: updated.status,
-                salary: updated.salary || ''
+                name: data.firstName || data.lastName ? `${data.firstName || ''} ${data.lastName || ''}`.trim() : emp.name,
+                email: data.email || emp.email,
+                department: data.department || emp.department,
+                position: data.position || emp.position,
+                startDate: data.startDate || emp.startDate,
+                status: data.status || emp.status,
+                salary: data.salary || emp.salary
               }
             : emp
         )
@@ -999,6 +1000,7 @@ const HRComponent: React.FC = () => {
 
   const tabs: { id: HRTab; label: string }[] = [
     { id: 'overview', label: 'HR & Operations' },
+    { id: 'recruitment', label: 'Talent Acquisition' },
   ];
 
   return (
@@ -1022,7 +1024,7 @@ const HRComponent: React.FC = () => {
       </div>
 
       <div>
-        {renderOverviewTab()}
+        {activeTab === 'overview' ? renderOverviewTab() : <RecruitmentDashboard />}
       </div>
 
       {/* Employee Management Modals */}

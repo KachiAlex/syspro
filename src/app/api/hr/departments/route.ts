@@ -1,32 +1,56 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { z } from "zod";
+import { listDepartments, insertDepartment } from "@/lib/hr/db";
+
+const listSchema = z.object({
+  tenantSlug: z.string().min(1),
+});
+
+const createSchema = z.object({
+  tenantSlug: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().optional(),
+  parentDepartmentId: z.string().optional(),
+  budget: z.number().nonnegative().optional(),
+  costCenter: z.string().optional(),
+  managerId: z.string().optional(),
+});
 
 export async function GET(request: NextRequest) {
-  const context = validateTenantContext(request, "read");
-  return NextResponse.json({ departments: [] });
+  const url = new URL(request.url);
+  const parsed = listSchema.safeParse({
+    tenantSlug: url.searchParams.get("tenantSlug") ?? undefined,
+  });
+
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  try {
+    const departments = await listDepartments(parsed.data.tenantSlug);
+    return NextResponse.json({ departments });
+  } catch (error) {
+    console.error("Department list failed", error);
+    return NextResponse.json({ error: "Failed to load departments" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
-  const context = validateTenantContext(request, "write");
-  const body = await request.json();
-  const { name, manager } = body;
-
-  if (!name || !manager) {
-    return NextResponse.json(
-      { error: "Missing required fields" },
-      { status: 400 }
-    );
+  const body = await request.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const newDepartment = {
-    id: `dept-${Date.now()}`,
-    name,
-    manager,
-    headcount: 0,
-  };
+  const parsed = createSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
 
-  return NextResponse.json(
-    { department: newDepartment, message: "Department created successfully" },
-    { status: 201 }
-  );
+  try {
+    const department = await insertDepartment(parsed.data);
+    return NextResponse.json({ department }, { status: 201 });
+  } catch (error) {
+    console.error("Department create failed", error);
+    return NextResponse.json({ error: "Failed to create department" }, { status: 500 });
+  }
 }

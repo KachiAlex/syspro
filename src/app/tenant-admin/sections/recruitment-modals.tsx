@@ -1,0 +1,519 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { X, Plus } from 'lucide-react';
+
+interface BaseModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: any) => void | Promise<void>;
+  mode?: 'create' | 'edit';
+  initialData?: any;
+}
+
+function ModalOverlay({ children, onClose, title }: { children: React.ReactNode; onClose: () => void; title: string }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-theme-bg rounded-xl border border-theme-border shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-theme-border">
+          <h3 className="text-lg font-semibold text-theme-text-primary">{title}</h3>
+          <button onClick={onClose} className="p-1 rounded-md hover:bg-theme-muted text-theme-text-tertiary">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function TextField({ label, value, onChange, required, type = 'text', placeholder }: {
+  label: string; value: string; onChange: (v: string) => void; required?: boolean; type?: string; placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-theme-text-primary mb-1">
+        {label}{required && <span className="text-red-400">*</span>}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full px-3 py-2 bg-theme-muted border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+        required={required}
+      />
+    </div>
+  );
+}
+
+function NumberField({ label, value, onChange, required, min, placeholder }: {
+  label: string; value: number | ''; onChange: (v: number | '') => void; required?: boolean; min?: number; placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-theme-text-primary mb-1">
+        {label}{required && <span className="text-red-400">*</span>}
+      </label>
+      <input
+        type="number"
+        value={value}
+        onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))}
+        placeholder={placeholder}
+        min={min}
+        className="w-full px-3 py-2 bg-theme-muted border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+        required={required}
+      />
+    </div>
+  );
+}
+
+function TextArea({ label, value, onChange, required, rows = 3, placeholder }: {
+  label: string; value: string; onChange: (v: string) => void; required?: boolean; rows?: number; placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-theme-text-primary mb-1">
+        {label}{required && <span className="text-red-400">*</span>}
+      </label>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={rows}
+        className="w-full px-3 py-2 bg-theme-muted border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+        required={required}
+      />
+    </div>
+  );
+}
+
+function SelectField({ label, value, onChange, options, required }: {
+  label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; required?: boolean;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-theme-text-primary mb-1">
+        {label}{required && <span className="text-red-400">*</span>}
+      </label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2 bg-theme-muted border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+        required={required}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function TagsField({ label, tags, onChange }: { label: string; tags: string[]; onChange: (tags: string[]) => void }) {
+  const [input, setInput] = useState('');
+  const addTag = () => {
+    const trimmed = input.trim();
+    if (trimmed && !tags.includes(trimmed)) {
+      onChange([...tags, trimmed]);
+      setInput('');
+    }
+  };
+  return (
+    <div>
+      <label className="block text-sm font-medium text-theme-text-primary mb-1">{label}</label>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
+          placeholder="Type and press Enter"
+          className="flex-1 px-3 py-2 bg-theme-muted border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button type="button" onClick={addTag} className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+          <Plus className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="flex flex-wrap gap-2 mt-2">
+        {tags.map((t) => (
+          <span key={t} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            {t}
+            <button type="button" onClick={() => onChange(tags.filter((x) => x !== t))} className="hover:text-red-400"><X className="w-3 h-3" /></button>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CancelBtn({ onClose }: { onClose: () => void }) {
+  return (
+    <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-muted border border-theme-border rounded-lg hover:bg-theme-sidebar-hover">
+      Cancel
+    </button>
+  );
+}
+
+function SubmitBtn({ label }: { label: string }) {
+  return (
+    <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+      {label}
+    </button>
+  );
+}
+
+// ─── Requisition Modal ───
+export function RequisitionModal({
+  isOpen, onClose, onSubmit, mode = 'create', initialData, departments
+}: BaseModalProps & { departments: { id: string; name: string }[] }) {
+  const [title, setTitle] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
+  const [description, setDescription] = useState('');
+  const [requirements, setRequirements] = useState('');
+  const [location, setLocation] = useState('');
+  const [employmentType, setEmploymentType] = useState('full-time');
+  const [salaryRange, setSalaryRange] = useState('');
+  const [headcount, setHeadcount] = useState<number | ''>(1);
+  const [budget, setBudget] = useState<number | ''>('');
+  const [minExperienceYears, setMinExperienceYears] = useState<number | ''>('');
+  const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (initialData) {
+      setTitle(initialData.title || '');
+      setDepartmentId(initialData.departmentId || '');
+      setDescription(initialData.description || '');
+      setRequirements(initialData.requirements || '');
+      setLocation(initialData.location || '');
+      setEmploymentType(initialData.employmentType || 'full-time');
+      setSalaryRange(initialData.salaryRange || '');
+      setHeadcount(initialData.headcount ?? 1);
+      setBudget(initialData.budget ?? '');
+      setMinExperienceYears(initialData.minExperienceYears ?? '');
+      setRequiredSkills(initialData.requiredSkills || []);
+    } else {
+      setTitle(''); setDepartmentId(''); setDescription(''); setRequirements(''); setLocation('');
+      setEmploymentType('full-time'); setSalaryRange(''); setHeadcount(1); setBudget(''); setMinExperienceYears(''); setRequiredSkills([]);
+    }
+  }, [initialData, isOpen]);
+
+  if (!isOpen) return null;
+
+  const deptOptions = [{ value: '', label: 'Select department...' }, ...departments.map((d) => ({ value: d.id, label: d.name }))];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({ title, departmentId, description, requirements, location, employmentType, salaryRange, headcount: headcount || 1, budget: budget || undefined, minExperienceYears: minExperienceYears || undefined, requiredSkills });
+    onClose();
+  };
+
+  return (
+    <ModalOverlay onClose={onClose} title={mode === 'edit' ? 'Edit Requisition' : 'New Job Requisition'}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <TextField label="Title" value={title} onChange={setTitle} required />
+        <SelectField label="Department" value={departmentId} onChange={setDepartmentId} required options={deptOptions} />
+        <TextArea label="Description" value={description} onChange={setDescription} required />
+        <TextArea label="Requirements" value={requirements} onChange={setRequirements} />
+        <div className="grid grid-cols-2 gap-4">
+          <TextField label="Location" value={location} onChange={setLocation} />
+          <SelectField label="Employment Type" value={employmentType} onChange={setEmploymentType} options={[
+            { value: 'full-time', label: 'Full-time' }, { value: 'part-time', label: 'Part-time' },
+            { value: 'contract', label: 'Contract' }, { value: 'intern', label: 'Intern' },
+          ]} />
+        </div>
+        <TextField label="Salary Range" value={salaryRange} onChange={setSalaryRange} placeholder="e.g. $80k - $120k" />
+        <div className="grid grid-cols-3 gap-4">
+          <NumberField label="Headcount" value={headcount} onChange={setHeadcount} min={1} />
+          <NumberField label="Budget" value={budget} onChange={setBudget} min={0} />
+          <NumberField label="Min Experience (yrs)" value={minExperienceYears} onChange={setMinExperienceYears} min={0} />
+        </div>
+        <TagsField label="Required Skills" tags={requiredSkills} onChange={setRequiredSkills} />
+        <div className="flex justify-end gap-3 pt-2">
+          <CancelBtn onClose={onClose} />
+          <SubmitBtn label={mode === 'edit' ? 'Save Changes' : 'Create Requisition'} />
+        </div>
+      </form>
+    </ModalOverlay>
+  );
+}
+
+// ─── Candidate Modal ───
+export function CandidateModal({ isOpen, onClose, onSubmit, mode = 'create', initialData }: BaseModalProps) {
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [resumeUrl, setResumeUrl] = useState('');
+  const [source, setSource] = useState('');
+  const [currentStage, setCurrentStage] = useState('new');
+  const [skills, setSkills] = useState<string[]>([]);
+  const [experienceYears, setExperienceYears] = useState<number | ''>('');
+  const [education, setEducation] = useState('');
+  const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    if (initialData) {
+      setFullName(initialData.fullName || '');
+      setEmail(initialData.email || '');
+      setPhone(initialData.phone || '');
+      setResumeUrl(initialData.resumeUrl || '');
+      setSource(initialData.source || '');
+      setCurrentStage(initialData.currentStage || 'new');
+      setSkills(initialData.skills || []);
+      setExperienceYears(initialData.experienceYears ?? '');
+      setEducation(initialData.education || '');
+      setNotes(initialData.notes || '');
+    } else {
+      setFullName(''); setEmail(''); setPhone(''); setResumeUrl(''); setSource('');
+      setCurrentStage('new'); setSkills([]); setExperienceYears(''); setEducation(''); setNotes('');
+    }
+  }, [initialData, isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({ fullName, email, phone, resumeUrl, source, currentStage, skills, experienceYears: experienceYears || undefined, education, notes });
+    onClose();
+  };
+
+  return (
+    <ModalOverlay onClose={onClose} title={mode === 'edit' ? 'Edit Candidate' : 'Add Candidate'}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <TextField label="Full Name" value={fullName} onChange={setFullName} required />
+        <TextField label="Email" value={email} onChange={setEmail} required type="email" />
+        <div className="grid grid-cols-2 gap-4">
+          <TextField label="Phone" value={phone} onChange={setPhone} />
+          <TextField label="Source" value={source} onChange={setSource} placeholder="e.g. LinkedIn, Referral" />
+        </div>
+        <SelectField label="Current Stage" value={currentStage} onChange={setCurrentStage} options={[
+          { value: 'new', label: 'New' }, { value: 'shortlisted', label: 'Shortlisted' },
+          { value: 'interviewing', label: 'Interviewing' }, { value: 'offered', label: 'Offered' },
+          { value: 'hired', label: 'Hired' }, { value: 'rejected', label: 'Rejected' },
+        ]} />
+        <TextField label="Resume URL" value={resumeUrl} onChange={setResumeUrl} type="url" />
+        <TagsField label="Skills" tags={skills} onChange={setSkills} />
+        <NumberField label="Experience (years)" value={experienceYears} onChange={setExperienceYears} min={0} />
+        <TextField label="Education" value={education} onChange={setEducation} />
+        <TextArea label="Notes" value={notes} onChange={setNotes} />
+        <div className="flex justify-end gap-3 pt-2">
+          <CancelBtn onClose={onClose} />
+          <SubmitBtn label={mode === 'edit' ? 'Save Changes' : 'Add Candidate'} />
+        </div>
+      </form>
+    </ModalOverlay>
+  );
+}
+
+// ─── Application Modal ───
+export function ApplicationModal({
+  isOpen, onClose, onSubmit, mode = 'create', initialData, candidates, requisitions
+}: BaseModalProps & { candidates: { id: string; fullName: string }[]; requisitions: { id: string; title: string }[] }) {
+  const [candidateId, setCandidateId] = useState('');
+  const [requisitionId, setRequisitionId] = useState('');
+  const [coverLetter, setCoverLetter] = useState('');
+
+  useEffect(() => {
+    if (initialData) {
+      setCandidateId(initialData.candidateId || '');
+      setRequisitionId(initialData.requisitionId || '');
+      setCoverLetter(initialData.coverLetter || '');
+    } else {
+      setCandidateId(''); setRequisitionId(''); setCoverLetter('');
+    }
+  }, [initialData, isOpen]);
+
+  if (!isOpen) return null;
+
+  const candOptions = [{ value: '', label: 'Select candidate...' }, ...candidates.map((c) => ({ value: c.id, label: c.fullName }))];
+  const reqOptions = [{ value: '', label: 'Select requisition...' }, ...requisitions.map((r) => ({ value: r.id, label: r.title }))];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({ candidateId, requisitionId, coverLetter });
+    onClose();
+  };
+
+  return (
+    <ModalOverlay onClose={onClose} title={mode === 'edit' ? 'Edit Application' : 'New Application'}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <SelectField label="Candidate" value={candidateId} onChange={setCandidateId} required options={candOptions} />
+        <SelectField label="Requisition" value={requisitionId} onChange={setRequisitionId} required options={reqOptions} />
+        <TextArea label="Cover Letter" value={coverLetter} onChange={setCoverLetter} />
+        <div className="flex justify-end gap-3 pt-2">
+          <CancelBtn onClose={onClose} />
+          <SubmitBtn label={mode === 'edit' ? 'Save Changes' : 'Create Application'} />
+        </div>
+      </form>
+    </ModalOverlay>
+  );
+}
+
+// ─── Interview Modal ───
+export function InterviewModal({
+  isOpen, onClose, onSubmit, mode = 'create', initialData, applications
+}: BaseModalProps & { applications: { id: string; candidateName: string }[] }) {
+  const [applicationId, setApplicationId] = useState('');
+  const [roundNumber, setRoundNumber] = useState<number | ''>(1);
+  const [type, setType] = useState('video');
+  const [scheduledAt, setScheduledAt] = useState('');
+  const [interviewerIds, setInterviewerIds] = useState<string[]>([]);
+  const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    if (initialData) {
+      setApplicationId(initialData.applicationId || '');
+      setRoundNumber(initialData.roundNumber ?? 1);
+      setType(initialData.type || 'video');
+      setScheduledAt(initialData.scheduledAt ? new Date(initialData.scheduledAt).toISOString().slice(0, 16) : '');
+      setInterviewerIds(initialData.interviewerIds || []);
+      setNotes(initialData.notes || '');
+    } else {
+      setApplicationId(''); setRoundNumber(1); setType('video'); setScheduledAt(''); setInterviewerIds([]); setNotes('');
+    }
+  }, [initialData, isOpen]);
+
+  if (!isOpen) return null;
+
+  const appOptions = [{ value: '', label: 'Select application...' }, ...applications.map((a) => ({ value: a.id, label: a.candidateName }))];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({ applicationId, roundNumber: roundNumber || 1, type, scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : undefined, interviewerIds, notes });
+    onClose();
+  };
+
+  return (
+    <ModalOverlay onClose={onClose} title={mode === 'edit' ? 'Edit Interview' : 'Schedule Interview'}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <SelectField label="Application" value={applicationId} onChange={setApplicationId} required options={appOptions} />
+        <div className="grid grid-cols-2 gap-4">
+          <NumberField label="Round" value={roundNumber} onChange={setRoundNumber} min={1} />
+          <SelectField label="Type" value={type} onChange={setType} options={[
+            { value: 'phone', label: 'Phone' }, { value: 'video', label: 'Video' },
+            { value: 'onsite', label: 'Onsite' }, { value: 'panel', label: 'Panel' }, { value: 'technical', label: 'Technical' },
+          ]} />
+        </div>
+        <TextField label="Scheduled At" value={scheduledAt} onChange={setScheduledAt} required type="datetime-local" />
+        <TagsField label="Interviewer IDs" tags={interviewerIds} onChange={setInterviewerIds} />
+        <TextArea label="Notes" value={notes} onChange={setNotes} />
+        <div className="flex justify-end gap-3 pt-2">
+          <CancelBtn onClose={onClose} />
+          <SubmitBtn label={mode === 'edit' ? 'Save Changes' : 'Schedule Interview'} />
+        </div>
+      </form>
+    </ModalOverlay>
+  );
+}
+
+// ─── Offer Modal ───
+export function OfferModal({
+  isOpen, onClose, onSubmit, mode = 'create', initialData, applications
+}: BaseModalProps & { applications: { id: string; candidateName: string }[] }) {
+  const [applicationId, setApplicationId] = useState('');
+  const [salary, setSalary] = useState<number | ''>('');
+  const [bonus, setBonus] = useState<number | ''>('');
+  const [benefits, setBenefits] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [reportingManagerId, setReportingManagerId] = useState('');
+  const [expiresAt, setExpiresAt] = useState('');
+
+  useEffect(() => {
+    if (initialData) {
+      setApplicationId(initialData.applicationId || '');
+      setSalary(initialData.salary ?? '');
+      setBonus(initialData.bonus ?? '');
+      setBenefits(initialData.benefits ? JSON.stringify(initialData.benefits, null, 2) : '');
+      setStartDate(initialData.startDate ? initialData.startDate.split('T')[0] : '');
+      setReportingManagerId(initialData.reportingManagerId || '');
+      setExpiresAt(initialData.expiresAt ? initialData.expiresAt.split('T')[0] : '');
+    } else {
+      setApplicationId(''); setSalary(''); setBonus(''); setBenefits(''); setStartDate(''); setReportingManagerId(''); setExpiresAt('');
+    }
+  }, [initialData, isOpen]);
+
+  if (!isOpen) return null;
+
+  const appOptions = [{ value: '', label: 'Select application...' }, ...applications.map((a) => ({ value: a.id, label: a.candidateName }))];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    let parsedBenefits: Record<string, any> | undefined;
+    if (benefits.trim()) {
+      try { parsedBenefits = JSON.parse(benefits); } catch { parsedBenefits = { note: benefits }; }
+    }
+    onSubmit({ applicationId, salary: Number(salary) || 0, bonus: bonus ? Number(bonus) : undefined, benefits: parsedBenefits, startDate: startDate ? new Date(startDate).toISOString() : undefined, reportingManagerId, expiresAt: expiresAt ? new Date(expiresAt).toISOString() : undefined });
+    onClose();
+  };
+
+  return (
+    <ModalOverlay onClose={onClose} title={mode === 'edit' ? 'Edit Offer' : 'Create Offer'}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <SelectField label="Application" value={applicationId} onChange={setApplicationId} required options={appOptions} />
+        <div className="grid grid-cols-2 gap-4">
+          <NumberField label="Salary" value={salary} onChange={setSalary} required />
+          <NumberField label="Bonus" value={bonus} onChange={setBonus} />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <TextField label="Start Date" value={startDate} onChange={setStartDate} type="date" />
+          <TextField label="Expires At" value={expiresAt} onChange={setExpiresAt} type="date" />
+        </div>
+        <TextField label="Reporting Manager ID" value={reportingManagerId} onChange={setReportingManagerId} />
+        <TextArea label="Benefits (JSON or text)" value={benefits} onChange={setBenefits} rows={3} placeholder='{"health": true, "pto": 20}' />
+        <div className="flex justify-end gap-3 pt-2">
+          <CancelBtn onClose={onClose} />
+          <SubmitBtn label={mode === 'edit' ? 'Save Changes' : 'Create Offer'} />
+        </div>
+      </form>
+    </ModalOverlay>
+  );
+}
+
+// ─── Onboarding Task Modal ───
+export function OnboardingTaskModal({ isOpen, onClose, onSubmit, mode = 'create', initialData }: BaseModalProps) {
+  const [employeeId, setEmployeeId] = useState('');
+  const [category, setCategory] = useState('documents');
+  const [task, setTask] = useState('');
+  const [assignedToUserId, setAssignedToUserId] = useState('');
+  const [dueDate, setDueDate] = useState('');
+
+  useEffect(() => {
+    if (initialData) {
+      setEmployeeId(initialData.employeeId || '');
+      setCategory(initialData.category || 'documents');
+      setTask(initialData.task || '');
+      setAssignedToUserId(initialData.assignedToUserId || '');
+      setDueDate(initialData.dueDate ? initialData.dueDate.split('T')[0] : '');
+    } else {
+      setEmployeeId(''); setCategory('documents'); setTask(''); setAssignedToUserId(''); setDueDate('');
+    }
+  }, [initialData, isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({ employeeId, category, task, assignedToUserId, dueDate: dueDate ? new Date(dueDate).toISOString() : undefined });
+    onClose();
+  };
+
+  return (
+    <ModalOverlay onClose={onClose} title={mode === 'edit' ? 'Edit Onboarding Task' : 'Add Onboarding Task'}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <TextField label="Employee ID" value={employeeId} onChange={setEmployeeId} required />
+        <SelectField label="Category" value={category} onChange={setCategory} options={[
+          { value: 'documents', label: 'Documents' }, { value: 'it_setup', label: 'IT Setup' },
+          { value: 'training', label: 'Training' }, { value: 'compliance', label: 'Compliance' },
+          { value: 'benefits', label: 'Benefits' }, { value: 'other', label: 'Other' },
+        ]} />
+        <TextField label="Task" value={task} onChange={setTask} required />
+        <TextField label="Assigned To (User ID)" value={assignedToUserId} onChange={setAssignedToUserId} required />
+        <TextField label="Due Date" value={dueDate} onChange={setDueDate} type="date" />
+        <div className="flex justify-end gap-3 pt-2">
+          <CancelBtn onClose={onClose} />
+          <SubmitBtn label={mode === 'edit' ? 'Save Changes' : 'Add Task'} />
+        </div>
+      </form>
+    </ModalOverlay>
+  );
+}

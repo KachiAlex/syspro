@@ -1,24 +1,17 @@
 import { apiClient } from '@/lib/api-client';
-
-export interface AttendanceRecord {
-  employeeId: string;
-  employeeName: string;
-  date: string;
-  checkIn: string;
-  checkOut: string;
-  status: 'present' | 'absent' | 'late' | 'half_day';
-  notes?: string;
-}
-
-export interface LeaveRequest {
-  employeeId: string;
-  employeeName: string;
-  leaveType: 'annual' | 'sick' | 'personal' | 'maternity';
-  startDate: string;
-  endDate: string;
-  reason: string;
-  status: 'pending' | 'approved' | 'rejected';
-}
+import type {
+  EmployeeRecord,
+  DepartmentRecord,
+  AttendanceRecord,
+  LeaveRecord,
+  JobRequisitionRecord,
+  CandidateRecord,
+  ApplicationRecord,
+  InterviewRecord,
+  OfferRecord,
+  OnboardingTaskRecord,
+  ScreeningResult,
+} from '@/lib/hr/types';
 
 export interface HRReport {
   id: string;
@@ -34,15 +27,7 @@ export interface HRReport {
 export class HRService {
   // Attendance Management
   static async markAttendance(tenantSlug: string, records: AttendanceRecord[]): Promise<void> {
-    try {
-      await apiClient.post('/hr/attendance', {
-        tenantSlug,
-        records
-      });
-    } catch (error) {
-      console.error('Failed to mark attendance:', error);
-      throw new Error('Failed to mark attendance. Please try again.');
-    }
+    await apiClient.post('/hr/attendance', { tenantSlug, records });
   }
 
   static async getAttendanceRecords(tenantSlug: string, filters?: {
@@ -50,20 +35,13 @@ export class HRService {
     employeeId?: string;
     status?: string;
   }): Promise<AttendanceRecord[]> {
-    try {
-      const params = new URLSearchParams();
-      params.append('tenantSlug', tenantSlug);
-      
-      if (filters?.date) params.append('date', filters.date);
-      if (filters?.employeeId) params.append('employeeId', filters.employeeId);
-      if (filters?.status) params.append('status', filters.status);
+    const params = new URLSearchParams({ tenantSlug });
+    if (filters?.date) params.append('date', filters.date);
+    if (filters?.employeeId) params.append('employeeId', filters.employeeId);
+    if (filters?.status) params.append('status', filters.status);
 
-      const response = await apiClient.get(`/hr/attendance?${params.toString()}`);
-      return response.data.records || [];
-    } catch (error) {
-      console.error('Failed to fetch attendance records:', error);
-      return [];
-    }
+    const response = await apiClient.get(`/hr/attendance?${params.toString()}`);
+    return response.data.records || [];
   }
 
   static async getAttendanceStats(tenantSlug: string, date: string): Promise<{
@@ -73,66 +51,39 @@ export class HRService {
     halfDay: number;
     total: number;
   }> {
-    try {
-      const response = await apiClient.get(`/hr/attendance/stats?tenantSlug=${tenantSlug}&date=${date}`);
-      return response.data;
-    } catch (error) {
-      console.error('Failed to fetch attendance stats:', error);
-      return {
-        present: 0,
-        absent: 0,
-        late: 0,
-        halfDay: 0,
-        total: 0
-      };
-    }
+    const response = await apiClient.get(`/hr/attendance?tenantSlug=${tenantSlug}&statsDate=${date}`);
+    return response.data;
   }
 
   // Leave Management
-  static async submitLeaveRequest(tenantSlug: string, request: LeaveRequest): Promise<LeaveRequest> {
-    try {
-      const response = await apiClient.post('/hr/leave', {
-        ...request,
-        tenantSlug
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to submit leave request:', error);
-      throw new Error('Failed to submit leave request. Please try again.');
-    }
+  static async submitLeaveRequest(tenantSlug: string, request: {
+    employeeId: string;
+    employeeName: string;
+    leaveType: string;
+    startDate: string;
+    endDate: string;
+    reason: string;
+  }): Promise<LeaveRecord> {
+    const response = await apiClient.post('/hr/leave', { ...request, tenantSlug });
+    return response.data.request;
   }
 
   static async getLeaveRequests(tenantSlug: string, filters?: {
     employeeId?: string;
     status?: string;
     leaveType?: string;
-  }): Promise<LeaveRequest[]> {
-    try {
-      const params = new URLSearchParams();
-      params.append('tenantSlug', tenantSlug);
-      
-      if (filters?.employeeId) params.append('employeeId', filters.employeeId);
-      if (filters?.status) params.append('status', filters.status);
-      if (filters?.leaveType) params.append('leaveType', filters.leaveType);
+  }): Promise<LeaveRecord[]> {
+    const params = new URLSearchParams({ tenantSlug });
+    if (filters?.employeeId) params.append('employeeId', filters.employeeId);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.leaveType) params.append('leaveType', filters.leaveType);
 
-      const response = await apiClient.get(`/hr/leave?${params.toString()}`);
-      return response.data.requests || [];
-    } catch (error) {
-      console.error('Failed to fetch leave requests:', error);
-      return [];
-    }
+    const response = await apiClient.get(`/hr/leave?${params.toString()}`);
+    return response.data.requests || [];
   }
 
-  static async updateLeaveStatus(tenantSlug: string, requestId: string, status: 'approved' | 'rejected'): Promise<void> {
-    try {
-      await apiClient.patch(`/hr/leave/${requestId}`, {
-        tenantSlug,
-        status
-      });
-    } catch (error) {
-      console.error('Failed to update leave status:', error);
-      throw new Error('Failed to update leave status. Please try again.');
-    }
+  static async updateLeaveStatus(tenantSlug: string, requestId: string, status: 'approved' | 'rejected' | 'cancelled'): Promise<void> {
+    await apiClient.patch(`/hr/leave/${requestId}`, { tenantSlug, status });
   }
 
   static async getLeaveBalance(tenantSlug: string, employeeId: string): Promise<{
@@ -141,21 +92,11 @@ export class HRService {
     personal: { used: number; total: number };
     maternity: { used: number; total: number };
   }> {
-    try {
-      const response = await apiClient.get(`/hr/leave/balance?tenantSlug=${tenantSlug}&employeeId=${employeeId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Failed to fetch leave balance:', error);
-      return {
-        annual: { used: 0, total: 20 },
-        sick: { used: 0, total: 10 },
-        personal: { used: 0, total: 5 },
-        maternity: { used: 0, total: 90 }
-      };
-    }
+    const response = await apiClient.get(`/hr/leave?tenantSlug=${tenantSlug}&employeeId=${employeeId}`);
+    return response.data;
   }
 
-  // Report Management
+  // Report Management (endpoints not yet implemented)
   static async generateReport(tenantSlug: string, reportData: {
     reportType: string;
     startDate: string;
@@ -163,48 +104,32 @@ export class HRService {
     includeCharts: boolean;
     format: string;
   }): Promise<HRReport> {
-    try {
-      const response = await apiClient.post('/hr/reports', {
-        ...reportData,
-        tenantSlug
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to generate report:', error);
-      throw new Error('Failed to generate report. Please try again.');
-    }
+    const response = await apiClient.post('/hr/reports', { ...reportData, tenantSlug });
+    return response.data;
   }
 
   static async getReports(tenantSlug: string): Promise<HRReport[]> {
-    try {
-      const response = await apiClient.get(`/hr/reports?tenantSlug=${tenantSlug}`);
-      return response.data.reports || [];
-    } catch (error) {
-      console.error('Failed to fetch reports:', error);
-      return [];
-    }
+    const response = await apiClient.get(`/hr/reports?tenantSlug=${tenantSlug}`);
+    return response.data.reports || [];
   }
 
   static async downloadReport(tenantSlug: string, reportId: string): Promise<string> {
-    try {
-      const response = await apiClient.get(`/hr/reports/${reportId}/download?tenantSlug=${tenantSlug}`);
-      return response.data.fileUrl;
-    } catch (error) {
-      console.error('Failed to download report:', error);
-      throw new Error('Failed to download report. Please try again.');
-    }
+    const response = await apiClient.get(`/hr/reports/${reportId}/download?tenantSlug=${tenantSlug}`);
+    return response.data.fileUrl;
   }
 
   static async deleteReport(tenantSlug: string, reportId: string): Promise<void> {
-    try {
-      await apiClient.delete(`/hr/reports/${reportId}?tenantSlug=${tenantSlug}`);
-    } catch (error) {
-      console.error('Failed to delete report:', error);
-      throw new Error('Failed to delete report. Please try again.');
-    }
+    await apiClient.delete(`/hr/reports/${reportId}?tenantSlug=${tenantSlug}`);
   }
 
-  // Employee Management (additional methods for HR operations)
+  // Employee Management
+  private static async resolveDepartmentId(tenantSlug: string, departmentName: string): Promise<string> {
+    const response = await apiClient.get(`/hr/departments?tenantSlug=${tenantSlug}`);
+    const depts: DepartmentRecord[] = response.data.departments || [];
+    const match = depts.find((d) => d.name === departmentName);
+    return match?.id || departmentName;
+  }
+
   static async addEmployee(tenantSlug: string, employeeData: {
     firstName: string;
     lastName: string;
@@ -214,27 +139,20 @@ export class HRService {
     startDate: string;
     salary?: string;
     employmentType: string;
-  }): Promise<{
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    department: string;
-    position: string;
-    startDate: string;
-    status: string;
-    salary?: string;
-  }> {
-    try {
-      const response = await apiClient.post('/hr/employees', {
-        ...employeeData,
-        tenantSlug
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to add employee:', error);
-      throw new Error('Failed to add employee. Please try again.');
-    }
+  }): Promise<EmployeeRecord> {
+    const departmentId = await this.resolveDepartmentId(tenantSlug, employeeData.department);
+    const payload = {
+      tenantSlug,
+      name: `${employeeData.firstName} ${employeeData.lastName}`.trim(),
+      email: employeeData.email,
+      departmentId,
+      jobTitle: employeeData.position,
+      hireDate: employeeData.startDate ? new Date(employeeData.startDate).toISOString() : undefined,
+      salary: employeeData.salary ? Number(employeeData.salary.replace(/[^0-9.]/g, '')) : undefined,
+      employmentType: employeeData.employmentType?.toLowerCase().replace(/\s/g, '-') as any,
+    };
+    const response = await apiClient.post('/hr/employees', payload);
+    return response.data.employee;
   }
 
   static async updateEmployee(tenantSlug: string, employeeId: string, employeeData: {
@@ -246,58 +164,41 @@ export class HRService {
     startDate?: string;
     status?: string;
     salary?: string;
-  }): Promise<{
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    department: string;
-    position: string;
-    startDate: string;
-    status: string;
-    salary?: string;
-  }> {
-    try {
-      const response = await apiClient.patch(`/hr/employees/${employeeId}`, {
-        ...employeeData,
-        tenantSlug
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to update employee:', error);
-      throw new Error('Failed to update employee. Please try again.');
+  }): Promise<EmployeeRecord> {
+    const payload: Record<string, any> = { tenantSlug };
+    if (employeeData.firstName || employeeData.lastName) {
+      payload.name = `${employeeData.firstName || ''} ${employeeData.lastName || ''}`.trim();
     }
+    if (employeeData.email) payload.email = employeeData.email;
+    if (employeeData.department) {
+      payload.departmentId = await this.resolveDepartmentId(tenantSlug, employeeData.department);
+    }
+    if (employeeData.position) payload.jobTitle = employeeData.position;
+    if (employeeData.status) payload.status = employeeData.status.toLowerCase().replace(/\s/g, '-') as any;
+    if (employeeData.salary) payload.salary = Number(employeeData.salary.replace(/[^0-9.]/g, ''));
+    if (employeeData.startDate) payload.hireDate = new Date(employeeData.startDate).toISOString();
+
+    const response = await apiClient.patch(`/hr/employees/${employeeId}`, payload);
+    return response.data.employee;
   }
 
   static async deleteEmployee(tenantSlug: string, employeeId: string): Promise<void> {
-    try {
-      await apiClient.delete(`/hr/employees/${employeeId}?tenantSlug=${tenantSlug}`);
-    } catch (error) {
-      console.error('Failed to delete employee:', error);
-      throw new Error('Failed to delete employee. Please try again.');
-    }
+    await apiClient.delete(`/hr/employees/${employeeId}?tenantSlug=${tenantSlug}`);
   }
 
   static async importEmployeesFromExcel(tenantSlug: string, file: File): Promise<{
-  imported: number;
-  failed: number;
-  errors: string[];
-}> {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('tenantSlug', tenantSlug);
+    imported: number;
+    failed: number;
+    errors: string[];
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('tenantSlug', tenantSlug);
 
-      const response = await apiClient.post('/hr/employees/import', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to import employees:', error);
-      throw new Error('Failed to import employees. Please check the file format and try again.');
-    }
+    const response = await apiClient.post('/hr/employees/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
   }
 
   static async generateInviteLink(tenantSlug: string, emails: string[]): Promise<{
@@ -305,16 +206,8 @@ export class HRService {
     expiresAt: string;
     maxUses: number;
   }> {
-    try {
-      const response = await apiClient.post('/hr/employees/invite', {
-        tenantSlug,
-        emails
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to generate invite link:', error);
-      throw new Error('Failed to generate invite link. Please try again.');
-    }
+    const response = await apiClient.post('/hr/employees/invite', { tenantSlug, emails });
+    return response.data;
   }
 
   static async getEmployees(tenantSlug: string): Promise<Array<{
@@ -327,68 +220,55 @@ export class HRService {
     salary: number;
     startDate: string;
   }>> {
-    try {
-      const response = await apiClient.get(`/hr/employees?tenantSlug=${tenantSlug}`);
-      return response.data.employees || [];
-    } catch (error) {
-      console.error('Failed to fetch employees:', error);
-      return [];
-    }
+    const [empRes, deptRes] = await Promise.all([
+      apiClient.get(`/hr/employees?tenantSlug=${tenantSlug}`),
+      apiClient.get(`/hr/departments?tenantSlug=${tenantSlug}`),
+    ]);
+    const employees: EmployeeRecord[] = empRes.data.employees || [];
+    const departments: DepartmentRecord[] = deptRes.data.departments || [];
+    const deptMap = new Map(departments.map((d) => [d.id, d.name]));
+
+    return employees.map((emp) => ({
+      id: emp.id,
+      name: emp.name,
+      email: emp.email,
+      department: deptMap.get(emp.departmentId) || emp.departmentId,
+      position: emp.jobTitle,
+      status: emp.status === 'active' ? 'Active' : emp.status === 'on-leave' ? 'On Leave' : emp.status === 'terminated' ? 'Terminated' : 'Inactive',
+      salary: emp.salary ?? 0,
+      startDate: emp.hireDate ? emp.hireDate.split('T')[0] : '',
+    }));
+  }
+
+  static async getDepartmentRecords(tenantSlug: string): Promise<DepartmentRecord[]> {
+    const response = await apiClient.get(`/hr/departments?tenantSlug=${tenantSlug}`);
+    return response.data.departments || [];
   }
 
   static async getDepartments(tenantSlug: string): Promise<string[]> {
-    try {
-      const response = await apiClient.get(`/hr/departments?tenantSlug=${tenantSlug}`);
-      return response.data.departments || [];
-    } catch (error) {
-      console.error('Failed to fetch departments:', error);
-      return ['Engineering', 'Sales', 'Marketing', 'HR', 'Finance'];
-    }
+    const depts = await this.getDepartmentRecords(tenantSlug);
+    return depts.map((d) => d.name);
   }
 
-  // Payroll Management
+  // Payroll Management (endpoints not yet implemented)
   static async runPayroll(tenantSlug: string, payrollData: {
     payrollMonth: string;
     payDate: string;
     includeBonuses: boolean;
     processDeductions: boolean;
-  }): Promise<{
-    id: string;
-    period: string;
-    totalAmount: number;
-    employeeCount: number;
-    status: string;
-  }> {
-    try {
-      const response = await apiClient.post('/hr/payroll/run', {
-        ...payrollData,
-        tenantSlug
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to run payroll:', error);
-      throw new Error('Failed to run payroll. Please try again.');
-    }
+  }): Promise<{ id: string; period: string; totalAmount: number; employeeCount: number; status: string }> {
+    const response = await apiClient.post('/hr/payroll/run', { ...payrollData, tenantSlug });
+    return response.data;
   }
 
   static async getPayrollHistory(tenantSlug: string): Promise<Array<{
-    id: string;
-    period: string;
-    totalAmount: number;
-    employeeCount: number;
-    status: string;
-    processedDate: string;
+    id: string; period: string; totalAmount: number; employeeCount: number; status: string; processedDate: string;
   }>> {
-    try {
-      const response = await apiClient.get(`/hr/payroll/history?tenantSlug=${tenantSlug}`);
-      return response.data.history || [];
-    } catch (error) {
-      console.error('Failed to fetch payroll history:', error);
-      return [];
-    }
+    const response = await apiClient.get(`/hr/payroll/history?tenantSlug=${tenantSlug}`);
+    return response.data.history || [];
   }
 
-  // Training Management
+  // Training Management (endpoints not yet implemented)
   static async createTrainingSession(tenantSlug: string, trainingData: {
     title: string;
     description: string;
@@ -396,42 +276,17 @@ export class HRService {
     startDate: string;
     endDate: string;
     capacity: number;
-  }): Promise<{
-    id: string;
-    title: string;
-    status: string;
-    enrolled: number;
-  }> {
-    try {
-      const response = await apiClient.post('/hr/training', {
-        ...trainingData,
-        tenantSlug
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to create training session:', error);
-      throw new Error('Failed to create training session. Please try again.');
-    }
+  }): Promise<{ id: string; title: string; status: string; enrolled: number }> {
+    const response = await apiClient.post('/hr/training', { ...trainingData, tenantSlug });
+    return response.data;
   }
 
   static async getTrainingSessions(tenantSlug: string): Promise<Array<{
-    id: string;
-    title: string;
-    description: string;
-    instructor: string;
-    startDate: string;
-    endDate: string;
-    capacity: number;
-    enrolled: number;
-    status: string;
+    id: string; title: string; description: string; instructor: string;
+    startDate: string; endDate: string; capacity: number; enrolled: number; status: string;
   }>> {
-    try {
-      const response = await apiClient.get(`/hr/training?tenantSlug=${tenantSlug}`);
-      return response.data.sessions || [];
-    } catch (error) {
-      console.error('Failed to fetch training sessions:', error);
-      return [];
-    }
+    const response = await apiClient.get(`/hr/training?tenantSlug=${tenantSlug}`);
+    return response.data.sessions || [];
   }
 
   static async postJob(tenantSlug: string, jobData: {
@@ -442,20 +297,203 @@ export class HRService {
     location: string;
     employmentType: string;
     salaryRange?: string;
-  }): Promise<{
-    id: string;
+  }): Promise<JobRequisitionRecord> {
+    const departmentId = await this.resolveDepartmentId(tenantSlug, jobData.department);
+    const payload = {
+      tenantSlug,
+      title: jobData.title,
+      departmentId,
+      description: jobData.description,
+      requirements: jobData.requirements,
+      location: jobData.location,
+      employmentType: jobData.employmentType.toLowerCase().replace(/\s/g, '-') as any,
+      salaryRange: jobData.salaryRange,
+      requestedBy: 'system',
+    };
+    const response = await apiClient.post('/hr/requisitions', payload);
+    return response.data.requisition;
+  }
+
+  // Recruitment / Talent Acquisition
+  static async getRequisitions(tenantSlug: string, filters?: { status?: string; departmentId?: string }): Promise<{ requisitions: JobRequisitionRecord[]; total: number }> {
+    const params = new URLSearchParams({ tenantSlug });
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.departmentId) params.append('departmentId', filters.departmentId);
+    const response = await apiClient.get(`/hr/requisitions?${params.toString()}`);
+    return { requisitions: response.data.requisitions || [], total: response.data.total || 0 };
+  }
+
+  static async createRequisition(tenantSlug: string, data: {
     title: string;
-    status: string;
-  }> {
-    try {
-      const response = await apiClient.post('/hr/jobs', {
-        ...jobData,
-        tenantSlug
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to post job:', error);
-      throw new Error('Failed to post job. Please try again.');
-    }
+    departmentId: string;
+    description: string;
+    employmentType: string;
+    requestedBy: string;
+    headcount?: number;
+    budget?: number;
+    requiredSkills?: string[];
+    minExperienceYears?: number;
+    requirements?: string;
+    location?: string;
+    salaryRange?: string;
+  }): Promise<JobRequisitionRecord> {
+    const response = await apiClient.post('/hr/requisitions', { ...data, tenantSlug });
+    return response.data.requisition;
+  }
+
+  static async updateRequisition(tenantSlug: string, id: string, data: Partial<JobRequisitionRecord>): Promise<JobRequisitionRecord> {
+    const response = await apiClient.patch(`/hr/requisitions/${id}`, { ...data, tenantSlug });
+    return response.data.requisition;
+  }
+
+  static async deleteRequisition(tenantSlug: string, id: string): Promise<void> {
+    await apiClient.delete(`/hr/requisitions/${id}?tenantSlug=${tenantSlug}`);
+  }
+
+  static async getCandidates(tenantSlug: string, filters?: { currentStage?: string; source?: string }): Promise<{ candidates: CandidateRecord[]; total: number }> {
+    const params = new URLSearchParams({ tenantSlug });
+    if (filters?.currentStage) params.append('currentStage', filters.currentStage);
+    if (filters?.source) params.append('source', filters.source);
+    const response = await apiClient.get(`/hr/candidates?${params.toString()}`);
+    return { candidates: response.data.candidates || [], total: response.data.total || 0 };
+  }
+
+  static async createCandidate(tenantSlug: string, data: {
+    fullName: string;
+    email: string;
+    phone?: string;
+    resumeUrl?: string;
+    source?: string;
+    currentStage?: string;
+    skills?: string[];
+    experienceYears?: number;
+    education?: string;
+    notes?: string;
+    tags?: string[];
+  }): Promise<CandidateRecord> {
+    const response = await apiClient.post('/hr/candidates', { ...data, tenantSlug });
+    return response.data.candidate;
+  }
+
+  static async updateCandidate(tenantSlug: string, id: string, data: Partial<CandidateRecord>): Promise<CandidateRecord> {
+    const response = await apiClient.patch(`/hr/candidates/${id}`, { ...data, tenantSlug });
+    return response.data.candidate;
+  }
+
+  static async deleteCandidate(tenantSlug: string, id: string): Promise<void> {
+    await apiClient.delete(`/hr/candidates/${id}?tenantSlug=${tenantSlug}`);
+  }
+
+  static async getApplications(tenantSlug: string, filters?: { candidateId?: string; requisitionId?: string; status?: string }): Promise<{ applications: ApplicationRecord[]; total: number }> {
+    const params = new URLSearchParams({ tenantSlug });
+    if (filters?.candidateId) params.append('candidateId', filters.candidateId);
+    if (filters?.requisitionId) params.append('requisitionId', filters.requisitionId);
+    if (filters?.status) params.append('status', filters.status);
+    const response = await apiClient.get(`/hr/applications?${params.toString()}`);
+    return { applications: response.data.applications || [], total: response.data.total || 0 };
+  }
+
+  static async createApplication(tenantSlug: string, data: { candidateId: string; requisitionId: string; coverLetter?: string }): Promise<ApplicationRecord> {
+    const response = await apiClient.post('/hr/applications', { ...data, tenantSlug });
+    return response.data.application;
+  }
+
+  static async updateApplication(tenantSlug: string, id: string, data: Partial<ApplicationRecord>): Promise<ApplicationRecord> {
+    const response = await apiClient.patch(`/hr/applications/${id}`, { ...data, tenantSlug });
+    return response.data.application;
+  }
+
+  static async screenApplication(tenantSlug: string, id: string): Promise<ScreeningResult> {
+    const response = await apiClient.post(`/hr/applications/${id}/screen`, { tenantSlug });
+    return response.data.result;
+  }
+
+  static async getInterviews(tenantSlug: string, filters?: { applicationId?: string; status?: string }): Promise<InterviewRecord[]> {
+    const params = new URLSearchParams({ tenantSlug });
+    if (filters?.applicationId) params.append('applicationId', filters.applicationId);
+    if (filters?.status) params.append('status', filters.status);
+    const response = await apiClient.get(`/hr/interviews?${params.toString()}`);
+    return response.data.interviews || [];
+  }
+
+  static async createInterview(tenantSlug: string, data: {
+    applicationId: string;
+    roundNumber?: number;
+    type: string;
+    scheduledAt: string;
+    interviewerIds: string[];
+    notes?: string;
+  }): Promise<InterviewRecord> {
+    const response = await apiClient.post('/hr/interviews', { ...data, tenantSlug });
+    return response.data.interview;
+  }
+
+  static async updateInterview(tenantSlug: string, id: string, data: Partial<InterviewRecord>): Promise<InterviewRecord> {
+    const response = await apiClient.patch(`/hr/interviews/${id}`, { ...data, tenantSlug });
+    return response.data.interview;
+  }
+
+  static async deleteInterview(tenantSlug: string, id: string): Promise<void> {
+    await apiClient.delete(`/hr/interviews/${id}?tenantSlug=${tenantSlug}`);
+  }
+
+  static async getOffers(tenantSlug: string, filters?: { applicationId?: string; status?: string }): Promise<OfferRecord[]> {
+    const params = new URLSearchParams({ tenantSlug });
+    if (filters?.applicationId) params.append('applicationId', filters.applicationId);
+    if (filters?.status) params.append('status', filters.status);
+    const response = await apiClient.get(`/hr/offers?${params.toString()}`);
+    return response.data.offers || [];
+  }
+
+  static async createOffer(tenantSlug: string, data: {
+    applicationId: string;
+    salary: number;
+    bonus?: number;
+    benefits?: Record<string, any>;
+    startDate: string;
+    reportingManagerId: string;
+    expiresAt: string;
+  }): Promise<OfferRecord> {
+    const response = await apiClient.post('/hr/offers', { ...data, tenantSlug });
+    return response.data.offer;
+  }
+
+  static async updateOffer(tenantSlug: string, id: string, data: Partial<OfferRecord>): Promise<OfferRecord> {
+    const response = await apiClient.patch(`/hr/offers/${id}`, { ...data, tenantSlug });
+    return response.data.offer;
+  }
+
+  static async deleteOffer(tenantSlug: string, id: string): Promise<void> {
+    await apiClient.delete(`/hr/offers/${id}?tenantSlug=${tenantSlug}`);
+  }
+
+  static async getOnboardingTasks(tenantSlug: string, filters?: { employeeId?: string; category?: string; status?: string; assignedToUserId?: string }): Promise<OnboardingTaskRecord[]> {
+    const params = new URLSearchParams({ tenantSlug });
+    if (filters?.employeeId) params.append('employeeId', filters.employeeId);
+    if (filters?.category) params.append('category', filters.category);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.assignedToUserId) params.append('assignedToUserId', filters.assignedToUserId);
+    const response = await apiClient.get(`/hr/onboarding-tasks?${params.toString()}`);
+    return response.data.tasks || [];
+  }
+
+  static async createOnboardingTask(tenantSlug: string, data: {
+    employeeId: string;
+    category: string;
+    task: string;
+    assignedToUserId: string;
+    dueDate: string;
+  }): Promise<OnboardingTaskRecord> {
+    const response = await apiClient.post('/hr/onboarding-tasks', { ...data, tenantSlug });
+    return response.data.task;
+  }
+
+  static async updateOnboardingTask(tenantSlug: string, id: string, data: Partial<OnboardingTaskRecord>): Promise<OnboardingTaskRecord> {
+    const response = await apiClient.patch(`/hr/onboarding-tasks/${id}`, { ...data, tenantSlug });
+    return response.data.task;
+  }
+
+  static async deleteOnboardingTask(tenantSlug: string, id: string): Promise<void> {
+    await apiClient.delete(`/hr/onboarding-tasks/${id}?tenantSlug=${tenantSlug}`);
   }
 }

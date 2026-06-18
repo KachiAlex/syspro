@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { listEmployees, insertEmployee, countEmployees } from "@/lib/hr/db";
+import { listRequisitions, insertRequisition, countRequisitions } from "@/lib/hr/db-recruitment";
 
 const listSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -12,19 +12,19 @@ const listSchema = z.object({
 
 const createSchema = z.object({
   tenantSlug: z.string().min(1),
-  name: z.string().min(1),
-  email: z.string().email(),
-  phone: z.string().optional(),
+  title: z.string().min(1),
   departmentId: z.string().min(1),
-  jobTitle: z.string().min(1),
-  reportingManagerId: z.string().optional(),
   branchId: z.string().optional(),
-  regionId: z.string().optional(),
-  costCenter: z.string().optional(),
-  hireDate: z.string().datetime().optional(),
-  salary: z.number().nonnegative().optional(),
-  employmentType: z.enum(["full-time", "part-time", "contract", "intern"]).optional(),
-  status: z.enum(["active", "inactive", "on-leave", "terminated"]).optional(),
+  headcount: z.number().int().positive().optional(),
+  budget: z.number().nonnegative().optional(),
+  requiredSkills: z.array(z.string()).default([]),
+  minExperienceYears: z.number().int().nonnegative().optional(),
+  employmentType: z.enum(["full-time", "part-time", "contract", "intern"]),
+  description: z.string().min(1),
+  requirements: z.string().optional(),
+  location: z.string().optional(),
+  salaryRange: z.string().optional(),
+  requestedBy: z.string().min(1),
 });
 
 export async function GET(request: NextRequest) {
@@ -42,14 +42,14 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [employees, total] = await Promise.all([
-      listEmployees(parsed.data),
-      countEmployees({ tenantSlug: parsed.data.tenantSlug, status: parsed.data.status, departmentId: parsed.data.departmentId }),
+    const [requisitions, total] = await Promise.all([
+      listRequisitions(parsed.data),
+      countRequisitions({ tenantSlug: parsed.data.tenantSlug, status: parsed.data.status, departmentId: parsed.data.departmentId }),
     ]);
-    return NextResponse.json({ employees, total });
+    return NextResponse.json({ requisitions, total });
   } catch (error) {
-    console.error("Employee list failed", error);
-    return NextResponse.json({ error: "Failed to load employees" }, { status: 500 });
+    console.error("Requisition list failed", error);
+    return NextResponse.json({ error: "Failed to load requisitions" }, { status: 500 });
   }
 }
 
@@ -65,10 +65,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const employee = await insertEmployee(parsed.data);
-    return NextResponse.json({ employee }, { status: 201 });
+    const requisition = await insertRequisition(parsed.data);
+    return NextResponse.json({ requisition }, { status: 201 });
   } catch (error) {
-    console.error("Employee create failed", error);
-    return NextResponse.json({ error: "Failed to create employee" }, { status: 500 });
+    console.error("Requisition create failed", error);
+    return NextResponse.json({ error: "Failed to create requisition" }, { status: 500 });
   }
 }
