@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import {
   generatePnLReport,
   generateBalanceSheet,
@@ -6,23 +7,33 @@ import {
   generateAgedReceivablesReport,
 } from "@/lib/finance/reports-db";
 
-export async function GET(request: NextRequest) {
-  try {
-    const url = new URL(request.url);
-    const tenantSlug = url.searchParams.get("tenantSlug");
-    const type = url.searchParams.get("type") || "pl";
-    const startDate = url.searchParams.get("startDate");
-    const endDate = url.searchParams.get("endDate");
+const generateSchema = z.object({
+  tenantSlug: z.string().min(1),
+  type: z.enum(["pl", "balance", "cashflow", "aged"]).default("pl"),
+  period: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
 
-    if (!tenantSlug) {
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    }
+
+    const parsed = generateSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "tenantSlug is required" },
+        { error: "Invalid parameters", details: parsed.error.flatten() },
         { status: 400 }
       );
     }
 
+    const { tenantSlug, type, startDate, endDate } = parsed.data;
+
     const filters = {
-      tenantId: BigInt(0),
+      tenantId: BigInt(0), // tenantSlug is used as filter in views
       periodStart: startDate ? new Date(startDate) : undefined,
       periodEnd: endDate ? new Date(endDate) : undefined,
     };
@@ -41,14 +52,12 @@ export async function GET(request: NextRequest) {
       case "aged":
         report = await generateAgedReceivablesReport(filters);
         break;
-      default:
-        report = await generatePnLReport(filters);
     }
 
-    return NextResponse.json({ report });
+    return NextResponse.json({ report, type });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Reports generation failed:", errorMessage, error);
+    console.error("Report generation failed:", errorMessage, error);
     return NextResponse.json(
       { error: "Failed to generate report", details: errorMessage },
       { status: 500 }
