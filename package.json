@@ -22,6 +22,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.1",
+    "cloudinary": "^2.10.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "ioredis": "^5.10.1",

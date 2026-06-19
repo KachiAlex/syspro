@@ -1,10 +1,9 @@
 /**
  * Resume Upload Service
- * Handles file uploads and storage for candidate resumes
+ * Uploads resumes to Cloudinary for Vercel serverless compatibility
  */
 
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
+import { v2 as cloudinary } from "cloudinary";
 
 export interface UploadResult {
   success: boolean;
@@ -23,7 +22,6 @@ export interface FileUploadRequest {
   candidateId?: string;
 }
 
-const UPLOAD_DIR = join(process.cwd(), "public", "uploads", "resumes");
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = [
   "application/pdf",
@@ -54,15 +52,30 @@ function validateFile(file: FileUploadRequest): string | null {
   return null;
 }
 
-function generateSafeFilename(originalName: string, prefix?: string): string {
-  const timestamp = Date.now();
-  const ext = originalName.split(".").pop() || "bin";
-  const safeName = originalName
-    .replace(/[^a-zA-Z0-9.-]/g, "_")
-    .replace(/^\.+/, "")
-    .slice(0, 50);
-  const prefixStr = prefix ? `${prefix}_` : "";
-  return `${prefixStr}${timestamp}_${safeName}`.slice(0, 255);
+function getCloudinaryConfig() {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  if (cloudName && apiKey && apiSecret) {
+    return { cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret };
+  }
+
+  const url = process.env.CLOUDINARY_URL;
+  if (url) {
+    try {
+      const parsed = new URL(url);
+      return {
+        cloud_name: parsed.hostname,
+        api_key: parsed.username,
+        api_secret: parsed.password,
+      };
+    } catch {
+      // ignore
+    }
+  }
+
+  return null;
 }
 
 export async function uploadResume(
@@ -74,22 +87,29 @@ export async function uploadResume(
       return { success: false, error: validationError };
     }
 
-    try {
-      await mkdir(UPLOAD_DIR, { recursive: true });
-    } catch (err) {
-      console.error("Failed to create upload directory:", err);
+    const config = getCloudinaryConfig();
+    if (!config) {
+      return {
+        success: false,
+        error: "Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET env vars.",
+      };
     }
 
-    const safeFilename = generateSafeFilename(file.filename, file.candidateId);
-    const filepath = join(UPLOAD_DIR, safeFilename);
-    await writeFile(filepath, file.data);
+    cloudinary.config(config);
 
-    const url = `/uploads/resumes/${safeFilename}`;
+    // Build data URI for Cloudinary upload
+    const dataUri = `data:${file.mimeType};base64,${file.data.toString("base64")}`;
+
+    const result = await cloudinary.uploader.upload(dataUri, {
+      folder: "syspro/resumes",
+      resource_type: "raw",
+      public_id: `resume_${Date.now()}_${file.filename.replace(/[^a-zA-Z0-9.-]/g, "_").slice(0, 50)}`,
+    });
 
     return {
       success: true,
-      filename: safeFilename,
-      url,
+      filename: file.filename,
+      url: result.secure_url,
       size: file.data.length,
       mimeType: file.mimeType,
       uploadedAt: new Date().toISOString(),
