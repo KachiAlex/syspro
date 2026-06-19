@@ -26,7 +26,7 @@ const createSchema = z.object({
   requirements: z.string().optional(),
   location: z.string().optional(),
   salaryRange: z.string().optional(),
-  requestedBy: z.string().min(1),
+  requestedBy: z.string().optional().default('system'),
 });
 
 export async function GET(request: NextRequest) {

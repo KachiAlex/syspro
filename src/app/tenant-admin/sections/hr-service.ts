@@ -360,7 +360,7 @@ export class HRService {
     departmentId: string;
     description: string;
     employmentType: string;
-    requestedBy: string;
+    requestedBy?: string;
     headcount?: number;
     budget?: number;
     requiredSkills?: string[];

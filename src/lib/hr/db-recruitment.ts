@@ -59,6 +59,7 @@ export async function ensureRecruitmentTables(sql: SqlClient = SQL) {
   await sql`create index if not exists idx_admin_reqs_tenant on admin_job_requisitions(tenant_slug)`;
   await sql`create index if not exists idx_admin_reqs_status on admin_job_requisitions(status)`;
   await sql`create index if not exists idx_admin_reqs_dept on admin_job_requisitions(department_id)`;
+  await sql`alter table admin_job_requisitions alter column requested_by drop not null`;
 
   // Candidates
   await sql`
@@ -217,7 +218,7 @@ export async function insertRequisition(row: {
   requirements?: string | null;
   location?: string | null;
   salaryRange?: string | null;
-  requestedBy: string;
+  requestedBy?: string;
 }) {
   const sql = SQL;
   await ensureRecruitmentTables(sql);
@@ -233,7 +234,7 @@ export async function insertRequisition(row: {
       ${row.headcount ?? 1}, ${row.budget ?? null}, ${skillsLit}::text[],
       ${row.minExperienceYears ?? null}, ${row.employmentType}, ${row.description},
       ${row.requirements ?? null}, ${row.location ?? null}, ${row.salaryRange ?? null},
-      'draft', ${row.requestedBy}
+      'draft', ${row.requestedBy ?? 'system'}
     )
   `;
   const inserted = await sql`select * from admin_job_requisitions where id = ${id} limit 1`;
