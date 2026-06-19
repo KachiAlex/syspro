@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { listDepartments, insertDepartment, ensureDepartmentHeadRole, assignDepartmentHeadRole, listDepartmentsWithHeads, getDepartmentEmployeeCount } from "@/lib/hr/db";
+import { ensureAdminTables } from "@/lib/admin/db";
 import { db } from "@/lib/sql-client";
 
 const listSchema = z.object({
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
   console.log("[POST /hr/departments] parsed data:", JSON.stringify(parsed.data));
 
   try {
+    await ensureAdminTables();
     // Validate managerId if provided
     if (parsed.data.managerId) {
       const empRows = await db.sql<any>`

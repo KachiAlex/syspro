@@ -15,6 +15,17 @@ export async function ensureAdminTables(sql: SqlClient = SQL) {
       updated_at timestamptz default now()
     )
   `;
+  await sql`
+    alter table admin_departments
+    add column if not exists parent_department_id text,
+    add column if not exists budget numeric(15,2),
+    add column if not exists cost_center text,
+    add column if not exists manager_id text,
+    add column if not exists created_by text,
+    add column if not exists updated_by text
+  `;
+  await sql`create index if not exists idx_admin_departments_tenant on admin_departments(tenant_slug)`;
+  await sql`create index if not exists idx_admin_departments_parent on admin_departments(parent_department_id)`;
 
   // Roles table
   await sql`
