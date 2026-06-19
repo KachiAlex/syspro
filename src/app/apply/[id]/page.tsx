@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { Briefcase, MapPin, DollarSign, Users, Calendar, CheckCircle, Loader2, ArrowLeft } from "lucide-react";
+import { Briefcase, MapPin, DollarSign, Users, Calendar, CheckCircle, Loader2, ArrowLeft, Upload, FileText, X } from "lucide-react";
 import Link from "next/link";
 
 interface Requisition {
@@ -32,6 +32,8 @@ export default function ApplyPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [resumeUrl, setResumeUrl] = useState("");
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [uploadingResume, setUploadingResume] = useState(false);
   const [coverLetter, setCoverLetter] = useState("");
   const [experienceYears, setExperienceYears] = useState("");
   const [education, setEducation] = useState("");
@@ -73,6 +75,40 @@ export default function ApplyPage() {
       .filter(Boolean);
 
     try {
+      let finalResumeUrl = resumeUrl;
+
+      // Upload resume file if selected
+      if (resumeFile) {
+        setUploadingResume(true);
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            const base64Data = result.split(',')[1];
+            resolve(base64Data);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(resumeFile);
+        });
+
+        const uploadRes = await fetch("/api/hr/resumes/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: resumeFile.name,
+            mimeType: resumeFile.type || "application/octet-stream",
+            data: base64,
+          }),
+        });
+
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok) {
+          throw new Error(uploadData.error?.message || uploadData.error || "Resume upload failed");
+        }
+        finalResumeUrl = uploadData.resume?.url;
+        setUploadingResume(false);
+      }
+
       const res = await fetch("/api/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -82,7 +118,7 @@ export default function ApplyPage() {
           fullName,
           email,
           phone: phone || undefined,
-          resumeUrl: resumeUrl || undefined,
+          resumeUrl: finalResumeUrl || undefined,
           coverLetter: coverLetter || undefined,
           experienceYears: experienceYears ? Number(experienceYears) : undefined,
           education: education || undefined,
@@ -99,6 +135,7 @@ export default function ApplyPage() {
       setError(err.message || "Failed to submit application");
     } finally {
       setSubmitting(false);
+      setUploadingResume(false);
     }
   };
 
@@ -242,14 +279,41 @@ export default function ApplyPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Resume URL</label>
-                <input
-                  type="url"
-                  value={resumeUrl}
-                  onChange={(e) => setResumeUrl(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                  placeholder="https://..."
-                />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Resume *</label>
+                <div className="relative">
+                  {!resumeFile ? (
+                    <label className="flex items-center justify-center w-full px-3 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) setResumeFile(file);
+                        }}
+                        className="hidden"
+                      />
+                      <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                        <Upload className="w-4 h-4" />
+                        <span className="text-sm">Click to upload resume</span>
+                      </div>
+                    </label>
+                  ) : (
+                    <div className="flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                      <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+                        <FileText className="w-4 h-4 text-blue-500" />
+                        <span className="text-sm truncate max-w-[200px]">{resumeFile.name}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setResumeFile(null); setResumeUrl(""); }}
+                        className="p-1 rounded-md hover:bg-red-500/10 text-gray-400 hover:text-red-400"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">PDF, DOC, DOCX, TXT, PNG, JPG, WEBP. Max 10MB.</p>
               </div>
             </div>
 
@@ -299,11 +363,11 @@ export default function ApplyPage() {
 
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || uploadingResume}
               className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {submitting ? "Submitting..." : "Submit Application"}
+              {(submitting || uploadingResume) && <Loader2 className="w-4 h-4 animate-spin" />}
+              {uploadingResume ? "Uploading resume..." : submitting ? "Submitting..." : "Submit Application"}
             </button>
           </form>
         </div>
