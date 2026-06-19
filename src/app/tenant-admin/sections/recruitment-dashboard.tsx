@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Plus, Search, RefreshCw, Briefcase, UserCheck, FileText, Calendar, Award, ClipboardCheck, Filter, MoreHorizontal, CheckCircle, XCircle, Clock, AlertCircle, Eye, Trash2, Edit3, Sparkles, ChevronRight, Users
+  Plus, Search, RefreshCw, Briefcase, UserCheck, FileText, Calendar, Award, ClipboardCheck, Filter, MoreHorizontal, CheckCircle, XCircle, Clock, AlertCircle, Eye, Trash2, Edit3, Sparkles, ChevronRight, Users, Link2, Check
 } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { HRService } from './hr-service';
@@ -42,6 +42,7 @@ export const RecruitmentDashboard: React.FC = () => {
 
   // Modal states per entity
   const [showReqModal, setShowReqModal] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showCandModal, setShowCandModal] = useState(false);
   const [showAppModal, setShowAppModal] = useState(false);
   const [showIntModal, setShowIntModal] = useState(false);
@@ -91,6 +92,15 @@ export const RecruitmentDashboard: React.FC = () => {
     if (!confirm('Delete this requisition?')) return;
     await HRService.deleteRequisition(tenantSlug, id);
     setRequisitions((prev) => prev.filter((r) => r.id !== id));
+  };
+
+  const handleCopyLink = (id: string) => {
+    if (!tenantSlug) return;
+    const url = `${window.location.origin}/apply/${id}?tenantSlug=${encodeURIComponent(tenantSlug)}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
   };
 
   const handleDeleteCandidate = async (id: string) => {
@@ -243,6 +253,13 @@ export const RecruitmentDashboard: React.FC = () => {
                 <td className="px-4 py-3 text-theme-text-secondary">{r.createdAt ? r.createdAt.split('T')[0] : '—'}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleCopyLink(r.id)}
+                      className="p-1.5 rounded-md hover:bg-blue-500/10 text-theme-text-tertiary hover:text-blue-400"
+                      title="Copy application link"
+                    >
+                      {copiedId === r.id ? <Check className="w-4 h-4 text-green-500" /> : <Link2 className="w-4 h-4" />}
+                    </button>
                     {r.status === 'active' && (
                       <button
                         onClick={() => handleDeleteRequisition(r.id)}
