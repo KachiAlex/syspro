@@ -106,12 +106,13 @@ class ApiClient {
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
       try {
+        const { body: _ignoredBody, ...fetchOptions } = options;
         const response = await fetch(fullUrl, {
           method,
           headers: requestHeaders,
           body: this.serializeBody(body),
           signal: controller.signal,
-          ...options,
+          ...fetchOptions,
         });
 
         clearTimeout(timeoutId);
