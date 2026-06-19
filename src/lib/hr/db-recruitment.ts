@@ -341,6 +341,7 @@ export async function countRequisitions(filters: {
   departmentId?: string;
 }) {
   const sql = SQL;
+  await ensureRecruitmentTables(sql);
   let query = `select count(*)::int as cnt from admin_job_requisitions where tenant_slug = $1`;
   const params: any[] = [filters.tenantSlug];
 
@@ -359,6 +360,7 @@ export async function countRequisitions(filters: {
 
 export async function getRequisitionById(id: string, tenantSlug: string) {
   const sql = SQL;
+  await ensureRecruitmentTables(sql);
   const rows = await sql`select * from admin_job_requisitions where id = ${id} and tenant_slug = ${tenantSlug} limit 1`;
   const arr = rows as any[];
   return arr.length ? normalizeRequisitionRow(arr[0]) : null;
@@ -520,6 +522,7 @@ export async function countCandidates(filters: {
   source?: string;
 }) {
   const sql = SQL;
+  await ensureRecruitmentTables(sql);
   let query = `select count(*)::int as cnt from admin_candidates where tenant_slug = $1`;
   const params: any[] = [filters.tenantSlug];
 
@@ -538,6 +541,7 @@ export async function countCandidates(filters: {
 
 export async function getCandidateById(id: string, tenantSlug: string) {
   const sql = SQL;
+  await ensureRecruitmentTables(sql);
   const rows = await sql`select * from admin_candidates where id = ${id} and tenant_slug = ${tenantSlug} limit 1`;
   const arr = rows as any[];
   return arr.length ? normalizeCandidateRow(arr[0]) : null;
@@ -656,6 +660,7 @@ export async function countApplications(filters: {
   status?: string;
 }) {
   const sql = SQL;
+  await ensureRecruitmentTables(sql);
   let query = `select count(*)::int as cnt from admin_applications where tenant_slug = $1`;
   const params: any[] = [filters.tenantSlug];
 
@@ -674,6 +679,7 @@ export async function countApplications(filters: {
 
 export async function getApplicationById(id: string, tenantSlug: string) {
   const sql = SQL;
+  await ensureRecruitmentTables(sql);
   const rows = await sql`select * from admin_applications where id = ${id} and tenant_slug = ${tenantSlug} limit 1`;
   const arr = rows as any[];
   return arr.length ? normalizeApplicationRow(arr[0]) : null;
@@ -805,6 +811,7 @@ export async function listInterviews(filters: {
 
 export async function getInterviewById(id: string, tenantSlug: string) {
   const sql = SQL;
+  await ensureRecruitmentTables(sql);
   const rows = await sql`select * from admin_interviews where id = ${id} and tenant_slug = ${tenantSlug} limit 1`;
   const arr = rows as any[];
   return arr.length ? normalizeInterviewRow(arr[0]) : null;
@@ -931,6 +938,7 @@ export async function listOffers(filters: {
 
 export async function getOfferById(id: string, tenantSlug: string) {
   const sql = SQL;
+  await ensureRecruitmentTables(sql);
   const rows = await sql`select * from admin_offers where id = ${id} and tenant_slug = ${tenantSlug} limit 1`;
   const arr = rows as any[];
   return arr.length ? normalizeOfferRow(arr[0]) : null;
@@ -1053,6 +1061,7 @@ export async function listOnboardingTasks(filters: {
 
 export async function getOnboardingTaskById(id: string, tenantSlug: string) {
   const sql = SQL;
+  await ensureRecruitmentTables(sql);
   const rows = await sql`select * from admin_onboarding_tasks where id = ${id} and tenant_slug = ${tenantSlug} limit 1`;
   const arr = rows as any[];
   return arr.length ? normalizeOnboardingRow(arr[0]) : null;

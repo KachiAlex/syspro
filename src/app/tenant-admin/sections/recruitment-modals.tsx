@@ -230,10 +230,15 @@ export function RequisitionModal({
     ...localDepartments.map((d) => ({ value: d.id, label: d.name })),
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ title, departmentId, description, requirements, location, employmentType, salaryRange, headcount: headcount || 1, budget: budget || undefined, minExperienceYears: minExperienceYears || undefined, requiredSkills });
-    onClose();
+    try {
+      await onSubmit({ title, departmentId, description, requirements, location, employmentType, salaryRange, headcount: headcount || 1, budget: budget || undefined, minExperienceYears: minExperienceYears || undefined, requiredSkills });
+      onClose();
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to create requisition';
+      alert(msg);
+    }
   };
 
   const handleCreateDepartment = async (e: React.FormEvent) => {

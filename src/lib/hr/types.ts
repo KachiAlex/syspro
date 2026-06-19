@@ -171,7 +171,7 @@ export const requisitionCreateSchema = z.object({
   location: z.string().optional(),
   salaryRange: z.string().optional(),
   postedAt: z.string().datetime().optional(),
-  requestedBy: z.string().min(1),
+  requestedBy: z.string().optional().default('system'),
 });
 
 export const requisitionUpdateSchema = z.object({
