@@ -268,8 +268,13 @@ export class HRService {
   }
 
   static async getTenantUsers(tenantSlug: string): Promise<{ id: string; email: string; name: string }[]> {
-    const response = await apiClient.get(`/tenant/users?tenantSlug=${tenantSlug}`);
-    return response.data.users || [];
+    try {
+      const response = await apiClient.get(`/hr/employees?tenantSlug=${tenantSlug}&limit=100`);
+      const employees = response.data.employees || [];
+      return employees.map((e: any) => ({ id: e.id, email: e.email, name: e.name }));
+    } catch {
+      return [];
+    }
   }
 
   static async listDepartmentsWithHeads(tenantSlug: string): Promise<(DepartmentRecord & { headName: string | null; headEmail: string | null; employeeCount?: number })[]> {

@@ -11,6 +11,7 @@ import {
   assignDepartmentHeadRole,
   revokeDepartmentHeadRole,
 } from "@/lib/hr/db";
+import { db } from "@/lib/sql-client";
 
 const patchSchema = z.object({
   managerId: z.string().nullable(),
@@ -46,6 +47,14 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     // Assign new head if provided
     if (parsed.data.managerId) {
+      const empRows = await db.sql<any>`
+        select id from admin_employees
+        where tenant_slug = ${context.tenantSlug} and id = ${parsed.data.managerId}
+        limit 1
+      `;
+      if (!Array.isArray(empRows) || empRows.length === 0) {
+        return NextResponse.json({ error: "Manager not found in tenant employees" }, { status: 400 });
+      }
       await assignDepartmentHeadRole(context.tenantSlug, parsed.data.managerId, roleId);
     }
 

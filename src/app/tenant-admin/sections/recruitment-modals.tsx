@@ -562,10 +562,14 @@ export function DepartmentModal({
   const userOptions = [{ value: '', label: 'Select head...' }, ...users.map((u) => ({ value: u.id, label: `${u.name} (${u.email})` }))];
   const parentOptions = [{ value: '', label: 'No parent' }, ...departments.filter((d) => d.id !== initialData?.id).map((d) => ({ value: d.id, label: d.name }))];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ name, description, budget: budget || undefined, costCenter: costCenter || undefined, managerId: managerId || undefined, parentDepartmentId: parentDepartmentId || undefined });
-    onClose();
+    try {
+      await onSubmit({ name, description, budget: budget || undefined, costCenter: costCenter || undefined, managerId: managerId || undefined, parentDepartmentId: parentDepartmentId || undefined });
+      onClose();
+    } catch {
+      // error already alerted by parent; keep modal open
+    }
   };
 
   return (

@@ -336,14 +336,17 @@ export async function revokeDepartmentHeadRole(tenantSlug: string, userId: strin
 
 export async function getTenantUsers(tenantSlug: string) {
   const sql = SQL;
-  const rows = await sql`
-    select u.id, u.email, u.name
-    from users u
-    join tenants t on u.tenant_id = t.id
-    where t.slug = ${tenantSlug} and u.status = 'active'
-    order by u.name
-  `;
-  return (rows as any[]).map((r) => ({ id: r.id, email: r.email, name: r.name }));
+  try {
+    const rows = await sql`
+      select id, email, name
+      from admin_employees
+      where tenant_slug = ${tenantSlug} and status = 'active'
+      order by name
+    `;
+    return (rows as any[]).map((r) => ({ id: r.id, email: r.email, name: r.name }));
+  } catch {
+    return [];
+  }
 }
 
 export async function getDepartmentEmployeeCount(tenantSlug: string, departmentId: string) {
@@ -356,18 +359,22 @@ export async function getDepartmentEmployeeCount(tenantSlug: string, departmentI
 
 export async function listDepartmentsWithHeads(tenantSlug: string) {
   const sql = SQL;
-  const rows = await sql`
-    select d.*, u.name as head_name, u.email as head_email
-    from admin_departments d
-    left join users u on d.manager_id = u.id
-    where d.tenant_slug = ${tenantSlug}
-    order by d.name
-  `;
-  return (rows as any[]).map((r) => ({
-    ...normalizeDepartmentRow(r),
-    headName: r.head_name ?? null,
-    headEmail: r.head_email ?? null,
-  }));
+  try {
+    const rows = await sql`
+      select d.*, e.name as head_name, e.email as head_email
+      from admin_departments d
+      left join admin_employees e on d.manager_id = e.id
+      where d.tenant_slug = ${tenantSlug}
+      order by d.name
+    `;
+    return (rows as any[]).map((r) => ({
+      ...normalizeDepartmentRow(r),
+      headName: r.head_name ?? null,
+      headEmail: r.head_email ?? null,
+    }));
+  } catch {
+    return listDepartments(tenantSlug);
+  }
 }
 
 // ============================================================================

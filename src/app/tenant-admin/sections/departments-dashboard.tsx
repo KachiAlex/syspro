@@ -45,21 +45,33 @@ export const DepartmentsDashboard: React.FC = () => {
 
   const handleCreate = async (data: any) => {
     if (!tenantSlug) return;
-    const created = await HRService.createDepartment(tenantSlug, data);
-    setDepartments((prev) => [...prev, { ...created, headName: null, headEmail: null, employeeCount: 0 }]);
+    try {
+      const created = await HRService.createDepartment(tenantSlug, data);
+      setDepartments((prev) => [...prev, { ...created, headName: null, headEmail: null, employeeCount: 0 }]);
+    } catch (err: any) {
+      console.error('Create department failed:', err);
+      const message = err?.response?.data?.error?.formErrors?.[0] || err?.message || 'Failed to create department';
+      alert(message);
+      throw err;
+    }
   };
 
   const handleUpdateHead = async (deptId: string, managerId: string | null) => {
     if (!tenantSlug) return;
-    const updated = await HRService.updateDepartmentHead(tenantSlug, deptId, managerId);
-    const head = users.find((u) => u.id === managerId);
-    setDepartments((prev) =>
-      prev.map((d) =>
-        d.id === deptId
-          ? { ...d, managerId: updated.managerId, headName: head?.name || null, headEmail: head?.email || null }
-          : d
-      )
-    );
+    try {
+      const updated = await HRService.updateDepartmentHead(tenantSlug, deptId, managerId);
+      const head = users.find((u) => u.id === managerId);
+      setDepartments((prev) =>
+        prev.map((d) =>
+          d.id === deptId
+            ? { ...d, managerId: updated.managerId, headName: head?.name || null, headEmail: head?.email || null }
+            : d
+        )
+      );
+    } catch (err: any) {
+      console.error('Update head failed:', err);
+      alert(err?.message || 'Failed to update department head');
+    }
   };
 
   const handleDelete = async (id: string) => {

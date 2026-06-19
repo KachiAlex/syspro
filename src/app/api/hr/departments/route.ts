@@ -49,26 +49,27 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
+  console.log("[POST /hr/departments] body:", body);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) {
+    console.error("[POST /hr/departments] Zod error:", parsed.error.flatten());
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
   try {
     // Validate managerId if provided
     if (parsed.data.managerId) {
-      const users = await db.sql<any>`
-        select u.id from users u
-        join tenants t on u.tenant_id = t.id
-        where t.slug = ${parsed.data.tenantSlug} and u.id = ${parsed.data.managerId} and u.status = 'active'
+      const empRows = await db.sql<any>`
+        select id from admin_employees
+        where tenant_slug = ${parsed.data.tenantSlug} and id = ${parsed.data.managerId}
         limit 1
       `;
-      if (!Array.isArray(users) || users.length === 0) {
-        return NextResponse.json({ error: "Manager not found in tenant" }, { status: 400 });
+      if (!Array.isArray(empRows) || empRows.length === 0) {
+        return NextResponse.json({ error: "Manager not found in tenant employees" }, { status: 400 });
       }
     }
 
