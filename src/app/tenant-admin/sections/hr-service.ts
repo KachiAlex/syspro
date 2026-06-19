@@ -250,6 +250,33 @@ export class HRService {
     return depts.map((d) => d.name);
   }
 
+  static async createDepartment(tenantSlug: string, data: {
+    name: string;
+    description?: string;
+    parentDepartmentId?: string;
+    budget?: number;
+    costCenter?: string;
+    managerId?: string;
+  }): Promise<DepartmentRecord> {
+    const response = await apiClient.post('/hr/departments', { ...data, tenantSlug });
+    return response.data.department;
+  }
+
+  static async updateDepartmentHead(tenantSlug: string, departmentId: string, managerId: string | null): Promise<DepartmentRecord> {
+    const response = await apiClient.patch(`/hr/departments/${departmentId}/head`, { managerId, tenantSlug });
+    return response.data.department;
+  }
+
+  static async getTenantUsers(tenantSlug: string): Promise<{ id: string; email: string; name: string }[]> {
+    const response = await apiClient.get(`/tenant/users?tenantSlug=${tenantSlug}`);
+    return response.data.users || [];
+  }
+
+  static async listDepartmentsWithHeads(tenantSlug: string): Promise<(DepartmentRecord & { headName: string | null; headEmail: string | null; employeeCount?: number })[]> {
+    const response = await apiClient.get(`/hr/departments?tenantSlug=${tenantSlug}&withHeads=true`);
+    return response.data.departments || [];
+  }
+
   // Payroll Management (endpoints not yet implemented)
   static async runPayroll(tenantSlug: string, payrollData: {
     payrollMonth: string;

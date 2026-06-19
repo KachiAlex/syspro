@@ -84,6 +84,7 @@ export interface TenantRequestContext {
   userId: string;
   userRole: string;
   userPermissions: string[];
+  managedDepartmentId?: string;
 }
 
 export function extractTenantContext(request: NextRequest): TenantRequestContext {
@@ -107,6 +108,25 @@ export function validateTenantContext(request: NextRequest, requiredPermission?:
     requirePermission(context.userRole, requiredPermission as any);
   }
 
+  return context;
+}
+
+export async function resolveDepartmentHeadContext(context: TenantRequestContext): Promise<TenantRequestContext> {
+  if (context.userId && context.userId !== 'unknown' && context.tenantSlug) {
+    try {
+      const { db } = await import('@/lib/sql-client');
+      const rows = await db.sql<any>`
+        select id from admin_departments
+        where tenant_slug = ${context.tenantSlug} and manager_id = ${context.userId}
+        limit 1
+      `;
+      if (Array.isArray(rows) && rows.length > 0) {
+        context.managedDepartmentId = rows[0].id;
+      }
+    } catch {
+      // ignore — no managed department
+    }
+  }
   return context;
 }
 

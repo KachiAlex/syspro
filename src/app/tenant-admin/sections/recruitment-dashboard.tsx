@@ -630,6 +630,8 @@ export const RecruitmentDashboard: React.FC = () => {
         onClose={() => setShowReqModal(false)}
         onSubmit={handleCreateRequisition}
         departments={departmentRecords}
+        tenantSlug={tenantSlug || ''}
+        onDepartmentCreated={(dept) => setDepartmentRecords((prev) => [...prev, dept])}
       />
       <CandidateModal
         isOpen={showCandModal}

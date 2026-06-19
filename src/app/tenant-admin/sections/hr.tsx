@@ -14,8 +14,9 @@ import { UnifiedReportModal } from '../components/unified-report-modal';
 import { ReportService } from '../services/report-service';
 import { HRService } from './hr-service';
 import { RecruitmentDashboard } from './recruitment-dashboard';
+import { DepartmentsDashboard } from './departments-dashboard';
 
-type HRTab = 'overview' | 'recruitment';
+type HRTab = 'overview' | 'recruitment' | 'departments';
 
 interface Employee {
   id: string;
@@ -1001,6 +1002,7 @@ const HRComponent: React.FC = () => {
   const tabs: { id: HRTab; label: string }[] = [
     { id: 'overview', label: 'HR & Operations' },
     { id: 'recruitment', label: 'Talent Acquisition' },
+    { id: 'departments', label: 'Departments & Units' },
   ];
 
   return (
@@ -1024,7 +1026,9 @@ const HRComponent: React.FC = () => {
       </div>
 
       <div>
-        {activeTab === 'overview' ? renderOverviewTab() : <RecruitmentDashboard />}
+        {activeTab === 'overview' && renderOverviewTab()}
+        {activeTab === 'recruitment' && <RecruitmentDashboard />}
+        {activeTab === 'departments' && <DepartmentsDashboard />}
       </div>
 
       {/* Employee Management Modals */}

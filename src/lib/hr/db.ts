@@ -292,6 +292,84 @@ export async function getDepartmentById(id: string, tenantSlug: string) {
   return arr.length ? normalizeDepartmentRow(arr[0]) : null;
 }
 
+export async function updateDepartmentHead(id: string, tenantSlug: string, managerId: string | null) {
+  const sql = SQL;
+  await sql`update admin_departments set manager_id = ${managerId}, updated_at = now() where id = ${id} and tenant_slug = ${tenantSlug}`;
+  const rows = await sql`select * from admin_departments where id = ${id} and tenant_slug = ${tenantSlug} limit 1`;
+  const arr = rows as any[];
+  return arr.length ? normalizeDepartmentRow(arr[0]) : null;
+}
+
+export async function getManagedDepartmentForUser(userId: string, tenantSlug: string) {
+  const sql = SQL;
+  const rows = await sql`select * from admin_departments where tenant_slug = ${tenantSlug} and manager_id = ${userId} limit 1`;
+  const arr = rows as any[];
+  return arr.length ? normalizeDepartmentRow(arr[0]) : null;
+}
+
+export async function ensureDepartmentHeadRole(tenantSlug: string) {
+  const sql = SQL;
+  const rows = await sql`select id from admin_roles where tenant_slug = ${tenantSlug} and name = ${'department_head'} limit 1`;
+  const arr = rows as any[];
+  if (arr.length) return arr[0].id as string;
+  const id = randomUUID();
+  await sql`
+    insert into admin_roles (id, tenant_slug, name, scope, permissions, description, is_system, created_at, updated_at)
+    values (${id}, ${tenantSlug}, ${'department_head'}, ${'tenant'}, ${['hr:read', 'hr:write', 'hr:approve']}, ${'Department head with scoped access to their department'}, ${true}, now(), now())
+  `;
+  return id;
+}
+
+export async function assignDepartmentHeadRole(tenantSlug: string, userId: string, roleId: string) {
+  const sql = SQL;
+  await sql`
+    insert into admin_user_roles (id, tenant_slug, user_id, role_id, scope, is_active, created_at)
+    values (${randomUUID()}, ${tenantSlug}, ${userId}, ${roleId}, ${'department'}, ${true}, now())
+    on conflict (user_id, role_id) do update set is_active = true, scope = ${'department'}
+  `;
+}
+
+export async function revokeDepartmentHeadRole(tenantSlug: string, userId: string, roleId: string) {
+  const sql = SQL;
+  await sql`delete from admin_user_roles where tenant_slug = ${tenantSlug} and user_id = ${userId} and role_id = ${roleId}`;
+}
+
+export async function getTenantUsers(tenantSlug: string) {
+  const sql = SQL;
+  const rows = await sql`
+    select u.id, u.email, u.name
+    from users u
+    join tenants t on u.tenant_id = t.id
+    where t.slug = ${tenantSlug} and u.status = 'active'
+    order by u.name
+  `;
+  return (rows as any[]).map((r) => ({ id: r.id, email: r.email, name: r.name }));
+}
+
+export async function getDepartmentEmployeeCount(tenantSlug: string, departmentId: string) {
+  const res = await db.query<{ cnt: number }>(
+    'select count(*) as cnt from admin_employees where tenant_slug = $1 and department_id = $2',
+    [tenantSlug, departmentId]
+  );
+  return res.rows.length ? Number(res.rows[0].cnt) : 0;
+}
+
+export async function listDepartmentsWithHeads(tenantSlug: string) {
+  const sql = SQL;
+  const rows = await sql`
+    select d.*, u.name as head_name, u.email as head_email
+    from admin_departments d
+    left join users u on d.manager_id = u.id
+    where d.tenant_slug = ${tenantSlug}
+    order by d.name
+  `;
+  return (rows as any[]).map((r) => ({
+    ...normalizeDepartmentRow(r),
+    headName: r.head_name ?? null,
+    headEmail: r.head_email ?? null,
+  }));
+}
+
 // ============================================================================
 // ATTENDANCE
 // ============================================================================

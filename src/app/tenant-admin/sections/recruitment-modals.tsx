@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Plus } from 'lucide-react';
+import { HRService } from './hr-service';
 
 interface BaseModalProps {
   isOpen: boolean;
@@ -165,8 +166,12 @@ function SubmitBtn({ label }: { label: string }) {
 
 // ─── Requisition Modal ───
 export function RequisitionModal({
-  isOpen, onClose, onSubmit, mode = 'create', initialData, departments
-}: BaseModalProps & { departments: { id: string; name: string }[] }) {
+  isOpen, onClose, onSubmit, mode = 'create', initialData, departments, tenantSlug, onDepartmentCreated
+}: BaseModalProps & {
+  departments: { id: string; name: string }[];
+  tenantSlug: string;
+  onDepartmentCreated?: (dept: { id: string; name: string }) => void;
+}) {
   const [title, setTitle] = useState('');
   const [departmentId, setDepartmentId] = useState('');
   const [description, setDescription] = useState('');
@@ -178,6 +183,10 @@ export function RequisitionModal({
   const [budget, setBudget] = useState<number | ''>('');
   const [minExperienceYears, setMinExperienceYears] = useState<number | ''>('');
   const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
+  const [showCreateDept, setShowCreateDept] = useState(false);
+  const [newDeptName, setNewDeptName] = useState('');
+  const [newDeptDescription, setNewDeptDescription] = useState('');
+  const [creatingDept, setCreatingDept] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -208,11 +217,63 @@ export function RequisitionModal({
     onClose();
   };
 
+  const handleCreateDepartment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDeptName.trim() || !tenantSlug) return;
+    setCreatingDept(true);
+    try {
+      const created = await HRService.createDepartment(tenantSlug, {
+        name: newDeptName.trim(),
+        description: newDeptDescription.trim() || undefined,
+      });
+      const newDept = { id: created.id, name: created.name };
+      onDepartmentCreated?.(newDept);
+      setDepartmentId(created.id);
+      setShowCreateDept(false);
+      setNewDeptName('');
+      setNewDeptDescription('');
+    } catch (err) {
+      console.error('Failed to create department:', err);
+      alert('Failed to create department. See console for details.');
+    } finally {
+      setCreatingDept(false);
+    }
+  };
+
   return (
     <ModalOverlay onClose={onClose} title={mode === 'edit' ? 'Edit Requisition' : 'New Job Requisition'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <TextField label="Title" value={title} onChange={setTitle} required />
         <SelectField label="Department" value={departmentId} onChange={setDepartmentId} required options={deptOptions} />
+        {!showCreateDept ? (
+          <button
+            type="button"
+            onClick={() => setShowCreateDept(true)}
+            className="text-sm text-blue-400 hover:text-blue-300 -mt-2"
+          >
+            + Create new department
+          </button>
+        ) : (
+          <div className="border border-theme-border rounded-lg p-4 space-y-3 bg-theme-muted/50">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-theme-text-primary">New Department</span>
+              <button type="button" onClick={() => setShowCreateDept(false)} className="text-xs text-theme-text-tertiary hover:text-theme-text-secondary">Cancel</button>
+            </div>
+            <form onSubmit={handleCreateDepartment} className="space-y-3">
+              <TextField label="Department Name" value={newDeptName} onChange={setNewDeptName} required />
+              <TextField label="Description" value={newDeptDescription} onChange={setNewDeptDescription} />
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={creatingDept}
+                  className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {creatingDept ? 'Creating...' : 'Create & Select'}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
         <TextArea label="Description" value={description} onChange={setDescription} required />
         <TextArea label="Requirements" value={requirements} onChange={setRequirements} />
         <div className="grid grid-cols-2 gap-4">
@@ -463,6 +524,64 @@ export function OfferModal({
         <div className="flex justify-end gap-3 pt-2">
           <CancelBtn onClose={onClose} />
           <SubmitBtn label={mode === 'edit' ? 'Save Changes' : 'Create Offer'} />
+        </div>
+      </form>
+    </ModalOverlay>
+  );
+}
+
+// ─── Department Modal ───
+export function DepartmentModal({
+  isOpen, onClose, onSubmit, mode = 'create', initialData, users, departments
+}: BaseModalProps & {
+  users: { id: string; name: string; email: string }[];
+  departments: { id: string; name: string }[];
+}) {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [budget, setBudget] = useState<number | ''>('');
+  const [costCenter, setCostCenter] = useState('');
+  const [managerId, setManagerId] = useState('');
+  const [parentDepartmentId, setParentDepartmentId] = useState('');
+
+  useEffect(() => {
+    if (initialData) {
+      setName(initialData.name || '');
+      setDescription(initialData.description || '');
+      setBudget(initialData.budget ?? '');
+      setCostCenter(initialData.costCenter || '');
+      setManagerId(initialData.managerId || '');
+      setParentDepartmentId(initialData.parentDepartmentId || '');
+    } else {
+      setName(''); setDescription(''); setBudget(''); setCostCenter(''); setManagerId(''); setParentDepartmentId('');
+    }
+  }, [initialData, isOpen]);
+
+  if (!isOpen) return null;
+
+  const userOptions = [{ value: '', label: 'Select head...' }, ...users.map((u) => ({ value: u.id, label: `${u.name} (${u.email})` }))];
+  const parentOptions = [{ value: '', label: 'No parent' }, ...departments.filter((d) => d.id !== initialData?.id).map((d) => ({ value: d.id, label: d.name }))];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({ name, description, budget: budget || undefined, costCenter: costCenter || undefined, managerId: managerId || undefined, parentDepartmentId: parentDepartmentId || undefined });
+    onClose();
+  };
+
+  return (
+    <ModalOverlay onClose={onClose} title={mode === 'edit' ? 'Edit Department' : 'New Department'}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <TextField label="Name" value={name} onChange={setName} required />
+        <TextArea label="Description" value={description} onChange={setDescription} />
+        <SelectField label="Head" value={managerId} onChange={setManagerId} options={userOptions} />
+        <SelectField label="Parent Department" value={parentDepartmentId} onChange={setParentDepartmentId} options={parentOptions} />
+        <div className="grid grid-cols-2 gap-4">
+          <NumberField label="Budget" value={budget} onChange={setBudget} min={0} />
+          <TextField label="Cost Center" value={costCenter} onChange={setCostCenter} />
+        </div>
+        <div className="flex justify-end gap-3 pt-2">
+          <CancelBtn onClose={onClose} />
+          <SubmitBtn label={mode === 'edit' ? 'Save Changes' : 'Create Department'} />
         </div>
       </form>
     </ModalOverlay>

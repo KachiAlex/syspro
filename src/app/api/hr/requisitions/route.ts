@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { listRequisitions, insertRequisition, countRequisitions } from "@/lib/hr/db-recruitment";
+import { extractAuthContext } from "@/lib/auth-helper";
+import { resolveDepartmentHeadContext } from "@/lib/tenant-admin/utils";
 
 const listSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -42,6 +44,18 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Apply department head scoping
+    const auth = extractAuthContext(request);
+    const context = await resolveDepartmentHeadContext({
+      tenantSlug: parsed.data.tenantSlug,
+      userId: auth.userId || 'unknown',
+      userRole: auth.userRole || 'user',
+      userPermissions: auth.userPermissions || [],
+    });
+    if (context.managedDepartmentId && !parsed.data.departmentId) {
+      parsed.data.departmentId = context.managedDepartmentId;
+    }
+
     const [requisitions, total] = await Promise.all([
       listRequisitions(parsed.data),
       countRequisitions({ tenantSlug: parsed.data.tenantSlug, status: parsed.data.status, departmentId: parsed.data.departmentId }),
