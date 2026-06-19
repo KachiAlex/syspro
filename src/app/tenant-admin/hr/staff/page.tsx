@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Plus, Eye, Search } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { HRService } from '@/app/tenant-admin/sections/hr-service';
+import { AddEmployeeModal } from '@/app/tenant-admin/sections/hr-add-employee-modal';
 
 interface Employee {
   id: string;
@@ -97,6 +98,12 @@ export default function StaffPage() {
       return true;
     });
   }, [employees, departmentFilter, statusFilter, searchQuery]);
+
+  const handleAddEmployee = async (data: any) => {
+    if (!tenantSlug) return;
+    await HRService.addEmployee(tenantSlug, data);
+    await loadData();
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -203,6 +210,13 @@ export default function StaffPage() {
           </tbody>
         </table>
       </div>
+
+      <AddEmployeeModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddEmployee}
+        departments={departments.filter(d => d !== 'All Departments')}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 p-4">
