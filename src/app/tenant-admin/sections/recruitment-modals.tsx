@@ -187,6 +187,22 @@ export function RequisitionModal({
   const [newDeptName, setNewDeptName] = useState('');
   const [newDeptDescription, setNewDeptDescription] = useState('');
   const [creatingDept, setCreatingDept] = useState(false);
+  const [localDepartments, setLocalDepartments] = useState(departments);
+  const [fetchingDepts, setFetchingDepts] = useState(false);
+
+  useEffect(() => {
+    setLocalDepartments(departments);
+  }, [departments]);
+
+  useEffect(() => {
+    if (isOpen && tenantSlug) {
+      setFetchingDepts(true);
+      HRService.getDepartmentRecords(tenantSlug)
+        .then((depts) => setLocalDepartments(depts))
+        .catch(() => { /* keep existing */ })
+        .finally(() => setFetchingDepts(false));
+    }
+  }, [isOpen, tenantSlug]);
 
   useEffect(() => {
     if (initialData) {
@@ -209,7 +225,10 @@ export function RequisitionModal({
 
   if (!isOpen) return null;
 
-  const deptOptions = [{ value: '', label: 'Select department...' }, ...departments.map((d) => ({ value: d.id, label: d.name }))];
+  const deptOptions = [
+    { value: '', label: fetchingDepts ? 'Loading departments...' : 'Select department...' },
+    ...localDepartments.map((d) => ({ value: d.id, label: d.name })),
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,6 +247,7 @@ export function RequisitionModal({
       });
       const newDept = { id: created.id, name: created.name };
       onDepartmentCreated?.(newDept);
+      setLocalDepartments((prev) => [...prev, newDept]);
       setDepartmentId(created.id);
       setShowCreateDept(false);
       setNewDeptName('');

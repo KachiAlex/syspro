@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    await ensureAdminTables();
     if (withHeads) {
       const departments = await listDepartmentsWithHeads(parsed.data.tenantSlug);
       const withCounts = await Promise.all(
