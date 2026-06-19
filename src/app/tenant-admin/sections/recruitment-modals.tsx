@@ -565,7 +565,7 @@ export function DepartmentModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await onSubmit({ name, description, budget: budget || undefined, costCenter: costCenter || undefined, managerId: managerId || undefined, parentDepartmentId: parentDepartmentId || undefined });
+      await onSubmit({ name, description, budget: budget ? Number(budget) : undefined, costCenter: costCenter || undefined, managerId: managerId || undefined, parentDepartmentId: parentDepartmentId || undefined });
       onClose();
     } catch {
       // error already alerted by parent; keep modal open

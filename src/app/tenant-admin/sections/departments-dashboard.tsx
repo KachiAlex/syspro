@@ -50,7 +50,15 @@ export const DepartmentsDashboard: React.FC = () => {
       setDepartments((prev) => [...prev, { ...created, headName: null, headEmail: null, employeeCount: 0 }]);
     } catch (err: any) {
       console.error('Create department failed:', err);
-      const message = err?.response?.data?.error?.formErrors?.[0] || err?.message || 'Failed to create department';
+      const errorData = err?.response?.data?.error;
+      let message = err?.message || 'Failed to create department';
+      if (errorData) {
+        const fieldErrors = errorData.fieldErrors ? Object.entries(errorData.fieldErrors).map(([k, v]) => `${k}: ${(v as string[]).join(', ')}`) : [];
+        const formErrors = errorData.formErrors || [];
+        const allErrors = [...formErrors, ...fieldErrors];
+        if (allErrors.length) message = allErrors.join('; ');
+        else if (typeof errorData === 'string') message = errorData;
+      }
       alert(message);
       throw err;
     }
