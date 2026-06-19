@@ -49,16 +49,19 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
-  console.log("[POST /hr/departments] body:", body);
+  console.log("[POST /hr/departments] raw body:", JSON.stringify(body));
   if (!body || typeof body !== "object") {
+    console.error("[POST /hr/departments] Invalid payload - body is null or not object");
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) {
-    console.error("[POST /hr/departments] Zod error:", parsed.error.flatten());
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    const flat = parsed.error.flatten();
+    console.error("[POST /hr/departments] Zod validation failed:", JSON.stringify(flat));
+    return NextResponse.json({ error: flat, message: "Validation failed" }, { status: 400 });
   }
+  console.log("[POST /hr/departments] parsed data:", JSON.stringify(parsed.data));
 
   try {
     // Validate managerId if provided

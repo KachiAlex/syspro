@@ -128,7 +128,8 @@ class ApiClient {
           } catch {
             errorData = null;
           }
-          const err = new Error(`HTTP error! status: ${response.status}`) as any;
+          const bodyText = typeof errorData === "string" ? errorData : JSON.stringify(errorData);
+          const err = new Error(`HTTP error! status: ${response.status} - ${bodyText}`) as any;
           err.response = { data: errorData, status: response.status, statusText: response.statusText };
           throw err;
         }
