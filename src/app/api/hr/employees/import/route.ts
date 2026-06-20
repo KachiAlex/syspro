@@ -98,6 +98,8 @@ export async function POST(request: NextRequest) {
       'intern': 'intern', 'internship': 'intern', 'trainee': 'intern',
     };
 
+    const hodDepartments = new Set<string>();
+
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       try {
@@ -124,6 +126,28 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
+        let finalRole = mappedRole;
+        if (finalRole === 'hod' && department) {
+          if (hodDepartments.has(department)) {
+            finalRole = 'staff';
+            errors.push(`Row ${i + 1}: HOD already exists in "${department}". Assigned as staff instead.`);
+          } else {
+            const dupRows = await SQL`
+              select id from admin_employees
+              where tenant_slug = ${tenantSlug}
+                and department_id = ${department}
+                and role = 'hod'
+              limit 1
+            `;
+            if ((dupRows as any[]).length > 0) {
+              finalRole = 'staff';
+              errors.push(`Row ${i + 1}: HOD already exists in "${department}". Assigned as staff instead.`);
+            } else {
+              hodDepartments.add(department);
+            }
+          }
+        }
+
         await insertEmployee({
           tenantSlug,
           name: `${firstName} ${lastName}`.trim(),
@@ -133,7 +157,7 @@ export async function POST(request: NextRequest) {
           hireDate: startDate,
           salary,
           employmentType: mappedEmpType,
-          role: mappedRole,
+          role: finalRole,
           status: "active",
         });
         imported++;
