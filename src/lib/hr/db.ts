@@ -36,6 +36,9 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
   await sql`alter table if exists admin_employees add column if not exists role text default 'staff' check (role in ('staff','hod','admin','executive'))`;
   await sql`alter table if exists admin_employees add column if not exists created_by text`;
   await sql`alter table if exists admin_employees add column if not exists updated_by text`;
+  await sql`alter table if exists admin_employees add column if not exists password_hash text`;
+  await sql`alter table if exists admin_employees add column if not exists is_portal_active boolean default false`;
+  await sql`alter table if exists admin_employees add column if not exists last_login timestamptz`;
 
   await sql`
     create table if not exists admin_attendance (
@@ -97,6 +100,9 @@ function normalizeEmployeeRow(row: any): EmployeeRecord {
     employmentType: row.employment_type ?? null,
     role: row.role ?? null,
     status: row.status ?? "active",
+    passwordHash: row.password_hash ?? null,
+    isPortalActive: row.is_portal_active ?? false,
+    lastLogin: row.last_login ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

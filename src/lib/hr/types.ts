@@ -52,6 +52,9 @@ export interface EmployeeRecord {
   employmentType: string | null;
   role: string | null;
   status: string;
+  passwordHash: string | null;
+  isPortalActive: boolean;
+  lastLogin: string | null;
   createdAt: string;
   updatedAt: string;
 }

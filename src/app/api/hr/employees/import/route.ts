@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { insertEmployee, ensureHrTables } from "@/lib/hr/db";
 import { ensureAdminTables } from "@/lib/admin/db";
 import { sql as SQL } from "@/lib/sql-client";
+import { setEmployeePassword } from "@/lib/hr/auth";
 
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
@@ -48,6 +49,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file");
     const tenantSlug = formData.get("tenantSlug")?.toString() ?? "";
+    const createPortalAccounts = formData.get("createPortalAccounts")?.toString() === "true";
 
     if (!tenantSlug) {
       return NextResponse.json({ error: "tenantSlug required" }, { status: 400 });
@@ -70,6 +72,8 @@ export async function POST(request: NextRequest) {
     let imported = 0;
     const errors: string[] = [];
     const warnings: string[] = [];
+    const portalCredentials: Array<{ name: string; email: string; password: string }> = [];
+    const { generatePassword } = await import("@/lib/hr/auth");
 
     function inferRole(rawRole: string): { role: string; inferredFromTitle: boolean } {
       const lower = rawRole.toLowerCase();
@@ -149,9 +153,10 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        const fullName = `${firstName} ${lastName}`.trim();
         await insertEmployee({
           tenantSlug,
-          name: `${firstName} ${lastName}`.trim(),
+          name: fullName,
           email,
           departmentId: department,
           jobTitle: position,
@@ -162,13 +167,31 @@ export async function POST(request: NextRequest) {
           status: "active",
         });
         imported++;
+
+        if (createPortalAccounts) {
+          const password = generatePassword();
+          const empRows = await SQL`
+            select id from admin_employees
+            where tenant_slug = ${tenantSlug} and email = ${email}
+            limit 1
+          `;
+          if ((empRows as any[]).length > 0) {
+            await setEmployeePassword(tenantSlug, (empRows as any[])[0].id, password);
+            portalCredentials.push({ name: fullName, email, password });
+          }
+        }
       } catch (err: any) {
         const msg = err?.message || err?.toString?.() || "Unknown error";
         errors.push(`Row ${i + 1}: ${msg}`);
       }
     }
 
-    return NextResponse.json({ imported, failed: errors.length, errors, warnings });
+    const response: any = { imported, failed: errors.length, errors, warnings };
+    if (createPortalAccounts) {
+      response.portalAccountsCreated = portalCredentials.length;
+      response.portalCredentials = portalCredentials;
+    }
+    return NextResponse.json(response);
   } catch (error: any) {
     const errorDetail = error?.message || error?.toString?.() || "Unknown error";
     console.error("Employee import failed:", errorDetail, error);
