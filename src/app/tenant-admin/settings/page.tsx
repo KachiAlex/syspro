@@ -74,7 +74,7 @@ const settings: Setting[] = [
     description: 'Primary currency for financial operations',
     value: 'USD',
     type: 'select',
-    options: ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR', 'AED']
+    options: ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR', 'AED', 'NGN', 'ZAR', 'GHS', 'KES', 'EGP', 'MAD', 'TZS', 'UGX', 'XOF', 'XAF', 'BRL', 'MXN', 'ARS', 'CLP', 'COP', 'PEN', 'UYU', 'CAD', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HUF', 'RON', 'BGN', 'HRK', 'RUB', 'TRY', 'ILS', 'SAR', 'QAR', 'KWD', 'BHD', 'OMR', 'JOD', 'LBP', 'PKR', 'BDT', 'LKR', 'NPR', 'MMK', 'IDR', 'THB', 'MYR', 'SGD', 'PHP', 'VND', 'KRW', 'TWD', 'HKD', 'CNY', 'NZD', 'FJD', 'PGK', 'SBD', 'VUV', 'WST', 'TOP']
   },
 
   // Security Settings
