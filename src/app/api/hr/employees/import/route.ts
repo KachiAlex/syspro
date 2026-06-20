@@ -70,14 +70,27 @@ export async function POST(request: NextRequest) {
     let imported = 0;
     const errors: string[] = [];
 
-    const validRoles = new Set(['staff','hod','admin','executive']);
-    const validEmploymentTypes = new Set(['full-time','part-time','contract','intern']);
-    const roleAliases: Record<string, string> = {
-      'staff': 'staff', 'employee': 'staff', 'worker': 'staff', 'member': 'staff',
-      'hod': 'hod', 'head': 'hod', 'head of department': 'hod', 'manager': 'hod', 'lead': 'hod',
-      'admin': 'admin', 'administrator': 'admin',
-      'executive': 'executive', 'exec': 'executive', 'director': 'executive', 'ceo': 'executive', 'cto': 'executive', 'cfo': 'executive',
-    };
+    function inferRole(rawRole: string): { role: string; inferredFromTitle: boolean } {
+      const lower = rawRole.toLowerCase();
+      const exact: Record<string, string> = {
+        staff: 'staff', employee: 'staff', worker: 'staff', member: 'staff',
+        hod: 'hod', head: 'hod', 'head of department': 'hod',
+        admin: 'admin', administrator: 'admin',
+        executive: 'executive', exec: 'executive', ceo: 'executive', cto: 'executive', cfo: 'executive', coo: 'executive', cmo: 'executive',
+      };
+      if (exact[lower]) return { role: exact[lower], inferredFromTitle: false };
+      if (lower.includes('director') || lower.includes('vp ') || lower.includes('vice president')) {
+        return { role: 'executive', inferredFromTitle: true };
+      }
+      if (lower.includes('manager') || lower.includes('head ') || lower.includes(' lead') || lower.startsWith('lead ') || lower.includes('supervisor')) {
+        return { role: 'hod', inferredFromTitle: true };
+      }
+      if (lower.includes('admin') || lower.includes('coordinator') || lower.includes('specialist') || lower.includes('analyst')) {
+        return { role: 'admin', inferredFromTitle: true };
+      }
+      return { role: 'staff', inferredFromTitle: true };
+    }
+
     const employmentTypeAliases: Record<string, string> = {
       'full-time': 'full-time', 'fulltime': 'full-time', 'full time': 'full-time', 'permanent': 'full-time',
       'part-time': 'part-time', 'parttime': 'part-time', 'part time': 'part-time',
@@ -92,24 +105,19 @@ export async function POST(request: NextRequest) {
         const lastName = (row.lastname || "").trim();
         const email = (row.email || "").trim();
         const department = (row.department || "").trim();
-        const position = (row.position || row.jobtitle || "").trim();
+        let position = (row.position || row.jobtitle || "").trim();
         const startDate = row.startdate || row.hiredate || null;
         const salaryRaw = (row.salary || "").trim();
         const salary = salaryRaw ? Number(salaryRaw.replace(/[^0-9.]/g, "")) : null;
 
-        const rawRole = (row.role || "staff").trim().toLowerCase();
-        const mappedRole = roleAliases[rawRole] || rawRole;
-        if (!validRoles.has(mappedRole)) {
-          errors.push(`Row ${i + 1}: invalid role "${row.role}". Allowed: staff, hod, admin, executive`);
-          continue;
+        const rawRole = (row.role || "staff").trim();
+        const { role: mappedRole, inferredFromTitle } = inferRole(rawRole);
+        if (inferredFromTitle && !position) {
+          position = rawRole;
         }
 
         const rawEmpType = (row.employmenttype || "full-time").trim().toLowerCase();
         const mappedEmpType = employmentTypeAliases[rawEmpType] || rawEmpType;
-        if (!validEmploymentTypes.has(mappedEmpType)) {
-          errors.push(`Row ${i + 1}: invalid employmentType "${row.employmenttype}". Allowed: full-time, part-time, contract, intern`);
-          continue;
-        }
 
         if (!firstName || !lastName || !email) {
           errors.push(`Row ${i + 1}: missing required fields (firstname=${firstName}, lastname=${lastName}, email=${email})`);
