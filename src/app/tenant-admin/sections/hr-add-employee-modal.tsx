@@ -34,6 +34,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
   const [activeTab, setActiveTab] = useState<'manual' | 'excel' | 'invite'>('manual');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [warnings, setWarnings] = useState<string[]>([]);
   const [currency, setCurrency] = useState('USD');
 
   // Manual form data
@@ -57,6 +58,14 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
       }).catch(() => {});
     }
   }, [isOpen, tenantSlug]);
+
+  // Clear warnings when switching to excel tab or opening modal
+  useEffect(() => {
+    if (isOpen && activeTab === 'excel') {
+      setWarnings([]);
+      setErrors({});
+    }
+  }, [isOpen, activeTab]);
 
   // Excel upload data
   const [excelFile, setExcelFile] = useState<File | null>(null);
@@ -100,14 +109,19 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
 
     setLoading(true);
     setUploadProgress(0);
+    setErrors({});
+    setWarnings([]);
 
     try {
       const result = await HRService.importEmployeesFromExcel(tenantSlug, excelFile);
 
       setUploadProgress(100);
+      setWarnings(result.warnings || []);
 
       if (result.failed > 0) {
-        setErrors({ upload: `Imported ${result.imported}, failed ${result.failed}. ${result.errors.slice(0, 3).join('; ')}` });
+        setErrors({ upload: `Imported ${result.imported}, failed ${result.failed}. ${(result.errors || []).slice(0, 3).join('; ')}` });
+      } else if ((result.warnings || []).length > 0) {
+        setErrors({ upload: `Imported ${result.imported} employees with ${result.warnings.length} warning(s).` });
       } else {
         alert(`Successfully imported ${result.imported} employees.`);
         onClose();
@@ -446,6 +460,23 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                   <div className="flex items-center gap-2">
                     <AlertCircle className="w-5 h-5 text-red-600" />
                     <span className="text-red-700">{errors.upload}</span>
+                  </div>
+                </div>
+              )}
+
+              {warnings.length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-amber-800 text-sm max-h-32 overflow-y-auto">
+                      <p className="font-medium mb-1">Warnings:</p>
+                      {warnings.slice(0, 5).map((w, i) => (
+                        <p key={i} className="text-amber-700">{w}</p>
+                      ))}
+                      {warnings.length > 5 && (
+                        <p className="text-amber-600 italic">...and {warnings.length - 5} more</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
 
     let imported = 0;
     const errors: string[] = [];
+    const warnings: string[] = [];
 
     function inferRole(rawRole: string): { role: string; inferredFromTitle: boolean } {
       const lower = rawRole.toLowerCase();
@@ -130,7 +131,7 @@ export async function POST(request: NextRequest) {
         if (finalRole === 'hod' && department) {
           if (hodDepartments.has(department)) {
             finalRole = 'staff';
-            errors.push(`Row ${i + 1}: HOD already exists in "${department}". Assigned as staff instead.`);
+            warnings.push(`Row ${i + 1}: HOD already exists in "${department}". Assigned as staff instead.`);
           } else {
             const dupRows = await SQL`
               select id from admin_employees
@@ -141,7 +142,7 @@ export async function POST(request: NextRequest) {
             `;
             if ((dupRows as any[]).length > 0) {
               finalRole = 'staff';
-              errors.push(`Row ${i + 1}: HOD already exists in "${department}". Assigned as staff instead.`);
+              warnings.push(`Row ${i + 1}: HOD already exists in "${department}". Assigned as staff instead.`);
             } else {
               hodDepartments.add(department);
             }
@@ -167,7 +168,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ imported, failed: errors.length, errors });
+    return NextResponse.json({ imported, failed: errors.length, errors, warnings });
   } catch (error: any) {
     const errorDetail = error?.message || error?.toString?.() || "Unknown error";
     console.error("Employee import failed:", errorDetail, error);
