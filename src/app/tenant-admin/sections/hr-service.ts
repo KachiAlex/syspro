@@ -214,7 +214,7 @@ export class HRService {
     return response.data;
   }
 
-  static async getEmployees(tenantSlug: string): Promise<Array<{
+  static async getEmployees(tenantSlug: string, opts?: { limit?: number; offset?: number }): Promise<Array<{
     id: string;
     name: string;
     email: string;
@@ -226,8 +226,10 @@ export class HRService {
     startDate: string;
     employmentType?: string;
   }>> {
+    const limit = opts?.limit ?? 200;
+    const offset = opts?.offset ?? 0;
     const [empRes, deptRes] = await Promise.all([
-      apiClient.get(`/hr/employees?tenantSlug=${tenantSlug}`),
+      apiClient.get(`/hr/employees?tenantSlug=${tenantSlug}&limit=${limit}&offset=${offset}`),
       apiClient.get(`/hr/departments?tenantSlug=${tenantSlug}`),
     ]);
     const employees: EmployeeRecord[] = empRes.data.employees || [];

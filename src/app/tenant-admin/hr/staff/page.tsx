@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { Plus, Pencil, Search } from 'lucide-react';
+import { Plus, Pencil, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { HRService } from '@/app/tenant-admin/sections/hr-service';
 import { AddEmployeeModal } from '@/app/tenant-admin/sections/hr-add-employee-modal';
@@ -45,6 +45,8 @@ export default function StaffPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 25;
 
   const [departments, setDepartments] = useState<string[]>(['All Departments']);
   const statuses = ['All Statuses', 'Active', 'On Leave', 'Inactive', 'Terminated'];
@@ -114,6 +116,16 @@ export default function StaffPage() {
       return true;
     });
   }, [employees, departmentFilter, statusFilter, searchQuery]);
+
+  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
+  const paginatedEmployees = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredEmployees.slice(start, start + itemsPerPage);
+  }, [filteredEmployees, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, departmentFilter, statusFilter]);
 
   const handleAddEmployee = async (data: any) => {
     if (!tenantSlug) return;
@@ -197,8 +209,8 @@ export default function StaffPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredEmployees.length > 0 ? (
-              filteredEmployees.map((emp) => (
+            {paginatedEmployees.length > 0 ? (
+              paginatedEmployees.map((emp) => (
                 <tr key={emp.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">{emp.name}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{emp.email}</td>
@@ -249,6 +261,43 @@ export default function StaffPage() {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between bg-white rounded-lg border border-gray-200 px-4 py-3">
+          <div className="text-sm text-gray-600">
+            Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredEmployees.length)} of {filteredEmployees.length}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                  page === currentPage
+                    ? 'bg-blue-600 text-white'
+                    : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <AddEmployeeModal
         isOpen={showAddModal}

@@ -236,7 +236,7 @@ export async function listEmployees(filters: {
 }) {
   const sql = SQL;
   await ensureHrTables(sql);
-  const limit = filters.limit ? Math.min(Math.max(filters.limit, 1), 100) : 50;
+  const limit = filters.limit ? Math.min(Math.max(filters.limit, 1), 500) : 200;
   const offset = filters.offset ?? 0;
 
   let query = `select * from admin_employees where tenant_slug = $1`;
