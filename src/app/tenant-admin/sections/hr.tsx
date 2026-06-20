@@ -1037,6 +1037,7 @@ const HRComponent: React.FC = () => {
         onClose={() => setShowAddModal(false)}
         onSubmit={handleAddEmployee}
         departments={departments}
+        tenantSlug={tenantSlug || ''}
       />
 
       <EditEmployeeModal

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Upload, Link, Plus, Users, AlertCircle, CheckCircle } from 'lucide-react';
 import { HRService } from './hr-service';
 
@@ -9,12 +9,32 @@ interface AddEmployeeModalProps {
   onClose: () => void;
   onSubmit: (data: any) => Promise<void>;
   departments: string[];
+  tenantSlug: string;
 }
 
-export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose, onSubmit, departments }) => {
+const CURRENCY_OPTIONS = [
+  { code: 'USD', label: 'USD ($)' },
+  { code: 'EUR', label: 'EUR (€)' },
+  { code: 'GBP', label: 'GBP (£)' },
+  { code: 'NGN', label: 'NGN (₦)' },
+  { code: 'JPY', label: 'JPY (¥)' },
+  { code: 'CAD', label: 'CAD (C$)' },
+  { code: 'AUD', label: 'AUD (A$)' },
+  { code: 'INR', label: 'INR (₹)' },
+  { code: 'KES', label: 'KES (KSh)' },
+  { code: 'GHS', label: 'GHS (₵)' },
+];
+
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  USD: '$', EUR: '€', GBP: '£', NGN: '₦', JPY: '¥',
+  CAD: 'C$', AUD: 'A$', INR: '₹', KES: 'KSh', GHS: '₵',
+};
+
+export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onClose, onSubmit, departments, tenantSlug }) => {
   const [activeTab, setActiveTab] = useState<'manual' | 'excel' | 'invite'>('manual');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [currency, setCurrency] = useState('USD');
 
   // Manual form data
   const [formData, setFormData] = useState({
@@ -27,6 +47,15 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
     salary: '',
     employmentType: 'Full-time'
   });
+
+  // Fetch tenant currency when modal opens
+  useEffect(() => {
+    if (isOpen && tenantSlug) {
+      HRService.getTenantCurrency(tenantSlug).then((c) => {
+        if (c) setCurrency(c);
+      }).catch(() => {});
+    }
+  }, [isOpen, tenantSlug]);
 
   // Excel upload data
   const [excelFile, setExcelFile] = useState<File | null>(null);
@@ -262,14 +291,34 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-2">Salary</label>
-                  <input
-                    type="text"
-                    value={formData.salary}
-                    onChange={(e) => setFormData(prev => ({ ...prev, salary: e.target.value }))}
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-gray-500 text-sm">{CURRENCY_SYMBOLS[currency] || currency}</span>
+                    <input
+                      type="text"
+                      value={formData.salary}
+                      onChange={(e) => setFormData(prev => ({ ...prev, salary: e.target.value }))}
+                      className="bg-white w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                      disabled={loading}
+                      placeholder="65,000"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Currency</label>
+                  <select
+                    value={currency}
+                    onChange={(e) => {
+                      const newCurrency = e.target.value;
+                      setCurrency(newCurrency);
+                      HRService.setTenantCurrency(tenantSlug, newCurrency).catch(() => {});
+                    }}
                     className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                     disabled={loading}
-                    placeholder="e.g., $65,000"
-                  />
+                  >
+                    {CURRENCY_OPTIONS.map((c) => (
+                      <option key={c.code} value={c.code}>{c.label}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-2">Employment Type</label>

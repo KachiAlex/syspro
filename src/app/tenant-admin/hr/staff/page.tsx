@@ -43,16 +43,25 @@ export default function StaffPage() {
 
   const [departments, setDepartments] = useState<string[]>(['All Departments']);
   const statuses = ['All Statuses', 'Active', 'On Leave', 'Inactive', 'Terminated'];
+  const [currency, setCurrency] = useState('USD');
+
+  const currencySymbol = (code: string) => {
+    const symbols: Record<string, string> = { USD: '$', EUR: '€', GBP: '£', NGN: '₦', JPY: '¥', CAD: 'C$', AUD: 'A$', INR: '₹', KES: 'KSh', GHS: '₵' };
+    return symbols[code] || code;
+  };
 
   const loadData = useCallback(async () => {
     if (!tenantSlug) return;
     setLoading(true);
     try {
-      const [fetchedEmployees, fetchedDepartments, fetchedTraining] = await Promise.all([
+      const [fetchedEmployees, fetchedDepartments, fetchedTraining, fetchedCurrency] = await Promise.all([
         HRService.getEmployees(tenantSlug).catch(() => []),
         HRService.getDepartments(tenantSlug).catch(() => []),
         HRService.getTrainingSessions(tenantSlug).catch(() => []),
+        HRService.getTenantCurrency(tenantSlug).catch(() => 'USD'),
       ]);
+      setCurrency(fetchedCurrency);
+      const sym = currencySymbol(fetchedCurrency);
       setEmployees(fetchedEmployees.map((emp: any) => ({
         id: emp.id,
         name: emp.name,
@@ -61,7 +70,7 @@ export default function StaffPage() {
         position: emp.position,
         startDate: emp.startDate,
         status: emp.status,
-        salary: emp.salary ? `$${Number(emp.salary).toLocaleString()}` : ''
+        salary: emp.salary ? `${sym}${Number(emp.salary).toLocaleString()}` : ''
       })));
       setDepartments(['All Departments', ...fetchedDepartments]);
       setTrainingSessions(fetchedTraining.map((s: any) => ({
@@ -216,6 +225,7 @@ export default function StaffPage() {
         onClose={() => setShowAddModal(false)}
         onSubmit={handleAddEmployee}
         departments={departments.filter(d => d !== 'All Departments')}
+        tenantSlug={tenantSlug || ''}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

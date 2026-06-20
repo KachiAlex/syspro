@@ -25,8 +25,16 @@ function serializeTextArray(values?: string[] | null): string {
 // ============================================================================
 
 export async function ensureHrTables(sql: SqlClient = SQL) {
+  // Ensure admin_employees has all columns needed by insertEmployee
+  await sql`alter table if exists admin_employees add column if not exists phone text`;
+  await sql`alter table if exists admin_employees add column if not exists job_title text`;
+  await sql`alter table if exists admin_employees add column if not exists reporting_manager_id text`;
+  await sql`alter table if exists admin_employees add column if not exists cost_center text`;
+  await sql`alter table if exists admin_employees add column if not exists hire_date timestamptz`;
   await sql`alter table if exists admin_employees add column if not exists salary numeric(15,2)`;
   await sql`alter table if exists admin_employees add column if not exists employment_type text default 'full-time' check (employment_type in ('full-time','part-time','contract','intern'))`;
+  await sql`alter table if exists admin_employees add column if not exists created_by text`;
+  await sql`alter table if exists admin_employees add column if not exists updated_by text`;
 
   await sql`
     create table if not exists admin_attendance (

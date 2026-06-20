@@ -528,4 +528,17 @@ export class HRService {
   static async deleteOnboardingTask(tenantSlug: string, id: string): Promise<void> {
     await apiClient.delete(`/hr/onboarding-tasks/${id}?tenantSlug=${tenantSlug}`);
   }
+
+  static async getTenantCurrency(tenantSlug: string): Promise<string> {
+    try {
+      const response = await apiClient.get(`/tenant/settings?tenantSlug=${tenantSlug}`);
+      return response.data.currency || 'USD';
+    } catch {
+      return 'USD';
+    }
+  }
+
+  static async setTenantCurrency(tenantSlug: string, currency: string): Promise<void> {
+    await apiClient.post('/tenant/settings', { tenantSlug, currency });
+  }
 }
