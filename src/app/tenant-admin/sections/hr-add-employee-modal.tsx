@@ -102,29 +102,20 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
     setUploadProgress(0);
 
     try {
-      const result = await HRService.importEmployeesFromExcel('tenant-slug', excelFile);
-      
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + 10;
-        });
-      }, 200);
+      const result = await HRService.importEmployeesFromExcel(tenantSlug, excelFile);
 
       setUploadProgress(100);
-      clearInterval(progressInterval);
-      
-      // Show success message with import results
-      alert(`Successfully imported ${result.imported} employees. ${result.failed} failed.`);
-      
-      onClose();
-    } catch (error) {
+
+      if (result.failed > 0) {
+        setErrors({ upload: `Imported ${result.imported}, failed ${result.failed}. ${result.errors.slice(0, 3).join('; ')}` });
+      } else {
+        alert(`Successfully imported ${result.imported} employees.`);
+        onClose();
+      }
+    } catch (error: any) {
       console.error('Failed to upload employees:', error);
-      setErrors({ upload: 'Failed to upload employees. Please try again.' });
+      const detail = error?.response?.data?.detail || error?.message || 'Upload failed. Please try again.';
+      setErrors({ upload: detail });
     } finally {
       setLoading(false);
     }
