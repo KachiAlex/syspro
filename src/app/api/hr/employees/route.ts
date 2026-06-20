@@ -9,7 +9,7 @@ const listSchema = z.object({
   tenantSlug: z.string().min(1),
   status: z.string().optional(),
   departmentId: z.string().optional(),
-  limit: z.coerce.number().min(1).max(100).optional(),
+  limit: z.coerce.number().min(1).max(500).optional(),
   offset: z.coerce.number().min(0).optional(),
 });
 
