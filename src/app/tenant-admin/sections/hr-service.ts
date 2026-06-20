@@ -201,9 +201,7 @@ export class HRService {
     formData.append('file', file);
     formData.append('tenantSlug', tenantSlug);
 
-    const response = await apiClient.post('/hr/employees/import', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const response = await apiClient.post('/hr/employees/import', formData);
     return response.data;
   }
 
