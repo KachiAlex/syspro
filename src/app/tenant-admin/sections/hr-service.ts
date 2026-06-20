@@ -153,7 +153,7 @@ export class HRService {
       hireDate: employeeData.startDate ? new Date(employeeData.startDate).toISOString() : undefined,
       salary: employeeData.salary ? Number(employeeData.salary.replace(/[^0-9.]/g, '')) : undefined,
       employmentType: employeeData.employmentType?.toLowerCase().replace(/\s/g, '-') as any,
-      role: employeeData.role || 'staff',
+      role: (employeeData.role || 'Staff').toLowerCase(),
     };
     const response = await apiClient.post('/hr/employees', payload);
     return response.data.employee;
