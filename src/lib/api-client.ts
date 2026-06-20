@@ -90,6 +90,9 @@ class ApiClient {
 
     const fullUrl = this.buildUrl(url);
     const requestHeaders = { ...this.defaultHeaders, ...headers };
+    if (body instanceof FormData) {
+      delete (requestHeaders as Record<string, string>)['Content-Type'];
+    }
     const cacheKeyToUse = cacheKey || this.generateCacheKey(method, fullUrl, body);
 
     // Check cache first (for GET requests)
