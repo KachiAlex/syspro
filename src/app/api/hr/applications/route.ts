@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { listApplications, insertApplication, countApplications } from "@/lib/hr/db-recruitment";
+import { listApplications, insertApplication, countApplications, ensureRecruitmentTables } from "@/lib/hr/db-recruitment";
+import { sql as SQL } from "@/lib/sql-client";
 
 const listSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -34,6 +35,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    await ensureRecruitmentTables(SQL);
     const [applications, total] = await Promise.all([
       listApplications(parsed.data),
       countApplications({ tenantSlug: parsed.data.tenantSlug, requisitionId: parsed.data.requisitionId, status: parsed.data.status }),
@@ -57,6 +59,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    await ensureRecruitmentTables(SQL);
     const application = await insertApplication(parsed.data);
     return NextResponse.json({ application }, { status: 201 });
   } catch (error) {

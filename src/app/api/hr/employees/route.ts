@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { listEmployees, insertEmployee, countEmployees } from "@/lib/hr/db";
+import { listEmployees, insertEmployee, countEmployees, ensureHrTables } from "@/lib/hr/db";
 import { extractAuthContext } from "@/lib/auth-helper";
 import { resolveDepartmentHeadContext } from "@/lib/tenant-admin/utils";
+import { sql as SQL } from "@/lib/sql-client";
 
 const listSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -45,6 +46,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    await ensureHrTables(SQL);
     // Apply department head scoping
     const auth = extractAuthContext(request);
     const context = await resolveDepartmentHeadContext({
@@ -80,6 +82,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    await ensureHrTables(SQL);
     const employee = await insertEmployee(parsed.data);
     return NextResponse.json({ employee }, { status: 201 });
   } catch (error: any) {

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Upload, Link, Plus, Users, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, Upload, Link, Plus, Users, AlertCircle, CheckCircle, FileSpreadsheet, Download } from 'lucide-react';
 import { HRService } from './hr-service';
 
 interface AddEmployeeModalProps {
@@ -157,6 +157,25 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
     } catch (error) {
       console.error('Failed to copy link:', error);
     }
+  };
+
+  const downloadSampleFile = () => {
+    const headers = ['firstName', 'lastName', 'email', 'department', 'position', 'startDate', 'salary', 'employmentType', 'role'];
+    const sampleRows = [
+      ['John', 'Doe', 'john.doe@example.com', 'Engineering', 'Software Engineer', '2026-01-15', '75000', 'Full-time', 'Staff'],
+      ['Jane', 'Smith', 'jane.smith@example.com', 'Marketing', 'Marketing Manager', '2026-02-01', '85000', 'Full-time', 'HOD'],
+      ['Michael', 'Brown', 'michael.brown@example.com', 'Sales', 'Sales Representative', '2026-03-10', '60000', 'Contract', 'Staff'],
+    ];
+    const csvContent = [headers, ...sampleRows].map((row) => row.map((cell) => `"${cell}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'employee-import-sample.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   if (!isOpen) return null;
@@ -380,9 +399,18 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                   <Upload className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Upload Excel File</h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    Upload an Excel file with employee data. The file should contain columns for: Name, Email, Department, Position, Start Date, and Salary.
+                    Upload an Excel or CSV file with employee data. The file should contain columns for: firstName, lastName, email, department, position, startDate, salary, employmentType, and role.
                   </p>
-                  
+
+                  <button
+                    type="button"
+                    onClick={downloadSampleFile}
+                    className="inline-flex items-center gap-2 px-4 py-2 mb-4 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    Download Sample CSV
+                  </button>
+
                   <input
                     type="file"
                     accept=".xlsx,.xls,.csv"

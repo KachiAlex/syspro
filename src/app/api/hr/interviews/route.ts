@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { listInterviews, insertInterview } from "@/lib/hr/db-recruitment";
+import { listInterviews, insertInterview, ensureRecruitmentTables } from "@/lib/hr/db-recruitment";
+import { sql as SQL } from "@/lib/sql-client";
 
 const listSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -35,6 +36,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    await ensureRecruitmentTables(SQL);
     const interviews = await listInterviews(parsed.data);
     return NextResponse.json({ interviews });
   } catch (error) {
@@ -55,6 +57,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    await ensureRecruitmentTables(SQL);
     const interview = await insertInterview(parsed.data);
     return NextResponse.json({ interview }, { status: 201 });
   } catch (error) {

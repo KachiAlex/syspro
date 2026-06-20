@@ -20,6 +20,7 @@ export async function ensureTenantTable(sql: SqlClient) {
     )
   `;
 
+  await sql`alter table tenants add column if not exists settings jsonb default '{}'::jsonb`;
   await sql`alter table tenants add column if not exists slug text`;
   await sql`alter table tenants add column if not exists region text`;
   await sql`alter table tenants add column if not exists industry text`;

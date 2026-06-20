@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { listCandidates, insertCandidate, countCandidates } from "@/lib/hr/db-recruitment";
+import { listCandidates, insertCandidate, countCandidates, ensureRecruitmentTables } from "@/lib/hr/db-recruitment";
+import { sql as SQL } from "@/lib/sql-client";
 
 const listSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -40,6 +41,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    await ensureRecruitmentTables(SQL);
     const [candidates, total] = await Promise.all([
       listCandidates(parsed.data),
       countCandidates({ tenantSlug: parsed.data.tenantSlug, currentStage: parsed.data.currentStage, source: parsed.data.source }),
@@ -63,6 +65,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    await ensureRecruitmentTables(SQL);
     const candidate = await insertCandidate(parsed.data);
     return NextResponse.json({ candidate }, { status: 201 });
   } catch (error) {

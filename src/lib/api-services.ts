@@ -5,7 +5,7 @@
 
 import { Employee, Bill, Vendor, Requisition, PurchaseOrder, Invoice } from "@/components/modules";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "/api";
 
 // ============================================================
 // HR SERVICES

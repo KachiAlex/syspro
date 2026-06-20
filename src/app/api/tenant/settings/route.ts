@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getTenantCurrency, setTenantCurrency } from "@/lib/tenant/currency";
+import { ensureTenantTable } from "@/lib/tenant/tenant-table";
+import { sql as SQL } from "@/lib/sql-client";
 
 const updateSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -14,6 +16,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "tenantSlug required" }, { status: 400 });
   }
   try {
+    await ensureTenantTable(SQL);
     const currency = await getTenantCurrency(tenantSlug);
     return NextResponse.json({ currency });
   } catch (error) {
@@ -32,6 +35,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
   try {
+    await ensureTenantTable(SQL);
     await setTenantCurrency(parsed.data.tenantSlug, parsed.data.currency);
     return NextResponse.json({ success: true });
   } catch (error) {

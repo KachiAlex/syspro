@@ -130,7 +130,8 @@ class NotificationManager {
         this.reconnectAttempts++;
         console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
         // Re-initialize WebSocket connection
-        this.initializeWebSocket('ws://localhost:8080/notifications');
+        const wsUrl = process.env.NEXT_PUBLIC_NOTIFICATIONS_WS_URL || 'ws://localhost:8080/notifications';
+        this.initializeWebSocket(wsUrl);
       }, this.reconnectDelay * this.reconnectAttempts);
     }
   }

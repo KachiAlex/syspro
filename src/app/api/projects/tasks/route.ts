@@ -8,40 +8,25 @@ import {
   updateTaskStatus,
 } from "@/lib/projects-data";
 import { suggestAssignments } from "@/lib/project-fit";
+import { updateAttendanceSignals } from "@/lib/attendance";
 
 async function sendAttendanceSignal(params: { tenantSlug: string; employeeId: string; workDate: string; taskId: string }) {
   try {
-    await fetch("http://localhost:3000/api/attendance", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        tenantSlug: params.tenantSlug,
-        employeeId: params.employeeId,
-        workDate: params.workDate,
-        signalType: "TASK_UPDATE",
-        signalData: { taskId: params.taskId },
-      }),
+    await updateAttendanceSignals({
+      tenantId: params.tenantSlug,
+      employeeId: params.employeeId,
+      workDate: params.workDate,
+      signalType: "TASK_UPDATE",
+      signalData: { taskId: params.taskId, count: 1 },
     });
   } catch (error) {
     console.error("Failed to forward attendance signal", error);
   }
 }
 
-async function sendPerformanceSignal(params: { tenantSlug: string; taskId: string; contributionWeight: number; status: TaskEntity["status"] }) {
-  try {
-    await fetch("http://localhost:3000/api/hr/staff-reports", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        tenantSlug: params.tenantSlug,
-        taskId: params.taskId,
-        contributionWeight: params.contributionWeight,
-        status: params.status,
-      }),
-    });
-  } catch (error) {
-    console.error("Failed to forward performance signal", error);
-  }
+async function sendPerformanceSignal(_params: { tenantSlug: string; taskId: string; contributionWeight: number; status: TaskEntity["status"] }) {
+  // TODO: connect to a real performance-tracking module.
+  // The previous localhost fetch payload did not match the staff-reports API schema.
 }
 
 export async function GET(request: NextRequest) {
