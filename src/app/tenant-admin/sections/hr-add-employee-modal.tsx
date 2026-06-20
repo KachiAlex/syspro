@@ -153,9 +153,9 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
   const downloadSampleFile = () => {
     const headers = ['firstName', 'lastName', 'email', 'department', 'position', 'startDate', 'salary', 'employmentType', 'role'];
     const sampleRows = [
-      ['John', 'Doe', 'john.doe@example.com', 'Engineering', 'Software Engineer', '2026-01-15', '75000', 'Full-time', 'Staff'],
-      ['Jane', 'Smith', 'jane.smith@example.com', 'Marketing', 'Marketing Manager', '2026-02-01', '85000', 'Full-time', 'HOD'],
-      ['Michael', 'Brown', 'michael.brown@example.com', 'Sales', 'Sales Representative', '2026-03-10', '60000', 'Contract', 'Staff'],
+      ['John', 'Doe', 'john.doe@example.com', 'Engineering', 'Software Engineer', '2026-01-15', '75000', 'full-time', 'staff'],
+      ['Jane', 'Smith', 'jane.smith@example.com', 'Marketing', 'Marketing Manager', '2026-02-01', '85000', 'full-time', 'hod'],
+      ['Michael', 'Brown', 'michael.brown@example.com', 'Sales', 'Sales Representative', '2026-03-10', '60000', 'contract', 'staff'],
     ];
     const csvContent = [headers, ...sampleRows].map((row) => row.map((cell) => `"${cell}"`).join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -390,7 +390,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                   <Upload className="w-12 h-12 text-theme-text-tertiary mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Upload Excel File</h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    Upload an Excel or CSV file with employee data. The file should contain columns for: firstName, lastName, email, department, position, startDate, salary, employmentType, and role.
+                    Upload a CSV file with employee data. Required columns: firstName, lastName, email, department, position. Optional: startDate, salary, employmentType (full-time, part-time, contract, intern), role (staff, hod, admin, executive).
                   </p>
 
                   <button

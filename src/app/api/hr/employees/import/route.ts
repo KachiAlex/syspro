@@ -70,19 +70,46 @@ export async function POST(request: NextRequest) {
     let imported = 0;
     const errors: string[] = [];
 
+    const validRoles = new Set(['staff','hod','admin','executive']);
+    const validEmploymentTypes = new Set(['full-time','part-time','contract','intern']);
+    const roleAliases: Record<string, string> = {
+      'staff': 'staff', 'employee': 'staff', 'worker': 'staff', 'member': 'staff',
+      'hod': 'hod', 'head': 'hod', 'head of department': 'hod', 'manager': 'hod', 'lead': 'hod',
+      'admin': 'admin', 'administrator': 'admin',
+      'executive': 'executive', 'exec': 'executive', 'director': 'executive', 'ceo': 'executive', 'cto': 'executive', 'cfo': 'executive',
+    };
+    const employmentTypeAliases: Record<string, string> = {
+      'full-time': 'full-time', 'fulltime': 'full-time', 'full time': 'full-time', 'permanent': 'full-time',
+      'part-time': 'part-time', 'parttime': 'part-time', 'part time': 'part-time',
+      'contract': 'contract', 'contractor': 'contract', 'consultant': 'contract', 'freelance': 'contract',
+      'intern': 'intern', 'internship': 'intern', 'trainee': 'intern',
+    };
+
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       try {
-        const firstName = row.firstname || "";
-        const lastName = row.lastname || "";
-        const email = row.email || "";
-        const department = row.department || "";
-        const position = row.position || row.jobtitle || "";
+        const firstName = (row.firstname || "").trim();
+        const lastName = (row.lastname || "").trim();
+        const email = (row.email || "").trim();
+        const department = (row.department || "").trim();
+        const position = (row.position || row.jobtitle || "").trim();
         const startDate = row.startdate || row.hiredate || null;
-        const salaryRaw = row.salary || "";
+        const salaryRaw = (row.salary || "").trim();
         const salary = salaryRaw ? Number(salaryRaw.replace(/[^0-9.]/g, "")) : null;
-        const employmentType = row.employmenttype || "full-time";
-        const role = (row.role || "staff").toLowerCase();
+
+        const rawRole = (row.role || "staff").trim().toLowerCase();
+        const mappedRole = roleAliases[rawRole] || rawRole;
+        if (!validRoles.has(mappedRole)) {
+          errors.push(`Row ${i + 1}: invalid role "${row.role}". Allowed: staff, hod, admin, executive`);
+          continue;
+        }
+
+        const rawEmpType = (row.employmenttype || "full-time").trim().toLowerCase();
+        const mappedEmpType = employmentTypeAliases[rawEmpType] || rawEmpType;
+        if (!validEmploymentTypes.has(mappedEmpType)) {
+          errors.push(`Row ${i + 1}: invalid employmentType "${row.employmenttype}". Allowed: full-time, part-time, contract, intern`);
+          continue;
+        }
 
         if (!firstName || !lastName || !email) {
           errors.push(`Row ${i + 1}: missing required fields (firstname=${firstName}, lastname=${lastName}, email=${email})`);
@@ -97,8 +124,8 @@ export async function POST(request: NextRequest) {
           jobTitle: position,
           hireDate: startDate,
           salary,
-          employmentType: employmentType.toLowerCase(),
-          role,
+          employmentType: mappedEmpType,
+          role: mappedRole,
           status: "active",
         });
         imported++;
