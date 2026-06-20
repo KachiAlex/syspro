@@ -141,6 +141,7 @@ export class HRService {
     startDate: string;
     salary?: string;
     employmentType: string;
+    role?: string;
   }): Promise<EmployeeRecord> {
     const departmentId = await this.resolveDepartmentId(tenantSlug, employeeData.department);
     const payload = {
@@ -152,6 +153,7 @@ export class HRService {
       hireDate: employeeData.startDate ? new Date(employeeData.startDate).toISOString() : undefined,
       salary: employeeData.salary ? Number(employeeData.salary.replace(/[^0-9.]/g, '')) : undefined,
       employmentType: employeeData.employmentType?.toLowerCase().replace(/\s/g, '-') as any,
+      role: employeeData.role || 'staff',
     };
     const response = await apiClient.post('/hr/employees', payload);
     return response.data.employee;

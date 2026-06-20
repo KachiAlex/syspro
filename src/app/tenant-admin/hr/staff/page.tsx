@@ -12,6 +12,7 @@ interface Employee {
   email: string;
   department: string;
   position: string;
+  role: string;
   startDate: string;
   status: string;
   salary: string;
@@ -68,6 +69,7 @@ export default function StaffPage() {
         email: emp.email,
         department: emp.department,
         position: emp.position,
+        role: emp.role || 'Staff',
         startDate: emp.startDate,
         status: emp.status,
         salary: emp.salary ? `${sym}${Number(emp.salary).toLocaleString()}` : ''
@@ -177,6 +179,7 @@ export default function StaffPage() {
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Email</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Department</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Position</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Role</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Status</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Start Date</th>
               <th className="px-6 py-3 text-center text-xs font-semibold text-gray-900">Actions</th>
@@ -190,6 +193,16 @@ export default function StaffPage() {
                   <td className="px-6 py-4 text-sm text-gray-600">{emp.email}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{emp.department}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{emp.position}</td>
+                  <td className="px-6 py-4 text-sm">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      emp.role === 'Executive' ? 'bg-purple-100 text-purple-800' :
+                      emp.role === 'Admin' ? 'bg-blue-100 text-blue-800' :
+                      emp.role === 'HOD' ? 'bg-amber-100 text-amber-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {emp.role}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 text-sm">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       emp.status === 'Active' ? 'bg-green-100 text-green-800' :
@@ -211,7 +224,7 @@ export default function StaffPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-600">
+                <td colSpan={8} className="px-6 py-8 text-center text-sm text-gray-600">
                   No employees found
                 </td>
               </tr>

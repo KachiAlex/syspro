@@ -33,6 +33,7 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
   await sql`alter table if exists admin_employees add column if not exists hire_date timestamptz`;
   await sql`alter table if exists admin_employees add column if not exists salary numeric(15,2)`;
   await sql`alter table if exists admin_employees add column if not exists employment_type text default 'full-time' check (employment_type in ('full-time','part-time','contract','intern'))`;
+  await sql`alter table if exists admin_employees add column if not exists role text default 'staff' check (role in ('staff','hod','admin','executive'))`;
   await sql`alter table if exists admin_employees add column if not exists created_by text`;
   await sql`alter table if exists admin_employees add column if not exists updated_by text`;
 
@@ -94,6 +95,7 @@ function normalizeEmployeeRow(row: any): EmployeeRecord {
     hireDate: row.hire_date ?? null,
     salary: row.salary ?? null,
     employmentType: row.employment_type ?? null,
+    role: row.role ?? null,
     status: row.status ?? "active",
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -114,6 +116,7 @@ export async function insertEmployee(row: {
   hireDate?: string | null;
   salary?: number | null;
   employmentType?: string | null;
+  role?: string | null;
   status?: string;
   createdBy?: string | null;
 }) {
@@ -124,13 +127,13 @@ export async function insertEmployee(row: {
     insert into admin_employees (
       id, tenant_slug, name, email, phone, department_id, job_title,
       reporting_manager_id, branch_id, region_id, cost_center, hire_date,
-      salary, employment_type, status, created_by
+      salary, employment_type, role, status, created_by
     ) values (
       ${id}, ${row.tenantSlug}, ${row.name}, ${row.email}, ${row.phone ?? null},
       ${row.departmentId}, ${row.jobTitle}, ${row.reportingManagerId ?? null},
       ${row.branchId ?? null}, ${row.regionId ?? null}, ${row.costCenter ?? null},
       ${row.hireDate ?? null}, ${row.salary ?? null}, ${row.employmentType ?? "full-time"},
-      ${row.status ?? "active"}, ${row.createdBy ?? null}
+      ${row.role ?? "staff"}, ${row.status ?? "active"}, ${row.createdBy ?? null}
     )
   `;
   const inserted = await sql`select * from admin_employees where id = ${id} limit 1`;
@@ -171,6 +174,7 @@ export async function updateEmployee(
       hire_date = coalesce(${updates.hireDate ?? null}, hire_date),
       salary = coalesce(${updates.salary ?? null}, salary),
       employment_type = coalesce(${updates.employmentType ?? null}, employment_type),
+      role = coalesce(${(updates as any).role ?? null}, role),
       status = coalesce(${updates.status ?? null}, status),
       updated_at = now()
     where id = ${id}

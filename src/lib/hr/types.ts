@@ -10,6 +10,7 @@ import { z } from "zod";
 
 export const employeeStatusEnum = z.enum(["active", "inactive", "on-leave", "terminated"]);
 export const employmentTypeEnum = z.enum(["full-time", "part-time", "contract", "intern"]);
+export const employeeRoleEnum = z.enum(["staff", "hod", "admin", "executive"]);
 
 export const employeeCreateSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -26,6 +27,7 @@ export const employeeCreateSchema = z.object({
   salary: z.number().nonnegative().optional(),
   employmentType: employmentTypeEnum.optional(),
   status: employeeStatusEnum.optional(),
+  role: employeeRoleEnum.optional(),
 });
 
 export const employeeUpdateSchema = employeeCreateSchema.partial().omit({ tenantSlug: true });
@@ -48,6 +50,7 @@ export interface EmployeeRecord {
   hireDate: string | null;
   salary: number | null;
   employmentType: string | null;
+  role: string | null;
   status: string;
   createdAt: string;
   updatedAt: string;

@@ -27,6 +27,7 @@ const createSchema = z.object({
   salary: z.number().nonnegative().optional(),
   employmentType: z.enum(["full-time", "part-time", "contract", "intern"]).optional(),
   status: z.enum(["active", "inactive", "on-leave", "terminated"]).optional(),
+  role: z.enum(["staff", "hod", "admin", "executive"]).optional(),
 });
 
 export async function GET(request: NextRequest) {

@@ -45,7 +45,8 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
     position: '',
     startDate: '',
     salary: '',
-    employmentType: 'Full-time'
+    employmentType: 'Full-time',
+    role: 'Staff'
   });
 
   // Fetch tenant currency when modal opens
@@ -81,7 +82,8 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
         position: '',
         startDate: '',
         salary: '',
-        employmentType: 'Full-time'
+        employmentType: 'Full-time',
+        role: 'Staff'
       });
       onClose();
     } catch (error) {
@@ -332,6 +334,20 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                     <option value="Part-time">Part-time</option>
                     <option value="Contract">Contract</option>
                     <option value="Intern">Intern</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Role</label>
+                  <select
+                    value={formData.role}
+                    onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
+                    className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    disabled={loading}
+                  >
+                    <option value="Staff">Staff</option>
+                    <option value="HOD">HOD</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Executive">Executive</option>
                   </select>
                 </div>
               </div>
