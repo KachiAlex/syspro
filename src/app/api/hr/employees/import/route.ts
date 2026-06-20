@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file");
     const tenantSlug = formData.get("tenantSlug")?.toString() ?? "";
-    const createPortalAccounts = formData.get("createPortalAccounts")?.toString() === "true";
+    const defaultPassword = formData.get("defaultPassword")?.toString();
 
     if (!tenantSlug) {
       return NextResponse.json({ error: "tenantSlug required" }, { status: 400 });
@@ -168,17 +168,16 @@ export async function POST(request: NextRequest) {
         });
         imported++;
 
-        if (createPortalAccounts) {
-          const password = generatePassword();
-          const empRows = await SQL`
-            select id from admin_employees
-            where tenant_slug = ${tenantSlug} and email = ${email}
-            limit 1
-          `;
-          if ((empRows as any[]).length > 0) {
-            await setEmployeePassword(tenantSlug, (empRows as any[])[0].id, password);
-            portalCredentials.push({ name: fullName, email, password });
-          }
+        // Always create portal account for imported employees
+        const password = defaultPassword || generatePassword();
+        const empRows = await SQL`
+          select id from admin_employees
+          where tenant_slug = ${tenantSlug} and email = ${email}
+          limit 1
+        `;
+        if ((empRows as any[]).length > 0) {
+          await setEmployeePassword(tenantSlug, (empRows as any[])[0].id, password);
+          portalCredentials.push({ name: fullName, email, password });
         }
       } catch (err: any) {
         const msg = err?.message || err?.toString?.() || "Unknown error";
@@ -187,10 +186,8 @@ export async function POST(request: NextRequest) {
     }
 
     const response: any = { imported, failed: errors.length, errors, warnings };
-    if (createPortalAccounts) {
-      response.portalAccountsCreated = portalCredentials.length;
-      response.portalCredentials = portalCredentials;
-    }
+    response.portalAccountsCreated = portalCredentials.length;
+    response.portalCredentials = portalCredentials;
     return NextResponse.json(response);
   } catch (error: any) {
     const errorDetail = error?.message || error?.toString?.() || "Unknown error";

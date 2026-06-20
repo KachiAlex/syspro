@@ -113,10 +113,13 @@ export async function setEmployeePassword(
 
 /**
  * Bulk activate portal accounts for all active employees in a tenant
- * Returns a map of employeeId -> generatedPassword for distribution
+ * If defaultPassword is provided, all employees get that password.
+ * Otherwise generates random secure passwords.
+ * Returns a map of employeeId -> {name, email, password} for distribution.
  */
 export async function bulkActivateEmployees(
-  tenantSlug: string
+  tenantSlug: string,
+  defaultPassword?: string
 ): Promise<Map<string, { name: string; email: string; password: string }>> {
   const sql = SQL;
   await ensureHrTables(sql);
@@ -132,7 +135,7 @@ export async function bulkActivateEmployees(
   const result = new Map<string, { name: string; email: string; password: string }>();
 
   for (const emp of employees) {
-    const password = generatePassword();
+    const password = defaultPassword || generatePassword();
     await setEmployeePassword(tenantSlug, emp.id, password);
     result.set(emp.id, { name: emp.name, email: emp.email, password });
   }

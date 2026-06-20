@@ -8,7 +8,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { tenantSlug, employeeIds } = body;
+    const { tenantSlug, employeeIds, defaultPassword } = body;
 
     if (!tenantSlug) {
       return NextResponse.json(
@@ -19,11 +19,11 @@ export async function POST(request: NextRequest) {
 
     // If specific employee IDs are provided, activate only those
     if (Array.isArray(employeeIds) && employeeIds.length > 0) {
-      const { setEmployeePassword } = await import("@/lib/hr/auth");
+      const { setEmployeePassword, generatePassword } = await import("@/lib/hr/auth");
       const results: Array<{ id: string; name: string; email: string; password: string }> = [];
 
       for (const id of employeeIds) {
-        const password = (await import("@/lib/hr/auth")).generatePassword();
+        const password = defaultPassword || generatePassword();
         await setEmployeePassword(tenantSlug, id, password);
         // Fetch employee details for response
         const { sql } = await import("@/lib/sql-client");
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Otherwise, bulk activate all active employees without portal access
-    const activated = await bulkActivateEmployees(tenantSlug);
+    const activated = await bulkActivateEmployees(tenantSlug, defaultPassword);
     const employees = Array.from(activated.entries()).map(([id, data]) => ({
       id,
       ...data,

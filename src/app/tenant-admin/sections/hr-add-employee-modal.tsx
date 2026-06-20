@@ -35,6 +35,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [portalCredentials, setPortalCredentials] = useState<Array<{ name: string; email: string; password: string }> | null>(null);
   const [currency, setCurrency] = useState('USD');
 
   // Manual form data
@@ -64,6 +65,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
     if (isOpen && activeTab === 'excel') {
       setWarnings([]);
       setErrors({});
+      setPortalCredentials(null);
     }
   }, [isOpen, activeTab]);
 
@@ -113,18 +115,18 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
     setWarnings([]);
 
     try {
-      const result = await HRService.importEmployeesFromExcel(tenantSlug, excelFile);
+      const result = await HRService.importEmployeesFromExcel(tenantSlug, excelFile, 'demo123');
 
       setUploadProgress(100);
       setWarnings(result.warnings || []);
+      setPortalCredentials(result.portalCredentials || null);
 
       if (result.failed > 0) {
         setErrors({ upload: `Imported ${result.imported}, failed ${result.failed}. ${(result.errors || []).slice(0, 3).join('; ')}` });
       } else if ((result.warnings || []).length > 0) {
         setErrors({ upload: `Imported ${result.imported} employees with ${result.warnings.length} warning(s).` });
       } else {
-        alert(`Successfully imported ${result.imported} employees.`);
-        onClose();
+        alert(`Successfully imported ${result.imported} employees. Portal accounts created with default password.`);
       }
     } catch (error: any) {
       console.error('Failed to upload employees:', error);
@@ -476,6 +478,42 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                       {warnings.length > 5 && (
                         <p className="text-amber-600 italic">...and {warnings.length - 5} more</p>
                       )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {portalCredentials && portalCredentials.length > 0 && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <div className="w-full">
+                      <p className="font-medium text-emerald-800 text-sm mb-2">
+                        Portal accounts created ({portalCredentials.length}) — Default password: <strong>demo123</strong>
+                      </p>
+                      <div className="max-h-40 overflow-y-auto text-xs">
+                        <table className="w-full text-left">
+                          <thead>
+                            <tr className="border-b border-emerald-200">
+                              <th className="py-1 pr-2 text-emerald-700">Name</th>
+                              <th className="py-1 pr-2 text-emerald-700">Email</th>
+                              <th className="py-1 text-emerald-700">Password</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {portalCredentials.slice(0, 10).map((c, i) => (
+                              <tr key={i} className="border-b border-emerald-100">
+                                <td className="py-1 pr-2 text-emerald-900">{c.name}</td>
+                                <td className="py-1 pr-2 text-emerald-900">{c.email}</td>
+                                <td className="py-1 text-emerald-900 font-mono">{c.password}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {portalCredentials.length > 10 && (
+                          <p className="text-emerald-600 italic mt-1">...and {portalCredentials.length - 10} more</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

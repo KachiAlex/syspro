@@ -192,14 +192,19 @@ export class HRService {
     await apiClient.delete(`/hr/employees/${employeeId}?tenantSlug=${tenantSlug}`);
   }
 
-  static async importEmployeesFromExcel(tenantSlug: string, file: File): Promise<{
+  static async importEmployeesFromExcel(tenantSlug: string, file: File, defaultPassword?: string): Promise<{
     imported: number;
     failed: number;
     errors: string[];
+    portalAccountsCreated?: number;
+    portalCredentials?: Array<{ name: string; email: string; password: string }>;
   }> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('tenantSlug', tenantSlug);
+    if (defaultPassword) {
+      formData.append('defaultPassword', defaultPassword);
+    }
 
     const response = await apiClient.post('/hr/employees/import', formData);
     return response.data;
