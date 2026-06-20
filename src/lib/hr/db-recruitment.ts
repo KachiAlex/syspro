@@ -12,6 +12,8 @@ import type {
   OfferRecord,
   OnboardingTaskRecord,
   ScreeningResult,
+  ScreeningConfigRecord,
+  BatchScreeningResult,
 } from "./types";
 
 function serializeTextArray(values?: string[] | null): string {
@@ -170,6 +172,26 @@ export async function ensureRecruitmentTables(sql: SqlClient = SQL) {
   `;
   await sql`create index if not exists idx_admin_onboarding_tenant on admin_onboarding_tasks(tenant_slug)`;
   await sql`create index if not exists idx_admin_onboarding_emp on admin_onboarding_tasks(employee_id)`;
+
+  // Screening Config
+  await sql`
+    create table if not exists admin_requisition_screening_configs (
+      requisition_id text primary key,
+      tenant_slug text not null,
+      selection_mode text not null check (selection_mode in ('percentage','fixed_number')),
+      selection_value integer not null,
+      min_score_threshold integer not null default 0,
+      is_enabled boolean default true,
+      created_at timestamptz default now(),
+      updated_at timestamptz default now()
+    )
+  `;
+  await sql`create index if not exists idx_admin_screening_cfg_tenant on admin_requisition_screening_configs(tenant_slug)`;
+  await sql`create index if not exists idx_admin_screening_cfg_req on admin_requisition_screening_configs(requisition_id)`;
+
+  // Application shortlist tracking
+  await sql`alter table admin_applications add column if not exists shortlisted_at timestamptz`;
+  await sql`alter table admin_applications add column if not exists shortlisted_by text default 'system' check (shortlisted_by in ('ai','hr','system'))`;
 }
 
 // ============================================================================
@@ -563,6 +585,8 @@ function normalizeApplicationRow(row: any): ApplicationRecord {
     appliedAt: row.applied_at,
     reviewedAt: row.reviewed_at ?? null,
     decidedAt: row.decided_at ?? null,
+    shortlistedAt: row.shortlisted_at ?? null,
+    shortlistedBy: row.shortlisted_by ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -1218,4 +1242,283 @@ export async function runApplicationScreening(
   `;
 
   return result;
+}
+
+// ============================================================================
+// SCREENING CONFIG
+// ============================================================================
+
+function normalizeScreeningConfigRow(row: any): ScreeningConfigRecord {
+  return {
+    requisitionId: row.requisition_id,
+    tenantSlug: row.tenant_slug,
+    selectionMode: row.selection_mode,
+    selectionValue: row.selection_value,
+    minScoreThreshold: row.min_score_threshold,
+    isEnabled: row.is_enabled ?? true,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function getScreeningConfig(requisitionId: string, tenantSlug: string) {
+  const sql = SQL;
+  await ensureRecruitmentTables(sql);
+  const rows = await sql`
+    select * from admin_requisition_screening_configs
+    where requisition_id = ${requisitionId} and tenant_slug = ${tenantSlug}
+    limit 1
+  `;
+  const arr = rows as any[];
+  return arr.length ? normalizeScreeningConfigRow(arr[0]) : null;
+}
+
+export async function saveScreeningConfig(row: {
+  requisitionId: string;
+  tenantSlug: string;
+  selectionMode: "percentage" | "fixed_number";
+  selectionValue: number;
+  minScoreThreshold?: number;
+  isEnabled?: boolean;
+}) {
+  const sql = SQL;
+  await ensureRecruitmentTables(sql);
+  await sql`
+    insert into admin_requisition_screening_configs (
+      requisition_id, tenant_slug, selection_mode, selection_value,
+      min_score_threshold, is_enabled
+    ) values (
+      ${row.requisitionId}, ${row.tenantSlug}, ${row.selectionMode},
+      ${row.selectionValue}, ${row.minScoreThreshold ?? 0}, ${row.isEnabled ?? true}
+    )
+    on conflict (requisition_id) do update set
+      selection_mode = excluded.selection_mode,
+      selection_value = excluded.selection_value,
+      min_score_threshold = excluded.min_score_threshold,
+      is_enabled = excluded.is_enabled,
+      updated_at = now()
+  `;
+  return getScreeningConfig(row.requisitionId, row.tenantSlug);
+}
+
+// ============================================================================
+// BATCH AI SCREENING
+// ============================================================================
+
+export async function runBatchAIScreening(
+  requisitionId: string,
+  tenantSlug: string,
+  overrides?: { selectionMode?: "percentage" | "fixed_number"; selectionValue?: number; minScoreThreshold?: number }
+): Promise<BatchScreeningResult> {
+  const sql = SQL;
+  await ensureRecruitmentTables(sql);
+
+  // Fetch config (or defaults)
+  const config = await getScreeningConfig(requisitionId, tenantSlug);
+  const selectionMode = overrides?.selectionMode ?? config?.selectionMode ?? "percentage";
+  const selectionValue = overrides?.selectionValue ?? config?.selectionValue ?? 20;
+  const minScoreThreshold = overrides?.minScoreThreshold ?? config?.minScoreThreshold ?? 0;
+
+  // Fetch requisition
+  const reqRows = await sql`select * from admin_job_requisitions where id = ${requisitionId} and tenant_slug = ${tenantSlug} limit 1`;
+  const requisition = (reqRows as any[])[0];
+  if (!requisition) throw new Error("Requisition not found");
+
+  // Fetch all unscreened applications for this requisition
+  const appRows = await sql`
+    select a.*, c.full_name, c.skills, c.experience_years, c.education, c.resume_url, c.source
+    from admin_applications a
+    join admin_candidates c on c.id = a.candidate_id
+    where a.requisition_id = ${requisitionId}
+      and a.tenant_slug = ${tenantSlug}
+      and a.status in ('applied', 'under_review', 'screened')
+    order by a.applied_at desc
+  `;
+  const apps = appRows as any[];
+  if (apps.length === 0) {
+    return { screened: 0, shortlisted: 0, thresholdScore: 0, results: [] };
+  }
+
+  // Score each application
+  const scored = apps.map((app) => {
+    const candidate = {
+      experience_years: app.experience_years,
+      skills: app.skills,
+      education: app.education,
+      resume_url: app.resume_url,
+      source: app.source,
+    };
+    const result = scoreSingleApplication(candidate, requisition);
+    return {
+      applicationId: app.id,
+      candidateName: app.full_name,
+      aiScore: result.score,
+      breakdown: result.breakdown,
+    };
+  });
+
+  // Sort descending by score
+  scored.sort((a, b) => b.aiScore - a.aiScore);
+
+  // Determine cutoff
+  let cutoffCount: number;
+  if (selectionMode === "percentage") {
+    cutoffCount = Math.max(1, Math.round((selectionValue / 100) * scored.length));
+  } else {
+    cutoffCount = Math.min(selectionValue, scored.length);
+  }
+
+  // Apply threshold
+  const shortlisted = scored.slice(0, cutoffCount).filter((s) => s.aiScore >= minScoreThreshold);
+  const nonShortlisted = scored.filter((s) => !shortlisted.includes(s));
+
+  // Persist scores
+  for (const s of scored) {
+    await sql`
+      update admin_applications set
+        ai_score = ${s.aiScore},
+        screening_result = ${{ score: s.aiScore, breakdown: s.breakdown } as any},
+        status = ${shortlisted.includes(s) ? "shortlist" : "screened"},
+        shortlisted_at = ${shortlisted.includes(s) ? new Date().toISOString() : null},
+        shortlisted_by = ${shortlisted.includes(s) ? "ai" : null},
+        reviewed_at = now(),
+        updated_at = now()
+      where id = ${s.applicationId} and tenant_slug = ${tenantSlug}
+    `;
+  }
+
+  return {
+    screened: scored.length,
+    shortlisted: shortlisted.length,
+    thresholdScore: shortlisted.length > 0 ? shortlisted[shortlisted.length - 1].aiScore : 0,
+    results: scored.map((s) => ({
+      applicationId: s.applicationId,
+      candidateName: s.candidateName,
+      aiScore: s.aiScore,
+      status: shortlisted.includes(s) ? "shortlist" : "screened",
+      breakdown: s.breakdown,
+    })),
+  };
+}
+
+function scoreSingleApplication(candidate: any, requisition: any): { score: number; breakdown: ScreeningResult["breakdown"] } {
+  const checks: ScreeningResult["breakdown"] = [];
+  let totalScore = 0;
+  let maxTotal = 0;
+
+  // Experience check
+  const reqMinExp = requisition.min_experience_years ?? 0;
+  const candExp = candidate.experience_years ?? 0;
+  const expWeight = 0.20;
+  const expMax = 100;
+  const expScore = candExp >= reqMinExp ? expMax : Math.max(0, (candExp / Math.max(reqMinExp, 1)) * expMax);
+  checks.push({
+    criteria: "Years of Experience",
+    weight: expWeight,
+    required: reqMinExp,
+    actual: candExp,
+    score: Math.round(expScore),
+    maxScore: expMax,
+    reason: candExp >= reqMinExp
+      ? `Candidate has ${candExp} years (required: ${reqMinExp})`
+      : `Candidate has ${candExp} years, below required ${reqMinExp}`,
+  });
+  totalScore += expScore * expWeight;
+  maxTotal += expMax * expWeight;
+
+  // Skills match
+  const reqSkills: string[] = Array.isArray(requisition.required_skills) ? requisition.required_skills : [];
+  const candSkills: string[] = Array.isArray(candidate.skills) ? candidate.skills : [];
+  const skillsWeight = 0.35;
+  const skillsMax = 100;
+  let matched = 0;
+  reqSkills.forEach((skill: string) => {
+    const s = skill.toLowerCase();
+    if (candSkills.some((cs: string) => cs.toLowerCase().includes(s) || s.includes(cs.toLowerCase()))) {
+      matched++;
+    }
+  });
+  const skillsScore = reqSkills.length === 0 ? skillsMax : (matched / reqSkills.length) * skillsMax;
+  checks.push({
+    criteria: "Skills Match",
+    weight: skillsWeight,
+    required: reqSkills,
+    actual: candSkills,
+    score: Math.round(skillsScore),
+    maxScore: skillsMax,
+    reason: `${matched}/${reqSkills.length} required skills matched`,
+  });
+  totalScore += skillsScore * skillsWeight;
+  maxTotal += skillsMax * skillsWeight;
+
+  // Education relevance
+  const eduWeight = 0.10;
+  const eduMax = 100;
+  const eduText = (candidate.education || "").toLowerCase();
+  const hasDegree = /\b(bsc|b\.s\.?|ba|b\.a\.?|msc|m\.s\.?|ma|m\.a\.?|phd|mba|bachelor|master|doctorate|degree)\b/.test(eduText);
+  const eduScore = hasDegree ? eduMax : 30;
+  checks.push({
+    criteria: "Education Relevance",
+    weight: eduWeight,
+    required: "Post-secondary degree",
+    actual: candidate.education || "Not provided",
+    score: Math.round(eduScore),
+    maxScore: eduMax,
+    reason: hasDegree ? "Education record with degree present" : "No education details provided",
+  });
+  totalScore += eduScore * eduWeight;
+  maxTotal += eduMax * eduWeight;
+
+  // Source quality
+  const sourceWeight = 0.05;
+  const sourceMax = 100;
+  const highQualitySources = ["referral", "linkedin", "career_page"];
+  const sourceScore = highQualitySources.includes(candidate.source) ? sourceMax : 50;
+  checks.push({
+    criteria: "Source Quality",
+    weight: sourceWeight,
+    required: "Referral / LinkedIn / Career Page",
+    actual: candidate.source,
+    score: Math.round(sourceScore),
+    maxScore: sourceMax,
+    reason: `Source: ${candidate.source}`,
+  });
+  totalScore += sourceScore * sourceWeight;
+  maxTotal += sourceMax * sourceWeight;
+
+  // Resume presence
+  const resumeWeight = 0.20;
+  const resumeMax = 100;
+  const hasResume = !!(candidate.resume_url && candidate.resume_url.trim().length > 0);
+  const resumeScore = hasResume ? resumeMax : 30;
+  checks.push({
+    criteria: "Resume Submitted",
+    weight: resumeWeight,
+    required: true,
+    actual: hasResume,
+    score: Math.round(resumeScore),
+    maxScore: resumeMax,
+    reason: hasResume ? "Resume provided" : "No resume on file",
+  });
+  totalScore += resumeScore * resumeWeight;
+  maxTotal += resumeMax * resumeWeight;
+
+  // Application completeness
+  const completeWeight = 0.10;
+  const completeMax = 100;
+  const completeScore = hasResume && candidate.education && candidate.experience_years !== null ? completeMax : 50;
+  checks.push({
+    criteria: "Application Completeness",
+    weight: completeWeight,
+    required: "All fields provided",
+    actual: { hasResume, hasEducation: !!candidate.education, hasExperience: candidate.experience_years !== null },
+    score: Math.round(completeScore),
+    maxScore: completeMax,
+    reason: completeScore === completeMax ? "All key fields completed" : "Some fields missing",
+  });
+  totalScore += completeScore * completeWeight;
+  maxTotal += completeMax * completeWeight;
+
+  const finalScore = maxTotal > 0 ? Math.round((totalScore / maxTotal) * 100) : 0;
+  return { score: finalScore, breakdown: checks };
 }

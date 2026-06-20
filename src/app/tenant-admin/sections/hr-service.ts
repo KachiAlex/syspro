@@ -11,6 +11,8 @@ import type {
   OfferRecord,
   OnboardingTaskRecord,
   ScreeningResult,
+  ScreeningConfigRecord,
+  BatchScreeningResult,
 } from '@/lib/hr/types';
 
 export interface HRReport {
@@ -437,6 +439,44 @@ export class HRService {
 
   static async screenApplication(tenantSlug: string, id: string): Promise<ScreeningResult> {
     const response = await apiClient.post(`/hr/applications/${id}/screen`, { tenantSlug });
+    return response.data.result;
+  }
+
+  static async getScreeningConfig(tenantSlug: string, requisitionId: string): Promise<ScreeningConfigRecord | null> {
+    const response = await apiClient.get(`/hr/requisitions/${requisitionId}/screening-config?tenantSlug=${tenantSlug}`);
+    return response.data.config ?? null;
+  }
+
+  static async saveScreeningConfig(
+    tenantSlug: string,
+    requisitionId: string,
+    data: {
+      selectionMode: 'percentage' | 'fixed_number';
+      selectionValue: number;
+      minScoreThreshold?: number;
+      isEnabled?: boolean;
+    }
+  ): Promise<ScreeningConfigRecord | null> {
+    const response = await apiClient.post(`/hr/requisitions/${requisitionId}/screening-config`, {
+      tenantSlug,
+      ...data,
+    });
+    return response.data.config ?? null;
+  }
+
+  static async runBatchAIScreening(
+    tenantSlug: string,
+    requisitionId: string,
+    overrides?: {
+      selectionMode?: 'percentage' | 'fixed_number';
+      selectionValue?: number;
+      minScoreThreshold?: number;
+    }
+  ): Promise<BatchScreeningResult> {
+    const response = await apiClient.post(`/hr/requisitions/${requisitionId}/run-ai-screening`, {
+      tenantSlug,
+      ...overrides,
+    });
     return response.data.result;
   }
 

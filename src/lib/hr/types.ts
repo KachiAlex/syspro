@@ -346,6 +346,8 @@ export interface ApplicationRecord {
   appliedAt: string;
   reviewedAt: string | null;
   decidedAt: string | null;
+  shortlistedAt: string | null;
+  shortlistedBy: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -533,4 +535,39 @@ export interface ScreeningResult {
     reason: string;
   }>;
   reasons: string[];
+}
+
+export const screeningConfigSchema = z.object({
+  tenantSlug: z.string().min(1),
+  requisitionId: z.string().min(1),
+  selectionMode: z.enum(["percentage", "fixed_number"]),
+  selectionValue: z.number().int().positive(),
+  minScoreThreshold: z.number().int().min(0).max(100).default(0),
+  isEnabled: z.boolean().default(true),
+});
+
+export type ScreeningConfigInput = z.infer<typeof screeningConfigSchema>;
+
+export interface ScreeningConfigRecord {
+  requisitionId: string;
+  tenantSlug: string;
+  selectionMode: "percentage" | "fixed_number";
+  selectionValue: number;
+  minScoreThreshold: number;
+  isEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BatchScreeningResult {
+  screened: number;
+  shortlisted: number;
+  thresholdScore: number;
+  results: Array<{
+    applicationId: string;
+    candidateName: string;
+    aiScore: number;
+    status: string;
+    breakdown: ScreeningResult["breakdown"];
+  }>;
 }
