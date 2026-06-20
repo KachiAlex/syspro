@@ -82,8 +82,12 @@ export async function POST(request: NextRequest) {
   try {
     const employee = await insertEmployee(parsed.data);
     return NextResponse.json({ employee }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Employee create failed", error);
+    const msg = error?.message || "";
+    if (msg.includes("HOD role in this department")) {
+      return NextResponse.json({ error: msg }, { status: 409 });
+    }
     return NextResponse.json({ error: "Failed to create employee" }, { status: 500 });
   }
 }

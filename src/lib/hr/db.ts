@@ -122,6 +122,21 @@ export async function insertEmployee(row: {
 }) {
   const sql = SQL;
   await ensureHrTables(sql);
+
+  // Enforce unique HOD per department
+  if ((row.role ?? "staff") === "hod") {
+    const dupRows = await sql`
+      select id from admin_employees
+      where tenant_slug = ${row.tenantSlug}
+        and department_id = ${row.departmentId}
+        and role = 'hod'
+      limit 1
+    `;
+    if ((dupRows as any[]).length > 0) {
+      throw new Error("Someone has already been assigned the HOD role in this department.");
+    }
+  }
+
   const id = randomUUID();
   await sql`
     insert into admin_employees (
@@ -155,11 +170,34 @@ export async function updateEmployee(
     hireDate: string | null;
     salary: number | null;
     employmentType: string | null;
+    role: string | null;
     status: string;
   }>
 ) {
   const sql = SQL;
   await ensureHrTables(sql);
+
+  // Enforce unique HOD per department
+  if (updates.role === "hod") {
+    const currentRows = await sql`select tenant_slug, department_id from admin_employees where id = ${id} limit 1`;
+    const current = (currentRows as any[])[0];
+    if (current) {
+      const deptId = updates.departmentId ?? current.department_id;
+      const tenantSlug = current.tenant_slug;
+      const dupRows = await sql`
+        select id from admin_employees
+        where tenant_slug = ${tenantSlug}
+          and department_id = ${deptId}
+          and role = 'hod'
+          and id != ${id}
+        limit 1
+      `;
+      if ((dupRows as any[]).length > 0) {
+        throw new Error("Someone has already been assigned the HOD role in this department.");
+      }
+    }
+  }
+
   const updated = await sql`
     update admin_employees set
       name = coalesce(${updates.name ?? null}, name),
@@ -174,7 +212,7 @@ export async function updateEmployee(
       hire_date = coalesce(${updates.hireDate ?? null}, hire_date),
       salary = coalesce(${updates.salary ?? null}, salary),
       employment_type = coalesce(${updates.employmentType ?? null}, employment_type),
-      role = coalesce(${(updates as any).role ?? null}, role),
+      role = coalesce(${updates.role ?? null}, role),
       status = coalesce(${updates.status ?? null}, status),
       updated_at = now()
     where id = ${id}

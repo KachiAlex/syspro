@@ -168,6 +168,7 @@ export class HRService {
     startDate?: string;
     status?: string;
     salary?: string;
+    role?: string;
   }): Promise<EmployeeRecord> {
     const payload: Record<string, any> = { tenantSlug };
     if (employeeData.firstName || employeeData.lastName) {
@@ -181,6 +182,7 @@ export class HRService {
     if (employeeData.status) payload.status = employeeData.status.toLowerCase().replace(/\s/g, '-') as any;
     if (employeeData.salary) payload.salary = Number(employeeData.salary.replace(/[^0-9.]/g, ''));
     if (employeeData.startDate) payload.hireDate = new Date(employeeData.startDate).toISOString();
+    if (employeeData.role) payload.role = employeeData.role.toLowerCase();
 
     const response = await apiClient.patch(`/hr/employees/${employeeId}`, payload);
     return response.data.employee;
@@ -220,9 +222,11 @@ export class HRService {
     email: string;
     department: string;
     position: string;
+    role: string;
     status: string;
     salary: number;
     startDate: string;
+    employmentType?: string;
   }>> {
     const [empRes, deptRes] = await Promise.all([
       apiClient.get(`/hr/employees?tenantSlug=${tenantSlug}`),
@@ -238,9 +242,11 @@ export class HRService {
       email: emp.email,
       department: deptMap.get(emp.departmentId) || emp.departmentId,
       position: emp.jobTitle,
+      role: emp.role ? emp.role.charAt(0).toUpperCase() + emp.role.slice(1) : 'Staff',
       status: emp.status === 'active' ? 'Active' : emp.status === 'on-leave' ? 'On Leave' : emp.status === 'terminated' ? 'Terminated' : 'Inactive',
       salary: emp.salary ?? 0,
       startDate: emp.hireDate ? emp.hireDate.split('T')[0] : '',
+      employmentType: emp.employmentType ? emp.employmentType.charAt(0).toUpperCase() + emp.employmentType.slice(1).replace('-', ' ') : 'Full-time',
     }));
   }
 

@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { Plus, Eye, Search } from 'lucide-react';
+import { Plus, Pencil, Search } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { HRService } from '@/app/tenant-admin/sections/hr-service';
 import { AddEmployeeModal } from '@/app/tenant-admin/sections/hr-add-employee-modal';
+import { EditEmployeeModal } from '@/app/tenant-admin/sections/hr-edit-employee-modal';
 
 interface Employee {
   id: string;
@@ -16,6 +17,7 @@ interface Employee {
   startDate: string;
   status: string;
   salary: string;
+  employmentType?: string;
 }
 
 interface TrainingSession {
@@ -41,6 +43,8 @@ export default function StaffPage() {
   const [departmentFilter, setDepartmentFilter] = useState('All Departments');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
 
   const [departments, setDepartments] = useState<string[]>(['All Departments']);
   const statuses = ['All Statuses', 'Active', 'On Leave', 'Inactive', 'Terminated'];
@@ -72,7 +76,8 @@ export default function StaffPage() {
         role: emp.role || 'Staff',
         startDate: emp.startDate,
         status: emp.status,
-        salary: emp.salary ? `${sym}${Number(emp.salary).toLocaleString()}` : ''
+        salary: emp.salary ? `${sym}${Number(emp.salary).toLocaleString()}` : '',
+        employmentType: emp.employmentType || 'Full-time',
       })));
       setDepartments(['All Departments', ...fetchedDepartments]);
       setTrainingSessions(fetchedTraining.map((s: any) => ({
@@ -113,6 +118,12 @@ export default function StaffPage() {
   const handleAddEmployee = async (data: any) => {
     if (!tenantSlug) return;
     await HRService.addEmployee(tenantSlug, data);
+    await loadData();
+  };
+
+  const handleEditEmployee = async (data: any) => {
+    if (!tenantSlug || !editingEmployee) return;
+    await HRService.updateEmployee(tenantSlug, editingEmployee.id, data);
     await loadData();
   };
 
@@ -215,9 +226,15 @@ export default function StaffPage() {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{emp.startDate}</td>
                   <td className="px-6 py-4 text-center">
-                    <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover">
-                      <Eye className="w-4 h-4" />
-                      View
+                    <button
+                      onClick={() => {
+                        setEditingEmployee(emp);
+                        setShowEditModal(true);
+                      }}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800"
+                    >
+                      <Pencil className="w-4 h-4" />
+                      Edit
                     </button>
                   </td>
                 </tr>
@@ -237,6 +254,15 @@ export default function StaffPage() {
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSubmit={handleAddEmployee}
+        departments={departments.filter(d => d !== 'All Departments')}
+        tenantSlug={tenantSlug || ''}
+      />
+
+      <EditEmployeeModal
+        isOpen={showEditModal}
+        onClose={() => { setShowEditModal(false); setEditingEmployee(null); }}
+        onSubmit={handleEditEmployee}
+        employee={editingEmployee}
         departments={departments.filter(d => d !== 'All Departments')}
         tenantSlug={tenantSlug || ''}
       />

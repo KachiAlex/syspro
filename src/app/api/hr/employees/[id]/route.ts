@@ -16,6 +16,7 @@ const updateSchema = z.object({
   salary: z.number().nonnegative().optional(),
   employmentType: z.enum(["full-time", "part-time", "contract", "intern"]).optional(),
   status: z.enum(["active", "inactive", "on-leave", "terminated"]).optional(),
+  role: z.enum(["staff", "hod", "admin", "executive"]).optional(),
 });
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -56,8 +57,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
     }
     return NextResponse.json({ employee });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Employee update failed", error);
+    const msg = error?.message || "";
+    if (msg.includes("HOD role in this department")) {
+      return NextResponse.json({ error: msg }, { status: 409 });
+    }
     return NextResponse.json({ error: "Failed to update employee" }, { status: 500 });
   }
 }
