@@ -594,4 +594,67 @@ export class HRService {
   static async setTenantCurrency(tenantSlug: string, currency: string): Promise<void> {
     await apiClient.post('/tenant/settings', { tenantSlug, currency });
   }
+
+  // Payroll
+  static async listPayrollRuns(tenantSlug: string): Promise<Array<{
+    id: string;
+    period: string;
+    status: string;
+    totalGross: number;
+    totalDeductions: number;
+    totalNet: number;
+    anomalies: Array<{ type: string; severity: string; message: string; employeeName?: string }>;
+    compliancePassed: boolean;
+    createdAt: string;
+  }>> {
+    const response = await apiClient.get(`/hr/payroll?tenantSlug=${tenantSlug}`);
+    return response.data.runs || [];
+  }
+
+  static async createPayrollRun(payload: {
+    tenantSlug: string;
+    period: string;
+    config: {
+      taxRate: number;
+      pensionRate: number;
+      healthInsuranceRate: number;
+      transportAllowance: number;
+      housingAllowance: number;
+      mealAllowance: number;
+    };
+    entries: Array<{
+      employeeId: string;
+      employeeName: string;
+      department?: string;
+      position?: string;
+      baseSalary: number;
+      transportAllowance: number;
+      housingAllowance: number;
+      mealAllowance: number;
+      bonus: number;
+      tax: number;
+      pension: number;
+      healthInsurance: number;
+      otherDeductions: number;
+      totalDeductions: number;
+      grossPay: number;
+      netPay: number;
+    }>;
+    processedBy?: string;
+  }): Promise<{
+    runId: string;
+    anomalies: Array<{ type: string; severity: string; message: string; employeeName?: string }>;
+    compliance: { passed: boolean; issues: string[] };
+  }> {
+    const response = await apiClient.post('/hr/payroll', payload);
+    return response.data;
+  }
+
+  static async getPayrollRun(tenantSlug: string, runId: string): Promise<{
+    run: any;
+    entries: any[];
+  }> {
+    const response = await apiClient.get(`/hr/payroll/${runId}?tenantSlug=${tenantSlug}`);
+    return response.data;
+  }
 }

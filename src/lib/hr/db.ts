@@ -76,6 +76,55 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
   await sql`create index if not exists idx_admin_leave_tenant on admin_leave(tenant_slug)`;
   await sql`create index if not exists idx_admin_leave_emp on admin_leave(employee_id)`;
   await sql`create index if not exists idx_admin_leave_status on admin_leave(status)`;
+
+  // Payroll runs
+  await sql`
+    create table if not exists admin_payroll_runs (
+      id text primary key,
+      tenant_slug text not null,
+      period text not null,
+      status text default 'draft' check (status in ('draft','processing','completed','cancelled')),
+      total_gross numeric(15,2) default 0,
+      total_deductions numeric(15,2) default 0,
+      total_net numeric(15,2) default 0,
+      config jsonb default '{}',
+      anomalies jsonb default '[]',
+      compliance_passed boolean default false,
+      processed_at timestamptz,
+      processed_by text,
+      created_at timestamptz default now()
+    )
+  `;
+  await sql`create index if not exists idx_admin_payroll_runs_tenant on admin_payroll_runs(tenant_slug)`;
+  await sql`create index if not exists idx_admin_payroll_runs_period on admin_payroll_runs(tenant_slug, period)`;
+
+  // Payroll entries per employee per run
+  await sql`
+    create table if not exists admin_payroll_entries (
+      id text primary key,
+      tenant_slug text not null,
+      run_id text not null references admin_payroll_runs(id) on delete cascade,
+      employee_id text not null,
+      employee_name text not null,
+      department text,
+      position text,
+      base_salary numeric(15,2) default 0,
+      transport_allowance numeric(15,2) default 0,
+      housing_allowance numeric(15,2) default 0,
+      meal_allowance numeric(15,2) default 0,
+      bonus numeric(15,2) default 0,
+      tax numeric(15,2) default 0,
+      pension numeric(15,2) default 0,
+      health_insurance numeric(15,2) default 0,
+      other_deductions numeric(15,2) default 0,
+      total_deductions numeric(15,2) default 0,
+      gross_pay numeric(15,2) default 0,
+      net_pay numeric(15,2) default 0,
+      created_at timestamptz default now()
+    )
+  `;
+  await sql`create index if not exists idx_admin_payroll_entries_run on admin_payroll_entries(run_id)`;
+  await sql`create index if not exists idx_admin_payroll_entries_emp on admin_payroll_entries(tenant_slug, employee_id)`;
 }
 
 // ============================================================================
@@ -647,4 +696,346 @@ export async function getLeaveBalance(tenantSlug: string, employeeId: string) {
     paternity: { used: used["paternity"] ?? 0, total: 14 },
     unpaid: { used: used["unpaid"] ?? 0, total: 0 },
   };
+}
+
+// ============================================================================
+// PAYROLL
+// ============================================================================
+
+export interface PayrollConfig {
+  taxRate: number;
+  pensionRate: number;
+  healthInsuranceRate: number;
+  transportAllowance: number;
+  housingAllowance: number;
+  mealAllowance: number;
+}
+
+export interface PayrollAnomaly {
+  type: string;
+  severity: "warning" | "error";
+  message: string;
+  employeeId?: string;
+  employeeName?: string;
+}
+
+export interface PayrollRunRecord {
+  id: string;
+  tenantSlug: string;
+  period: string;
+  status: string;
+  totalGross: number;
+  totalDeductions: number;
+  totalNet: number;
+  config: PayrollConfig;
+  anomalies: PayrollAnomaly[];
+  compliancePassed: boolean;
+  processedAt: string | null;
+  processedBy: string | null;
+  createdAt: string;
+}
+
+export interface PayrollEntryRecord {
+  id: string;
+  tenantSlug: string;
+  runId: string;
+  employeeId: string;
+  employeeName: string;
+  department: string | null;
+  position: string | null;
+  baseSalary: number;
+  transportAllowance: number;
+  housingAllowance: number;
+  mealAllowance: number;
+  bonus: number;
+  tax: number;
+  pension: number;
+  healthInsurance: number;
+  otherDeductions: number;
+  totalDeductions: number;
+  grossPay: number;
+  netPay: number;
+  createdAt: string;
+}
+
+function normalizePayrollRun(row: any): PayrollRunRecord {
+  return {
+    id: row.id,
+    tenantSlug: row.tenant_slug,
+    period: row.period,
+    status: row.status,
+    totalGross: Number(row.total_gross) || 0,
+    totalDeductions: Number(row.total_deductions) || 0,
+    totalNet: Number(row.total_net) || 0,
+    config: (row.config as PayrollConfig) || {},
+    anomalies: (row.anomalies as PayrollAnomaly[]) || [],
+    compliancePassed: row.compliance_passed ?? false,
+    processedAt: row.processed_at ?? null,
+    processedBy: row.processed_by ?? null,
+    createdAt: row.created_at,
+  };
+}
+
+function normalizePayrollEntry(row: any): PayrollEntryRecord {
+  return {
+    id: row.id,
+    tenantSlug: row.tenant_slug,
+    runId: row.run_id,
+    employeeId: row.employee_id,
+    employeeName: row.employee_name,
+    department: row.department ?? null,
+    position: row.position ?? null,
+    baseSalary: Number(row.base_salary) || 0,
+    transportAllowance: Number(row.transport_allowance) || 0,
+    housingAllowance: Number(row.housing_allowance) || 0,
+    mealAllowance: Number(row.meal_allowance) || 0,
+    bonus: Number(row.bonus) || 0,
+    tax: Number(row.tax) || 0,
+    pension: Number(row.pension) || 0,
+    healthInsurance: Number(row.health_insurance) || 0,
+    otherDeductions: Number(row.other_deductions) || 0,
+    totalDeductions: Number(row.total_deductions) || 0,
+    grossPay: Number(row.gross_pay) || 0,
+    netPay: Number(row.net_pay) || 0,
+    createdAt: row.created_at,
+  };
+}
+
+export function detectAnomalies(
+  entries: PayrollEntryRecord[],
+  prevEntries: PayrollEntryRecord[]
+): PayrollAnomaly[] {
+  const anomalies: PayrollAnomaly[] = [];
+  const prevMap = new Map(prevEntries.map((e) => [e.employeeId, e]));
+
+  for (const entry of entries) {
+    // Zero salary
+    if (entry.baseSalary <= 0) {
+      anomalies.push({
+        type: "zero_salary",
+        severity: "error",
+        message: "Employee has zero or negative base salary",
+        employeeId: entry.employeeId,
+        employeeName: entry.employeeName,
+      });
+    }
+
+    // Massive increase vs previous
+    const prev = prevMap.get(entry.employeeId);
+    if (prev && prev.netPay > 0) {
+      const change = (entry.netPay - prev.netPay) / prev.netPay;
+      if (change > 2.0) {
+        anomalies.push({
+          type: "massive_increase",
+          severity: "error",
+          message: `Net pay increased by ${(change * 100).toFixed(0)}% vs previous period`,
+          employeeId: entry.employeeId,
+          employeeName: entry.employeeName,
+        });
+      } else if (change > 0.5) {
+        anomalies.push({
+          type: "large_increase",
+          severity: "warning",
+          message: `Net pay increased by ${(change * 100).toFixed(0)}% vs previous period`,
+          employeeId: entry.employeeId,
+          employeeName: entry.employeeName,
+        });
+      }
+    }
+
+    // Negative net
+    if (entry.netPay < 0) {
+      anomalies.push({
+        type: "negative_net",
+        severity: "error",
+        message: "Net pay is negative after deductions",
+        employeeId: entry.employeeId,
+        employeeName: entry.employeeName,
+      });
+    }
+  }
+
+  // Duplicate check
+  const idCounts = new Map<string, number>();
+  for (const e of entries) {
+    idCounts.set(e.employeeId, (idCounts.get(e.employeeId) || 0) + 1);
+  }
+  for (const [empId, count] of idCounts) {
+    if (count > 1) {
+      const emp = entries.find((e) => e.employeeId === empId);
+      anomalies.push({
+        type: "duplicate_employee",
+        severity: "error",
+        message: `Employee appears ${count} times in this payroll`,
+        employeeId: empId,
+        employeeName: emp?.employeeName,
+      });
+    }
+  }
+
+  return anomalies;
+}
+
+export function checkCompliance(
+  entries: PayrollEntryRecord[],
+  config: PayrollConfig
+): { passed: boolean; issues: string[] } {
+  const issues: string[] = [];
+
+  for (const entry of entries) {
+    if (entry.grossPay <= 0) continue;
+
+    // Tax sanity check: tax should be roughly config.taxRate % of gross
+    const expectedTax = (entry.grossPay * (config.taxRate || 7.5)) / 100;
+    const taxDiff = Math.abs(entry.tax - expectedTax);
+    if (taxDiff > 1) {
+      issues.push(
+        `${entry.employeeName}: Tax (${entry.tax}) deviates from expected ${expectedTax.toFixed(2)} based on ${config.taxRate}% rate`
+      );
+    }
+
+    // Pension check
+    const expectedPension = (entry.grossPay * (config.pensionRate || 8)) / 100;
+    const pensionDiff = Math.abs(entry.pension - expectedPension);
+    if (pensionDiff > 1) {
+      issues.push(
+        `${entry.employeeName}: Pension (${entry.pension}) deviates from expected ${expectedPension.toFixed(2)} based on ${config.pensionRate}% rate`
+      );
+    }
+
+    // Net should not exceed gross
+    if (entry.netPay > entry.grossPay) {
+      issues.push(`${entry.employeeName}: Net pay (${entry.netPay}) exceeds gross pay (${entry.grossPay})`);
+    }
+
+    // Minimum wage check (example: 30,000 NGN or equivalent)
+    if (entry.netPay > 0 && entry.netPay < 30000 && entry.baseSalary > 0) {
+      issues.push(
+        `${entry.employeeName}: Net pay (${entry.netPay}) is below minimum wage threshold`
+      );
+    }
+  }
+
+  return { passed: issues.length === 0, issues };
+}
+
+export async function createPayrollRun(params: {
+  tenantSlug: string;
+  period: string;
+  config: PayrollConfig;
+  entries: Omit<PayrollEntryRecord, "id" | "tenantSlug" | "runId" | "createdAt">[];
+  processedBy?: string | null;
+}) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+
+  // Fetch previous period entries for anomaly detection
+  const prevPeriod = (await sql`
+    select id from admin_payroll_runs
+    where tenant_slug = ${params.tenantSlug} and period < ${params.period}
+    order by period desc limit 1
+  `) as any[];
+  let prevEntries: PayrollEntryRecord[] = [];
+  if (prevPeriod.length > 0) {
+    const prevRows = await sql`
+      select * from admin_payroll_entries where run_id = ${prevPeriod[0].id}
+    `;
+    prevEntries = (prevRows as any[]).map(normalizePayrollEntry);
+  }
+
+  const runId = randomUUID();
+  const totalGross = params.entries.reduce((s, e) => s + e.grossPay, 0);
+  const totalDeductions = params.entries.reduce((s, e) => s + e.totalDeductions, 0);
+  const totalNet = params.entries.reduce((s, e) => s + e.netPay, 0);
+
+  const anomalies = detectAnomalies(
+    params.entries.map((e) => ({ ...e, id: "", tenantSlug: params.tenantSlug, runId, createdAt: "" })),
+    prevEntries
+  );
+  const compliance = checkCompliance(
+    params.entries.map((e) => ({ ...e, id: "", tenantSlug: params.tenantSlug, runId, createdAt: "" })),
+    params.config
+  );
+
+  await sql`
+    insert into admin_payroll_runs (
+      id, tenant_slug, period, status, total_gross, total_deductions, total_net,
+      config, anomalies, compliance_passed, processed_by
+    ) values (
+      ${runId}, ${params.tenantSlug}, ${params.period}, 'completed',
+      ${totalGross}, ${totalDeductions}, ${totalNet},
+      ${JSON.stringify(params.config)}::jsonb, ${JSON.stringify(anomalies)}::jsonb,
+      ${compliance.passed}, ${params.processedBy ?? null}
+    )
+  `;
+
+  for (const entry of params.entries) {
+    const entryId = randomUUID();
+    await sql`
+      insert into admin_payroll_entries (
+        id, tenant_slug, run_id, employee_id, employee_name, department, position,
+        base_salary, transport_allowance, housing_allowance, meal_allowance, bonus,
+        tax, pension, health_insurance, other_deductions, total_deductions,
+        gross_pay, net_pay
+      ) values (
+        ${entryId}, ${params.tenantSlug}, ${runId}, ${entry.employeeId}, ${entry.employeeName},
+        ${entry.department ?? null}, ${entry.position ?? null},
+        ${entry.baseSalary}, ${entry.transportAllowance}, ${entry.housingAllowance},
+        ${entry.mealAllowance}, ${entry.bonus},
+        ${entry.tax}, ${entry.pension}, ${entry.healthInsurance}, ${entry.otherDeductions},
+        ${entry.totalDeductions}, ${entry.grossPay}, ${entry.netPay}
+      )
+    `;
+  }
+
+  return { runId, anomalies, compliance };
+}
+
+export async function listPayrollRuns(tenantSlug: string, opts?: { limit?: number; offset?: number }) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const limit = opts?.limit ?? 20;
+  const offset = opts?.offset ?? 0;
+  const rows = await sql`
+    select * from admin_payroll_runs
+    where tenant_slug = ${tenantSlug}
+    order by period desc, created_at desc
+    limit ${limit} offset ${offset}
+  `;
+  return (rows as any[]).map(normalizePayrollRun);
+}
+
+export async function getPayrollRun(tenantSlug: string, runId: string) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const rows = await sql`
+    select * from admin_payroll_runs
+    where id = ${runId} and tenant_slug = ${tenantSlug}
+    limit 1
+  `;
+  const arr = rows as any[];
+  return arr.length ? normalizePayrollRun(arr[0]) : null;
+}
+
+export async function getPayrollEntries(runId: string) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const rows = await sql`
+    select * from admin_payroll_entries where run_id = ${runId} order by employee_name
+  `;
+  return (rows as any[]).map(normalizePayrollEntry);
+}
+
+export async function getPayrollHistoryForEmployee(tenantSlug: string, employeeId: string, opts?: { limit?: number }) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const limit = opts?.limit ?? 12;
+  const rows = await sql`
+    select e.*, r.period, r.status from admin_payroll_entries e
+    join admin_payroll_runs r on e.run_id = r.id
+    where e.tenant_slug = ${tenantSlug} and e.employee_id = ${employeeId}
+    order by r.period desc
+    limit ${limit}
+  `;
+  return rows as any[];
 }

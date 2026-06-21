@@ -15,6 +15,9 @@ import {
   RotateCcw,
   TrendingUp,
   ShieldCheck,
+  History,
+  FileText,
+  Eye,
 } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { getCurrencySymbol } from '@/lib/tenant/currency';
@@ -44,6 +47,18 @@ interface PayrollConfig {
   mealAllowance: number;
 }
 
+interface PayrollRun {
+  id: string;
+  period: string;
+  status: string;
+  totalGross: number;
+  totalDeductions: number;
+  totalNet: number;
+  anomalies: Array<{ type: string; severity: string; message: string; employeeName?: string }>;
+  compliancePassed: boolean;
+  createdAt: string;
+}
+
 const defaultConfig: PayrollConfig = {
   taxRate: 7.5,
   pensionRate: 8,
@@ -67,12 +82,20 @@ export default function PayrollPage() {
   });
   const [processing, setProcessing] = useState(false);
   const [processed, setProcessed] = useState(false);
+  const [payrollRuns, setPayrollRuns] = useState<PayrollRun[]>([]);
+  const [anomalies, setAnomalies] = useState<PayrollRun['anomalies']>([]);
+  const [complianceIssues, setComplianceIssues] = useState<string[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [activeTab, setActiveTab] = useState<'current' | 'history'>('current');
 
   const loadEmployees = useCallback(async () => {
     if (!tenantSlug) return;
     setLoading(true);
     try {
-      const fetched = await HRService.getEmployees(tenantSlug);
+      const [fetched, runs] = await Promise.all([
+        HRService.getEmployees(tenantSlug).catch(() => []),
+        HRService.listPayrollRuns(tenantSlug).catch(() => []),
+      ]);
       const payrollRows: EmployeePayroll[] = fetched.map((emp) => ({
         id: emp.id,
         name: emp.name,
@@ -88,6 +111,7 @@ export default function PayrollPage() {
         status: emp.status,
       }));
       setEmployees(payrollRows);
+      setPayrollRuns(runs);
     } catch (err) {
       console.error('Failed to load employees:', err);
     } finally {
@@ -138,6 +162,20 @@ export default function PayrollPage() {
     };
   }, [computed]);
 
+  // Department cost attribution
+  const deptCosts = useMemo(() => {
+    const map = new Map<string, { gross: number; net: number; count: number }>();
+    for (const emp of computed) {
+      const d = emp.department || 'Unassigned';
+      const cur = map.get(d) || { gross: 0, net: 0, count: 0 };
+      cur.gross += emp.baseSalary + emp.allowances + emp.bonus;
+      cur.net += emp.netPay;
+      cur.count += 1;
+      map.set(d, cur);
+    }
+    return Array.from(map.entries()).map(([name, data]) => ({ name, ...data }));
+  }, [computed]);
+
   const updateBonus = (id: string, value: number) => {
     setEmployees((prev) =>
       prev.map((e) => (e.id === id ? { ...e, bonus: value } : e))
@@ -146,11 +184,50 @@ export default function PayrollPage() {
   };
 
   const handleProcess = async () => {
+    if (!tenantSlug || computed.length === 0) return;
     setProcessing(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setProcessing(false);
-    setProcessed(true);
-    setTimeout(() => setProcessed(false), 4000);
+    setAnomalies([]);
+    setComplianceIssues([]);
+
+    try {
+      const entries = computed.map((emp) => ({
+        employeeId: emp.id,
+        employeeName: emp.name,
+        department: emp.department,
+        position: emp.position,
+        baseSalary: emp.baseSalary,
+        transportAllowance: emp.allowances, // simplified: all allowances lumped for now
+        housingAllowance: 0,
+        mealAllowance: 0,
+        bonus: emp.bonus,
+        tax: emp.tax,
+        pension: (emp.baseSalary + emp.allowances + emp.bonus) * (config.pensionRate / 100),
+        healthInsurance: (emp.baseSalary + emp.allowances + emp.bonus) * (config.healthInsuranceRate / 100),
+        otherDeductions: 0,
+        totalDeductions: emp.deductions,
+        grossPay: emp.baseSalary + emp.allowances + emp.bonus,
+        netPay: emp.netPay,
+      }));
+
+      const result = await HRService.createPayrollRun({
+        tenantSlug,
+        period: selectedMonth,
+        config,
+        entries,
+      });
+
+      setAnomalies(result.anomalies || []);
+      setComplianceIssues(result.compliance?.issues || []);
+      setProcessed(true);
+
+      // Refresh history
+      const runs = await HRService.listPayrollRuns(tenantSlug);
+      setPayrollRuns(runs);
+    } catch (err) {
+      console.error('Failed to process payroll:', err);
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const formatMoney = (n: number) => `${sym}${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
@@ -205,6 +282,99 @@ export default function PayrollPage() {
           </button>
         </div>
       </div>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="flex gap-6">
+          <button
+            onClick={() => setActiveTab('current')}
+            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'current'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Current Payroll
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'history'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <History className="w-4 h-4 inline mr-1" />
+            Payroll History ({payrollRuns.length})
+          </button>
+        </nav>
+      </div>
+
+      {activeTab === 'current' && (
+        <>
+          {/* Anomalies & Compliance */}
+          {(anomalies.length > 0 || complianceIssues.length > 0) && (
+            <div className="space-y-3">
+              {anomalies.filter((a) => a.severity === 'error').length > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-red-800 text-sm">
+                      <p className="font-semibold mb-1">Anomalies Detected</p>
+                      {anomalies
+                        .filter((a) => a.severity === 'error')
+                        .map((a, i) => (
+                          <p key={i} className="text-red-700">
+                            {a.employeeName ? `${a.employeeName}: ` : ''}{a.message}
+                          </p>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {anomalies.filter((a) => a.severity === 'warning').length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-amber-800 text-sm">
+                      <p className="font-semibold mb-1">Warnings</p>
+                      {anomalies
+                        .filter((a) => a.severity === 'warning')
+                        .map((a, i) => (
+                          <p key={i} className="text-amber-700">
+                            {a.employeeName ? `${a.employeeName}: ` : ''}{a.message}
+                          </p>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {complianceIssues.length > 0 && (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <ShieldCheck className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-orange-800 text-sm">
+                      <p className="font-semibold mb-1">Compliance Issues</p>
+                      {complianceIssues.map((issue, i) => (
+                        <p key={i} className="text-orange-700">{issue}</p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {anomalies.length === 0 && complianceIssues.length === 0 && processed && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-green-800 text-sm">
+                      <p className="font-semibold">All Checks Passed</p>
+                      <p className="text-green-700">No anomalies or compliance issues detected.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
       {showConfig && (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -429,6 +599,34 @@ export default function PayrollPage() {
         </div>
       </div>
 
+          {/* Department Cost Attribution */}
+          {deptCosts.length > 0 && (
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Department Cost Attribution</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {deptCosts.map((dept) => (
+                  <div key={dept.name} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-900">{dept.name}</span>
+                      <span className="text-xs text-gray-500">{dept.count} emp</span>
+                    </div>
+                    <p className="text-lg font-bold text-gray-900">{formatMoney(dept.net)}</p>
+                    <p className="text-xs text-gray-500">Net payroll cost</p>
+                    <div className="mt-2 w-full bg-gray-100 rounded-full h-1.5">
+                      <div
+                        className="bg-blue-500 h-1.5 rounded-full"
+                        style={{ width: `${totals.totalNet ? (dept.net / totals.totalNet) * 100 : 0}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {totals.totalNet ? ((dept.net / totals.totalNet) * 100).toFixed(1) : 0}% of total
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -486,6 +684,100 @@ export default function PayrollPage() {
           </div>
         </div>
       </div>
+        </>
+      )}
+
+      {activeTab === 'history' && (
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <History className="w-5 h-5 text-blue-600" />
+              Payroll Run History
+            </h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Period</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900">Gross</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900">Deductions</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900">Net Pay</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900">Status</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900">Anomalies</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900">Compliance</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Date</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {payrollRuns.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-500">
+                      No payroll runs yet. Process your first payroll to see history here.
+                    </td>
+                  </tr>
+                ) : (
+                  payrollRuns.map((run) => (
+                    <tr key={run.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{run.period}</td>
+                      <td className="px-4 py-3 text-sm text-right">{formatMoney(run.totalGross)}</td>
+                      <td className="px-4 py-3 text-sm text-right text-red-600">-{formatMoney(run.totalDeductions)}</td>
+                      <td className="px-4 py-3 text-sm text-right font-bold">{formatMoney(run.totalNet)}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          run.status === 'completed'
+                            ? 'bg-green-100 text-green-800'
+                            : run.status === 'processing'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {run.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {run.anomalies?.length > 0 ? (
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            run.anomalies.some((a) => a.severity === 'error')
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {run.anomalies.length} flagged
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Clean
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {run.compliancePassed ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Passed
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            Failed
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {new Date(run.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                          <Eye className="w-4 h-4 inline mr-1" />
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
