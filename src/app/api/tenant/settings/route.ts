@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   try {
     await ensureTenantTable(db.sql);
     const currency = await getTenantCurrency(tenantSlug, db.sql);
-    return NextResponse.json({ currency });
+    return NextResponse.json({ settings: [{ id: "currency", value: currency }] });
   } catch (error) {
     console.error("Failed to get tenant settings", error);
     return NextResponse.json({ error: "Failed to get settings" }, { status: 500 });
