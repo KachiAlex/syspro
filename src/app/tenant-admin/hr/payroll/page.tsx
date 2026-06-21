@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  DollarSign,
   Users,
   Settings,
   Calculator,
@@ -11,12 +10,10 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronUp,
-  Save,
   RotateCcw,
   TrendingUp,
   ShieldCheck,
   History,
-  FileText,
   Eye,
 } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
@@ -102,7 +99,7 @@ export default function PayrollPage() {
         email: emp.email,
         department: emp.department,
         position: emp.position,
-        baseSalary: emp.salary ?? 0,
+        baseSalary: Number(emp.salary) || 0,
         allowances: 0,
         bonus: 0,
         deductions: 0,
@@ -230,7 +227,10 @@ export default function PayrollPage() {
     }
   };
 
-  const formatMoney = (n: number) => `${sym}${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  const formatMoney = (n: number) => {
+    const val = typeof n === 'number' && !isNaN(n) ? n : 0;
+    return `${sym}${Math.round(val).toLocaleString('en-US')}`;
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -448,47 +448,47 @@ export default function PayrollPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-3 h-3 rounded-full bg-blue-500" />
-            <span className="text-sm font-medium text-gray-700">Base Salary</span>
-            <span className="ml-auto text-sm font-semibold">{formatMoney(totals.totalBase)}</span>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block" />
+              Base Salary
+            </span>
+            <span className="text-sm font-semibold text-gray-900">{formatMoney(totals.totalBase)}</span>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-2">
+          <div className="w-full bg-gray-100 rounded-full h-2 mt-3">
             <div
-              className="bg-blue-500 h-2 rounded-full"
-              style={{
-                width: `${totals.totalNet ? (totals.totalBase / totals.totalNet) * 100 : 0}%`,
-              }}
+              className="bg-blue-500 h-2 rounded-full transition-all"
+              style={{ width: `${totals.totalNet ? Math.min((totals.totalBase / totals.totalNet) * 100, 100) : 0}%` }}
             />
           </div>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span className="text-sm font-medium text-gray-700">Allowances</span>
-            <span className="ml-auto text-sm font-semibold">{formatMoney(totals.totalAllowances)}</span>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" />
+              Allowances
+            </span>
+            <span className="text-sm font-semibold text-gray-900">{formatMoney(totals.totalAllowances)}</span>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-2">
+          <div className="w-full bg-gray-100 rounded-full h-2 mt-3">
             <div
-              className="bg-green-500 h-2 rounded-full"
-              style={{
-                width: `${totals.totalNet ? (totals.totalAllowances / totals.totalNet) * 100 : 0}%`,
-              }}
+              className="bg-green-500 h-2 rounded-full transition-all"
+              style={{ width: `${totals.totalNet ? Math.min((totals.totalAllowances / totals.totalNet) * 100, 100) : 0}%` }}
             />
           </div>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-3 h-3 rounded-full bg-purple-500" />
-            <span className="text-sm font-medium text-gray-700">Bonuses</span>
-            <span className="ml-auto text-sm font-semibold">{formatMoney(totals.totalBonus)}</span>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block" />
+              Bonuses
+            </span>
+            <span className="text-sm font-semibold text-gray-900">{formatMoney(totals.totalBonus)}</span>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-2">
+          <div className="w-full bg-gray-100 rounded-full h-2 mt-3">
             <div
-              className="bg-purple-500 h-2 rounded-full"
-              style={{
-                width: `${totals.totalNet ? (totals.totalBonus / totals.totalNet) * 100 : 0}%`,
-              }}
+              className="bg-purple-500 h-2 rounded-full transition-all"
+              style={{ width: `${totals.totalNet ? Math.min((totals.totalBonus / totals.totalNet) * 100, 100) : 0}%` }}
             />
           </div>
         </div>
@@ -503,18 +503,18 @@ export default function PayrollPage() {
           <span className="text-xs text-gray-500">{totals.count} employees</span>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[900px]">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Employee</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Department</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900">Base Salary</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900">Allowances</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900">Bonus</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900">Tax</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900">Deductions</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900">Net Pay</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[180px]">Employee</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[120px]">Department</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[110px]">Base Salary</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[110px]">Allowances</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[90px]">Bonus</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[90px]">Tax</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[100px]">Deductions</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[110px]">Net Pay</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[80px]">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -533,28 +533,28 @@ export default function PayrollPage() {
               ) : (
                 computed.map((emp) => (
                   <tr key={emp.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div>
                         <p className="text-sm font-medium text-gray-900">{emp.name}</p>
                         <p className="text-xs text-gray-500">{emp.position}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{emp.department}</td>
-                    <td className="px-4 py-3 text-sm text-right font-medium">{formatMoney(emp.baseSalary)}</td>
-                    <td className="px-4 py-3 text-sm text-right text-green-600">+{formatMoney(emp.allowances)}</td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{emp.department}</td>
+                    <td className="px-4 py-3 text-sm text-right font-medium whitespace-nowrap">{formatMoney(emp.baseSalary)}</td>
+                    <td className="px-4 py-3 text-sm text-right text-green-600 whitespace-nowrap">{formatMoney(emp.allowances)}</td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
                       <input
                         type="number"
                         value={emp.bonus || ''}
                         onChange={(e) => updateBonus(emp.id, parseFloat(e.target.value) || 0)}
                         placeholder="0"
-                        className="w-24 px-2 py-1 text-sm text-right border border-gray-300 rounded-lg"
+                        className="w-20 px-2 py-1 text-sm text-right border border-gray-300 rounded-lg"
                       />
                     </td>
-                    <td className="px-4 py-3 text-sm text-right text-red-600">-{formatMoney(emp.tax)}</td>
-                    <td className="px-4 py-3 text-sm text-right text-red-600">-{formatMoney(emp.deductions)}</td>
-                    <td className="px-4 py-3 text-sm text-right font-bold text-gray-900">{formatMoney(emp.netPay)}</td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-3 text-sm text-right text-red-600 whitespace-nowrap">{formatMoney(emp.tax)}</td>
+                    <td className="px-4 py-3 text-sm text-right text-red-600 whitespace-nowrap">{formatMoney(emp.deductions)}</td>
+                    <td className="px-4 py-3 text-sm text-right font-bold text-gray-900 whitespace-nowrap">{formatMoney(emp.netPay)}</td>
+                    <td className="px-4 py-3 text-center whitespace-nowrap">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                           emp.status === 'Active'
@@ -573,26 +573,26 @@ export default function PayrollPage() {
             </tbody>
             <tfoot className="bg-gray-50 border-t border-gray-200">
               <tr>
-                <td className="px-4 py-3 text-sm font-semibold text-gray-900" colSpan={2}>
+                <td className="px-4 py-3 text-sm font-semibold text-gray-900 whitespace-nowrap" colSpan={2}>
                   Totals
                 </td>
-                <td className="px-4 py-3 text-sm text-right font-semibold">{formatMoney(totals.totalBase)}</td>
-                <td className="px-4 py-3 text-sm text-right font-semibold text-green-600">
-                  +{formatMoney(totals.totalAllowances)}
+                <td className="px-4 py-3 text-sm text-right font-semibold whitespace-nowrap">{formatMoney(totals.totalBase)}</td>
+                <td className="px-4 py-3 text-sm text-right font-semibold text-green-600 whitespace-nowrap">
+                  {formatMoney(totals.totalAllowances)}
                 </td>
-                <td className="px-4 py-3 text-sm text-right font-semibold text-purple-600">
-                  +{formatMoney(totals.totalBonus)}
+                <td className="px-4 py-3 text-sm text-right font-semibold text-purple-600 whitespace-nowrap">
+                  {formatMoney(totals.totalBonus)}
                 </td>
-                <td className="px-4 py-3 text-sm text-right font-semibold text-red-600">
-                  -{formatMoney(totals.totalTax)}
+                <td className="px-4 py-3 text-sm text-right font-semibold text-red-600 whitespace-nowrap">
+                  {formatMoney(totals.totalTax)}
                 </td>
-                <td className="px-4 py-3 text-sm text-right font-semibold text-red-600">
-                  -{formatMoney(totals.totalDeductions)}
+                <td className="px-4 py-3 text-sm text-right font-semibold text-red-600 whitespace-nowrap">
+                  {formatMoney(totals.totalDeductions)}
                 </td>
-                <td className="px-4 py-3 text-sm text-right font-bold text-gray-900">
+                <td className="px-4 py-3 text-sm text-right font-bold text-gray-900 whitespace-nowrap">
                   {formatMoney(totals.totalNet)}
                 </td>
-                <td />
+                <td className="px-4 py-3 whitespace-nowrap" />
               </tr>
             </tfoot>
           </table>
