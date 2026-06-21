@@ -15,6 +15,9 @@ import {
   ShieldCheck,
   History,
   Eye,
+  Pencil,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { getCurrencySymbol } from '@/lib/tenant/currency';
@@ -29,10 +32,12 @@ interface EmployeePayroll {
   baseSalary: number;
   allowances: number;
   bonus: number;
+  customDeduction: number;
   deductions: number;
   tax: number;
   netPay: number;
   status: string;
+  adjustmentReason: string;
 }
 
 interface PayrollConfig {
@@ -82,8 +87,10 @@ export default function PayrollPage() {
   const [payrollRuns, setPayrollRuns] = useState<PayrollRun[]>([]);
   const [anomalies, setAnomalies] = useState<PayrollRun['anomalies']>([]);
   const [complianceIssues, setComplianceIssues] = useState<string[]>([]);
-  const [showHistory, setShowHistory] = useState(false);
   const [activeTab, setActiveTab] = useState<'current' | 'history'>('current');
+  const [editMode, setEditMode] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 25;
 
   const loadEmployees = useCallback(async () => {
     if (!tenantSlug) return;
@@ -102,10 +109,12 @@ export default function PayrollPage() {
         baseSalary: Number(emp.salary) || 0,
         allowances: 0,
         bonus: 0,
+        customDeduction: 0,
         deductions: 0,
         tax: 0,
         netPay: 0,
         status: emp.status,
+        adjustmentReason: '',
       }));
       setEmployees(payrollRows);
       setPayrollRuns(runs);
@@ -129,7 +138,8 @@ export default function PayrollPage() {
         const tax = (gross * cfg.taxRate) / 100;
         const pension = (gross * cfg.pensionRate) / 100;
         const health = (gross * cfg.healthInsuranceRate) / 100;
-        const deductions = tax + pension + health;
+        const statutoryDeductions = tax + pension + health;
+        const deductions = statutoryDeductions + emp.customDeduction;
         const netPay = gross - deductions;
         return { ...emp, allowances, tax, deductions, netPay };
       });
@@ -144,6 +154,7 @@ export default function PayrollPage() {
     const totalAllowances = computed.reduce((s, e) => s + e.allowances, 0);
     const totalBonus = computed.reduce((s, e) => s + e.bonus, 0);
     const totalTax = computed.reduce((s, e) => s + e.tax, 0);
+    const totalCustomDeductions = computed.reduce((s, e) => s + e.customDeduction, 0);
     const totalDeductions = computed.reduce((s, e) => s + e.deductions, 0);
     const totalNet = computed.reduce((s, e) => s + e.netPay, 0);
     const avgSalary = computed.length ? totalBase / computed.length : 0;
@@ -152,12 +163,20 @@ export default function PayrollPage() {
       totalAllowances,
       totalBonus,
       totalTax,
+      totalCustomDeductions,
       totalDeductions,
       totalNet,
       avgSalary,
       count: computed.length,
     };
   }, [computed]);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(computed.length / pageSize));
+  const paginated = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return computed.slice(start, start + pageSize);
+  }, [computed, page]);
 
   // Department cost attribution
   const deptCosts = useMemo(() => {
@@ -180,6 +199,26 @@ export default function PayrollPage() {
     setProcessed(false);
   };
 
+  const updateBaseSalary = (id: string, value: number) => {
+    setEmployees((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, baseSalary: value } : e))
+    );
+    setProcessed(false);
+  };
+
+  const updateCustomDeduction = (id: string, value: number) => {
+    setEmployees((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, customDeduction: value } : e))
+    );
+    setProcessed(false);
+  };
+
+  const updateAdjustmentReason = (id: string, value: string) => {
+    setEmployees((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, adjustmentReason: value } : e))
+    );
+  };
+
   const handleProcess = async () => {
     if (!tenantSlug || computed.length === 0) return;
     setProcessing(true);
@@ -193,14 +232,14 @@ export default function PayrollPage() {
         department: emp.department,
         position: emp.position,
         baseSalary: emp.baseSalary,
-        transportAllowance: emp.allowances, // simplified: all allowances lumped for now
+        transportAllowance: emp.allowances,
         housingAllowance: 0,
         mealAllowance: 0,
         bonus: emp.bonus,
         tax: emp.tax,
         pension: (emp.baseSalary + emp.allowances + emp.bonus) * (config.pensionRate / 100),
         healthInsurance: (emp.baseSalary + emp.allowances + emp.bonus) * (config.healthInsuranceRate / 100),
-        otherDeductions: 0,
+        otherDeductions: emp.customDeduction,
         totalDeductions: emp.deductions,
         grossPay: emp.baseSalary + emp.allowances + emp.bonus,
         netPay: emp.netPay,
@@ -253,6 +292,17 @@ export default function PayrollPage() {
             <Settings className="w-4 h-4" />
             Configuration
             {showConfig ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={() => setEditMode((s) => !s)}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors border ${
+              editMode
+                ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            <Pencil className="w-4 h-4" />
+            {editMode ? 'Editing...' : 'Edit Payroll'}
           </button>
           <button
             onClick={handleProcess}
@@ -446,7 +496,7 @@ export default function PayrollPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 p-5">
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -492,6 +542,21 @@ export default function PayrollPage() {
             />
           </div>
         </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-5">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block" />
+              Custom Deductions
+            </span>
+            <span className="text-sm font-semibold text-gray-900">{formatMoney(totals.totalCustomDeductions)}</span>
+          </div>
+          <div className="w-full bg-gray-100 rounded-full h-2 mt-3">
+            <div
+              className="bg-orange-500 h-2 rounded-full transition-all"
+              style={{ width: `${totals.totalNet ? Math.min((totals.totalCustomDeductions / totals.totalNet) * 100, 100) : 0}%` }}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -500,19 +565,20 @@ export default function PayrollPage() {
             <Users className="w-5 h-5 text-blue-600" />
             Employee Payroll
           </h3>
-          <span className="text-xs text-gray-500">{totals.count} employees</span>
+          <span className="text-xs text-gray-500">{totals.count} employees | Page {page} of {totalPages}</span>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px]">
+          <table className="w-full min-w-[1000px]">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[180px]">Employee</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[120px]">Department</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[110px]">Base Salary</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[110px]">Allowances</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[100px]">Allowances</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[90px]">Bonus</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[90px]">Tax</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[100px]">Deductions</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[90px]">Custom Ded.</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[80px]">Tax</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[90px]">Deductions</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[110px]">Net Pay</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900 whitespace-nowrap min-w-[80px]">Status</th>
               </tr>
@@ -520,27 +586,41 @@ export default function PayrollPage() {
             <tbody className="divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-500">
+                  <td colSpan={10} className="px-4 py-8 text-center text-sm text-gray-500">
                     Loading employees...
                   </td>
                 </tr>
-              ) : computed.length === 0 ? (
+              ) : paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-500">
+                  <td colSpan={10} className="px-4 py-8 text-center text-sm text-gray-500">
                     No employees found. Add employees in the Staff tab first.
                   </td>
                 </tr>
               ) : (
-                computed.map((emp) => (
+                paginated.map((emp) => (
                   <tr key={emp.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div>
                         <p className="text-sm font-medium text-gray-900">{emp.name}</p>
                         <p className="text-xs text-gray-500">{emp.position}</p>
+                        {emp.adjustmentReason && (
+                          <p className="text-xs text-amber-600 mt-0.5">{emp.adjustmentReason}</p>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{emp.department}</td>
-                    <td className="px-4 py-3 text-sm text-right font-medium whitespace-nowrap">{formatMoney(emp.baseSalary)}</td>
+                    <td className="px-4 py-3 text-sm text-right whitespace-nowrap">
+                      {editMode ? (
+                        <input
+                          type="number"
+                          value={emp.baseSalary || ''}
+                          onChange={(e) => updateBaseSalary(emp.id, parseFloat(e.target.value) || 0)}
+                          className="w-24 px-2 py-1 text-sm text-right border border-gray-300 rounded-lg"
+                        />
+                      ) : (
+                        <span className="font-medium">{formatMoney(emp.baseSalary)}</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-sm text-right text-green-600 whitespace-nowrap">{formatMoney(emp.allowances)}</td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
                       <input
@@ -550,6 +630,28 @@ export default function PayrollPage() {
                         placeholder="0"
                         className="w-20 px-2 py-1 text-sm text-right border border-gray-300 rounded-lg"
                       />
+                    </td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      {editMode ? (
+                        <div className="space-y-1">
+                          <input
+                            type="number"
+                            value={emp.customDeduction || ''}
+                            onChange={(e) => updateCustomDeduction(emp.id, parseFloat(e.target.value) || 0)}
+                            placeholder="0"
+                            className="w-20 px-2 py-1 text-sm text-right border border-red-300 rounded-lg"
+                          />
+                          <input
+                            type="text"
+                            value={emp.adjustmentReason}
+                            onChange={(e) => updateAdjustmentReason(emp.id, e.target.value)}
+                            placeholder="Reason"
+                            className="w-20 px-2 py-0.5 text-xs text-right border border-gray-200 rounded"
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-sm text-red-600">{emp.customDeduction > 0 ? formatMoney(emp.customDeduction) : '-'}</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-right text-red-600 whitespace-nowrap">{formatMoney(emp.tax)}</td>
                     <td className="px-4 py-3 text-sm text-right text-red-600 whitespace-nowrap">{formatMoney(emp.deductions)}</td>
@@ -584,6 +686,9 @@ export default function PayrollPage() {
                   {formatMoney(totals.totalBonus)}
                 </td>
                 <td className="px-4 py-3 text-sm text-right font-semibold text-red-600 whitespace-nowrap">
+                  {formatMoney(totals.totalCustomDeductions)}
+                </td>
+                <td className="px-4 py-3 text-sm text-right font-semibold text-red-600 whitespace-nowrap">
                   {formatMoney(totals.totalTax)}
                 </td>
                 <td className="px-4 py-3 text-sm text-right font-semibold text-red-600 whitespace-nowrap">
@@ -597,6 +702,35 @@ export default function PayrollPage() {
             </tfoot>
           </table>
         </div>
+        {/* Pagination */}
+        {computed.length > pageSize && (
+          <div className="px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+            <p className="text-xs text-gray-500">
+              Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, computed.length)} of {computed.length} employees
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </button>
+              <span className="text-sm text-gray-600 px-2">
+                {page} / {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
           {/* Department Cost Attribution */}
