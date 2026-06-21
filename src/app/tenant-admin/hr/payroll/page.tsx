@@ -3,9 +3,11 @@
 import React from 'react';
 import { DollarSign, TrendingUp, Users } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { getCurrencySymbol } from '@/lib/tenant/currency';
 
 export default function PayrollPage() {
-  const { tenantSlug } = useTenantContext();
+  const { tenantSlug, currency } = useTenantContext();
+  const symbol = getCurrencySymbol(currency);
 
   return (
     <div className="p-6 space-y-6">
@@ -14,22 +16,22 @@ export default function PayrollPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-sm font-medium text-gray-600 mb-2">Monthly Payroll</p>
-          <p className="text-3xl font-bold text-gray-900">$0</p>
+          <p className="text-3xl font-bold text-gray-900">{symbol}0</p>
           <p className="text-xs text-gray-500 mt-2">Current period</p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-sm font-medium text-gray-600 mb-2">Annual Payroll</p>
-          <p className="text-3xl font-bold text-gray-900">$0</p>
+          <p className="text-3xl font-bold text-gray-900">{symbol}0</p>
           <p className="text-xs text-gray-500 mt-2">Projected</p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-sm font-medium text-gray-600 mb-2">Average Salary</p>
-          <p className="text-3xl font-bold text-gray-900">$0</p>
+          <p className="text-3xl font-bold text-gray-900">{symbol}0</p>
           <p className="text-xs text-gray-500 mt-2">Per employee</p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-sm font-medium text-gray-600 mb-2">Total Benefits</p>
-          <p className="text-3xl font-bold text-gray-900">$0</p>
+          <p className="text-3xl font-bold text-gray-900">{symbol}0</p>
           <p className="text-xs text-gray-500 mt-2">Monthly allocation</p>
         </div>
       </div>
@@ -38,10 +40,10 @@ export default function PayrollPage() {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Payroll Breakdown</h3>
         <div className="space-y-3">
           {[
-            { label: 'Base Salary', amount: '$0', percentage: 0 },
-            { label: 'Allowances', amount: '$0', percentage: 0 },
-            { label: 'Bonuses', amount: '$0', percentage: 0 },
-            { label: 'Other', amount: '$0', percentage: 0 },
+            { label: 'Base Salary', amount: `${symbol}0`, percentage: 0 },
+            { label: 'Allowances', amount: `${symbol}0`, percentage: 0 },
+            { label: 'Bonuses', amount: `${symbol}0`, percentage: 0 },
+            { label: 'Other', amount: `${symbol}0`, percentage: 0 },
           ].map((item, idx) => (
             <div key={idx} className="flex items-center justify-between">
               <div className="flex-1">

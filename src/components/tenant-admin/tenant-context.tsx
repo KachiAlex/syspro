@@ -8,6 +8,7 @@ type TenantContextValue = {
   regionName: string;
   branchId: string;
   branchName: string;
+  currency: string;
 };
 
 const TenantContext = createContext<TenantContextValue | undefined>(undefined);
@@ -25,6 +26,7 @@ export function TenantContextProvider({ value, children }: TenantContextProvider
       regionName: value.regionName || "Primary Region",
       branchId: value.branchId,
       branchName: value.branchName || "Headquarters",
+      currency: value.currency || "USD",
     } satisfies TenantContextValue;
   }, [value]);
 

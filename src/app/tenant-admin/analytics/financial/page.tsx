@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { DollarSign, TrendingUp, TrendingDown, Download, Calendar, Filter, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { getCurrencySymbol } from '@/lib/tenant/currency';
 
 interface FinancialMetric {
   title: string;
@@ -22,46 +23,47 @@ interface FinancialReport {
   size: string;
 }
 
-const financialMetrics: FinancialMetric[] = [
-  {
-    title: 'Total Revenue',
-    value: '$425,000',
-    change: '+12.5%',
-    trend: 'up',
-    icon: DollarSign
-  },
-  {
-    title: 'Total Expenses',
-    value: '$326,000',
-    change: '+8.2%',
-    trend: 'up',
-    icon: TrendingUp
-  },
-  {
-    title: 'Net Profit',
-    value: '$99,000',
-    change: '+23.4%',
-    trend: 'up',
-    icon: TrendingUp
-  },
-  {
-    title: 'Profit Margin',
-    value: '23.4%',
-    change: '+2.1%',
-    trend: 'up',
-    icon: TrendingUp
-  }
-];
-
 const financialReports: FinancialReport[] = [
   { id: '1', name: 'Monthly Financial Summary', type: 'Revenue', date: '2026-04-03', status: 'Completed', size: '2.4 MB' },
   { id: '2', name: 'Q1 Profit & Loss', type: 'P&L', date: '2026-04-01', status: 'Completed', size: '1.8 MB' },
   { id: '3', name: 'Cash Flow Analysis', type: 'Cash Flow', date: '2026-03-31', status: 'Completed', size: '1.2 MB' },
-  { id: '4', name: 'Budget vs Actual', type: 'Budget', date: '2026-03-30', status: 'Processing', size: '3.1 MB' },
+  { id: '4', name: 'Budget vs Actual', type: 'Budget', date: '2026-03-30', status: 'Processing', size: '3.1 MB' }
 ];
 
 export default function FinancialAnalyticsPage() {
-  const { tenantSlug } = useTenantContext();
+  const { tenantSlug, currency } = useTenantContext();
+  const sym = getCurrencySymbol(currency);
+
+  const financialMetrics: FinancialMetric[] = [
+    {
+      title: 'Total Revenue',
+      value: `${sym}425,000`,
+      change: '+12.5%',
+      trend: 'up',
+      icon: DollarSign
+    },
+    {
+      title: 'Total Expenses',
+      value: `${sym}326,000`,
+      change: '+8.2%',
+      trend: 'up',
+      icon: TrendingUp
+    },
+    {
+      title: 'Net Profit',
+      value: `${sym}99,000`,
+      change: '+23.4%',
+      trend: 'up',
+      icon: TrendingUp
+    },
+    {
+      title: 'Profit Margin',
+      value: '23.4%',
+      change: '+2.1%',
+      trend: 'up',
+      icon: TrendingUp
+    }
+  ];
   const [selectedPeriod, setSelectedPeriod] = useState('This Month');
   const [selectedReportType, setSelectedReportType] = useState('All');
 
@@ -144,20 +146,20 @@ export default function FinancialAnalyticsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Product Sales</span>
-              <span className="text-sm font-semibold text-gray-900">$285,000</span>
+              <span className="text-sm font-semibold text-gray-900">{sym}285,000</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Service Revenue</span>
-              <span className="text-sm font-semibold text-gray-900">$95,000</span>
+              <span className="text-sm font-semibold text-gray-900">{sym}95,000</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Subscription Revenue</span>
-              <span className="text-sm font-semibold text-gray-900">$45,000</span>
+              <span className="text-sm font-semibold text-gray-900">{sym}45,000</span>
             </div>
             <div className="pt-4 border-t border-gray-200">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-900">Total Revenue</span>
-                <span className="text-sm font-bold text-green-600">$425,000</span>
+                <span className="text-sm font-bold text-green-600">{sym}425,000</span>
               </div>
             </div>
           </div>
@@ -168,24 +170,24 @@ export default function FinancialAnalyticsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Salaries & Wages</span>
-              <span className="text-sm font-semibold text-gray-900">$185,000</span>
+              <span className="text-sm font-semibold text-gray-900">{sym}185,000</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Operating Expenses</span>
-              <span className="text-sm font-semibold text-gray-900">$78,000</span>
+              <span className="text-sm font-semibold text-gray-900">{sym}78,000</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Marketing & Sales</span>
-              <span className="text-sm font-semibold text-gray-900">$42,000</span>
+              <span className="text-sm font-semibold text-gray-900">{sym}42,000</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Other Expenses</span>
-              <span className="text-sm font-semibold text-gray-900">$21,000</span>
+              <span className="text-sm font-semibold text-gray-900">{sym}21,000</span>
             </div>
             <div className="pt-4 border-t border-gray-200">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-900">Total Expenses</span>
-                <span className="text-sm font-bold text-red-600">$326,000</span>
+                <span className="text-sm font-bold text-red-600">{sym}326,000</span>
               </div>
             </div>
           </div>
