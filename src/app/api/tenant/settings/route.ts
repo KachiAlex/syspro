@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getTenantCurrency, setTenantCurrency } from "@/lib/tenant/currency";
+import { getTenantSettings, setTenantSettings } from "@/lib/tenant/currency";
 import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 import { db } from "@/lib/sql-client";
 
@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
   }
   try {
     await ensureTenantTable(db.sql);
-    const currency = await getTenantCurrency(tenantSlug, db.sql);
-    return NextResponse.json({ settings: [{ id: "currency", value: currency }] });
+    const settings = await getTenantSettings(tenantSlug, db.sql);
+    return NextResponse.json({ settings });
   } catch (error) {
     console.error("Failed to get tenant settings", error);
     return NextResponse.json({ error: "Failed to get settings" }, { status: 500 });
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   }
   try {
     await ensureTenantTable(db.sql);
-    await setTenantCurrency(parsed.data.tenantSlug, parsed.data.currency, db.sql);
+    await setTenantSettings(parsed.data.tenantSlug, [{ id: "currency", value: parsed.data.currency }], db.sql);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to update tenant settings", error);
@@ -62,10 +62,8 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const currencySetting = settings.find((s: any) => s.id === "currency");
-    if (currencySetting && typeof currencySetting.value === "string") {
-      await setTenantCurrency(tenantSlug, currencySetting.value, db.sql);
-    }
+    const cleanSettings = settings.map((s: any) => ({ id: s.id, value: s.value }));
+    await setTenantSettings(tenantSlug, cleanSettings, db.sql);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to update tenant settings:", error);

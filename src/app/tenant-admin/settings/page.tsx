@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Settings, Save, RotateCcw, Download, Upload, Bell, Shield, Database, Globe, Mail, Phone, MapPin, Building, Users, Calendar, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Save, RotateCcw, Download, Bell, Shield, Database, Building, Users, CheckCircle, AlertCircle } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 
 interface Setting {
@@ -195,16 +194,18 @@ export default function SettingsPage() {
   const [selectedCategory, setSelectedCategory] = useState('General');
   const [hasChanges, setHasChanges] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const categories = [...new Set(settings.map(s => s.category))];
 
   const filteredSettings = settingsState.filter(setting => setting.category === selectedCategory);
 
   const updateSetting = (id: string, value: any) => {
-    setSettingsState(prev => prev.map(setting => 
+    setSettingsState(prev => prev.map(setting =>
       setting.id === id ? { ...setting, value } : setting
     ));
     setHasChanges(true);
+    setSaveSuccess(false);
   };
 
   const loadSettings = async () => {
@@ -246,6 +247,8 @@ export default function SettingsPage() {
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(payload.error || 'Failed to save settings');
       setHasChanges(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
       console.error('Failed to save settings:', err);
       alert(err instanceof Error ? err.message : 'Failed to save settings');
@@ -349,7 +352,7 @@ export default function SettingsPage() {
       case 'Security': return <Shield className="w-5 h-5" />;
       case 'Notifications': return <Bell className="w-5 h-5" />;
       case 'System': return <Database className="w-5 h-5" />;
-      default: return <Settings className="w-5 h-5" />;
+      default: return <Building className="w-5 h-5" />;
     }
   };
 
@@ -402,11 +405,24 @@ export default function SettingsPage() {
           </button>
           <button
             onClick={saveSettings}
-            disabled={!hasChanges}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!hasChanges || loading}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
+              saveSuccess
+                ? 'bg-green-600 hover:bg-green-700'
+                : 'bg-blue-600 hover:bg-blue-700'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            <Save className="w-4 h-4" />
-            Save Changes
+            {saveSuccess ? (
+              <>
+                <CheckCircle className="w-4 h-4" />
+                Saved
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Save Changes
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -437,8 +453,8 @@ export default function SettingsPage() {
                         )}
                       </div>
                     ) : (
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Settings className="w-6 h-6 text-blue-600" />
+                      <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center">
+                        <span className="text-xs font-semibold text-blue-600 uppercase">{setting.type.slice(0, 3)}</span>
                       </div>
                     )}
                     <p className="text-xs text-gray-500 mt-2 capitalize">{setting.type}</p>

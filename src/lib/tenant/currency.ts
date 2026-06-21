@@ -23,6 +23,41 @@ export async function setTenantCurrency(tenantSlug: string, currency: string, sq
   `;
 }
 
+export async function getTenantSettings(tenantSlug: string, sql: SqlClient = SQL): Promise<Array<{ id: string; value: any }>> {
+  try {
+    const rows = await sql`
+      select settings
+      from tenants
+      where slug = ${tenantSlug}
+      limit 1
+    `;
+    const arr = rows as any[];
+    const settingsObj = arr[0]?.settings;
+    if (!settingsObj || typeof settingsObj !== 'object') return [];
+    return Object.entries(settingsObj).map(([id, value]) => ({ id, value }));
+  } catch {
+    return [];
+  }
+}
+
+export async function setTenantSettings(
+  tenantSlug: string,
+  settingsArray: Array<{ id: string; value: any }>,
+  sql: SqlClient = SQL
+): Promise<void> {
+  const settingsObj: Record<string, any> = {};
+  for (const s of settingsArray) {
+    settingsObj[s.id] = s.value;
+  }
+  const json = JSON.stringify(settingsObj);
+  await sql`
+    insert into tenants (name, slug, settings, seats)
+    values (${tenantSlug}::text, ${tenantSlug}::text, ${json}::jsonb, 1)
+    on conflict (slug) do update
+    set settings = ${json}::jsonb
+  `;
+}
+
 const CURRENCY_SYMBOLS: Record<string, string> = {
   USD: '$',
   EUR: '€',
