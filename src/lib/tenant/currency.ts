@@ -18,7 +18,7 @@ export async function getTenantCurrency(tenantSlug: string, sql: SqlClient = SQL
 export async function setTenantCurrency(tenantSlug: string, currency: string, sql: SqlClient = SQL): Promise<void> {
   await sql`
     update tenants
-    set settings = coalesce(settings, '{}'::jsonb) || jsonb_build_object('currency', ${currency})
+    set settings = coalesce(settings, '{}'::jsonb) || jsonb_build_object('currency', ${currency}::text)
     where slug = ${tenantSlug}
   `;
 }

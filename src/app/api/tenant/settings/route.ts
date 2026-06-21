@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getTenantCurrency, setTenantCurrency } from "@/lib/tenant/currency";
 import { ensureTenantTable } from "@/lib/tenant/tenant-table";
-import { sql as SQL } from "@/lib/sql-client";
+import { db } from "@/lib/sql-client";
 
 const updateSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "tenantSlug required" }, { status: 400 });
   }
   try {
-    await ensureTenantTable(SQL);
-    const currency = await getTenantCurrency(tenantSlug);
+    await ensureTenantTable(db.sql);
+    const currency = await getTenantCurrency(tenantSlug, db.sql);
     return NextResponse.json({ currency });
   } catch (error) {
     console.error("Failed to get tenant settings", error);
@@ -35,11 +35,40 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
   try {
-    await ensureTenantTable(SQL);
-    await setTenantCurrency(parsed.data.tenantSlug, parsed.data.currency);
+    await ensureTenantTable(db.sql);
+    await setTenantCurrency(parsed.data.tenantSlug, parsed.data.currency, db.sql);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to update tenant settings", error);
     return NextResponse.json({ error: "Failed to update settings" }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  const body = await request.json().catch(() => null);
+  if (!body) {
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  }
+  const { tenantSlug, settings } = body as { tenantSlug?: string; settings?: Array<{ id: string; value: any }> };
+  if (!tenantSlug || !Array.isArray(settings)) {
+    return NextResponse.json({ error: "tenantSlug and settings array required" }, { status: 400 });
+  }
+
+  try {
+    await ensureTenantTable(db.sql);
+  } catch (tableErr) {
+    console.error("ensureTenantTable failed:", tableErr);
+    return NextResponse.json({ error: "DB schema init failed", detail: (tableErr as Error).message }, { status: 500 });
+  }
+
+  try {
+    const currencySetting = settings.find((s: any) => s.id === "currency");
+    if (currencySetting && typeof currencySetting.value === "string") {
+      await setTenantCurrency(tenantSlug, currencySetting.value, db.sql);
+    }
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Failed to update tenant settings:", error);
+    return NextResponse.json({ error: "Failed to update settings", detail: (error as Error).message }, { status: 500 });
   }
 }
