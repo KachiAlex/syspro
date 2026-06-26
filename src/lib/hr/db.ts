@@ -125,6 +125,80 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
   `;
   await sql`create index if not exists idx_admin_payroll_entries_run on admin_payroll_entries(run_id)`;
   await sql`create index if not exists idx_admin_payroll_entries_emp on admin_payroll_entries(tenant_slug, employee_id)`;
+
+  // Payroll adjustments (audit trail for increments/deductions)
+  await sql`
+    create table if not exists admin_payroll_adjustments (
+      id text primary key,
+      tenant_slug text not null,
+      employee_id text not null,
+      type text not null check (type in ('increment','deduction')),
+      category text not null check (category in ('bonus','promotion','fine','loan_repayment','other')),
+      amount numeric(15,2) not null,
+      reason text,
+      effective_period text not null,
+      status text default 'pending' check (status in ('pending','applied','rejected')),
+      approved_by text,
+      created_at timestamptz default now(),
+      applied_at timestamptz
+    )
+  `;
+  await sql`create index if not exists idx_admin_payroll_adjustments_tenant on admin_payroll_adjustments(tenant_slug)`;
+  await sql`create index if not exists idx_admin_payroll_adjustments_emp_period on admin_payroll_adjustments(tenant_slug, employee_id, effective_period)`;
+  await sql`create index if not exists idx_admin_payroll_adjustments_status on admin_payroll_adjustments(status)`;
+
+  // Staff reports
+  await sql`
+    create table if not exists admin_staff_reports (
+      id text primary key,
+      tenant_slug text not null,
+      employee_id text not null,
+      title text,
+      report_type text not null check (report_type in ('daily','weekly','monthly','quarterly')),
+      report_date text not null,
+      raw_transcript text,
+      refined_text text,
+      objectives text not null,
+      achievements text not null,
+      challenges text,
+      next_steps text,
+      additional_notes text,
+      meetings text,
+      blockers text,
+      activities text,
+      head_of_department text not null,
+      team_members text[] default '{}',
+      submitted_at timestamptz default now(),
+      updated_at timestamptz default now(),
+      status text default 'pending' check (status in ('pending','under_review','approved','needs_edit')),
+      appraisal jsonb default null
+    )
+  `;
+  await sql`create index if not exists idx_admin_staff_reports_tenant on admin_staff_reports(tenant_slug)`;
+  await sql`create index if not exists idx_admin_staff_reports_emp on admin_staff_reports(tenant_slug, employee_id)`;
+  await sql`create index if not exists idx_admin_staff_reports_status on admin_staff_reports(status)`;
+  await sql`create index if not exists idx_admin_staff_reports_hod on admin_staff_reports(tenant_slug, head_of_department)`;
+
+  // Staff tasks assigned by HODs
+  await sql`
+    create table if not exists admin_staff_tasks (
+      id text primary key,
+      tenant_slug text not null,
+      employee_id text not null,
+      title text not null,
+      description text,
+      frequency text not null check (frequency in ('daily','weekly','one-time')),
+      due_date text not null,
+      status text default 'pending' check (status in ('pending','in_progress','completed','overdue')),
+      assigned_by text not null,
+      created_at timestamptz default now(),
+      updated_at timestamptz default now()
+    )
+  `;
+  await sql`create index if not exists idx_admin_staff_tasks_tenant on admin_staff_tasks(tenant_slug)`;
+  await sql`create index if not exists idx_admin_staff_tasks_emp on admin_staff_tasks(tenant_slug, employee_id)`;
+  await sql`create index if not exists idx_admin_staff_tasks_status on admin_staff_tasks(status)`;
+  await sql`create index if not exists idx_admin_staff_tasks_due on admin_staff_tasks(tenant_slug, due_date)`;
 }
 
 // ============================================================================
@@ -1038,4 +1112,387 @@ export async function getPayrollHistoryForEmployee(tenantSlug: string, employeeI
     limit ${limit}
   `;
   return rows as any[];
+}
+
+// ============================================================================
+// PAYROLL ADJUSTMENTS
+// ============================================================================
+
+export interface PayrollAdjustmentRecord {
+  id: string;
+  tenantSlug: string;
+  employeeId: string;
+  type: 'increment' | 'deduction';
+  category: 'bonus' | 'promotion' | 'fine' | 'loan_repayment' | 'other';
+  amount: number;
+  reason: string | null;
+  effectivePeriod: string;
+  status: 'pending' | 'applied' | 'rejected';
+  approvedBy: string | null;
+  createdAt: string;
+  appliedAt: string | null;
+}
+
+function normalizeAdjustmentRow(row: any): PayrollAdjustmentRecord {
+  return {
+    id: row.id,
+    tenantSlug: row.tenant_slug,
+    employeeId: row.employee_id,
+    type: row.type,
+    category: row.category,
+    amount: Number(row.amount) || 0,
+    reason: row.reason ?? null,
+    effectivePeriod: row.effective_period,
+    status: row.status,
+    approvedBy: row.approved_by ?? null,
+    createdAt: row.created_at,
+    appliedAt: row.applied_at ?? null,
+  };
+}
+
+export async function createPayrollAdjustment(params: {
+  tenantSlug: string;
+  employeeId: string;
+  type: 'increment' | 'deduction';
+  category: 'bonus' | 'promotion' | 'fine' | 'loan_repayment' | 'other';
+  amount: number;
+  reason?: string | null;
+  effectivePeriod: string;
+  approvedBy?: string | null;
+}) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const id = randomUUID();
+  await sql`
+    insert into admin_payroll_adjustments (
+      id, tenant_slug, employee_id, type, category, amount, reason,
+      effective_period, status, approved_by
+    ) values (
+      ${id}, ${params.tenantSlug}, ${params.employeeId}, ${params.type},
+      ${params.category}, ${params.amount}, ${params.reason ?? null},
+      ${params.effectivePeriod}, 'pending', ${params.approvedBy ?? null}
+    )
+  `;
+  return { id };
+}
+
+export async function listPayrollAdjustments(
+  tenantSlug: string,
+  opts?: {
+    employeeId?: string;
+    period?: string;
+    status?: 'pending' | 'applied' | 'rejected';
+    limit?: number;
+    offset?: number;
+  }
+) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const limit = opts?.limit ?? 50;
+  const offset = opts?.offset ?? 0;
+
+  const rows = await sql`
+    select * from admin_payroll_adjustments
+    where tenant_slug = ${tenantSlug}
+      ${opts?.employeeId ? sql`and employee_id = ${opts.employeeId}` : sql``}
+      ${opts?.period ? sql`and effective_period = ${opts.period}` : sql``}
+      ${opts?.status ? sql`and status = ${opts.status}` : sql``}
+    order by created_at desc
+    limit ${limit} offset ${offset}
+  `;
+  return (rows as any[]).map(normalizeAdjustmentRow);
+}
+
+export async function getPayrollAdjustment(tenantSlug: string, id: string) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const rows = await sql`
+    select * from admin_payroll_adjustments
+    where id = ${id} and tenant_slug = ${tenantSlug}
+    limit 1
+  `;
+  const arr = rows as any[];
+  return arr.length ? normalizeAdjustmentRow(arr[0]) : null;
+}
+
+export async function updatePayrollAdjustmentStatus(
+  tenantSlug: string,
+  id: string,
+  status: 'applied' | 'rejected',
+  approvedBy?: string | null
+) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  await sql`
+    update admin_payroll_adjustments
+    set status = ${status},
+        approved_by = ${approvedBy ?? null},
+        applied_at = ${status === 'applied' ? new Date().toISOString() : null}
+    where id = ${id} and tenant_slug = ${tenantSlug}
+  `;
+}
+
+export async function deletePayrollAdjustment(tenantSlug: string, id: string) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  await sql`
+    delete from admin_payroll_adjustments
+    where id = ${id} and tenant_slug = ${tenantSlug} and status = 'pending'
+  `;
+}
+
+export async function applyPendingAdjustmentsToPayroll(
+  tenantSlug: string,
+  period: string,
+  approvedBy?: string | null
+) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  await sql`
+    update admin_payroll_adjustments
+    set status = 'applied',
+        approved_by = ${approvedBy ?? null},
+        applied_at = now()
+    where tenant_slug = ${tenantSlug}
+      and effective_period = ${period}
+      and status = 'pending'
+  `;
+}
+
+// ============================================================================
+// STAFF REPORTS
+// ============================================================================
+
+function normalizeStaffReportRow(row: any) {
+  return {
+    id: row.id,
+    tenantSlug: row.tenant_slug,
+    employeeId: row.employee_id,
+    title: row.title ?? '',
+    reportType: row.report_type,
+    reportDate: row.report_date,
+    rawTranscript: row.raw_transcript ?? '',
+    refinedText: row.refined_text ?? '',
+    objectives: row.objectives ?? '',
+    achievements: row.achievements ?? '',
+    challenges: row.challenges ?? '',
+    nextSteps: row.next_steps ?? '',
+    additionalNotes: row.additional_notes ?? '',
+    meetings: row.meetings ?? '',
+    blockers: row.blockers ?? '',
+    activities: row.activities ?? '',
+    headOfDepartment: row.head_of_department,
+    teamMembers: row.team_members ?? [],
+    submittedAt: row.submitted_at,
+    updatedAt: row.updated_at,
+    status: row.status,
+    appraisal: row.appraisal ? (typeof row.appraisal === 'string' ? JSON.parse(row.appraisal) : row.appraisal) : null,
+  };
+}
+
+export async function insertStaffReport(row: {
+  tenantSlug: string;
+  employeeId: string;
+  title?: string;
+  reportType: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+  reportDate: string;
+  rawTranscript?: string;
+  refinedText?: string;
+  objectives?: string;
+  achievements?: string;
+  challenges?: string;
+  nextSteps?: string;
+  additionalNotes?: string;
+  meetings?: string;
+  blockers?: string;
+  activities?: string;
+  headOfDepartment: string;
+  teamMembers?: string[];
+  status?: string;
+  appraisal?: any;
+}) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const id = randomUUID();
+  const appraisalJson = row.appraisal ? JSON.stringify(row.appraisal) : null;
+  await sql`
+    insert into admin_staff_reports (
+      id, tenant_slug, employee_id, title, report_type, report_date,
+      raw_transcript, refined_text,
+      objectives, achievements, challenges, next_steps, additional_notes,
+      meetings, blockers, activities,
+      head_of_department, team_members, status, appraisal
+    ) values (
+      ${id}, ${row.tenantSlug}, ${row.employeeId}, ${row.title ?? null}, ${row.reportType}, ${row.reportDate},
+      ${row.rawTranscript ?? null}, ${row.refinedText ?? null},
+      ${row.objectives ?? null}, ${row.achievements ?? null}, ${row.challenges ?? null}, ${row.nextSteps ?? null}, ${row.additionalNotes ?? null},
+      ${row.meetings ?? null}, ${row.blockers ?? null}, ${row.activities ?? null},
+      ${row.headOfDepartment}, ${serializeTextArray(row.teamMembers)}, ${row.status ?? 'pending'},
+      ${appraisalJson}
+    )
+  `;
+  const rows = await sql`select * from admin_staff_reports where id = ${id} limit 1`;
+  return normalizeStaffReportRow((rows as any[])[0]);
+}
+
+export async function listStaffReports(
+  tenantSlug: string,
+  filters?: { employeeId?: string; status?: string }
+) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+
+  let query = `select * from admin_staff_reports where tenant_slug = $1`;
+  const params: any[] = [tenantSlug];
+
+  if (filters?.employeeId) {
+    params.push(filters.employeeId);
+    query += ` and employee_id = $${params.length}`;
+  }
+  if (filters?.status) {
+    params.push(filters.status);
+    query += ` and status = $${params.length}`;
+  }
+
+  query += ` order by submitted_at desc`;
+
+  const res = await db.query(query, params);
+  return (res.rows as any[]).map(normalizeStaffReportRow);
+}
+
+export async function updateStaffReportStatus(
+  tenantSlug: string,
+  id: string,
+  status: 'pending' | 'under_review' | 'approved' | 'needs_edit'
+) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  await sql`
+    update admin_staff_reports
+    set status = ${status}, updated_at = now()
+    where id = ${id} and tenant_slug = ${tenantSlug}
+  `;
+}
+
+export async function deleteStaffReport(tenantSlug: string, id: string) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  await sql`
+    delete from admin_staff_reports
+    where id = ${id} and tenant_slug = ${tenantSlug}
+  `;
+}
+
+// ============================================================================
+// STAFF TASKS
+// ============================================================================
+
+function normalizeStaffTaskRow(row: any) {
+  return {
+    id: row.id,
+    tenantSlug: row.tenant_slug,
+    employeeId: row.employee_id,
+    title: row.title,
+    description: row.description ?? '',
+    frequency: row.frequency,
+    dueDate: row.due_date,
+    status: row.status,
+    assignedBy: row.assigned_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function insertStaffTask(row: {
+  tenantSlug: string;
+  employeeId: string;
+  title: string;
+  description?: string;
+  frequency: 'daily' | 'weekly' | 'one-time';
+  dueDate: string;
+  status?: 'pending' | 'in_progress' | 'completed' | 'overdue';
+  assignedBy: string;
+}) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const id = randomUUID();
+  await sql`
+    insert into admin_staff_tasks (
+      id, tenant_slug, employee_id, title, description, frequency, due_date, status, assigned_by
+    ) values (
+      ${id}, ${row.tenantSlug}, ${row.employeeId}, ${row.title}, ${row.description ?? null}, ${row.frequency}, ${row.dueDate}, ${row.status ?? 'pending'}, ${row.assignedBy}
+    )
+  `;
+  const rows = await sql`select * from admin_staff_tasks where id = ${id} limit 1`;
+  return normalizeStaffTaskRow((rows as any[])[0]);
+}
+
+export async function listStaffTasks(
+  tenantSlug: string,
+  filters?: { employeeId?: string; status?: string; dueDate?: string; dueBefore?: string }
+) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+
+  let query = `select * from admin_staff_tasks where tenant_slug = $1`;
+  const params: any[] = [tenantSlug];
+
+  if (filters?.employeeId) {
+    params.push(filters.employeeId);
+    query += ` and employee_id = $${params.length}`;
+  }
+  if (filters?.status) {
+    params.push(filters.status);
+    query += ` and status = $${params.length}`;
+  }
+  if (filters?.dueDate) {
+    params.push(filters.dueDate);
+    query += ` and due_date = $${params.length}`;
+  }
+  if (filters?.dueBefore) {
+    params.push(filters.dueBefore);
+    query += ` and due_date <= $${params.length}`;
+  }
+
+  query += ` order by due_date desc, created_at desc`;
+
+  const res = await db.query(query, params);
+  return (res.rows as any[]).map(normalizeStaffTaskRow);
+}
+
+export async function updateStaffTask(
+  tenantSlug: string,
+  id: string,
+  updates: {
+    title?: string;
+    description?: string;
+    frequency?: 'daily' | 'weekly' | 'one-time';
+    dueDate?: string;
+    status?: 'pending' | 'in_progress' | 'completed' | 'overdue';
+  }
+) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  await sql`
+    update admin_staff_tasks
+    set
+      title = coalesce(${updates.title ?? null}, title),
+      description = coalesce(${updates.description ?? null}, description),
+      frequency = coalesce(${updates.frequency ?? null}, frequency),
+      due_date = coalesce(${updates.dueDate ?? null}, due_date),
+      status = coalesce(${updates.status ?? null}, status),
+      updated_at = now()
+    where id = ${id} and tenant_slug = ${tenantSlug}
+  `;
+  const rows = await sql`select * from admin_staff_tasks where id = ${id} and tenant_slug = ${tenantSlug} limit 1`;
+  return normalizeStaffTaskRow((rows as any[])[0]);
+}
+
+export async function deleteStaffTask(tenantSlug: string, id: string) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  await sql`
+    delete from admin_staff_tasks
+    where id = ${id} and tenant_slug = ${tenantSlug}
+  `;
 }

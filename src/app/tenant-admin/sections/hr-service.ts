@@ -98,7 +98,7 @@ export class HRService {
     return response.data;
   }
 
-  // Report Management (endpoints not yet implemented)
+  // Report Management
   static async generateReport(tenantSlug: string, reportData: {
     reportType: string;
     startDate: string;
@@ -111,8 +111,89 @@ export class HRService {
   }
 
   static async getReports(tenantSlug: string): Promise<HRReport[]> {
-    const response = await apiClient.get(`/hr/reports?tenantSlug=${tenantSlug}`);
+    const response = await apiClient.get(`/hr/staff-reports?tenantSlug=${tenantSlug}`);
+    const reports = response.data.reports || [];
+    return reports.map((r: any) => ({
+      id: r.id,
+      title: r.title || `${r.reportType?.replace(/_/g, ' ')} Report`,
+      type: r.reportType || 'workforce',
+      dateRange: r.dateRange || { start: r.reportDate || '', end: r.reportDate || '' },
+      generatedBy: r.generatedBy || r.headOfDepartment || '',
+      generatedAt: r.generatedAt || r.submittedAt || '',
+      status: r.status || 'pending',
+      fileUrl: r.fileUrl,
+    }));
+  }
+
+  static async getStaffReports(tenantSlug: string): Promise<any[]> {
+    const response = await apiClient.get(`/hr/staff-reports?tenantSlug=${tenantSlug}`);
     return response.data.reports || [];
+  }
+
+  static async submitStaffReport(tenantSlug: string, reportData: {
+    employeeId: string;
+    title?: string;
+    reportType: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+    reportDate: string;
+    rawTranscript?: string;
+    refinedText?: string;
+    objectives?: string;
+    achievements?: string;
+    challenges?: string;
+    nextSteps?: string;
+    additionalNotes?: string;
+    meetings?: string;
+    blockers?: string;
+    activities?: string;
+    headOfDepartment: string;
+    teamMembers?: string[];
+    appraisal?: any;
+  }): Promise<any> {
+    const response = await apiClient.post('/hr/staff-reports', { ...reportData, tenantSlug });
+    return response.data.report;
+  }
+
+  static async updateStaffReportStatus(tenantSlug: string, reportId: string, status: 'pending' | 'under_review' | 'approved' | 'needs_edit'): Promise<void> {
+    await apiClient.put('/hr/staff-reports', { reportId, status, tenantSlug });
+  }
+
+  static async getStaffTasks(tenantSlug: string, filters?: { employeeId?: string; status?: string; dueDate?: string; dueBefore?: string }): Promise<any[]> {
+    const params = new URLSearchParams();
+    params.append('tenantSlug', tenantSlug);
+    if (filters?.employeeId) params.append('employeeId', filters.employeeId);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.dueDate) params.append('dueDate', filters.dueDate);
+    if (filters?.dueBefore) params.append('dueBefore', filters.dueBefore);
+    const response = await apiClient.get(`/hr/staff-tasks?${params.toString()}`);
+    return response.data.tasks || [];
+  }
+
+  static async createStaffTask(tenantSlug: string, taskData: {
+    employeeId: string;
+    title: string;
+    description?: string;
+    frequency: 'daily' | 'weekly' | 'one-time';
+    dueDate: string;
+    status?: 'pending' | 'in_progress' | 'completed' | 'overdue';
+    assignedBy: string;
+  }): Promise<any> {
+    const response = await apiClient.post('/hr/staff-tasks', { ...taskData, tenantSlug });
+    return response.data.task;
+  }
+
+  static async updateStaffTask(tenantSlug: string, taskId: string, updates: {
+    title?: string;
+    description?: string;
+    frequency?: 'daily' | 'weekly' | 'one-time';
+    dueDate?: string;
+    status?: 'pending' | 'in_progress' | 'completed' | 'overdue';
+  }): Promise<any> {
+    const response = await apiClient.put('/hr/staff-tasks', { taskId, tenantSlug, ...updates });
+    return response.data.task;
+  }
+
+  static async deleteStaffTask(tenantSlug: string, taskId: string): Promise<void> {
+    await apiClient.delete(`/hr/staff-tasks?tenantSlug=${tenantSlug}&taskId=${taskId}`);
   }
 
   static async downloadReport(tenantSlug: string, reportId: string): Promise<string> {
@@ -121,7 +202,7 @@ export class HRService {
   }
 
   static async deleteReport(tenantSlug: string, reportId: string): Promise<void> {
-    await apiClient.delete(`/hr/reports/${reportId}?tenantSlug=${tenantSlug}`);
+    await apiClient.delete(`/hr/staff-reports?tenantSlug=${tenantSlug}&reportId=${reportId}`);
   }
 
   // Employee Management
@@ -196,6 +277,7 @@ export class HRService {
     imported: number;
     failed: number;
     errors: string[];
+    warnings?: string[];
     portalAccountsCreated?: number;
     portalCredentials?: Array<{ name: string; email: string; password: string }>;
   }> {
@@ -656,5 +738,63 @@ export class HRService {
   }> {
     const response = await apiClient.get(`/hr/payroll/${runId}?tenantSlug=${tenantSlug}`);
     return response.data;
+  }
+
+  // Payroll Adjustments
+  static async listPayrollAdjustments(tenantSlug: string, opts?: {
+    employeeId?: string;
+    period?: string;
+    status?: 'pending' | 'applied' | 'rejected';
+  }): Promise<Array<{
+    id: string;
+    tenantSlug: string;
+    employeeId: string;
+    type: 'increment' | 'deduction';
+    category: 'bonus' | 'promotion' | 'fine' | 'loan_repayment' | 'other';
+    amount: number;
+    reason: string | null;
+    effectivePeriod: string;
+    status: 'pending' | 'applied' | 'rejected';
+    approvedBy: string | null;
+    createdAt: string;
+    appliedAt: string | null;
+  }>> {
+    const params = new URLSearchParams({ tenantSlug });
+    if (opts?.employeeId) params.set('employeeId', opts.employeeId);
+    if (opts?.period) params.set('period', opts.period);
+    if (opts?.status) params.set('status', opts.status);
+    const response = await apiClient.get(`/hr/payroll/adjustments?${params.toString()}`);
+    return response.data.adjustments || [];
+  }
+
+  static async createPayrollAdjustment(payload: {
+    tenantSlug: string;
+    employeeId: string;
+    type: 'increment' | 'deduction';
+    category: 'bonus' | 'promotion' | 'fine' | 'loan_repayment' | 'other';
+    amount: number;
+    reason?: string;
+    effectivePeriod: string;
+    approvedBy?: string;
+  }): Promise<{ id: string }> {
+    const response = await apiClient.post('/hr/payroll/adjustments', payload);
+    return response.data;
+  }
+
+  static async updatePayrollAdjustmentStatus(
+    tenantSlug: string,
+    id: string,
+    status: 'applied' | 'rejected',
+    approvedBy?: string
+  ): Promise<void> {
+    await apiClient.patch(`/hr/payroll/adjustments/${id}`, { status, approvedBy }, {
+      headers: { 'x-tenant-slug': tenantSlug },
+    });
+  }
+
+  static async deletePayrollAdjustment(tenantSlug: string, id: string): Promise<void> {
+    await apiClient.delete(`/hr/payroll/adjustments/${id}`, {
+      headers: { 'x-tenant-slug': tenantSlug },
+    });
   }
 }

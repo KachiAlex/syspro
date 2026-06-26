@@ -18,6 +18,9 @@ import {
   Pencil,
   ChevronLeft,
   ChevronRight,
+  Plus,
+  Trash2,
+  X,
 } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { getCurrencySymbol } from '@/lib/tenant/currency';
@@ -61,6 +64,22 @@ interface PayrollRun {
   createdAt: string;
 }
 
+interface PayrollAdjustment {
+  id: string;
+  tenantSlug: string;
+  employeeId: string;
+  employeeName?: string;
+  type: 'increment' | 'deduction';
+  category: 'bonus' | 'promotion' | 'fine' | 'loan_repayment' | 'other';
+  amount: number;
+  reason: string | null;
+  effectivePeriod: string;
+  status: 'pending' | 'applied' | 'rejected';
+  approvedBy: string | null;
+  createdAt: string;
+  appliedAt: string | null;
+}
+
 const defaultConfig: PayrollConfig = {
   taxRate: 7.5,
   pensionRate: 8,
@@ -87,10 +106,12 @@ export default function PayrollPage() {
   const [payrollRuns, setPayrollRuns] = useState<PayrollRun[]>([]);
   const [anomalies, setAnomalies] = useState<PayrollRun['anomalies']>([]);
   const [complianceIssues, setComplianceIssues] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'current' | 'history'>('current');
+  const [activeTab, setActiveTab] = useState<'current' | 'history' | 'adjustments'>('current');
   const [editMode, setEditMode] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 25;
+  const [adjustments, setAdjustments] = useState<PayrollAdjustment[]>([]);
+  const [showAdjustmentForm, setShowAdjustmentForm] = useState(false);
 
   const loadEmployees = useCallback(async () => {
     if (!tenantSlug) return;
@@ -129,6 +150,22 @@ export default function PayrollPage() {
     loadEmployees();
   }, [loadEmployees]);
 
+  const loadAdjustments = useCallback(async () => {
+    if (!tenantSlug) return;
+    try {
+      const adj = await HRService.listPayrollAdjustments(tenantSlug, {
+        period: selectedMonth,
+      });
+      setAdjustments(adj);
+    } catch (err) {
+      console.error('Failed to load adjustments:', err);
+    }
+  }, [tenantSlug, selectedMonth]);
+
+  useEffect(() => {
+    loadAdjustments();
+  }, [loadAdjustments]);
+
   const recalc = useCallback(
     (rows: EmployeePayroll[], cfg: PayrollConfig) => {
       return rows.map((emp) => {
@@ -147,7 +184,28 @@ export default function PayrollPage() {
     []
   );
 
-  const computed = useMemo(() => recalc(employees, config), [employees, config, recalc]);
+  // Apply pending adjustments to employee rows before recalc
+  const computed = useMemo(() => {
+    const pending = adjustments.filter((a) => a.status === 'pending' && a.effectivePeriod === selectedMonth);
+    const adjusted = employees.map((emp) => {
+      const empAdjustments = pending.filter((a) => a.employeeId === emp.id);
+      let baseSalary = emp.baseSalary;
+      let bonus = emp.bonus;
+      let customDeduction = emp.customDeduction;
+      const reasons: string[] = [];
+      for (const adj of empAdjustments) {
+        if (adj.type === 'increment') {
+          if (adj.category === 'promotion') baseSalary += adj.amount;
+          else bonus += adj.amount;
+        } else {
+          customDeduction += adj.amount;
+        }
+        if (adj.reason) reasons.push(adj.reason);
+      }
+      return { ...emp, baseSalary, bonus, customDeduction, adjustmentReason: reasons.join('; ') };
+    });
+    return recalc(adjusted, config);
+  }, [employees, config, recalc, adjustments, selectedMonth]);
 
   const totals = useMemo(() => {
     const totalBase = computed.reduce((s, e) => s + e.baseSalary, 0);
@@ -256,6 +314,18 @@ export default function PayrollPage() {
       setComplianceIssues(result.compliance?.issues || []);
       setProcessed(true);
 
+      // Mark all pending adjustments for this period as applied
+      await HRService.listPayrollAdjustments(tenantSlug, { period: selectedMonth, status: 'pending' })
+        .then((adjList) =>
+          Promise.all(
+            adjList.map((a) =>
+              HRService.updatePayrollAdjustmentStatus(tenantSlug, a.id, 'applied')
+            )
+          )
+        )
+        .catch(() => {});
+      await loadAdjustments();
+
       // Refresh history
       const runs = await HRService.listPayrollRuns(tenantSlug);
       setPayrollRuns(runs);
@@ -269,6 +339,66 @@ export default function PayrollPage() {
   const formatMoney = (n: number) => {
     const val = typeof n === 'number' && !isNaN(n) ? n : 0;
     return `${sym}${Math.round(val).toLocaleString('en-US')}`;
+  };
+
+  // Adjustment CRUD
+  const pendingAdjustments = adjustments.filter((a) => a.status === 'pending' && a.effectivePeriod === selectedMonth);
+
+  const handleCreateAdjustment = async (payload: {
+    employeeId: string;
+    type: 'increment' | 'deduction';
+    category: 'bonus' | 'promotion' | 'fine' | 'loan_repayment' | 'other';
+    amount: number;
+    reason: string;
+  }) => {
+    if (!tenantSlug) return;
+    try {
+      await HRService.createPayrollAdjustment({
+        tenantSlug,
+        employeeId: payload.employeeId,
+        type: payload.type,
+        category: payload.category,
+        amount: payload.amount,
+        reason: payload.reason,
+        effectivePeriod: selectedMonth,
+      });
+      setShowAdjustmentForm(false);
+      await loadAdjustments();
+      setProcessed(false);
+    } catch (err) {
+      console.error('Failed to create adjustment:', err);
+    }
+  };
+
+  const handleApproveAdjustment = async (id: string) => {
+    if (!tenantSlug) return;
+    try {
+      await HRService.updatePayrollAdjustmentStatus(tenantSlug, id, 'applied');
+      await loadAdjustments();
+    } catch (err) {
+      console.error('Failed to approve adjustment:', err);
+    }
+  };
+
+  const handleRejectAdjustment = async (id: string) => {
+    if (!tenantSlug) return;
+    try {
+      await HRService.updatePayrollAdjustmentStatus(tenantSlug, id, 'rejected');
+      await loadAdjustments();
+    } catch (err) {
+      console.error('Failed to reject adjustment:', err);
+    }
+  };
+
+  const handleDeleteAdjustment = async (id: string) => {
+    if (!tenantSlug) return;
+    try {
+      await HRService.deletePayrollAdjustment(tenantSlug, id);
+      await loadAdjustments();
+      setProcessed(false);
+    } catch (err) {
+      console.error('Failed to delete adjustment:', err);
+    }
   };
 
   return (
@@ -356,6 +486,17 @@ export default function PayrollPage() {
           >
             <History className="w-4 h-4 inline mr-1" />
             Payroll History ({payrollRuns.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('adjustments')}
+            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'adjustments'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Calculator className="w-4 h-4 inline mr-1" />
+            Adjustments ({adjustments.length})
           </button>
         </nav>
       </div>
@@ -733,6 +874,108 @@ export default function PayrollPage() {
         )}
       </div>
 
+      {/* Staged Adjustments Panel */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <Calculator className="w-5 h-5 text-blue-600" />
+            Staged Adjustments
+            {pendingAdjustments.length > 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                {pendingAdjustments.length} pending
+              </span>
+            )}
+          </h3>
+          <button
+            onClick={() => setShowAdjustmentForm((s) => !s)}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100"
+          >
+            {showAdjustmentForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            {showAdjustmentForm ? 'Cancel' : 'Stage Adjustment'}
+          </button>
+        </div>
+
+        {showAdjustmentForm && (
+          <AdjustmentForm
+            employees={employees}
+            onSubmit={handleCreateAdjustment}
+            onCancel={() => setShowAdjustmentForm(false)}
+          />
+        )}
+
+        <div className="overflow-x-auto">
+          {pendingAdjustments.length === 0 ? (
+            <div className="px-6 py-8 text-center text-sm text-gray-500">
+              No staged adjustments for {selectedMonth}. Click "Stage Adjustment" to add one.
+            </div>
+          ) : (
+            <table className="w-full min-w-[700px]">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Employee</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Type</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Category</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap">Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Reason</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900 whitespace-nowrap">Status</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900 whitespace-nowrap">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {pendingAdjustments.map((adj) => {
+                  const emp = employees.find((e) => e.id === adj.employeeId);
+                  return (
+                    <tr key={adj.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{emp?.name ?? adj.employeeId}</td>
+                      <td className="px-4 py-3 text-sm whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          adj.type === 'increment' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {adj.type}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap capitalize">{adj.category.replace('_', ' ')}</td>
+                      <td className="px-4 py-3 text-sm text-right font-medium whitespace-nowrap">{formatMoney(adj.amount)}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{adj.reason ?? '-'}</td>
+                      <td className="px-4 py-3 text-center whitespace-nowrap">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                          {adj.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleApproveAdjustment(adj.id)}
+                            className="text-green-600 hover:text-green-800 text-xs font-medium"
+                            title="Apply to payroll"
+                          >
+                            Apply
+                          </button>
+                          <button
+                            onClick={() => handleRejectAdjustment(adj.id)}
+                            className="text-gray-500 hover:text-gray-700 text-xs font-medium"
+                            title="Reject"
+                          >
+                            Reject
+                          </button>
+                          <button
+                            onClick={() => handleDeleteAdjustment(adj.id)}
+                            className="text-red-500 hover:text-red-700"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
           {/* Department Cost Attribution */}
           {deptCosts.length > 0 && (
             <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -912,6 +1155,216 @@ export default function PayrollPage() {
           </div>
         </div>
       )}
+
+      {activeTab === 'adjustments' && (
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <Calculator className="w-5 h-5 text-blue-600" />
+              Adjustment Audit Trail
+            </h3>
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+              >
+                {Array.from({ length: 12 }, (_, i) => {
+                  const d = new Date();
+                  d.setMonth(d.getMonth() - i);
+                  const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                  return <option key={val} value={val}>{val}</option>;
+                })}
+              </select>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            {adjustments.length === 0 ? (
+              <div className="px-6 py-8 text-center text-sm text-gray-500">
+                No adjustments found for {selectedMonth}.
+              </div>
+            ) : (
+              <table className="w-full min-w-[800px]">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Employee</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Type</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Category</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 whitespace-nowrap">Amount</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Reason</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900 whitespace-nowrap">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Applied</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {adjustments.map((adj) => {
+                    const emp = employees.find((e) => e.id === adj.employeeId);
+                    return (
+                      <tr key={adj.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                          {new Date(adj.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{emp?.name ?? adj.employeeId}</td>
+                        <td className="px-4 py-3 text-sm whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            adj.type === 'increment' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {adj.type}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap capitalize">{adj.category.replace('_', ' ')}</td>
+                        <td className="px-4 py-3 text-sm text-right font-medium whitespace-nowrap">{formatMoney(adj.amount)}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{adj.reason ?? '-'}</td>
+                        <td className="px-4 py-3 text-center whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            adj.status === 'applied'
+                              ? 'bg-green-100 text-green-800'
+                              : adj.status === 'rejected'
+                              ? 'bg-gray-100 text-gray-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {adj.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                          {adj.appliedAt ? new Date(adj.appliedAt).toLocaleDateString() : '-'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+// Adjustment Form Component
+function AdjustmentForm({
+  employees,
+  onSubmit,
+  onCancel,
+}: {
+  employees: Array<{ id: string; name: string }>;
+  onSubmit: (payload: {
+    employeeId: string;
+    type: 'increment' | 'deduction';
+    category: 'bonus' | 'promotion' | 'fine' | 'loan_repayment' | 'other';
+    amount: number;
+    reason: string;
+  }) => void;
+  onCancel: () => void;
+}) {
+  const [employeeId, setEmployeeId] = useState('');
+  const [type, setType] = useState<'increment' | 'deduction'>('increment');
+  const [category, setCategory] = useState<'bonus' | 'promotion' | 'fine' | 'loan_repayment' | 'other'>('bonus');
+  const [amount, setAmount] = useState('');
+  const [reason, setReason] = useState('');
+
+  const categoriesByType: Record<'increment' | 'deduction', Array<'bonus' | 'promotion' | 'fine' | 'loan_repayment' | 'other'>> = {
+    increment: ['bonus', 'promotion', 'other'],
+    deduction: ['fine', 'loan_repayment', 'other'],
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!employeeId || !amount) return;
+    onSubmit({
+      employeeId,
+      type,
+      category,
+      amount: parseFloat(amount) || 0,
+      reason,
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+        <div className="md:col-span-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">Employee</label>
+          <select
+            value={employeeId}
+            onChange={(e) => setEmployeeId(e.target.value)}
+            required
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          >
+            <option value="">Select employee...</option>
+            {employees.map((emp) => (
+              <option key={emp.id} value={emp.id}>{emp.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
+          <select
+            value={type}
+            onChange={(e) => {
+              const t = e.target.value as 'increment' | 'deduction';
+              setType(t);
+              setCategory(categoriesByType[t][0]);
+            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          >
+            <option value="increment">Increment</option>
+            <option value="deduction">Deduction</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value as typeof category)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          >
+            {categoriesByType[type].map((c) => (
+              <option key={c} value={c}>{c.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Amount</label>
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0"
+            required
+            min={0}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">Reason</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g. Performance bonus, Lateness fine..."
+              required
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+            <button
+              type="submit"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
+              Stage
+            </button>
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
   );
 }

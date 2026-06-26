@@ -1,52 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
+import {
+  insertStaffReport,
+  listStaffReports,
+  updateStaffReportStatus,
+  deleteStaffReport,
+} from '@/lib/hr/db';
 
-interface StaffReport {
-  id: string;
-  tenantSlug: string;
-  employeeId: string;
-  reportType: 'daily' | 'weekly' | 'monthly';
-  reportDate: string;
-  objectives: string;
-  achievements: string;
-  challenges: string;
-  nextSteps: string;
-  additionalNotes: string;
-  headOfDepartment: string;
-  teamMembers: string[];
-  submittedAt: string;
-  status: 'pending' | 'reviewed' | 'approved';
-}
-
-const STAFF_REPORTS_FILE = path.join(process.cwd(), '.data', 'staff-reports.json');
-
-// Ensure data directory exists
-async function ensureDataDir() {
-  const dataDir = path.join(process.cwd(), '.data');
-  try {
-    await fs.access(dataDir);
-  } catch {
-    await fs.mkdir(dataDir, { recursive: true });
-  }
-}
-
-// Get all staff reports
-async function getStaffReports(): Promise<StaffReport[]> {
-  try {
-    await ensureDataDir();
-    const data = await fs.readFile(STAFF_REPORTS_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch {
-    return [];
-  }
-}
-
-// Save staff reports
-async function saveStaffReports(reports: StaffReport[]): Promise<void> {
-  await ensureDataDir();
-  await fs.writeFile(STAFF_REPORTS_FILE, JSON.stringify(reports, null, 2));
-}
+const VALID_REPORT_TYPES = ['daily', 'weekly', 'monthly', 'quarterly'];
+const VALID_STATUSES = ['pending', 'under_review', 'approved', 'needs_edit'];
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,51 +15,60 @@ export async function POST(request: NextRequest) {
     const {
       tenantSlug,
       employeeId,
+      title,
       reportType,
       reportDate,
+      rawTranscript,
+      refinedText,
       objectives,
       achievements,
       challenges,
       nextSteps,
       additionalNotes,
+      meetings,
+      blockers,
+      activities,
       headOfDepartment,
       teamMembers,
+      appraisal,
     } = body;
 
-    // Validate required fields
-    if (!tenantSlug || !employeeId || !reportType || !reportDate || !objectives || !achievements || !headOfDepartment) {
+    if (!tenantSlug || !employeeId || !reportType || !reportDate || !headOfDepartment) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: tenantSlug, employeeId, reportType, reportDate, headOfDepartment' },
         { status: 400 }
       );
     }
 
-    const reports = await getStaffReports();
+    if (!VALID_REPORT_TYPES.includes(reportType)) {
+      return NextResponse.json(
+        { error: `Invalid reportType. Must be one of: ${VALID_REPORT_TYPES.join(', ')}` },
+        { status: 400 }
+      );
+    }
 
-    const newReport: StaffReport = {
-      id: `report-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    const report = await insertStaffReport({
       tenantSlug,
       employeeId,
+      title,
       reportType,
       reportDate,
+      rawTranscript,
+      refinedText,
       objectives,
       achievements,
       challenges,
       nextSteps,
       additionalNotes,
+      meetings,
+      blockers,
+      activities,
       headOfDepartment,
-      teamMembers: teamMembers || [],
-      submittedAt: new Date().toISOString(),
-      status: 'pending',
-    };
-
-    reports.push(newReport);
-    await saveStaffReports(reports);
-
-    return NextResponse.json({
-      success: true,
-      report: newReport,
+      teamMembers,
+      appraisal,
     });
+
+    return NextResponse.json({ success: true, report });
   } catch (error) {
     console.error('Error submitting staff report:', error);
     return NextResponse.json(
@@ -113,7 +83,6 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { reportId, status, tenantSlug } = body;
 
-    // Validate required fields
     if (!reportId || !status || !tenantSlug) {
       return NextResponse.json(
         { error: 'Missing required fields: reportId, status, tenantSlug' },
@@ -121,33 +90,15 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Validate status
-    if (!['pending', 'reviewed', 'approved'].includes(status)) {
+    if (!VALID_STATUSES.includes(status)) {
       return NextResponse.json(
-        { error: 'Invalid status. Must be pending, reviewed, or approved' },
+        { error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}` },
         { status: 400 }
       );
     }
 
-    const reports = await getStaffReports();
-
-    // Find and update the report
-    const reportIndex = reports.findIndex(report => report.id === reportId && report.tenantSlug === tenantSlug);
-
-    if (reportIndex === -1) {
-      return NextResponse.json(
-        { error: 'Report not found' },
-        { status: 404 }
-      );
-    }
-
-    reports[reportIndex].status = status;
-    await saveStaffReports(reports);
-
-    return NextResponse.json({
-      success: true,
-      report: reports[reportIndex],
-    });
+    await updateStaffReportStatus(tenantSlug, reportId, status);
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating staff report status:', error);
     return NextResponse.json(
@@ -161,8 +112,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const tenantSlug = searchParams.get('tenantSlug');
-    const employeeId = searchParams.get('employeeId');
-    const status = searchParams.get('status');
+    const employeeId = searchParams.get('employeeId') ?? undefined;
+    const status = searchParams.get('status') ?? undefined;
 
     if (!tenantSlug) {
       return NextResponse.json(
@@ -171,26 +122,34 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const reports = await getStaffReports();
-
-    let filteredReports = reports.filter(report => report.tenantSlug === tenantSlug);
-
-    if (employeeId) {
-      filteredReports = filteredReports.filter(report => report.employeeId === employeeId);
-    }
-
-    if (status) {
-      filteredReports = filteredReports.filter(report => report.status === status);
-    }
-
-    // Sort by submission date (newest first)
-    filteredReports.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-
-    return NextResponse.json({
-      reports: filteredReports,
-    });
+    const reports = await listStaffReports(tenantSlug, { employeeId, status });
+    return NextResponse.json({ reports });
   } catch (error) {
     console.error('Error fetching staff reports:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const tenantSlug = searchParams.get('tenantSlug');
+    const reportId = searchParams.get('reportId');
+
+    if (!tenantSlug || !reportId) {
+      return NextResponse.json(
+        { error: 'tenantSlug and reportId are required' },
+        { status: 400 }
+      );
+    }
+
+    await deleteStaffReport(tenantSlug, reportId);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting staff report:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

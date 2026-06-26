@@ -20,24 +20,9 @@ interface HRAnalyticsProps {
   payrollData?: PayrollData[];
 }
 
-const DEFAULT_DEPARTMENTS: DepartmentData[] = [
-  { dept: 'Engineering', count: 45, pct: 19 },
-  { dept: 'Sales', count: 38, pct: 16 },
-  { dept: 'Marketing', count: 28, pct: 12 },
-  { dept: 'Finance', count: 22, pct: 9 },
-  { dept: 'Operations', count: 86, pct: 38 }
-];
-
-const DEFAULT_PAYROLL: PayrollData[] = [
-  { label: 'Monthly', amount: '$456,789', bgColor: 'bg-blue-50', textColor: 'text-blue-600' },
-  { label: 'Annual', amount: '$5.4M', bgColor: 'bg-green-50', textColor: 'text-green-600' },
-  { label: 'Avg Salary', amount: '$1,952', bgColor: 'bg-purple-50', textColor: 'text-purple-600' },
-  { label: 'Benefits', amount: '$234,567', bgColor: 'bg-orange-50', textColor: 'text-orange-600' }
-];
-
 export const HRAnalytics: React.FC<HRAnalyticsProps> = ({
-  departmentData = DEFAULT_DEPARTMENTS,
-  payrollData = DEFAULT_PAYROLL
+  departmentData = [],
+  payrollData = [],
 }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

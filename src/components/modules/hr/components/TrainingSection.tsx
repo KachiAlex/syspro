@@ -8,15 +8,9 @@ interface TrainingProps {
   onScheduleTraining: () => void;
 }
 
-const DEFAULT_SESSIONS: TrainingSession[] = [
-  { title: 'Leadership Excellence', participants: 12, status: 'Upcoming', instructor: 'Dr. Sarah Mitchell' },
-  { title: 'Advanced Sales', participants: 25, status: 'In Progress', instructor: 'John Anderson' },
-  { title: 'Security Awareness', participants: 234, status: 'Completed', instructor: 'Security Team' }
-];
-
 export const TrainingSection: React.FC<TrainingProps> = ({
-  sessions = DEFAULT_SESSIONS,
-  onScheduleTraining
+  sessions = [],
+  onScheduleTraining,
 }) => {
   const getStatusStyles = (status: TrainingSession['status']) => {
     switch (status) {

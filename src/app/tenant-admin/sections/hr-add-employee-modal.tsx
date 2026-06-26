@@ -124,7 +124,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
       if (result.failed > 0) {
         setErrors({ upload: `Imported ${result.imported}, failed ${result.failed}. ${(result.errors || []).slice(0, 3).join('; ')}` });
       } else if ((result.warnings || []).length > 0) {
-        setErrors({ upload: `Imported ${result.imported} employees with ${result.warnings.length} warning(s).` });
+        setErrors({ upload: `Imported ${result.imported} employees with ${(result.warnings || []).length} warning(s).` });
       } else {
         alert(`Successfully imported ${result.imported} employees. Portal accounts created with default password.`);
       }

@@ -25,28 +25,7 @@ interface HRModuleProps {
 
 export const HRModule: React.FC<HRModuleProps> = ({
   tenantSlug,
-  initialEmployees = [
-    {
-      name: 'Alex Johnson',
-      email: 'alex.johnson@company.com',
-      department: 'Engineering',
-      position: 'Senior Developer',
-      startDate: '2021-03-15',
-      status: 'Active',
-      performance: 'Excellent',
-      salary: '$95,000'
-    },
-    {
-      name: 'Sarah Williams',
-      email: 'sarah.williams@company.com',
-      department: 'Sales',
-      position: 'Sales Manager',
-      startDate: '2020-08-22',
-      status: 'Active',
-      performance: 'Good',
-      salary: '$85,000'
-    }
-  ]
+  initialEmployees = [],
 }) => {
   // Use the new API hook for real data
   const {
@@ -189,6 +168,7 @@ export const HRModule: React.FC<HRModuleProps> = ({
         departmentFilter={departmentFilter}
         statusFilter={statusFilter}
         searchQuery={searchQuery}
+        departments={departments}
         onDepartmentChange={setDepartmentFilter}
         onStatusChange={setStatusFilter}
         onSearchChange={setSearchQuery}

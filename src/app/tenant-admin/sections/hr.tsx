@@ -1,16 +1,19 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Plus, Eye, Search, RefreshCw, Clock, DollarSign, BarChart2, Users, CheckCircle, Calendar,
-  Download, MoreVertical, Award, Briefcase
+  Download, MoreVertical, Award, Briefcase, FileText
 } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { AddEmployeeModal } from './hr-add-employee-modal';
 import { EditEmployeeModal, ViewEmployeeModal, DeleteEmployeeModal, RunPayrollModal, PostJobModal, TrainingModal } from './hr-modals';
 import { AttendanceModal, LeaveModal } from './hr-attendance-modals';
 import { UnifiedReportModal } from '../components/unified-report-modal';
+import { StaffReportModal } from './hr-staff-report-modal';
+import { StaffTasksModal } from './hr-staff-tasks-modal';
 import { ReportService } from '../services/report-service';
 import { HRService } from './hr-service';
 import { RecruitmentDashboard } from './recruitment-dashboard';
@@ -27,6 +30,7 @@ interface Employee {
   startDate: string;
   status: string;
   salary: string;
+  role?: string;
 }
 
 interface TrainingSession {
@@ -72,7 +76,18 @@ interface PayrollRun {
 
 
 const HRComponent: React.FC = () => {
-  const { tenantSlug } = useTenantContext();
+  const { tenantSlug, currency } = useTenantContext();
+  const currentUser = useCurrentUser();
+  const currentEmployeeId = useMemo(() => {
+    if (!currentUser?.id) return undefined;
+    const matchById = employees.find((e) => e.id === currentUser.id);
+    if (matchById) return matchById.id;
+    if (currentUser.email) {
+      const matchByEmail = employees.find((e) => e.email?.toLowerCase() === currentUser.email?.toLowerCase());
+      if (matchByEmail) return matchByEmail.id;
+    }
+    return undefined;
+  }, [currentUser, employees]);
   const [activeTab, setActiveTab] = useState<HRTab>('overview');
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
@@ -89,8 +104,10 @@ const HRComponent: React.FC = () => {
   const [showAttendanceModal, setShowAttendanceModal] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showUnifiedReportModal, setShowUnifiedReportModal] = useState(false);
+  const [showStaffReportModal, setShowStaffReportModal] = useState(false);
+  const [showStaffTasksModal, setShowStaffTasksModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-  const [departments, setDepartments] = useState<string[]>(['Engineering', 'Sales', 'Marketing', 'HR', 'Finance']);
+  const [departments, setDepartments] = useState<string[]>([]);
   const [statuses, setStatuses] = useState<string[]>(['Active', 'On Leave', 'Terminated']);
   const [reports, setReports] = useState<any[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
@@ -242,7 +259,6 @@ const HRComponent: React.FC = () => {
       const [
         fetchedEmployees,
         fetchedDepartments,
-        fetchedReports,
         fetchedAttendance,
         fetchedStats,
         fetchedLeave,
@@ -251,7 +267,6 @@ const HRComponent: React.FC = () => {
       ] = await Promise.all([
         HRService.getEmployees(tenantSlug),
         HRService.getDepartments(tenantSlug),
-        HRService.getReports(tenantSlug).catch(() => []),
         HRService.getAttendanceRecords(tenantSlug, { date: today }).catch(() => []),
         HRService.getAttendanceStats(tenantSlug, today).catch(() => ({ present: 0, absent: 0, late: 0, halfDay: 0, total: 0 })),
         HRService.getLeaveRequests(tenantSlug, { status: 'pending' }).catch(() => []),
@@ -268,11 +283,10 @@ const HRComponent: React.FC = () => {
           position: emp.position,
           startDate: emp.startDate,
           status: emp.status,
-          salary: emp.salary ? `$${Number(emp.salary).toLocaleString()}` : ''
+          salary: emp.salary ? new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(Number(emp.salary)) : ''
         }))
       );
       setDepartments(fetchedDepartments);
-      setReports(fetchedReports);
       setAttendanceRecords(fetchedAttendance.map((r: any) => ({
         id: r.id,
         employeeName: r.employeeName || r.employee?.name || '',
@@ -437,6 +451,20 @@ const HRComponent: React.FC = () => {
             >
               <BarChart2 className="w-4 h-4" />
               Generate Report
+            </button>
+            <button
+              onClick={() => setShowStaffReportModal(true)}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
+              <FileText className="w-4 h-4" />
+              Submit Report
+            </button>
+            <button
+              onClick={() => setShowStaffTasksModal(true)}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-theme-text-primary bg-theme-bg rounded-lg hover:bg-theme-sidebar-hover"
+            >
+              <Briefcase className="w-4 h-4" />
+              Assign Tasks
             </button>
           </div>
         </div>
@@ -886,118 +914,95 @@ const HRComponent: React.FC = () => {
     </div>
   );
 
-  const renderReportsTab = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-theme-text-primary">HR Reports & Analytics</h2>
-        <div className="flex gap-3">
-          <button
-            onClick={() => setShowUnifiedReportModal(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-blue-600 rounded-lg hover:bg-blue-700"
-          >
-            <BarChart2 className="w-4 h-4" />
-            Generate Report
-          </button>
-          <button
-            onClick={() => setShowUnifiedReportModal(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-muted border border-theme-border rounded-lg hover:bg-theme-sidebar-hover"
-          >
-            <Download className="w-4 h-4" />
-            Report History
-          </button>
-        </div>
-      </div>
+  const renderReportsTab = () => {
+    const salaryNumbers = employees
+      .map(e => e.salary)
+      .filter((s): s is string => !!s)
+      .map(s => Number(s.replace(/[^0-9.]/g, '')))
+      .filter(n => !isNaN(n) && n > 0);
+    const salaryRanges = React.useMemo(() => {
+      if (salaryNumbers.length === 0) return [];
+      const min = Math.min(...salaryNumbers);
+      const max = Math.max(...salaryNumbers);
+      if (min === max) return [{ label: new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(min), count: salaryNumbers.length, percentage: 100 }];
+      const count = Math.min(4, salaryNumbers.length);
+      const step = (max - min) / count;
+      return Array.from({ length: count }, (_, i) => {
+        const rMin = min + i * step;
+        const rMax = i === count - 1 ? max + 1 : min + (i + 1) * step;
+        const c = salaryNumbers.filter(s => s >= rMin && s < rMax).length;
+        return {
+          label: `${new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 0 }).format(rMin)} - ${new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 0 }).format(Math.min(rMax, max))}`,
+          count: c,
+          percentage: Math.round((c / salaryNumbers.length) * 100),
+        };
+      });
+    }, [salaryNumbers, currency]);
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
-          <h4 className="font-semibold text-theme-text-primary mb-4">Workforce Summary</h4>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-theme-text-secondary">Total Employees</span>
-              <span className="font-semibold text-theme-text-primary">{employees.length}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-theme-text-secondary">Active</span>
-              <span className="font-semibold text-green-400">{employees.filter(e => e.status === 'Active').length}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-theme-text-secondary">On Leave</span>
-              <span className="font-semibold text-amber-400">{employees.filter(e => e.status === 'On Leave').length}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-theme-text-secondary">Departments</span>
-              <span className="font-semibold text-theme-accent">{new Set(employees.map(e => e.department)).size}</span>
-            </div>
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-theme-text-primary">HR Reports & Analytics</h2>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowUnifiedReportModal(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
+              <BarChart2 className="w-4 h-4" />
+              Generate Report
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
+            <h4 className="font-semibold text-theme-text-primary mb-4">Total Employees</h4>
+            <p className="text-3xl font-bold text-theme-text-primary">{employees.length}</p>
+            <p className="text-xs text-theme-text-secondary mt-2">Active workforce</p>
+          </div>
+
+          <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
+            <h4 className="font-semibold text-theme-text-primary mb-4">Active</h4>
+            <p className="text-3xl font-bold text-green-400">{employees.filter(e => e.status === 'Active').length}</p>
+            <p className="text-xs text-theme-text-secondary mt-2">Currently working</p>
+          </div>
+
+          <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
+            <h4 className="font-semibold text-theme-text-primary mb-4">On Leave</h4>
+            <p className="text-3xl font-bold text-amber-400">{employees.filter(e => e.status === 'On Leave').length}</p>
+            <p className="text-xs text-theme-text-secondary mt-2">Temporary absence</p>
+          </div>
+
+          <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
+            <h4 className="font-semibold text-theme-text-primary mb-4">Departments</h4>
+            <p className="text-3xl font-bold text-theme-accent">{new Set(employees.map(e => e.department)).size}</p>
+            <p className="text-xs text-theme-text-secondary mt-2">Organizational units</p>
           </div>
         </div>
 
         <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
-          <h4 className="font-semibold text-theme-text-primary mb-4">Key Metrics</h4>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-theme-text-secondary">Total Employees</span>
-              <span className="font-semibold text-theme-text-primary">{employees.length}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-theme-text-secondary">Active</span>
-              <span className="font-semibold text-green-400">{employees.filter(e => e.status === 'Active').length}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-theme-text-secondary">On Leave</span>
-              <span className="font-semibold text-amber-400">{employees.filter(e => e.status === 'On Leave').length}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-theme-text-secondary">Departments</span>
-              <span className="font-semibold text-theme-accent">{new Set(employees.map(e => e.department)).size}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
-        <h4 className="font-semibold text-theme-text-primary mb-4">Salary Distribution</h4>
-        {employees.filter(e => e.salary).length > 0 ? (
-          <div className="space-y-3">
-            {(() => {
-              const ranges = [
-                { label: '$40K - $60K', min: 40000, max: 60000 },
-                { label: '$60K - $80K', min: 60000, max: 80000 },
-                { label: '$80K - $100K', min: 80000, max: 100000 },
-                { label: '$100K+', min: 100000, max: Infinity },
-              ];
-              const withSalaries = employees.filter(e => e.salary);
-              const total = withSalaries.length;
-              return ranges.map((range) => {
-                const count = withSalaries.filter(e => {
-                  const s = parseFloat(e.salary?.replace(/[$,]/g, '') || '0');
-                  return s >= range.min && s < range.max;
-                }).length;
-                const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-                return (
-                  <div key={range.label}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-theme-text-secondary">{range.label}</span>
-                      <span className="text-sm font-semibold text-theme-text-primary">{count} ({pct}%)</span>
-                    </div>
-                    <div className="w-full bg-theme-border rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${pct}%` }} />
-                    </div>
+          <h4 className="font-semibold text-theme-text-primary mb-4">Salary Distribution</h4>
+          {salaryRanges.length > 0 ? (
+            <div className="space-y-3">
+              {salaryRanges.map((range) => (
+                <div key={range.label}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-theme-text-secondary">{range.label}</span>
+                    <span className="text-sm font-semibold text-theme-text-primary">{range.count} ({range.percentage}%)</span>
                   </div>
-                );
-              });
-            })()}
-          </div>
-        ) : (
-          <p className="text-sm text-theme-text-secondary">No salary data available.</p>
-        )}
+                  <div className="w-full bg-theme-border rounded-full h-2">
+                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${range.percentage}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-theme-text-secondary">No salary data available.</p>
+          )}
+        </div>
       </div>
-
-      <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
-        <h4 className="font-semibold text-theme-text-primary mb-4">Compliance Reports</h4>
-        <p className="text-sm text-theme-text-secondary">Compliance reports will be generated from real audit data.</p>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const tabs: { id: HRTab; label: string }[] = [
     { id: 'overview', label: 'HR & Operations' },
@@ -1128,6 +1133,28 @@ const HRComponent: React.FC = () => {
         tenantSlug={tenantSlug || ''}
         onReportGenerated={(report) => {
           setReports(prev => [report, ...prev]);
+        }}
+      />
+
+      <StaffReportModal
+        isOpen={showStaffReportModal}
+        onClose={() => setShowStaffReportModal(false)}
+        tenantSlug={tenantSlug || ''}
+        employees={employees}
+        currentEmployeeId={currentEmployeeId}
+        onSubmitted={() => {
+          loadData();
+        }}
+      />
+
+      <StaffTasksModal
+        isOpen={showStaffTasksModal}
+        onClose={() => setShowStaffTasksModal(false)}
+        tenantSlug={tenantSlug || ''}
+        employees={employees}
+        currentUserName={currentUser?.name || 'Admin'}
+        onUpdated={() => {
+          loadData();
         }}
       />
     </div>

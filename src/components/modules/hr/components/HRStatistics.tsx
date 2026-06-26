@@ -12,9 +12,9 @@ interface HRStatisticsProps {
 
 export const HRStatistics: React.FC<HRStatisticsProps> = ({
   totalEmployees,
-  openPositions = 12,
-  monthlyPayroll = '$456,789',
-  avgPerformance = '4.2/5'
+  openPositions,
+  monthlyPayroll,
+  avgPerformance,
 }) => {
   const stats = [
     {
