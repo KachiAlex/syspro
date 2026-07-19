@@ -6,7 +6,7 @@ import Link from "next/link";
 import { SidebarNav } from "./sidebar-nav";
 import { useTheme } from "@/components/theme/theme-provider";
 import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
-import { Menu, X, ChevronDown, User, Bell, Settings, Search, Command, Home, ArrowRight, Sun, Moon } from "lucide-react";
+import { Menu, X, User, Bell, Settings, Search, Command, Home, ArrowRight, Sun, Moon, LogOut } from "lucide-react";
 
 interface TenantAdminShellProps {
   children: React.ReactNode;
@@ -109,6 +109,18 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
   }, [toggleSidebar]);
 
   const { theme, mounted: themeMounted, toggleTheme } = useTheme();
+
+  const handleLogout = () => {
+    const expire = "expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;";
+    document.cookie = `X-User-Id=; ${expire}`;
+    document.cookie = `dev-user-id=; ${expire}`;
+    document.cookie = `userId=; ${expire}`;
+    document.cookie = `X-Role-Id=; ${expire}`;
+    document.cookie = `X-User-Email=; ${expire}`;
+    document.cookie = `tenantSlug=; ${expire}`;
+    document.cookie = `X-Tenant-Slug=; ${expire}`;
+    window.location.href = "/access";
+  };
 
   const dashboardKey = getDashboardKey(pathname || '');
   const perms = useTenantPermissions(user?.id);
@@ -255,8 +267,13 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
                 <p className="text-xs text-theme-text-tertiary">{user?.email || "admin@company.com"}</p>
               </div>
             </div>
-            <button className="p-1.5 rounded-lg hover:bg-theme-sidebar-hover transition-colors">
-              <ChevronDown className="w-4 h-4 text-theme-text-tertiary" />
+            <button
+              onClick={handleLogout}
+              className="p-1.5 rounded-lg hover:bg-theme-sidebar-hover transition-colors"
+              title="Logout"
+              aria-label="Logout"
+            >
+              <LogOut className="w-4 h-4 text-theme-text-tertiary" />
             </button>
           </div>
           <div className="flex items-center gap-2">
@@ -347,13 +364,26 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
                 <Settings className="w-5 h-5" />
               </button>
               <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-theme-border">
-                <div className="w-8 h-8 bg-theme-surface rounded-full flex items-center justify-center border border-theme-border">
+                <button
+                  onClick={handleLogout}
+                  className="w-8 h-8 bg-theme-surface rounded-full flex items-center justify-center border border-theme-border hover:bg-theme-sidebar-hover transition-colors"
+                  title="Logout"
+                  aria-label="Logout"
+                >
                   <User className="w-4 h-4 text-theme-sidebar-text" />
-                </div>
+                </button>
                 <div className="hidden md:block">
                   <p className="text-sm font-medium text-theme-sidebar-text-active">{user?.name || "Admin User"}</p>
                   <p className="text-xs text-theme-text-tertiary">{user?.roleId ? user.roleId.charAt(0).toUpperCase() + user.roleId.slice(1) : "Administrator"}</p>
                 </div>
+                <button
+                  onClick={handleLogout}
+                  className="p-2 text-theme-sidebar-text hover:text-theme-sidebar-text-active hover:bg-theme-sidebar-hover rounded-lg transition-colors"
+                  title="Logout"
+                  aria-label="Logout"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
               </div>
             </div>
           </div>
