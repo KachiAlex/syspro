@@ -48,6 +48,20 @@ const PERMISSION_GROUPS = {
       { id: "billing.write", label: "Edit", description: "Create and modify billing records" },
     ],
   },
+  dashboard: {
+    label: "Dashboards",
+    description: "Role-based dashboard access",
+    permissions: [
+      { id: "dashboard:admin", label: "Admin Dashboard", description: "View the admin dashboard" },
+      { id: "dashboard:automation", label: "Automation Dashboard", description: "View the automation dashboard" },
+      { id: "dashboard:finance", label: "Finance Dashboard", description: "View the finance dashboard" },
+      { id: "dashboard:people", label: "People Dashboard", description: "View the people/HR dashboard" },
+      { id: "dashboard:crm", label: "CRM Dashboard", description: "View the CRM dashboard" },
+      { id: "dashboard:projects", label: "Projects Dashboard", description: "View the projects dashboard" },
+      { id: "dashboard:reports", label: "Reports Dashboard", description: "View the reports dashboard" },
+      { id: "dashboard:billing", label: "Billing Dashboard", description: "View the billing dashboard" },
+    ],
+  },
 };
 
 const SCOPE_INFO = {

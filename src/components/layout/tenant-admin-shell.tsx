@@ -10,6 +10,7 @@ import { Menu, X, ChevronDown, User, Bell, Settings, Search, Command, Home, Arro
 interface TenantAdminShellProps {
   children: React.ReactNode;
   user?: {
+    id?: string;
     name?: string;
     email?: string;
     roleId?: string;
@@ -217,7 +218,7 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
         {/* Scrollable Navigation */}
         <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[rgba(128,128,128,0.2)] scrollbar-track-transparent">
           <div className="p-4 lg:p-6">
-            <SidebarNav />
+            <SidebarNav userId={user?.id} />
           </div>
         </div>
 

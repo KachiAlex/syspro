@@ -24,17 +24,20 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
 
 const navigationItems = [
   {
     title: "Dashboard",
     href: "/tenant-admin",
     icon: Home,
+    permission: "admin",
   },
   {
     title: "CRM",
     href: "/tenant-admin/crm",
     icon: Users,
+    permission: "crm",
     children: [
       { title: "Leads", href: "/tenant-admin/crm/leads" },
       { title: "Customers", href: "/tenant-admin/crm/customers" },
@@ -45,6 +48,7 @@ const navigationItems = [
     title: "Finance",
     href: "/tenant-admin/finance",
     icon: DollarSign,
+    permission: "finance",
     children: [
       { title: "Overview", href: "/tenant-admin/finance" },
       { title: "Expenses", href: "/tenant-admin/expenses" },
@@ -57,6 +61,7 @@ const navigationItems = [
     title: "HR & Operations",
     href: "/tenant-admin/hr",
     icon: UserCog,
+    permission: "people",
     children: [
       { title: "Staff", href: "/tenant-admin/hr/staff" },
       { title: "Attendance", href: "/tenant-admin/hr/attendance" },
@@ -68,6 +73,7 @@ const navigationItems = [
     title: "Projects",
     href: "/tenant-admin/projects",
     icon: FolderKanban,
+    permission: "projects",
     children: [
       { title: "Active Projects", href: "/tenant-admin/projects/active" },
       { title: "Archive", href: "/tenant-admin/projects/archive" },
@@ -78,6 +84,7 @@ const navigationItems = [
     title: "Sales & Procurement",
     href: "/tenant-admin/sales",
     icon: ShoppingCart,
+    permission: "crm",
     children: [
       { title: "Sales Orders", href: "/tenant-admin/sales/orders" },
       { title: "Suppliers", href: "/tenant-admin/sales/suppliers" },
@@ -89,6 +96,7 @@ const navigationItems = [
     title: "Reports & Analytics",
     href: "/tenant-admin/analytics",
     icon: BarChart3,
+    permission: "finance",
     children: [
       { title: "Dashboard", href: "/tenant-admin/analytics" },
       { title: "Financial Reports", href: "/tenant-admin/analytics/financial" },
@@ -100,6 +108,7 @@ const navigationItems = [
     title: "Automation",
     href: "/tenant-admin/automation",
     icon: Zap,
+    permission: "automation",
     children: [
       { title: "Workflows", href: "/tenant-admin/automation/workflows" },
       { title: "Rules", href: "/tenant-admin/automation/rules" },
@@ -110,6 +119,7 @@ const navigationItems = [
     title: "Admin",
     href: "/tenant-admin/admin",
     icon: Settings,
+    permission: "admin",
     children: [
       { title: "Settings", href: "/tenant-admin/settings" },
       { title: "Users & Roles", href: "/tenant-admin/users" },
@@ -121,11 +131,24 @@ const navigationItems = [
 
 interface SidebarNavProps {
   className?: string;
+  userId?: string;
 }
 
-export function SidebarNav({ className }: SidebarNavProps) {
+function canView(permission: string | undefined, perms: ReturnType<typeof useTenantPermissions>) {
+  if (!permission) return true;
+  if (perms.isAdmin) return true;
+  if (permission.startsWith("dashboard:")) {
+    return perms.dashboards.includes(permission.replace("dashboard:", ""));
+  }
+  const level = perms[permission as keyof typeof perms];
+  return level !== "none" && level !== undefined;
+}
+
+export function SidebarNav({ className, userId }: SidebarNavProps) {
   const pathname = usePathname();
+  const perms = useTenantPermissions(userId);
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  const visibleItems = navigationItems.filter((item) => canView(item.permission, perms));
 
   const toggleSection = (title: string) => {
     setCollapsedSections(prev => {
@@ -141,7 +164,7 @@ export function SidebarNav({ className }: SidebarNavProps) {
 
   return (
     <nav className={cn("space-y-1", className)}>
-      {navigationItems.map((item) => {
+      {visibleItems.map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
         const Icon = item.icon;
         const isCollapsed = collapsedSections.has(item.title);
