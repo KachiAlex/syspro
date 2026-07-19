@@ -437,6 +437,146 @@ export async function getUnassignedTasks(
   }
 }
 
+export async function getTasksForProject(
+  projectId: string,
+  tenantSlug: string
+): Promise<Task[]> {
+  try {
+    const result = await db.query(
+      `
+      SELECT * FROM tasks 
+      WHERE project_id = $1 AND tenant_slug = $2
+      ORDER BY priority ASC, created_at ASC
+      `,
+      [projectId, tenantSlug]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching project tasks:", error);
+    throw error;
+  }
+}
+
+export async function getTaskById(
+  id: string,
+  tenantSlug: string
+): Promise<Task | null> {
+  try {
+    const result = await db.query(
+      `SELECT * FROM tasks WHERE id = $1 AND tenant_slug = $2`,
+      [id, tenantSlug]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error fetching task:", error);
+    throw error;
+  }
+}
+
+export async function updateTask(
+  id: string,
+  tenantSlug: string,
+  input: Partial<TaskCreateInput>
+): Promise<Task | null> {
+  try {
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
+
+    if (input.title !== undefined) {
+      updates.push(`title = $${paramCount}`);
+      values.push(input.title);
+      paramCount++;
+    }
+    if (input.description !== undefined) {
+      updates.push(`description = $${paramCount}`);
+      values.push(input.description);
+      paramCount++;
+    }
+    if (input.status !== undefined) {
+      updates.push(`status = $${paramCount}`);
+      values.push(input.status);
+      paramCount++;
+    }
+    if (input.priority !== undefined) {
+      updates.push(`priority = $${paramCount}`);
+      values.push(input.priority);
+      paramCount++;
+    }
+    if (input.percentComplete !== undefined) {
+      updates.push(`percent_complete = $${paramCount}`);
+      values.push(input.percentComplete);
+      paramCount++;
+    }
+    if (input.plannedEndDate !== undefined) {
+      updates.push(`planned_end_date = $${paramCount}`);
+      values.push(input.plannedEndDate);
+      paramCount++;
+    }
+
+    updates.push("updated_at = CURRENT_TIMESTAMP");
+    values.push(id, tenantSlug);
+
+    if (updates.length === 1) return getTaskById(id, tenantSlug);
+
+    const result = await db.query(
+      `
+      UPDATE tasks 
+      SET ${updates.join(", ")}
+      WHERE id = $${paramCount} AND tenant_slug = $${paramCount + 1}
+      RETURNING *
+      `,
+      values
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error updating task:", error);
+    throw error;
+  }
+}
+
+export async function deleteTask(id: string, tenantSlug: string): Promise<boolean> {
+  try {
+    const result = await db.query(
+      `DELETE FROM tasks WHERE id = $1 AND tenant_slug = $2 RETURNING id`,
+      [id, tenantSlug]
+    );
+    return (result.rowCount ?? 0) > 0;
+  } catch (error) {
+    console.error("Error deleting task:", error);
+    throw error;
+  }
+}
+
+export async function getOrCreateDefaultWorkstream(
+  projectId: string,
+  tenantSlug: string,
+  createdBy: string
+): Promise<Workstream | null> {
+  try {
+    const existing = await db.query(
+      `SELECT * FROM workstreams WHERE project_id = $1 AND tenant_slug = $2 ORDER BY created_at ASC LIMIT 1`,
+      [projectId, tenantSlug]
+    );
+    if (existing.rows[0]) return existing.rows[0];
+
+    const result = await db.query(
+      `
+      INSERT INTO workstreams (
+        project_id, tenant_slug, code, name, description, status, priority, created_by
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+      `,
+      [projectId, tenantSlug, "WS-DEFAULT", "Default Workstream", "Auto-created workstream", "ACTIVE", 1, createdBy]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error ensuring default workstream:", error);
+    throw error;
+  }
+}
+
 // ============================================================
 // TASK ASSIGNMENT OPERATIONS
 // ============================================================
@@ -786,4 +926,104 @@ export async function getAssignmentRecommendations(
     console.error("Error fetching recommendations:", error);
     throw error;
   }
+}
+
+// ============================================================
+// PROJECT TEAM OPERATIONS
+// ============================================================
+
+async function ensureProjectTeamTable() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS project_team (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      project_id TEXT NOT NULL,
+      tenant_slug TEXT NOT NULL,
+      email TEXT NOT NULL,
+      role TEXT NOT NULL,
+      created_by TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
+export async function getProjectTeam(
+  projectId: string,
+  tenantSlug: string
+): Promise<any[]> {
+  await ensureProjectTeamTable();
+  const result = await db.query(
+    `SELECT * FROM project_team WHERE project_id = $1 AND tenant_slug = $2 ORDER BY created_at DESC`,
+    [projectId, tenantSlug]
+  );
+  return result.rows;
+}
+
+export async function addProjectTeamMember(
+  projectId: string,
+  tenantSlug: string,
+  data: { email: string; role: string },
+  createdBy: string
+): Promise<any | null> {
+  await ensureProjectTeamTable();
+  const result = await db.query(
+    `
+    INSERT INTO project_team (project_id, tenant_slug, email, role, created_by)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING *
+    `,
+    [projectId, tenantSlug, data.email, data.role, createdBy]
+  );
+  return result.rows[0] || null;
+}
+
+export async function updateProjectTeamMember(
+  id: string,
+  tenantSlug: string,
+  data: { role?: string; email?: string }
+): Promise<any | null> {
+  await ensureProjectTeamTable();
+  const updates: string[] = [];
+  const values: any[] = [];
+  let paramCount = 1;
+
+  if (data.role !== undefined) {
+    updates.push(`role = $${paramCount}`);
+    values.push(data.role);
+    paramCount++;
+  }
+  if (data.email !== undefined) {
+    updates.push(`email = $${paramCount}`);
+    values.push(data.email);
+    paramCount++;
+  }
+  if (updates.length === 0) {
+    const existing = await db.query(`SELECT * FROM project_team WHERE id = $1 AND tenant_slug = $2`, [id, tenantSlug]);
+    return existing.rows[0] || null;
+  }
+  updates.push("updated_at = CURRENT_TIMESTAMP");
+  values.push(id, tenantSlug);
+
+  const result = await db.query(
+    `
+    UPDATE project_team
+    SET ${updates.join(", ")}
+    WHERE id = $${paramCount} AND tenant_slug = $${paramCount + 1}
+    RETURNING *
+    `,
+    values
+  );
+  return result.rows[0] || null;
+}
+
+export async function removeProjectTeamMember(
+  id: string,
+  tenantSlug: string
+): Promise<boolean> {
+  await ensureProjectTeamTable();
+  const result = await db.query(
+    `DELETE FROM project_team WHERE id = $1 AND tenant_slug = $2 RETURNING id`,
+    [id, tenantSlug]
+  );
+  return (result.rowCount ?? 0) > 0;
 }
