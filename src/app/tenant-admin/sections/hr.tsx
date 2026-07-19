@@ -78,6 +78,7 @@ interface PayrollRun {
 const HRComponent: React.FC = () => {
   const { tenantSlug, currency } = useTenantContext();
   const currentUser = useCurrentUser();
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const currentEmployeeId = useMemo(() => {
     if (!currentUser?.id) return undefined;
     const matchById = employees.find((e) => e.id === currentUser.id);
@@ -89,7 +90,6 @@ const HRComponent: React.FC = () => {
     return undefined;
   }, [currentUser, employees]);
   const [activeTab, setActiveTab] = useState<HRTab>('overview');
-  const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('All Departments');
