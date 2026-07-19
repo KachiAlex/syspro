@@ -28,30 +28,30 @@ export default function HistoryPage() {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [publishing, setPublishing] = useState(false);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await AutomationService.getAudits(tenantSlug || '', 50);
-        setExecutions((data.audits || []).map((a: any) => ({
-          id: a.id,
-          name: a.triggerEvent?.type || 'Unknown',
-          type: 'rule',
-          category: 'Automation',
-          status: a.matched ? 'success' : 'failed',
-          startTime: a.createdAt ? new Date(a.createdAt).toLocaleString() : '-',
-          endTime: a.createdAt ? new Date(a.createdAt).toLocaleString() : '-',
-          duration: '-',
-          triggeredBy: a.actor || 'system'
-        })));
-      } catch (err) {
-        console.error('Failed to load automation history', err);
-      } finally {
-        setLoading(false);
-      }
+  async function load() {
+    try {
+      setLoading(true);
+      const data = await AutomationService.getAudits(tenantSlug || '', 50);
+      setExecutions((data.audits || []).map((a: any) => ({
+        id: a.id,
+        name: a.triggerEvent?.type || 'Unknown',
+        type: 'rule',
+        category: 'Automation',
+        status: a.matched ? 'success' : 'failed',
+        startTime: a.createdAt ? new Date(a.createdAt).toLocaleString() : '-',
+        endTime: a.createdAt ? new Date(a.createdAt).toLocaleString() : '-',
+        duration: '-',
+        triggeredBy: a.actor || 'system'
+      })));
+    } catch (err) {
+      console.error('Failed to load automation history', err);
+    } finally {
+      setLoading(false);
     }
-    if (tenantSlug) load();
-  }, [tenantSlug]);
+  }
+  useEffect(() => { if (tenantSlug) load(); }, [tenantSlug]);
 
   const filteredExecutions = executions.filter(execution => {
     const matchesSearch = execution.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -86,6 +86,19 @@ export default function HistoryPage() {
       default: return <div className="w-2 h-2 bg-gray-500 rounded-full" />;
     }
   };
+
+  async function runTestEvent() {
+    if (!tenantSlug) return;
+    setPublishing(true);
+    try {
+      await AutomationService.publishEvent(tenantSlug, { type: 'test.sample', payload: { id: '1' } });
+      await load();
+    } catch (err) {
+      console.error('Failed to publish test event', err);
+    } finally {
+      setPublishing(false);
+    }
+  }
 
   return (
     <>
@@ -158,6 +171,22 @@ export default function HistoryPage() {
                 </div>
                 <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-500" />
               </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-gray-900">Populate history</p>
+                <p className="text-sm text-gray-500">Emit a sample event to see how rules are matched and logged.</p>
+              </div>
+              <button
+                onClick={runTestEvent}
+                disabled={publishing}
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {publishing ? 'Emitting...' : 'Emit sample event'}
+              </button>
             </div>
           </div>
 
