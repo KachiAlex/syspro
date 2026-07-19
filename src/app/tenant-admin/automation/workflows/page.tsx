@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PlayCircle, Play, Pause, Square, Edit, Trash2, Plus, Search, Filter, Clock, CheckCircle, AlertCircle, Settings, Zap } from 'lucide-react';
+import { PlayCircle, Play, Pause, Square, Edit, Trash2, Plus, Search, Filter, Clock, CheckCircle, AlertCircle, Settings, Zap, X } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 
 interface Workflow {
@@ -27,30 +27,36 @@ export default function AutomationWorkflowsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ name: '', description: '', type: 'custom', status: 'active' });
+
+  async function load() {
+    if (!tenantSlug) return;
+    setLoading(true);
+    try {
+      const data = await AutomationService.getWorkflows(tenantSlug);
+      setWorkflows((data.workflows || []).map((w: any) => ({
+        id: w.id,
+        name: w.name,
+        description: w.description || '',
+        status: w.isActive ? 'active' : w.isActive === false ? 'stopped' : 'paused',
+        lastRun: w.updatedAt ? new Date(w.updatedAt).toLocaleString() : '—',
+        nextRun: '—',
+        executions: 0,
+        successRate: 0,
+        avgDuration: '—',
+        category: w.type || 'custom',
+      })));
+    } catch (err) {
+      console.error('Failed to load workflows', err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    if (!tenantSlug) return;
-    async function load() {
-      try {
-        const data = await AutomationService.getWorkflows(tenantSlug);
-        setWorkflows((data.workflows || []).map((w: any) => ({
-          id: w.id,
-          name: w.name,
-          description: w.description || '',
-          status: w.isActive ? 'active' : w.isActive === false ? 'stopped' : 'paused',
-          lastRun: w.updatedAt ? new Date(w.updatedAt).toLocaleString() : '—',
-          nextRun: '—',
-          executions: 0,
-          successRate: 0,
-          avgDuration: '—',
-          category: w.type || 'custom',
-        })));
-      } catch (err) {
-        console.error('Failed to load workflows', err);
-      } finally {
-        setLoading(false);
-      }
-    }
     load();
   }, [tenantSlug]);
 
@@ -79,6 +85,33 @@ export default function AutomationWorkflowsPage() {
       default: return <Clock className="w-4 h-4 text-gray-600" />;
     }
   };
+
+  async function handleCreateWorkflow(e: React.FormEvent) {
+    e.preventDefault();
+    if (!formData.name.trim()) {
+      setCreateError('Workflow name is required');
+      return;
+    }
+    if (!tenantSlug) return;
+    setCreateLoading(true);
+    setCreateError(null);
+    try {
+      await AutomationService.createWorkflow(tenantSlug, {
+        name: formData.name.trim(),
+        description: formData.description,
+        type: formData.type,
+        isActive: formData.status === 'active',
+        steps: [{ id: '1', name: 'Start', order: 1, triggerType: 'manual', actions: [] }],
+      });
+      setShowCreate(false);
+      setFormData({ name: '', description: '', type: 'custom', status: 'active' });
+      await load();
+    } catch (err: any) {
+      setCreateError(err?.message || 'Failed to create workflow');
+    } finally {
+      setCreateLoading(false);
+    }
+  }
 
   return (
     <>
@@ -168,7 +201,7 @@ export default function AutomationWorkflowsPage() {
                 <option value="Marketing">Marketing</option>
               </select>
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+            <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
               <Plus className="w-4 h-4" />
               Create Workflow
             </button>
@@ -328,7 +361,7 @@ export default function AutomationWorkflowsPage() {
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
               <div className="space-y-3">
-                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                <button onClick={() => setShowCreate(true)} className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
                   <Plus className="w-4 h-4" />
                   Create New Workflow
                 </button>
@@ -345,6 +378,53 @@ export default function AutomationWorkflowsPage() {
           </div>
         </div>
       </div>
+      {showCreate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) setShowCreate(false); }}>
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Create Workflow</h2>
+              <button onClick={() => setShowCreate(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {createError && (
+              <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{createError}</div>
+            )}
+            <form onSubmit={handleCreateWorkflow} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" placeholder="Workflow name" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" rows={3} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Type</label>
+                <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black">
+                  <option value="custom">Custom</option>
+                  <option value="onboarding">Onboarding</option>
+                  <option value="transfer">Transfer</option>
+                  <option value="promotion">Promotion</option>
+                  <option value="exit">Exit</option>
+                  <option value="approval">Approval</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Status</label>
+                <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black">
+                  <option value="active">Active</option>
+                  <option value="paused">Paused</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setShowCreate(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button type="submit" disabled={createLoading} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{createLoading ? 'Creating...' : 'Create Workflow'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }

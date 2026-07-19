@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { sql } from "@/lib/sql-client";
 
 export async function GET(request: NextRequest) {
@@ -41,6 +42,58 @@ export async function GET(request: NextRequest) {
     console.error("Failed to fetch tenant users:", error);
     return NextResponse.json(
       { error: "Failed to fetch users" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
+
+  if (!tenantSlug) {
+    return NextResponse.json(
+      { error: "tenantSlug is required" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const body = await request.json();
+    const { email, name, status = "active", role } = body;
+
+    if (!email || !name) {
+      return NextResponse.json(
+        { error: "Email and name are required" },
+        { status: 400 }
+      );
+    }
+
+    const userId = randomUUID();
+    await sql`
+      INSERT INTO users (id, tenant_id, email, name, status, created_at)
+      SELECT ${userId}, t.id, ${email}, ${name}, ${status}, now()
+      FROM tenants t
+      WHERE t.slug = ${tenantSlug}
+    `;
+
+    if (role) {
+      await sql`
+        INSERT INTO user_roles (user_id, role_id)
+        SELECT ${userId}, r.id
+        FROM roles r
+        WHERE r.name = ${role}
+        LIMIT 1
+      `;
+    }
+
+    return NextResponse.json({
+      success: true,
+      user: { id: userId, email, name, status },
+    });
+  } catch (error) {
+    console.error("Failed to create user:", error);
+    return NextResponse.json(
+      { error: "Failed to create user" },
       { status: 500 }
     );
   }

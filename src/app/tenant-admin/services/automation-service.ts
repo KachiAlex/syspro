@@ -26,6 +26,11 @@ export class AutomationService {
     return response.data;
   }
 
+  static async createWorkflow(tenantSlug: string, workflow: any) {
+    const response = await apiClient.post(`/tenant/workflows?tenantSlug=${encodeURIComponent(tenantSlug)}`, workflow);
+    return response.data;
+  }
+
   static async getTriggers(tenantSlug: string) {
     const response = await apiClient.get(`/automation/triggers?tenantSlug=${encodeURIComponent(tenantSlug)}`);
     return response.data;

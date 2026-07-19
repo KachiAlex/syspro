@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Settings, Users, FileText, Heart, Globe, MapPin, Building, Plus, Edit, Trash2, Eye, TrendingUp, TrendingDown, AlertCircle, CheckCircle } from 'lucide-react';
+import { Settings, Users, FileText, Heart, Globe, MapPin, Building, Plus, Edit, Trash2, Eye, TrendingUp, TrendingDown, AlertCircle, CheckCircle, X } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { AdminService } from '@/app/tenant-admin/services/admin-service';
 
@@ -72,6 +72,10 @@ export default function AdminPage() {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [branches, setBranches] = useState<Branch[]>([]);
   const [recentAudits, setRecentAudits] = useState<any[]>([]);
+  const [showAddBranch, setShowAddBranch] = useState(false);
+  const [addBranchLoading, setAddBranchLoading] = useState(false);
+  const [addBranchError, setAddBranchError] = useState<string | null>(null);
+  const [branchForm, setBranchForm] = useState({ name: '', code: '', city: '', country: '', continent: '', manager: '' });
 
   useEffect(() => {
     async function load() {
@@ -130,6 +134,48 @@ export default function AdminPage() {
   const continents = [...new Set(branches.map(b => b.continent))];
   const tabs = adminTabs.map(t => ({ ...t, count: counts[t.id] ?? t.count }));
 
+  async function handleAddBranch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!branchForm.name.trim() || !branchForm.manager.trim()) {
+      setAddBranchError('Name and manager are required');
+      return;
+    }
+    if (!tenantSlug) return;
+    setAddBranchLoading(true);
+    setAddBranchError(null);
+    try {
+      const res = await fetch(`/api/tenant/org-structure?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          parentId: 'tenant-root',
+          node: {
+            name: branchForm.name.trim(),
+            manager: branchForm.manager.trim(),
+            type: 'branch',
+            status: 'Live',
+            region: branchForm.continent,
+            timezone: 'UTC',
+            headcount: 0,
+            modules: [],
+          },
+        }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.error || 'Failed to create branch');
+      }
+      setShowAddBranch(false);
+      setBranchForm({ name: '', code: '', city: '', country: '', continent: '', manager: '' });
+      const branchesRes = await AdminService.getBranches(tenantSlug);
+      setBranches(branchesRes.branches || []);
+    } catch (err: any) {
+      setAddBranchError(err?.message || 'Failed to create branch');
+    } finally {
+      setAddBranchLoading(false);
+    }
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -143,7 +189,7 @@ export default function AdminPage() {
             <option>Last Quarter</option>
             <option>Last Year</option>
           </select>
-          <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+          <button onClick={() => setShowAddBranch(true)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
             <Plus className="w-4 h-4" />
             Add Branch
           </button>
@@ -385,6 +431,59 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
+      {showAddBranch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) setShowAddBranch(false); }}>
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Add Branch</h2>
+              <button onClick={() => setShowAddBranch(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {addBranchError && (
+              <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{addBranchError}</div>
+            )}
+            <form onSubmit={handleAddBranch} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Branch Name</label>
+                <input value={branchForm.name} onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" placeholder="Branch name" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Branch Code</label>
+                <input value={branchForm.code} onChange={(e) => setBranchForm({ ...branchForm, code: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" placeholder="e.g. NYC-01" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Manager</label>
+                <input value={branchForm.manager} onChange={(e) => setBranchForm({ ...branchForm, manager: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" placeholder="Manager name" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">City</label>
+                <input value={branchForm.city} onChange={(e) => setBranchForm({ ...branchForm, city: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" placeholder="City" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Country</label>
+                <input value={branchForm.country} onChange={(e) => setBranchForm({ ...branchForm, country: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" placeholder="Country" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Continent</label>
+                <select value={branchForm.continent} onChange={(e) => setBranchForm({ ...branchForm, continent: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black">
+                  <option value="">Select continent</option>
+                  <option value="Africa">Africa</option>
+                  <option value="Asia">Asia</option>
+                  <option value="Europe">Europe</option>
+                  <option value="North America">North America</option>
+                  <option value="South America">South America</option>
+                  <option value="Oceania">Oceania</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setShowAddBranch(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button type="submit" disabled={addBranchLoading} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{addBranchLoading ? 'Creating...' : 'Add Branch'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

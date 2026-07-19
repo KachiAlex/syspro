@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Users, Plus, Edit, Trash2, Eye, Search, Filter, Shield, UserCheck, UserX, Mail, Phone, Calendar, Building, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Eye, Search, Filter, Shield, UserCheck, UserX, Mail, Phone, Calendar, Building, CheckCircle, AlertCircle, Clock, X } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 
 interface User {
@@ -29,7 +29,7 @@ interface Role {
   color: string;
 }
 
-const users: User[] = [
+const INITIAL_USERS: User[] = [
   {
     id: '1',
     name: 'Sarah Johnson',
@@ -174,6 +174,11 @@ export default function UsersPage() {
   const [selectedRole, setSelectedRole] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedBranch, setSelectedBranch] = useState('all');
+  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [addUserLoading, setAddUserLoading] = useState(false);
+  const [addUserError, setAddUserError] = useState<string | null>(null);
+  const [userForm, setUserForm] = useState({ name: '', email: '', role: '', department: '', branch: '', status: 'active' });
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -211,6 +216,55 @@ export default function UsersPage() {
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
+
+  async function handleAddUser(e: React.FormEvent) {
+    e.preventDefault();
+    if (!userForm.name.trim() || !userForm.email.trim()) {
+      setAddUserError('Name and email are required');
+      return;
+    }
+    if (!tenantSlug) return;
+    setAddUserLoading(true);
+    setAddUserError(null);
+    try {
+      const res = await fetch(`/api/tenant/users?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: userForm.name.trim(),
+          email: userForm.email.trim(),
+          status: userForm.status,
+          role: userForm.role,
+        }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.error || 'Failed to create user');
+      }
+      const data = await res.json();
+      const newUser: User = {
+        id: data.user?.id || Date.now().toString(),
+        name: userForm.name.trim(),
+        email: userForm.email.trim(),
+        phone: '',
+        role: userForm.role || 'User',
+        department: userForm.department || '—',
+        branch: userForm.branch || '—',
+        status: userForm.status as User['status'],
+        lastLogin: '—',
+        joinDate: new Date().toISOString().split('T')[0],
+        permissions: [],
+        avatar: getInitials(userForm.name),
+      };
+      setUsers((prev) => [...prev, newUser]);
+      setShowAddUser(false);
+      setUserForm({ name: '', email: '', role: '', department: '', branch: '', status: 'active' });
+    } catch (err: any) {
+      setAddUserError(err?.message || 'Failed to create user');
+    } finally {
+      setAddUserLoading(false);
+    }
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -332,7 +386,7 @@ export default function UsersPage() {
                 ))}
               </select>
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+            <button onClick={() => setShowAddUser(true)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
               <Plus className="w-4 h-4" />
               Add User
             </button>
@@ -506,6 +560,65 @@ export default function UsersPage() {
             </div>
           </div>
         </>
+      )}
+      {showAddUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) setShowAddUser(false); }}>
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Add User</h2>
+              <button onClick={() => setShowAddUser(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {addUserError && (
+              <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{addUserError}</div>
+            )}
+            <form onSubmit={handleAddUser} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                <input value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" placeholder="John Doe" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" placeholder="john@company.com" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Role</label>
+                <select value={userForm.role} onChange={(e) => setUserForm({ ...userForm, role: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black">
+                  <option value="">Select role</option>
+                  {roles.map(role => (
+                    <option key={role.id} value={role.name}>{role.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Department</label>
+                <input value={userForm.department} onChange={(e) => setUserForm({ ...userForm, department: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" placeholder="e.g. Operations" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Branch</label>
+                <select value={userForm.branch} onChange={(e) => setUserForm({ ...userForm, branch: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black">
+                  <option value="">Select branch</option>
+                  {branches.map(branch => (
+                    <option key={branch} value={branch}>{branch}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Status</label>
+                <select value={userForm.status} onChange={(e) => setUserForm({ ...userForm, status: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black">
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="suspended">Suspended</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setShowAddUser(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button type="submit" disabled={addUserLoading} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{addUserLoading ? 'Adding...' : 'Add User'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
