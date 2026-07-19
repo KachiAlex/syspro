@@ -20,4 +20,14 @@ export class AutomationService {
     const response = await apiClient.post(`/automation?tenantSlug=${encodeURIComponent(tenantSlug)}`, event);
     return response.data;
   }
+
+  static async getWorkflows(tenantSlug: string) {
+    const response = await apiClient.get(`/tenant/workflows?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+    return response.data;
+  }
+
+  static async getTriggers(tenantSlug: string) {
+    const response = await apiClient.get(`/automation/triggers?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+    return response.data;
+  }
 }

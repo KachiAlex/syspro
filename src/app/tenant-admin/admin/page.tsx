@@ -64,107 +64,34 @@ interface Branch {
   currency: string;
 }
 
-const branches: Branch[] = [
-  {
-    id: '1',
-    name: 'New York Headquarters',
-    code: 'NY-HQ-001',
-    country: 'United States',
-    continent: 'North America',
-    state: 'New York',
-    city: 'New York City',
-    status: 'active',
-    employees: 450,
-    manager: 'Sarah Johnson',
-    establishedDate: '2018-03-15',
-    revenue: 12500000,
-    currency: 'USD'
-  },
-  {
-    id: '2',
-    name: 'London Branch',
-    code: 'LON-UK-002',
-    country: 'United Kingdom',
-    continent: 'Europe',
-    state: 'England',
-    city: 'London',
-    status: 'active',
-    employees: 280,
-    manager: 'James Wilson',
-    establishedDate: '2019-07-22',
-    revenue: 8750000,
-    currency: 'GBP'
-  },
-  {
-    id: '3',
-    name: 'Tokyo Office',
-    code: 'TOK-JP-003',
-    country: 'Japan',
-    continent: 'Asia',
-    state: 'Tokyo',
-    city: 'Tokyo',
-    status: 'active',
-    employees: 195,
-    manager: 'Yuki Tanaka',
-    establishedDate: '2020-11-10',
-    revenue: 6200000,
-    currency: 'JPY'
-  },
-  {
-    id: '4',
-    name: 'Sydney Branch',
-    code: 'SYD-AU-004',
-    country: 'Australia',
-    continent: 'Oceania',
-    state: 'New South Wales',
-    city: 'Sydney',
-    status: 'pending',
-    employees: 120,
-    manager: 'Michael Chen',
-    establishedDate: '2021-02-28',
-    revenue: 3100000,
-    currency: 'AUD'
-  },
-  {
-    id: '5',
-    name: 'Dubai Office',
-    code: 'DUB-AE-005',
-    country: 'United Arab Emirates',
-    continent: 'Asia',
-    state: 'Dubai',
-    city: 'Dubai',
-    status: 'active',
-    employees: 85,
-    manager: 'Ahmed Hassan',
-    establishedDate: '2022-05-15',
-    revenue: 4200000,
-    currency: 'AED'
-  }
-];
-
 export default function AdminPage() {
   const { tenantSlug } = useTenantContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedContinent, setSelectedContinent] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [recentAudits, setRecentAudits] = useState<any[]>([]);
 
   useEffect(() => {
     async function load() {
       if (!tenantSlug) return;
       try {
-        const [usersRes, auditRes, healthRes] = await Promise.all([
+        const [usersRes, auditRes, healthRes, branchesRes] = await Promise.all([
           AdminService.getUsers(tenantSlug),
           AdminService.getAuditLogs(tenantSlug),
           AdminService.getHealth(tenantSlug),
+          AdminService.getBranches(tenantSlug),
         ]);
         setCounts({
           users: (usersRes.users || []).length,
           audit: (auditRes.logs || []).length,
           health: (healthRes.metrics || []).length,
         });
+        setBranches(branchesRes.branches || []);
+        setRecentAudits(auditRes.logs || []);
       } catch (err) {
-        console.error('Failed to load admin counts', err);
+        console.error('Failed to load admin data', err);
       }
     }
     load();
@@ -443,34 +370,18 @@ export default function AdminPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">Dubai Office activated</p>
-                <p className="text-xs text-gray-500">2 hours ago</p>
+            {recentAudits.slice(0, 4).map((audit) => (
+              <div key={audit.id} className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-900">{audit.action} on {audit.resource}</p>
+                  <p className="text-xs text-gray-500">{audit.user} • {audit.timestamp ? new Date(audit.timestamp).toLocaleString() : '—'}</p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">New manager assigned to Sydney Branch</p>
-                <p className="text-xs text-gray-500">1 day ago</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">Sydney Branch setup in progress</p>
-                <p className="text-xs text-gray-500">3 days ago</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">Quarterly revenue report generated</p>
-                <p className="text-xs text-gray-500">1 week ago</p>
-              </div>
-            </div>
+            ))}
+            {recentAudits.length === 0 && (
+              <p className="text-sm text-gray-600">No recent activity.</p>
+            )}
           </div>
         </div>
       </div>

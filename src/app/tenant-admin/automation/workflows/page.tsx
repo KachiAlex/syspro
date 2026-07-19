@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PlayCircle, Play, Pause, Square, Edit, Trash2, Plus, Search, Filter, Clock, CheckCircle, AlertCircle, Settings, Zap } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
@@ -18,74 +18,41 @@ interface Workflow {
   category: string;
 }
 
-const workflows: Workflow[] = [
-  {
-    id: '1',
-    name: 'Customer Onboarding',
-    description: 'Automated customer registration and welcome process',
-    status: 'active',
-    lastRun: '2 hours ago',
-    nextRun: 'In 1 hour',
-    executions: 342,
-    successRate: 98.2,
-    avgDuration: '3.2s',
-    category: 'Customer Management'
-  },
-  {
-    id: '2',
-    name: 'Invoice Processing',
-    description: 'Process and validate incoming invoices',
-    status: 'active',
-    lastRun: '30 minutes ago',
-    nextRun: 'In 30 minutes',
-    executions: 1247,
-    successRate: 96.8,
-    avgDuration: '1.8s',
-    category: 'Finance'
-  },
-  {
-    id: '3',
-    name: 'Daily Report Generation',
-    description: 'Generate and distribute daily business reports',
-    status: 'paused',
-    lastRun: '5 hours ago',
-    nextRun: 'Paused',
-    executions: 89,
-    successRate: 94.4,
-    avgDuration: '12.4s',
-    category: 'Reporting'
-  },
-  {
-    id: '4',
-    name: 'Inventory Sync',
-    description: 'Synchronize inventory across all channels',
-    status: 'active',
-    lastRun: '15 minutes ago',
-    nextRun: 'In 15 minutes',
-    executions: 2156,
-    successRate: 99.1,
-    avgDuration: '2.1s',
-    category: 'Inventory'
-  },
-  {
-    id: '5',
-    name: 'Email Campaign',
-    description: 'Send automated marketing emails',
-    status: 'stopped',
-    lastRun: '2 days ago',
-    nextRun: 'Stopped',
-    executions: 45,
-    successRate: 91.2,
-    avgDuration: '4.7s',
-    category: 'Marketing'
-  }
-];
+import { AutomationService } from '@/app/tenant-admin/services/automation-service';
 
 export default function AutomationWorkflowsPage() {
   const { tenantSlug } = useTenantContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!tenantSlug) return;
+    async function load() {
+      try {
+        const data = await AutomationService.getWorkflows(tenantSlug);
+        setWorkflows((data.workflows || []).map((w: any) => ({
+          id: w.id,
+          name: w.name,
+          description: w.description || '',
+          status: w.isActive ? 'active' : w.isActive === false ? 'stopped' : 'paused',
+          lastRun: w.updatedAt ? new Date(w.updatedAt).toLocaleString() : '—',
+          nextRun: '—',
+          executions: 0,
+          successRate: 0,
+          avgDuration: '—',
+          category: w.type || 'custom',
+        })));
+      } catch (err) {
+        console.error('Failed to load workflows', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [tenantSlug]);
 
   const filteredWorkflows = workflows.filter(workflow => {
     const matchesSearch = workflow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

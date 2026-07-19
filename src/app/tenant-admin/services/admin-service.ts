@@ -17,6 +17,36 @@ export class AdminService {
     return res.json();
   }
 
+  static async getBranches(tenantSlug: string) {
+    const res = await fetch(`/api/tenant/branches?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+    if (!res.ok) throw new Error("Failed to fetch branches");
+    return res.json();
+  }
+
+  static async getAccessControl(tenantSlug: string) {
+    const res = await fetch(`/api/tenant/access-control?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+    if (!res.ok) throw new Error("Failed to fetch access control");
+    return res.json();
+  }
+
+  static async getBilling(tenantSlug: string) {
+    const res = await fetch(`/api/tenant/billing?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+    if (!res.ok) throw new Error("Failed to fetch billing");
+    return res.json();
+  }
+
+  static async getIntegrations(tenantSlug: string) {
+    const res = await fetch(`/api/tenant/integrations?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+    if (!res.ok) throw new Error("Failed to fetch integrations");
+    return res.json();
+  }
+
+  static async getRoles(tenantSlug: string) {
+    const res = await fetch(`/api/tenant/roles?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+    if (!res.ok) throw new Error("Failed to fetch roles");
+    return res.json();
+  }
+
   static async getOrgStructure(tenantSlug: string) {
     const res = await fetch(`/api/tenant/org-structure?tenantSlug=${encodeURIComponent(tenantSlug)}`);
     if (!res.ok) throw new Error("Failed to fetch org structure");
