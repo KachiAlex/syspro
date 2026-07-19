@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Settings, Users, FileText, Heart, Globe, MapPin, Building, Plus, Edit, Trash2, Eye, TrendingUp, TrendingDown, AlertCircle, CheckCircle } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { AdminService } from '@/app/tenant-admin/services/admin-service';
 
 interface AdminTab {
   id: string;
@@ -146,6 +147,28 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedContinent, setSelectedContinent] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [counts, setCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    async function load() {
+      if (!tenantSlug) return;
+      try {
+        const [usersRes, auditRes, healthRes] = await Promise.all([
+          AdminService.getUsers(tenantSlug),
+          AdminService.getAuditLogs(tenantSlug),
+          AdminService.getHealth(tenantSlug),
+        ]);
+        setCounts({
+          users: (usersRes.users || []).length,
+          audit: (auditRes.logs || []).length,
+          health: (healthRes.metrics || []).length,
+        });
+      } catch (err) {
+        console.error('Failed to load admin counts', err);
+      }
+    }
+    load();
+  }, [tenantSlug]);
 
   const filteredBranches = branches.filter(branch => {
     const matchesSearch = branch.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -178,6 +201,7 @@ export default function AdminPage() {
   const totalEmployees = branches.reduce((sum, branch) => sum + branch.employees, 0);
   const activeBranches = branches.filter(b => b.status === 'active').length;
   const continents = [...new Set(branches.map(b => b.continent))];
+  const tabs = adminTabs.map(t => ({ ...t, count: counts[t.id] ?? t.count }));
 
   return (
     <div className="p-6 space-y-6">
@@ -246,7 +270,7 @@ export default function AdminPage() {
         <div className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Access</h3>
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
-            {adminTabs.map((tab) => (
+            {tabs.map((tab) => (
               <Link
                 key={tab.id}
                 href={tab.href}
@@ -256,7 +280,7 @@ export default function AdminPage() {
                   <tab.icon className="w-8 h-8 text-gray-600 group-hover:text-gray-700" />
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 group-hover:text-gray-700">{tab.name}</h3>
-                    {tab.count && (
+                    {tab.count !== undefined && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-900 group-hover:bg-gray-300">
                         {tab.count}
                       </span>
