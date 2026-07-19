@@ -1,12 +1,29 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Briefcase, CheckCircle, Archive, BarChart3, TrendingUp } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { ProjectService, ProjectResponse } from './services/projectService';
 
 export default function ProjectsPage() {
   const { tenantSlug } = useTenantContext();
+  const [projects, setProjects] = useState<ProjectResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!tenantSlug) return;
+    ProjectService.getProjects(tenantSlug)
+      .then(setProjects)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [tenantSlug]);
+
+  const totalProjects = projects.length;
+  const activeProjects = projects.filter(p => p.status === 'In Progress' || p.status === 'Initiated').length;
+  const completedProjects = projects.filter(p => p.status === 'Completed' || p.status === 'Archived').length;
+  const completionRate = totalProjects ? Math.round((completedProjects / totalProjects) * 100) : 0;
+  const recentProjects = projects.slice(0, 5);
 
   return (
     <div className="p-6 space-y-6">
@@ -26,7 +43,7 @@ export default function ProjectsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Projects</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">12</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{totalProjects}</p>
             </div>
             <Briefcase className="w-12 h-12 text-blue-500" />
           </div>
@@ -108,7 +125,7 @@ export default function ProjectsPage() {
           </div>
           <p className="text-sm text-gray-600 mb-4">Analytics and project performance insights</p>
           <div className="flex items-center justify-between">
-            <span className="text-2xl font-bold text-blue-600">12</span>
+            <span className="text-2xl font-bold text-blue-600">{totalProjects}</span>
             <span className="text-xs font-medium text-blue-600">View →</span>
           </div>
         </Link>
@@ -116,31 +133,33 @@ export default function ProjectsPage() {
 
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Projects</h3>
-        <div className="space-y-3">
-          {[
-            { name: 'Website Redesign', status: 'In Progress', progress: 75, team: 5 },
-            { name: 'Mobile App Development', status: 'In Progress', progress: 60, team: 8 },
-            { name: 'API Integration', status: 'In Progress', progress: 85, team: 3 },
-          ].map((project, idx) => (
-            <div key={idx} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">{project.name}</p>
-                <div className="flex items-center gap-4 mt-2">
-                  <div className="flex-1 max-w-xs">
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${project.progress}%` }} />
+        {loading ? (
+          <p className="text-sm text-gray-500">Loading...</p>
+        ) : recentProjects.length === 0 ? (
+          <p className="text-sm text-gray-500">No projects yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {recentProjects.map((project) => (
+              <div key={project.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">{project.name}</p>
+                  <div className="flex items-center gap-4 mt-2">
+                    <div className="flex-1 max-w-xs">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${project.progress}%` }} />
+                      </div>
                     </div>
+                    <span className="text-xs text-gray-600">{project.progress}%</span>
+                    <span className="text-xs font-medium text-gray-600">{project.teamMembers} team members</span>
                   </div>
-                  <span className="text-xs text-gray-600">{project.progress}%</span>
-                  <span className="text-xs font-medium text-gray-600">{project.team} team members</span>
                 </div>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 ml-4">
+                  {project.status}
+                </span>
               </div>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 ml-4">
-                {project.status}
-              </span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

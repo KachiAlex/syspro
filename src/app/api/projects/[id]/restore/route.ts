@@ -1,23 +1,29 @@
 import { NextResponse } from 'next/server';
+import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { updateProject, toProjectResponse } from "@/lib/projects/db";
 
-export async function POST(
+async function restore(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const body = await request.json();
-    const { tenantSlug } = body;
-
-    // Mock restore operation - replace with real database update
-    console.log(`Restoring project: ${params.id}`);
-
-    return NextResponse.json({ 
-      success: true, 
+    const context = validateTenantContext(request as any, "write");
+    const updated = await updateProject(params.id, context.tenantSlug, { status: "IN_PROGRESS" } as any);
+    if (!updated) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+    return NextResponse.json({
+      success: true,
       id: params.id,
-      message: 'Project restored successfully'
+      project: toProjectResponse(updated),
+      message: 'Project restored successfully',
     });
   } catch (error) {
     console.error('Failed to restore project:', error);
-    return NextResponse.json({ error: 'Failed to restore project' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to restore project';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export const POST = restore;
+export const PATCH = restore;

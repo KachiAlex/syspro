@@ -1,23 +1,29 @@
 import { NextResponse } from 'next/server';
+import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { getProject, updateProject, toProjectResponse } from "@/lib/projects/db";
 
-export async function POST(
+async function archive(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const body = await request.json();
-    const { tenantSlug } = body;
-
-    // Mock archive operation - replace with real database update
-    console.log(`Archiving project: ${params.id}`);
-
-    return NextResponse.json({ 
-      success: true, 
+    const context = validateTenantContext(request as any, "write");
+    const updated = await updateProject(params.id, context.tenantSlug, { status: "ARCHIVED" } as any);
+    if (!updated) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+    return NextResponse.json({
+      success: true,
       id: params.id,
-      message: 'Project archived successfully'
+      project: toProjectResponse(updated),
+      message: 'Project archived successfully',
     });
   } catch (error) {
     console.error('Failed to archive project:', error);
-    return NextResponse.json({ error: 'Failed to archive project' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to archive project';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export const POST = archive;
+export const PATCH = archive;

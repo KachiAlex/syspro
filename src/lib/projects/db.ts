@@ -144,7 +144,7 @@ export async function updateProject(
       values.push(input.name);
       paramCount++;
     }
-    if (input.description) {
+    if (input.description !== undefined) {
       updates.push(`description = $${paramCount}`);
       values.push(input.description);
       paramCount++;
@@ -157,6 +157,31 @@ export async function updateProject(
     if (input.priority) {
       updates.push(`priority = $${paramCount}`);
       values.push(input.priority);
+      paramCount++;
+    }
+    if (input.startDate) {
+      updates.push(`start_date = $${paramCount}`);
+      values.push(input.startDate);
+      paramCount++;
+    }
+    if (input.plannedEndDate) {
+      updates.push(`planned_end_date = $${paramCount}`);
+      values.push(input.plannedEndDate);
+      paramCount++;
+    }
+    if (input.totalBudgetAmount !== undefined) {
+      updates.push(`total_budget_amount = $${paramCount}`);
+      values.push(input.totalBudgetAmount);
+      paramCount++;
+    }
+    if (input.projectManagerId !== undefined) {
+      updates.push(`project_manager_id = $${paramCount}`);
+      values.push(input.projectManagerId);
+      paramCount++;
+    }
+    if (input.approvalStatus) {
+      updates.push(`approval_status = $${paramCount}`);
+      values.push(input.approvalStatus);
       paramCount++;
     }
 
@@ -180,6 +205,84 @@ export async function updateProject(
     console.error("Error updating project:", error);
     throw error;
   }
+}
+
+export async function deleteProject(
+  id: string,
+  tenantSlug: string
+): Promise<boolean> {
+  try {
+    const result = await db.query(
+      `DELETE FROM projects WHERE id = $1 AND tenant_slug = $2 RETURNING id`,
+      [id, tenantSlug]
+    );
+    return (result.rowCount ?? 0) > 0;
+  } catch (error) {
+    console.error("Error deleting project:", error);
+    throw error;
+  }
+}
+
+// ============================================================
+// API RESPONSE MAPPING
+// ============================================================
+
+export function toProjectResponse(project: Project) {
+  const statusLabels: Record<string, string> = {
+    PLANNING: "Planning",
+    INITIATED: "Initiated",
+    IN_PROGRESS: "In Progress",
+    ON_HOLD: "On Hold",
+    COMPLETED: "Completed",
+    ARCHIVED: "Archived",
+    CANCELLED: "Cancelled",
+  };
+  const priorityLabels: Record<string, string> = {
+    LOW: "Low",
+    MEDIUM: "Medium",
+    HIGH: "High",
+    CRITICAL: "Critical",
+  };
+  const progressFromStatus = (status: string) => {
+    switch (status) {
+      case "COMPLETED":
+      case "ARCHIVED":
+        return 100;
+      case "IN_PROGRESS":
+        return 50;
+      case "ON_HOLD":
+        return 25;
+      case "INITIATED":
+        return 10;
+      default:
+        return 0;
+    }
+  };
+  const toDateString = (value: any) => {
+    if (!value) return undefined;
+    const d = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+  };
+  const formatCurrency = (amount: number | null | undefined) => {
+    const n = Number(amount) || 0;
+    return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  };
+
+  return {
+    id: project.id,
+    name: project.name,
+    description: project.description ?? "",
+    status: statusLabels[project.status] ?? project.status,
+    priority: priorityLabels[project.priority] ?? project.priority,
+    progress: progressFromStatus(project.status),
+    startDate: toDateString(project.startDate),
+    dueDate: toDateString(project.plannedEndDate),
+    teamMembers: 0,
+    budget: formatCurrency(project.totalBudgetAmount),
+    manager: project.projectManagerId ?? project.createdBy ?? "Unassigned",
+    createdAt: toDateString(project.createdAt),
+    updatedAt: toDateString(project.updatedAt),
+  };
 }
 
 // ============================================================
