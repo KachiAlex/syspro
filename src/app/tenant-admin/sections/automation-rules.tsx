@@ -13,6 +13,22 @@ type Rule = {
   enabled: boolean;
 };
 
+type RuleTemplate = {
+  label: string;
+  name: string;
+  description: string;
+  eventType: string;
+  condition: { op: string; field: string; value: any };
+  actions: any[];
+};
+
+const TEMPLATES: RuleTemplate[] = [
+  { label: "Custom rule", name: "", description: "", eventType: "", condition: { op: "exists", field: "payload.id", value: "" }, actions: [{ type: "notify", params: { channel: "email", template: "default" } }] },
+  { label: "Notify admin on missed check-in", name: "Missed check-in alert", description: "Notify admin when an employee misses a check-in", eventType: "attendance.missed", condition: { op: "exists", field: "payload.employeeId", value: "" }, actions: [{ type: "notify", params: { channel: "email", template: "missed-checkin" } }] },
+  { label: "Create task for new support ticket", name: "Support ticket task", description: "Create a task when a new support ticket is created", eventType: "support.ticket-created", condition: { op: "exists", field: "payload.ticketId", value: "" }, actions: [{ type: "task", params: { title: "Handle support ticket", assignee: "@admin" } }] },
+  { label: "Alert when project goes over budget", name: "Over budget alert", description: "Notify project lead when budget threshold is crossed", eventType: "projects.over-budget", condition: { op: "gt", field: "payload.spent", value: "1000" }, actions: [{ type: "email", params: { to: "pm@example.com", subject: "Project over budget" } }] },
+];
+
 export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) {
   const [rules, setRules] = useState<Rule[]>([]);
   const [triggers, setTriggers] = useState<Array<{ key: string; module: string; description: string }>>([]);
@@ -23,6 +39,8 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
   const [audits, setAudits] = useState<any[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState<string | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState(0);
+  const [previewPayload, setPreviewPayload] = useState('{\n  "id": "123"\n}');
 
   const [form, setForm] = useState({
     name: "",
@@ -32,7 +50,12 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
     actions: [{ type: "notify", params: { channel: "email", template: "default" } }],
   });
 
-  const triggerOptions = useMemo(() => triggers.map((t) => t.key), [triggers]);
+  const groupedTriggers = useMemo(() => {
+    return triggers.reduce((acc, t) => {
+      (acc[t.module] = acc[t.module] || []).push(t);
+      return acc;
+    }, {} as Record<string, typeof triggers>);
+  }, [triggers]);
 
   const needsValueOps = ["eq", "neq", "gt", "gte", "lt", "lte", "includes", "excludes"];
 
@@ -58,6 +81,55 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
   function removeAction(index: number) {
     setForm((p) => ({ ...p, actions: p.actions.filter((_, i) => i !== index) }));
   }
+
+  function applyTemplate(index: number) {
+    setSelectedTemplate(index);
+    const t = TEMPLATES[index];
+    setForm({
+      name: t.name,
+      eventType: t.eventType,
+      description: t.description,
+      condition: t.condition,
+      actions: t.actions,
+    });
+  }
+
+  function getPayloadValue(payload: any, path?: string) {
+    if (!path) return undefined;
+    return path.split(".").reduce((acc: any, key: string) => acc?.[key], payload);
+  }
+
+  function compareDraft(op: string, left: any, right: any) {
+    switch (op) {
+      case "eq": return left === right;
+      case "neq": return left !== right;
+      case "gt": return Number(left) > Number(right);
+      case "gte": return Number(left) >= Number(right);
+      case "lt": return Number(left) < Number(right);
+      case "lte": return Number(left) <= Number(right);
+      case "includes": return Array.isArray(left) ? left.includes(right) : typeof left === "string" ? left.includes(String(right)) : false;
+      case "excludes": return Array.isArray(left) ? !left.includes(right) : typeof left === "string" ? !left.includes(String(right)) : false;
+      case "exists": return left !== undefined && left !== null;
+      case "missing": return left === undefined || left === null;
+      default: return false;
+    }
+  }
+
+  function evaluateDraft(condition: any, payload: any): boolean {
+    if (condition.all && condition.all.length > 0) return condition.all.every((c: any) => evaluateDraft(c, payload));
+    if (condition.any && condition.any.length > 0) return condition.any.some((c: any) => evaluateDraft(c, payload));
+    return compareDraft(condition.op, getPayloadValue(payload, condition.field), condition.value);
+  }
+
+  const previewResult = useMemo(() => {
+    try {
+      const payload = JSON.parse(previewPayload);
+      const matched = evaluateDraft(form.condition, payload);
+      return { matched, actions: matched ? form.actions : [], error: null };
+    } catch (err) {
+      return { matched: false, actions: [], error: "Invalid payload JSON" };
+    }
+  }, [form.condition, form.actions, previewPayload]);
 
   async function load() {
     setLoading(true);
@@ -175,19 +247,33 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
         </div>
 
         <form className="mt-4 space-y-4" onSubmit={handleCreate}>
+          <div>
+            <label className="block text-sm font-medium text-gray-900 mb-2">Start from a template</label>
+            <select value={selectedTemplate} onChange={(e) => applyTemplate(Number(e.target.value))} className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+              {TEMPLATES.map((t, i) => (
+                <option key={i} value={i}>{t.label}</option>
+              ))}
+            </select>
+          </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">Rule name</label>
               <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Event type</label>
-              <input list="trigger-list" value={form.eventType} onChange={(e) => setForm((p) => ({ ...p, eventType: e.target.value }))} required className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
-              <datalist id="trigger-list">
-                {triggerOptions.map((t) => (
-                  <option value={t} key={t} />
+              <label className="block text-sm font-medium text-gray-900 mb-2">Event trigger</label>
+              <select value={form.eventType} onChange={(e) => setForm((p) => ({ ...p, eventType: e.target.value }))} required className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                <option value="">Select a trigger</option>
+                {Object.entries(groupedTriggers).map(([module, items]) => (
+                  <optgroup key={module} label={module}>
+                    {items.map((t) => (
+                      <option key={t.key} value={t.key}>
+                        {t.key} — {t.description}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
-              </datalist>
+              </select>
             </div>
           </div>
           <div>
@@ -283,6 +369,39 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
               </div>
             </div>
           </div>
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <label className="block text-sm font-medium text-gray-900 mb-2">Live preview</label>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Sample payload (JSON)</label>
+                <textarea value={previewPayload} onChange={(e) => setPreviewPayload(e.target.value)} className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-xs" rows={5} />
+                {previewResult.error && <p className="mt-1 text-xs text-rose-600">{previewResult.error}</p>}
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400 mb-2">Result</p>
+                {previewResult.error ? (
+                  <p className="text-sm text-slate-600">Fix the payload JSON to see the preview.</p>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium text-gray-900">
+                      {previewResult.matched ? "Matched" : "Skipped"}
+                    </p>
+                    {previewResult.matched && (
+                      <div className="mt-2">
+                        <p className="text-xs text-slate-500">Actions that would run:</p>
+                        <ul className="mt-1 space-y-1 text-xs text-slate-700">
+                          {previewResult.actions.map((action, i) => (
+                            <li key={i} className="rounded bg-white border border-slate-100 px-2 py-1">{action.type}: {JSON.stringify(action.params)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
           <div className="flex gap-3">
             <button
               type="submit"
