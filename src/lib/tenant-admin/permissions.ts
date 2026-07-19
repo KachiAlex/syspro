@@ -6,10 +6,9 @@ async function ensurePermissionsTables() {
   if (permissionsTablesEnsured) return;
   try {
     await setupTenantAdminSchema(sql);
+    permissionsTablesEnsured = true;
   } catch (error) {
     console.warn("Failed to ensure permissions tables:", error);
-  } finally {
-    permissionsTablesEnsured = true;
   }
 }
 
@@ -156,11 +155,17 @@ export async function requireDashboardPermission(
     request.cookies?.get?.("userId")?.value ||
     request.cookies?.get?.("X-User-Id")?.value;
 
+  const roleId =
+    request.nextUrl.searchParams.get("roleId") ||
+    request.headers.get("x-role-id") ||
+    request.cookies?.get?.("X-Role-Id")?.value ||
+    request.cookies?.get?.("roleId")?.value;
+
   if (!tenantSlug || !userId) {
     throw new Error("Unauthorized");
   }
 
-  const perms = await getTenantUserPermissions(tenantSlug, userId);
+  const perms = await getTenantUserPermissions(tenantSlug, userId, roleId ?? undefined);
 
   if (perms.isAdmin || perms.dashboards.includes(dashboardKey)) {
     return perms;

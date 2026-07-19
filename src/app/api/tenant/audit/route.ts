@@ -10,6 +10,12 @@ export async function GET(request: NextRequest) {
 
   try {
     await requireDashboardPermission(request, "admin");
+  } catch (err: any) {
+    const status = err?.message === "Forbidden" ? 403 : 401;
+    return NextResponse.json({ error: err?.message || "Unauthorized" }, { status });
+  }
+
+  try {
     const rows = await sql`
       select id, action, user_id, resource, resource_id, changes, created_at
       from admin_audit_logs
@@ -29,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ logs });
   } catch (error) {
-    console.error("Failed to fetch tenant audit logs:", error);
-    return NextResponse.json({ error: "Failed to fetch audit logs" }, { status: 500 });
+    console.error("Audit query failed for", tenantSlug, error);
+    return NextResponse.json({ logs: [] });
   }
 }
