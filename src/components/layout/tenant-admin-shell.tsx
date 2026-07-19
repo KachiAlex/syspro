@@ -111,6 +111,10 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
   }, [toggleSidebar]);
 
   const { theme, mounted: themeMounted, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = () => {
     const expire = "expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;";
@@ -133,6 +137,10 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
     perms.isAdmin ||
     perms.dashboards.includes(dashboardKey) ||
     ((perms as any)[dashboardKey] !== 'none' && (perms as any)[dashboardKey] !== undefined);
+
+  if (!mounted) {
+    return <div className="min-h-screen bg-theme-bg" />;
+  }
 
   return (
     <div className="min-h-screen flex bg-theme-bg relative">
