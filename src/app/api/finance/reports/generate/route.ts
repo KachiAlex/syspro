@@ -6,6 +6,7 @@ import {
   generateCashFlowReport,
   generateAgedReceivablesReport,
 } from "@/lib/finance/reports-db";
+import { AuditService } from "@/lib/tenant-admin/service";
 
 const generateSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -52,6 +53,31 @@ export async function POST(request: NextRequest) {
       case "aged":
         report = await generateAgedReceivablesReport(filters);
         break;
+    }
+
+    try {
+      const auditService = new AuditService();
+      const reportId = `fin-${Date.now()}`;
+      await auditService.log(
+        tenantSlug as any,
+        tenantSlug as any,
+        "create",
+        "report",
+        reportId as any,
+        {
+          after: {
+            id: reportId,
+            name: `${type.toUpperCase()} Financial Report`,
+            reportType: type,
+            status: "Completed",
+            module: "financial",
+            period: startDate && endDate ? `${startDate} to ${endDate}` : period,
+            createdAt: new Date().toISOString(),
+          },
+        }
+      );
+    } catch (auditErr) {
+      console.error("Failed to audit finance report:", auditErr);
     }
 
     return NextResponse.json({ report, type });

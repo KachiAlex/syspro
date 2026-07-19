@@ -111,6 +111,8 @@ export async function GET(request: NextRequest) {
           coalesce((changes->'after'->>'id'), resource_id) as id,
           coalesce((changes->'after'->>'name'), 'Untitled') as name,
           coalesce((changes->'after'->>'reportType'), (changes->'after'->>'type'), 'report') as "reportType",
+          coalesce((changes->'after'->>'module'), 'general') as "module",
+          coalesce((changes->'after'->>'status'), 'Completed') as "status",
           (changes->'after'->>'schedule') as schedule,
           coalesce((changes->'after'->>'rows')::int, 0) as "dataPoints",
           coalesce((changes->'after'->>'createdAt')::timestamptz, created_at) as "createdAt"

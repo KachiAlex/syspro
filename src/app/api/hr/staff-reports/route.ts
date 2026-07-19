@@ -5,6 +5,7 @@ import {
   updateStaffReportStatus,
   deleteStaffReport,
 } from '@/lib/hr/db';
+import { AuditService } from '@/lib/tenant-admin/service';
 
 const VALID_REPORT_TYPES = ['daily', 'weekly', 'monthly', 'quarterly'];
 const VALID_STATUSES = ['pending', 'under_review', 'approved', 'needs_edit', 'rejected'];
@@ -77,6 +78,29 @@ export async function POST(request: NextRequest) {
       resubmissionOfId,
       version,
     });
+
+    try {
+      const auditService = new AuditService();
+      await auditService.log(
+        tenantSlug as any,
+        (report.employeeId ?? employeeId) as any,
+        "create",
+        "report",
+        report.id as any,
+        {
+          after: {
+            id: report.id,
+            name: report.title || title || `${reportType} Report`,
+            reportType: report.reportType || reportType,
+            status: report.status || "pending",
+            module: "hr",
+            createdAt: report.createdAt || new Date().toISOString(),
+          },
+        }
+      );
+    } catch (auditErr) {
+      console.error("Failed to audit staff report:", auditErr);
+    }
 
     return NextResponse.json({ success: true, report });
   } catch (error) {

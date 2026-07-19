@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractAuthContext, requirePermission, validateTenant } from "@/lib/auth-helper";
 import { createReport } from "@/lib/reporting/db";
+import { AuditService } from "@/lib/tenant-admin/service";
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,6 +39,30 @@ export async function POST(request: NextRequest) {
       format: format || "pdf",
       size: "0 KB",
     };
+
+    try {
+      const auditService = new AuditService();
+      await auditService.log(
+        tenantSlug as any,
+        (auth.userId || report.id) as any,
+        "create",
+        "report",
+        report.id as any,
+        {
+          after: {
+            id: report.id,
+            name: report.title,
+            reportType: report.type,
+            status: report.status,
+            module: report.module,
+            format: report.format,
+            createdAt: report.generatedAt,
+          },
+        }
+      );
+    } catch (auditErr) {
+      console.error("Failed to audit generated report:", auditErr);
+    }
 
     return NextResponse.json(report, { status: 201 });
   } catch (error) {

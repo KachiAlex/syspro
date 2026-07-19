@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { BarChart3, TrendingUp, DollarSign, Users, Calendar, Download, Filter } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
@@ -40,6 +40,25 @@ const reportTabs: ReportTab[] = [
 export default function AnalyticsPage() {
   const { tenantSlug } = useTenantContext();
   const [selectedPeriod, setSelectedPeriod] = useState('This Month');
+  const [recentReports, setRecentReports] = useState<any[]>([]);
+  const [loadingReports, setLoadingReports] = useState(false);
+
+  useEffect(() => {
+    if (!tenantSlug) return;
+    setLoadingReports(true);
+    fetch(`/api/tenant/analytics?type=reports&tenantSlug=${encodeURIComponent(tenantSlug)}`)
+      .then((res) => res.json().catch(() => ({ reports: [] })))
+      .then((payload) => {
+        setRecentReports(payload.reports || payload.data?.reports || []);
+      })
+      .catch((err) => console.error('Failed to load recent reports:', err))
+      .finally(() => setLoadingReports(false));
+  }, [tenantSlug]);
+
+  const handleDownload = (reportId: string) => {
+    if (!tenantSlug || !reportId) return;
+    window.open(`/api/tenant/analytics?action=download&reportId=${encodeURIComponent(reportId)}&tenantSlug=${encodeURIComponent(tenantSlug)}&format=csv`, '_blank');
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -221,33 +240,39 @@ export default function AnalyticsPage() {
 
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Reports & Insights</h3>
-        <div className="space-y-4">
-          {[
-            { name: 'Monthly Financial Summary', type: 'Financial', date: '2026-04-03', status: 'Completed' },
-            { name: 'Sales Performance Q1', type: 'Sales', date: '2026-04-02', status: 'Completed' },
-            { name: 'Employee Productivity Analysis', type: 'HR', date: '2026-04-01', status: 'Processing' },
-            { name: 'Revenue Forecast Report', type: 'Financial', date: '2026-03-31', status: 'Completed' },
-          ].map((report, idx) => (
-            <div key={idx} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">{report.name}</p>
-                <p className="text-xs text-gray-600 mt-1">{report.type} • {report.date}</p>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  report.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                  'bg-amber-100 text-amber-800'
-                }`}>
-                  {report.status}
-                </span>
-                <button className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover">
-                  <Download className="w-3 h-3" />
-                  Download
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+        {loadingReports ? (
+          <div className="text-sm text-gray-500">Loading reports...</div>
+        ) : (
+          <div className="space-y-4">
+            {recentReports.length === 0 ? (
+              <div className="text-sm text-gray-500">No reports generated yet.</div>
+            ) : (
+              recentReports.map((report: any, idx: number) => (
+                <div key={report.id || idx} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">{report.name || 'Untitled'}</p>
+                    <p className="text-xs text-gray-600 mt-1">{(report.module || report.reportType || 'Report').charAt(0).toUpperCase() + (report.module || report.reportType || 'Report').slice(1)} • {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : 'Unknown'}</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      (report.status || '') === 'Completed' || (report.status || '') === 'approved' ? 'bg-green-100 text-green-800' :
+                      'bg-amber-100 text-amber-800'
+                    }`}>
+                      {report.status || 'Completed'}
+                    </span>
+                    <button
+                      onClick={() => handleDownload(report.id)}
+                      className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover"
+                    >
+                      <Download className="w-3 h-3" />
+                      Download
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
