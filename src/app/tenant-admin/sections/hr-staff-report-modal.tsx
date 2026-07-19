@@ -59,7 +59,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
   const recognitionRef = useRef<ReturnType<typeof listenForTranscript> | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const hods = useMemo(() => employees.filter((e) => e.role.toLowerCase() === 'hod'), [employees]);
+  const hods = useMemo(() => employees.filter((e) => e.role?.toLowerCase() === 'hod'), [employees]);
   const colleagues = useMemo(() => employees.filter((e) => e.id !== submitterId), [employees, submitterId]);
   const submitter = useMemo(() => employees.find((e) => e.id === submitterId), [employees, submitterId]);
   const autoHod = useMemo(() => {

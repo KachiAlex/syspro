@@ -121,7 +121,7 @@ const HRComponent: React.FC = () => {
     if (statusFilter !== 'All Statuses' && emp.status !== statusFilter) return false;
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      if (!emp.name.toLowerCase().includes(query) && !emp.email.toLowerCase().includes(query)) return false;
+      if (!emp.name?.toLowerCase().includes(query) && !emp.email?.toLowerCase().includes(query)) return false;
     }
     return true;
   });

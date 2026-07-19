@@ -52,7 +52,7 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
   const [newFrequency, setNewFrequency] = useState<'daily' | 'weekly' | 'one-time'>('daily');
   const [newDueDate, setNewDueDate] = useState(() => new Date().toISOString().split('T')[0]);
 
-  const staff = useMemo(() => employees.filter((e) => e.role.toLowerCase() !== 'hod'), [employees]);
+  const staff = useMemo(() => employees.filter((e) => e.role?.toLowerCase() !== 'hod'), [employees]);
 
   const loadTasks = async () => {
     setLoading(true);
