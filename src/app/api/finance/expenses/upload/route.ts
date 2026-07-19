@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
           filename: result.filename,
           size: result.size,
           mimeType: result.mimeType,
+          url: result.url,
           createdAt: result.createdAt,
         },
       },

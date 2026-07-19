@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { db, sql as SQL } from "../sql-client";
 import type { SqlClient } from "../sql-client";
+import { uploadReceipt } from "./uploads";
 import type {
   FinanceAccount,
   FinanceAccountCreateInput,
@@ -1272,16 +1273,36 @@ export async function saveReceipt(params: {
   filename: string;
   mimeType: string;
   data: string; // base64
-}): Promise<{ id: string; filename: string; mimeType: string; size: number; createdAt: string }> {
+  tenantSlug?: string;
+}): Promise<{ id: string; filename: string; mimeType: string; size: number; url: string; createdAt: string }> {
   const sql = SQL;
   await ensureExpenseTables(sql);
   const id = randomUUID();
-  const sizeBytes = Math.ceil((params.data.length * 3) / 4);
+
+  const fileBuffer = Buffer.from(params.data, "base64");
+
+  let tenantSlug = params.tenantSlug;
+  if (!tenantSlug) {
+    const tenantRows = await sql`select tenant_slug from expenses where id = ${params.expenseId} limit 1` as any[];
+    tenantSlug = tenantRows[0]?.tenant_slug ?? "default";
+  }
+
+  const uploadResult = await uploadReceipt({
+    filename: params.filename,
+    mimeType: params.mimeType,
+    data: fileBuffer,
+    expenseId: params.expenseId,
+    tenantSlug,
+  });
+
+  if (!uploadResult.success || !uploadResult.url) {
+    throw new Error(uploadResult.error || "Receipt upload failed");
+  }
 
   const [row] = await sql`
     insert into expense_receipts (id, expense_id, filename, mime_type, data, size_bytes)
-    values (${id}, ${params.expenseId}, ${params.filename}, ${params.mimeType}, ${params.data}, ${sizeBytes})
-    returning id, filename, mime_type, size_bytes, created_at
+    values (${id}, ${params.expenseId}, ${params.filename}, ${params.mimeType}, ${uploadResult.url}, ${uploadResult.size ?? 0})
+    returning id, filename, mime_type, data, size_bytes, created_at
   ` as any[];
 
   // Also update the expense attachments array
@@ -1297,6 +1318,7 @@ export async function saveReceipt(params: {
     filename: row.filename,
     mimeType: row.mime_type,
     size: row.size_bytes,
+    url: row.data,
     createdAt: row.created_at,
   };
 }

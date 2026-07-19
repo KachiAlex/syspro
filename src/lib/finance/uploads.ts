@@ -3,8 +3,7 @@
  * Handles file uploads and storage for expense receipts
  */
 
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 export interface UploadResult {
   success: boolean;
@@ -21,13 +20,13 @@ export interface FileUploadRequest {
   mimeType: string;
   data: Buffer;
   expenseId: string;
+  tenantSlug?: string;
 }
 
 /**
  * Local storage configuration
  * In production, use S3/GCS/Azure Blob Storage
  */
-const UPLOAD_DIR = join(process.cwd(), "public", "uploads", "receipts");
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = [
   "application/pdf",
@@ -68,23 +67,34 @@ function validateFile(file: FileUploadRequest): string | null {
   return null;
 }
 
-/**
- * Generate safe filename with timestamp
- */
-function generateSafeFilename(originalName: string, expenseId: string): string {
-  const timestamp = Date.now();
-  const ext = originalName.split(".").pop() || "bin";
-  const safeName = originalName
-    .replace(/[^a-zA-Z0-9.-]/g, "_")
-    .replace(/^\.+/, "") // Remove leading dots
-    .slice(0, 50); // Limit length
+function getS3Client() {
+  return new S3Client({
+    region: "auto",
+    endpoint: process.env.R2_ENDPOINT || "",
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
+    },
+    forcePathStyle: true,
+  });
+}
 
-  return `${expenseId}_${timestamp}_${safeName}`.slice(0, 255);
+function getR2Env() {
+  const bucket = process.env.R2_BUCKET_NAME;
+  const publicUrl = process.env.R2_PUBLIC_URL;
+  const endpoint = process.env.R2_ENDPOINT;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+
+  if (!bucket || !publicUrl || !endpoint || !accessKeyId || !secretAccessKey) {
+    return null;
+  }
+
+  return { bucket, publicUrl: publicUrl.replace(/\/+$/, ""), endpoint, accessKeyId, secretAccessKey };
 }
 
 /**
- * Upload receipt file to local storage
- * In production, replace with cloud storage (S3, GCS, Azure)
+ * Upload receipt file to Cloudflare R2 (S3-compatible)
  */
 export async function uploadReceipt(
   file: FileUploadRequest
@@ -99,26 +109,37 @@ export async function uploadReceipt(
       };
     }
 
-    // Create upload directory if it doesn't exist
-    try {
-      await mkdir(UPLOAD_DIR, { recursive: true });
-    } catch (err) {
-      console.error("Failed to create upload directory:", err);
+    const env = getR2Env();
+    if (!env) {
+      return {
+        success: false,
+        error: "R2 is not configured. Set R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, and R2_PUBLIC_URL env vars.",
+      };
     }
 
-    // Generate safe filename
-    const safeFilename = generateSafeFilename(file.filename, file.expenseId);
-    const filepath = join(UPLOAD_DIR, safeFilename);
+    const client = getS3Client();
+    const timestamp = Date.now();
+    const ext = file.filename.split(".").pop() || "bin";
+    const safeName = file.filename
+      .replace(/[^a-zA-Z0-9.-]/g, "_")
+      .replace(/^\.+/, "")
+      .slice(0, 50);
+    const key = `receipts/${(file.tenantSlug || "default").replace(/[^a-zA-Z0-9-]/g, "")}/${file.expenseId}/${timestamp}_${safeName}.${ext}`;
 
-    // Write file
-    await writeFile(filepath, file.data);
+    await client.send(
+      new PutObjectCommand({
+        Bucket: env.bucket,
+        Key: key,
+        Body: file.data,
+        ContentType: file.mimeType,
+      })
+    );
 
-    // Return success with relative URL
-    const url = `/uploads/receipts/${safeFilename}`;
+    const url = `${env.publicUrl}/${key}`;
 
     return {
       success: true,
-      filename: safeFilename,
+      filename: `${timestamp}_${safeName}.${ext}`,
       url,
       size: file.data.length,
       mimeType: file.mimeType,
@@ -140,14 +161,6 @@ export async function uploadReceiptBatch(
   files: FileUploadRequest[]
 ): Promise<UploadResult[]> {
   return Promise.all(files.map((file) => uploadReceipt(file)));
-}
-
-/**
- * Generate download URL for receipt
- * In production, use signed URLs from cloud storage
- */
-export function getReceiptUrl(filename: string): string {
-  return `/uploads/receipts/${filename}`;
 }
 
 /**
