@@ -73,7 +73,7 @@ export default function AdminRestrictions({ tenantSlug }: { tenantSlug?: string 
     setSuccess(null);
 
     try {
-      const res = await fetch(`/api/tenant/access-restrictions`, {
+      const res = await fetch(`/api/tenant/access-restrictions?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

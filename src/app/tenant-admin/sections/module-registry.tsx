@@ -40,7 +40,7 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
       const res = await fetch(`/api/tenant/modules?tenantSlug=${encodeURIComponent(ts ?? '')}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load modules");
       const payload = await res.json();
-      setModules(Array.isArray(payload.modules) ? payload.modules : []);
+      setModules(Array.isArray(payload.data) ? payload.data : []);
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : String(err));
@@ -55,7 +55,7 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
 
   async function toggleModule(m: ModuleItem) {
     try {
-      const res = await fetch(`/api/tenant/modules/${encodeURIComponent(m.id)}`, {
+      const res = await fetch(`/api/tenant/modules/${encodeURIComponent(m.id)}?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled: !m.enabled }),
@@ -72,7 +72,7 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
 
   async function toggleFlag(m: ModuleItem, flag: string, label: string) {
     try {
-      const res = await fetch(`/api/tenant/modules/${encodeURIComponent(m.id)}`, {
+      const res = await fetch(`/api/tenant/modules/${encodeURIComponent(m.id)}?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ flags: { [flag]: !(m.flags?.[flag] ?? false) } }),

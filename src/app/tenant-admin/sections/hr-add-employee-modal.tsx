@@ -146,7 +146,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
     setLoading(true);
     try {
       const emails = inviteEmails.split('\n').filter(email => email.trim());
-      const result = await HRService.generateInviteLink('tenant-slug', emails);
+      const result = await HRService.generateInviteLink(tenantSlug, emails);
       setInviteLink(result.link);
       setLinkGenerated(true);
     } catch (error) {

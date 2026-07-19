@@ -145,7 +145,7 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
         type: form.values.type,
         steps: steps.map((s, i) => ({ step: i + 1, title: s.title, assignee: s.assignee || undefined, daysAfter: s.daysAfter })),
       };
-      const res = await fetch(`/api/tenant/workflows`, {
+      const res = await fetch(`/api/tenant/workflows?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -171,7 +171,7 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
   async function saveEdit(id: string) {
     try {
       const payload = { name: editName.trim(), steps: editSteps };
-      const res = await fetch(`/api/tenant/workflows/${encodeURIComponent(id)}`, {
+      const res = await fetch(`/api/tenant/workflows/${encodeURIComponent(id)}?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -196,7 +196,7 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
   async function handleDelete(id: string) {
     if (!confirm("Delete workflow? This action cannot be undone.")) return;
     try {
-      const res = await fetch(`/api/tenant/workflows/${encodeURIComponent(id)}`, { method: "DELETE" });
+      const res = await fetch(`/api/tenant/workflows/${encodeURIComponent(id)}?tenantSlug=${encodeURIComponent(ts ?? '')}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Delete failed");
       setSuccessMessage("Workflow deleted successfully");
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -209,7 +209,7 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
 
   async function toggleWorkflowStatus(id: string, status: "active" | "paused") {
     try {
-      const res = await fetch(`/api/tenant/workflows/${encodeURIComponent(id)}/status`, {
+      const res = await fetch(`/api/tenant/workflows/${encodeURIComponent(id)}/status?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
@@ -226,7 +226,7 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
 
   async function duplicateWorkflow(id: string) {
     try {
-      const res = await fetch(`/api/tenant/workflows/${encodeURIComponent(id)}/duplicate`, {
+      const res = await fetch(`/api/tenant/workflows/${encodeURIComponent(id)}/duplicate?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });

@@ -116,7 +116,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
       const res = await fetch(`/api/tenant/access-control?tenantSlug=${encodeURIComponent(ts ?? '')}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load permissions");
       const payload = await res.json();
-      setAccessControls(Array.isArray(payload.accessControls) ? payload.accessControls : []);
+      setAccessControls(Array.isArray(payload.data) ? payload.data : []);
     } catch (err) {
       console.error(err);
       setServerError(err instanceof Error ? err.message : String(err));
@@ -175,7 +175,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
 
     try {
       const payload = { roleName: form.values.roleName.trim(), moduleAccess: selectedModules };
-      const res = await fetch(`/api/tenant/access-control`, {
+      const res = await fetch(`/api/tenant/access-control?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -202,7 +202,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
   async function saveEdit(id: string) {
     try {
       const payload = { moduleAccess: editModules };
-      const res = await fetch(`/api/tenant/access-control/${encodeURIComponent(id)}`, {
+      const res = await fetch(`/api/tenant/access-control?id=${encodeURIComponent(id)}&tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -226,7 +226,7 @@ export default function AccessControlPanel({ tenantSlug }: { tenantSlug?: string
   async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this role? Users with this role will lose their access.")) return;
     try {
-      const res = await fetch(`/api/tenant/access-control/${encodeURIComponent(id)}`, { method: "DELETE" });
+      const res = await fetch(`/api/tenant/access-control?id=${encodeURIComponent(id)}&tenantSlug=${encodeURIComponent(ts ?? '')}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete role");
       setSuccessMessage("Role deleted successfully");
       setTimeout(() => setSuccessMessage(null), 3000);
