@@ -11,6 +11,7 @@ import {
 } from "@/lib/tenant-admin/utils";
 import { AuditService } from "@/lib/tenant-admin/service";
 import { AuditAction, UserId, ResourceId } from "@/lib/tenant-admin/types";
+import { db } from "@/lib/sql-client";
 import { z } from "zod";
 
 const CreateReportSchema = z.object({
@@ -27,9 +28,30 @@ const ExportReportSchema = z.object({
   scheduleFor: z.string().datetime().optional(),
 });
 
+async function safeQuery<T = any>(query: string, params: any[] = []): Promise<T[] | null> {
+  try {
+    const result = await db.query<T>(query, params);
+    return result.rows || [];
+  } catch (err) {
+    console.error("Analytics query failed:", query, err);
+    return null;
+  }
+}
+
+function safeNumber(value: any, fallback = 0): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function computeTrend(current: number, previous: number) {
+  if (!previous) return { growth: 0, trend: current > 0 ? "up" : "flat" };
+  const growth = Math.round(((current - previous) / previous) * 100);
+  return { growth, trend: growth >= 0 ? "up" : "down" };
+}
+
 /**
  * GET /api/tenant/analytics
- * Retrieve analytics reports and metrics
+ * Retrieve analytics reports and metrics from real database tables.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -39,69 +61,234 @@ export async function GET(request: NextRequest) {
       return errorResponse("Rate limit exceeded", 429);
     }
 
+    const tenantSlug = context.tenantSlug;
     const type = new URL(request.url).searchParams.get("type") || "overview";
     const pagination = getPaginationParams(request);
     const sort = getSortParams(request);
+    const periodDays = Math.min(Math.max(Number(new URL(request.url).searchParams.get("days") || "30"), 1), 365);
 
     if (type === "reports") {
+      const reports = (await safeQuery<any>(
+        `select
+          coalesce((changes->'after'->>'id'), resource_id) as id,
+          coalesce((changes->'after'->>'name'), 'Untitled') as name,
+          coalesce((changes->'after'->>'reportType'), (changes->'after'->>'type'), 'report') as "reportType",
+          (changes->'after'->>'schedule') as schedule,
+          coalesce((changes->'after'->>'rows')::int, 0) as "dataPoints",
+          coalesce((changes->'after'->>'createdAt')::timestamptz, created_at) as "createdAt"
+        from admin_audit_logs
+        where tenant_slug = $1 and resource = 'report' and action = 'create'
+        order by coalesce((changes->'after'->>'createdAt')::timestamptz, created_at) desc
+        limit $2 offset $3`,
+        [tenantSlug, pagination.limit, (pagination.page - 1) * pagination.limit]
+      )) || [];
+      const total = (await safeQuery<{ count: number }>(
+        `select count(*)::int as count from admin_audit_logs where tenant_slug = $1 and resource = 'report' and action = 'create'`,
+        [tenantSlug]
+      ))?.[0]?.count || 0;
       return NextResponse.json({
         success: true,
-        data: {
-          reports: [],
-          pagination: {
-            page: pagination.page,
-            limit: pagination.limit,
-            total: 0,
-          },
-        },
+        data: { reports, pagination: { page: pagination.page, limit: pagination.limit, total } },
       });
     } else if (type === "metrics") {
+      const deptResult = (await safeQuery<{ total: number; avg: number }>(
+        `select
+          (select count(*)::int from admin_departments where tenant_slug = $1) as total,
+          coalesce((select avg(emp_count)::float from (
+            select count(*) as emp_count from admin_employees where tenant_slug = $1 group by department_id
+          ) sub), 0) as avg`,
+        [tenantSlug]
+      ))?.[0];
+
+      const employeeRows = (await safeQuery<{ status: string; count: number }>(
+        `select status, count(*)::int as count from admin_employees where tenant_slug = $1 group by status`,
+        [tenantSlug]
+      )) || [];
+      const empTotal = employeeRows.reduce((sum, r) => sum + safeNumber(r.count), 0);
+      const empActive = employeeRows.find((r) => r.status === 'active')?.count || 0;
+      const empByStatus = Object.fromEntries(employeeRows.map((r) => [r.status, safeNumber(r.count)]));
+      const tenureResult = (await safeQuery<{ avg: number; terminated: number }>(
+        `select
+          coalesce(avg(extract(epoch from (now() - hire_date)) / 86400 / 365.25), 0) as avg,
+          count(*) filter (where status = 'terminated')::int as terminated
+        from admin_employees where tenant_slug = $1`,
+        [tenantSlug]
+      ))?.[0];
+
+      const approvalRows = (await safeQuery<{ status: string; count: number; avg: number }>(
+        `select
+          status,
+          count(*)::int as count,
+          coalesce(avg(extract(epoch from (updated_at - created_at))), 0) as avg
+        from admin_approval_requests where tenant_slug = $1 group by status`,
+        [tenantSlug]
+      )) || [];
+      const approvals = Object.fromEntries(approvalRows.map((r) => [r.status, r.count]));
+      const approvedAvg = approvalRows.find((r) => r.status === 'approved')?.avg || 0;
+
+      const workflowResult = (await safeQuery<{ total: number; active: number; executed: number }>(
+        `select
+          (select count(*)::int from admin_workflows where tenant_slug = $1) as total,
+          (select count(*)::int from admin_workflows where tenant_slug = $1 and is_active = true) as active,
+          (select count(*)::int from admin_audit_logs where tenant_slug = $1 and resource = 'workflow' and action = 'execute') as executed`,
+        [tenantSlug]
+      ))?.[0];
+
       return NextResponse.json({
         success: true,
         data: {
-          departments: {
-            total: 0,
-            active: 0,
-            avgEmployeesPerDept: 0,
-          },
-          employees: {
-            total: 0,
-            active: 0,
-            byStatus: {},
-            avgTenure: 0,
-            turnover: 0,
-          },
+          departments: { total: safeNumber(deptResult?.total), active: safeNumber(deptResult?.total), avgEmployeesPerDept: safeNumber(deptResult?.avg) },
+          employees: { total: empTotal, active: empActive, byStatus: empByStatus, avgTenure: safeNumber(tenureResult?.avg), turnover: empTotal ? safeNumber(tenureResult?.terminated) / empTotal : 0 },
           approvals: {
-            pending: 0,
-            approved: 0,
-            rejected: 0,
-            avgTimeToApprove: 0,
+            pending: safeNumber(approvals['pending']),
+            approved: safeNumber(approvals['approved']),
+            rejected: safeNumber(approvals['rejected']),
+            avgTimeToApprove: Math.round(approvedAvg),
           },
-          workflows: {
-            total: 0,
-            active: 0,
-            executed: 0,
-          },
+          workflows: { total: safeNumber(workflowResult?.total), active: safeNumber(workflowResult?.active), executed: safeNumber(workflowResult?.executed) },
         },
       });
     } else if (type === "security") {
+      const security = (await safeQuery<{ auditLogsCount: number; activePolicies: number; suspicious: number; lastUpdate: string | null }>(
+        `select
+          (select count(*)::int from admin_audit_logs where tenant_slug = $1) as "auditLogsCount",
+          (select count(*)::int from admin_security_policies where tenant_slug = $1 and is_active = true) as "activePolicies",
+          (select count(*)::int from admin_audit_logs where tenant_slug = $1 and action in ('permission_change', 'delete')) as suspicious,
+          (select max(updated_at)::text from admin_security_policies where tenant_slug = $1) as "lastUpdate"`,
+        [tenantSlug]
+      ))?.[0];
       return NextResponse.json({
         success: true,
         data: {
-          auditLogsCount: 0,
-          activePolicies: 0,
-          suspiciousActivities: 0,
-          lastPolicyUpdate: null,
+          auditLogsCount: safeNumber(security?.auditLogsCount),
+          activePolicies: safeNumber(security?.activePolicies),
+          suspiciousActivities: safeNumber(security?.suspicious),
+          lastPolicyUpdate: security?.lastUpdate || null,
         },
       });
     } else if (type === "overview") {
+      const currentStart = `now() - interval '${periodDays} days'`;
+      const previousStart = `now() - interval '${periodDays * 2} days'`;
+
+      const revenueResult = (await safeQuery<{ current: number; previous: number }>(
+        `select
+          coalesce(sum(total) filter (where created_at >= ${currentStart}), 0) as current,
+          coalesce(sum(total) filter (where created_at >= ${previousStart} and created_at < ${currentStart}), 0) as previous
+        from finance_invoices where tenant_slug = $1`,
+        [tenantSlug]
+      ))?.[0];
+
+      const customerResult = (await safeQuery<{ current: number; previous: number }>(
+        `select
+          count(*) filter (where created_at >= ${currentStart})::int as current,
+          count(*) filter (where created_at >= ${previousStart} and created_at < ${currentStart})::int as previous
+        from crm_customers where tenant_slug = $1`,
+        [tenantSlug]
+      ))?.[0];
+
+      const orderResult = (await safeQuery<{ current: number; previous: number }>(
+        `select
+          count(*) filter (where created_at >= ${currentStart})::int as current,
+          count(*) filter (where created_at >= ${previousStart} and created_at < ${currentStart})::int as previous
+        from purchase_orders where tenant_slug = $1`,
+        [tenantSlug]
+      ))?.[0];
+
+      const conversionResult = (await safeQuery<{ current: number; previous: number; totalLeads: number }>(
+        `select
+          count(c.id) filter (where c.created_at >= ${currentStart})::int as current,
+          count(c.id) filter (where c.created_at >= ${previousStart} and c.created_at < ${currentStart})::int as previous,
+          nullif(count(l.id) filter (where l.created_at >= ${currentStart}), 0) as "totalLeads"
+        from crm_leads l
+        left join crm_conversions c on c.lead_id = l.id
+        where l.tenant_slug = $1`,
+        [tenantSlug]
+      ))?.[0];
+
+      const revenue = safeNumber(revenueResult?.current);
+      const revenuePrevious = safeNumber(revenueResult?.previous);
+      const customers = safeNumber(customerResult?.current);
+      const customersPrevious = safeNumber(customerResult?.previous);
+      const orders = safeNumber(orderResult?.current);
+      const ordersPrevious = safeNumber(orderResult?.previous);
+      const conversions = safeNumber(conversionResult?.current);
+      const conversionLeads = safeNumber(conversionResult?.totalLeads);
+      const conversionCurrent = conversionLeads ? Math.round((conversions / conversionLeads) * 100) : 0;
+      const conversionPreviousRaw = safeNumber(conversionResult?.previous);
+
+      const topProducts = (await safeQuery<{ name: string; sales: number; revenue: number }>(
+        `select
+          coalesce(description, 'Unknown') as name,
+          coalesce(sum(quantity)::int, 0) as sales,
+          coalesce(sum(quantity * unit_price), 0) as revenue
+        from finance_invoice_lines
+        where invoice_id in (select id from finance_invoices where tenant_slug = $1 and created_at >= ${currentStart})
+        group by description
+        order by revenue desc
+        limit 5`,
+        [tenantSlug]
+      )) || [];
+
+      const recentActivity = (await safeQuery<{ type: string; description: string; amount: string; time: string }>(
+        `select
+          action as type,
+          resource || ' ' || resource_id as description,
+          '' as amount,
+          created_at::text as time
+        from admin_audit_logs
+        where tenant_slug = $1
+        order by created_at desc
+        limit 8`,
+        [tenantSlug]
+      )) || [];
+
+      const reports = (await safeQuery<any>(
+        `select
+          coalesce((changes->'after'->>'id'), resource_id) as id,
+          coalesce((changes->'after'->>'name'), 'Untitled') as name,
+          coalesce((changes->'after'->>'reportType'), (changes->'after'->>'type'), 'report') as "reportType",
+          (changes->'after'->>'schedule') as schedule,
+          coalesce((changes->'after'->>'dataPoints')::int, 0) as "dataPoints",
+          coalesce((changes->'after'->>'createdAt')::timestamptz, created_at) as "createdAt"
+        from admin_audit_logs
+        where tenant_slug = $1 and resource = 'report' and action = 'create'
+        order by coalesce((changes->'after'->>'createdAt')::timestamptz, created_at) desc
+        limit 20`,
+        [tenantSlug]
+      )) || [];
+
+      const exports = (await safeQuery<any>(
+        `select
+          coalesce((changes->'after'->>'id'), resource_id) as id,
+          coalesce((changes->'after'->>'name'), 'Untitled') as name,
+          coalesce((changes->'after'->>'frequency'), 'daily') as frequency,
+          coalesce((changes->'after'->>'format'), 'csv') as format,
+          coalesce((changes->'after'->>'scheduleFor')::timestamptz, created_at) as "nextRun",
+          created_at as "lastRun"
+        from admin_audit_logs
+        where tenant_slug = $1 and resource = 'export' and action = 'create'
+        order by created_at desc
+        limit 20`,
+        [tenantSlug]
+      )) || [];
+
+      const revenueTrend = computeTrend(revenue, revenuePrevious);
+      const customerTrend = computeTrend(customers, customersPrevious);
+      const orderTrend = computeTrend(orders, ordersPrevious);
+      const conversionTrend = computeTrend(conversionCurrent, conversionPreviousRaw ? Math.round((conversionPreviousRaw / Math.max(safeNumber(conversionResult?.totalLeads, 1))) * 100) : 0);
+
       return NextResponse.json({
         success: true,
         data: {
-          summary: {
-            totalPages: 0,
-            lastUpdated: new Date().toISOString(),
-          },
+          reports,
+          exports,
+          revenue: { current: revenue, previous: revenuePrevious, growth: revenueTrend.growth, trend: revenueTrend.trend },
+          customers: { current: customers, previous: customersPrevious, growth: customerTrend.growth, trend: customerTrend.trend },
+          orders: { current: orders, previous: ordersPrevious, growth: orderTrend.growth, trend: orderTrend.trend },
+          conversion: { current: conversionCurrent, previous: 0, growth: conversionTrend.growth, trend: conversionTrend.trend },
+          topProducts: topProducts.map((p) => ({ name: p.name, sales: safeNumber(p.sales), revenue: safeNumber(p.revenue) })),
+          recentActivity: recentActivity.map((a) => ({ ...a, amount: a.amount || '—' })),
+          summary: { totalPages: 0, lastUpdated: new Date().toISOString() },
           charts: [],
         },
       });
