@@ -1,9 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import {
+  getProjectCapacitySnapshots,
+  upsertProjectCapacitySnapshot,
+} from "@/lib/projects/db";
 
 export async function GET(request: NextRequest) {
   const context = validateTenantContext(request, "read");
-  return NextResponse.json({ capacity: [] });
+  const rawSnapshots = await getProjectCapacitySnapshots(context.tenantSlug);
+  const capacity = rawSnapshots.map((s: any) => ({
+    id: s.id,
+    department: s.department,
+    availableHours: Number(s.available_hours),
+    assignedHours: Number(s.assigned_hours),
+    utilization: Number(s.utilization),
+    underUtilized: Boolean(s.under_utilized),
+    weekOf: s.week_of,
+  }));
+  return NextResponse.json({ capacity });
 }
 
 export async function PUT(request: NextRequest) {
@@ -32,15 +46,18 @@ export async function PUT(request: NextRequest) {
     );
   }
 
-  const snapshot = {
-    id: body.id || `cap-${Date.now()}`,
-    department,
-    weekOf,
-    availableHours,
-    assignedHours,
-    utilization,
-    underUtilized,
-  };
+  const snapshot = await upsertProjectCapacitySnapshot(
+    context.tenantSlug,
+    {
+      department,
+      weekOf,
+      availableHours: Number(availableHours),
+      assignedHours: Number(assignedHours),
+      utilization: Number(utilization),
+      underUtilized: Boolean(underUtilized),
+    },
+    context.userId
+  );
 
   return NextResponse.json({ snapshot, message: "Capacity updated" });
 }

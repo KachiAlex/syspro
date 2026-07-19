@@ -1,20 +1,30 @@
 import { NextResponse } from 'next/server';
+import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { deleteProject } from "@/lib/projects/db";
 
 export async function POST(request: Request) {
   try {
+    const context = validateTenantContext(request as any, "delete");
     const body = await request.json();
-    const { projectIds, tenantSlug } = body;
+    const { projectIds } = body;
 
-    // Mock permanent delete operation - replace with real database deletion
-    console.log(`Permanently deleting projects: ${projectIds.join(', ')}`);
+    if (!Array.isArray(projectIds) || projectIds.length === 0) {
+      return NextResponse.json({ error: "projectIds array is required" }, { status: 400 });
+    }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: `${projectIds.length} project(s) deleted permanently`,
-      deletedCount: projectIds.length 
+    const results = await Promise.all(
+      projectIds.map((id: string) => deleteProject(id, context.tenantSlug))
+    );
+    const deletedCount = results.filter(Boolean).length;
+
+    return NextResponse.json({
+      success: true,
+      message: `${deletedCount} project(s) deleted permanently`,
+      deletedCount,
     });
   } catch (error) {
     console.error('Failed to delete projects:', error);
-    return NextResponse.json({ error: 'Failed to delete projects' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to delete projects';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

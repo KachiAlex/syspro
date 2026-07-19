@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-
-import { recordAssignment } from "@/lib/projects-data";
+import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { createTaskAssignment, getTaskById } from "@/lib/projects/db";
 import { suggestAssignments } from "@/lib/project-fit";
 
 export async function POST(request: NextRequest) {
+  const context = validateTenantContext(request, "write");
   const body = await request.json();
   const {
-    tenantSlug = "default",
     taskId,
     requiredSkills,
     department,
     override,
     employeeId,
   } = body as {
-    tenantSlug?: string;
     taskId?: string;
     requiredSkills?: string[];
     department?: string;
@@ -28,23 +27,28 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const suggestions = suggestAssignments({ tenantSlug, department, requiredSkills });
+  const suggestions = suggestAssignments({ tenantSlug: context.tenantSlug, department, requiredSkills });
 
   let assignmentRecord = null;
-  if (override && override.employeeId) {
-    assignmentRecord = recordAssignment(tenantSlug, {
-      taskId,
-      employeeId: override.employeeId,
-      fitScore: suggestions.find((s) => s.employeeId === override.employeeId)?.fitScore ?? 0,
-      overrideReason: override.reason,
-      approvedBy: override.approvedBy,
-    });
-  } else if (employeeId) {
-    assignmentRecord = recordAssignment(tenantSlug, {
-      taskId,
-      employeeId,
-      fitScore: suggestions.find((s) => s.employeeId === employeeId)?.fitScore ?? 0,
-    });
+  const assignedEmployeeId = override?.employeeId ?? employeeId;
+  if (assignedEmployeeId) {
+    const task = await getTaskById(taskId, context.tenantSlug);
+    if (!task) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+    assignmentRecord = await createTaskAssignment(
+      context.tenantSlug,
+      {
+        taskId,
+        projectId: task.projectId,
+        employeeId: assignedEmployeeId,
+        assignedHours: null,
+        assignedPercentage: null,
+        assignmentStartDate: new Date(),
+        status: override ? "ACCEPTED" : "PROPOSED",
+      },
+      context.userId
+    );
   }
 
   return NextResponse.json({ suggestions, assignment: assignmentRecord });

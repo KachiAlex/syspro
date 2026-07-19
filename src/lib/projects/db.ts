@@ -272,14 +272,25 @@ export function toProjectResponse(project: Project) {
     id: project.id,
     name: project.name,
     description: project.description ?? "",
+    objective: project.description ?? project.scopeDescription ?? "",
     status: statusLabels[project.status] ?? project.status,
     priority: priorityLabels[project.priority] ?? project.priority,
     progress: progressFromStatus(project.status),
     startDate: toDateString(project.startDate),
+    start: toDateString(project.startDate),
     dueDate: toDateString(project.plannedEndDate),
+    endDate: toDateString(project.plannedEndDate),
+    end: toDateString(project.plannedEndDate),
     teamMembers: 0,
     budget: formatCurrency(project.totalBudgetAmount),
+    budgetApproved: Number(project.totalBudgetAmount ?? 0),
+    budgetSpent: 0,
+    subsidiary: "",
+    departments: [],
+    region: "",
+    owner: project.projectManagerId ?? project.createdBy ?? "Unassigned",
     manager: project.projectManagerId ?? project.createdBy ?? "Unassigned",
+    approvalStatus: project.approvalStatus ?? "DRAFT",
     createdAt: toDateString(project.createdAt),
     updatedAt: toDateString(project.updatedAt),
   };
@@ -345,6 +356,25 @@ export async function getWorkstreamsForProject(
     return result.rows;
   } catch (error) {
     console.error("Error fetching workstreams:", error);
+    throw error;
+  }
+}
+
+export async function getAllWorkstreamsForTenant(
+  tenantSlug: string
+): Promise<Workstream[]> {
+  try {
+    const result = await db.query(
+      `
+      SELECT * FROM workstreams 
+      WHERE tenant_slug = $1
+      ORDER BY priority ASC, created_at ASC
+      `,
+      [tenantSlug]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching tenant workstreams:", error);
     throw error;
   }
 }
@@ -453,6 +483,25 @@ export async function getTasksForProject(
     return result.rows;
   } catch (error) {
     console.error("Error fetching project tasks:", error);
+    throw error;
+  }
+}
+
+export async function getAllTasksForTenant(
+  tenantSlug: string
+): Promise<Task[]> {
+  try {
+    const result = await db.query(
+      `
+      SELECT * FROM tasks 
+      WHERE tenant_slug = $1
+      ORDER BY priority ASC, created_at ASC
+      `,
+      [tenantSlug]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching tenant tasks:", error);
     throw error;
   }
 }
@@ -737,6 +786,26 @@ export async function getTimeLogsForEmployee(
     return result.rows;
   } catch (error) {
     console.error("Error fetching time logs:", error);
+    throw error;
+  }
+}
+
+export async function getTimeLogsForProject(
+  projectId: string,
+  tenantSlug: string
+): Promise<TimeLog[]> {
+  try {
+    const result = await db.query(
+      `
+      SELECT * FROM time_logs 
+      WHERE project_id = $1 AND tenant_slug = $2
+      ORDER BY log_date DESC
+      `,
+      [projectId, tenantSlug]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching project time logs:", error);
     throw error;
   }
 }
@@ -1026,4 +1095,183 @@ export async function removeProjectTeamMember(
     [id, tenantSlug]
   );
   return (result.rowCount ?? 0) > 0;
+}
+
+// ============================================================
+// PROJECT BUDGET OPERATIONS
+// ============================================================
+
+async function ensureBudgetAllocationsTable() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS project_budget_allocations (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      project_id TEXT NOT NULL,
+      tenant_slug TEXT NOT NULL,
+      category TEXT NOT NULL,
+      allocated NUMERIC(15,2) NOT NULL DEFAULT 0,
+      spent NUMERIC(15,2) NOT NULL DEFAULT 0,
+      created_by TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
+export async function getBudgetAllocationsForProject(
+  projectId: string,
+  tenantSlug: string
+): Promise<any[]> {
+  await ensureBudgetAllocationsTable();
+  const result = await db.query(
+    `SELECT * FROM project_budget_allocations WHERE project_id = $1 AND tenant_slug = $2 ORDER BY created_at DESC`,
+    [projectId, tenantSlug]
+  );
+  return result.rows;
+}
+
+export async function createBudgetAllocation(
+  projectId: string,
+  tenantSlug: string,
+  data: { category: string; allocated: number; spent?: number },
+  createdBy: string
+): Promise<any | null> {
+  await ensureBudgetAllocationsTable();
+  const result = await db.query(
+    `
+    INSERT INTO project_budget_allocations (project_id, tenant_slug, category, allocated, spent, created_by)
+    VALUES ($1, $2, $3, $4, $5, $6)
+    RETURNING *
+    `,
+    [projectId, tenantSlug, data.category, data.allocated, data.spent ?? 0, createdBy]
+  );
+  return result.rows[0] || null;
+}
+
+export async function deleteBudgetAllocation(
+  id: string,
+  tenantSlug: string
+): Promise<boolean> {
+  await ensureBudgetAllocationsTable();
+  const result = await db.query(
+    `DELETE FROM project_budget_allocations WHERE id = $1 AND tenant_slug = $2 RETURNING id`,
+    [id, tenantSlug]
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
+// ============================================================
+// PROJECT CAPACITY OPERATIONS
+// ============================================================
+
+async function ensureCapacitySnapshotsTable() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS project_capacity_snapshots (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      tenant_slug TEXT NOT NULL,
+      department TEXT NOT NULL,
+      week_of DATE NOT NULL,
+      available_hours NUMERIC(10,2) NOT NULL DEFAULT 0,
+      assigned_hours NUMERIC(10,2) NOT NULL DEFAULT 0,
+      utilization NUMERIC(5,2) NOT NULL DEFAULT 0,
+      under_utilized BOOLEAN NOT NULL DEFAULT false,
+      created_by TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
+export async function getProjectCapacitySnapshots(
+  tenantSlug: string
+): Promise<any[]> {
+  await ensureCapacitySnapshotsTable();
+  const result = await db.query(
+    `SELECT * FROM project_capacity_snapshots WHERE tenant_slug = $1 ORDER BY created_at DESC`,
+    [tenantSlug]
+  );
+  return result.rows;
+}
+
+export async function upsertProjectCapacitySnapshot(
+  tenantSlug: string,
+  data: {
+    department: string;
+    weekOf: string;
+    availableHours: number;
+    assignedHours: number;
+    utilization: number;
+    underUtilized: boolean;
+  },
+  createdBy: string
+): Promise<any | null> {
+  await ensureCapacitySnapshotsTable();
+  const result = await db.query(
+    `
+    INSERT INTO project_capacity_snapshots (tenant_slug, department, week_of, available_hours, assigned_hours, utilization, under_utilized, created_by)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    ON CONFLICT (tenant_slug, department, week_of) DO UPDATE SET
+      available_hours = EXCLUDED.available_hours,
+      assigned_hours = EXCLUDED.assigned_hours,
+      utilization = EXCLUDED.utilization,
+      under_utilized = EXCLUDED.under_utilized,
+      updated_at = CURRENT_TIMESTAMP
+    RETURNING *
+    `,
+    [tenantSlug, data.department, data.weekOf, data.availableHours, data.assignedHours, data.utilization, data.underUtilized, createdBy]
+  );
+  return result.rows[0] || null;
+}
+
+// ============================================================
+// PROJECT INVOICE OPERATIONS
+// ============================================================
+
+async function ensureProjectInvoicesTable() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS project_invoices (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      tenant_slug TEXT NOT NULL,
+      project_id TEXT NOT NULL,
+      invoice_number TEXT NOT NULL,
+      amount NUMERIC(15,2) NOT NULL,
+      due_date DATE,
+      status TEXT NOT NULL DEFAULT 'draft',
+      created_by TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
+export async function getProjectInvoices(
+  tenantSlug: string
+): Promise<any[]> {
+  await ensureProjectInvoicesTable();
+  const result = await db.query(
+    `SELECT * FROM project_invoices WHERE tenant_slug = $1 ORDER BY created_at DESC`,
+    [tenantSlug]
+  );
+  return result.rows;
+}
+
+export async function createProjectInvoice(
+  tenantSlug: string,
+  data: {
+    projectId: string;
+    amount: number;
+    dueDate: string;
+  },
+  createdBy: string
+): Promise<any | null> {
+  await ensureProjectInvoicesTable();
+  const invoiceNumber = `INV-${Date.now()}`;
+  const result = await db.query(
+    `
+    INSERT INTO project_invoices (tenant_slug, project_id, invoice_number, amount, due_date, status, created_by)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING *
+    `,
+    [tenantSlug, data.projectId, invoiceNumber, data.amount, data.dueDate, "draft", createdBy]
+  );
+  return result.rows[0] || null;
 }

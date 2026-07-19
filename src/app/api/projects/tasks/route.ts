@@ -1,14 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
-
 import {
   createTask,
-  listTasks,
-  TaskEntity,
-  updateTaskStatus,
-} from "@/lib/projects-data";
+  getTasksForProject,
+  getTasksForWorkstream,
+  getAllTasksForTenant,
+  updateTask,
+} from "@/lib/projects/db";
 import { suggestAssignments } from "@/lib/project-fit";
 import { updateAttendanceSignals } from "@/lib/attendance";
+
+type FrontendStatus = "todo" | "in-progress" | "done";
+
+const statusToDb: Record<string, string> = {
+  todo: "NOT_STARTED",
+  "in-progress": "IN_PROGRESS",
+  done: "COMPLETED",
+};
+
+const priorityToDb: Record<string, number> = {
+  low: 1,
+  medium: 2,
+  high: 3,
+};
 
 async function sendAttendanceSignal(params: { tenantSlug: string; employeeId: string; workDate: string; taskId: string }) {
   try {
@@ -24,19 +38,57 @@ async function sendAttendanceSignal(params: { tenantSlug: string; employeeId: st
   }
 }
 
-async function sendPerformanceSignal(_params: { tenantSlug: string; taskId: string; contributionWeight: number; status: TaskEntity["status"] }) {
+async function sendPerformanceSignal(_params: { tenantSlug: string; taskId: string; contributionWeight: number; status: FrontendStatus }) {
   // TODO: connect to a real performance-tracking module.
-  // The previous localhost fetch payload did not match the staff-reports API schema.
 }
+
+const statusToPlanner: Record<string, string> = {
+  NOT_STARTED: "Todo",
+  IN_PROGRESS: "In Progress",
+  BLOCKED: "Review",
+  COMPLETED: "Done",
+  CANCELLED: "Done",
+};
+
+const priorityToPlanner = (n: number) => {
+  if (n <= 1) return "Low";
+  if (n >= 3) return "High";
+  return "Medium";
+};
 
 export async function GET(request: NextRequest) {
   const context = validateTenantContext(request, "read");
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get("projectId") || undefined;
   const workstreamId = searchParams.get("workstreamId") || undefined;
-  const status = (searchParams.get("status") as TaskEntity["status"]) || undefined;
 
-  const tasks = listTasks({ tenantSlug: context.tenantSlug, projectId, workstreamId, status });
+  let rawTasks = [] as any[];
+  if (workstreamId) {
+    rawTasks = await getTasksForWorkstream(workstreamId, context.tenantSlug);
+  } else if (projectId) {
+    rawTasks = await getTasksForProject(projectId, context.tenantSlug);
+  } else {
+    rawTasks = await getAllTasksForTenant(context.tenantSlug);
+  }
+
+  const tasks = rawTasks.map((t: any) => ({
+    id: t.id,
+    projectId: t.project_id,
+    workstreamId: t.workstream_id,
+    department: "",
+    title: t.title,
+    status: statusToPlanner[t.status] ?? t.status,
+    requiredSkills: t.required_skills || [],
+    dueDate: t.planned_end_date ? new Date(t.planned_end_date).toISOString() : "",
+    estimatedHours: Number(t.estimated_hours ?? 0),
+    effortHours: Number(t.estimated_hours ?? 0),
+    assignedTo: "Unassigned",
+    assignedEmployees: [],
+    assignedEmployeeIds: [],
+    contributionWeight: 0,
+    priority: priorityToPlanner(Number(t.priority ?? 2)),
+  }));
+
   return NextResponse.json({ tasks });
 }
 
@@ -54,9 +106,7 @@ export async function POST(request: NextRequest) {
     priority,
     dueDate,
     assignedEmployees = [],
-    contributionWeight,
-    createdBy,
-  } = body as Partial<TaskEntity> & { requiredSkills?: string[]; assignedEmployees?: string[] };
+  } = body as any;
 
   const missing = [
     projectId,
@@ -68,8 +118,6 @@ export async function POST(request: NextRequest) {
     estimatedHours,
     priority,
     dueDate,
-    contributionWeight,
-    createdBy,
   ].some((value) => value === undefined || value === null || value === "");
 
   if (missing) {
@@ -79,22 +127,22 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const task = createTask(context.tenantSlug, {
-    projectId: projectId!,
-    workstreamId: workstreamId!,
-    department: department!,
+  const task = await createTask(context.tenantSlug, {
+    projectId,
+    workstreamId,
+    code: `TASK-${Date.now()}`,
     title: title!,
     description: description!,
-    requiredSkills: requiredSkills!,
+    requiredSkills,
     estimatedHours: Number(estimatedHours),
-    priority: priority!,
-    dependencyStatus: "unblocked",
-    dueDate: dueDate!,
-    assignedEmployees,
-    contributionWeight: Number(contributionWeight),
-    status: "Todo",
-    createdBy: createdBy!,
-  });
+    priority: priorityToDb[priority as string] ?? 2,
+    plannedEndDate: new Date(dueDate),
+    status: "NOT_STARTED",
+  } as any, context.userId);
+
+  if (!task) {
+    return NextResponse.json({ error: "Failed to create task" }, { status: 500 });
+  }
 
   const suggestions = suggestAssignments({
     tenantSlug: context.tenantSlug,
@@ -105,7 +153,7 @@ export async function POST(request: NextRequest) {
   if (assignedEmployees.length > 0) {
     const workDate = new Date().toISOString().split("T")[0];
     await Promise.all(
-      assignedEmployees.map((employeeId) =>
+      assignedEmployees.map((employeeId: string) =>
         sendAttendanceSignal({ tenantSlug: context.tenantSlug, employeeId, workDate, taskId: task.id })
       )
     );
@@ -124,11 +172,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const context = validateTenantContext(request, "write");
   const body = await request.json();
-  const {
-    taskId,
-    status,
-    dependencyStatus,
-  } = body as { taskId?: string; status?: TaskEntity["status"]; dependencyStatus?: TaskEntity["dependencyStatus"]; };
+  const { taskId, status } = body as { taskId?: string; status?: FrontendStatus };
 
   if (!taskId || !status) {
     return NextResponse.json(
@@ -137,7 +181,8 @@ export async function PUT(request: NextRequest) {
     );
   }
 
-  const task = updateTaskStatus(context.tenantSlug, taskId, status, dependencyStatus);
+  const dbStatus = statusToDb[status] || status.toUpperCase().replace(/-/g, "_");
+  const task = await updateTask(taskId, context.tenantSlug, { status: dbStatus });
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
@@ -145,7 +190,7 @@ export async function PUT(request: NextRequest) {
   await sendPerformanceSignal({
     tenantSlug: context.tenantSlug,
     taskId: task.id,
-    contributionWeight: task.contributionWeight,
+    contributionWeight: 1,
     status,
   });
 

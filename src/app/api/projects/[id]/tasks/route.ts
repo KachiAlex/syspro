@@ -93,7 +93,7 @@ export async function POST(
       return NextResponse.json({ error: "Failed to create task" }, { status: 500 });
     }
 
-    return NextResponse.json({ task: toClientTask(task), ...toClientTask(task) }, { status: 201 });
+    return NextResponse.json({ task: toClientTask(task) }, { status: 201 });
   } catch (error) {
     console.error('Failed to create task:', error);
     const message = error instanceof Error ? error.message : 'Failed to create task';

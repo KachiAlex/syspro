@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
-
-import { listTimeEntries, logTimeEntry } from "@/lib/projects-data";
+import {
+  getTimeLogsForProject,
+  logTime,
+  createTaskAssignment,
+} from "@/lib/projects/db";
 
 export async function GET(request: NextRequest) {
   const context = validateTenantContext(request, "read");
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get("projectId") || undefined;
 
-  const timeEntries = listTimeEntries(context.tenantSlug, projectId);
+  if (!projectId) {
+    return NextResponse.json({ error: "projectId is required" }, { status: 400 });
+  }
+
+  const timeEntries = await getTimeLogsForProject(projectId, context.tenantSlug);
   return NextResponse.json({ timeEntries });
 }
 
@@ -23,16 +30,7 @@ export async function POST(request: NextRequest) {
     hours,
     date,
     billable = false,
-  } = body as {
-    tenantSlug?: string;
-    projectId?: string;
-    workstreamId?: string;
-    taskId?: string;
-    employeeId?: string;
-    hours?: number;
-    date?: string;
-    billable?: boolean;
-  };
+  } = body as any;
 
   if (!projectId || !workstreamId || !taskId || !employeeId || hours === undefined || !date) {
     return NextResponse.json(
@@ -41,15 +39,43 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const entry = logTimeEntry(context.tenantSlug, {
-    projectId,
-    workstreamId,
-    taskId,
-    employeeId,
-    hours: Number(hours),
-    date,
-    billable,
-  });
+  // Ensure a task assignment exists for this task/employee to satisfy the time_logs FK.
+  const assignment = await createTaskAssignment(
+    context.tenantSlug,
+    {
+      taskId,
+      projectId,
+      employeeId,
+      assignedHours: null,
+      assignedPercentage: null,
+      assignmentStartDate: new Date(),
+    },
+    context.userId
+  );
+  if (!assignment) {
+    return NextResponse.json({ error: "Failed to create assignment" }, { status: 500 });
+  }
+  const taskAssignmentId = assignment.id;
+
+  const entry = await logTime(
+    context.tenantSlug,
+    {
+      taskAssignmentId,
+      taskId,
+      projectId,
+      employeeId,
+      logDate: new Date(date),
+      hoursLogged: Number(hours),
+      billable,
+      description: null,
+      activityType: null,
+    },
+    context.userId
+  );
+
+  if (!entry) {
+    return NextResponse.json({ error: "Failed to log time" }, { status: 500 });
+  }
 
   return NextResponse.json(
     { timeEntry: entry, message: "Time entry logged successfully" },
