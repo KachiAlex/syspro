@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/sql-client";
+import { requireDashboardPermission } from "@/lib/tenant-admin/permissions";
 
 export interface TenantBranch {
   id: string;
@@ -56,6 +57,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    await requireDashboardPermission(request, "admin");
     await sql`
       create table if not exists tenant_org_structures (
         slug text primary key,

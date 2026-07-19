@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Zap, PlayCircle, Settings, Clock, CheckCircle, AlertCircle, TrendingUp, Download, Filter } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { AutomationService } from '@/app/tenant-admin/services/automation-service';
+import DashboardGuard from '@/app/tenant-admin/components/DashboardGuard';
 
 interface AutomationTab {
   id: string;
@@ -64,6 +65,7 @@ export default function AutomationPage() {
   }, [tenantSlug]);
 
   return (
+    <DashboardGuard permission="automation" module="automation">
     <>
       {/* Horizontal Navigation Tabs */}
       <div className="bg-white border-b border-gray-200">
@@ -258,5 +260,6 @@ export default function AutomationPage() {
         </div>
       </div>
     </>
+    </DashboardGuard>
   );
 }

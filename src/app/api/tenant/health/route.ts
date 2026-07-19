@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/sql-client";
+import { requireDashboardPermission } from "@/lib/tenant-admin/permissions";
 
 export async function GET(request: NextRequest) {
   const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
   if (!tenantSlug) {
     return NextResponse.json({ error: "tenantSlug is required" }, { status: 400 });
+  }
+
+  try {
+    await requireDashboardPermission(request, "admin");
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Forbidden" }, { status: 403 });
   }
 
   const now = new Date().toISOString();

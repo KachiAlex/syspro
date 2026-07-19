@@ -55,6 +55,24 @@ export async function getTenantUserPermissions(
 
   const keys: string[] = Array.isArray(rows) ? (rows as any[]).map((r) => r.key) : [];
 
+  // Development fallback: if no roles are configured for the tenant yet,
+  // grant full dashboard access so the UI can still be used locally.
+  if (keys.length === 0 && process.env.NODE_ENV !== "production") {
+    const allDashboards = ["admin", "automation", "finance", "people", "crm", "projects", "reports", "billing"];
+    return {
+      people: "admin",
+      admin: "admin",
+      integrations: "admin",
+      billing: "admin",
+      automation: "admin",
+      crm: "admin",
+      finance: "admin",
+      projects: "admin",
+      dashboards: allDashboards,
+      isAdmin: true,
+    };
+  }
+
   const result: Omit<TenantUserPermissions, "dashboards" | "isAdmin"> = {
     people: "none",
     admin: "none",
@@ -98,4 +116,33 @@ export async function getTenantUserPermissions(
   }
 
   return { ...result, dashboards, isAdmin };
+}
+
+export async function requireDashboardPermission(
+  request: { nextUrl: { searchParams: URLSearchParams }; headers: Headers; cookies: any },
+  dashboardKey: string
+): Promise<TenantUserPermissions> {
+  const tenantSlug =
+    request.nextUrl.searchParams.get("tenantSlug") ||
+    request.cookies?.get?.("tenantSlug")?.value;
+
+  const userId =
+    request.nextUrl.searchParams.get("userId") ||
+    request.headers.get("x-user-id") ||
+    request.headers.get("x-dev-user-id") ||
+    request.cookies?.get?.("dev-user-id")?.value ||
+    request.cookies?.get?.("userId")?.value ||
+    request.cookies?.get?.("X-User-Id")?.value;
+
+  if (!tenantSlug || !userId) {
+    throw new Error("Unauthorized");
+  }
+
+  const perms = await getTenantUserPermissions(tenantSlug, userId);
+
+  if (perms.isAdmin || perms.dashboards.includes(dashboardKey)) {
+    return perms;
+  }
+
+  throw new Error("Forbidden");
 }

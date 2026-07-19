@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { FALLBACK_ORG_TREE, OrgNode, ORG_NODE_STATUSES, ORG_NODE_TYPES } from "@/lib/org-tree";
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
+import { requireDashboardPermission } from "@/lib/tenant-admin/permissions";
 
 
 type TenantStructureRow = {
@@ -171,6 +172,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "tenantSlug is required" }, { status: 400 });
   }
   try {
+    await requireDashboardPermission(request, "admin");
     const sql = SQL;
     const tree = await loadTenantTree(sql, tenantSlug);
     return NextResponse.json({ tree, tenantSlug, fetchedAt: new Date().toISOString() });
@@ -194,6 +196,7 @@ export async function POST(request: NextRequest) {
     if (!tenantSlug) {
       return NextResponse.json({ error: "tenantSlug is required" }, { status: 400 });
     }
+    await requireDashboardPermission(request, "admin");
     const tree = await loadTenantTree(sql, tenantSlug);
     const parent = findNodeWithParent(tree, parsed.data.parentId);
 
@@ -234,6 +237,7 @@ export async function PATCH(request: NextRequest) {
     if (!tenantSlug) {
       return NextResponse.json({ error: "tenantSlug is required" }, { status: 400 });
     }
+    await requireDashboardPermission(request, "admin");
     const tree = await loadTenantTree(sql, tenantSlug);
     const current = findNodeWithParent(tree, parsed.data.nodeId);
 
@@ -276,6 +280,7 @@ export async function DELETE(request: NextRequest) {
     if (!tenantSlug) {
       return NextResponse.json({ error: "tenantSlug is required" }, { status: 400 });
     }
+    await requireDashboardPermission(request, "admin");
     const tree = await loadTenantTree(sql, tenantSlug);
     const current = findNodeWithParent(tree, parsed.data.nodeId);
 

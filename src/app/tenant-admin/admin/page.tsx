@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Settings, Users, FileText, Heart, Globe, MapPin, Building, Plus, Edit, Trash2, Eye, TrendingUp, TrendingDown, AlertCircle, CheckCircle, X } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { AdminService } from '@/app/tenant-admin/services/admin-service';
+import DashboardGuard from '@/app/tenant-admin/components/DashboardGuard';
 
 interface AdminTab {
   id: string;
@@ -169,6 +170,7 @@ export default function AdminPage() {
   }
 
   return (
+    <DashboardGuard permission="admin" module="admin">
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -477,5 +479,6 @@ export default function AdminPage() {
         </div>
       )}
     </div>
+    </DashboardGuard>
   );
 }

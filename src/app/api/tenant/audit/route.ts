@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/sql-client";
+import { requireDashboardPermission } from "@/lib/tenant-admin/permissions";
 
 export async function GET(request: NextRequest) {
   const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
@@ -8,6 +9,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    await requireDashboardPermission(request, "admin");
     const rows = await sql`
       select id, action, user_id, resource, resource_id, changes, created_at
       from admin_audit_logs

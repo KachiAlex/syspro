@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { sql } from "@/lib/sql-client";
+import { requireDashboardPermission } from "@/lib/tenant-admin/permissions";
 
 export async function GET(request: NextRequest) {
   const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
@@ -18,6 +19,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    await requireDashboardPermission(request, "admin");
     const rows = await sql`
       SELECT u.id, u.email, u.name, u.status, u.created_at, r.name as role_name
       FROM users u
@@ -58,6 +60,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    await requireDashboardPermission(request, "admin");
     const body = await request.json();
     const { email, name, status = "active", role } = body;
 
