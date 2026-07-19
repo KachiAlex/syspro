@@ -196,6 +196,47 @@ select:focus {
   border-radius: 9999px;
 }
 
+/* Brand-aligned gradient & colour utilities */
+.brand-gradient {
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 50%, #7C3AED 100%);
+}
+
+.brand-gradient-subtle {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(124, 58, 237, 0.10) 100%);
+}
+
+.brand-gradient-text {
+  background: linear-gradient(135deg, #6366F1, #7C3AED);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.gradient-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #6366F1, #10B981, #F59E0B, #EF4444);
+  opacity: 0.85;
+}
+
+.accent-glow {
+  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.16);
+}
+
+.metric-icon {
+  background: linear-gradient(135deg, rgba(99,102,241,0.20) 0%, rgba(124,58,237,0.12) 100%);
+  color: #FFFFFF;
+}
+
 .nav-muted {
   color: var(--text-tertiary);
 }

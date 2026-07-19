@@ -194,18 +194,18 @@ export default function UsersPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800';
-      case 'inactive': return 'bg-gray-100 text-gray-900';
+      case 'inactive': return 'bg-theme-accent-subtle text-theme-accent';
       case 'suspended': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-900';
+      default: return 'bg-theme-accent-subtle text-theme-accent';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active': return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'inactive': return <Clock className="w-4 h-4 text-gray-600" />;
+      case 'inactive': return <Clock className="w-4 h-4 text-theme-text-secondary" />;
       case 'suspended': return <AlertCircle className="w-4 h-4 text-red-600" />;
-      default: return <AlertCircle className="w-4 h-4 text-gray-600" />;
+      default: return <AlertCircle className="w-4 h-4 text-theme-text-secondary" />;
     }
   };
 
@@ -265,17 +265,17 @@ export default function UsersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-theme-text-primary">Users & Roles</h1>
-          <p className="text-sm text-gray-600 mt-1">User management and permissions</p>
+          <p className="text-sm text-theme-text-secondary mt-1">User management and permissions</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-4 border-b border-gray-200">
+      <div className="flex items-center gap-4 border-b border-theme-border">
         <button
           onClick={() => setActiveTab('users')}
           className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'users'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              ? 'border-theme-accent text-theme-accent'
+              : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
           }`}
         >
           Users ({users.length})
@@ -284,8 +284,8 @@ export default function UsersPage() {
           onClick={() => setActiveTab('roles')}
           className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'roles'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              ? 'border-theme-accent text-theme-accent'
+              : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
           }`}
         >
           Roles ({roles.length})
@@ -295,40 +295,40 @@ export default function UsersPage() {
       {activeTab === 'users' && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Users</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{users.length}</p>
-                  <p className="text-xs text-blue-600 mt-2">↑ 4 new this month</p>
+                  <p className="text-sm font-medium text-theme-text-secondary">Total Users</p>
+                  <p className="text-3xl font-bold text-theme-text-primary mt-2">{users.length}</p>
+                  <p className="text-xs text-theme-accent mt-2">↑ 4 new this month</p>
                 </div>
-                <Users className="w-12 h-12 text-blue-500" />
+                <Users className="w-12 h-12 text-theme-accent" />
               </div>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Active</p>
+                  <p className="text-sm font-medium text-theme-text-secondary">Active</p>
                   <p className="text-3xl font-bold text-green-600 mt-2">{activeUsers}</p>
                   <p className="text-xs text-green-600 mt-2">{((activeUsers / users.length) * 100).toFixed(1)}% active</p>
                 </div>
                 <UserCheck className="w-12 h-12 text-green-500" />
               </div>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Inactive</p>
-                  <p className="text-3xl font-bold text-gray-600 mt-2">{inactiveUsers}</p>
-                  <p className="text-xs text-gray-600 mt-2">Not recently active</p>
+                  <p className="text-sm font-medium text-theme-text-secondary">Inactive</p>
+                  <p className="text-3xl font-bold text-theme-text-secondary mt-2">{inactiveUsers}</p>
+                  <p className="text-xs text-theme-text-secondary mt-2">Not recently active</p>
                 </div>
                 <Clock className="w-12 h-12 text-gray-100" />
               </div>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Suspended</p>
+                  <p className="text-sm font-medium text-theme-text-secondary">Suspended</p>
                   <p className="text-3xl font-bold text-red-600 mt-2">{suspendedUsers}</p>
                   <p className="text-xs text-red-600 mt-2">Access restricted</p>
                 </div>
@@ -346,13 +346,13 @@ export default function UsersPage() {
                   placeholder="Search users..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
                 />
               </div>
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
               >
                 <option value="all">All Roles</option>
                 {rolesList.map(role => (
@@ -362,7 +362,7 @@ export default function UsersPage() {
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -372,7 +372,7 @@ export default function UsersPage() {
               <select
                 value={selectedBranch}
                 onChange={(e) => setSelectedBranch(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
               >
                 <option value="all">All Branches</option>
                 {branches.map(branch => (
@@ -380,49 +380,49 @@ export default function UsersPage() {
                 ))}
               </select>
             </div>
-            <button onClick={() => setShowAddUser(true)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+            <button onClick={() => setShowAddUser(true)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white brand-gradient rounded-lg hover:opacity-90">
               <Plus className="w-4 h-4" />
               Add User
             </button>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-theme-muted border-b border-theme-border">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Branch</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Login</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">User</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Role</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Department</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Branch</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Last Login</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-theme-border">
                   {filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
+                    <tr key={user.id} className="hover:bg-theme-muted">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-blue-600">{getInitials(user.name)}</span>
+                          <div className="w-10 h-10 bg-theme-accent-subtle rounded-full flex items-center justify-center">
+                            <span className="text-sm font-medium text-theme-accent">{getInitials(user.name)}</span>
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                            <p className="text-xs text-gray-500">{user.email}</p>
-                            <p className="text-xs text-gray-500">{user.phone}</p>
+                            <p className="text-sm font-medium text-theme-text-primary">{user.name}</p>
+                            <p className="text-xs text-theme-text-secondary">{user.email}</p>
+                            <p className="text-xs text-theme-text-secondary">{user.phone}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">{user.role}</span>
+                        <span className="text-sm text-theme-text-primary">{user.role}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">{user.department}</span>
+                        <span className="text-sm text-theme-text-primary">{user.department}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">{user.branch}</span>
+                        <span className="text-sm text-theme-text-primary">{user.branch}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
@@ -432,16 +432,16 @@ export default function UsersPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-primary">
                         {user.lastLogin}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-theme-accent-hover">
+                          <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-accent hover:text-theme-accent-hover">
                             <Eye className="w-3 h-3" />
                             View
                           </button>
-                          <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-700">
+                          <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-text-secondary hover:text-theme-text-primary">
                             <Edit className="w-3 h-3" />
                             Edit
                           </button>
@@ -468,10 +468,10 @@ export default function UsersPage() {
               <input
                 type="text"
                 placeholder="Search roles..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
               />
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+            <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white brand-gradient rounded-lg hover:opacity-90">
               <Plus className="w-4 h-4" />
               Create Role
             </button>
@@ -479,37 +479,37 @@ export default function UsersPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {roles.map((role) => (
-              <div key={role.id} className="bg-white rounded-lg border border-gray-200 p-6">
+              <div key={role.id} className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 ${role.color} rounded-full flex items-center justify-center`}>
                       <Shield className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{role.name}</h3>
-                      <span className="text-xs text-gray-500">{role.userCount} users</span>
+                      <h3 className="text-lg font-semibold text-theme-text-primary">{role.name}</h3>
+                      <span className="text-xs text-theme-text-secondary">{role.userCount} users</span>
                     </div>
                   </div>
-                  <button className="text-theme-text-tertiary hover:text-gray-600">
+                  <button className="text-theme-text-tertiary hover:text-theme-text-secondary">
                     <Edit className="w-4 h-4" />
                   </button>
                 </div>
-                <p className="text-sm text-gray-600 mb-4">{role.description}</p>
+                <p className="text-sm text-theme-text-secondary mb-4">{role.description}</p>
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-gray-900">Permissions:</p>
+                  <p className="text-xs font-medium text-theme-text-primary">Permissions:</p>
                   <div className="flex flex-wrap gap-1">
                     {role.permissions.map((permission, index) => (
                       <span
                         key={index}
-                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-900"
+                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-theme-accent-subtle text-theme-accent"
                       >
                         {permission}
                       </span>
                     ))}
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
-                  <button className="text-sm text-blue-600 hover:text-theme-accent-hover font-medium">
+                <div className="mt-4 pt-4 border-t border-theme-border flex items-center justify-between">
+                  <button className="text-sm text-theme-accent hover:text-theme-accent-hover font-medium">
                     Edit Role
                   </button>
                   <button className="text-sm text-red-600 hover:text-theme-danger font-medium">
@@ -520,30 +520,30 @@ export default function UsersPage() {
             ))}
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Role Permissions Matrix</h3>
+          <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-6">
+            <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Role Permissions Matrix</h3>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-theme-muted border-b border-theme-border">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permission</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Permission</th>
                     {roles.map(role => (
-                      <th key={role.id} className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th key={role.id} className="px-4 py-3 text-center text-xs font-medium text-theme-text-secondary uppercase tracking-wider">
                         {role.name}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-theme-border">
                   {['Full Access', 'User Management', 'System Settings', 'Branch Management', 'Reporting', 'Financial Reporting', 'HR Management', 'Sales Management'].map(permission => (
                     <tr key={permission}>
-                      <td className="px-4 py-3 text-sm text-gray-900">{permission}</td>
+                      <td className="px-4 py-3 text-sm text-theme-text-primary">{permission}</td>
                       {roles.map(role => (
                         <td key={role.id} className="px-4 py-3 text-center">
                           {role.permissions.includes(permission) ? (
                             <CheckCircle className="w-4 h-4 text-green-600 mx-auto" />
                           ) : (
-                            <div className="w-4 h-4 border border-gray-300 rounded mx-auto" />
+                            <div className="w-4 h-4 border border-theme-border rounded mx-auto" />
                           )}
                         </td>
                       ))}
@@ -557,28 +557,28 @@ export default function UsersPage() {
       )}
       {showAddUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) setShowAddUser(false); }}>
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-md rounded-xl bg-theme-surface p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Add User</h2>
-              <button onClick={() => setShowAddUser(false)} className="text-gray-400 hover:text-gray-600">
+              <h2 className="text-lg font-semibold text-theme-text-primary">Add User</h2>
+              <button onClick={() => setShowAddUser(false)} className="text-theme-text-tertiary hover:text-theme-text-secondary">
                 <X className="w-5 h-5" />
               </button>
             </div>
             {addUserError && (
-              <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{addUserError}</div>
+              <div className="mb-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-400">{addUserError}</div>
             )}
             <form onSubmit={handleAddUser} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                <input value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" placeholder="John Doe" required />
+                <label className="block text-sm font-medium text-theme-text-secondary">Full Name</label>
+                <input value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary" placeholder="John Doe" required />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" placeholder="john@company.com" required />
+                <label className="block text-sm font-medium text-theme-text-secondary">Email</label>
+                <input type="email" value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary" placeholder="john@company.com" required />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Role</label>
-                <select value={userForm.role} onChange={(e) => setUserForm({ ...userForm, role: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black">
+                <label className="block text-sm font-medium text-theme-text-secondary">Role</label>
+                <select value={userForm.role} onChange={(e) => setUserForm({ ...userForm, role: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary">
                   <option value="">Select role</option>
                   {roles.map(role => (
                     <option key={role.id} value={role.name}>{role.name}</option>
@@ -586,12 +586,12 @@ export default function UsersPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Department</label>
-                <input value={userForm.department} onChange={(e) => setUserForm({ ...userForm, department: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black" placeholder="e.g. Operations" />
+                <label className="block text-sm font-medium text-theme-text-secondary">Department</label>
+                <input value={userForm.department} onChange={(e) => setUserForm({ ...userForm, department: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary" placeholder="e.g. Operations" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Branch</label>
-                <select value={userForm.branch} onChange={(e) => setUserForm({ ...userForm, branch: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black">
+                <label className="block text-sm font-medium text-theme-text-secondary">Branch</label>
+                <select value={userForm.branch} onChange={(e) => setUserForm({ ...userForm, branch: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary">
                   <option value="">Select branch</option>
                   {branches.map(branch => (
                     <option key={branch} value={branch}>{branch}</option>
@@ -599,16 +599,16 @@ export default function UsersPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Status</label>
-                <select value={userForm.status} onChange={(e) => setUserForm({ ...userForm, status: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black">
+                <label className="block text-sm font-medium text-theme-text-secondary">Status</label>
+                <select value={userForm.status} onChange={(e) => setUserForm({ ...userForm, status: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary">
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                   <option value="suspended">Suspended</option>
                 </select>
               </div>
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setShowAddUser(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button type="submit" disabled={addUserLoading} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{addUserLoading ? 'Adding...' : 'Add User'}</button>
+                <button type="button" onClick={() => setShowAddUser(false)} className="rounded-lg border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-secondary hover:bg-theme-muted">Cancel</button>
+                <button type="submit" disabled={addUserLoading} className="rounded-lg brand-gradient px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50">{addUserLoading ? 'Adding...' : 'Add User'}</button>
               </div>
             </form>
           </div>

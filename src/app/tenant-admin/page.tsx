@@ -79,8 +79,8 @@ export default function TenantAdminDashboard() {
           value: m[0]?.value || "—",
           delta: m[0]?.delta,
           trend: m[0]?.trend,
-          icon: <DollarSign className="w-5 h-5 text-[#6366F1]" />,
-          iconBg: "bg-[rgba(99,102,241,0.1)]",
+          icon: <DollarSign className="w-5 h-5 text-white" />,
+          iconBg: "bg-gradient-to-br from-indigo-500 to-violet-600",
           href: "/tenant-admin/finance",
         });
         if (m[1]) {
@@ -89,8 +89,8 @@ export default function TenantAdminDashboard() {
             value: m[1].value,
             delta: m[1].delta,
             trend: m[1].trend,
-            icon: <Receipt className="w-5 h-5 text-[#EF4444]" />,
-            iconBg: "bg-[rgba(239,68,68,0.1)]",
+            icon: <Receipt className="w-5 h-5 text-white" />,
+            iconBg: "bg-gradient-to-br from-rose-500 to-orange-500",
             href: "/tenant-admin/expenses",
           });
         }
@@ -100,8 +100,8 @@ export default function TenantAdminDashboard() {
             value: m[2].value,
             delta: m[2].delta,
             trend: m[2].trend,
-            icon: <CreditCard className="w-5 h-5 text-[#10B981]" />,
-            iconBg: "bg-[rgba(16,185,129,0.1)]",
+            icon: <CreditCard className="w-5 h-5 text-white" />,
+            iconBg: "bg-gradient-to-br from-emerald-500 to-teal-500",
             href: "/tenant-admin/payments",
           });
         }
@@ -110,22 +110,22 @@ export default function TenantAdminDashboard() {
           {
             label: "Total Revenue",
             value: "—",
-            icon: <DollarSign className="w-5 h-5 text-[#6366F1]" />,
-            iconBg: "bg-[rgba(99,102,241,0.1)]",
+            icon: <DollarSign className="w-5 h-5 text-white" />,
+            iconBg: "bg-gradient-to-br from-indigo-500 to-violet-600",
             href: "/tenant-admin/finance",
           },
           {
             label: "Total Expenses",
             value: "—",
-            icon: <Receipt className="w-5 h-5 text-[#EF4444]" />,
-            iconBg: "bg-[rgba(239,68,68,0.1)]",
+            icon: <Receipt className="w-5 h-5 text-white" />,
+            iconBg: "bg-gradient-to-br from-rose-500 to-orange-500",
             href: "/tenant-admin/expenses",
           },
           {
             label: "Net Cash Flow",
             value: "—",
-            icon: <CreditCard className="w-5 h-5 text-[#10B981]" />,
-            iconBg: "bg-[rgba(16,185,129,0.1)]",
+            icon: <CreditCard className="w-5 h-5 text-white" />,
+            iconBg: "bg-gradient-to-br from-emerald-500 to-teal-500",
             href: "/tenant-admin/payments",
           }
         );
@@ -147,8 +147,8 @@ export default function TenantAdminDashboard() {
       financeMetrics.push({
         label: "Team Members",
         value: String(users),
-        icon: <Users className="w-5 h-5 text-[#818CF8]" />,
-        iconBg: "bg-[rgba(129,140,248,0.1)]",
+        icon: <Users className="w-5 h-5 text-white" />,
+        iconBg: "bg-gradient-to-br from-violet-500 to-fuchsia-500",
         href: "/tenant-admin/users",
       });
 
@@ -220,15 +220,15 @@ export default function TenantAdminDashboard() {
       paid: "bg-green-500/10 text-green-400",
       pending: "bg-amber-500/10 text-amber-400",
     };
-    return map[status] || "bg-[rgba(255,255,255,0.05)] text-[#94A3B8]";
+    return map[status] || "bg-[rgba(255,255,255,0.05)] text-theme-text-secondary";
   };
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#F8FAFC]">Dashboard Overview</h1>
-        <p className="text-[#94A3B8] mt-1">
+        <h1 className="text-2xl font-extrabold brand-gradient-text">Dashboard Overview</h1>
+        <p className="text-theme-text-secondary mt-1">
           Welcome back! Here&apos;s your system at a glance.
         </p>
       </div>
@@ -250,16 +250,16 @@ export default function TenantAdminDashboard() {
               <Link
                 key={m.label}
                 href={m.href}
-                className="group bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-5 hover:border-[rgba(99,102,241,0.3)] transition-colors"
+                className="group gradient-card bg-theme-surface rounded-xl border border-theme-border p-5 hover:border-theme-accent/40 transition-all duration-300 accent-glow hover:shadow-lg"
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className={`w-10 h-10 rounded-lg ${m.iconBg} flex items-center justify-center`}>
                     {m.icon}
                   </div>
-                  <ArrowRight className="w-4 h-4 text-[#64748B] group-hover:text-[#818CF8] transition-colors" />
+                  <ArrowRight className="w-4 h-4 text-theme-text-tertiary group-hover:text-theme-accent transition-colors" />
                 </div>
-                <p className="text-sm text-[#94A3B8] mb-1">{m.label}</p>
-                <p className="text-2xl font-bold text-[#F8FAFC]">{m.value}</p>
+                <p className="text-sm text-theme-text-secondary mb-1">{m.label}</p>
+                <p className="text-2xl font-bold text-theme-text-primary">{m.value}</p>
                 {m.delta && (
                   <div className="flex items-center gap-1 mt-2">
                     {m.trend === "up" ? (
@@ -281,14 +281,14 @@ export default function TenantAdminDashboard() {
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-5">
-            <h3 className="text-sm font-semibold text-[#F8FAFC] mb-4">Quick Actions</h3>
+          <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-5">
+            <h3 className="text-sm font-semibold text-theme-text-primary mb-4">Quick Actions</h3>
             <div className="flex flex-wrap gap-3">
               {quickActions.map((action) => (
                 <Link
                   key={action.label}
                   href={action.href}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-[rgba(99,102,241,0.1)] border border-[rgba(99,102,241,0.2)] text-[#818CF8] rounded-lg hover:bg-[rgba(99,102,241,0.15)] text-sm font-medium transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 brand-gradient-subtle border border-theme-accent/30 text-theme-accent rounded-lg hover:border-theme-accent/60 text-sm font-medium transition-colors"
                 >
                   {action.icon}
                   {action.label}
@@ -298,14 +298,14 @@ export default function TenantAdminDashboard() {
           </div>
 
           {/* Recent Transactions */}
-          <div className="bg-[#111827] rounded-xl border border-[rgba(255,255,255,0.07)] p-5">
+          <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-[#F8FAFC]">
+              <h3 className="text-sm font-semibold text-theme-text-primary">
                 Recent Transactions
               </h3>
               <Link
                 href="/tenant-admin/finance"
-                className="text-xs text-[#818CF8] hover:text-[#F8FAFC] transition-colors"
+                className="text-xs text-theme-accent hover:text-theme-text-primary transition-colors"
               >
                 View all
               </Link>
@@ -319,28 +319,28 @@ export default function TenantAdminDashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-[rgba(255,255,255,0.07)]">
-                      <th className="text-left text-xs font-medium text-[#94A3B8] py-3 px-2">
+                    <tr className="border-b border-theme-border">
+                      <th className="text-left text-xs font-medium text-theme-text-secondary py-3 px-2">
                         Description
                       </th>
-                      <th className="text-left text-xs font-medium text-[#94A3B8] py-3 px-2">
+                      <th className="text-left text-xs font-medium text-theme-text-secondary py-3 px-2">
                         Type
                       </th>
-                      <th className="text-left text-xs font-medium text-[#94A3B8] py-3 px-2">
+                      <th className="text-left text-xs font-medium text-theme-text-secondary py-3 px-2">
                         Date
                       </th>
-                      <th className="text-left text-xs font-medium text-[#94A3B8] py-3 px-2">
+                      <th className="text-left text-xs font-medium text-theme-text-secondary py-3 px-2">
                         Status
                       </th>
-                      <th className="text-right text-xs font-medium text-[#94A3B8] py-3 px-2">
+                      <th className="text-right text-xs font-medium text-theme-text-secondary py-3 px-2">
                         Amount
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[rgba(255,255,255,0.07)]">
+                  <tbody className="divide-y divide-theme-border">
                     {transactions.map((tx) => (
-                      <tr key={tx.id} className="hover:bg-[rgba(255,255,255,0.02)] transition-colors">
-                        <td className="py-3 px-2 text-sm text-[#F8FAFC]">
+                      <tr key={tx.id} className="hover:bg-white/5 transition-colors">
+                        <td className="py-3 px-2 text-sm text-theme-text-primary">
                           {tx.description}
                         </td>
                         <td className="py-3 px-2">
@@ -354,7 +354,7 @@ export default function TenantAdminDashboard() {
                             {tx.type === "income" ? "Income" : "Expense"}
                           </span>
                         </td>
-                        <td className="py-3 px-2 text-sm text-[#94A3B8]">
+                        <td className="py-3 px-2 text-sm text-theme-text-secondary">
                           {tx.date}
                         </td>
                         <td className="py-3 px-2">
@@ -362,7 +362,7 @@ export default function TenantAdminDashboard() {
                             {tx.status.replace(/_/g, " ")}
                           </span>
                         </td>
-                        <td className="py-3 px-2 text-sm text-[#F8FAFC] text-right font-medium">
+                        <td className="py-3 px-2 text-sm text-theme-text-primary text-right font-medium">
                           {tx.amount}
                         </td>
                       </tr>
