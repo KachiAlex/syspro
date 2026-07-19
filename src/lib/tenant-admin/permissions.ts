@@ -1,4 +1,17 @@
 import { sql } from "@/lib/sql-client";
+import { setupTenantAdminSchema } from "./schema";
+
+let permissionsTablesEnsured = false;
+async function ensurePermissionsTables() {
+  if (permissionsTablesEnsured) return;
+  try {
+    await setupTenantAdminSchema(sql);
+  } catch (error) {
+    console.warn("Failed to ensure permissions tables:", error);
+  } finally {
+    permissionsTablesEnsured = true;
+  }
+}
 
 export const DASHBOARD_PERMISSION_KEYS: Record<string, string> = {
   admin: "dashboard:admin",
@@ -46,14 +59,19 @@ export async function getTenantUserPermissions(
   tenantSlug: string,
   userId: string
 ): Promise<TenantUserPermissions> {
-  const rows = await sql`
-    SELECT DISTINCT unnest(r.permissions) as key
-    FROM admin_user_roles ur
-    JOIN admin_roles r ON r.id = ur.role_id
-    WHERE ur.tenant_slug = ${tenantSlug} AND ur.user_id = ${userId}
-  `;
-
-  const keys: string[] = Array.isArray(rows) ? (rows as any[]).map((r) => r.key) : [];
+  let keys: string[] = [];
+  try {
+    await ensurePermissionsTables();
+    const rows = await sql`
+      SELECT DISTINCT unnest(r.permissions) as key
+      FROM admin_user_roles ur
+      JOIN admin_roles r ON r.id = ur.role_id
+      WHERE ur.tenant_slug = ${tenantSlug} AND ur.user_id = ${userId}
+    `;
+    keys = Array.isArray(rows) ? (rows as any[]).map((r) => r.key) : [];
+  } catch (error) {
+    console.error("Permission lookup failed for", tenantSlug, userId, error);
+  }
 
   // Development fallback: if no roles are configured for the tenant yet,
   // grant full dashboard access so the UI can still be used locally.
