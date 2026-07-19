@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { SidebarNav } from "./sidebar-nav";
 import { useTheme } from "@/components/theme/theme-provider";
+import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
 import { Menu, X, ChevronDown, User, Bell, Settings, Search, Command, Home, ArrowRight, Sun, Moon } from "lucide-react";
 
 interface TenantAdminShellProps {
@@ -61,6 +62,18 @@ const QUICK_LINKS = [
   { label: "Settings", href: "/tenant-admin/settings" },
 ];
 
+function getDashboardKey(pathname: string): string | null {
+  if (pathname === '/tenant-admin' || pathname.startsWith('/tenant-admin/admin') || pathname.startsWith('/tenant-admin/users') || pathname.startsWith('/tenant-admin/settings') || pathname.startsWith('/tenant-admin/audit') || pathname.startsWith('/tenant-admin/health')) return 'admin';
+  if (pathname.startsWith('/tenant-admin/automation')) return 'automation';
+  if (pathname.startsWith('/tenant-admin/finance') || pathname.startsWith('/tenant-admin/expenses') || pathname.startsWith('/tenant-admin/bills') || pathname.startsWith('/tenant-admin/payments') || pathname.startsWith('/tenant-admin/billing')) return 'finance';
+  if (pathname.startsWith('/tenant-admin/hr')) return 'people';
+  if (pathname.startsWith('/tenant-admin/crm')) return 'crm';
+  if (pathname.startsWith('/tenant-admin/projects')) return 'projects';
+  if (pathname.startsWith('/tenant-admin/analytics')) return 'reports';
+  if (pathname.startsWith('/tenant-admin/sales') || pathname.startsWith('/tenant-admin/inventory')) return 'crm';
+  return null;
+}
+
 export default function TenantAdminShell({ children, user }: TenantAdminShellProps) {
   const pathname = usePathname();
   const breadcrumbs = useBreadcrumbs(pathname || "");
@@ -96,6 +109,14 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
   }, [toggleSidebar]);
 
   const { theme, mounted: themeMounted, toggleTheme } = useTheme();
+
+  const dashboardKey = getDashboardKey(pathname || '');
+  const perms = useTenantPermissions(user?.id);
+  const allowed =
+    !dashboardKey ||
+    perms.isAdmin ||
+    perms.dashboards.includes(dashboardKey) ||
+    ((perms as any)[dashboardKey] !== 'none' && (perms as any)[dashboardKey] !== undefined);
 
   return (
     <div className="min-h-screen flex bg-theme-bg relative">
@@ -341,7 +362,18 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
         {/* Page content - independently scrollable */}
         <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[rgba(128,128,128,0.2)] scrollbar-track-transparent dashboard-content">
           <div className="p-4 sm:p-6 lg:p-8">
-            {children}
+            {perms.loading ? (
+              <div className="flex items-center justify-center h-full min-h-[50vh]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : allowed ? (
+              children
+            ) : (
+              <div className="p-8 bg-white rounded-xl border border-gray-200 max-w-xl">
+                <h2 className="text-lg font-semibold text-gray-900">Access Denied</h2>
+                <p className="text-sm text-gray-600 mt-2">You do not have permission to view this dashboard.</p>
+              </div>
+            )}
           </div>
         </div>
       </main>

@@ -1,7 +1,32 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getTenantUserPermissions } from '@/lib/tenant-admin/permissions';
 
-export function middleware(request: NextRequest) {
+function getRequiredPermissionForPath(pathname: string): string | null {
+  if (pathname === '/api/tenant/user/permissions' || pathname.startsWith('/api/auth/')) return null;
+  if (pathname.startsWith('/api/automation/')) return 'automation';
+  if (pathname.startsWith('/api/finance/') || pathname.startsWith('/api/tenant/billing')) return 'finance';
+  if (pathname.startsWith('/api/crm/')) return 'crm';
+  if (pathname.startsWith('/api/hr/') || pathname.startsWith('/api/tenant/employees')) return 'people';
+  if (pathname.startsWith('/api/projects/')) return 'projects';
+  if (pathname.startsWith('/api/reports/')) return 'reports';
+  if (pathname.startsWith('/api/inventory/')) return 'crm';
+  if (
+    pathname.startsWith('/api/tenant/branches') ||
+    pathname.startsWith('/api/tenant/users') ||
+    pathname.startsWith('/api/tenant/health') ||
+    pathname.startsWith('/api/tenant/audit') ||
+    pathname.startsWith('/api/tenant/org-structure') ||
+    pathname.startsWith('/api/tenant/access-restrictions') ||
+    pathname.startsWith('/api/tenant/roles') ||
+    pathname.startsWith('/api/tenant/modules')
+  ) {
+    return 'admin';
+  }
+  return null;
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isProduction = process.env.NODE_ENV === 'production';
 
@@ -36,9 +61,46 @@ export function middleware(request: NextRequest) {
     // In development, the tenant-admin layout handles dev fallbacks
   }
 
+  // Enforce dashboard permissions on tenant-scoped API routes
+  if (pathname.startsWith('/api/')) {
+    const permissionKey = getRequiredPermissionForPath(pathname);
+    if (permissionKey) {
+      const tenantSlug =
+        request.nextUrl.searchParams.get('tenantSlug') ||
+        request.cookies.get('tenantSlug')?.value;
+      const userId =
+        request.nextUrl.searchParams.get('userId') ||
+        request.headers.get('x-user-id') ||
+        request.headers.get('x-dev-user-id') ||
+        request.cookies.get('dev-user-id')?.value ||
+        request.cookies.get('userId')?.value;
+
+      if (!tenantSlug || !userId) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
+      try {
+        const perms = await getTenantUserPermissions(tenantSlug, userId);
+        const hasAccess =
+          perms.isAdmin ||
+          perms.dashboards.includes(permissionKey) ||
+          ((perms as any)[permissionKey] !== 'none' &&
+            (perms as any)[permissionKey] !== undefined);
+        if (!hasAccess) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+      } catch (err) {
+        return NextResponse.json(
+          { error: 'Permission check failed' },
+          { status: 500 }
+        );
+      }
+    }
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/superadmin/:path*', '/tenant-admin/:path*'],
+  matcher: ['/superadmin/:path*', '/tenant-admin/:path*', '/api/:path*'],
 };
