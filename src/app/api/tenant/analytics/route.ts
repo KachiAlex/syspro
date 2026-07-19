@@ -16,15 +16,18 @@ import { z } from "zod";
 
 const CreateReportSchema = z.object({
   name: z.string().min(1).max(100),
-  type: z.enum(["departments", "employees", "roles", "workflows", "approvals", "security", "billing", "custom"]),
+  type: z.string().min(1).optional(),
+  reportType: z.string().min(1).optional(),
   filters: z.record(z.any()).optional(),
   metrics: z.array(z.string()).optional(),
   schedule: z.enum(["once", "daily", "weekly", "monthly"]).optional(),
 });
 
 const ExportReportSchema = z.object({
-  reportId: z.string(),
-  format: z.enum(["csv", "json", "pdf", "xlsx"]),
+  name: z.string().min(1).optional(),
+  reportId: z.string().optional(),
+  format: z.enum(["csv", "json", "pdf", "xlsx"]).optional().default("csv"),
+  frequency: z.string().optional(),
   scheduleFor: z.string().datetime().optional(),
 });
 
@@ -66,6 +69,41 @@ export async function GET(request: NextRequest) {
     const pagination = getPaginationParams(request);
     const sort = getSortParams(request);
     const periodDays = Math.min(Math.max(Number(new URL(request.url).searchParams.get("days") || "30"), 1), 365);
+
+    const action = new URL(request.url).searchParams.get("action");
+
+    if (action === "download") {
+      const reportId = new URL(request.url).searchParams.get("reportId");
+      const format = (new URL(request.url).searchParams.get("format") || "csv").toLowerCase();
+      if (!reportId) {
+        return errorResponse("Report ID is required", 400);
+      }
+      const report = (await safeQuery<any>(
+        `select
+          coalesce((changes->'after'->>'id'), resource_id) as id,
+          coalesce((changes->'after'->>'name'), 'Untitled') as name,
+          coalesce((changes->'after'->>'reportType'), (changes->'after'->>'type'), 'report') as "reportType",
+          (changes->'after') as payload,
+          created_at as "createdAt"
+        from admin_audit_logs
+        where tenant_slug = $1 and resource = 'report' and action = 'create'
+          and (
+            (changes->'after'->>'id') = $2
+            or resource_id = $2
+          )
+        order by created_at desc
+        limit 1`,
+        [tenantSlug, reportId]
+      ))?.[0];
+      if (!report) {
+        return errorResponse("Report not found", 404);
+      }
+      const payload = report.payload || {};
+      const headers = ["Field", "Value"];
+      const rows = Object.entries({ id: report.id, name: report.name, type: report.reportType, ...payload, createdAt: report.createdAt }).map(([k, v]) => [JSON.stringify(k), JSON.stringify(v)]);
+      const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+      return new NextResponse(csv, { status: 200, headers: { "Content-Type": "text/csv", "Content-Disposition": `attachment; filename="${report.name.replace(/\s+/g, "-")}.csv"` } });
+    }
 
     if (type === "reports") {
       const reports = (await safeQuery<any>(
@@ -318,7 +356,12 @@ export async function POST(request: NextRequest) {
 
       const report = {
         id: `rep-${Date.now()}`,
-        ...parsed.data,
+        name: parsed.data.name,
+        reportType: parsed.data.reportType || parsed.data.type || "custom",
+        type: parsed.data.type || parsed.data.reportType || "custom",
+        filters: parsed.data.filters,
+        metrics: parsed.data.metrics,
+        schedule: parsed.data.schedule,
         tenantSlug: context.tenantSlug,
         status: "generating",
         createdAt: new Date().toISOString(),
@@ -351,7 +394,11 @@ export async function POST(request: NextRequest) {
 
       const exportJob = {
         id: `exp-${Date.now()}`,
-        ...parsed.data,
+        name: parsed.data.name || `Export ${parsed.data.format || "csv"}`,
+        reportId: parsed.data.reportId || null,
+        format: parsed.data.format || "csv",
+        frequency: parsed.data.frequency || "daily",
+        scheduleFor: parsed.data.scheduleFor,
         tenantSlug: context.tenantSlug,
         status: "queued",
         createdAt: new Date().toISOString(),
@@ -376,6 +423,27 @@ export async function POST(request: NextRequest) {
         },
         { status: 201 }
       );
+    } else if (action === "run_export") {
+      const body = await request.json().catch(() => ({}));
+      const exportId = new URL(request.url).searchParams.get("exportId") || body.exportId;
+      const run = {
+        id: `run-${Date.now()}`,
+        exportId: exportId || null,
+        tenantSlug: context.tenantSlug,
+        status: "running",
+        startedAt: new Date().toISOString(),
+        runBy: context.userId,
+      };
+      const auditService = new AuditService();
+      await auditService.log(
+        asTenantSlug(context.tenantSlug),
+        context.userId as UserId,
+        "execute",
+        "export",
+        run.id as ResourceId,
+        { after: run }
+      );
+      return NextResponse.json({ success: true, data: run, message: "Export started" });
     } else {
       return errorResponse("Invalid action", 400);
     }
@@ -394,6 +462,7 @@ export async function PATCH(request: NextRequest) {
     const context = validateTenantContext(request, "write");
     const id = new URL(request.url).searchParams.get("id");
     const action = new URL(request.url).searchParams.get("action") || "update";
+    const resourceType = new URL(request.url).searchParams.get("type") || "report";
 
     if (!id) {
       return errorResponse("Report ID is required", 400);
@@ -414,7 +483,7 @@ export async function PATCH(request: NextRequest) {
       asTenantSlug(context.tenantSlug),
       context.userId as UserId,
       action === "rerun" ? "execute" as AuditAction : "update",
-      "report",
+      resourceType === "export" ? "export" : "report",
       id as ResourceId,
       { after: updated }
     );
@@ -438,6 +507,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "delete");
     const id = new URL(request.url).searchParams.get("id");
+    const resourceType = new URL(request.url).searchParams.get("type") || "report";
 
     if (!id) {
       return errorResponse("ID is required", 400);
@@ -448,7 +518,7 @@ export async function DELETE(request: NextRequest) {
       asTenantSlug(context.tenantSlug),
       context.userId as UserId,
       "delete",
-      "report",
+      resourceType === "export" ? "export" : "report",
       id as ResourceId
     );
 

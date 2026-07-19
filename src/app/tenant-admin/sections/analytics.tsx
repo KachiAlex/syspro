@@ -75,11 +75,14 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
   const [runningExport, setRunningExport] = useState(false);
   const ts = tenantSlug ;
 
+  const periodToDays: Record<string, number> = { "7d": 7, "30d": 30, "90d": 90, "1y": 365 };
+
   async function load() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts ?? '')}`);
+      const days = periodToDays[selectedPeriod] ?? 30;
+      const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts ?? '')}&days=${days}`);
       const payload = await res.json().catch(() => null);
       if (res.ok && payload) {
         const data = payload.data || payload;
@@ -112,7 +115,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
       return;
     }
     try {
-      const payload = Object.assign({}, reportForm, { type: "report" });
+      const payload = Object.assign({}, reportForm, { reportType: reportForm.type });
       const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -153,8 +156,8 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
       return;
     }
     try {
-      const payload = Object.assign({}, exportForm, { type: "export" });
-      const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
+      const payload = Object.assign({}, exportForm, { reportType: "export" });
+      const res = await fetch(`/api/tenant/analytics?action=export&tenantSlug=${encodeURIComponent(ts ?? '')}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
