@@ -103,8 +103,13 @@ export const RecruitmentDashboard: React.FC = () => {
   const handleDeleteRequisition = async (id: string) => {
     if (!tenantSlug) return;
     if (!confirm('Delete this requisition?')) return;
-    await HRService.deleteRequisition(tenantSlug, id);
-    setRequisitions((prev) => prev.filter((r) => r.id !== id));
+    try {
+      await HRService.deleteRequisition(tenantSlug, id);
+      setRequisitions((prev) => prev.filter((r) => r.id !== id));
+    } catch (err: any) {
+      console.error('Failed to delete requisition:', err);
+      alert(err?.response?.data?.error || 'Failed to delete requisition.');
+    }
   };
 
   const handleCopyLink = (id: string) => {
@@ -119,65 +124,115 @@ export const RecruitmentDashboard: React.FC = () => {
   const handleDeleteCandidate = async (id: string) => {
     if (!tenantSlug) return;
     if (!confirm('Delete this candidate?')) return;
-    await HRService.deleteCandidate(tenantSlug, id);
-    setCandidates((prev) => prev.filter((c) => c.id !== id));
+    try {
+      await HRService.deleteCandidate(tenantSlug, id);
+      setCandidates((prev) => prev.filter((c) => c.id !== id));
+    } catch (err: any) {
+      console.error('Failed to delete candidate:', err);
+      alert(err?.response?.data?.error || 'Failed to delete candidate.');
+    }
   };
 
   const handleDeleteInterview = async (id: string) => {
     if (!tenantSlug) return;
     if (!confirm('Delete this interview?')) return;
-    await HRService.deleteInterview(tenantSlug, id);
-    setInterviews((prev) => prev.filter((i) => i.id !== id));
+    try {
+      await HRService.deleteInterview(tenantSlug, id);
+      setInterviews((prev) => prev.filter((i) => i.id !== id));
+    } catch (err: any) {
+      console.error('Failed to delete interview:', err);
+      alert(err?.response?.data?.error || 'Failed to delete interview.');
+    }
   };
 
   const handleDeleteOffer = async (id: string) => {
     if (!tenantSlug) return;
     if (!confirm('Delete this offer?')) return;
-    await HRService.deleteOffer(tenantSlug, id);
-    setOffers((prev) => prev.filter((o) => o.id !== id));
+    try {
+      await HRService.deleteOffer(tenantSlug, id);
+      setOffers((prev) => prev.filter((o) => o.id !== id));
+    } catch (err: any) {
+      console.error('Failed to delete offer:', err);
+      alert(err?.response?.data?.error || 'Failed to delete offer.');
+    }
   };
 
   const handleDeleteOnboardingTask = async (id: string) => {
     if (!tenantSlug) return;
     if (!confirm('Delete this task?')) return;
-    await HRService.deleteOnboardingTask(tenantSlug, id);
-    setOnboardingTasks((prev) => prev.filter((t) => t.id !== id));
+    try {
+      await HRService.deleteOnboardingTask(tenantSlug, id);
+      setOnboardingTasks((prev) => prev.filter((t) => t.id !== id));
+    } catch (err: any) {
+      console.error('Failed to delete onboarding task:', err);
+      alert(err?.response?.data?.error || 'Failed to delete onboarding task.');
+    }
   };
 
   const handleCreateRequisition = async (data: any) => {
     if (!tenantSlug) return;
-    const created = await HRService.createRequisition(tenantSlug, data);
-    setRequisitions((prev) => [created, ...prev]);
+    try {
+      const created = await HRService.createRequisition(tenantSlug, data);
+      setRequisitions((prev) => [created, ...prev]);
+    } catch (err: any) {
+      console.error('Failed to create requisition:', err);
+      throw new Error(err?.response?.data?.error || 'Failed to create requisition.');
+    }
   };
 
   const handleCreateCandidate = async (data: any) => {
     if (!tenantSlug) return;
-    const created = await HRService.createCandidate(tenantSlug, data);
-    setCandidates((prev) => [created, ...prev]);
+    try {
+      const created = await HRService.createCandidate(tenantSlug, data);
+      setCandidates((prev) => [created, ...prev]);
+    } catch (err: any) {
+      console.error('Failed to create candidate:', err);
+      throw new Error(err?.response?.data?.error || 'Failed to create candidate.');
+    }
   };
 
   const handleCreateApplication = async (data: any) => {
     if (!tenantSlug) return;
-    const created = await HRService.createApplication(tenantSlug, data);
-    setApplications((prev) => [created, ...prev]);
+    try {
+      const created = await HRService.createApplication(tenantSlug, data);
+      setApplications((prev) => [created, ...prev]);
+    } catch (err: any) {
+      console.error('Failed to create application:', err);
+      throw new Error(err?.response?.data?.error || 'Failed to create application.');
+    }
   };
 
   const handleCreateInterview = async (data: any) => {
     if (!tenantSlug) return;
-    const created = await HRService.createInterview(tenantSlug, data);
-    setInterviews((prev) => [created, ...prev]);
+    try {
+      const created = await HRService.createInterview(tenantSlug, data);
+      setInterviews((prev) => [created, ...prev]);
+    } catch (err: any) {
+      console.error('Failed to create interview:', err);
+      throw new Error(err?.response?.data?.error || 'Failed to create interview.');
+    }
   };
 
   const handleCreateOffer = async (data: any) => {
     if (!tenantSlug) return;
-    const created = await HRService.createOffer(tenantSlug, data);
-    setOffers((prev) => [created, ...prev]);
+    try {
+      const created = await HRService.createOffer(tenantSlug, data);
+      setOffers((prev) => [created, ...prev]);
+    } catch (err: any) {
+      console.error('Failed to create offer:', err);
+      throw new Error(err?.response?.data?.error || 'Failed to create offer.');
+    }
   };
 
   const handleCreateOnboardingTask = async (data: any) => {
     if (!tenantSlug) return;
-    const created = await HRService.createOnboardingTask(tenantSlug, data);
-    setOnboardingTasks((prev) => [created, ...prev]);
+    try {
+      const created = await HRService.createOnboardingTask(tenantSlug, data);
+      setOnboardingTasks((prev) => [created, ...prev]);
+    } catch (err: any) {
+      console.error('Failed to create onboarding task:', err);
+      throw new Error(err?.response?.data?.error || 'Failed to create onboarding task.');
+    }
   };
 
   const handleScreenApplication = async (id: string) => {
@@ -282,7 +337,7 @@ export const RecruitmentDashboard: React.FC = () => {
       under_review: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
       applied: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
     };
-    return classes[status.toLowerCase()] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+    return classes[status?.toLowerCase()] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
   };
 
   const subTabs: { id: RecruitmentSubTab; label: string; icon: React.ElementType }[] = [

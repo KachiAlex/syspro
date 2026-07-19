@@ -241,8 +241,7 @@ export function RequisitionModal({
     }
   };
 
-  const handleCreateDepartment = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateDepartment = async () => {
     if (!newDeptName.trim() || !tenantSlug) return;
     setCreatingDept(true);
     try {
@@ -284,19 +283,20 @@ export function RequisitionModal({
               <span className="text-sm font-medium text-theme-text-primary">New Department</span>
               <button type="button" onClick={() => setShowCreateDept(false)} className="text-xs text-theme-text-tertiary hover:text-theme-text-secondary">Cancel</button>
             </div>
-            <form onSubmit={handleCreateDepartment} className="space-y-3">
+            <div className="space-y-3">
               <TextField label="Department Name" value={newDeptName} onChange={setNewDeptName} required />
               <TextField label="Description" value={newDeptDescription} onChange={setNewDeptDescription} />
               <div className="flex justify-end">
                 <button
-                  type="submit"
-                  disabled={creatingDept}
+                  type="button"
+                  onClick={handleCreateDepartment}
+                  disabled={creatingDept || !newDeptName.trim()}
                   className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
                 >
                   {creatingDept ? 'Creating...' : 'Create & Select'}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         )}
         <TextArea label="Description" value={description} onChange={setDescription} required />
@@ -330,7 +330,7 @@ export function CandidateModal({ isOpen, onClose, onSubmit, mode = 'create', ini
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [resumeUrl, setResumeUrl] = useState('');
-  const [source, setSource] = useState('');
+  const [source, setSource] = useState('manual');
   const [currentStage, setCurrentStage] = useState('new');
   const [skills, setSkills] = useState<string[]>([]);
   const [experienceYears, setExperienceYears] = useState<number | ''>('');
@@ -343,14 +343,14 @@ export function CandidateModal({ isOpen, onClose, onSubmit, mode = 'create', ini
       setEmail(initialData.email || '');
       setPhone(initialData.phone || '');
       setResumeUrl(initialData.resumeUrl || '');
-      setSource(initialData.source || '');
+      setSource(initialData.source || 'manual');
       setCurrentStage(initialData.currentStage || 'new');
       setSkills(initialData.skills || []);
       setExperienceYears(initialData.experienceYears ?? '');
       setEducation(initialData.education || '');
       setNotes(initialData.notes || '');
     } else {
-      setFullName(''); setEmail(''); setPhone(''); setResumeUrl(''); setSource('');
+      setFullName(''); setEmail(''); setPhone(''); setResumeUrl(''); setSource('manual');
       setCurrentStage('new'); setSkills([]); setExperienceYears(''); setEducation(''); setNotes('');
     }
   }, [initialData, isOpen]);
@@ -370,12 +370,22 @@ export function CandidateModal({ isOpen, onClose, onSubmit, mode = 'create', ini
         <TextField label="Email" value={email} onChange={setEmail} required type="email" />
         <div className="grid grid-cols-2 gap-4">
           <TextField label="Phone" value={phone} onChange={setPhone} />
-          <TextField label="Source" value={source} onChange={setSource} placeholder="e.g. LinkedIn, Referral" />
+          <SelectField label="Source" value={source} onChange={setSource} options={[
+          { value: '', label: 'Select source...' },
+          { value: 'career_page', label: 'Career Page' },
+          { value: 'linkedin', label: 'LinkedIn' },
+          { value: 'indeed', label: 'Indeed' },
+          { value: 'referral', label: 'Referral' },
+          { value: 'agency', label: 'Agency' },
+          { value: 'job_fair', label: 'Job Fair' },
+          { value: 'manual', label: 'Manual' },
+        ]} />
         </div>
         <SelectField label="Current Stage" value={currentStage} onChange={setCurrentStage} options={[
-          { value: 'new', label: 'New' }, { value: 'shortlisted', label: 'Shortlisted' },
-          { value: 'interviewing', label: 'Interviewing' }, { value: 'offered', label: 'Offered' },
-          { value: 'hired', label: 'Hired' }, { value: 'rejected', label: 'Rejected' },
+          { value: 'new', label: 'New' }, { value: 'screening', label: 'Screening' },
+          { value: 'shortlist', label: 'Shortlist' }, { value: 'interview', label: 'Interview' },
+          { value: 'offer', label: 'Offer' }, { value: 'hired', label: 'Hired' },
+          { value: 'rejected', label: 'Rejected' }, { value: 'talent_pool', label: 'Talent Pool' },
         ]} />
         <TextField label="Resume URL" value={resumeUrl} onChange={setResumeUrl} type="url" />
         <TagsField label="Skills" tags={skills} onChange={setSkills} />
@@ -441,7 +451,7 @@ export function InterviewModal({
 }: BaseModalProps & { applications: { id: string; candidateName: string }[] }) {
   const [applicationId, setApplicationId] = useState('');
   const [roundNumber, setRoundNumber] = useState<number | ''>(1);
-  const [type, setType] = useState('video');
+  const [type, setType] = useState('phone_screen');
   const [scheduledAt, setScheduledAt] = useState('');
   const [interviewerIds, setInterviewerIds] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
@@ -450,12 +460,12 @@ export function InterviewModal({
     if (initialData) {
       setApplicationId(initialData.applicationId || '');
       setRoundNumber(initialData.roundNumber ?? 1);
-      setType(initialData.type || 'video');
+      setType(initialData.type || 'phone_screen');
       setScheduledAt(initialData.scheduledAt ? new Date(initialData.scheduledAt).toISOString().slice(0, 16) : '');
       setInterviewerIds(initialData.interviewerIds || []);
       setNotes(initialData.notes || '');
     } else {
-      setApplicationId(''); setRoundNumber(1); setType('video'); setScheduledAt(''); setInterviewerIds([]); setNotes('');
+      setApplicationId(''); setRoundNumber(1); setType('phone_screen'); setScheduledAt(''); setInterviewerIds([]); setNotes('');
     }
   }, [initialData, isOpen]);
 
@@ -476,8 +486,9 @@ export function InterviewModal({
         <div className="grid grid-cols-2 gap-4">
           <NumberField label="Round" value={roundNumber} onChange={setRoundNumber} min={1} />
           <SelectField label="Type" value={type} onChange={setType} options={[
-            { value: 'phone', label: 'Phone' }, { value: 'video', label: 'Video' },
-            { value: 'onsite', label: 'Onsite' }, { value: 'panel', label: 'Panel' }, { value: 'technical', label: 'Technical' },
+            { value: 'phone_screen', label: 'Phone Screen' }, { value: 'technical', label: 'Technical' },
+            { value: 'behavioral', label: 'Behavioral' }, { value: 'cultural', label: 'Cultural' },
+            { value: 'executive', label: 'Executive' }, { value: 'panel', label: 'Panel' },
           ]} />
         </div>
         <TextField label="Scheduled At" value={scheduledAt} onChange={setScheduledAt} required type="datetime-local" />
@@ -620,7 +631,7 @@ export function DepartmentModal({
 // ─── Onboarding Task Modal ───
 export function OnboardingTaskModal({ isOpen, onClose, onSubmit, mode = 'create', initialData }: BaseModalProps) {
   const [employeeId, setEmployeeId] = useState('');
-  const [category, setCategory] = useState('documents');
+  const [category, setCategory] = useState('hr');
   const [task, setTask] = useState('');
   const [assignedToUserId, setAssignedToUserId] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -628,12 +639,12 @@ export function OnboardingTaskModal({ isOpen, onClose, onSubmit, mode = 'create'
   useEffect(() => {
     if (initialData) {
       setEmployeeId(initialData.employeeId || '');
-      setCategory(initialData.category || 'documents');
+      setCategory(initialData.category || 'hr');
       setTask(initialData.task || '');
       setAssignedToUserId(initialData.assignedToUserId || '');
       setDueDate(initialData.dueDate ? initialData.dueDate.split('T')[0] : '');
     } else {
-      setEmployeeId(''); setCategory('documents'); setTask(''); setAssignedToUserId(''); setDueDate('');
+      setEmployeeId(''); setCategory('hr'); setTask(''); setAssignedToUserId(''); setDueDate('');
     }
   }, [initialData, isOpen]);
 
@@ -650,9 +661,9 @@ export function OnboardingTaskModal({ isOpen, onClose, onSubmit, mode = 'create'
       <form onSubmit={handleSubmit} className="space-y-4">
         <TextField label="Employee ID" value={employeeId} onChange={setEmployeeId} required />
         <SelectField label="Category" value={category} onChange={setCategory} options={[
-          { value: 'documents', label: 'Documents' }, { value: 'it_setup', label: 'IT Setup' },
-          { value: 'training', label: 'Training' }, { value: 'compliance', label: 'Compliance' },
-          { value: 'benefits', label: 'Benefits' }, { value: 'other', label: 'Other' },
+          { value: 'hr', label: 'HR' }, { value: 'it', label: 'IT' },
+          { value: 'admin', label: 'Admin' }, { value: 'manager', label: 'Manager' },
+          { value: 'compliance', label: 'Compliance' },
         ]} />
         <TextField label="Task" value={task} onChange={setTask} required />
         <TextField label="Assigned To (User ID)" value={assignedToUserId} onChange={setAssignedToUserId} required />
