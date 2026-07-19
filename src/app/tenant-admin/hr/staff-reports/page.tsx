@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { HRService } from '@/app/tenant-admin/sections/hr-service';
+import { StaffReportTemplateModal } from '@/app/tenant-admin/sections/hr-staff-report-template-modal';
 
 interface Employee {
   id: string;
@@ -102,6 +103,7 @@ export default function ReportsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [reviewComment, setReviewComment] = useState('');
   const [reviewingStatus, setReviewingStatus] = useState<string | null>(null);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!tenantSlug) return;
@@ -325,7 +327,14 @@ export default function ReportsPage() {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <h4 className="font-semibold text-gray-900">Incoming Staff Reports</h4>
-          <select
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowTemplateModal(true)}
+              className="px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100"
+            >
+              Manage Templates
+            </button>
+            <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -335,6 +344,7 @@ export default function ReportsPage() {
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
+          </div>
         </div>
 
         {filteredReports.length > 0 ? (
@@ -515,6 +525,14 @@ export default function ReportsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showTemplateModal && (
+        <StaffReportTemplateModal
+          isOpen={showTemplateModal}
+          onClose={() => setShowTemplateModal(false)}
+          tenantSlug={tenantSlug}
+        />
       )}
     </div>
   );
