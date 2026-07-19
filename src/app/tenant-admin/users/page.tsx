@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { Users, Plus, Edit, Trash2, Eye, Search, Filter, Shield, UserCheck, UserX, Mail, Phone, Calendar, Building, CheckCircle, AlertCircle, Clock, X } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { AdminService } from '@/app/tenant-admin/services/admin-service';
-import DashboardGuard from '@/app/tenant-admin/components/DashboardGuard';
 
 interface User {
   id: string;
@@ -260,7 +259,6 @@ export default function UsersPage() {
   }
 
   return (
-    <DashboardGuard permission="admin" module="admin">
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -615,6 +613,5 @@ export default function UsersPage() {
         </div>
       )}
     </div>
-    </DashboardGuard>
   );
 }
