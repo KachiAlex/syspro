@@ -28,11 +28,36 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
     name: "",
     eventType: "",
     description: "",
-    condition: '{"op":"exists","field":"payload.id"}',
-    actions: '[{"type":"notify","params":{"channel":"email","template":"default"}}]',
+    condition: { op: "exists", field: "payload.id", value: "" },
+    actions: [{ type: "notify", params: { channel: "email", template: "default" } }],
   });
 
   const triggerOptions = useMemo(() => triggers.map((t) => t.key), [triggers]);
+
+  const needsValueOps = ["eq", "neq", "gt", "gte", "lt", "lte", "includes", "excludes"];
+
+  function updateCondition(patch: Partial<typeof form.condition>) {
+    setForm((p) => ({ ...p, condition: { ...p.condition, ...patch } }));
+  }
+
+  function updateAction(index: number, patch: any) {
+    setForm((p) => {
+      const actions = [...p.actions];
+      actions[index] = { ...actions[index], ...patch };
+      return { ...p, actions };
+    });
+  }
+
+  function addAction() {
+    setForm((p) => ({
+      ...p,
+      actions: [...p.actions, { type: "notify", params: { channel: "email", template: "default" } }],
+    }));
+  }
+
+  function removeAction(index: number) {
+    setForm((p) => ({ ...p, actions: p.actions.filter((_, i) => i !== index) }));
+  }
 
   async function load() {
     setLoading(true);
@@ -80,8 +105,6 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
     setSaving(true);
     setError(null);
     try {
-      const condition = JSON.parse(form.condition || "{}");
-      const actions = JSON.parse(form.actions || "[]");
       const res = await fetch(`/api/automation/rules?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -89,8 +112,8 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
           name: form.name,
           description: form.description,
           eventType: form.eventType,
-          condition,
-          actions,
+          condition: form.condition,
+          actions: form.actions,
         }),
       });
       if (!res.ok) throw new Error("Create failed");
@@ -171,14 +194,93 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
             <label className="block text-sm font-medium text-gray-900 mb-2">Description</label>
             <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" rows={2} />
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Condition (JSON)</label>
-              <textarea value={form.condition} onChange={(e) => setForm((p) => ({ ...p, condition: e.target.value }))} className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-xs" rows={4} />
+          <div className="space-y-4">
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <label className="block text-sm font-medium text-gray-900 mb-3">Condition</label>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Operator</label>
+                  <select value={form.condition.op} onChange={(e) => updateCondition({ op: e.target.value, value: "" })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                    {["exists", "missing", "eq", "neq", "gt", "gte", "lt", "lte", "includes", "excludes"].map((op) => (
+                      <option key={op} value={op}>{op}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Field path</label>
+                  <input value={form.condition.field} onChange={(e) => updateCondition({ field: e.target.value })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="payload.id" />
+                </div>
+                {needsValueOps.includes(form.condition.op) && (
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Value</label>
+                    <input value={String(form.condition.value ?? "")} onChange={(e) => updateCondition({ value: e.target.value })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="value to compare" />
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Actions (JSON)</label>
-              <textarea value={form.actions} onChange={(e) => setForm((p) => ({ ...p, actions: e.target.value }))} className="bg-white w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-xs" rows={4} />
+
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-medium text-gray-900">Actions</label>
+                <button type="button" onClick={addAction} className="text-xs text-blue-600 hover:text-blue-700">+ Add action</button>
+              </div>
+              <div className="space-y-3">
+                {form.actions.map((action, i) => (
+                  <div key={i} className="grid gap-3 md:grid-cols-3 items-end rounded-lg border border-slate-100 bg-slate-50 p-3">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Action type</label>
+                      <select value={action.type} onChange={(e) => updateAction(i, { type: e.target.value, params: {} })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                        <option value="notify">Notify</option>
+                        <option value="webhook">Webhook</option>
+                        <option value="email">Email</option>
+                        <option value="task">Task</option>
+                      </select>
+                    </div>
+                    {action.type === "notify" ? (
+                      <>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Channel</label>
+                          <input value={action.params?.channel || ""} onChange={(e) => updateAction(i, { params: { ...action.params, channel: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="email" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Template</label>
+                          <input value={action.params?.template || ""} onChange={(e) => updateAction(i, { params: { ...action.params, template: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="default" />
+                        </div>
+                      </>
+                    ) : action.type === "webhook" ? (
+                      <div className="md:col-span-2">
+                        <label className="block text-xs text-gray-500 mb-1">URL</label>
+                        <input value={action.params?.url || ""} onChange={(e) => updateAction(i, { params: { ...action.params, url: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="https://..." />
+                      </div>
+                    ) : action.type === "email" ? (
+                      <>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">To</label>
+                          <input value={action.params?.to || ""} onChange={(e) => updateAction(i, { params: { ...action.params, to: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="user@example.com" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Subject</label>
+                          <input value={action.params?.subject || ""} onChange={(e) => updateAction(i, { params: { ...action.params, subject: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Subject" />
+                        </div>
+                      </>
+                    ) : action.type === "task" ? (
+                      <>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Title</label>
+                          <input value={action.params?.title || ""} onChange={(e) => updateAction(i, { params: { ...action.params, title: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Task title" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Assignee</label>
+                          <input value={action.params?.assignee || ""} onChange={(e) => updateAction(i, { params: { ...action.params, assignee: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="@username" />
+                        </div>
+                      </>
+                    ) : null}
+                    <div className="flex justify-end md:col-span-3">
+                      <button type="button" onClick={() => removeAction(i)} className="text-xs text-rose-600 hover:text-rose-700">Remove</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           <div className="flex gap-3">
