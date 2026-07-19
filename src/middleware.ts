@@ -67,11 +67,14 @@ export async function middleware(request: NextRequest) {
     if (permissionKey) {
       const tenantSlug =
         request.nextUrl.searchParams.get('tenantSlug') ||
-        request.cookies.get('tenantSlug')?.value;
+        request.headers.get('x-tenant-slug') ||
+        request.cookies.get('tenantSlug')?.value ||
+        request.cookies.get('X-Tenant-Slug')?.value;
       const userId =
         request.nextUrl.searchParams.get('userId') ||
         request.headers.get('x-user-id') ||
         request.headers.get('x-dev-user-id') ||
+        request.cookies.get('X-User-Id')?.value ||
         request.cookies.get('dev-user-id')?.value ||
         request.cookies.get('userId')?.value;
 
