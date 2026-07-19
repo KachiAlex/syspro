@@ -179,6 +179,35 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
   await sql`create index if not exists idx_admin_staff_reports_status on admin_staff_reports(status)`;
   await sql`create index if not exists idx_admin_staff_reports_hod on admin_staff_reports(tenant_slug, head_of_department)`;
 
+    await sql`alter table if exists admin_staff_reports add column if not exists template_id text`;
+    await sql`alter table if exists admin_staff_reports add column if not exists template_snapshot jsonb default null`;
+    await sql`alter table if exists admin_staff_reports add column if not exists department_id text`;
+    await sql`alter table if exists admin_staff_reports add column if not exists hod_comment text`;
+    await sql`alter table if exists admin_staff_reports add column if not exists hod_action_at timestamptz`;
+    await sql`alter table if exists admin_staff_reports add column if not exists version integer default 1`;
+    await sql`alter table if exists admin_staff_reports add column if not exists resubmission_of_id text`;
+    await sql`alter table if exists admin_staff_reports add column if not exists rejected_at timestamptz`;
+
+    await sql`
+      create table if not exists admin_staff_report_templates (
+        id text primary key,
+        tenant_slug text not null,
+        report_type text not null check (report_type in ('daily','weekly','monthly','quarterly')),
+        name text not null,
+        is_default boolean default false,
+        sections jsonb not null default '[]',
+        created_by text,
+        created_at timestamptz default now(),
+        updated_at timestamptz default now()
+      )
+    `;
+    await sql`create index if not exists idx_admin_staff_report_templates_tenant on admin_staff_report_templates(tenant_slug)`;
+    await sql`create index if not exists idx_admin_staff_report_templates_type on admin_staff_report_templates(tenant_slug, report_type)`;
+
+    await sql`alter table if exists admin_staff_tasks add column if not exists expected_outcome text`;
+    await sql`alter table if exists admin_staff_tasks add column if not exists weight integer default 1`;
+    await sql`alter table if exists admin_staff_tasks add column if not exists is_kpi boolean default false`;
+
   // Staff tasks assigned by HODs
   await sql`
     create table if not exists admin_staff_tasks (
@@ -1286,6 +1315,14 @@ function normalizeStaffReportRow(row: any) {
     submittedAt: row.submitted_at,
     updatedAt: row.updated_at,
     status: row.status,
+    templateId: row.template_id ?? null,
+    templateSnapshot: row.template_snapshot ?? null,
+    departmentId: row.department_id ?? null,
+    hodComment: row.hod_comment ?? null,
+    hodActionAt: row.hod_action_at ?? null,
+    rejectedAt: row.rejected_at ?? null,
+    version: row.version ?? 1,
+    resubmissionOfId: row.resubmission_of_id ?? null,
     appraisal: row.appraisal ? (typeof row.appraisal === 'string' ? JSON.parse(row.appraisal) : row.appraisal) : null,
   };
 }
@@ -1310,25 +1347,33 @@ export async function insertStaffReport(row: {
   teamMembers?: string[];
   status?: string;
   appraisal?: any;
+  templateId?: string | null;
+  templateSnapshot?: any;
+  departmentId?: string | null;
+  resubmissionOfId?: string | null;
+  version?: number;
 }) {
   const sql = SQL;
   await ensureHrTables(sql);
   const id = randomUUID();
   const appraisalJson = row.appraisal ? JSON.stringify(row.appraisal) : null;
+  const templateSnapshotJson = row.templateSnapshot ? JSON.stringify(row.templateSnapshot) : null;
   await sql`
     insert into admin_staff_reports (
       id, tenant_slug, employee_id, title, report_type, report_date,
       raw_transcript, refined_text,
       objectives, achievements, challenges, next_steps, additional_notes,
       meetings, blockers, activities,
-      head_of_department, team_members, status, appraisal
+      head_of_department, team_members, status, appraisal,
+      template_id, template_snapshot, department_id, resubmission_of_id, version
     ) values (
       ${id}, ${row.tenantSlug}, ${row.employeeId}, ${row.title ?? null}, ${row.reportType}, ${row.reportDate},
       ${row.rawTranscript ?? null}, ${row.refinedText ?? null},
       ${row.objectives ?? null}, ${row.achievements ?? null}, ${row.challenges ?? null}, ${row.nextSteps ?? null}, ${row.additionalNotes ?? null},
       ${row.meetings ?? null}, ${row.blockers ?? null}, ${row.activities ?? null},
       ${row.headOfDepartment}, ${serializeTextArray(row.teamMembers)}, ${row.status ?? 'pending'},
-      ${appraisalJson}
+      ${appraisalJson},
+      ${row.templateId ?? null}, ${templateSnapshotJson}, ${row.departmentId ?? null}, ${row.resubmissionOfId ?? null}, ${row.version ?? 1}
     )
   `;
   const rows = await sql`select * from admin_staff_reports where id = ${id} limit 1`;
@@ -1363,13 +1408,22 @@ export async function listStaffReports(
 export async function updateStaffReportStatus(
   tenantSlug: string,
   id: string,
-  status: 'pending' | 'under_review' | 'approved' | 'needs_edit'
+  status: 'pending' | 'under_review' | 'approved' | 'needs_edit' | 'rejected',
+  opts?: { hodComment?: string; hodActionAt?: string; rejectedAt?: string | null }
 ) {
   const sql = SQL;
   await ensureHrTables(sql);
+  const shouldTimestamp = ['approved', 'rejected', 'needs_edit'].includes(status);
+  const hodActionAt = opts?.hodActionAt ?? (shouldTimestamp ? new Date().toISOString() : null);
+  const rejectedAt = opts?.rejectedAt ?? (status === 'rejected' ? new Date().toISOString() : null);
   await sql`
     update admin_staff_reports
-    set status = ${status}, updated_at = now()
+    set
+      status = ${status},
+      hod_comment = ${opts?.hodComment ?? null},
+      hod_action_at = ${hodActionAt},
+      rejected_at = ${rejectedAt},
+      updated_at = now()
     where id = ${id} and tenant_slug = ${tenantSlug}
   `;
 }
@@ -1383,6 +1437,126 @@ export async function deleteStaffReport(tenantSlug: string, id: string) {
   `;
 }
 
+function normalizeTemplateRow(row: any) {
+  return {
+    id: row.id,
+    tenantSlug: row.tenant_slug,
+    reportType: row.report_type,
+    name: row.name,
+    isDefault: row.is_default ?? false,
+    sections: Array.isArray(row.sections) ? row.sections : (typeof row.sections === 'string' ? JSON.parse(row.sections) : []),
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function insertStaffReportTemplate(row: {
+  tenantSlug: string;
+  reportType: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+  name: string;
+  isDefault?: boolean;
+  sections?: any[];
+  createdBy?: string;
+}) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const id = randomUUID();
+  const sectionsJson = row.sections ? JSON.stringify(row.sections) : '[]';
+  await sql`
+    insert into admin_staff_report_templates (
+      id, tenant_slug, report_type, name, is_default, sections, created_by
+    ) values (
+      ${id}, ${row.tenantSlug}, ${row.reportType}, ${row.name}, ${row.isDefault ?? false}, ${sectionsJson}::jsonb, ${row.createdBy ?? null}
+    )
+  `;
+  if (row.isDefault) {
+    await sql`
+      update admin_staff_report_templates
+      set is_default = false
+      where tenant_slug = ${row.tenantSlug} and report_type = ${row.reportType} and id <> ${id}
+    `;
+  }
+  const rows = await sql`select * from admin_staff_report_templates where id = ${id} limit 1`;
+  return normalizeTemplateRow((rows as any[])[0]);
+}
+
+export async function listStaffReportTemplates(
+  tenantSlug: string,
+  filters?: { reportType?: string }
+) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  let query = `select * from admin_staff_report_templates where tenant_slug = $1`;
+  const params: any[] = [tenantSlug];
+  if (filters?.reportType) {
+    params.push(filters.reportType);
+    query += ` and report_type = $${params.length}`;
+  }
+  query += ` order by report_type, is_default desc, name`;
+  const res = await db.query(query, params);
+  return (res.rows as any[]).map(normalizeTemplateRow);
+}
+
+export async function getStaffReportTemplateById(tenantSlug: string, id: string) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const rows = await sql`select * from admin_staff_report_templates where id = ${id} and tenant_slug = ${tenantSlug} limit 1`;
+  const arr = rows as any[];
+  return arr.length ? normalizeTemplateRow(arr[0]) : null;
+}
+
+export async function getDefaultStaffReportTemplate(
+  tenantSlug: string,
+  reportType: 'daily' | 'weekly' | 'monthly' | 'quarterly'
+) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const rows = await sql`select * from admin_staff_report_templates where tenant_slug = ${tenantSlug} and report_type = ${reportType} and is_default = true limit 1`;
+  const arr = rows as any[];
+  return arr.length ? normalizeTemplateRow(arr[0]) : null;
+}
+
+export async function updateStaffReportTemplate(
+  tenantSlug: string,
+  id: string,
+  updates: {
+    reportType?: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+    name?: string;
+    isDefault?: boolean;
+    sections?: any[];
+  }
+) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const sectionsJson = updates.sections ? JSON.stringify(updates.sections) : undefined;
+  await sql`
+    update admin_staff_report_templates
+    set
+      report_type = coalesce(${updates.reportType ?? null}, report_type),
+      name = coalesce(${updates.name ?? null}, name),
+      is_default = coalesce(${updates.isDefault ?? null}, is_default),
+      sections = coalesce(${sectionsJson ?? null}::jsonb, sections),
+      updated_at = now()
+    where id = ${id} and tenant_slug = ${tenantSlug}
+  `;
+  if (updates.isDefault && updates.reportType) {
+    await sql`
+      update admin_staff_report_templates
+      set is_default = false
+      where tenant_slug = ${tenantSlug} and report_type = ${updates.reportType} and id <> ${id}
+    `;
+  }
+  const rows = await sql`select * from admin_staff_report_templates where id = ${id} and tenant_slug = ${tenantSlug} limit 1`;
+  return rows.length ? normalizeTemplateRow((rows as any[])[0]) : null;
+}
+
+export async function deleteStaffReportTemplate(tenantSlug: string, id: string) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  await sql`delete from admin_staff_report_templates where id = ${id} and tenant_slug = ${tenantSlug}`;
+}
+
 // ============================================================================
 // STAFF TASKS
 // ============================================================================
@@ -1394,6 +1568,9 @@ function normalizeStaffTaskRow(row: any) {
     employeeId: row.employee_id,
     title: row.title,
     description: row.description ?? '',
+    expectedOutcome: row.expected_outcome ?? '',
+    weight: row.weight ?? 1,
+    isKpi: row.is_kpi ?? false,
     frequency: row.frequency,
     dueDate: row.due_date,
     status: row.status,
@@ -1408,6 +1585,9 @@ export async function insertStaffTask(row: {
   employeeId: string;
   title: string;
   description?: string;
+  expectedOutcome?: string;
+  weight?: number;
+  isKpi?: boolean;
   frequency: 'daily' | 'weekly' | 'one-time';
   dueDate: string;
   status?: 'pending' | 'in_progress' | 'completed' | 'overdue';
@@ -1418,9 +1598,9 @@ export async function insertStaffTask(row: {
   const id = randomUUID();
   await sql`
     insert into admin_staff_tasks (
-      id, tenant_slug, employee_id, title, description, frequency, due_date, status, assigned_by
+      id, tenant_slug, employee_id, title, description, expected_outcome, weight, is_kpi, frequency, due_date, status, assigned_by
     ) values (
-      ${id}, ${row.tenantSlug}, ${row.employeeId}, ${row.title}, ${row.description ?? null}, ${row.frequency}, ${row.dueDate}, ${row.status ?? 'pending'}, ${row.assignedBy}
+      ${id}, ${row.tenantSlug}, ${row.employeeId}, ${row.title}, ${row.description ?? null}, ${row.expectedOutcome ?? null}, ${row.weight ?? 1}, ${row.isKpi ?? false}, ${row.frequency}, ${row.dueDate}, ${row.status ?? 'pending'}, ${row.assignedBy}
     )
   `;
   const rows = await sql`select * from admin_staff_tasks where id = ${id} limit 1`;
@@ -1466,6 +1646,9 @@ export async function updateStaffTask(
   updates: {
     title?: string;
     description?: string;
+    expectedOutcome?: string;
+    weight?: number;
+    isKpi?: boolean;
     frequency?: 'daily' | 'weekly' | 'one-time';
     dueDate?: string;
     status?: 'pending' | 'in_progress' | 'completed' | 'overdue';
@@ -1478,6 +1661,9 @@ export async function updateStaffTask(
     set
       title = coalesce(${updates.title ?? null}, title),
       description = coalesce(${updates.description ?? null}, description),
+      expected_outcome = coalesce(${updates.expectedOutcome ?? null}, expected_outcome),
+      weight = coalesce(${updates.weight ?? null}, weight),
+      is_kpi = coalesce(${updates.isKpi ?? null}, is_kpi),
       frequency = coalesce(${updates.frequency ?? null}, frequency),
       due_date = coalesce(${updates.dueDate ?? null}, due_date),
       status = coalesce(${updates.status ?? null}, status),

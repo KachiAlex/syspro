@@ -35,7 +35,9 @@ interface StaffReport {
   teamMembers: string[];
   submittedAt: string;
   updatedAt: string;
-  status: 'pending' | 'under_review' | 'approved' | 'needs_edit';
+  status: 'pending' | 'under_review' | 'approved' | 'needs_edit' | 'rejected';
+  hodComment?: string | null;
+  templateSnapshot?: any;
   appraisal?: {
     overallScore: number;
     taskCompletionRate: number;
@@ -86,7 +88,8 @@ const STATUS_OPTIONS: { value: StaffReport['status']; label: string; color: stri
   { value: 'pending', label: 'Pending', color: 'bg-amber-100 text-amber-800' },
   { value: 'under_review', label: 'Under Review', color: 'bg-blue-100 text-blue-800' },
   { value: 'approved', label: 'Approved', color: 'bg-green-100 text-green-800' },
-  { value: 'needs_edit', label: 'Needs Edit', color: 'bg-red-100 text-red-800' },
+  { value: 'needs_edit', label: 'Needs Edit', color: 'bg-orange-100 text-orange-800' },
+  { value: 'rejected', label: 'Rejected', color: 'bg-red-100 text-red-800' },
 ];
 
 export default function ReportsPage() {
@@ -97,6 +100,8 @@ export default function ReportsPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [selectedReport, setSelectedReport] = useState<StaffReport | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewingStatus, setReviewingStatus] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!tenantSlug) return;
@@ -154,18 +159,31 @@ export default function ReportsPage() {
     return reports.filter((r) => r.status === filterStatus);
   }, [reports, filterStatus]);
 
-  const handleStatusChange = async (reportId: string, status: StaffReport['status']) => {
+  const handleStatusChange = async (reportId: string, status: StaffReport['status'], comment?: string) => {
     if (!tenantSlug) return;
     setUpdatingId(reportId);
+    setReviewingStatus(status);
     try {
-      await HRService.updateStaffReportStatus(tenantSlug, reportId, status);
+      await HRService.updateStaffReportStatus(tenantSlug, reportId, status, comment);
       await loadData();
+      setReviewComment('');
     } catch (error) {
       console.error('Failed to update status:', error);
     } finally {
       setUpdatingId(null);
+      setReviewingStatus(null);
     }
   };
+
+  const appraisalAggregate = useMemo(() => {
+    const scored = reports.filter((r) => r.appraisal && r.appraisal.overallScore > 0);
+    if (scored.length === 0) return null;
+    const avgOverall = Math.round(scored.reduce((sum, r) => sum + (r.appraisal?.overallScore || 0), 0) / scored.length);
+    const avgCompletion = Math.round(scored.reduce((sum, r) => sum + (r.appraisal?.taskCompletionRate || 0), 0) / scored.length);
+    const avgCoverage = Math.round(scored.reduce((sum, r) => sum + (r.appraisal?.reportCoverage || 0), 0) / scored.length);
+    const avgQuality = Math.round(scored.reduce((sum, r) => sum + (r.appraisal?.qualityScore || 0), 0) / scored.length);
+    return { avgOverall, avgCompletion, avgCoverage, avgQuality, count: scored.length };
+  }, [reports]);
 
   const statusBadge = (status: StaffReport['status']) => {
     const option = STATUS_OPTIONS.find((o) => o.value === status) || STATUS_OPTIONS[0];
@@ -279,6 +297,31 @@ export default function ReportsPage() {
         </div>
       </div>
 
+      {appraisalAggregate && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h4 className="font-semibold text-gray-900 mb-4">Collective Productivity Appraisal</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100 text-center">
+              <div className="text-xs text-emerald-700">Avg Overall Score</div>
+              <div className="text-2xl font-bold text-emerald-800">{appraisalAggregate.avgOverall}/100</div>
+            </div>
+            <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100 text-center">
+              <div className="text-xs text-emerald-700">Avg Completion</div>
+              <div className="text-2xl font-bold text-emerald-800">{appraisalAggregate.avgCompletion}%</div>
+            </div>
+            <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100 text-center">
+              <div className="text-xs text-emerald-700">Avg Coverage</div>
+              <div className="text-2xl font-bold text-emerald-800">{appraisalAggregate.avgCoverage}%</div>
+            </div>
+            <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100 text-center">
+              <div className="text-xs text-emerald-700">Avg Quality</div>
+              <div className="text-2xl font-bold text-emerald-800">{appraisalAggregate.avgQuality}%</div>
+            </div>
+          </div>
+          <p className="text-sm text-gray-600 mt-3">Based on {appraisalAggregate.count} submitted reports with appraisals.</p>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <h4 className="font-semibold text-gray-900">Incoming Staff Reports</h4>
@@ -361,6 +404,48 @@ export default function ReportsPage() {
               </button>
             </div>
             <div className="p-6">
+              {(selectedReport.status === 'pending' || selectedReport.status === 'under_review') && (
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <h5 className="text-sm font-semibold text-gray-900 mb-2">HOD Review</h5>
+                  <textarea
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="Optional comment or reason for rejection..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => handleStatusChange(selectedReport.id, 'approved', reviewComment)}
+                      disabled={updatingId === selectedReport.id}
+                      className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange(selectedReport.id, 'needs_edit', reviewComment)}
+                      disabled={updatingId === selectedReport.id}
+                      className="px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 disabled:opacity-50"
+                    >
+                      Request Edits
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange(selectedReport.id, 'rejected', reviewComment)}
+                      disabled={updatingId === selectedReport.id}
+                      className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              )}
+              {selectedReport.hodComment && (
+                <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                  <h5 className="text-sm font-semibold text-blue-900 mb-1">HOD Comment</h5>
+                  <p className="text-sm text-blue-900">{selectedReport.hodComment}</p>
+                </div>
+              )}
+
               {selectedReport.refinedText && (
                 <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
                   <h5 className="text-sm font-semibold text-blue-900 mb-2">Refined Summary</h5>

@@ -17,6 +17,9 @@ interface StaffTask {
   employeeId: string;
   title: string;
   description: string;
+  expectedOutcome: string;
+  weight: number;
+  isKpi: boolean;
   frequency: 'daily' | 'weekly' | 'one-time';
   dueDate: string;
   status: string;
@@ -49,6 +52,9 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
   const [newEmployeeId, setNewEmployeeId] = useState('');
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
+  const [newExpectedOutcome, setNewExpectedOutcome] = useState('');
+  const [newWeight, setNewWeight] = useState<number>(1);
+  const [newIsKpi, setNewIsKpi] = useState(false);
   const [newFrequency, setNewFrequency] = useState<'daily' | 'weekly' | 'one-time'>('daily');
   const [newDueDate, setNewDueDate] = useState(() => new Date().toISOString().split('T')[0]);
 
@@ -86,6 +92,9 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
         employeeId: newEmployeeId,
         title: newTitle.trim(),
         description: newDescription.trim(),
+        expectedOutcome: newExpectedOutcome.trim(),
+        weight: newWeight,
+        isKpi: newIsKpi,
         frequency: newFrequency,
         dueDate: newDueDate,
         assignedBy: currentUserName,
@@ -93,6 +102,9 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
       setSuccess('Task assigned successfully.');
       setNewTitle('');
       setNewDescription('');
+      setNewExpectedOutcome('');
+      setNewWeight(1);
+      setNewIsKpi(false);
       setNewFrequency('daily');
       setNewDueDate(new Date().toISOString().split('T')[0]);
       loadTasks();
@@ -215,6 +227,40 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
                 className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+            <div>
+              <label className="block text-xs font-medium text-theme-text-primary mb-1">Expected Outcome (KPI)</label>
+              <textarea
+                value={newExpectedOutcome}
+                onChange={(e) => setNewExpectedOutcome(e.target.value)}
+                placeholder="Describe the expected result / KPI..."
+                rows={2}
+                className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-theme-text-primary mb-1">Weight (1-10)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={newWeight}
+                  onChange={(e) => setNewWeight(Number(e.target.value) || 1)}
+                  className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex items-end pb-2">
+                <label className="flex items-center gap-2 text-sm text-theme-text-primary">
+                  <input
+                    type="checkbox"
+                    checked={newIsKpi}
+                    onChange={(e) => setNewIsKpi(e.target.checked)}
+                    className="rounded border-theme-border"
+                  />
+                  Mark as KPI
+                </label>
+              </div>
+            </div>
             <div className="flex justify-end">
               <button
                 onClick={handleCreate}
@@ -255,10 +301,13 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
                           <span className={`text-xs font-medium ${statusColor}`}>{task.status.replace('-', ' ')}</span>
                         </div>
                         <div className="text-xs text-theme-text-secondary mt-1">
-                          {emp?.name || 'Unknown'} • {task.frequency} • due {task.dueDate}
+                          {emp?.name || 'Unknown'} • {task.frequency} • due {task.dueDate} • weight {task.weight}{task.isKpi ? ' • KPI' : ''}
                         </div>
                         {task.description && (
                           <div className="text-xs text-theme-text-secondary mt-1">{task.description}</div>
+                        )}
+                        {task.expectedOutcome && (
+                          <div className="text-xs text-theme-text-tertiary mt-1">Expected: {task.expectedOutcome}</div>
                         )}
                         <div className="flex items-center gap-2 mt-2">
                           {['pending', 'in_progress', 'completed', 'overdue'].map((s) => (

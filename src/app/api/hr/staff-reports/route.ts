@@ -7,7 +7,7 @@ import {
 } from '@/lib/hr/db';
 
 const VALID_REPORT_TYPES = ['daily', 'weekly', 'monthly', 'quarterly'];
-const VALID_STATUSES = ['pending', 'under_review', 'approved', 'needs_edit'];
+const VALID_STATUSES = ['pending', 'under_review', 'approved', 'needs_edit', 'rejected'];
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,6 +31,11 @@ export async function POST(request: NextRequest) {
       headOfDepartment,
       teamMembers,
       appraisal,
+      templateId,
+      templateSnapshot,
+      departmentId,
+      resubmissionOfId,
+      version,
     } = body;
 
     if (!tenantSlug || !employeeId || !reportType || !reportDate || !headOfDepartment) {
@@ -66,6 +71,11 @@ export async function POST(request: NextRequest) {
       headOfDepartment,
       teamMembers,
       appraisal,
+      templateId,
+      templateSnapshot,
+      departmentId,
+      resubmissionOfId,
+      version,
     });
 
     return NextResponse.json({ success: true, report });
@@ -81,7 +91,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { reportId, status, tenantSlug } = body;
+    const { reportId, status, tenantSlug, hodComment } = body;
 
     if (!reportId || !status || !tenantSlug) {
       return NextResponse.json(
@@ -97,7 +107,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    await updateStaffReportStatus(tenantSlug, reportId, status);
+    await updateStaffReportStatus(tenantSlug, reportId, status, { hodComment });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating staff report status:', error);

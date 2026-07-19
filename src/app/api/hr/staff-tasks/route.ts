@@ -12,7 +12,7 @@ const VALID_STATUSES = ['pending', 'in_progress', 'completed', 'overdue'];
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { tenantSlug, employeeId, title, description, frequency, dueDate, status, assignedBy } = body;
+    const { tenantSlug, employeeId, title, description, expectedOutcome, weight, isKpi, frequency, dueDate, status, assignedBy } = body;
 
     if (!tenantSlug || !employeeId || !title || !frequency || !dueDate || !assignedBy) {
       return NextResponse.json(
@@ -40,6 +40,9 @@ export async function POST(request: NextRequest) {
       employeeId,
       title,
       description,
+      expectedOutcome,
+      weight,
+      isKpi,
       frequency,
       dueDate,
       status,

@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { X, Mic, MicOff, Wand2, Send, Clock, Loader2 } from 'lucide-react';
 import { HRService } from './hr-service';
-import { createSpeechRecognition, listenForTranscript, refineReportWithAppraisal, Task } from '@/lib/ai/report-refiner';
+import { createSpeechRecognition, listenForTranscript, refineReportWithTemplate, Task, ReportTemplateSection } from '@/lib/ai/report-refiner';
 
 interface Employee {
   id: string;
@@ -29,6 +29,23 @@ const REPORT_TYPES = [
   { value: 'quarterly', label: 'Quarterly' },
 ];
 
+const DEFAULT_TEMPLATE = {
+  id: 'default',
+  name: 'Default Template',
+  reportType: 'daily',
+  isDefault: true,
+  sections: [
+    { key: 'objectives', label: 'Objectives', prompt: 'What were your objectives for this period?', inputType: 'textarea', keywords: ['objective', 'goal', 'target'] },
+    { key: 'activities', label: 'Key Activities', prompt: 'What activities did you carry out?', inputType: 'textarea', keywords: ['activity', 'work done', 'completed'] },
+    { key: 'achievements', label: 'Achievements', prompt: 'What did you accomplish?', inputType: 'textarea', keywords: ['achievement', 'accomplished', 'delivered'] },
+    { key: 'meetings', label: 'Meetings', prompt: 'Meetings or calls attended.', inputType: 'textarea', keywords: ['meeting', 'call', 'sync'] },
+    { key: 'blockers', label: 'Blockers / Issues', prompt: 'Any blockers or issues faced?', inputType: 'textarea', keywords: ['blocker', 'issue', 'problem'] },
+    { key: 'challenges', label: 'Challenges', prompt: 'What challenges did you encounter?', inputType: 'textarea', keywords: ['challenge', 'difficulty', 'setback'] },
+    { key: 'nextSteps', label: 'Next Steps', prompt: 'What are your next steps?', inputType: 'textarea', keywords: ['next step', 'plan', 'tomorrow'] },
+    { key: 'additionalNotes', label: 'Additional Notes', prompt: 'Any other notes?', inputType: 'textarea', keywords: ['note', 'mention', 'additional'] },
+  ] as ReportTemplateSection[],
+};
+
 const MAX_RECORDING_MS = 5 * 60 * 1000; // 5 minutes hard cap
 
 export const StaffReportModal: React.FC<StaffReportModalProps> = ({
@@ -44,7 +61,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
   const [transcript, setTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [recordingMs, setRecordingMs] = useState(0);
-  const [refined, setRefined] = useState(refineReportWithAppraisal('', []));
+  const [refined, setRefined] = useState(refineReportWithTemplate('', DEFAULT_TEMPLATE.sections, []));
   const [activeTab, setActiveTab] = useState<'transcript' | 'refined' | 'appraisal'>('transcript');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +72,13 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(false);
   const [taskStatuses, setTaskStatuses] = useState<Record<string, string>>({});
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const [template, setTemplate] = useState<any>(DEFAULT_TEMPLATE);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [inputMode, setInputMode] = useState<'type' | 'voice'>('type');
+  const [sectionValues, setSectionValues] = useState<Record<string, string>>({});
+  const [templateSnapshot, setTemplateSnapshot] = useState<any>(DEFAULT_TEMPLATE);
 
   const recognitionRef = useRef<ReturnType<typeof listenForTranscript> | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -84,6 +108,32 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
       setSubmitterId(currentEmployeeId);
     }
   }, [currentEmployeeId, submitterId]);
+
+  useEffect(() => {
+    if (!isOpen || !tenantSlug) return;
+    const loadTemplates = async () => {
+      setTemplatesLoading(true);
+      try {
+        const fetched = await HRService.getStaffReportTemplates(tenantSlug, reportType);
+        const withDefault = fetched.length > 0 ? fetched : [{ ...DEFAULT_TEMPLATE, reportType }];
+        setTemplates(withDefault);
+        const preferred = withDefault.find((t) => t.isDefault) || withDefault[0];
+        setSelectedTemplateId(preferred.id);
+        setTemplate(preferred);
+        setTemplateSnapshot(preferred);
+        setSectionValues({});
+        setRefined(refineReportWithTemplate('', preferred.sections || [], []));
+      } catch (err) {
+        console.error('Failed to load templates:', err);
+        setTemplates([{ ...DEFAULT_TEMPLATE, reportType }]);
+        setTemplate({ ...DEFAULT_TEMPLATE, reportType });
+        setTemplateSnapshot({ ...DEFAULT_TEMPLATE, reportType });
+      } finally {
+        setTemplatesLoading(false);
+      }
+    };
+    loadTemplates();
+  }, [isOpen, tenantSlug, reportType]);
 
   useEffect(() => {
     return () => {
@@ -164,9 +214,20 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
   };
 
   const handleRefine = () => {
-    if (!transcript.trim()) return;
+    if (!transcript.trim() && inputMode === 'voice') return;
     const tasksWithStatus = tasks.map((t) => ({ ...t, status: taskStatuses[t.id] || t.status || 'pending' }));
-    setRefined(refineReportWithAppraisal(transcript, tasksWithStatus));
+    const result = refineReportWithTemplate(transcript, template?.sections || DEFAULT_TEMPLATE.sections, tasksWithStatus);
+    setRefined(result);
+    setSectionValues({
+      objectives: result.objectives,
+      achievements: result.achievements,
+      challenges: result.challenges,
+      nextSteps: result.nextSteps,
+      additionalNotes: result.additionalNotes,
+      meetings: result.meetings,
+      blockers: result.blockers,
+      activities: result.activities,
+    });
     setActiveTab('refined');
   };
 
@@ -189,27 +250,36 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
 
     try {
       const hod = hods.find((h) => h.id === hodId);
+      const submitterEmployee = employees.find((e) => e.id === submitterId);
       const tagged = colleagues.filter((c) => taggedIds.includes(c.id)).map((c) => c.name);
       const tasksWithStatus = tasks.map((t) => ({ ...t, status: taskStatuses[t.id] || t.status || 'pending' }));
-      const refinedWithAppraisal = refineReportWithAppraisal(transcript, tasksWithStatus);
+      const refinedWithAppraisal = refineReportWithTemplate(transcript, template?.sections || DEFAULT_TEMPLATE.sections, tasksWithStatus);
+      const title = refinedWithAppraisal.title || `${reportType} Report`;
+      const refinedText = Object.entries(sectionValues)
+        .filter(([, v]) => v.trim())
+        .map(([k, v]) => `${(template?.sections || DEFAULT_TEMPLATE.sections).find((s: ReportTemplateSection) => s.key === k)?.label || k}:\n${v}`)
+        .join('\n\n');
       await HRService.submitStaffReport(tenantSlug, {
         employeeId: submitterId,
-        title: refinedWithAppraisal.title || `${reportType} Report`,
+        title,
         reportType: reportType as any,
         reportDate,
         rawTranscript: transcript,
-        refinedText: refinedWithAppraisal.refinedText,
-        objectives: refinedWithAppraisal.objectives,
-        achievements: refinedWithAppraisal.achievements,
-        challenges: refinedWithAppraisal.challenges,
-        nextSteps: refinedWithAppraisal.nextSteps,
-        additionalNotes: refinedWithAppraisal.additionalNotes,
-        meetings: refinedWithAppraisal.meetings,
-        blockers: refinedWithAppraisal.blockers,
-        activities: refinedWithAppraisal.activities,
+        refinedText,
+        objectives: sectionValues.objectives || refinedWithAppraisal.objectives,
+        achievements: sectionValues.achievements || refinedWithAppraisal.achievements,
+        challenges: sectionValues.challenges || refinedWithAppraisal.challenges,
+        nextSteps: sectionValues.nextSteps || refinedWithAppraisal.nextSteps,
+        additionalNotes: sectionValues.additionalNotes || refinedWithAppraisal.additionalNotes,
+        meetings: sectionValues.meetings || refinedWithAppraisal.meetings,
+        blockers: sectionValues.blockers || refinedWithAppraisal.blockers,
+        activities: sectionValues.activities || refinedWithAppraisal.activities,
         headOfDepartment: hod?.name || '',
         teamMembers: tagged,
         appraisal: refinedWithAppraisal.appraisal,
+        templateId: selectedTemplateId === 'default' ? null : selectedTemplateId,
+        templateSnapshot,
+        departmentId: submitterEmployee?.department || null,
       });
       onSubmitted?.();
       handleClose();
@@ -225,7 +295,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
     setReportType('daily');
     setReportDate(new Date().toISOString().split('T')[0]);
     setTranscript('');
-    setRefined(refineReportWithAppraisal('', []));
+    setRefined(refineReportWithTemplate('', DEFAULT_TEMPLATE.sections, []));
     setActiveTab('transcript');
     setError(null);
     setHodId('');
@@ -233,6 +303,12 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
     setSubmitterId(currentEmployeeId || '');
     setTasks([]);
     setTaskStatuses({});
+    setTemplates([]);
+    setSelectedTemplateId('');
+    setTemplate(DEFAULT_TEMPLATE);
+    setTemplateSnapshot(DEFAULT_TEMPLATE);
+    setSectionValues({});
+    setInputMode('type');
     onClose();
   };
 
@@ -288,6 +364,51 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
           </div>
 
           <div>
+            <label className="block text-xs font-medium text-theme-text-primary mb-2">
+              Report Template {templatesLoading && <Loader2 className="w-3 h-3 inline animate-spin ml-1" />}
+            </label>
+            <select
+              value={selectedTemplateId}
+              onChange={(e) => {
+                const id = e.target.value;
+                setSelectedTemplateId(id);
+                const selected = templates.find((t) => t.id === id) || DEFAULT_TEMPLATE;
+                setTemplate(selected);
+                setTemplateSnapshot(selected);
+                setSectionValues({});
+              }}
+              className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}{t.isDefault ? ' (default)' : ''}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-theme-text-primary mb-2">Input Mode</label>
+            <div className="flex gap-2">
+              {[
+                { value: 'type', label: 'Type from Template' },
+                { value: 'voice', label: 'Dictate by Voice' },
+              ].map((m) => (
+                <button
+                  key={m.value}
+                  type="button"
+                  onClick={() => setInputMode(m.value as 'type' | 'voice')}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                    inputMode === m.value
+                      ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                      : 'bg-theme-muted text-theme-text-secondary border-theme-border hover:bg-theme-sidebar-hover'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
             <label className="block text-xs font-medium text-theme-text-primary mb-2">Submitter</label>
             <select
               value={submitterId}
@@ -301,33 +422,35 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
             </select>
           </div>
 
-          <div className="bg-theme-muted rounded-lg border border-theme-border p-4">
-            <div className="flex items-center justify-between mb-3">
-              <label className="text-xs font-medium text-theme-text-primary">Voice Input</label>
-              <div className="flex items-center gap-2 text-xs text-theme-text-secondary">
-                <Clock className="w-3 h-3" />
-                <span>{formatTime(recordingMs)} / {formatTime(MAX_RECORDING_MS)}</span>
+          {inputMode === 'voice' && (
+            <div className="bg-theme-muted rounded-lg border border-theme-border p-4">
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-xs font-medium text-theme-text-primary">Voice Dictation</label>
+                <div className="flex items-center gap-2 text-xs text-theme-text-secondary">
+                  <Clock className="w-3 h-3" />
+                  <span>{formatTime(recordingMs)} / {formatTime(MAX_RECORDING_MS)}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={isListening ? stopRecording : startRecording}
+                  disabled={!speechSupported}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isListening
+                      ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                  {isListening ? 'Stop Recording' : 'Start Recording'}
+                </button>
+                {!speechSupported && (
+                  <span className="text-xs text-amber-400">Speech recognition not supported in this browser.</span>
+                )}
               </div>
             </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={isListening ? stopRecording : startRecording}
-                disabled={!speechSupported}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isListening
-                    ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                {isListening ? 'Stop Recording' : 'Start Recording'}
-              </button>
-              {!speechSupported && (
-                <span className="text-xs text-amber-400">Speech recognition not supported in this browser.</span>
-              )}
-            </div>
-          </div>
+          )}
 
           <div>
             <div className="flex gap-4 border-b border-theme-border mb-3">
@@ -335,7 +458,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
                 onClick={() => setActiveTab('transcript')}
                 className={`pb-2 text-sm font-medium ${activeTab === 'transcript' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-theme-text-secondary'}`}
               >
-                Transcript
+                {inputMode === 'voice' ? 'Transcript' : 'Type Report'}
               </button>
               <button
                 onClick={() => setActiveTab('refined')}
@@ -353,21 +476,42 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
 
             {activeTab === 'transcript' ? (
               <div className="space-y-2">
-                <textarea
-                  value={transcript}
-                  onChange={(e) => setTranscript(e.target.value)}
-                  placeholder="Speak or type your report here..."
-                  rows={6}
-                  className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  onClick={handleRefine}
-                  disabled={!transcript.trim()}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-muted border border-theme-border rounded-lg hover:bg-theme-sidebar-hover disabled:opacity-50"
-                >
-                  <Wand2 className="w-4 h-4" />
-                  Refine with AI
-                </button>
+                {inputMode === 'voice' ? (
+                  <textarea
+                    value={transcript}
+                    onChange={(e) => setTranscript(e.target.value)}
+                    placeholder="Your exact dictated transcript appears here. Edit if needed, then click Refine with AI."
+                    rows={6}
+                    className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    {(template?.sections || DEFAULT_TEMPLATE.sections).map((section: ReportTemplateSection) => (
+                      <div key={section.key}>
+                        <label className="block text-xs font-medium text-theme-text-primary mb-1">
+                          {section.label} {section.required && <span className="text-red-400">*</span>}
+                        </label>
+                        <p className="text-xs text-theme-text-tertiary mb-1">{section.prompt}</p>
+                        <textarea
+                          value={sectionValues[section.key] || ''}
+                          onChange={(e) => setSectionValues((prev) => ({ ...prev, [section.key]: e.target.value }))}
+                          rows={section.inputType === 'bullets' ? 4 : 3}
+                          className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {inputMode === 'voice' && (
+                  <button
+                    onClick={handleRefine}
+                    disabled={!transcript.trim()}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-theme-text-primary bg-theme-muted border border-theme-border rounded-lg hover:bg-theme-sidebar-hover disabled:opacity-50"
+                  >
+                    <Wand2 className="w-4 h-4" />
+                    Refine with AI
+                  </button>
+                )}
               </div>
             ) : activeTab === 'refined' ? (
               <div className="space-y-4">
@@ -380,19 +524,13 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
                     className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                {[
-                  { key: 'activities', label: 'Activities' },
-                  { key: 'meetings', label: 'Meetings' },
-                  { key: 'blockers', label: 'Blockers' },
-                  { key: 'nextSteps', label: 'Next Steps' },
-                  { key: 'additionalNotes', label: 'Additional Notes' },
-                ].map(({ key, label }) => (
-                  <div key={key}>
-                    <label className="block text-xs font-medium text-theme-text-primary mb-1">{label}</label>
+                {(template?.sections || DEFAULT_TEMPLATE.sections).map((section: ReportTemplateSection) => (
+                  <div key={section.key}>
+                    <label className="block text-xs font-medium text-theme-text-primary mb-1">{section.label}</label>
                     <textarea
-                      value={(refined as any)[key]}
-                      onChange={(e) => setRefined({ ...refined, [key]: e.target.value })}
-                      rows={3}
+                      value={sectionValues[section.key] || (refined as any)[section.key] || ''}
+                      onChange={(e) => setSectionValues((prev) => ({ ...prev, [section.key]: e.target.value }))}
+                      rows={4}
                       className="bg-theme-muted w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
