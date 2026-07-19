@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Activity, AlertTriangle, Bot, CheckCircle2, Loader2, Play, RefreshCcw } from "lucide-react";
+import { AutomationService } from "@/app/tenant-admin/services/automation-service";
 
 interface AutomationSummary {
   rules: { total: number; enabled: number; simulationOnly: number };
@@ -15,13 +16,12 @@ export default function AutomationDashboard({ tenantSlug }: { tenantSlug?: strin
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
+    if (!tenantSlug) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/automation/summary?tenantSlug=${encodeURIComponent(tenantSlug ?? '')}`, { cache: "no-store" });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Failed to load automation summary");
-      setSummary(json.summary as AutomationSummary);
+      const data = await AutomationService.getSummary(tenantSlug);
+      setSummary(data.summary as AutomationSummary);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {

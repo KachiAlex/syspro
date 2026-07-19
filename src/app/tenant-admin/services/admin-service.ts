@@ -52,4 +52,34 @@ export class AdminService {
     if (!res.ok) throw new Error("Failed to fetch org structure");
     return res.json();
   }
+
+  static async createBranch(tenantSlug: string, payload: any) {
+    const res = await fetch(`/api/tenant/org-structure?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error("Failed to create branch");
+    return res.json();
+  }
+
+  static async saveAccessRestrictions(tenantSlug: string, restrictions: string[]) {
+    const res = await fetch(`/api/tenant/access-restrictions?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tenantSlug, restrictions }),
+    });
+    if (!res.ok) throw new Error("Failed to save access restrictions");
+    return res.json();
+  }
+
+  static async createUser(tenantSlug: string, user: any) {
+    const res = await fetch(`/api/tenant/users?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(user),
+    });
+    if (!res.ok) throw new Error("Failed to create user");
+    return res.json();
+  }
 }

@@ -144,27 +144,19 @@ export default function AdminPage() {
     setAddBranchLoading(true);
     setAddBranchError(null);
     try {
-      const res = await fetch(`/api/tenant/org-structure?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          parentId: 'tenant-root',
-          node: {
-            name: branchForm.name.trim(),
-            manager: branchForm.manager.trim(),
-            type: 'branch',
-            status: 'Live',
-            region: branchForm.continent,
-            timezone: 'UTC',
-            headcount: 0,
-            modules: [],
-          },
-        }),
+      await AdminService.createBranch(tenantSlug, {
+        parentId: 'tenant-root',
+        node: {
+          name: branchForm.name.trim(),
+          manager: branchForm.manager.trim(),
+          type: 'branch',
+          status: 'Live',
+          region: branchForm.continent,
+          timezone: 'UTC',
+          headcount: 0,
+          modules: [],
+        },
       });
-      if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        throw new Error(payload.error || 'Failed to create branch');
-      }
       setShowAddBranch(false);
       setBranchForm({ name: '', code: '', city: '', country: '', continent: '', manager: '' });
       const branchesRes = await AdminService.getBranches(tenantSlug);

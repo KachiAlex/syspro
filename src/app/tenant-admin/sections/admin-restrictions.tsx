@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Eye, EyeOff, Lock, Unlock, AlertTriangle } from "lucide-react";
 import { FormAlert } from "@/components/form";
+import { AdminService } from "@/app/tenant-admin/services/admin-service";
 
 const AVAILABLE_MODULES = [
   { id: "crm", label: "Sales & CRM", category: "Operations" },
@@ -73,16 +74,7 @@ export default function AdminRestrictions({ tenantSlug }: { tenantSlug?: string 
     setSuccess(null);
 
     try {
-      const res = await fetch(`/api/tenant/access-restrictions?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tenantSlug: ts,
-          restrictions,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Failed to save restrictions");
+      await AdminService.saveAccessRestrictions(ts ?? '', restrictions);
 
       setHasChanges(false);
       setSuccess(

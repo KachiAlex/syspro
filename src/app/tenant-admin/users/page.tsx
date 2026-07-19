@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Users, Plus, Edit, Trash2, Eye, Search, Filter, Shield, UserCheck, UserX, Mail, Phone, Calendar, Building, CheckCircle, AlertCircle, Clock, X } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { AdminService } from '@/app/tenant-admin/services/admin-service';
 
 interface User {
   id: string;
@@ -227,21 +228,12 @@ export default function UsersPage() {
     setAddUserLoading(true);
     setAddUserError(null);
     try {
-      const res = await fetch(`/api/tenant/users?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: userForm.name.trim(),
-          email: userForm.email.trim(),
-          status: userForm.status,
-          role: userForm.role,
-        }),
+      const data = await AdminService.createUser(tenantSlug, {
+        name: userForm.name.trim(),
+        email: userForm.email.trim(),
+        status: userForm.status,
+        role: userForm.role,
       });
-      if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        throw new Error(payload.error || 'Failed to create user');
-      }
-      const data = await res.json();
       const newUser: User = {
         id: data.user?.id || Date.now().toString(),
         name: userForm.name.trim(),
