@@ -76,7 +76,9 @@ function getDashboardKey(pathname: string): string | null {
 
 export default function TenantAdminShell({ children, user }: TenantAdminShellProps) {
   const pathname = usePathname();
-  const breadcrumbs = useBreadcrumbs(pathname || "");
+  const [safePath, setSafePath] = useState<string | null>(null);
+  useEffect(() => { setSafePath(pathname); }, [pathname]);
+  const breadcrumbs = useBreadcrumbs(safePath || "");
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar } = useSidebarState();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -122,9 +124,11 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
     window.location.href = "/access";
   };
 
-  const dashboardKey = getDashboardKey(pathname || '');
+  const dashboardKey = getDashboardKey(safePath || '');
   const perms = useTenantPermissions(user?.id);
   const allowed =
+    !safePath ||
+    perms.loading ||
     !dashboardKey ||
     perms.isAdmin ||
     perms.dashboards.includes(dashboardKey) ||
