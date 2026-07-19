@@ -98,6 +98,7 @@ export default function ApplyPage() {
             filename: resumeFile.name,
             mimeType: resumeFile.type || "application/octet-stream",
             data: base64,
+            tenantSlug,
           }),
         });
 

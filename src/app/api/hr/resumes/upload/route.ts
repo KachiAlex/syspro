@@ -7,6 +7,7 @@ const uploadSchema = z.object({
   mimeType: z.string().optional().default("application/octet-stream"),
   data: z.string().min(1), // Base64 encoded file data
   candidateId: z.string().optional(),
+  tenantSlug: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { filename, mimeType, data, candidateId } = parsed.data;
+    const { filename, mimeType, data, candidateId, tenantSlug } = parsed.data;
 
     // Decode base64 to Buffer
     const fileBuffer = Buffer.from(data, "base64");
@@ -32,6 +33,7 @@ export async function POST(request: NextRequest) {
       mimeType,
       data: fileBuffer,
       candidateId,
+      tenantSlug,
     });
 
     if (!result.success) {

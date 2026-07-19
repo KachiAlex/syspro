@@ -1,9 +1,9 @@
 /**
  * Resume Upload Service
- * Uploads resumes to Cloudinary for Vercel serverless compatibility
+ * Uploads resumes to Cloudflare R2 (S3-compatible)
  */
 
-import { v2 as cloudinary } from "cloudinary";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 export interface UploadResult {
   success: boolean;
@@ -20,6 +20,7 @@ export interface FileUploadRequest {
   mimeType: string;
   data: Buffer;
   candidateId?: string;
+  tenantSlug?: string;
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -52,30 +53,30 @@ function validateFile(file: FileUploadRequest): string | null {
   return null;
 }
 
-function getCloudinaryConfig() {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  const apiKey = process.env.CLOUDINARY_API_KEY;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+function getS3Client() {
+  return new S3Client({
+    region: "auto",
+    endpoint: process.env.R2_ENDPOINT || "",
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
+    },
+    forcePathStyle: true,
+  });
+}
 
-  if (cloudName && apiKey && apiSecret) {
-    return { cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret };
+function getR2Env() {
+  const bucket = process.env.R2_BUCKET_NAME;
+  const publicUrl = process.env.R2_PUBLIC_URL;
+  const endpoint = process.env.R2_ENDPOINT;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+
+  if (!bucket || !publicUrl || !endpoint || !accessKeyId || !secretAccessKey) {
+    return null;
   }
 
-  const url = process.env.CLOUDINARY_URL;
-  if (url) {
-    try {
-      const parsed = new URL(url);
-      return {
-        cloud_name: parsed.hostname,
-        api_key: parsed.username,
-        api_secret: parsed.password,
-      };
-    } catch {
-      // ignore
-    }
-  }
-
-  return null;
+  return { bucket, publicUrl: publicUrl.replace(/\/+$/, ""), endpoint, accessKeyId, secretAccessKey };
 }
 
 export async function uploadResume(
@@ -87,29 +88,33 @@ export async function uploadResume(
       return { success: false, error: validationError };
     }
 
-    const config = getCloudinaryConfig();
-    if (!config) {
+    const env = getR2Env();
+    if (!env) {
       return {
         success: false,
-        error: "Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET env vars.",
+        error: "R2 is not configured. Set R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, and R2_PUBLIC_URL env vars.",
       };
     }
 
-    cloudinary.config(config);
+    const client = getS3Client();
+    const sanitizedFilename = file.filename.replace(/[^a-zA-Z0-9.-]/g, "_").slice(0, 50);
+    const key = `resumes/${(file.tenantSlug || "default").replace(/[^a-zA-Z0-9-]/g, "")}/${Date.now()}_${sanitizedFilename}`;
 
-    // Build data URI for Cloudinary upload
-    const dataUri = `data:${file.mimeType};base64,${file.data.toString("base64")}`;
+    await client.send(
+      new PutObjectCommand({
+        Bucket: env.bucket,
+        Key: key,
+        Body: file.data,
+        ContentType: file.mimeType,
+      })
+    );
 
-    const result = await cloudinary.uploader.upload(dataUri, {
-      folder: "syspro/resumes",
-      resource_type: "raw",
-      public_id: `resume_${Date.now()}_${file.filename.replace(/[^a-zA-Z0-9.-]/g, "_").slice(0, 50)}`,
-    });
+    const publicUrl = `${env.publicUrl}/${key}`;
 
     return {
       success: true,
       filename: file.filename,
-      url: result.secure_url,
+      url: publicUrl,
       size: file.data.length,
       mimeType: file.mimeType,
       uploadedAt: new Date().toISOString(),
