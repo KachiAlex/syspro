@@ -129,7 +129,7 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
   };
 
   const dashboardKey = getDashboardKey(safePath || '');
-  const perms = useTenantPermissions(user?.id);
+  const perms = useTenantPermissions(user?.id, user?.roleId);
   const allowed =
     !safePath ||
     perms.loading ||

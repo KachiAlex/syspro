@@ -57,7 +57,8 @@ export interface TenantUserPermissions {
 
 export async function getTenantUserPermissions(
   tenantSlug: string,
-  userId: string
+  userId: string,
+  roleId?: string
 ): Promise<TenantUserPermissions> {
   let keys: string[] = [];
   try {
@@ -74,10 +75,11 @@ export async function getTenantUserPermissions(
     console.error("Permission lookup failed for", tenantSlug, userId, error);
   }
 
-  // Development fallback: if no roles are configured for the tenant yet,
-  // grant full dashboard access so the UI can still be used locally.
+  // Fallback: if no roles are configured for the tenant yet, grant full
+  // dashboard access to admin users and dev accounts so the UI remains usable.
   const isDevUser = userId?.startsWith("dev-user-");
-  if (keys.length === 0 && (process.env.NODE_ENV !== "production" || isDevUser)) {
+  const isAdminRole = roleId?.toLowerCase() === "admin";
+  if (keys.length === 0 && (process.env.NODE_ENV !== "production" || isDevUser || isAdminRole)) {
     const allDashboards = ["admin", "automation", "finance", "people", "crm", "projects", "reports", "billing"];
     return {
       people: "admin",

@@ -77,13 +77,18 @@ export async function middleware(request: NextRequest) {
         request.cookies.get('X-User-Id')?.value ||
         request.cookies.get('dev-user-id')?.value ||
         request.cookies.get('userId')?.value;
+      const roleId =
+        request.nextUrl.searchParams.get('roleId') ||
+        request.headers.get('x-role-id') ||
+        request.cookies.get('X-Role-Id')?.value ||
+        request.cookies.get('roleId')?.value;
 
       if (!tenantSlug || !userId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
 
       try {
-        const perms = await getTenantUserPermissions(tenantSlug, userId);
+        const perms = await getTenantUserPermissions(tenantSlug, userId, roleId ?? undefined);
         const hasAccess =
           perms.isAdmin ||
           perms.dashboards.includes(permissionKey) ||

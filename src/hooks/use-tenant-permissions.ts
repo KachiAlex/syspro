@@ -32,7 +32,7 @@ function normalizeFromRole(roleId?: string): TenantPermissions {
   return { ...DEFAULT, loading: false };
 }
 
-export function useTenantPermissions(userId?: string): TenantPermissions {
+export function useTenantPermissions(userId?: string, roleId?: string): TenantPermissions {
   const { tenantSlug } = useTenantContext();
   const [permissions, setPermissions] = useState<TenantPermissions>(DEFAULT);
 
@@ -50,11 +50,13 @@ export function useTenantPermissions(userId?: string): TenantPermissions {
           : null) ||
         undefined;
 
+      const roleParam = roleId ? `&roleId=${encodeURIComponent(roleId)}` : "";
+
       try {
         const res = await fetch(
           `/api/tenant/user/permissions?tenantSlug=${encodeURIComponent(
             tenantSlug
-          )}${uid ? `&userId=${encodeURIComponent(uid)}` : ""}`,
+          )}${uid ? `&userId=${encodeURIComponent(uid)}` : ""}${roleParam}`,
           { cache: "no-store" }
         );
 
@@ -65,16 +67,16 @@ export function useTenantPermissions(userId?: string): TenantPermissions {
             loading: false,
           });
         } else {
-          setPermissions(normalizeFromRole(undefined));
+          setPermissions(normalizeFromRole(roleId));
         }
       } catch (error) {
         console.error("Error fetching tenant permissions:", error);
-        setPermissions(normalizeFromRole(undefined));
+        setPermissions(normalizeFromRole(roleId));
       }
     }
 
     load();
-  }, [tenantSlug, userId]);
+  }, [tenantSlug, userId, roleId]);
 
   return permissions;
 }
