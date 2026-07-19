@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Search, Clock, CheckCircle, XCircle, AlertCircle, PlayCircle, Settings, Download, Eye, TrendingDown } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { AutomationService } from '@/app/tenant-admin/services/automation-service';
 
 interface Execution {
   id: string;
@@ -18,38 +19,39 @@ interface Execution {
   error?: string;
 }
 
-const executions: Execution[] = [
-  {
-    id: '1',
-    name: 'Customer Onboarding Workflow',
-    type: 'workflow',
-    category: 'Customer Management',
-    status: 'success',
-    startTime: '2024-04-03 14:30:00',
-    endTime: '2024-04-03 14:30:03',
-    duration: '3.2s',
-    triggeredBy: 'Schedule'
-  },
-  {
-    id: '2',
-    name: 'Invoice Processing Rule',
-    type: 'rule',
-    category: 'Finance',
-    status: 'success',
-    startTime: '2024-04-03 14:25:00',
-    endTime: '2024-04-03 14:25:01',
-    duration: '0.8s',
-    triggeredBy: 'User Action'
-  }
-];
-
 export default function HistoryPage() {
   const { tenantSlug } = useTenantContext();
+  const [executions, setExecutions] = useState<Execution[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState('today');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await AutomationService.getAudits(tenantSlug || '', 50);
+        setExecutions((data.audits || []).map((a: any) => ({
+          id: a.id,
+          name: a.triggerEvent?.type || 'Unknown',
+          type: 'rule',
+          category: 'Automation',
+          status: a.matched ? 'success' : 'failed',
+          startTime: a.createdAt ? new Date(a.createdAt).toLocaleString() : '-',
+          endTime: a.createdAt ? new Date(a.createdAt).toLocaleString() : '-',
+          duration: '-',
+          triggeredBy: a.actor || 'system'
+        })));
+      } catch (err) {
+        console.error('Failed to load automation history', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (tenantSlug) load();
+  }, [tenantSlug]);
 
   const filteredExecutions = executions.filter(execution => {
     const matchesSearch = execution.name.toLowerCase().includes(searchTerm.toLowerCase());

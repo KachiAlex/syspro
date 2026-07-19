@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Search, Settings, PlayCircle, Clock, CheckCircle, AlertCircle, Pause, Edit, Trash2, Plus, Filter } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { AutomationService } from '@/app/tenant-admin/services/automation-service';
 
 interface Rule {
   id: string;
@@ -19,41 +20,40 @@ interface Rule {
   category: string;
 }
 
-const rules: Rule[] = [
-  {
-    id: '1',
-    name: 'Invoice Auto-Approval',
-    description: 'Automatically approve invoices under $1000',
-    trigger: 'Invoice Created',
-    action: 'Auto Approve',
-    status: 'active',
-    priority: 'high',
-    lastTriggered: '5 minutes ago',
-    triggersToday: 45,
-    successRate: 98.2,
-    category: 'Finance'
-  },
-  {
-    id: '2',
-    name: 'Customer Welcome Email',
-    description: 'Send welcome email to new customers',
-    trigger: 'Customer Registered',
-    action: 'Send Email',
-    status: 'active',
-    priority: 'medium',
-    lastTriggered: '2 hours ago',
-    triggersToday: 12,
-    successRate: 99.1,
-    category: 'Customer Service'
-  }
-];
-
 export default function RulesPage() {
   const { tenantSlug } = useTenantContext();
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedPriority, setSelectedPriority] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await AutomationService.getRules(tenantSlug || '');
+        setRules((data.rules || []).map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          description: r.description || '',
+          trigger: r.eventType,
+          action: (r.actions || []).map((a: any) => a.type).join(', '),
+          status: r.enabled ? 'active' : 'disabled',
+          priority: 'medium',
+          lastTriggered: '-',
+          triggersToday: 0,
+          successRate: 0,
+          category: r.scope?.category || 'General'
+        })));
+      } catch (err) {
+        console.error('Failed to load automation rules', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (tenantSlug) load();
+  }, [tenantSlug]);
 
   const filteredRules = rules.filter(rule => {
     const matchesSearch = rule.name.toLowerCase().includes(searchTerm.toLowerCase());

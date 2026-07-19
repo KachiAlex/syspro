@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Zap, PlayCircle, Settings, Clock, CheckCircle, AlertCircle, TrendingUp, Download, Filter } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
+import { AutomationService } from '@/app/tenant-admin/services/automation-service';
 
 interface AutomationTab {
   id: string;
@@ -40,6 +41,27 @@ const automationTabs: AutomationTab[] = [
 export default function AutomationPage() {
   const { tenantSlug } = useTenantContext();
   const [selectedPeriod, setSelectedPeriod] = useState('Last 24 Hours');
+  const [summary, setSummary] = useState<any>(null);
+  const [recentAudits, setRecentAudits] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [summaryRes, auditsRes] = await Promise.all([
+          AutomationService.getSummary(tenantSlug || ''),
+          AutomationService.getAudits(tenantSlug || '', 5),
+        ]);
+        setSummary(summaryRes.summary);
+        setRecentAudits(auditsRes.audits || []);
+      } catch (err) {
+        console.error('Failed to load automation data', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (tenantSlug) load();
+  }, [tenantSlug]);
 
   return (
     <>
@@ -105,8 +127,8 @@ export default function AutomationPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Active Workflows</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-2">24</p>
-                  <p className="text-xs text-green-600 mt-2">↑ 8.3% from last period</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-2">{summary?.rules?.enabled ?? 0}</p>
+                  <p className="text-xs text-green-600 mt-2">enabled rules</p>
                 </div>
                 <PlayCircle className="w-8 h-8 sm:w-12 sm:h-12 text-green-500" />
               </div>
@@ -116,8 +138,8 @@ export default function AutomationPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Executions</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-blue-600 mt-2">1847</p>
-                  <p className="text-xs text-blue-600 mt-2">↑ 15.2% from last period</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-blue-600 mt-2">{summary?.audits?.total ?? 0}</p>
+                  <p className="text-xs text-blue-600 mt-2">rule evaluations</p>
                 </div>
                 <Zap className="w-8 h-8 sm:w-12 sm:h-12 text-blue-500" />
               </div>
@@ -127,8 +149,12 @@ export default function AutomationPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Success Rate</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-purple-600 mt-2">94.7%</p>
-                  <p className="text-xs text-purple-600 mt-2">↑ 2.1% from last period</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-purple-600 mt-2">
+                    {summary?.audits?.total
+                      ? ((summary.audits.matched / summary.audits.total) * 100).toFixed(1)
+                      : 0}%
+                  </p>
+                  <p className="text-xs text-purple-600 mt-2">matched rules</p>
                 </div>
                 <CheckCircle className="w-8 h-8 sm:w-12 sm:h-12 text-purple-100" />
               </div>
@@ -138,8 +164,8 @@ export default function AutomationPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Failed Executions</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-amber-600 mt-2">98</p>
-                  <p className="text-xs text-amber-600 mt-2">↓ 12.4% from last period</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-amber-600 mt-2">{summary?.queue?.failed ?? 0}</p>
+                  <p className="text-xs text-amber-600 mt-2">failed actions</p>
                 </div>
                 <AlertCircle className="w-8 h-8 sm:w-12 sm:h-12 text-amber-500" />
               </div>
@@ -151,16 +177,20 @@ export default function AutomationPage() {
             <div className="space-y-3 sm:space-y-4">
               <div className="overflow-x-auto">
                 <div className="min-w-full">
-                  {[
-                    { name: 'Customer Onboarding Workflow', type: 'Workflow', time: '2 hours ago', status: 'Completed', duration: '3.2s' },
-                    { name: 'Invoice Processing Rule', type: 'Rule', time: '3 hours ago', status: 'Completed', duration: '0.8s' },
-                    { name: 'Daily Report Generation', type: 'Workflow', time: '5 hours ago', status: 'Failed', duration: '12.4s' },
-                    { name: 'Email Notification Trigger', type: 'Rule', time: '6 hours ago', status: 'Completed', duration: '1.1s' },
-                  ].map((activity, idx) => (
+                  {(loading
+                    ? []
+                    : recentAudits.slice(0, 4).map((a: any) => ({
+                        name: a.triggerEvent?.type || 'Unknown',
+                        type: 'Rule',
+                        time: a.createdAt ? new Date(a.createdAt).toLocaleString() : '-',
+                        status: a.matched ? 'Completed' : 'Failed',
+                        duration: '-',
+                      }))
+                  ).map((activity, idx) => (
                     <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-gray-200 rounded-lg gap-4">
                       <div className="flex-1">
                         <p className="font-medium text-gray-900">{activity.name}</p>
-                        <p className="text-xs text-gray-600 mt-1">{activity.type} • {activity.time} • Duration: {activity.duration}</p>
+                        <p className="text-xs text-gray-600 mt-1">{activity.type} • {activity.time}{activity.duration && ` • Duration: ${activity.duration}`}</p>
                       </div>
                       <div className="flex items-center gap-2 sm:gap-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

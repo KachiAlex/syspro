@@ -1,5 +1,5 @@
 import { AutomationRule, Condition, RuleSimulationResult, Action } from "../automation";
-import { insertAutomationAudit, enqueueAutomationActions } from "./db";
+import { insertAutomationAudit, enqueueAutomationActions, listAutomationRules } from "./db";
 
 function getValue(payload: any, path?: string): any {
   if (!path) return undefined;
@@ -87,4 +87,33 @@ export async function executeRule(rule: AutomationRule, event: { type: string; p
   );
 
   return result;
+}
+
+export async function executeRulesForEvent(
+  tenantSlug: string,
+  event: { type: string; payload?: Record<string, any>; actor?: string },
+  simulation = false
+): Promise<Array<{ ruleId: string; ruleName: string; matched: boolean; actions: Action[] }>> {
+  const rules = await listAutomationRules(tenantSlug);
+  const activeRules = rules.filter(
+    (rule) => rule.enabled && rule.eventType === event.type
+  );
+
+  const results = await Promise.all(
+    activeRules.map(async (rule) => {
+      const result = await executeRule(
+        rule,
+        { ...event, tenantSlug },
+        simulation
+      );
+      return {
+        ruleId: rule.id,
+        ruleName: rule.name,
+        matched: result.matched,
+        actions: result.actions,
+      };
+    })
+  );
+
+  return results;
 }
