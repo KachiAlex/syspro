@@ -5,10 +5,10 @@ const sql = getSql();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params;
   try {
-    const { slug } = params;
 
     // Get tenant id
     const tenant = await sql`SELECT id FROM tenants WHERE slug = ${slug}`;
@@ -31,10 +31,10 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params;
   try {
-    const { slug } = params;
     const body = await request.json();
     const { email, name, role } = body;
 

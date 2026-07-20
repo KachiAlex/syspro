@@ -157,7 +157,7 @@ export default function SuperadminLoginPage() {
                   <ChevronRight size={16} className="text-gray-500 group-hover:text-gray-400" />
                 </Link>
                 <Link 
-                  href="/superadmin/tenants"
+                  href="/superadmin"
                   className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-colors group"
                 >
                   <span className="text-sm font-medium text-gray-300">

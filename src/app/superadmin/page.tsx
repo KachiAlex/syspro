@@ -139,6 +139,7 @@ export default function SuperadminPage() {
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [showLicenseModal, setShowLicenseModal] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
+  const [editingAdmin, setEditingAdmin] = useState<TenantAdmin | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [tenantDetails, setTenantDetails] = useState<any>(null);
@@ -600,9 +601,48 @@ export default function SuperadminPage() {
       });
       if (response.ok) {
         setTenantAdmins(tenantAdmins.filter(a => a.id !== id));
+        setSuccess('Admin deleted successfully');
       }
     } catch (error) {
       console.error('Failed to delete tenant admin:', error);
+      setError('Failed to delete admin');
+    }
+  };
+
+  const handleEditAdmin = (admin: TenantAdmin) => {
+    setEditingAdmin(admin);
+    setAdminFormData({ tenantSlug: admin.tenant_slug, email: admin.email, name: admin.name, role: admin.role });
+    setShowAdminModal(true);
+  };
+
+  const handleAddAdmin = () => {
+    setEditingAdmin(null);
+    setAdminFormData({ tenantSlug: '', email: '', name: '', role: 'admin' });
+    setShowAdminModal(true);
+  };
+
+  const handleSaveAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAdmin) return;
+    try {
+      const response = await fetch(`/api/superadmin/tenants/${editingAdmin.tenant_slug}/admins/${editingAdmin.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: adminFormData.email, name: adminFormData.name, role: adminFormData.role }),
+      });
+      if (response.ok) {
+        const updated = await response.json();
+        setTenantAdmins(tenantAdmins.map(a => a.id === editingAdmin.id ? { ...a, ...updated, tenant_slug: editingAdmin.tenant_slug, tenant_name: editingAdmin.tenant_name } : a));
+        setShowAdminModal(false);
+        setEditingAdmin(null);
+        setSuccess('Admin updated successfully');
+      } else {
+        const data = await response.json().catch(() => ({}));
+        setError(data.error || 'Failed to update admin');
+      }
+    } catch (error) {
+      console.error('Failed to update admin:', error);
+      setError('Failed to update admin');
     }
   };
 
@@ -650,7 +690,7 @@ export default function SuperadminPage() {
                 </Button>
               )}
               {activeTab === 'admins' && (
-                <Button onClick={() => setShowAdminModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+                <Button onClick={handleAddAdmin} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
                   <Plus className="w-4 h-4 mr-2" /> Add Admin
                 </Button>
               )}
@@ -1171,7 +1211,7 @@ export default function SuperadminPage() {
                     {new Date(admin.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => handleEditAdmin(admin)}>
                       <Edit className="w-4 h-4" />
                     </Button>
                     <Button
@@ -1626,18 +1666,19 @@ export default function SuperadminPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg w-96">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Add Tenant Admin</h2>
-              <Button variant="ghost" onClick={() => setShowAdminModal(false)}>
+              <h2 className="text-xl font-bold">{editingAdmin ? 'Edit Admin' : 'Add Tenant Admin'}</h2>
+              <Button variant="ghost" onClick={() => { setShowAdminModal(false); setEditingAdmin(null); }}>
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            <form onSubmit={handleCreateAdmin}>
+            <form onSubmit={editingAdmin ? handleSaveAdmin : handleCreateAdmin}>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-black">Tenant Slug</label>
+                <label className="block text-sm font-medium text-black">Tenant</label>
                 <select
                   value={adminFormData.tenantSlug}
                   onChange={(e) => setAdminFormData({ ...adminFormData, tenantSlug: e.target.value })}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                  disabled={!!editingAdmin}
                   required
                 >
                   <option value="">Select tenant</option>
@@ -1682,10 +1723,10 @@ export default function SuperadminPage() {
                 </select>
               </div>
               <div className="flex justify-end">
-                <Button type="button" variant="outline" onClick={() => setShowAdminModal(false)} className="mr-2">
+                <Button type="button" variant="outline" onClick={() => { setShowAdminModal(false); setEditingAdmin(null); }} className="mr-2">
                   Cancel
                 </Button>
-                <Button type="submit">Create</Button>
+                <Button type="submit">{editingAdmin ? 'Save Changes' : 'Create'}</Button>
               </div>
             </form>
           </div>

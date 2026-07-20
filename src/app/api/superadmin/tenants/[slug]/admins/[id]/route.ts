@@ -5,10 +5,10 @@ const sql = getSql();
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { slug: string; id: string } }
+  { params }: { params: Promise<{ slug: string; id: string }> }
 ) {
+  const { id } = await params;
   try {
-    const { id } = params;
     const body = await request.json();
     const { email, name, role } = body;
 
@@ -34,10 +34,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { slug: string; id: string } }
+  { params }: { params: Promise<{ slug: string; id: string }> }
 ) {
+  const { id } = await params;
   try {
-    const { id } = params;
     const result = await sql`DELETE FROM tenant_admins WHERE id = ${id} RETURNING *`;
 
     if (result.length === 0) {
