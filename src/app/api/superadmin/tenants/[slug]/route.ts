@@ -52,6 +52,13 @@ export async function PUT(
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
+    if (seats !== undefined) {
+      await sql`
+        UPDATE licenses SET seats = ${seats}, updated_at = NOW()
+        WHERE tenant_id = ${result[0].id} AND status = 'active'
+      `;
+    }
+
     return NextResponse.json(result[0]);
   } catch (error) {
     console.error('Error updating tenant:', error);
