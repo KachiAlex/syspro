@@ -68,8 +68,8 @@ export default function StaffPage() {
     setLoading(true);
     try {
       const [fetchedEmployees, fetchedDepartments, fetchedTraining, fetchedCurrency] = await Promise.all([
-        HRService.getEmployees(tenantSlug).catch(() => []),
-        HRService.getDepartments(tenantSlug).catch(() => []),
+        HRService.getEmployees(tenantSlug).catch((e) => { console.error('Staff: getEmployees failed:', e?.response?.status, e?.message); return []; }),
+        HRService.getDepartments(tenantSlug).catch((e) => { console.error('Staff: getDepartments failed:', e?.response?.status, e?.message); return []; }),
         HRService.getTrainingSessions(tenantSlug).catch(() => []),
         HRService.getTenantCurrency(tenantSlug).catch(() => 'USD'),
       ]);

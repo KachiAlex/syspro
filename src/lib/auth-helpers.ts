@@ -6,6 +6,7 @@
 
 import { NextRequest } from "next/server";
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
+import { verifySession } from "@/lib/session";
 
 export interface SessionUser {
   id: string;
@@ -31,7 +32,6 @@ export function getCurrentUser(request: NextRequest): SessionUser | null {
     if (typeof (request as any).cookies?.get === "function") {
       const sessionCookie = (request as any).cookies.get("syspro_session")?.value;
       if (sessionCookie) {
-        const { verifySession } = require("@/lib/session");
         const session = verifySession(sessionCookie);
         if (session && session.id) {
           return {

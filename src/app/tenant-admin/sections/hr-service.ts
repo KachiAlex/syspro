@@ -361,8 +361,8 @@ export class HRService {
     const limit = opts?.limit ?? 200;
     const offset = opts?.offset ?? 0;
     const [empRes, deptRes] = await Promise.all([
-      apiClient.get(`/hr/employees?tenantSlug=${tenantSlug}&limit=${limit}&offset=${offset}`),
-      apiClient.get(`/hr/departments?tenantSlug=${tenantSlug}`),
+      apiClient.get(`/hr/employees?tenantSlug=${tenantSlug}&limit=${limit}&offset=${offset}`, { skipCache: true }),
+      apiClient.get(`/hr/departments?tenantSlug=${tenantSlug}`, { skipCache: true }),
     ]);
     const employees: EmployeeRecord[] = empRes.data.employees || [];
     const departments: DepartmentRecord[] = deptRes.data.departments || [];
@@ -407,7 +407,7 @@ export class HRService {
   }
 
   static async getDepartmentRecords(tenantSlug: string): Promise<DepartmentRecord[]> {
-    const response = await apiClient.get(`/hr/departments?tenantSlug=${tenantSlug}`);
+    const response = await apiClient.get(`/hr/departments?tenantSlug=${tenantSlug}`, { skipCache: true });
     return response.data.departments || [];
   }
 
