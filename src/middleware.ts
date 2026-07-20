@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getTenantUserPermissions } from '@/lib/tenant-admin/permissions';
+import { verifySession } from '@/lib/session';
 
 function getRequiredPermissionForPath(pathname: string): string | null {
   if (pathname === '/api/tenant/user/permissions' || pathname.startsWith('/api/auth/')) return null;
@@ -71,23 +72,42 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith('/api/')) {
     const permissionKey = getRequiredPermissionForPath(pathname);
     if (permissionKey) {
-      const tenantSlug =
+      let tenantSlug =
         request.nextUrl.searchParams.get('tenantSlug') ||
         request.headers.get('x-tenant-slug') ||
         request.cookies.get('tenantSlug')?.value ||
         request.cookies.get('X-Tenant-Slug')?.value;
-      const userId =
+      let userId =
         request.nextUrl.searchParams.get('userId') ||
         request.headers.get('x-user-id') ||
         request.headers.get('x-dev-user-id') ||
         request.cookies.get('X-User-Id')?.value ||
         request.cookies.get('dev-user-id')?.value ||
         request.cookies.get('userId')?.value;
-      const roleId =
+      let roleId =
         request.nextUrl.searchParams.get('roleId') ||
         request.headers.get('x-role-id') ||
         request.cookies.get('X-Role-Id')?.value ||
         request.cookies.get('roleId')?.value;
+
+      if (!tenantSlug || !userId) {
+        // Try extracting from syspro_session cookie
+        const sessionCookie = request.cookies.get('syspro_session')?.value;
+        if (sessionCookie) {
+          const session = verifySession(sessionCookie);
+          if (session) {
+            if (!userId) {
+              userId = session.id;
+            }
+            if (!tenantSlug) {
+              tenantSlug = session.tenantSlug || undefined;
+            }
+            if (!roleId) {
+              roleId = session.roleId || undefined;
+            }
+          }
+        }
+      }
 
       if (!tenantSlug || !userId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -26,6 +26,28 @@ export type PermissionLevel = "none" | "read" | "write" | "admin";
  * In production: Verify JWT token or get from next-auth session
  */
 export function getCurrentUser(request: NextRequest): SessionUser | null {
+  // Method 0: Check syspro_session cookie (set by /access page)
+  try {
+    if (typeof (request as any).cookies?.get === "function") {
+      const sessionCookie = (request as any).cookies.get("syspro_session")?.value;
+      if (sessionCookie) {
+        const { verifySession } = require("@/lib/session");
+        const session = verifySession(sessionCookie);
+        if (session && session.id) {
+          return {
+            id: session.id,
+            email: session.email,
+            name: session.name,
+            tenantSlug: session.tenantSlug,
+            roleId: session.roleId || "viewer",
+          };
+        }
+      }
+    }
+  } catch (e) {
+    // ignore session parsing errors
+  }
+
   // Method 1: Check for development headers
   const userId = typeof request.headers?.get === "function" ? request.headers.get("X-User-Id") : undefined;
   const userEmail = typeof request.headers?.get === "function" ? request.headers.get("X-User-Email") || "user@example.com" : "user@example.com";
@@ -97,6 +119,12 @@ export async function validateTenantAccess(user: SessionUser, requestedTenantSlu
   // allow access immediately (fast path).
   if (user.tenantSlug && user.tenantSlug === requestedTenantSlug) return true;
 
+  // Admin fallback: allow admin users without requiring DB-backed membership.
+  // This ensures the initial tenant admin dashboard is reachable even when
+  // tenant_user_roles / tenant_members tables haven't been seeded yet.
+  if ((user.roleId || "").toLowerCase() === "admin") return true;
+  if ((user.id || "").toLowerCase().startsWith("dev-user-")) return true;
+
   // Otherwise, check the database for tenant membership/role assignment.
   try {
     const sql = SQL;
@@ -112,11 +140,6 @@ export async function validateTenantAccess(user: SessionUser, requestedTenantSlu
       SELECT 1 FROM tenant_members WHERE tenant_slug = ${requestedTenantSlug} AND user_id = ${user.id} LIMIT 1
     `;
     if (Array.isArray(memberRows) && memberRows.length > 0) return true;
-
-    // Admin fallback: allow admin users when tenant membership records have
-    // not been seeded yet, so the initial tenant admin dashboard is reachable.
-    if ((user.roleId || "").toLowerCase() === "admin") return true;
-    if ((user.id || "").toLowerCase().startsWith("dev-user-")) return true;
 
     return false;
   } catch (error) {
