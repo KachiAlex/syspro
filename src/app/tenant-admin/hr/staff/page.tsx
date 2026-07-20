@@ -274,29 +274,30 @@ export default function StaffPage() {
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[900px]">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Department</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Position</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Role</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Portal</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Start Date</th>
-              <th className="px-6 py-3 text-center text-xs font-semibold text-gray-900">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Name</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Email</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Department</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Position</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Role</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Portal</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Start Date</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900 whitespace-nowrap">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {paginatedEmployees.length > 0 ? (
               paginatedEmployees.map((emp) => (
                 <tr key={emp.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{emp.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{emp.email}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{emp.department}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{emp.position}</td>
-                  <td className="px-6 py-4 text-sm">
+                  <td className="px-4 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">{emp.name}</td>
+                  <td className="px-4 py-4 text-sm text-gray-600 whitespace-nowrap">{emp.email}</td>
+                  <td className="px-4 py-4 text-sm text-gray-600 whitespace-nowrap">{emp.department}</td>
+                  <td className="px-4 py-4 text-sm text-gray-600 whitespace-nowrap">{emp.position}</td>
+                  <td className="px-4 py-4 text-sm whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       emp.role === 'Executive' ? 'bg-purple-100 text-purple-800' :
                       emp.role === 'Admin' ? 'bg-blue-100 text-blue-800' :
@@ -306,7 +307,7 @@ export default function StaffPage() {
                       {emp.role}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm">
+                  <td className="px-4 py-4 text-sm whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       emp.status === 'Active' ? 'bg-green-100 text-green-800' :
                       emp.status === 'On Leave' ? 'bg-amber-100 text-amber-800' :
@@ -316,7 +317,7 @@ export default function StaffPage() {
                       {emp.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm">
+                  <td className="px-4 py-4 text-sm whitespace-nowrap">
                     {emp.isPortalActive ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         <Unlock className="w-3 h-3" />
@@ -329,8 +330,8 @@ export default function StaffPage() {
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{emp.startDate}</td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-4 py-4 text-sm text-gray-600 whitespace-nowrap">{emp.startDate}</td>
+                  <td className="px-4 py-4 text-center whitespace-nowrap">
                     <div className="flex items-center justify-center gap-2">
                       <button
                         onClick={() => {
@@ -387,6 +388,7 @@ export default function StaffPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {totalPages > 1 && (

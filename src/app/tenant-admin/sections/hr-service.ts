@@ -393,6 +393,19 @@ export class HRService {
     await apiClient.patch(`/hr/employees/${employeeId}/portal`, { tenantSlug, isPortalActive: false });
   }
 
+  static async setEmployeePortalPassword(
+    tenantSlug: string,
+    employeeId: string,
+    password?: string
+  ): Promise<{ name: string; email: string; password: string }> {
+    const response = await apiClient.patch(`/hr/employees/${employeeId}/portal`, {
+      tenantSlug,
+      password: password || undefined,
+      generatePassword: !password,
+    });
+    return response.data.portalCredentials;
+  }
+
   static async getDepartmentRecords(tenantSlug: string): Promise<DepartmentRecord[]> {
     const response = await apiClient.get(`/hr/departments?tenantSlug=${tenantSlug}`);
     return response.data.departments || [];
