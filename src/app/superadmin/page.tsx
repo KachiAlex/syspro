@@ -145,7 +145,7 @@ export default function SuperadminPage() {
   const [tenantDetails, setTenantDetails] = useState<any>(null);
   const [tenantFormData, setTenantFormData] = useState({ name: '', slug: '', seats: 1, licenseType: '' });
   const [licenseFormData, setLicenseFormData] = useState({ tenantSlug: '', type: 'starter', seats: 10, expiry: '' });
-  const [adminFormData, setAdminFormData] = useState({ tenantSlug: '', email: '', name: '', role: 'admin' });
+  const [adminFormData, setAdminFormData] = useState({ tenantSlug: '', email: '', name: '', role: 'admin', password: '' });
   
   // Pagination and bulk selection state
   const [currentPage, setCurrentPage] = useState(1);
@@ -537,7 +537,7 @@ export default function SuperadminPage() {
         const tenant = tenants.find(t => t.slug === adminFormData.tenantSlug);
         setTenantAdmins([...tenantAdmins, { ...newAdmin, tenant_name: tenant?.name || '', tenant_slug: adminFormData.tenantSlug }]);
         setShowAdminModal(false);
-        setAdminFormData({ tenantSlug: '', email: '', name: '', role: 'admin' });
+        setAdminFormData({ tenantSlug: '', email: '', name: '', role: 'admin', password: '' });
       }
     } catch (error) {
       console.error('Failed to create tenant admin:', error);
@@ -611,13 +611,13 @@ export default function SuperadminPage() {
 
   const handleEditAdmin = (admin: TenantAdmin) => {
     setEditingAdmin(admin);
-    setAdminFormData({ tenantSlug: admin.tenant_slug, email: admin.email, name: admin.name, role: admin.role });
+    setAdminFormData({ tenantSlug: admin.tenant_slug, email: admin.email, name: admin.name, role: admin.role, password: '' });
     setShowAdminModal(true);
   };
 
   const handleAddAdmin = () => {
     setEditingAdmin(null);
-    setAdminFormData({ tenantSlug: '', email: '', name: '', role: 'admin' });
+    setAdminFormData({ tenantSlug: '', email: '', name: '', role: 'admin', password: '' });
     setShowAdminModal(true);
   };
 
@@ -628,13 +628,14 @@ export default function SuperadminPage() {
       const response = await fetch(`/api/superadmin/tenants/${editingAdmin.tenant_slug}/admins/${editingAdmin.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: adminFormData.email, name: adminFormData.name, role: adminFormData.role }),
+        body: JSON.stringify({ email: adminFormData.email, name: adminFormData.name, role: adminFormData.role, password: adminFormData.password || undefined }),
       });
       if (response.ok) {
         const updated = await response.json();
         setTenantAdmins(tenantAdmins.map(a => a.id === editingAdmin.id ? { ...a, ...updated, tenant_slug: editingAdmin.tenant_slug, tenant_name: editingAdmin.tenant_name } : a));
         setShowAdminModal(false);
         setEditingAdmin(null);
+        setAdminFormData({ tenantSlug: '', email: '', name: '', role: 'admin', password: '' });
         setSuccess('Admin updated successfully');
       } else {
         const data = await response.json().catch(() => ({}));
@@ -1709,6 +1710,19 @@ export default function SuperadminPage() {
                   required
                 />
               </div>
+              {editingAdmin && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-black">Reset Password</label>
+                  <input
+                    type="password"
+                    value={adminFormData.password}
+                    onChange={(e) => setAdminFormData({ ...adminFormData, password: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    placeholder="Leave blank to keep current password"
+                  />
+                  <p className="text-xs text-amber-600 mt-1">Enter a new password to reset it. Leave blank to keep the existing password.</p>
+                </div>
+              )}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-black">Role</label>
                 <select

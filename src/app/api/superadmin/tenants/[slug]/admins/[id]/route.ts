@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
+import bcrypt from 'bcryptjs';
 
 const sql = getSql();
 
@@ -10,15 +11,21 @@ export async function PUT(
   const { id } = await params;
   try {
     const body = await request.json();
-    const { email, name, role } = body;
+    const { email, name, role, password } = body;
+
+    let passwordHash: string | null = null;
+    if (password) {
+      passwordHash = await bcrypt.hash(password, 10);
+    }
 
     const result = await sql`
       UPDATE tenant_admins
       SET email = COALESCE(${email}, email),
           name = COALESCE(${name}, name),
-          role = COALESCE(${role}, role)
+          role = COALESCE(${role}, role),
+          password_hash = COALESCE(${passwordHash}, password_hash)
       WHERE id = ${id}
-      RETURNING *
+      RETURNING id, email, name, role, tenant_id, created_at
     `;
 
     if (result.length === 0) {
