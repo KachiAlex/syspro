@@ -4,6 +4,7 @@ import { listEmployees, insertEmployee, countEmployees, ensureHrTables } from "@
 import { extractAuthContext } from "@/lib/auth-helper";
 import { resolveDepartmentHeadContext } from "@/lib/tenant-admin/utils";
 import { sql as SQL } from "@/lib/sql-client";
+import { setEmployeePassword, generatePassword } from "@/lib/hr/auth";
 
 const listSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -29,6 +30,8 @@ const createSchema = z.object({
   employmentType: z.enum(["full-time", "part-time", "contract", "intern"]).optional(),
   status: z.enum(["active", "inactive", "on-leave", "terminated"]).optional(),
   role: z.enum(["staff", "hod", "admin", "executive"]).optional(),
+  activatePortal: z.boolean().optional(),
+  password: z.string().min(1).optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -84,7 +87,15 @@ export async function POST(request: NextRequest) {
   try {
     await ensureHrTables(SQL);
     const employee = await insertEmployee(parsed.data);
-    return NextResponse.json({ employee }, { status: 201 });
+
+    let portalCredentials: { email: string; password: string } | null = null;
+    if (parsed.data.activatePortal) {
+      const password = parsed.data.password || generatePassword();
+      await setEmployeePassword(parsed.data.tenantSlug, employee.id, password);
+      portalCredentials = { email: employee.email, password };
+    }
+
+    return NextResponse.json({ employee, portalCredentials }, { status: 201 });
   } catch (error: any) {
     console.error("Employee create failed", error);
     const msg = error?.message || "";

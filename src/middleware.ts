@@ -4,6 +4,12 @@ import { getTenantUserPermissions } from '@/lib/tenant-admin/permissions';
 
 function getRequiredPermissionForPath(pathname: string): string | null {
   if (pathname === '/api/tenant/user/permissions' || pathname.startsWith('/api/auth/')) return null;
+  // Employee portal auth routes must be public
+  if (
+    pathname.startsWith('/api/hr/employees/auth/login') ||
+    pathname.startsWith('/api/hr/employees/auth/logout') ||
+    pathname.startsWith('/api/hr/employees/me')
+  ) return null;
   if (pathname.startsWith('/api/automation/')) return 'automation';
   if (pathname.startsWith('/api/finance/') || pathname.startsWith('/api/tenant/billing')) return 'finance';
   if (pathname.startsWith('/api/crm/')) return 'crm';
@@ -110,5 +116,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/superadmin/:path*', '/tenant-admin/:path*', '/api/:path*'],
+  matcher: ['/superadmin/:path*', '/tenant-admin/:path*', '/employee/:path*', '/api/:path*'],
 };

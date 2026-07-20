@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { Plus, Pencil, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Search, ChevronLeft, ChevronRight, KeyRound, Lock, Unlock, CheckCircle, X, Copy } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { HRService } from '@/app/tenant-admin/sections/hr-service';
 import { AddEmployeeModal } from '@/app/tenant-admin/sections/hr-add-employee-modal';
@@ -18,6 +18,8 @@ interface Employee {
   status: string;
   salary: string;
   employmentType?: string;
+  isPortalActive?: boolean;
+  lastLogin?: string | null;
 }
 
 interface TrainingSession {
@@ -47,6 +49,8 @@ export default function StaffPage() {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 25;
+  const [portalActionLoading, setPortalActionLoading] = useState<string | null>(null);
+  const [portalCredentials, setPortalCredentials] = useState<{ name: string; email: string; password: string } | null>(null);
 
   const [departments, setDepartments] = useState<string[]>(['All Departments']);
   const statuses = ['All Statuses', 'Active', 'On Leave', 'Inactive', 'Terminated'];
@@ -80,6 +84,8 @@ export default function StaffPage() {
         status: emp.status,
         salary: emp.salary ? `${sym}${Number(emp.salary).toLocaleString()}` : '',
         employmentType: emp.employmentType || 'Full-time',
+        isPortalActive: emp.isPortalActive ?? false,
+        lastLogin: emp.lastLogin ?? null,
       })));
       setDepartments(['All Departments', ...fetchedDepartments]);
       setTrainingSessions(fetchedTraining.map((s: any) => ({
@@ -129,8 +135,38 @@ export default function StaffPage() {
 
   const handleAddEmployee = async (data: any) => {
     if (!tenantSlug) return;
-    await HRService.addEmployee(tenantSlug, data);
+    const result = await HRService.addEmployee(tenantSlug, data);
     await loadData();
+    return result;
+  };
+
+  const handleActivatePortal = async (emp: Employee) => {
+    if (!tenantSlug) return;
+    setPortalActionLoading(emp.id);
+    try {
+      const creds = await HRService.activateEmployeePortal(tenantSlug, [emp.id]);
+      if (creds.length > 0) {
+        setPortalCredentials({ name: creds[0].name, email: creds[0].email, password: creds[0].password });
+      }
+      await loadData();
+    } catch (err) {
+      console.error('Failed to activate portal:', err);
+    } finally {
+      setPortalActionLoading(null);
+    }
+  };
+
+  const handleDeactivatePortal = async (emp: Employee) => {
+    if (!tenantSlug) return;
+    setPortalActionLoading(emp.id);
+    try {
+      await HRService.deactivateEmployeePortal(tenantSlug, emp.id);
+      await loadData();
+    } catch (err) {
+      console.error('Failed to deactivate portal:', err);
+    } finally {
+      setPortalActionLoading(null);
+    }
   };
 
   const handleEditEmployee = async (data: any) => {
@@ -204,6 +240,7 @@ export default function StaffPage() {
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Position</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Role</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Portal</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900">Start Date</th>
               <th className="px-6 py-3 text-center text-xs font-semibold text-gray-900">Actions</th>
             </tr>
@@ -236,24 +273,71 @@ export default function StaffPage() {
                       {emp.status}
                     </span>
                   </td>
+                  <td className="px-6 py-4 text-sm">
+                    {emp.isPortalActive ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <Unlock className="w-3 h-3" />
+                        Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                        <Lock className="w-3 h-3" />
+                        Inactive
+                      </span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{emp.startDate}</td>
                   <td className="px-6 py-4 text-center">
-                    <button
-                      onClick={() => {
-                        setEditingEmployee(emp);
-                        setShowEditModal(true);
-                      }}
-                      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800"
-                    >
-                      <Pencil className="w-4 h-4" />
-                      Edit
-                    </button>
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => {
+                          setEditingEmployee(emp);
+                          setShowEditModal(true);
+                        }}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800"
+                      >
+                        <Pencil className="w-4 h-4" />
+                        Edit
+                      </button>
+                      {emp.isPortalActive ? (
+                        <>
+                          <button
+                            onClick={() => handleActivatePortal(emp)}
+                            disabled={portalActionLoading === emp.id}
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-600 hover:text-amber-800 disabled:opacity-40"
+                            title="Reset portal password"
+                          >
+                            <KeyRound className="w-4 h-4" />
+                            Reset
+                          </button>
+                          <button
+                            onClick={() => handleDeactivatePortal(emp)}
+                            disabled={portalActionLoading === emp.id}
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-800 disabled:opacity-40"
+                            title="Deactivate portal access"
+                          >
+                            <Lock className="w-4 h-4" />
+                            Disable
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => handleActivatePortal(emp)}
+                          disabled={portalActionLoading === emp.id}
+                          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-600 hover:text-green-800 disabled:opacity-40"
+                          title="Activate portal access"
+                        >
+                          <KeyRound className="w-4 h-4" />
+                          Activate
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-sm text-gray-600">
+                <td colSpan={9} className="px-6 py-8 text-center text-sm text-gray-600">
                   No employees found
                 </td>
               </tr>
@@ -372,6 +456,61 @@ export default function StaffPage() {
           )}
         </div>
       </div>
+
+      {/* Portal credentials modal */}
+      {portalCredentials && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900">Portal Credentials</h3>
+              <button onClick={() => setPortalCredentials(null)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-lg p-4">
+                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-green-800">
+                  Portal account activated for <strong>{portalCredentials.name}</strong>. Share these credentials securely.
+                </p>
+              </div>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Email</span>
+                  <span className="text-sm font-mono text-gray-900">{portalCredentials.email}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Password</span>
+                  <span className="text-sm font-mono text-gray-900 select-all">{portalCredentials.password}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Login URL</span>
+                  <span className="text-sm font-mono text-blue-700">/employee/login</span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    navigator.clipboard?.writeText(
+                      `Login URL: /employee/login\nEmail: ${portalCredentials.email}\nPassword: ${portalCredentials.password}`
+                    );
+                  }}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50"
+                >
+                  <Copy className="w-4 h-4" />
+                  Copy
+                </button>
+                <button
+                  onClick={() => setPortalCredentials(null)}
+                  className="flex-1 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -267,7 +267,9 @@ export class HRService {
     salary?: string;
     employmentType: string;
     role?: string;
-  }): Promise<EmployeeRecord> {
+    activatePortal?: boolean;
+    password?: string;
+  }): Promise<{ employee: EmployeeRecord; portalCredentials: { email: string; password: string } | null }> {
     const departmentId = await this.resolveDepartmentId(tenantSlug, employeeData.department);
     const payload = {
       tenantSlug,
@@ -279,9 +281,14 @@ export class HRService {
       salary: employeeData.salary ? Number(employeeData.salary.replace(/[^0-9.]/g, '')) : undefined,
       employmentType: employeeData.employmentType?.toLowerCase().replace(/\s/g, '-') as any,
       role: (employeeData.role || 'Staff').toLowerCase(),
+      activatePortal: employeeData.activatePortal ?? false,
+      password: employeeData.password,
     };
     const response = await apiClient.post('/hr/employees', payload);
-    return response.data.employee;
+    return {
+      employee: response.data.employee,
+      portalCredentials: response.data.portalCredentials ?? null,
+    };
   }
 
   static async updateEmployee(tenantSlug: string, employeeId: string, employeeData: {
@@ -356,6 +363,8 @@ export class HRService {
     salary: number;
     startDate: string;
     employmentType?: string;
+    isPortalActive: boolean;
+    lastLogin: string | null;
   }>> {
     const limit = opts?.limit ?? 200;
     const offset = opts?.offset ?? 0;
@@ -378,7 +387,18 @@ export class HRService {
       salary: emp.salary ?? 0,
       startDate: emp.hireDate ? emp.hireDate.split('T')[0] : '',
       employmentType: emp.employmentType ? emp.employmentType.charAt(0).toUpperCase() + emp.employmentType.slice(1).replace('-', ' ') : 'Full-time',
+      isPortalActive: emp.isPortalActive ?? false,
+      lastLogin: emp.lastLogin ?? null,
     }));
+  }
+
+  static async activateEmployeePortal(tenantSlug: string, employeeIds: string[], defaultPassword?: string): Promise<Array<{ id: string; name: string; email: string; password: string }>> {
+    const response = await apiClient.post('/hr/employees/auth/activate', { tenantSlug, employeeIds, defaultPassword });
+    return response.data.employees || [];
+  }
+
+  static async deactivateEmployeePortal(tenantSlug: string, employeeId: string): Promise<void> {
+    await apiClient.patch(`/hr/employees/${employeeId}/portal`, { tenantSlug, isPortalActive: false });
   }
 
   static async getDepartmentRecords(tenantSlug: string): Promise<DepartmentRecord[]> {

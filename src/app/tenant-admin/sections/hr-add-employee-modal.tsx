@@ -7,7 +7,7 @@ import { HRService } from './hr-service';
 interface AddEmployeeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: any) => Promise<any>;
   departments: string[];
   tenantSlug: string;
 }
@@ -36,7 +36,9 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [warnings, setWarnings] = useState<string[]>([]);
   const [portalCredentials, setPortalCredentials] = useState<Array<{ name: string; email: string; password: string }> | null>(null);
+  const [createdCredentials, setCreatedCredentials] = useState<{ name: string; email: string; password: string } | null>(null);
   const [currency, setCurrency] = useState('USD');
+  const [activatePortal, setActivatePortal] = useState(true);
 
   // Manual form data
   const [formData, setFormData] = useState({
@@ -60,7 +62,17 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
     }
   }, [isOpen, tenantSlug]);
 
-  // Clear warnings when switching to excel tab or opening modal
+  // Clear state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setCreatedCredentials(null);
+      setPortalCredentials(null);
+      setErrors({});
+      setWarnings([]);
+    }
+  }, [isOpen]);
+
+  // Clear warnings when switching to excel tab
   useEffect(() => {
     if (isOpen && activeTab === 'excel') {
       setWarnings([]);
@@ -82,21 +94,30 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
     e.preventDefault();
     setLoading(true);
     setErrors({});
+    setCreatedCredentials(null);
 
     try {
-      await onSubmit(formData);
-      setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        department: '',
-        position: '',
-        startDate: '',
-        salary: '',
-        employmentType: 'Full-time',
-        role: 'Staff'
-      });
-      onClose();
+      const result = await onSubmit({ ...formData, activatePortal });
+      if (result?.portalCredentials) {
+        setCreatedCredentials({
+          name: `${formData.firstName} ${formData.lastName}`.trim(),
+          email: result.portalCredentials.email,
+          password: result.portalCredentials.password,
+        });
+      } else {
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          department: '',
+          position: '',
+          startDate: '',
+          salary: '',
+          employmentType: 'Full-time',
+          role: 'Staff'
+        });
+        onClose();
+      }
     } catch (error) {
       console.error('Failed to add employee:', error);
       setErrors({ submit: 'Failed to add employee. Please try again.' });
@@ -378,23 +399,116 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-                  disabled={loading}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-black rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                  disabled={loading}
-                >
-                  {loading ? 'Adding...' : 'Add Employee'}
-                </button>
+              {/* Portal activation */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={activatePortal}
+                    onChange={(e) => setActivatePortal(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300"
+                    disabled={loading}
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-gray-900">Create portal account</span>
+                    <p className="text-xs text-gray-600 mt-0.5">
+                      Generates a secure password so this employee can log in to their self-service dashboard immediately.
+                    </p>
+                  </div>
+                </label>
               </div>
+
+              {/* Credentials display after creation */}
+              {createdCredentials && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-green-900">
+                        Employee added &mdash; portal account activated
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Copy these credentials and share them securely with the employee. They can log in at{' '}
+                        <span className="font-mono text-blue-700">/employee/login</span>.
+                      </p>
+                      <div className="mt-3 grid grid-cols-1 gap-2 bg-white border border-green-200 rounded-lg p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-600">Name</span>
+                          <span className="text-sm font-medium text-gray-900">{createdCredentials.name}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-600">Email</span>
+                          <span className="text-sm font-mono text-gray-900">{createdCredentials.email}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-600">Password</span>
+                          <span className="text-sm font-mono text-gray-900 select-all">{createdCredentials.password}</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard?.writeText(
+                            `Login URL: /employee/login\nEmail: ${createdCredentials.email}\nPassword: ${createdCredentials.password}`
+                          );
+                        }}
+                        className="mt-2 text-xs text-blue-700 hover:text-blue-900 font-medium"
+                      >
+                        Copy credentials to clipboard
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCreatedCredentials(null);
+                        setFormData({
+                          firstName: '',
+                          lastName: '',
+                          email: '',
+                          department: '',
+                          position: '',
+                          startDate: '',
+                          salary: '',
+                          employmentType: 'Full-time',
+                          role: 'Staff'
+                        });
+                      }}
+                      className="flex-1 px-3 py-2 text-sm border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50"
+                    >
+                      Add another
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {!createdCredentials && (
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    disabled={loading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    disabled={loading}
+                  >
+                    {loading ? 'Adding...' : 'Add Employee'}
+                  </button>
+                </div>
+              )}
             </form>
           )}
 
