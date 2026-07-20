@@ -63,6 +63,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     delete (updateData as any).departmentName;
     delete (updateData as any).tenantSlug;
 
+    console.log("PATCH /hr/employees/[id]", { id, updateData });
+
     const employee = await updateEmployee(id, updateData);
     if (!employee) {
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });

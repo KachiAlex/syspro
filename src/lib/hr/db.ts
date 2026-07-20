@@ -355,23 +355,28 @@ export async function updateEmployee(
 
   // Enforce unique HOD per department
   if (updates.role === "hod") {
-    const currentRows = await sql`select tenant_slug, department_id from admin_employees where id = ${id} limit 1`;
+    const currentRows = await sql`select tenant_slug, department_id, role from admin_employees where id = ${id} limit 1`;
     const current = (currentRows as any[])[0];
     if (current) {
+      // Only check for conflicts if the employee is being PROMOTED to HOD
+      // (not already HOD in the same department)
       const deptId = updates.departmentId ?? current.department_id;
-      const tenantSlug = current.tenant_slug;
-      const dupRows = await sql`
-        select id, name, email from admin_employees
-        where tenant_slug = ${tenantSlug}
-          and department_id = ${deptId}
-          and role = 'hod'
-          and status != 'terminated'
-          and id != ${id}
-        limit 1
-      `;
-      if ((dupRows as any[]).length > 0) {
-        const dup = (dupRows as any[])[0];
-        throw new Error(`Someone has already been assigned the HOD role in this department: ${dup.name} (${dup.email}).`);
+      const isAlreadyHodInSameDept = current.role === 'hod' && current.department_id === deptId;
+      if (!isAlreadyHodInSameDept) {
+        const tenantSlug = current.tenant_slug;
+        const dupRows = await sql`
+          select id, name, email from admin_employees
+          where tenant_slug = ${tenantSlug}
+            and department_id = ${deptId}
+            and role = 'hod'
+            and status != 'terminated'
+            and id != ${id}
+          limit 1
+        `;
+        if ((dupRows as any[]).length > 0) {
+          const dup = (dupRows as any[])[0];
+          throw new Error(`Someone has already been assigned the HOD role in this department: ${dup.name} (${dup.email}).`);
+        }
       }
     }
   }
