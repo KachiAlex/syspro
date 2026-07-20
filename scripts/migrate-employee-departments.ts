@@ -12,7 +12,7 @@
  */
 
 import { neon } from "@neondatabase/serverless";
-import { randomUUID } from "node:crypto";
+import { randomUUID } from "crypto";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {

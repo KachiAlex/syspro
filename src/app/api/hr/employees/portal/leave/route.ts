@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { randomUUID } = await import("node:crypto");
+    const { randomUUID } = await import("crypto");
     const id = randomUUID();
 
     await SQL`

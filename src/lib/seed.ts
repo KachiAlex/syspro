@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID } from "crypto";
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import { ensureAdminTables, insertRole, insertDepartment, insertApprovalRoute, insertAccessControl, insertWorkflow } from "@/lib/admin/db";
 import { ensureCrmTables, insertLead, insertContact } from "@/lib/crm/db";

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql as SQL } from "@/lib/sql-client";
-import { randomBytes } from "node:crypto";
+import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "@/lib/email";
 import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limit";
 

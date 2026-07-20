@@ -3,7 +3,7 @@
  * Manages payments to vendors, payment applications, and balance tracking
  */
 
-import { randomUUID } from "node:crypto";
+import { randomUUID } from "crypto";
 import { db, sql as SQL } from "../sql-client";
 import { createPaymentJournalEntry } from "./accounting";
 

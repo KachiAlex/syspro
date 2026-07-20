@@ -3,7 +3,7 @@
  * Manages configurable approval workflows for POs, bills, and payments
  */
 
-import { randomUUID } from "node:crypto";
+import { randomUUID } from "crypto";
 import { db, sql as SQL } from "../sql-client";
 
 export interface ApprovalRule {

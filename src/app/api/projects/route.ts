@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "node:crypto";
+import { randomUUID } from "crypto";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { getAllProjectsForTenant, createProject, toProjectResponse } from "@/lib/projects/db";
 

@@ -3,7 +3,7 @@
  * Manages vendor bills, accounts payable, and aging
  */
 
-import { randomUUID } from "node:crypto";
+import { randomUUID } from "crypto";
 import { db, sql as SQL } from "../sql-client";
 import { createBillJournalEntry } from "./accounting";
 

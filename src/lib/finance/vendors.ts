@@ -3,7 +3,7 @@
  * Manages vendor master data and lookups
  */
 
-import { randomUUID } from "node:crypto";
+import { randomUUID } from "crypto";
 import { db, sql as SQL, SqlClient } from "../sql-client";
 
 export interface VendorRecord {

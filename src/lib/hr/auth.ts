@@ -3,7 +3,7 @@
  * Handles employee login, password hashing, and session management.
  */
 
-import { randomUUID, randomBytes } from "node:crypto";
+import { randomUUID, randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables } from "./db";
