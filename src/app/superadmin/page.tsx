@@ -3,7 +3,23 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Trash2, LogOut, X, Eye, CheckSquare, Square, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Edit, Trash2, LogOut, X, Eye, CheckSquare, Square, ChevronLeft, ChevronRight, Settings, Tag } from 'lucide-react';
+
+interface LicenseTier {
+  id: number;
+  key: string;
+  label: string;
+  description: string;
+  min_seats: number;
+  max_seats: number;
+  default_seats: number;
+  price_per_seat: number;
+  currency: string;
+  billing_cycle: string;
+  features: string[];
+  is_active: boolean;
+  sort_order: number;
+}
 
 interface Tenant {
   id: number;
@@ -109,6 +125,16 @@ export default function SuperadminPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'tenants' | 'licenses' | 'admins'>('tenants');
+  const [licenseSubTab, setLicenseSubTab] = useState<'assignments' | 'tiers'>('assignments');
+  const [licenseTiers, setLicenseTiers] = useState<LicenseTier[]>([]);
+  const [showTierModal, setShowTierModal] = useState(false);
+  const [editingTier, setEditingTier] = useState<LicenseTier | null>(null);
+  const [tierFormData, setTierFormData] = useState({
+    key: '', label: '', description: '', min_seats: 5, max_seats: 25,
+    default_seats: 10, price_per_seat: 29, currency: 'USD', billing_cycle: 'monthly',
+    features: [] as string[], is_active: true, sort_order: 0,
+  });
+  const [tierFeatureInput, setTierFeatureInput] = useState('');
   const [showTenantModal, setShowTenantModal] = useState(false);
   const [showLicenseModal, setShowLicenseModal] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
@@ -229,6 +255,7 @@ export default function SuperadminPage() {
   useEffect(() => {
     fetchTenants(currentPage);
     fetchLicenses();
+    fetchLicenseTiers();
     // tenant admins will be fetched after tenants load (see tenants effect)
   }, [currentPage]);
 
@@ -264,6 +291,96 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to fetch licenses:', error);
+    }
+  };
+
+  const fetchLicenseTiers = async () => {
+    try {
+      const response = await fetch('/api/superadmin/license-tiers');
+      if (response.ok) {
+        const data = await response.json();
+        setLicenseTiers(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch license tiers:', error);
+    }
+  };
+
+  const handleEditTier = (tier: LicenseTier) => {
+    setEditingTier(tier);
+    setTierFormData({
+      key: tier.key, label: tier.label, description: tier.description || '',
+      min_seats: tier.min_seats, max_seats: tier.max_seats,
+      default_seats: tier.default_seats, price_per_seat: Number(tier.price_per_seat),
+      currency: tier.currency, billing_cycle: tier.billing_cycle,
+      features: tier.features || [], is_active: tier.is_active, sort_order: tier.sort_order,
+    });
+    setShowTierModal(true);
+  };
+
+  const handleAddTier = () => {
+    setEditingTier(null);
+    setTierFormData({
+      key: '', label: '', description: '', min_seats: 5, max_seats: 25,
+      default_seats: 10, price_per_seat: 29, currency: 'USD', billing_cycle: 'monthly',
+      features: [], is_active: true, sort_order: licenseTiers.length + 1,
+    });
+    setShowTierModal(true);
+  };
+
+  const handleAddFeature = () => {
+    if (tierFeatureInput.trim()) {
+      setTierFormData({ ...tierFormData, features: [...tierFormData.features, tierFeatureInput.trim()] });
+      setTierFeatureInput('');
+    }
+  };
+
+  const handleRemoveFeature = (idx: number) => {
+    setTierFormData({ ...tierFormData, features: tierFormData.features.filter((_, i) => i !== idx) });
+  };
+
+  const handleSaveTier = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const url = editingTier
+        ? `/api/superadmin/license-tiers/${editingTier.id}`
+        : '/api/superadmin/license-tiers';
+      const method = editingTier ? 'PATCH' : 'POST';
+      const body = editingTier
+        ? { ...tierFormData, key: undefined }
+        : tierFormData;
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (response.ok) {
+        setShowTierModal(false);
+        setEditingTier(null);
+        fetchLicenseTiers();
+        setSuccess(editingTier ? 'License tier updated successfully' : 'License tier created successfully');
+      } else {
+        const data = await response.json().catch(() => ({}));
+        setError(data.error || 'Failed to save license tier');
+      }
+    } catch (error) {
+      console.error('Failed to save license tier:', error);
+      setError('Failed to save license tier');
+    }
+  };
+
+  const handleDeleteTier = async (id: number, label: string) => {
+    if (!confirm(`Delete the "${label}" license tier? Existing licenses assigned to this tier will not be affected.`)) return;
+    try {
+      const response = await fetch(`/api/superadmin/license-tiers/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        fetchLicenseTiers();
+        setSuccess(`License tier "${label}" deleted`);
+      }
+    } catch (error) {
+      console.error('Failed to delete license tier:', error);
     }
   };
 
@@ -474,7 +591,7 @@ export default function SuperadminPage() {
                   <Plus className="w-4 h-4 mr-2" /> Add Tenant
                 </Button>
               )}
-              {activeTab === 'licenses' && (
+              {activeTab === 'licenses' && licenseSubTab === 'assignments' && (
                 <Button onClick={() => setShowLicenseModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
                   <Plus className="w-4 h-4 mr-2" /> Add License
                 </Button>
@@ -763,6 +880,34 @@ export default function SuperadminPage() {
     )}
 
     {activeTab === 'licenses' && (
+      <div>
+        {/* Sub-tab navigation */}
+        <div className="mb-4 flex items-center gap-2">
+          <button
+            onClick={() => setLicenseSubTab('assignments')}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition ${
+              licenseSubTab === 'assignments'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            <Tag className="w-4 h-4 inline mr-1" />
+            License Assignments
+          </button>
+          <button
+            onClick={() => setLicenseSubTab('tiers')}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition ${
+              licenseSubTab === 'tiers'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            <Settings className="w-4 h-4 inline mr-1" />
+            Tier Configuration
+          </button>
+        </div>
+
+        {licenseSubTab === 'assignments' && (
         <div className="bg-white rounded-lg shadow">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -845,7 +990,89 @@ export default function SuperadminPage() {
             </tbody>
           </table>
         </div>
-      )}
+        )}
+
+        {licenseSubTab === 'tiers' && (
+        <div>
+          {/* Tier cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {licenseTiers.map((tier) => (
+              <div
+                key={tier.id}
+                className={`bg-white rounded-lg shadow border-2 ${
+                  tier.key === 'enterprise' ? 'border-purple-200' :
+                  tier.key === 'professional' ? 'border-blue-200' :
+                  tier.key === 'growth' ? 'border-green-200' :
+                  'border-gray-200'
+                } ${!tier.is_active ? 'opacity-60' : ''}`}
+              >
+                <div className="p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">{tier.label}</h3>
+                      <p className="text-xs text-gray-500 font-mono">{tier.key}</p>
+                    </div>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      tier.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      {tier.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4 min-h-[40px]">{tier.description}</p>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Seats:</span>
+                      <span className="font-medium text-gray-900">{tier.min_seats} - {tier.max_seats === 100000 ? 'Unlimited' : tier.max_seats}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Default:</span>
+                      <span className="font-medium text-gray-900">{tier.default_seats} seats</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Price:</span>
+                      <span className="font-medium text-gray-900">
+                        {tier.price_per_seat > 0 ? `${tier.currency} ${tier.price_per_seat}/${tier.billing_cycle}` : 'Custom'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <p className="text-xs font-medium text-gray-500 uppercase mb-1">Features ({tier.features?.length || 0})</p>
+                    <div className="flex flex-wrap gap-1">
+                      {(tier.features || []).slice(0, 4).map((f, i) => (
+                        <span key={i} className="inline-block px-2 py-0.5 text-xs bg-gray-100 text-gray-700 rounded">{f}</span>
+                      ))}
+                      {(tier.features || []).length > 4 && (
+                        <span className="inline-block px-2 py-0.5 text-xs bg-gray-100 text-gray-500 rounded">
+                          +{(tier.features || []).length - 4} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-3 border-t border-gray-100">
+                    <Button variant="outline" size="sm" onClick={() => handleEditTier(tier)} className="flex-1">
+                      <Edit className="w-3 h-3 mr-1" /> Edit
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDeleteTier(tier.id, tier.label)}>
+                      <Trash2 className="w-3 h-3 text-red-600" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Add new tier card */}
+            <button
+              onClick={handleAddTier}
+              className="bg-gray-50 rounded-lg shadow border-2 border-dashed border-gray-300 p-5 flex flex-col items-center justify-center min-h-[280px] hover:border-blue-400 hover:bg-blue-50 transition"
+            >
+              <Plus className="w-8 h-8 text-gray-400 mb-2" />
+              <span className="text-sm font-medium text-gray-500">Add New Tier</span>
+            </button>
+          </div>
+        </div>
+        )}
+      </div>
+    )}
 
       {activeTab === 'admins' && (
         <div className="bg-white rounded-lg shadow">
@@ -1114,6 +1341,190 @@ export default function SuperadminPage() {
                   Cancel
                 </Button>
                 <Button type="submit">Create</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showTierModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-[540px] max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">{editingTier ? 'Edit License Tier' : 'Add License Tier'}</h2>
+              <Button variant="ghost" onClick={() => { setShowTierModal(false); setEditingTier(null); }}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <form onSubmit={handleSaveTier}>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-black">Tier Key</label>
+                  <input
+                    type="text"
+                    value={tierFormData.key}
+                    onChange={(e) => setTierFormData({ ...tierFormData, key: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    placeholder="e.g. starter, growth"
+                    pattern="[a-z0-9-]+"
+                    disabled={!!editingTier}
+                    required
+                  />
+                  {editingTier && <p className="text-xs text-gray-400 mt-1">Key cannot be changed after creation</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black">Display Label</label>
+                  <input
+                    type="text"
+                    value={tierFormData.label}
+                    onChange={(e) => setTierFormData({ ...tierFormData, label: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    placeholder="e.g. Starter, Growth"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-black">Description</label>
+                <textarea
+                  value={tierFormData.description}
+                  onChange={(e) => setTierFormData({ ...tierFormData, description: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                  rows={2}
+                  placeholder="Target audience and key features..."
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-black">Min Seats</label>
+                  <input
+                    type="number"
+                    value={tierFormData.min_seats}
+                    onChange={(e) => setTierFormData({ ...tierFormData, min_seats: parseInt(e.target.value) || 1 })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    min="1"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black">Max Seats</label>
+                  <input
+                    type="number"
+                    value={tierFormData.max_seats}
+                    onChange={(e) => setTierFormData({ ...tierFormData, max_seats: parseInt(e.target.value) || 1 })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    min="1"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black">Default Seats</label>
+                  <input
+                    type="number"
+                    value={tierFormData.default_seats}
+                    onChange={(e) => setTierFormData({ ...tierFormData, default_seats: parseInt(e.target.value) || 1 })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    min="1"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-black">Price / Seat</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={tierFormData.price_per_seat}
+                    onChange={(e) => setTierFormData({ ...tierFormData, price_per_seat: parseFloat(e.target.value) || 0 })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    min="0"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black">Currency</label>
+                  <select
+                    value={tierFormData.currency}
+                    onChange={(e) => setTierFormData({ ...tierFormData, currency: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="NGN">NGN (₦)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black">Billing Cycle</label>
+                  <select
+                    value={tierFormData.billing_cycle}
+                    onChange={(e) => setTierFormData({ ...tierFormData, billing_cycle: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                  >
+                    <option value="monthly">Monthly</option>
+                    <option value="annual">Annual</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-black">Sort Order</label>
+                  <input
+                    type="number"
+                    value={tierFormData.sort_order}
+                    onChange={(e) => setTierFormData({ ...tierFormData, sort_order: parseInt(e.target.value) || 0 })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    min="0"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <label className="flex items-center gap-2 text-sm font-medium text-black">
+                    <input
+                      type="checkbox"
+                      checked={tierFormData.is_active}
+                      onChange={(e) => setTierFormData({ ...tierFormData, is_active: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    Active
+                  </label>
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-black mb-2">Features</label>
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={tierFeatureInput}
+                    onChange={(e) => setTierFeatureInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddFeature(); } }}
+                    className="flex-1 border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    placeholder="Add a feature..."
+                  />
+                  <Button type="button" onClick={handleAddFeature} size="sm">
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {tierFormData.features.map((f, i) => (
+                    <span key={i} className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded">
+                      {f}
+                      <button type="button" onClick={() => handleRemoveFeature(i)} className="text-blue-400 hover:text-blue-600">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                  {tierFormData.features.length === 0 && (
+                    <span className="text-xs text-gray-400">No features added yet</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button type="button" variant="outline" onClick={() => { setShowTierModal(false); setEditingTier(null); }} className="mr-2">
+                  Cancel
+                </Button>
+                <Button type="submit">{editingTier ? 'Save Changes' : 'Create Tier'}</Button>
               </div>
             </form>
           </div>
