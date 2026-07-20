@@ -250,13 +250,6 @@ export class HRService {
   }
 
   // Employee Management
-  private static async resolveDepartmentId(tenantSlug: string, departmentName: string): Promise<string> {
-    const response = await apiClient.get(`/hr/departments?tenantSlug=${tenantSlug}`);
-    const depts: DepartmentRecord[] = response.data.departments || [];
-    const match = depts.find((d) => d.name === departmentName);
-    return match?.id || departmentName;
-  }
-
   static async addEmployee(tenantSlug: string, employeeData: {
     firstName: string;
     lastName: string;
@@ -270,12 +263,11 @@ export class HRService {
     activatePortal?: boolean;
     password?: string;
   }): Promise<{ employee: EmployeeRecord; portalCredentials: { email: string; password: string } | null }> {
-    const departmentId = await this.resolveDepartmentId(tenantSlug, employeeData.department);
     const payload = {
       tenantSlug,
       name: `${employeeData.firstName} ${employeeData.lastName}`.trim(),
       email: employeeData.email,
-      departmentId,
+      departmentName: employeeData.department,
       jobTitle: employeeData.position,
       hireDate: employeeData.startDate ? new Date(employeeData.startDate).toISOString() : undefined,
       salary: employeeData.salary ? Number(employeeData.salary.replace(/[^0-9.]/g, '')) : undefined,
@@ -308,7 +300,7 @@ export class HRService {
     }
     if (employeeData.email) payload.email = employeeData.email;
     if (employeeData.department) {
-      payload.departmentId = await this.resolveDepartmentId(tenantSlug, employeeData.department);
+      payload.departmentName = employeeData.department;
     }
     if (employeeData.position) payload.jobTitle = employeeData.position;
     if (employeeData.status) payload.status = employeeData.status.toLowerCase().replace(/\s/g, '-') as any;

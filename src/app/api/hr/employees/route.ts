@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { listEmployees, insertEmployee, countEmployees, ensureHrTables } from "@/lib/hr/db";
+import { listEmployees, insertEmployee, countEmployees, ensureHrTables, resolveOrCreateDepartment } from "@/lib/hr/db";
 import { extractAuthContext } from "@/lib/auth-helper";
 import { resolveDepartmentHeadContext } from "@/lib/tenant-admin/utils";
 import { sql as SQL } from "@/lib/sql-client";
@@ -19,7 +19,8 @@ const createSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   phone: z.string().optional(),
-  departmentId: z.string().min(1),
+  departmentId: z.string().optional(),
+  departmentName: z.string().optional(),
   jobTitle: z.string().min(1),
   reportingManagerId: z.string().optional(),
   branchId: z.string().optional(),
@@ -86,7 +87,18 @@ export async function POST(request: NextRequest) {
 
   try {
     await ensureHrTables(SQL);
-    const employee = await insertEmployee(parsed.data);
+
+    // Resolve department: accept either a UUID (departmentId) or a raw name (departmentName)
+    let departmentId = parsed.data.departmentId;
+    if (!departmentId && parsed.data.departmentName) {
+      const dept = await resolveOrCreateDepartment(parsed.data.tenantSlug, parsed.data.departmentName);
+      departmentId = dept.id;
+    }
+    if (!departmentId) {
+      return NextResponse.json({ error: "Either departmentId or departmentName is required" }, { status: 400 });
+    }
+
+    const employee = await insertEmployee({ ...parsed.data, departmentId });
 
     let portalCredentials: { email: string; password: string } | null = null;
     if (parsed.data.activatePortal) {

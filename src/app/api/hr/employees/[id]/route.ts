@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { updateEmployee, deleteEmployee, getEmployeeById } from "@/lib/hr/db";
+import { updateEmployee, deleteEmployee, getEmployeeById, resolveOrCreateDepartment } from "@/lib/hr/db";
 
 const updateSchema = z.object({
+  tenantSlug: z.string().optional(),
   name: z.string().min(1).optional(),
   email: z.string().email().optional(),
   phone: z.string().optional(),
   departmentId: z.string().min(1).optional(),
+  departmentName: z.string().optional(),
   jobTitle: z.string().min(1).optional(),
   reportingManagerId: z.string().optional(),
   branchId: z.string().optional(),
@@ -52,7 +54,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 
   try {
-    const employee = await updateEmployee(id, parsed.data);
+    // Resolve departmentName to departmentId if provided
+    let updateData = { ...parsed.data };
+    if (!updateData.departmentId && updateData.departmentName && updateData.tenantSlug) {
+      const dept = await resolveOrCreateDepartment(updateData.tenantSlug, updateData.departmentName);
+      updateData.departmentId = dept.id;
+    }
+    delete (updateData as any).departmentName;
+    delete (updateData as any).tenantSlug;
+
+    const employee = await updateEmployee(id, updateData);
     if (!employee) {
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
     }

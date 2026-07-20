@@ -500,6 +500,51 @@ export async function getDepartmentById(id: string, tenantSlug: string) {
   return arr.length ? normalizeDepartmentRow(arr[0]) : null;
 }
 
+/**
+ * Given a tenant and a department name (or a UUID that already exists),
+ * resolve it to a real admin_departments row. If the value is a raw name
+ * that doesn't match any existing department, auto-create one.
+ * This is the single source of truth for department resolution across
+ * manual add, bulk import, and invite flows.
+ */
+export async function resolveOrCreateDepartment(
+  tenantSlug: string,
+  departmentNameOrId: string
+): Promise<DepartmentRecord> {
+  const sql = SQL;
+  await ensureHrTables(sql);
+
+  const trimmed = departmentNameOrId.trim();
+  if (!trimmed) {
+    throw new Error("Department name is required");
+  }
+
+  // 1. If it looks like a UUID, try direct ID lookup first
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuidRegex.test(trimmed)) {
+    const byId = await getDepartmentById(trimmed, tenantSlug);
+    if (byId) return byId;
+  }
+
+  // 2. Case-insensitive name lookup
+  const rows = await sql`
+    select * from admin_departments
+    where tenant_slug = ${tenantSlug} and lower(name) = lower(${trimmed})
+    limit 1
+  `;
+  const arr = rows as any[];
+  if (arr.length > 0) {
+    return normalizeDepartmentRow(arr[0]);
+  }
+
+  // 3. Auto-create a minimal department
+  return insertDepartment({
+    tenantSlug,
+    name: trimmed,
+    description: null,
+  });
+}
+
 export async function updateDepartmentHead(id: string, tenantSlug: string, managerId: string | null) {
   const sql = SQL;
   await sql`update admin_departments set manager_id = ${managerId}, updated_at = now() where id = ${id} and tenant_slug = ${tenantSlug}`;

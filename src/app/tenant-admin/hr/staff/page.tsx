@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { Plus, Pencil, Search, ChevronLeft, ChevronRight, KeyRound, Lock, Unlock, CheckCircle, X, Copy } from 'lucide-react';
+import { Plus, Pencil, Search, ChevronLeft, ChevronRight, KeyRound, Lock, Unlock, CheckCircle, X, Copy, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { HRService } from '@/app/tenant-admin/sections/hr-service';
 import { AddEmployeeModal } from '@/app/tenant-admin/sections/hr-add-employee-modal';
@@ -51,6 +51,8 @@ export default function StaffPage() {
   const itemsPerPage = 25;
   const [portalActionLoading, setPortalActionLoading] = useState<string | null>(null);
   const [portalCredentials, setPortalCredentials] = useState<{ name: string; email: string; password: string } | null>(null);
+  const [migrationLoading, setMigrationLoading] = useState(false);
+  const [MigrationResult, setMigrationResult] = useState<{ scanned: number; repaired: number; repairs: any[]; dryRun: boolean } | null>(null);
 
   const [departments, setDepartments] = useState<string[]>(['All Departments']);
   const statuses = ['All Statuses', 'Active', 'On Leave', 'Inactive', 'Terminated'];
@@ -169,6 +171,36 @@ export default function StaffPage() {
     }
   };
 
+  const handleMigrateDepartments = async (dryRun: boolean) => {
+    if (!tenantSlug) return;
+    setMigrationLoading(true);
+    try {
+      const res = await fetch('/api/hr/employees/migrate-departments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantSlug, dryRun }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Migration failed:', data.error);
+        return;
+      }
+      setMigrationResult({
+        scanned: data.scanned,
+        repaired: data.repaired ?? 0,
+        repairs: data.repairs || [],
+        dryRun,
+      });
+      if (!dryRun && data.repaired > 0) {
+        await loadData();
+      }
+    } catch (err) {
+      console.error('Migration error:', err);
+    } finally {
+      setMigrationLoading(false);
+    }
+  };
+
   const handleEditEmployee = async (data: any) => {
     if (!tenantSlug || !editingEmployee) return;
     await HRService.updateEmployee(tenantSlug, editingEmployee.id, data);
@@ -179,13 +211,24 @@ export default function StaffPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Staff Management</h2>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-        >
-          <Plus className="w-4 h-4" />
-          Add Employee
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleMigrateDepartments(true)}
+            disabled={migrationLoading}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            title="Scan and fix department links for existing employees"
+          >
+            <RefreshCw className={`w-4 h-4 ${migrationLoading ? 'animate-spin' : ''}`} />
+            Sync Departments
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          >
+            <Plus className="w-4 h-4" />
+            Add Employee
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -507,6 +550,101 @@ export default function StaffPage() {
                   Done
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Migration result modal */}
+      {MigrationResult && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900">Department Sync</h3>
+              <button onClick={() => setMigrationResult(null)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto space-y-4">
+              {MigrationResult.scanned === 0 ? (
+                <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-lg p-4">
+                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-green-800">
+                    All employees already have proper department links. No repairs needed.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-900">
+                        {MigrationResult.dryRun
+                          ? `${MigrationResult.scanned} employee(s) have raw-text department IDs`
+                          : `${MigrationResult.repaired} employee(s) repaired`}
+                      </p>
+                      <p className="text-xs text-amber-700 mt-1">
+                        {MigrationResult.dryRun
+                          ? 'Review the list below and click "Apply Repair" to fix them.'
+                          : 'Department links have been updated to use proper department records.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700">Employee</th>
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700">Old Dept ID</th>
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700">Resolved To</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {MigrationResult.repairs.slice(0, 20).map((r: any, i: number) => (
+                          <tr key={i}>
+                            <td className="px-3 py-2 text-xs text-gray-900">{r.employeeName}</td>
+                            <td className="px-3 py-2 text-xs font-mono text-gray-500 truncate max-w-[120px]">{r.oldDepartmentId}</td>
+                            <td className="px-3 py-2 text-xs text-gray-900">{r.departmentName}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {MigrationResult.repairs.length > 20 && (
+                      <p className="px-3 py-2 text-xs text-gray-500 bg-gray-50">
+                        ...and {MigrationResult.repairs.length - 20} more
+                      </p>
+                    )}
+                  </div>
+
+                  {MigrationResult.dryRun && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setMigrationResult(null); handleMigrateDepartments(false); }}
+                        disabled={migrationLoading}
+                        className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {migrationLoading ? 'Applying...' : 'Apply Repair'}
+                      </button>
+                      <button
+                        onClick={() => setMigrationResult(null)}
+                        className="flex-1 px-4 py-2 text-sm border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+
+                  {!MigrationResult.dryRun && (
+                    <button
+                      onClick={() => setMigrationResult(null)}
+                      className="w-full px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      Done
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>

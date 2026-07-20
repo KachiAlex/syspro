@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { insertEmployee, ensureHrTables } from "@/lib/hr/db";
+import { insertEmployee, ensureHrTables, resolveOrCreateDepartment } from "@/lib/hr/db";
 import { ensureAdminTables } from "@/lib/admin/db";
 import { sql as SQL } from "@/lib/sql-client";
 import { setEmployeePassword } from "@/lib/hr/auth";
@@ -131,16 +131,27 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
+        // Resolve department name to a real admin_departments UUID
+        let departmentId = department;
+        if (department) {
+          try {
+            const dept = await resolveOrCreateDepartment(tenantSlug, department);
+            departmentId = dept.id;
+          } catch {
+            warnings.push(`Row ${i + 1}: could not resolve department "${department}", using raw value.`);
+          }
+        }
+
         let finalRole = mappedRole;
-        if (finalRole === 'hod' && department) {
-          if (hodDepartments.has(department)) {
+        if (finalRole === 'hod' && departmentId) {
+          if (hodDepartments.has(departmentId)) {
             finalRole = 'staff';
             warnings.push(`Row ${i + 1}: HOD already exists in "${department}". Assigned as staff instead.`);
           } else {
             const dupRows = await SQL`
               select id from admin_employees
               where tenant_slug = ${tenantSlug}
-                and department_id = ${department}
+                and department_id = ${departmentId}
                 and role = 'hod'
               limit 1
             `;
@@ -148,7 +159,7 @@ export async function POST(request: NextRequest) {
               finalRole = 'staff';
               warnings.push(`Row ${i + 1}: HOD already exists in "${department}". Assigned as staff instead.`);
             } else {
-              hodDepartments.add(department);
+              hodDepartments.add(departmentId);
             }
           }
         }
@@ -158,7 +169,7 @@ export async function POST(request: NextRequest) {
           tenantSlug,
           name: fullName,
           email,
-          departmentId: department,
+          departmentId,
           jobTitle: position,
           hireDate: startDate,
           salary,
