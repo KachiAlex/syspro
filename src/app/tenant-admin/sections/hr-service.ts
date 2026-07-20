@@ -358,7 +358,7 @@ export class HRService {
     isPortalActive: boolean;
     lastLogin: string | null;
   }>> {
-    const limit = opts?.limit ?? 200;
+    const limit = opts?.limit ?? 500;
     const offset = opts?.offset ?? 0;
     const [empRes, deptRes] = await Promise.all([
       apiClient.get(`/hr/employees?tenantSlug=${tenantSlug}&limit=${limit}&offset=${offset}`, { skipCache: true }),
