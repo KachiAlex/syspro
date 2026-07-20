@@ -331,7 +331,7 @@ export class HRService {
       formData.append('defaultPassword', defaultPassword);
     }
 
-    const response = await apiClient.post('/hr/employees/import', formData);
+    const response = await apiClient.post('/hr/employees/import', formData, { timeout: 120000, retries: 0 });
     return response.data;
   }
 

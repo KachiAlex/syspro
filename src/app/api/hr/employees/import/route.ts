@@ -44,6 +44,9 @@ function parseCSV(text: string): Record<string, string>[] {
   return rows;
 }
 
+export const maxDuration = 120;
+export const runtime = 'nodejs';
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -165,7 +168,7 @@ export async function POST(request: NextRequest) {
         }
 
         const fullName = `${firstName} ${lastName}`.trim();
-        await insertEmployee({
+        const employee = await insertEmployee({
           tenantSlug,
           name: fullName,
           email,
@@ -181,15 +184,8 @@ export async function POST(request: NextRequest) {
 
         // Always create portal account for imported employees
         const password = defaultPassword || generatePassword();
-        const empRows = await SQL`
-          select id from admin_employees
-          where tenant_slug = ${tenantSlug} and email = ${email}
-          limit 1
-        `;
-        if ((empRows as any[]).length > 0) {
-          await setEmployeePassword(tenantSlug, (empRows as any[])[0].id, password);
-          portalCredentials.push({ name: fullName, email, password });
-        }
+        await setEmployeePassword(tenantSlug, employee.id, password);
+        portalCredentials.push({ name: fullName, email, password });
       } catch (err: any) {
         const msg = err?.message || err?.toString?.() || "Unknown error";
         errors.push(`Row ${i + 1}: ${msg}`);
