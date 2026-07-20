@@ -31,6 +31,7 @@
     "next": "13.4.12",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "resend": "^4.8.0",
     "syspro-erp-frontend": "file:",
     "tailwind-merge": "^3.4.0",
     "zod": "^3.23.8"

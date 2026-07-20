@@ -42,7 +42,7 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
   const [selectedTemplate, setSelectedTemplate] = useState(0);
   const [previewPayload, setPreviewPayload] = useState('{\n  "id": "123"\n}');
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{ name: string; eventType: string; description: string; condition: any; actions: Array<{ type: string; params: Record<string, string> }> }>({
     name: "",
     eventType: "",
     description: "",

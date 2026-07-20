@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { tenantSlug, type, startDate, endDate } = parsed.data;
+    const { tenantSlug, type, startDate, endDate, period } = parsed.data;
 
     const filters = {
       tenantId: BigInt(0), // tenantSlug is used as filter in views

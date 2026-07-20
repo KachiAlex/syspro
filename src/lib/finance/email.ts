@@ -24,31 +24,18 @@ interface ExpenseNotification {
 }
 
 /**
- * Send email via configured service (Resend, SendGrid, etc.)
- * For now, logs to console - replace with actual email service
+ * Send email via centralized email service
  */
 async function sendEmail(options: EmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
-    // In production, integrate with Resend, SendGrid, or AWS SES
-    // Example with Resend:
-    // const { Resend } = await import('resend');
-    // const resend = new Resend(process.env.RESEND_API_KEY);
-    // const response = await resend.emails.send({
-    //   from: process.env.EMAIL_FROM || 'noreply@syspro.com',
-    //   to: options.to,
-    //   subject: options.subject,
-    //   html: options.htmlBody,
-    // });
-    // return { success: response.id ? true : false, messageId: response.id };
-
-    console.log(`[EMAIL] Sending to: ${options.to}`);
-    console.log(`[EMAIL] Subject: ${options.subject}`);
-    console.log(`[EMAIL] Body:\n${options.htmlBody}`);
-
-    return {
-      success: true,
-      messageId: `email-${Date.now()}`,
-    };
+    const { sendEmail: send } = await import("@/lib/email");
+    const result = await send({
+      to: options.to,
+      subject: options.subject,
+      html: options.htmlBody,
+      text: options.textBody,
+    });
+    return result;
   } catch (error) {
     console.error("Error sending email:", error);
     return {

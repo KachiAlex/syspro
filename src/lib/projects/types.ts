@@ -264,7 +264,9 @@ export const projectCreateSchema = z.object({
   branchId: z.string().uuid().optional(),
 });
 
-export const projectUpdateSchema = projectCreateSchema.partial();
+export const projectUpdateSchema = projectCreateSchema.partial().extend({
+  approvalStatus: z.enum(APPROVAL_STATUSES).optional(),
+});
 
 export const workstreamCreateSchema = z.object({
   projectId: z.string().uuid(),

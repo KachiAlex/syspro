@@ -411,6 +411,12 @@ export class HRService {
     return response.data.departments || [];
   }
 
+  static async resolveDepartmentId(tenantSlug: string, departmentName: string): Promise<string> {
+    const depts = await this.getDepartmentRecords(tenantSlug);
+    const found = depts.find((d) => d.name.toLowerCase() === departmentName.toLowerCase());
+    return found?.id || departmentName;
+  }
+
   static async getDepartments(tenantSlug: string): Promise<string[]> {
     const depts = await this.getDepartmentRecords(tenantSlug);
     return depts.map((d) => d.name);

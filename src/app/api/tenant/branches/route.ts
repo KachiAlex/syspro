@@ -36,7 +36,7 @@ function flattenBranches(node: any, list: TenantBranch[] = []) {
       headcount: typeof node.headcount === "number" ? node.headcount : 0,
       manager: node.manager || "—",
       establishedDate: node.metadata?.establishedDate || "—",
-      revenue: Number(node.metadata?.revenue) || 0,
+      revenue: String(Number(node.metadata?.revenue) || 0),
       currency: node.metadata?.currency || "USD",
       region: node.region,
       metadata: node.metadata || {},

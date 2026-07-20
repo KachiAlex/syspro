@@ -30,7 +30,7 @@ interface Employee {
   startDate: string;
   status: string;
   salary: string;
-  role?: string;
+  role: string;
 }
 
 interface TrainingSession {
@@ -193,14 +193,15 @@ const HRComponent: React.FC = () => {
 
       // Convert to local Employee interface
       const localEmployee: Employee = {
-        id: newEmployee.id,
-        name: newEmployee.name,
-        email: newEmployee.email,
+        id: newEmployee.employee.id,
+        name: newEmployee.employee.name,
+        email: newEmployee.employee.email,
         department: employeeData.department,
         position: employeeData.position,
         startDate: employeeData.startDate,
         status: 'Active',
-        salary: employeeData.salary || ''
+        salary: employeeData.salary || '',
+        role: employeeData.role || 'Staff',
       };
 
       setEmployees(prev => [localEmployee, ...prev]);
@@ -226,7 +227,8 @@ const HRComponent: React.FC = () => {
                 position: data.position || emp.position,
                 startDate: data.startDate || emp.startDate,
                 status: data.status || emp.status,
-                salary: data.salary || emp.salary
+                salary: data.salary || emp.salary,
+                role: data.role || emp.role,
               }
             : emp
         )
@@ -283,7 +285,8 @@ const HRComponent: React.FC = () => {
           position: emp.position,
           startDate: emp.startDate,
           status: emp.status,
-          salary: emp.salary ? new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(Number(emp.salary)) : ''
+          salary: emp.salary ? new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(Number(emp.salary)) : '',
+          role: emp.role || 'Staff',
         }))
       );
       setDepartments(fetchedDepartments);

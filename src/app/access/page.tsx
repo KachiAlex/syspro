@@ -81,21 +81,18 @@ export default function AccessPage() {
     }
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      if (email && password) {
-        const devId = 'dev-user-' + Date.now();
-        const derivedTenant = email.split('@')[1]?.replace(/\./g, '-') || 'unknown';
-        document.cookie = 'syspro_session=' + btoa(JSON.stringify({
-          id: devId, email, name: email.split('@')[0], tenantSlug: derivedTenant,
-          roleId: 'admin', iat: Date.now(),
-          exp: Date.now() + (7 * 24 * 60 * 60 * 1000)
-        })) + '; path=/; max-age=' + (7 * 24 * 60 * 60) + '; SameSite=lax; ' + (process.env.NODE_ENV === 'production' ? 'Secure;' : '');
-        document.cookie = 'tenantSlug=' + derivedTenant + '; path=/; max-age=' + (7 * 24 * 60 * 60) + '; SameSite=lax; ' + (process.env.NODE_ENV === 'production' ? 'Secure;' : '');
-        document.cookie = 'X-User-Id=' + devId + '; path=/; max-age=' + (7 * 24 * 60 * 60) + '; SameSite=lax; ' + (process.env.NODE_ENV === 'production' ? 'Secure;' : '');
-        document.cookie = 'X-User-Email=' + encodeURIComponent(email) + '; path=/; max-age=' + (7 * 24 * 60 * 60) + '; SameSite=lax; ' + (process.env.NODE_ENV === 'production' ? 'Secure;' : '');
-        document.cookie = 'X-Role-Id=admin; path=/; max-age=' + (7 * 24 * 60 * 60) + '; SameSite=lax; ' + (process.env.NODE_ENV === 'production' ? 'Secure;' : '');
-        router.push('/tenant-admin?tenantSlug=' + derivedTenant);
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'Login failed. Please check your credentials and try again.');
+        return;
       }
+      const data = await res.json();
+      router.push('/tenant-admin?tenantSlug=' + data.tenantSlug);
     } catch (err) {
       setError('Login failed. Please check your credentials and try again.');
     } finally {

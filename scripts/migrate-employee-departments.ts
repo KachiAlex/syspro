@@ -36,19 +36,19 @@ async function main() {
   console.log();
 
   // 1. Find all distinct non-UUID department_id values
-  const employees: Array<{
-    id: string;
-    name: string;
-    email: string;
-    department_id: string;
-    tenant_slug: string;
-  }> = await sql`
+  const employees = await sql`
     select id, name, email, department_id, tenant_slug
     from admin_employees
     where department_id is not null
       and department_id !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
     order by tenant_slug, created_at
-  `;
+  ` as Array<{
+    id: string;
+    name: string;
+    email: string;
+    department_id: string;
+    tenant_slug: string;
+  }>;
 
   if (employees.length === 0) {
     console.log("✓ All employees already have proper UUID department links. Nothing to migrate.");
@@ -80,12 +80,12 @@ async function main() {
 
     if (!deptId) {
       // Check if a department with this name already exists (case-insensitive)
-      const existing: Array<{ id: string }> = await sql`
+      const existing = await sql`
         select id from admin_departments
         where tenant_slug = ${emp.tenant_slug}
           and lower(name) = lower(${rawDept})
         limit 1
-      `;
+      ` as Array<{ id: string }>;
 
       if (existing.length > 0) {
         deptId = existing[0].id;

@@ -27,7 +27,10 @@ function getInitialTheme(): Theme {
   } catch {
     // localStorage may be unavailable
   }
-  // Default to dark to match current app behavior
+  // Fall back to system preference
+  if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
+    return "light";
+  }
   return "dark";
 }
 

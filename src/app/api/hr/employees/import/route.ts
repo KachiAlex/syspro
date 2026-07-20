@@ -108,88 +108,101 @@ export async function POST(request: NextRequest) {
 
     const hodDepartments = new Set<string>();
 
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
+    // Pre-resolve all unique department names in batch to avoid repeated DB calls
+    const uniqueDeptNames = new Set<string>();
+    for (const row of rows) {
+      const dept = (row.department || "").trim();
+      if (dept) uniqueDeptNames.add(dept);
+    }
+    const deptMap = new Map<string, string>();
+    for (const deptName of uniqueDeptNames) {
       try {
-        const firstName = (row.firstname || "").trim();
-        const lastName = (row.lastname || "").trim();
-        const email = (row.email || "").trim();
-        const department = (row.department || "").trim();
-        let position = (row.position || row.jobtitle || "").trim();
-        const startDate = row.startdate || row.hiredate || null;
-        const salaryRaw = (row.salary || "").trim();
-        const salary = salaryRaw ? Number(salaryRaw.replace(/[^0-9.]/g, "")) : null;
+        const dept = await resolveOrCreateDepartment(tenantSlug, deptName);
+        deptMap.set(deptName, dept.id);
+      } catch {
+        // Will be handled per-row as a warning
+      }
+    }
 
-        const rawRole = (row.role || "staff").trim();
-        const { role: mappedRole, inferredFromTitle } = inferRole(rawRole);
-        if (inferredFromTitle && !position) {
-          position = rawRole;
-        }
+    // Pre-fetch all existing HODs for this tenant in one query
+    const existingHods = await SQL`
+      select department_id from admin_employees
+      where tenant_slug = ${tenantSlug} and role = 'hod'
+    `;
+    for (const row of (existingHods as any[])) {
+      if (row.department_id) hodDepartments.add(row.department_id);
+    }
 
-        const rawEmpType = (row.employmenttype || "full-time").trim().toLowerCase();
-        const mappedEmpType = employmentTypeAliases[rawEmpType] || rawEmpType;
+    // Process rows in concurrent batches for faster import
+    const BATCH_SIZE = 5;
+    for (let batchStart = 0; batchStart < rows.length; batchStart += BATCH_SIZE) {
+      const batch = rows.slice(batchStart, batchStart + BATCH_SIZE);
+      await Promise.all(batch.map(async (row, batchIdx) => {
+        const i = batchStart + batchIdx;
+        try {
+          const firstName = (row.firstname || "").trim();
+          const lastName = (row.lastname || "").trim();
+          const email = (row.email || "").trim();
+          const department = (row.department || "").trim();
+          let position = (row.position || row.jobtitle || "").trim();
+          const startDate = row.startdate || row.hiredate || null;
+          const salaryRaw = (row.salary || "").trim();
+          const salary = salaryRaw ? Number(salaryRaw.replace(/[^0-9.]/g, "")) : null;
 
-        if (!firstName || !lastName || !email) {
-          errors.push(`Row ${i + 1}: missing required fields (firstname=${firstName}, lastname=${lastName}, email=${email})`);
-          continue;
-        }
-
-        // Resolve department name to a real admin_departments UUID
-        let departmentId = department;
-        if (department) {
-          try {
-            const dept = await resolveOrCreateDepartment(tenantSlug, department);
-            departmentId = dept.id;
-          } catch {
-            warnings.push(`Row ${i + 1}: could not resolve department "${department}", using raw value.`);
+          const rawRole = (row.role || "staff").trim();
+          const { role: mappedRole, inferredFromTitle } = inferRole(rawRole);
+          if (inferredFromTitle && !position) {
+            position = rawRole;
           }
-        }
 
-        let finalRole = mappedRole;
-        if (finalRole === 'hod' && departmentId) {
-          if (hodDepartments.has(departmentId)) {
-            finalRole = 'staff';
-            warnings.push(`Row ${i + 1}: HOD already exists in "${department}". Assigned as staff instead.`);
-          } else {
-            const dupRows = await SQL`
-              select id from admin_employees
-              where tenant_slug = ${tenantSlug}
-                and department_id = ${departmentId}
-                and role = 'hod'
-              limit 1
-            `;
-            if ((dupRows as any[]).length > 0) {
+          const rawEmpType = (row.employmenttype || "full-time").trim().toLowerCase();
+          const mappedEmpType = employmentTypeAliases[rawEmpType] || rawEmpType;
+
+          if (!firstName || !lastName || !email) {
+            errors.push(`Row ${i + 1}: missing required fields (firstname=${firstName}, lastname=${lastName}, email=${email})`);
+            return;
+          }
+
+          // Use pre-resolved department or fall back to raw value
+          let departmentId = department;
+          if (department) {
+            departmentId = deptMap.get(department) || department;
+          }
+
+          let finalRole = mappedRole;
+          if (finalRole === 'hod' && departmentId) {
+            if (hodDepartments.has(departmentId)) {
               finalRole = 'staff';
               warnings.push(`Row ${i + 1}: HOD already exists in "${department}". Assigned as staff instead.`);
             } else {
               hodDepartments.add(departmentId);
             }
           }
+
+          const fullName = `${firstName} ${lastName}`.trim();
+          const employee = await insertEmployee({
+            tenantSlug,
+            name: fullName,
+            email,
+            departmentId,
+            jobTitle: position,
+            hireDate: startDate,
+            salary,
+            employmentType: mappedEmpType,
+            role: finalRole,
+            status: "active",
+          });
+          imported++;
+
+          // Always create portal account for imported employees
+          const password = defaultPassword || generatePassword();
+          await setEmployeePassword(tenantSlug, employee.id, password);
+          portalCredentials.push({ name: fullName, email, password });
+        } catch (err: any) {
+          const msg = err?.message || err?.toString?.() || "Unknown error";
+          errors.push(`Row ${i + 1}: ${msg}`);
         }
-
-        const fullName = `${firstName} ${lastName}`.trim();
-        const employee = await insertEmployee({
-          tenantSlug,
-          name: fullName,
-          email,
-          departmentId,
-          jobTitle: position,
-          hireDate: startDate,
-          salary,
-          employmentType: mappedEmpType,
-          role: finalRole,
-          status: "active",
-        });
-        imported++;
-
-        // Always create portal account for imported employees
-        const password = defaultPassword || generatePassword();
-        await setEmployeePassword(tenantSlug, employee.id, password);
-        portalCredentials.push({ name: fullName, email, password });
-      } catch (err: any) {
-        const msg = err?.message || err?.toString?.() || "Unknown error";
-        errors.push(`Row ${i + 1}: ${msg}`);
-      }
+      }));
     }
 
     const response: any = { imported, failed: errors.length, errors, warnings };

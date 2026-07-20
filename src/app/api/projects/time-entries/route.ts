@@ -46,9 +46,10 @@ export async function POST(request: NextRequest) {
       taskId,
       projectId,
       employeeId,
-      assignedHours: null,
-      assignedPercentage: null,
+      assignedHours: undefined,
+      assignedPercentage: undefined,
       assignmentStartDate: new Date(),
+      status: "PROPOSED",
     },
     context.userId
   );
@@ -63,12 +64,11 @@ export async function POST(request: NextRequest) {
       taskAssignmentId,
       taskId,
       projectId,
-      employeeId,
       logDate: new Date(date),
       hoursLogged: Number(hours),
       billable,
-      description: null,
-      activityType: null,
+      description: undefined,
+      activityType: undefined,
     },
     context.userId
   );

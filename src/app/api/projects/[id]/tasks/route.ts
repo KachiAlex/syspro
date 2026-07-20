@@ -4,8 +4,8 @@ import {
   getTasksForProject,
   createTask,
   getOrCreateDefaultWorkstream,
-  Task,
 } from "@/lib/projects/db";
+import { Task } from "@/lib/projects/types";
 
 const statusToDb: Record<string, string> = {
   todo: "NOT_STARTED",

@@ -84,6 +84,7 @@ const SECTION_KEYWORDS: Record<keyof Omit<RefinedReport, 'title' | 'refinedText'
   objectives: ['objective', 'objectives', 'goal', 'goals', 'aim', 'target', 'purpose'],
   achievements: ['achievement', 'achievements', 'accomplished', 'milestone', 'win', 'wins', 'success', 'delivered', 'shipped'],
   challenges: ['challenge', 'challenges', 'difficulty', 'difficult', 'hurdle', 'setback', 'roadblock', 'struggle'],
+  appraisal: [],
 };
 
 function toSentences(text: string): string[] {

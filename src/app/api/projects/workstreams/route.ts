@@ -4,8 +4,8 @@ import {
   createWorkstream,
   getWorkstreamsForProject,
   getAllWorkstreamsForTenant,
-  Workstream,
 } from "@/lib/projects/db";
+import { Workstream } from "@/lib/projects/types";
 
 export async function GET(request: NextRequest) {
   const context = validateTenantContext(request, "read");

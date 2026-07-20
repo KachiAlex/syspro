@@ -1,16 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { LogIn, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Mail, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
+import Link from 'next/link';
 
-export default function EmployeeLoginPage() {
-  const router = useRouter();
+export default function ForgotPasswordPage() {
   const [tenantSlug, setTenantSlug] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,20 +17,19 @@ export default function EmployeeLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/hr/employees/auth/login', {
+      const res = await fetch('/api/hr/employees/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantSlug, email, password }),
+        body: JSON.stringify({ tenantSlug, email }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        setError(data.error || 'Login failed');
+        const data = await res.json();
+        setError(data.error || 'Request failed');
         return;
       }
 
-      router.push('/employee/dashboard');
+      setSuccess(true);
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -39,16 +37,42 @@ export default function EmployeeLoginPage() {
     }
   };
 
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 px-4">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center">
+            <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-7 h-7 text-green-600" />
+            </div>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">Check your email</h1>
+            <p className="text-sm text-gray-600 mb-6">
+              If an account exists for <strong>{email}</strong> in organization <strong>{tenantSlug}</strong>,
+              you&apos;ll receive a password reset link shortly. The link expires in 30 minutes.
+            </p>
+            <Link
+              href="/employee/login"
+              className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 px-4">
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-          <div className="flex flex-col items-center mb-8">
+          <div className="flex flex-col items-center mb-6">
             <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center mb-4">
-              <LogIn className="w-7 h-7 text-white" />
+              <Mail className="w-7 h-7 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Employee Portal</h1>
-            <p className="text-sm text-gray-500 mt-1">Sign in to access your dashboard</p>
+            <h1 className="text-2xl font-bold text-gray-900">Forgot Password</h1>
+            <p className="text-sm text-gray-500 mt-1">Enter your details to reset your password</p>
           </div>
 
           {error && (
@@ -60,9 +84,7 @@ export default function EmployeeLoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Organization ID
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Organization ID</label>
               <input
                 type="text"
                 value={tenantSlug}
@@ -72,15 +94,9 @@ export default function EmployeeLoginPage() {
                 disabled={loading}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-400 mt-1">
-                Ask your administrator if you don&apos;t know your organization ID.
-              </p>
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Email
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
               <input
                 type="email"
                 value={email}
@@ -91,28 +107,6 @@ export default function EmployeeLoginPage() {
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                disabled={loading}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            <div className="flex justify-end">
-              <a href="/employee/forgot-password" className="text-xs text-blue-600 hover:text-blue-700 font-medium">
-                Forgot password?
-              </a>
-            </div>
-
             <button
               type="submit"
               disabled={loading}
@@ -121,18 +115,24 @@ export default function EmployeeLoginPage() {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Signing in...
+                  Sending reset link...
                 </>
               ) : (
-                'Sign In'
+                'Send Reset Link'
               )}
             </button>
           </form>
-        </div>
 
-        <p className="text-center text-xs text-gray-400 mt-6">
-          Don&apos;t have an account? Contact your HR administrator.
-        </p>
+          <div className="mt-6 text-center">
+            <Link
+              href="/employee/login"
+              className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to login
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

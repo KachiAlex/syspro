@@ -3,10 +3,11 @@
  * Handles employee login, password hashing, and session management.
  */
 
-import { randomUUID } from "node:crypto";
+import { randomUUID, randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables } from "./db";
+import { signSession, verifySession } from "@/lib/session";
 
 const SALT_ROUNDS = 12;
 
@@ -21,13 +22,14 @@ export interface EmployeeSession {
 }
 
 /**
- * Generate a secure random password
+ * Generate a secure random password using crypto.randomBytes
  */
-export function generatePassword(length = 10): string {
+export function generatePassword(length = 12): string {
   const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+  const bytes = randomBytes(length);
   let password = "";
   for (let i = 0; i < length; i++) {
-    password += charset.charAt(Math.floor(Math.random() * charset.length));
+    password += charset.charAt(bytes[i] % charset.length);
   }
   return password;
 }
@@ -144,25 +146,33 @@ export async function bulkActivateEmployees(
 }
 
 /**
- * Build a simple JWT-like token for employee sessions
- * (In production, consider using jose or next-auth)
+ * Build an HMAC-signed token for employee sessions
  */
 export function createEmployeeToken(session: EmployeeSession): string {
-  const payload = JSON.stringify(session);
-  const signature = randomUUID().replace(/-/g, "");
-  return `${Buffer.from(payload).toString("base64url")}.${signature}`;
+  return signSession({
+    id: session.id,
+    email: session.email,
+    name: session.name,
+    tenantSlug: session.tenantSlug,
+    roleId: session.role,
+    iat: Date.now(),
+    exp: Date.now() + 12 * 60 * 60 * 1000, // 12 hours
+  });
 }
 
 /**
- * Decode an employee token back to a session
+ * Decode and verify an employee token
  */
 export function decodeEmployeeToken(token: string): EmployeeSession | null {
-  try {
-    const [payload] = token.split(".");
-    if (!payload) return null;
-    const decoded = Buffer.from(payload, "base64url").toString("utf8");
-    return JSON.parse(decoded) as EmployeeSession;
-  } catch {
-    return null;
-  }
+  const payload = verifySession(token);
+  if (!payload) return null;
+  return {
+    id: payload.id,
+    email: payload.email,
+    name: payload.name || "",
+    tenantSlug: payload.tenantSlug || "",
+    role: payload.roleId || "staff",
+    departmentId: "",
+    jobTitle: "",
+  };
 }

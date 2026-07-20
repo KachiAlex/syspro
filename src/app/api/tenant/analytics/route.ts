@@ -440,7 +440,7 @@ export async function POST(request: NextRequest) {
       await auditService.log(
         asTenantSlug(context.tenantSlug),
         context.userId as UserId,
-        "execute",
+        "export" as AuditAction,
         "export",
         run.id as ResourceId,
         { after: run }

@@ -91,7 +91,7 @@ export async function executeRule(rule: AutomationRule, event: { type: string; p
 
 export async function executeRulesForEvent(
   tenantSlug: string,
-  event: { type: string; payload?: Record<string, any>; actor?: string },
+  event: { type: string; payload: Record<string, any>; actor?: string },
   simulation = false
 ): Promise<Array<{ ruleId: string; ruleName: string; matched: boolean; actions: Action[] }>> {
   const rules = await listAutomationRules(tenantSlug);

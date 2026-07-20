@@ -37,6 +37,7 @@ interface StaffReport {
   submittedAt: string;
   updatedAt: string;
   status: 'pending' | 'under_review' | 'approved' | 'needs_edit' | 'rejected';
+  department?: string;
   hodComment?: string | null;
   templateSnapshot?: any;
   appraisal?: {

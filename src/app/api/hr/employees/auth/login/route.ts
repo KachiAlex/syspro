@@ -1,12 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { authenticateEmployee, createEmployeeToken } from "@/lib/hr/auth";
+import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limit";
 
 export async function GET() {
   return NextResponse.json({ status: "ok", message: "Employee login API is available." });
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 login attempts per minute per IP
+  const rateKey = `emp-login:${getRateLimitKey(request)}`;
+  const { allowed, retryAfter } = checkRateLimit(rateKey, 5, 60_000);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: `Too many login attempts. Try again in ${retryAfter}s.` },
+      { status: 429, headers: { "Retry-After": retryAfter.toString() } }
+    );
+  }
+
   try {
     const body = await request.json();
     const { tenantSlug, email, password } = body;

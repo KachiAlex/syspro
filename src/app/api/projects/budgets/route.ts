@@ -42,9 +42,9 @@ export async function POST(request: NextRequest) {
     id: `budget-${updated.id}`,
     projectId: updated.id,
     projectName: updated.name,
-    totalBudget: Number(updated.total_budget_amount ?? 0),
+    totalBudget: Number(updated.totalBudgetAmount ?? 0),
     spent: 0,
-    remaining: Number(updated.total_budget_amount ?? 0),
+    remaining: Number(updated.totalBudgetAmount ?? 0),
   };
 
   return NextResponse.json(

@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
             reportType: report.reportType || reportType,
             status: report.status || "pending",
             module: "hr",
-            createdAt: report.createdAt || new Date().toISOString(),
+            createdAt: (report as any).createdAt || (report as any).submittedAt || new Date().toISOString(),
           },
         }
       );

@@ -5,10 +5,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getSql } from '@/lib/db';
 import bcrypt from 'bcryptjs';
+import { checkRateLimit, getRateLimitKey } from '@/lib/rate-limit';
 
 const sql = getSql();
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 login attempts per minute per IP
+  const rateKey = `admin-login:${getRateLimitKey(request)}`;
+  const { allowed, retryAfter } = checkRateLimit(rateKey, 5, 60_000);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: `Too many login attempts. Try again in ${retryAfter}s.` },
+      { status: 429, headers: { 'Retry-After': retryAfter.toString() } }
+    );
+  }
+
   try {
     const body = await request.json();
     const { email, password } = body;

@@ -182,7 +182,7 @@ export async function PUT(request: NextRequest) {
   }
 
   const dbStatus = statusToDb[status] || status.toUpperCase().replace(/-/g, "_");
-  const task = await updateTask(taskId, context.tenantSlug, { status: dbStatus });
+  const task = await updateTask(taskId, context.tenantSlug, { status: dbStatus as any });
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }

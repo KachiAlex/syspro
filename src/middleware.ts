@@ -9,7 +9,10 @@ function getRequiredPermissionForPath(pathname: string): string | null {
   if (
     pathname.startsWith('/api/hr/employees/auth/login') ||
     pathname.startsWith('/api/hr/employees/auth/logout') ||
-    pathname.startsWith('/api/hr/employees/me')
+    pathname.startsWith('/api/hr/employees/auth/forgot-password') ||
+    pathname.startsWith('/api/hr/employees/auth/reset-password') ||
+    pathname.startsWith('/api/hr/employees/me') ||
+    pathname.startsWith('/api/hr/employees/portal/')
   ) return null;
   if (pathname.startsWith('/api/automation/')) return 'automation';
   if (pathname.startsWith('/api/finance/') || pathname.startsWith('/api/tenant/billing')) return 'finance';
@@ -36,6 +39,43 @@ function getRequiredPermissionForPath(pathname: string): string | null {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isProduction = process.env.NODE_ENV === 'production';
+
+  // CSRF protection: validate Origin/Referer for state-changing requests
+  const method = request.method.toUpperCase();
+  if (pathname.startsWith('/api/') && (method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE')) {
+    const origin = request.headers.get('origin');
+    const referer = request.headers.get('referer');
+    const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+
+    let isValidOrigin = false;
+    if (origin) {
+      try {
+        const originUrl = new URL(origin);
+        const allowedUrl = new URL(allowedOrigin);
+        isValidOrigin = originUrl.host === allowedUrl.host || originUrl.hostname === 'localhost' || originUrl.hostname === '127.0.0.1';
+      } catch {
+        isValidOrigin = false;
+      }
+    } else if (referer) {
+      try {
+        const refererUrl = new URL(referer);
+        const allowedUrl = new URL(allowedOrigin);
+        isValidOrigin = refererUrl.host === allowedUrl.host || refererUrl.hostname === 'localhost' || refererUrl.hostname === '127.0.0.1';
+      } catch {
+        isValidOrigin = false;
+      }
+    } else {
+      // No Origin or Referer header — reject in production, allow in dev for curl/postman
+      isValidOrigin = !isProduction;
+    }
+
+    if (!isValidOrigin) {
+      return NextResponse.json(
+        { error: 'CSRF validation failed: invalid origin' },
+        { status: 403 }
+      );
+    }
+  }
 
   // Protect superadmin routes
   if (pathname.startsWith('/superadmin') && pathname !== '/superadmin/login') {

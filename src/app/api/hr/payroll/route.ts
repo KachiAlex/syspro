@@ -17,8 +17,8 @@ const createSchema = z.object({
     z.object({
       employeeId: z.string().min(1),
       employeeName: z.string().min(1),
-      department: z.string().optional(),
-      position: z.string().optional(),
+      department: z.string().nullable(),
+      position: z.string().nullable(),
       baseSalary: z.number().min(0),
       transportAllowance: z.number().min(0),
       housingAllowance: z.number().min(0),
