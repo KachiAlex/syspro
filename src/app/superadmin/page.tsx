@@ -20,6 +20,8 @@ interface License {
   tenant_slug: string;
   type: string;
   seats: number;
+  status: string;
+  license_key: string;
   expiry: string | null;
   created_at: string;
 }
@@ -114,7 +116,7 @@ export default function SuperadminPage() {
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [tenantDetails, setTenantDetails] = useState<any>(null);
   const [tenantFormData, setTenantFormData] = useState({ name: '', slug: '', seats: 1 });
-  const [licenseFormData, setLicenseFormData] = useState({ tenantSlug: '', type: 'basic', seats: 1, expiry: '' });
+  const [licenseFormData, setLicenseFormData] = useState({ tenantSlug: '', type: 'starter', seats: 10, expiry: '' });
   const [adminFormData, setAdminFormData] = useState({ tenantSlug: '', email: '', name: '', role: 'admin' });
   
   // Pagination and bulk selection state
@@ -342,7 +344,7 @@ export default function SuperadminPage() {
         const newLicense = await response.json();
         setLicenses([...licenses, newLicense]);
         setShowLicenseModal(false);
-        setLicenseFormData({ tenantSlug: '', type: 'basic', seats: 1, expiry: '' });
+        setLicenseFormData({ tenantSlug: '', type: 'starter', seats: 10, expiry: '' });
       }
     } catch (error) {
       console.error('Failed to create license:', error);
@@ -769,16 +771,19 @@ export default function SuperadminPage() {
                   Tenant
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
+                  Tier
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  License Key
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Seats
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Expiry
+                  Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Created
+                  Expiry
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -792,16 +797,33 @@ export default function SuperadminPage() {
                     {license.tenant_name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {license.type}
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      license.type === 'enterprise' ? 'bg-purple-100 text-purple-700' :
+                      license.type === 'professional' ? 'bg-blue-100 text-blue-700' :
+                      license.type === 'growth' ? 'bg-green-100 text-green-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      {license.type}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                    {license.license_key || '—'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {license.seats}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {license.expiry ? new Date(license.expiry).toLocaleDateString() : 'Never'}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      license.status === 'active' ? 'bg-green-100 text-green-700' :
+                      license.status === 'suspended' ? 'bg-orange-100 text-orange-700' :
+                      license.status === 'expired' ? 'bg-red-100 text-red-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      {license.status || 'active'}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(license.created_at).toLocaleDateString()}
+                    {license.expiry ? new Date(license.expiry).toLocaleDateString() : 'Never'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <Button variant="ghost" size="sm" onClick={() => handleViewDetails(license.tenant_slug)}>
@@ -1050,16 +1072,21 @@ export default function SuperadminPage() {
                 </select>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-black">Type</label>
+                <label className="block text-sm font-medium text-black">License Tier</label>
                 <select
                   value={licenseFormData.type}
-                  onChange={(e) => setLicenseFormData({ ...licenseFormData, type: e.target.value })}
+                  onChange={(e) => {
+                    const tier = e.target.value;
+                    const defaults: Record<string, number> = { starter: 10, growth: 50, professional: 200, enterprise: 1000 };
+                    setLicenseFormData({ ...licenseFormData, type: tier, seats: defaults[tier] || 1 });
+                  }}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
                   required
                 >
-                  <option value="basic">Basic</option>
-                  <option value="premium">Premium</option>
-                  <option value="enterprise">Enterprise</option>
+                  <option value="starter">Starter (5-25 seats) — Small businesses</option>
+                  <option value="growth">Growth (25-100 seats) — Mid-market</option>
+                  <option value="professional">Professional (100-500 seats) — Large orgs</option>
+                  <option value="enterprise">Enterprise (500+ seats) — Corporations</option>
                 </select>
               </div>
               <div className="mb-4">

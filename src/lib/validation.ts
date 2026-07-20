@@ -219,10 +219,17 @@ export const UpdateTenantSchema = z.object({
 
 export const CreateLicenseSchema = z.object({
   tenantSlug: z.string().min(1, "Tenant slug required").max(100),
-  type: z.enum(["basic", "premium", "enterprise"], { errorMap: () => ({ message: "Invalid license type" }) }),
+  type: z.enum(["starter", "growth", "professional", "enterprise"], { errorMap: () => ({ message: "Invalid license type" }) }),
   seats: z.number().int().min(1).max(100000),
   expiry: z.string().datetime("Invalid datetime").optional(),
 });
+
+export const LICENSE_TIERS = {
+  starter: { label: "Starter", minSeats: 5, maxSeats: 25, defaultSeats: 10, description: "Small businesses (1-10 employees). Core HR, basic payroll, employee portal." },
+  growth: { label: "Growth", minSeats: 25, maxSeats: 100, defaultSeats: 50, description: "Mid-market (10-100 employees). + Recruitment, leave management, performance, CRM." },
+  professional: { label: "Professional", minSeats: 100, maxSeats: 500, defaultSeats: 200, description: "Large organizations (100-500 employees). + Finance, inventory, automation, analytics." },
+  enterprise: { label: "Enterprise", minSeats: 500, maxSeats: 100000, defaultSeats: 1000, description: "Corporations (500+ employees). + Multi-region, custom integrations, SLA, audit logs." },
+} as const;
 
 export const CreateAdminSchema = z.object({
   tenantSlug: z.string().min(1, "Tenant slug required").max(100),

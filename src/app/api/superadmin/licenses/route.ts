@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
+import { CreateLicenseSchema, safeParse, LICENSE_TIERS } from '@/lib/validation';
+import { randomUUID } from 'crypto';
 
 const sql = getSql();
 
@@ -21,21 +23,28 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { tenantSlug, type, seats, expiry } = body;
 
-    if (!tenantSlug || !type || !seats) {
-      return NextResponse.json({ error: 'Missing required fields: tenantSlug, type, seats' }, { status: 400 });
+    const validation = safeParse(CreateLicenseSchema, body);
+    if (!validation.success) {
+      return NextResponse.json({
+        error: 'Invalid request body',
+        details: validation.error.errors,
+      }, { status: 400 });
     }
 
-    // Get tenant id from slug
+    const { tenantSlug, type, seats, expiry } = validation.data;
+
     const tenant = await sql`SELECT id FROM tenants WHERE slug = ${tenantSlug}`;
     if (tenant.length === 0) {
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
+    const licenseKey = `SYSPRO-${type.toUpperCase()}-${tenantSlug.toUpperCase()}-${randomUUID().slice(0, 8)}`;
+    const expiryDate = expiry ? expiry.slice(0, 10) : null;
+
     const result = await sql`
-      INSERT INTO licenses (tenant_id, type, seats, expiry)
-      VALUES (${tenant[0].id}, ${type}, ${seats}, ${expiry})
+      INSERT INTO licenses (tenant_id, license_key, type, seats, status, expiry, created_at)
+      VALUES (${tenant[0].id}, ${licenseKey}, ${type}, ${seats}, 'active', ${expiryDate}, now())
       RETURNING *
     `;
 
