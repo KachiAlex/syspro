@@ -37,7 +37,7 @@ export async function PUT(
   const { slug } = await params;
   try {
     const body = await request.json();
-    const { name, seats } = body;
+    const { name, seats, licenseType } = body;
 
     const result = await sql`
       UPDATE tenants
@@ -52,11 +52,21 @@ export async function PUT(
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
-    if (seats !== undefined) {
-      await sql`
-        UPDATE licenses SET seats = ${seats}, updated_at = NOW()
-        WHERE tenant_id = ${result[0].id} AND status = 'active'
-      `;
+    if (seats !== undefined || licenseType !== undefined) {
+      if (licenseType) {
+        await sql`
+          UPDATE licenses SET
+            seats = COALESCE(${seats ?? null}, seats),
+            type = ${licenseType},
+            updated_at = NOW()
+          WHERE tenant_id = ${result[0].id} AND status = 'active'
+        `;
+      } else if (seats !== undefined) {
+        await sql`
+          UPDATE licenses SET seats = ${seats}, updated_at = NOW()
+          WHERE tenant_id = ${result[0].id} AND status = 'active'
+        `;
+      }
     }
 
     return NextResponse.json(result[0]);

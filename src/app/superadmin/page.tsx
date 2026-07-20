@@ -142,7 +142,7 @@ export default function SuperadminPage() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [tenantDetails, setTenantDetails] = useState<any>(null);
-  const [tenantFormData, setTenantFormData] = useState({ name: '', slug: '', seats: 1 });
+  const [tenantFormData, setTenantFormData] = useState({ name: '', slug: '', seats: 1, licenseType: '' });
   const [licenseFormData, setLicenseFormData] = useState({ tenantSlug: '', type: 'starter', seats: 10, expiry: '' });
   const [adminFormData, setAdminFormData] = useState({ tenantSlug: '', email: '', name: '', role: 'admin' });
   
@@ -441,7 +441,7 @@ export default function SuperadminPage() {
       if (response.ok) {
         const newTenant = await response.json();
         setShowTenantModal(false);
-        setTenantFormData({ name: '', slug: '', seats: 1 });
+        setTenantFormData({ name: '', slug: '', seats: 1, licenseType: '' });
         // refresh page to include new tenant
         fetchTenants(currentPage);
       }
@@ -450,9 +450,22 @@ export default function SuperadminPage() {
     }
   };
 
-  const handleEditTenant = (tenant: Tenant) => {
+  const handleEditTenant = async (tenant: Tenant) => {
     setEditingTenant(tenant);
-    setTenantFormData({ name: tenant.name, slug: tenant.slug, seats: tenant.seats });
+    setTenantFormData({ name: tenant.name, slug: tenant.slug, seats: tenant.seats, licenseType: '' });
+    // Fetch current license type for this tenant
+    try {
+      const licRes = await fetch('/api/superadmin/licenses');
+      if (licRes.ok) {
+        const allLicenses = await licRes.json();
+        const tenantLicense = allLicenses.find((l: any) => l.tenant_slug === tenant.slug);
+        if (tenantLicense) {
+          setTenantFormData(prev => ({ ...prev, licenseType: tenantLicense.type, seats: tenantLicense.seats }));
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch tenant license:', e);
+    }
     setShowTenantModal(true);
   };
 
@@ -463,12 +476,12 @@ export default function SuperadminPage() {
       const response = await fetch(`/api/superadmin/tenants/${editingTenant.slug}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: tenantFormData.name, seats: tenantFormData.seats }),
+        body: JSON.stringify({ name: tenantFormData.name, seats: tenantFormData.seats, licenseType: tenantFormData.licenseType }),
       });
       if (response.ok) {
         setShowTenantModal(false);
         setEditingTenant(null);
-        setTenantFormData({ name: '', slug: '', seats: 1 });
+        setTenantFormData({ name: '', slug: '', seats: 1, licenseType: '' });
         fetchTenants(currentPage);
         setSuccess('Tenant updated successfully');
       } else {
@@ -483,7 +496,7 @@ export default function SuperadminPage() {
 
   const handleAddTenant = () => {
     setEditingTenant(null);
-    setTenantFormData({ name: '', slug: '', seats: 1 });
+    setTenantFormData({ name: '', slug: '', seats: 1, licenseType: '' });
     setShowTenantModal(true);
   };
 
@@ -1291,13 +1304,49 @@ export default function SuperadminPage() {
                 {editingTenant && <p className="text-xs text-gray-400 mt-1">Slug cannot be changed after creation</p>}
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-black">Seats</label>
+                <label className="block text-sm font-medium text-black">License Tier</label>
+                <select
+                  value={tenantFormData.licenseType}
+                  onChange={(e) => {
+                    const tier = licenseTiers.find(t => t.key === e.target.value);
+                    setTenantFormData({
+                      ...tenantFormData,
+                      licenseType: e.target.value,
+                      seats: tier ? tier.default_seats : tenantFormData.seats,
+                    });
+                  }}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                >
+                  <option value="">No license (manual seats)</option>
+                  {licenseTiers.filter(t => t.is_active).map((tier) => (
+                    <option key={tier.id} value={tier.key}>
+                      {tier.label} ({tier.min_seats}-{tier.max_seats === 100000 ? 'Unlimited' : tier.max_seats} seats)
+                      {tier.price_per_seat > 0 ? ` — ${tier.currency}${tier.price_per_seat}/${tier.billing_cycle}` : ' — Custom'}
+                    </option>
+                  ))}
+                </select>
+                {tenantFormData.licenseType && licenseTiers.find(t => t.key === tenantFormData.licenseType) && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {licenseTiers.find(t => t.key === tenantFormData.licenseType)?.description}
+                  </p>
+                )}
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-black">
+                  Seats
+                  {tenantFormData.licenseType && licenseTiers.find(t => t.key === tenantFormData.licenseType) && (
+                    <span className="text-xs text-gray-400 ml-2">
+                      (Tier allows {licenseTiers.find(t => t.key === tenantFormData.licenseType)?.min_seats}–{licenseTiers.find(t => t.key === tenantFormData.licenseType)?.max_seats === 100000 ? 'Unlimited' : licenseTiers.find(t => t.key === tenantFormData.licenseType)?.max_seats})
+                    </span>
+                  )}
+                </label>
                 <input
                   type="number"
                   value={tenantFormData.seats}
                   onChange={(e) => setTenantFormData({ ...tenantFormData, seats: parseInt(e.target.value) || 1 })}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
-                  min="1"
+                  min={tenantFormData.licenseType ? licenseTiers.find(t => t.key === tenantFormData.licenseType)?.min_seats || 1 : 1}
+                  max={tenantFormData.licenseType && licenseTiers.find(t => t.key === tenantFormData.licenseType)?.max_seats !== 100000 ? licenseTiers.find(t => t.key === tenantFormData.licenseType)?.max_seats : undefined}
                   required
                 />
               </div>
