@@ -132,6 +132,7 @@ const navigationItems = [
 interface SidebarNavProps {
   className?: string;
   userId?: string;
+  roleId?: string;
 }
 
 function canView(permission: string | undefined, perms: ReturnType<typeof useTenantPermissions>) {
@@ -144,9 +145,9 @@ function canView(permission: string | undefined, perms: ReturnType<typeof useTen
   return level !== "none" && level !== undefined;
 }
 
-export function SidebarNav({ className, userId }: SidebarNavProps) {
+export function SidebarNav({ className, userId, roleId }: SidebarNavProps) {
   const pathname = usePathname();
-  const perms = useTenantPermissions(userId);
+  const perms = useTenantPermissions(userId, roleId);
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const visibleItems = navigationItems.filter((item) => canView(item.permission, perms));
 

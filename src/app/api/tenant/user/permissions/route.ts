@@ -14,10 +14,15 @@ export async function GET(request: NextRequest) {
   const userId =
     searchParams.get("userId") ||
     request.headers.get("x-user-id") ||
-    request.headers.get("x-dev-user-id");
+    request.headers.get("x-dev-user-id") ||
+    request.cookies.get("X-User-Id")?.value ||
+    request.cookies.get("dev-user-id")?.value ||
+    request.cookies.get("userId")?.value;
   const roleId =
     searchParams.get("roleId") ||
     request.headers.get("x-role-id") ||
+    request.cookies.get("X-Role-Id")?.value ||
+    request.cookies.get("roleId")?.value ||
     undefined;
 
   if (!tenantSlug) {
