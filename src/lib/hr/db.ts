@@ -4,6 +4,7 @@
 
 import { randomUUID } from "crypto";
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
+import { ensureAdminTables } from "@/lib/admin/db";
 import type {
   EmployeeRecord,
   DepartmentRecord,
@@ -25,6 +26,9 @@ function serializeTextArray(values?: string[] | null): string {
 // ============================================================================
 
 export async function ensureHrTables(sql: SqlClient = SQL) {
+  // Ensure base admin tables (admin_employees, admin_departments, etc.) exist
+  // before running ALTER TABLE IF EXISTS on them.
+  await ensureAdminTables(sql);
   // Ensure admin_employees has all columns needed by insertEmployee
   await sql`alter table if exists admin_employees add column if not exists phone text`;
   await sql`alter table if exists admin_employees add column if not exists job_title text`;

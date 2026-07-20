@@ -327,8 +327,11 @@ const HRComponent: React.FC = () => {
         status: p.status,
         processedDate: p.processedDate || p.processed_date || ''
       })));
-    } catch (error) {
-      console.error('Failed to load HR data:', error);
+    } catch (error: any) {
+      console.error('Failed to load HR data:', error?.message || error);
+      if (error?.response?.data?.error) {
+        console.error('Server error:', error.response.data.error);
+      }
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { listEmployees, insertEmployee, countEmployees, ensureHrTables, resolveOrCreateDepartment } from "@/lib/hr/db";
+import { ensureAdminTables } from "@/lib/admin/db";
 import { extractAuthContext } from "@/lib/auth-helper";
 import { resolveDepartmentHeadContext } from "@/lib/tenant-admin/utils";
 import { sql as SQL } from "@/lib/sql-client";
@@ -50,6 +51,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    await ensureAdminTables(SQL);
     await ensureHrTables(SQL);
     // Apply department head scoping
     const auth = extractAuthContext(request);
@@ -86,6 +88,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    await ensureAdminTables(SQL);
     await ensureHrTables(SQL);
 
     // Resolve department: accept either a UUID (departmentId) or a raw name (departmentName)
