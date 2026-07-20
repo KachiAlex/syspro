@@ -118,9 +118,19 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
         });
         onClose();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to add employee:', error);
-      setErrors({ submit: 'Failed to add employee. Please try again.' });
+      const serverMsg = error?.response?.data?.error || error?.message?.match(/- (\{.*\})/)?.[1];
+      let displayMsg = 'Failed to add employee. Please try again.';
+      if (serverMsg) {
+        try {
+          const parsed = JSON.parse(serverMsg);
+          displayMsg = parsed.error || displayMsg;
+        } catch {
+          displayMsg = serverMsg;
+        }
+      }
+      setErrors({ submit: displayMsg });
     } finally {
       setLoading(false);
     }
