@@ -7,14 +7,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { sql } from "@/lib/sql-client";
 import { requireDashboardPermission } from "@/lib/tenant-admin/permissions";
+import { extractAuthContext } from "@/lib/auth-helper";
 
 export async function GET(request: NextRequest) {
-  const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
+  const auth = extractAuthContext(request);
+  const tenantSlug = auth.tenantSlug;
 
   if (!tenantSlug) {
     return NextResponse.json(
-      { error: "tenantSlug is required" },
-      { status: 400 }
+      { error: "Authentication required" },
+      { status: 401 }
     );
   }
 
@@ -50,12 +52,13 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
+  const auth = extractAuthContext(request);
+  const tenantSlug = auth.tenantSlug;
 
   if (!tenantSlug) {
     return NextResponse.json(
-      { error: "tenantSlug is required" },
-      { status: 400 }
+      { error: "Authentication required" },
+      { status: 401 }
     );
   }
 

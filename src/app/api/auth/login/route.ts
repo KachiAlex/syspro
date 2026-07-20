@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { signSession } from "@/lib/session";
 import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limit";
+import { sql as SQL } from "@/lib/sql-client";
+import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   // Rate limit: 5 login attempts per minute per IP
@@ -25,31 +27,56 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Replace with real DB-backed authentication.
-    // For now, derive a dev user from the email domain.
-    // In production, validate against admin_employees or a tenant_admins table.
-    const isDev = process.env.NODE_ENV !== "production";
+    const sql = SQL;
 
-    if (!isDev) {
-      // In production, we need real credential validation.
-      // For now, reject — until a proper auth table is in place.
+    // Look up tenant admin by email in tenant_admins table
+    const adminRows = await sql`
+      SELECT ta.id, ta.email, ta.name, ta.password_hash, ta.role, ta.tenant_id,
+             t.slug as tenant_slug, t.name as tenant_name
+      FROM tenant_admins ta
+      JOIN tenants t ON t.id = ta.tenant_id
+      WHERE ta.email = ${email.toLowerCase()}
+      LIMIT 1
+    `;
+
+    if (adminRows.length === 0) {
       return NextResponse.json(
-        { error: "Server-side authentication not yet configured for production" },
-        { status: 501 }
+        { error: "Invalid credentials" },
+        { status: 401 }
       );
     }
 
-    const devId = "dev-user-" + Date.now();
-    const derivedTenant = email.split("@")[1]?.replace(/\./g, "-") || "unknown";
+    const admin = adminRows[0] as any;
+
+    // Verify password if hash exists
+    if (admin.password_hash) {
+      const isValid = await bcrypt.compare(password, admin.password_hash);
+      if (!isValid) {
+        return NextResponse.json(
+          { error: "Invalid credentials" },
+          { status: 401 }
+        );
+      }
+    } else {
+      // No password hash set yet — reject in production, allow in dev
+      if (process.env.NODE_ENV === "production") {
+        return NextResponse.json(
+          { error: "Password not set for this account. Please contact your superadmin." },
+          { status: 403 }
+        );
+      }
+    }
+
+    const tenantSlug = admin.tenant_slug;
     const now = Date.now();
     const maxAge = 7 * 24 * 60 * 60; // 7 days in seconds
 
     const payload = {
-      id: devId,
-      email,
-      name: email.split("@")[0],
-      tenantSlug: derivedTenant,
-      roleId: "admin",
+      id: String(admin.id),
+      email: admin.email,
+      name: admin.name,
+      tenantSlug,
+      roleId: admin.role || "admin",
       iat: now,
       exp: now + maxAge * 1000,
     };
@@ -64,13 +91,13 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       maxAge,
     });
-    cookieStore.set("tenantSlug", derivedTenant, {
+    cookieStore.set("tenantSlug", tenantSlug, {
       path: "/",
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       maxAge,
     });
-    cookieStore.set("X-User-Id", devId, {
+    cookieStore.set("X-User-Id", String(admin.id), {
       path: "/",
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
@@ -82,7 +109,7 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       maxAge,
     });
-    cookieStore.set("X-Role-Id", "admin", {
+    cookieStore.set("X-Role-Id", admin.role || "admin", {
       path: "/",
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
@@ -91,8 +118,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      tenantSlug: derivedTenant,
-      user: { id: devId, email, name: payload.name, roleId: "admin" },
+      tenantSlug,
+      user: { id: String(admin.id), email: admin.email, name: admin.name, roleId: admin.role || "admin" },
     });
   } catch (error) {
     console.error("Login error:", error);

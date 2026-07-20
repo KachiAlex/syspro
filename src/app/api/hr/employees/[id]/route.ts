@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { updateEmployee, deleteEmployee, getEmployeeById, resolveOrCreateDepartment } from "@/lib/hr/db";
+import { extractAuthContext } from "@/lib/auth-helper";
 
 const updateSchema = z.object({
   tenantSlug: z.string().optional(),
@@ -23,14 +24,13 @@ const updateSchema = z.object({
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const url = new URL(request.url);
-  const tenantSlug = url.searchParams.get("tenantSlug");
-  if (!tenantSlug) {
-    return NextResponse.json({ error: "Missing tenantSlug" }, { status: 400 });
+  const auth = extractAuthContext(request);
+  if (!auth.tenantSlug) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
 
   try {
-    const employee = await getEmployeeById(id, tenantSlug);
+    const employee = await getEmployeeById(id, auth.tenantSlug);
     if (!employee) {
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
     }
@@ -43,12 +43,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const auth = extractAuthContext(request);
+  if (!auth.tenantSlug) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const parsed = updateSchema.safeParse(body);
+  // Override tenantSlug with the authenticated session's tenant
+  const parsed = updateSchema.safeParse({ ...body, tenantSlug: auth.tenantSlug });
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
@@ -62,8 +68,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
     delete (updateData as any).departmentName;
     delete (updateData as any).tenantSlug;
-
-    console.log("PATCH /hr/employees/[id]", { id, updateData });
 
     const employee = await updateEmployee(id, updateData);
     if (!employee) {
@@ -82,14 +86,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const url = new URL(request.url);
-  const tenantSlug = url.searchParams.get("tenantSlug");
-  if (!tenantSlug) {
-    return NextResponse.json({ error: "Missing tenantSlug" }, { status: 400 });
+  const auth = extractAuthContext(request);
+  if (!auth.tenantSlug) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
 
   try {
-    await deleteEmployee(id, tenantSlug);
+    await deleteEmployee(id, auth.tenantSlug);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Employee delete failed", error);

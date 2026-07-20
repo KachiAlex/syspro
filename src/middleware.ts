@@ -112,41 +112,53 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith('/api/')) {
     const permissionKey = getRequiredPermissionForPath(pathname);
     if (permissionKey) {
-      let tenantSlug =
-        request.nextUrl.searchParams.get('tenantSlug') ||
-        request.headers.get('x-tenant-slug') ||
-        request.cookies.get('tenantSlug')?.value ||
-        request.cookies.get('X-Tenant-Slug')?.value;
-      let userId =
-        request.nextUrl.searchParams.get('userId') ||
-        request.headers.get('x-user-id') ||
-        request.headers.get('x-dev-user-id') ||
-        request.cookies.get('X-User-Id')?.value ||
-        request.cookies.get('dev-user-id')?.value ||
-        request.cookies.get('userId')?.value;
-      let roleId =
-        request.nextUrl.searchParams.get('roleId') ||
-        request.headers.get('x-role-id') ||
-        request.cookies.get('X-Role-Id')?.value ||
-        request.cookies.get('roleId')?.value;
+      // Prefer session-derived tenantSlug to prevent cross-tenant access
+      let tenantSlug: string | undefined;
+      let userId: string | undefined;
+      let roleId: string | undefined;
 
-      if (!tenantSlug || !userId) {
-        // Try extracting from syspro_session cookie
-        const sessionCookie = request.cookies.get('syspro_session')?.value;
-        if (sessionCookie) {
-          const session = verifySession(sessionCookie);
-          if (session) {
-            if (!userId) {
-              userId = session.id;
-            }
-            if (!tenantSlug) {
-              tenantSlug = session.tenantSlug || undefined;
-            }
-            if (!roleId) {
-              roleId = session.roleId || undefined;
-            }
-          }
+      // 1. Try extracting from syspro_session cookie first
+      const sessionCookie = request.cookies.get('syspro_session')?.value;
+      if (sessionCookie) {
+        const session = verifySession(sessionCookie);
+        if (session) {
+          userId = session.id;
+          tenantSlug = session.tenantSlug || undefined;
+          roleId = session.roleId || undefined;
         }
+      }
+
+      // 2. Fallback to headers (proxy/dev flows)
+      if (!userId) {
+        userId =
+          request.headers.get('x-user-id') ||
+          request.headers.get('x-dev-user-id') ||
+          request.cookies.get('X-User-Id')?.value ||
+          request.cookies.get('dev-user-id')?.value ||
+          request.cookies.get('userId')?.value ||
+          undefined;
+        roleId = roleId ||
+          request.headers.get('x-role-id') ||
+          request.cookies.get('X-Role-Id')?.value ||
+          request.cookies.get('roleId')?.value ||
+          undefined;
+      }
+
+      // 3. Tenant slug: prefer cookie, then query param (dev only)
+      if (!tenantSlug) {
+        tenantSlug =
+          request.cookies.get('tenantSlug')?.value ||
+          request.headers.get('x-tenant-slug') ||
+          undefined;
+      }
+
+      const isDev = !isProduction;
+      if (!tenantSlug && isDev) {
+        tenantSlug = request.nextUrl.searchParams.get('tenantSlug') || undefined;
+      }
+      if (isDev && !userId) {
+        userId = request.nextUrl.searchParams.get('userId') || undefined;
+        roleId = request.nextUrl.searchParams.get('roleId') || roleId || undefined;
       }
 
       if (!tenantSlug || !userId) {

@@ -38,8 +38,15 @@ const createSchema = z.object({
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
+
+  // Get tenantSlug from authenticated session, not from query params
+  const auth = extractAuthContext(request);
+  if (!auth.tenantSlug) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
   const parsed = listSchema.safeParse({
-    tenantSlug: url.searchParams.get("tenantSlug") ?? undefined,
+    tenantSlug: auth.tenantSlug,
     status: url.searchParams.get("status") ?? undefined,
     departmentId: url.searchParams.get("departmentId") ?? undefined,
     limit: url.searchParams.get("limit") ?? undefined,
@@ -54,7 +61,6 @@ export async function GET(request: NextRequest) {
     await ensureAdminTables(SQL);
     await ensureHrTables(SQL);
     // Apply department head scoping
-    const auth = extractAuthContext(request);
     const context = await resolveDepartmentHeadContext({
       tenantSlug: parsed.data.tenantSlug,
       userId: auth.userId || 'unknown',
@@ -77,12 +83,18 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = extractAuthContext(request);
+  if (!auth.tenantSlug) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const parsed = createSchema.safeParse(body);
+  // Override tenantSlug with the authenticated session's tenant
+  const parsed = createSchema.safeParse({ ...body, tenantSlug: auth.tenantSlug });
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }

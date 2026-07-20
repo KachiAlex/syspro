@@ -22,11 +22,11 @@ export interface AuthContext {
  */
 export function extractAuthContext(request: NextRequest): AuthContext {
   const url = new URL(request.url);
-  const tenantSlug = url.searchParams.get("tenantSlug");
 
   // 1. Attempt to read authenticated session from cookies
   let userId: string | undefined;
   let userRole: string | undefined;
+  let sessionTenantSlug: string | undefined;
 
   const sessionCookie = request.cookies.get("syspro_session")?.value;
   if (sessionCookie) {
@@ -34,6 +34,7 @@ export function extractAuthContext(request: NextRequest): AuthContext {
     if (session) {
       userId = session.id;
       userRole = session.roleId;
+      sessionTenantSlug = session.tenantSlug;
     }
   }
 
@@ -53,8 +54,29 @@ export function extractAuthContext(request: NextRequest): AuthContext {
     userRole = userRole || request.cookies.get("X-Role-Id")?.value || undefined;
   }
 
-  // 4. Development-only fallback: allow query params when no real auth is present
+  // Tenant slug resolution: prefer session, then cookie, then query param (dev only)
+  const cookieTenantSlug =
+    request.cookies.get("tenantSlug")?.value ||
+    request.headers.get("X-Tenant-Slug") ||
+    undefined;
+
   const isDev = process.env.NODE_ENV !== "production";
+  const queryTenantSlug = url.searchParams.get("tenantSlug") || undefined;
+
+  // In production: only trust session or cookie, never query params
+  // In dev: allow query params as fallback for convenience
+  let tenantSlug: string;
+  if (sessionTenantSlug) {
+    tenantSlug = sessionTenantSlug;
+  } else if (cookieTenantSlug) {
+    tenantSlug = cookieTenantSlug;
+  } else if (isDev && queryTenantSlug) {
+    tenantSlug = queryTenantSlug;
+  } else {
+    tenantSlug = "";
+  }
+
+  // 4. Development-only fallback: allow query params when no real auth is present
   if (isDev && !userId) {
     userId = url.searchParams.get("userId") || undefined;
     userRole = url.searchParams.get("userRole") || "admin";
@@ -66,7 +88,7 @@ export function extractAuthContext(request: NextRequest): AuthContext {
   }
 
   const userPermissions: string[] = [];
-  return { tenantSlug: tenantSlug || "", userId, userRole, userPermissions };
+  return { tenantSlug, userId, userRole, userPermissions };
 }
 
 /**
