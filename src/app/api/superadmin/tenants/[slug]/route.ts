@@ -5,10 +5,10 @@ const sql = getSql();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params;
   try {
-    const { slug } = params;
     const tenant = await sql`SELECT * FROM tenants WHERE slug = ${slug}`;
 
     if (tenant.length === 0) {
@@ -32,10 +32,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params;
   try {
-    const { slug } = params;
     const body = await request.json();
     const { name, seats } = body;
 
@@ -61,10 +61,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params;
   try {
-    const { slug } = params;
     const result = await sql`DELETE FROM tenants WHERE slug = ${slug} RETURNING *`;
 
     if (result.length === 0) {

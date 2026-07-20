@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Trash2, LogOut, X, Eye, CheckSquare, Square, ChevronLeft, ChevronRight, Settings, Tag } from 'lucide-react';
+import { Plus, Edit, Trash2, LogOut, X, Eye, CheckSquare, Square, ChevronLeft, ChevronRight, Settings, Tag, Power } from 'lucide-react';
 
 interface LicenseTier {
   id: number;
@@ -136,6 +136,7 @@ export default function SuperadminPage() {
   });
   const [tierFeatureInput, setTierFeatureInput] = useState('');
   const [showTenantModal, setShowTenantModal] = useState(false);
+  const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [showLicenseModal, setShowLicenseModal] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -449,6 +450,43 @@ export default function SuperadminPage() {
     }
   };
 
+  const handleEditTenant = (tenant: Tenant) => {
+    setEditingTenant(tenant);
+    setTenantFormData({ name: tenant.name, slug: tenant.slug, seats: tenant.seats });
+    setShowTenantModal(true);
+  };
+
+  const handleSaveTenant = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTenant) return;
+    try {
+      const response = await fetch(`/api/superadmin/tenants/${editingTenant.slug}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: tenantFormData.name, seats: tenantFormData.seats }),
+      });
+      if (response.ok) {
+        setShowTenantModal(false);
+        setEditingTenant(null);
+        setTenantFormData({ name: '', slug: '', seats: 1 });
+        fetchTenants(currentPage);
+        setSuccess('Tenant updated successfully');
+      } else {
+        const data = await response.json().catch(() => ({}));
+        setError(data.error || 'Failed to update tenant');
+      }
+    } catch (error) {
+      console.error('Failed to update tenant:', error);
+      setError('Failed to update tenant');
+    }
+  };
+
+  const handleAddTenant = () => {
+    setEditingTenant(null);
+    setTenantFormData({ name: '', slug: '', seats: 1 });
+    setShowTenantModal(true);
+  };
+
   const handleCreateLicense = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -587,7 +625,7 @@ export default function SuperadminPage() {
             )}
             <div className="flex items-center gap-3">
               {activeTab === 'tenants' && (
-                <Button onClick={() => setShowTenantModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+                <Button onClick={handleAddTenant} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
                   <Plus className="w-4 h-4 mr-2" /> Add Tenant
                 </Button>
               )}
@@ -787,7 +825,7 @@ export default function SuperadminPage() {
                         <Button variant="ghost" size="sm" onClick={() => handleViewDetails(tenant)}>
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => handleEditTenant(tenant)}>
                           <Edit className="w-4 h-4" />
                         </Button>
                         <Button 
@@ -813,7 +851,7 @@ export default function SuperadminPage() {
                           {actionLoading === tenant.slug ? (
                             <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
                           ) : (
-                            <Eye className="w-4 h-4 text-green-600" />
+                            <Power className="w-4 h-4 text-green-600" />
                           )}
                         </Button>
                         <Button 
@@ -1224,12 +1262,12 @@ export default function SuperadminPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg w-96">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Add Tenant</h2>
-              <Button variant="ghost" onClick={() => setShowTenantModal(false)}>
+              <h2 className="text-xl font-bold">{editingTenant ? 'Edit Tenant' : 'Add Tenant'}</h2>
+              <Button variant="ghost" onClick={() => { setShowTenantModal(false); setEditingTenant(null); }}>
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            <form onSubmit={handleCreateTenant}>
+            <form onSubmit={editingTenant ? handleSaveTenant : handleCreateTenant}>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-black">Name</label>
                 <input
@@ -1247,8 +1285,10 @@ export default function SuperadminPage() {
                   value={tenantFormData.slug}
                   onChange={(e) => setTenantFormData({ ...tenantFormData, slug: e.target.value })}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                  disabled={!!editingTenant}
                   required
                 />
+                {editingTenant && <p className="text-xs text-gray-400 mt-1">Slug cannot be changed after creation</p>}
               </div>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-black">Seats</label>
@@ -1262,10 +1302,10 @@ export default function SuperadminPage() {
                 />
               </div>
               <div className="flex justify-end">
-                <Button type="button" variant="outline" onClick={() => setShowTenantModal(false)} className="mr-2">
+                <Button type="button" variant="outline" onClick={() => { setShowTenantModal(false); setEditingTenant(null); }} className="mr-2">
                   Cancel
                 </Button>
-                <Button type="submit">Create</Button>
+                <Button type="submit">{editingTenant ? 'Save Changes' : 'Create'}</Button>
               </div>
             </form>
           </div>
