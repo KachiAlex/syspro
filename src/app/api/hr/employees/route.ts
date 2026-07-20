@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error("Employee create failed", error);
     const msg = error?.message || "";
-    if (msg.includes("HOD role in this department")) {
+    if (msg.includes("HOD role in this department") || msg.includes("already exists")) {
       return NextResponse.json({ error: msg }, { status: 409 });
     }
     return NextResponse.json({ error: "Failed to create employee" }, { status: 500 });

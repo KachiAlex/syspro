@@ -285,6 +285,18 @@ export async function insertEmployee(row: {
   const sql = SQL;
   await ensureHrTables(sql);
 
+  // Check for duplicate email within tenant
+  const existingEmp = await sql`
+    select id, name from admin_employees
+    where tenant_slug = ${row.tenantSlug}
+      and email = ${row.email}
+    limit 1
+  `;
+  if ((existingEmp as any[]).length > 0) {
+    const existing = (existingEmp as any[])[0];
+    throw new Error(`An employee with email ${row.email} already exists: ${existing.name}.`);
+  }
+
   // Enforce unique HOD per department
   if ((row.role ?? "staff") === "hod") {
     const dupRows = await sql`

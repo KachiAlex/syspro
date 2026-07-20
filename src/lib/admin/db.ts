@@ -52,7 +52,8 @@ export async function ensureAdminTables(sql: SqlClient = SQL) {
       region_id text,
       status text default 'active',
       created_at timestamptz default now(),
-      updated_at timestamptz default now()
+      updated_at timestamptz default now(),
+      constraint unique_employee_email unique (tenant_slug, email)
     )
   `;
 
