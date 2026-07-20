@@ -153,7 +153,11 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
       setPortalCredentials(result.portalCredentials || null);
 
       if (result.failed > 0) {
-        setErrors({ upload: `Imported ${result.imported}, failed ${result.failed}. ${(result.errors || []).slice(0, 3).join('; ')}` });
+        const errorList = (result.errors || []).slice(0, 10);
+        const errorDetail = errorList.length < (result.errors || []).length
+          ? `\n...and ${(result.errors || []).length - 10} more`
+          : "";
+        setErrors({ upload: `Imported ${result.imported}, failed ${result.failed}:\n${errorList.join('\n')}${errorDetail}` });
       } else if ((result.warnings || []).length > 0) {
         setErrors({ upload: `Imported ${result.imported} employees with ${(result.warnings || []).length} warning(s).` });
       } else {
