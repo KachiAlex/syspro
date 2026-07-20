@@ -42,11 +42,20 @@ export async function GET(request: NextRequest) {
       `;
     }
 
-    const countRes = await sql`
-      SELECT COUNT(*) AS total FROM tenants
-      ${q ? sql`WHERE name ILIKE ${`%${q}%`} OR slug ILIKE ${`%${q}%`}` : sql``}
-    `;
-    const total = parseInt(countRes[0]?.total || '0', 10);
+    let total: number;
+    if (q) {
+      const like = `%${q}%`;
+      const countRes = await sql`
+        SELECT COUNT(*) AS total FROM tenants
+        WHERE name ILIKE ${like} OR slug ILIKE ${like}
+      `;
+      total = parseInt(countRes[0]?.total || '0', 10);
+    } else {
+      const countRes = await sql`
+        SELECT COUNT(*) AS total FROM tenants
+      `;
+      total = parseInt(countRes[0]?.total || '0', 10);
+    }
 
     return NextResponse.json({ items, total });
   } catch (error) {
