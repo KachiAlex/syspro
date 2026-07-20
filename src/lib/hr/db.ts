@@ -288,14 +288,16 @@ export async function insertEmployee(row: {
   // Enforce unique HOD per department
   if ((row.role ?? "staff") === "hod") {
     const dupRows = await sql`
-      select id from admin_employees
+      select id, name, email from admin_employees
       where tenant_slug = ${row.tenantSlug}
         and department_id = ${row.departmentId}
         and role = 'hod'
+        and status != 'terminated'
       limit 1
     `;
     if ((dupRows as any[]).length > 0) {
-      throw new Error("Someone has already been assigned the HOD role in this department.");
+      const dup = (dupRows as any[])[0];
+      throw new Error(`Someone has already been assigned the HOD role in this department: ${dup.name} (${dup.email}).`);
     }
   }
 
@@ -347,15 +349,17 @@ export async function updateEmployee(
       const deptId = updates.departmentId ?? current.department_id;
       const tenantSlug = current.tenant_slug;
       const dupRows = await sql`
-        select id from admin_employees
+        select id, name, email from admin_employees
         where tenant_slug = ${tenantSlug}
           and department_id = ${deptId}
           and role = 'hod'
+          and status != 'terminated'
           and id != ${id}
         limit 1
       `;
       if ((dupRows as any[]).length > 0) {
-        throw new Error("Someone has already been assigned the HOD role in this department.");
+        const dup = (dupRows as any[])[0];
+        throw new Error(`Someone has already been assigned the HOD role in this department: ${dup.name} (${dup.email}).`);
       }
     }
   }
