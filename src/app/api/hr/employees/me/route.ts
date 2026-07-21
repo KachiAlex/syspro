@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { decodeEmployeeToken } from "@/lib/hr/auth";
 import { getEmployeeById } from "@/lib/hr/db";
 
 export async function GET(request: NextRequest) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("employee_session")?.value;
+  const token = request.cookies.get("employee_session")?.value;
 
   if (!token) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });

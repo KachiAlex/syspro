@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { decodeEmployeeToken } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
 import { z } from "zod";
@@ -9,8 +8,7 @@ import { z } from "zod";
  * Returns the logged-in employee's leave requests.
  */
 export async function GET(request: NextRequest) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("employee_session")?.value;
+  const token = request.cookies.get("employee_session")?.value;
 
   if (!token) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -50,8 +48,7 @@ const createSchema = z.object({
  * Submit a new leave request.
  */
 export async function POST(request: NextRequest) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("employee_session")?.value;
+  const token = request.cookies.get("employee_session")?.value;
 
   if (!token) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
