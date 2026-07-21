@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decodeEmployeeToken } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
+import { ensureHrTables } from "@/lib/hr/db";
 import { z } from "zod";
 
 /**
@@ -20,6 +21,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    try { await ensureHrTables(SQL); } catch (e) { console.error("ensureHrTables failed (non-fatal):", (e as any)?.message); }
     let rows: any[] = [];
     try {
       rows = await SQL`
@@ -66,6 +68,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    try { await ensureHrTables(SQL); } catch (e) { console.error("ensureHrTables failed (non-fatal):", (e as any)?.message); }
     const body = await request.json();
     const parsed = createSchema.safeParse(body);
     if (!parsed.success) {

@@ -248,6 +248,29 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
   await sql`create index if not exists idx_admin_staff_tasks_emp on admin_staff_tasks(tenant_slug, employee_id)`;
   await sql`create index if not exists idx_admin_staff_tasks_status on admin_staff_tasks(status)`;
   await sql`create index if not exists idx_admin_staff_tasks_due on admin_staff_tasks(tenant_slug, due_date)`;
+
+  // Leave requests
+  await sql`
+    create table if not exists admin_leave_requests (
+      id text primary key,
+      tenant_slug text not null,
+      employee_id text not null,
+      employee_name text not null,
+      leave_type text not null check (leave_type in ('annual','sick','personal','maternity','paternity','unpaid')),
+      start_date text not null,
+      end_date text not null,
+      reason text not null,
+      status text default 'pending' check (status in ('pending','approved','rejected')),
+      reviewer_id text,
+      reviewer_name text,
+      reviewer_comment text,
+      reviewed_at timestamptz,
+      created_at timestamptz default now()
+    )
+  `;
+  await sql`create index if not exists idx_admin_leave_requests_tenant on admin_leave_requests(tenant_slug)`;
+  await sql`create index if not exists idx_admin_leave_requests_emp on admin_leave_requests(tenant_slug, employee_id)`;
+  await sql`create index if not exists idx_admin_leave_requests_status on admin_leave_requests(status)`;
 }
 
 // ============================================================================
