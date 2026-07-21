@@ -48,10 +48,12 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
 
   const recognitionRef = useRef<any>(null);
   const transcriptRef = useRef('');
+  const isRecordingRef = useRef(false);
   const wordCount = transcript.trim().split(/\s+/).filter(Boolean).length;
 
-  // Keep transcriptRef in sync
+  // Keep refs in sync
   useEffect(() => { transcriptRef.current = transcript; }, [transcript]);
+  useEffect(() => { isRecordingRef.current = isRecording; }, [isRecording]);
 
   // Check Web Speech API support
   useEffect(() => {
@@ -62,8 +64,25 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
   }, []);
 
   // Setup speech recognition
-  const startRecording = useCallback(() => {
+  const startRecording = useCallback(async () => {
     setError(null);
+
+    // Explicitly request mic permission first — this triggers the browser prompt
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Stop the stream immediately — we just needed the permission prompt
+      stream.getTracks().forEach(t => t.stop());
+    } catch (err: any) {
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setError('Microphone access denied. Please allow microphone permissions in your browser settings and try again.');
+      } else if (err.name === 'NotFoundError') {
+        setError('No microphone found. Please connect a microphone or switch to text mode.');
+      } else {
+        setError('Could not access microphone. Please try again or switch to text mode.');
+      }
+      return;
+    }
+
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) { setError('Speech recognition is not supported in this browser. Please use Chrome or Edge, or switch to text mode.'); setSpeechSupported(false); return; }
 
@@ -98,11 +117,12 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
         setError(`Speech recognition error: ${event.error}`);
       }
       setIsRecording(false);
+      isRecordingRef.current = false;
     };
 
     recognition.onend = () => {
-      // Auto-restart if still recording (handles timeout)
-      if (isRecording) {
+      // Auto-restart if still recording (handles browser timeout)
+      if (isRecordingRef.current) {
         try { recognition.start(); } catch {}
       } else {
         setIsRecording(false);
@@ -113,10 +133,12 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
     recognition.start();
     recognitionRef.current = recognition;
     setIsRecording(true);
-  }, [isRecording]);
+    isRecordingRef.current = true;
+  }, []);
 
   const stopRecording = useCallback(() => {
     setIsRecording(false);
+    isRecordingRef.current = false;
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch {}
       recognitionRef.current = null;

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decodeEmployeeToken } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
-import { ensureHrTables } from "@/lib/hr/db";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 
@@ -40,52 +39,66 @@ export async function GET(request: NextRequest) {
 
   try {
     const sql = SQL;
-    await ensureHrTables(sql);
-
     const url = new URL(request.url);
     const reportType = url.searchParams.get("type");
 
-    let rows;
-    if (reportType) {
-      rows = await sql`
-        SELECT id, title, report_type, report_date, objectives, achievements,
-               challenges, next_steps, additional_notes, meetings, blockers,
-               activities, status, hod_comment, submitted_at, updated_at, appraisal
-        FROM admin_staff_reports
+    let rows: any[] = [];
+    try {
+      if (reportType) {
+        rows = await sql`
+          SELECT id, title, report_type, report_date, objectives, achievements,
+                 challenges, next_steps, additional_notes, meetings, blockers,
+                 activities, status, hod_comment, submitted_at, updated_at, appraisal
+          FROM admin_staff_reports
+          WHERE tenant_slug = ${session.tenantSlug}
+            AND employee_id = ${session.id}
+            AND report_type = ${reportType}
+          ORDER BY submitted_at DESC
+          LIMIT 50
+        `;
+      } else {
+        rows = await sql`
+          SELECT id, title, report_type, report_date, objectives, achievements,
+                 challenges, next_steps, additional_notes, meetings, blockers,
+                 activities, status, hod_comment, submitted_at, updated_at, appraisal
+          FROM admin_staff_reports
+          WHERE tenant_slug = ${session.tenantSlug}
+            AND employee_id = ${session.id}
+          ORDER BY submitted_at DESC
+          LIMIT 50
+        `;
+      }
+    } catch (e) { console.error("reports: fetch reports failed:", (e as any)?.message); }
+
+    // Fetch KPI tasks — try with is_kpi column, fallback without
+    let kpiTasks: any[] = [];
+    try {
+      kpiTasks = await sql`
+        SELECT id, title, description, expected_outcome, weight, is_kpi, frequency,
+               due_date, status, assigned_by
+        FROM admin_staff_tasks
         WHERE tenant_slug = ${session.tenantSlug}
           AND employee_id = ${session.id}
-          AND report_type = ${reportType}
-        ORDER BY submitted_at DESC
-        LIMIT 50
+          AND is_kpi = true
+        ORDER BY created_at DESC
       `;
-    } else {
-      rows = await sql`
-        SELECT id, title, report_type, report_date, objectives, achievements,
-               challenges, next_steps, additional_notes, meetings, blockers,
-               activities, status, hod_comment, submitted_at, updated_at, appraisal
-        FROM admin_staff_reports
-        WHERE tenant_slug = ${session.tenantSlug}
-          AND employee_id = ${session.id}
-        ORDER BY submitted_at DESC
-        LIMIT 50
-      `;
+    } catch (e) {
+      console.error("reports: kpiTasks with is_kpi failed:", (e as any)?.message);
+      try {
+        kpiTasks = await sql`
+          SELECT id, title, description, frequency, due_date, status, assigned_by
+          FROM admin_staff_tasks
+          WHERE tenant_slug = ${session.tenantSlug}
+            AND employee_id = ${session.id}
+          ORDER BY created_at DESC
+        `;
+      } catch (e2) { console.error("reports: kpiTasks fallback failed:", (e2 as any)?.message); }
     }
 
-    // Also fetch KPI tasks assigned to this employee
-    const kpiTasks = await sql`
-      SELECT id, title, description, expected_outcome, weight, is_kpi, frequency,
-             due_date, status, assigned_by
-      FROM admin_staff_tasks
-      WHERE tenant_slug = ${session.tenantSlug}
-        AND employee_id = ${session.id}
-        AND is_kpi = true
-      ORDER BY created_at DESC
-    `;
-
     return NextResponse.json({ reports: rows, kpis: kpiTasks });
-  } catch (error) {
-    console.error("Employee reports fetch error:", error);
-    return NextResponse.json({ error: "Failed to load reports" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Employee reports fetch error:", error?.message || error);
+    return NextResponse.json({ error: "Failed to load reports", detail: error?.message || String(error) }, { status: 500 });
   }
 }
 
@@ -102,7 +115,6 @@ export async function POST(request: NextRequest) {
 
   try {
     const sql = SQL;
-    await ensureHrTables(sql);
 
     const body = await request.json();
     const parsed = reportSchema.safeParse(body);
