@@ -191,6 +191,7 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
     await sql`alter table if exists admin_staff_reports add column if not exists blockers text`;
     await sql`alter table if exists admin_staff_reports add column if not exists activities text`;
     await sql`alter table if exists admin_staff_reports add column if not exists team_members text[] default '{}'`;
+    await sql`alter table if exists admin_staff_reports add column if not exists appraisal jsonb default null`;
     await sql`alter table if exists admin_staff_reports add column if not exists template_id text`;
     await sql`alter table if exists admin_staff_reports add column if not exists template_snapshot jsonb default null`;
     await sql`alter table if exists admin_staff_reports add column if not exists department_id text`;
