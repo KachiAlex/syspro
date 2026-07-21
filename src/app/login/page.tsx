@@ -80,22 +80,52 @@ export default function LoginPage() {
     }
     setLoading(true);
     try {
+      // Step 1: Try tenant admin login
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error || 'Login failed. Please check your credentials and try again.');
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.isEmployee) {
+          router.push('/employee/dashboard');
+        } else {
+          router.push('/tenant-admin?tenantSlug=' + data.tenantSlug);
+        }
         return;
       }
-      const data = await res.json();
-      if (data.isEmployee) {
-        router.push('/employee/dashboard');
-      } else {
-        router.push('/tenant-admin?tenantSlug=' + data.tenantSlug);
+
+      // Step 2: If not a tenant admin, try employee login
+      if (res.status === 401) {
+        // Look up employee tenant slug by email
+        const lookupRes = await fetch('/api/employee-lookup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+
+        if (lookupRes.ok) {
+          const lookupData = await lookupRes.json();
+          const tenantSlug = lookupData.tenantSlug;
+
+          // Call the dedicated employee login API
+          const empRes = await fetch('/api/hr/employees/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tenantSlug, email, password }),
+          });
+
+          if (empRes.ok) {
+            router.push('/employee/dashboard');
+            return;
+          }
+        }
       }
+
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || 'Invalid credentials. Please check your email and password.');
     } catch (err) {
       setError('Login failed. Please check your credentials and try again.');
     } finally {

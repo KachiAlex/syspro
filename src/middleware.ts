@@ -4,7 +4,7 @@ import { getTenantUserPermissions } from '@/lib/tenant-admin/permissions';
 import { verifySession } from '@/lib/session';
 
 function getRequiredPermissionForPath(pathname: string): string | null {
-  if (pathname === '/api/tenant/user/permissions' || pathname.startsWith('/api/auth/')) return null;
+  if (pathname === '/api/tenant/user/permissions' || pathname.startsWith('/api/auth/') || pathname === '/api/employee-lookup') return null;
   // Employee portal auth routes must be public
   if (
     pathname.startsWith('/api/hr/employees/auth/login') ||
