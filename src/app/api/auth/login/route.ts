@@ -55,24 +55,9 @@ export async function POST(request: NextRequest) {
 
         if (session) {
           const token = createEmployeeToken(session);
-          const cookieStore = await cookies();
           const maxAge = 60 * 60 * 12; // 12 hours
 
-          cookieStore.set("employee_session", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge,
-            path: "/",
-          });
-          cookieStore.set("employee_tenant", session.tenantSlug, {
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge,
-            path: "/",
-          });
-
-          return NextResponse.json({
+          const response = NextResponse.json({
             success: true,
             tenantSlug: session.tenantSlug,
             isEmployee: true,
@@ -83,6 +68,20 @@ export async function POST(request: NextRequest) {
               role: session.role,
             },
           });
+          response.cookies.set("employee_session", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge,
+            path: "/",
+          });
+          response.cookies.set("employee_tenant", session.tenantSlug, {
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge,
+            path: "/",
+          });
+          return response;
         }
       }
 
