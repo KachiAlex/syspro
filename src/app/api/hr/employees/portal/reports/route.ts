@@ -44,6 +44,9 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const reportType = url.searchParams.get("type");
 
+    // Ensure table and columns exist (runs migrations)
+    try { await ensureHrTables(sql); } catch (e) { console.error("ensureHrTables failed (non-fatal):", (e as any)?.message); }
+
     let rows: any[] = [];
     try {
       if (reportType) {
