@@ -101,7 +101,7 @@ export async function middleware(request: NextRequest) {
 
       if (!hasSession && !hasUserId && !hasSuperadmin) {
         return NextResponse.redirect(
-          new URL('/access?error=auth_required', request.url)
+          new URL('/login?error=auth_required', request.url)
         );
       }
     }

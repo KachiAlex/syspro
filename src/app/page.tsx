@@ -105,8 +105,8 @@ function Nav() {
         <span className="text-[#94A3B8] text-sm font-medium cursor-pointer hover:text-[#F8FAFC] transition-colors font-jakarta">Pricing</span>
       </div>
       <div className="flex items-center gap-3">
-        <Link href="/access" className="hidden sm:inline-flex items-center px-[18px] py-[8px] border border-[rgba(255,255,255,0.07)] rounded-lg text-[#F8FAFC] font-jakarta text-[13.5px] font-semibold hover:border-[#6366F1] hover:text-[#818CF8] transition-all">Sign in</Link>
-        <Link href="/access" className="inline-flex items-center px-5 py-[8px] rounded-lg text-white font-jakarta text-[13.5px] font-bold transition-transform hover:-translate-y-[1px]" style={{ background: 'linear-gradient(135deg,#6366F1,#4F46E5)', boxShadow: '0 4px 14px rgba(99,102,241,.35)' }}>Get started</Link>
+        <Link href="/login" className="hidden sm:inline-flex items-center px-[18px] py-[8px] border border-[rgba(255,255,255,0.07)] rounded-lg text-[#F8FAFC] font-jakarta text-[13.5px] font-semibold hover:border-[#6366F1] hover:text-[#818CF8] transition-all">Sign in</Link>
+        <Link href="/login" className="inline-flex items-center px-5 py-[8px] rounded-lg text-white font-jakarta text-[13.5px] font-bold transition-transform hover:-translate-y-[1px]" style={{ background: 'linear-gradient(135deg,#6366F1,#4F46E5)', boxShadow: '0 4px 14px rgba(99,102,241,.35)' }}>Get started</Link>
       </div>
     </nav>
   );
@@ -136,7 +136,7 @@ export default function HomePage() {
             Syspro connects your CRM, Finance, HR, Inventory, and Projects into one living system. Every action triggers the next — automatically.
           </p>
           <div className="flex gap-[14px] justify-center flex-wrap relative z-[2]">
-            <Link href="/access" className="inline-flex items-center gap-2 px-7 py-[13px] rounded-[10px] text-white font-jakarta text-sm font-bold cursor-pointer transition-all hover:-translate-y-[2px]" style={{ background: 'linear-gradient(135deg,#6366F1,#4F46E5)', boxShadow: '0 6px 20px rgba(99,102,241,.4)' }}>
+            <Link href="/login" className="inline-flex items-center gap-2 px-7 py-[13px] rounded-[10px] text-white font-jakarta text-sm font-bold cursor-pointer transition-all hover:-translate-y-[2px]" style={{ background: 'linear-gradient(135deg,#6366F1,#4F46E5)', boxShadow: '0 6px 20px rgba(99,102,241,.4)' }}>
               See the dashboard
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12,5 19,12 12,19" /></svg>
             </Link>
@@ -249,7 +249,7 @@ export default function HomePage() {
         <div className="max-w-[580px] mx-auto rounded-[20px] p-[56px_40px]" style={{ background: 'linear-gradient(135deg,rgba(99,102,241,.1),rgba(245,158,11,.06))', border: '1px solid rgba(99,102,241,.25)' }}>
           <h2 className="font-jakarta text-[clamp(26px,3.5vw,38px)] font-extrabold text-[#F8FAFC] mb-[14px] tracking-[-.02em]">Ready to stop doing<br />everything manually?</h2>
           <p className="text-[15px] text-[#94A3B8] mb-[34px] leading-[1.6]">Start a free tenant. Set up your team in 10 minutes. Let Syspro do the rest.</p>
-          <Link href="/access" className="inline-flex items-center gap-2 px-7 py-[13px] rounded-[10px] text-white font-jakarta text-sm font-bold transition-transform hover:-translate-y-[2px]" style={{ background: 'linear-gradient(135deg,#6366F1,#4F46E5)', boxShadow: '0 6px 20px rgba(99,102,241,.4)' }}>
+          <Link href="/login" className="inline-flex items-center gap-2 px-7 py-[13px] rounded-[10px] text-white font-jakarta text-sm font-bold transition-transform hover:-translate-y-[2px]" style={{ background: 'linear-gradient(135deg,#6366F1,#4F46E5)', boxShadow: '0 6px 20px rgba(99,102,241,.4)' }}>
             Get started free
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12,5 19,12 12,19" /></svg>
           </Link>

@@ -125,7 +125,7 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
     document.cookie = `X-User-Email=; ${expire}`;
     document.cookie = `tenantSlug=; ${expire}`;
     document.cookie = `X-Tenant-Slug=; ${expire}`;
-    window.location.href = "/access";
+    window.location.href = "/login";
   };
 
   const dashboardKey = getDashboardKey(safePath || '');

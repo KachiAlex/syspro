@@ -124,7 +124,7 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
 
   const handleCopyCredentials = () => {
     if (!portalCredentials) return;
-    const text = `Email: ${portalCredentials.email}\nPassword: ${portalCredentials.password}\nLogin URL: ${window.location.origin}/employee/login`;
+    const text = `Email: ${portalCredentials.email}\nPassword: ${portalCredentials.password}\nLogin URL: ${window.location.origin}/login`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -361,7 +361,7 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-gray-500">Login URL</span>
-                      <span className="text-sm font-mono text-gray-900">{typeof window !== 'undefined' ? `${window.location.origin}/employee/login` : '/employee/login'}</span>
+                      <span className="text-sm font-mono text-gray-900">{typeof window !== 'undefined' ? `${window.location.origin}/login` : '/login'}</span>
                     </div>
                   </div>
                   <div className="flex gap-2">

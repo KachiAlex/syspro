@@ -93,13 +93,13 @@ export default async function TenantAdminLayout({ children, searchParams }: { ch
           <p>The server did not detect a tenantSlug for this request. Inspect the values below and try again.</p>
           <pre style={{ background: "#0b1220", color: "#cbd5e1", padding: 12, borderRadius: 6 }}>{JSON.stringify(debugInfoEarly, null, 2)}</pre>
           <div style={{ marginTop: 12 }}>
-            <a href="/access" style={{ marginRight: 12 }}>Open Access Portal</a>
+            <a href="/login" style={{ marginRight: 12 }}>Open Login Portal</a>
           </div>
         </div>
       );
     }
     // No tenant specified: redirect to access/login page
-    redirect("/access?error=tenant_required");
+    redirect("/login?error=tenant_required");
   }
 
   if (!effectiveUser) {
@@ -110,12 +110,12 @@ export default async function TenantAdminLayout({ children, searchParams }: { ch
           <p>The server did not detect an authenticated user for this request. Inspect the values below and try again.</p>
           <pre style={{ background: "#0b1220", color: "#cbd5e1", padding: 12, borderRadius: 6 }}>{JSON.stringify(debugInfoEarly, null, 2)}</pre>
           <div style={{ marginTop: 12 }}>
-            <a href="/access" style={{ marginRight: 12 }}>Open Access Portal</a>
+            <a href="/login" style={{ marginRight: 12 }}>Open Login Portal</a>
           </div>
         </div>
       );
     }
-    redirect("/tenant-admin/tenant-signin?error=auth_required");
+    redirect("/login?error=auth_required");
   }
 
   // In local development, when a dev cookie/session is present, allow access

@@ -88,7 +88,7 @@ export default function EmployeeDashboardPage() {
       try {
         const res = await fetch('/api/hr/employees/me');
         if (res.status === 401) {
-          router.replace('/employee/login');
+          router.replace('/login');
           return;
         }
         if (!res.ok) {
@@ -149,7 +149,7 @@ export default function EmployeeDashboardPage() {
 
   const handleLogout = async () => {
     await fetch('/api/hr/employees/auth/logout', { method: 'POST' }).catch(() => {});
-    router.replace('/employee/login');
+    router.replace('/login');
   };
 
   if (loading) {
@@ -167,7 +167,7 @@ export default function EmployeeDashboardPage() {
           <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
           <p className="text-gray-700">{error}</p>
           <button
-            onClick={() => router.replace('/employee/login')}
+            onClick={() => router.replace('/login')}}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Back to login

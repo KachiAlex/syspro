@@ -53,7 +53,7 @@ export default function ResetPasswordPage() {
       }
 
       setSuccess(true);
-      setTimeout(() => router.push('/employee/login'), 3000);
+      setTimeout(() => router.push('/login'), 3000);
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -74,7 +74,7 @@ export default function ResetPasswordPage() {
               Your password has been successfully changed. Redirecting to login...
             </p>
             <Link
-              href="/employee/login"
+              href="/login"
               className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
             >
               Go to login now
@@ -151,7 +151,7 @@ export default function ResetPasswordPage() {
 
           <div className="mt-6 text-center">
             <Link
-              href="/employee/login"
+              href="/login"
               className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
             >
               Back to login

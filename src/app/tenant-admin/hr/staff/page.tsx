@@ -530,14 +530,14 @@ export default function StaffPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-600">Login URL</span>
-                  <span className="text-sm font-mono text-blue-700">/employee/login</span>
+                  <span className="text-sm font-mono text-blue-700">/login</span>
                 </div>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => {
                     navigator.clipboard?.writeText(
-                      `Login URL: /employee/login\nEmail: ${portalCredentials.email}\nPassword: ${portalCredentials.password}`
+                      `Login URL: /login\nEmail: ${portalCredentials.email}\nPassword: ${portalCredentials.password}`
                     );
                   }}
                   className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50"

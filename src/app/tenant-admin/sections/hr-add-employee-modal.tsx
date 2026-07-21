@@ -443,7 +443,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                       </p>
                       <p className="text-xs text-gray-600 mt-1">
                         Copy these credentials and share them securely with the employee. They can log in at{' '}
-                        <span className="font-mono text-blue-700">/employee/login</span>.
+                        <span className="font-mono text-blue-700">/login</span>
                       </p>
                       <div className="mt-3 grid grid-cols-1 gap-2 bg-white border border-green-200 rounded-lg p-3">
                         <div className="flex items-center justify-between">
@@ -463,7 +463,7 @@ export const AddEmployeeModal: React.FC<AddEmployeeModalProps> = ({ isOpen, onCl
                         type="button"
                         onClick={() => {
                           navigator.clipboard?.writeText(
-                            `Login URL: /employee/login\nEmail: ${createdCredentials.email}\nPassword: ${createdCredentials.password}`
+                            `Login URL: /login\nEmail: ${createdCredentials.email}\nPassword: ${createdCredentials.password}`
                           );
                         }}
                         className="mt-2 text-xs text-blue-700 hover:text-blue-900 font-medium"

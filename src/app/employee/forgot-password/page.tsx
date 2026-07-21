@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
               you&apos;ll receive a password reset link shortly. The link expires in 30 minutes.
             </p>
             <Link
-              href="/employee/login"
+              href="/login"
               className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -125,7 +125,7 @@ export default function ForgotPasswordPage() {
 
           <div className="mt-6 text-center">
             <Link
-              href="/employee/login"
+              href="/login"
               className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
             >
               <ArrowLeft className="w-4 h-4" />
