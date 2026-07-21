@@ -158,7 +158,7 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
       tenant_slug text not null,
       employee_id text not null,
       title text,
-      report_type text not null check (report_type in ('daily','weekly','monthly','quarterly')),
+      report_type text not null check (report_type in ('daily','weekly','monthly','quarterly','annual')),
       report_date text not null,
       raw_transcript text,
       refined_text text,
@@ -196,7 +196,7 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
       create table if not exists admin_staff_report_templates (
         id text primary key,
         tenant_slug text not null,
-        report_type text not null check (report_type in ('daily','weekly','monthly','quarterly')),
+        report_type text not null check (report_type in ('daily','weekly','monthly','quarterly','annual')),
         name text not null,
         is_default boolean default false,
         sections jsonb not null default '[]',
