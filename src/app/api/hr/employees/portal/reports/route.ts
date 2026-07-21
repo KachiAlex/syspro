@@ -70,7 +70,38 @@ export async function GET(request: NextRequest) {
           LIMIT 50
         `;
       }
-    } catch (e) { console.error("reports: fetch reports failed:", (e as any)?.message); }
+    } catch (e) {
+      console.error("reports: fetch with new columns failed:", (e as any)?.message);
+      // Fallback without submitter_role/approver_role columns (may not exist yet)
+      try {
+        if (reportType) {
+          rows = await sql`
+            SELECT id, title, report_type, report_date, objectives, achievements,
+                   challenges, next_steps, additional_notes, meetings, blockers,
+                   activities, status, hod_comment, submitted_at, updated_at, appraisal,
+                   head_of_department
+            FROM admin_staff_reports
+            WHERE tenant_slug = ${session.tenantSlug}
+              AND employee_id = ${session.id}
+              AND report_type = ${reportType}
+            ORDER BY submitted_at DESC
+            LIMIT 50
+          `;
+        } else {
+          rows = await sql`
+            SELECT id, title, report_type, report_date, objectives, achievements,
+                   challenges, next_steps, additional_notes, meetings, blockers,
+                   activities, status, hod_comment, submitted_at, updated_at, appraisal,
+                   head_of_department
+            FROM admin_staff_reports
+            WHERE tenant_slug = ${session.tenantSlug}
+              AND employee_id = ${session.id}
+            ORDER BY submitted_at DESC
+            LIMIT 50
+          `;
+        }
+      } catch (e2) { console.error("reports: fallback fetch failed:", (e2 as any)?.message); }
+    }
 
     // Fetch KPI tasks — try with is_kpi column, fallback without
     let kpiTasks: any[] = [];

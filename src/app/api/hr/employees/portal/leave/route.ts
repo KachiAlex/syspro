@@ -20,14 +20,20 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const rows = await SQL`
-      select id, leave_type, start_date, end_date, reason, status, created_at, reviewed_at, reviewer_comment
-      from admin_leave_requests
-      where tenant_slug = ${session.tenantSlug}
-        and employee_id = ${session.id}
-      order by created_at desc
-      limit 50
-    `;
+    let rows: any[] = [];
+    try {
+      rows = await SQL`
+        select id, leave_type, start_date, end_date, reason, status, created_at, reviewed_at, reviewer_comment
+        from admin_leave_requests
+        where tenant_slug = ${session.tenantSlug}
+          and employee_id = ${session.id}
+        order by created_at desc
+        limit 50
+      `;
+    } catch (e) {
+      console.error("Portal leave query failed:", (e as any)?.message);
+      // Table may not exist yet — return empty
+    }
 
     return NextResponse.json({ requests: rows || [] });
   } catch (error) {
