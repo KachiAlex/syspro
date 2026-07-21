@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decodeEmployeeToken } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
-import { ensureHrTables } from "@/lib/hr/db";
 
 export async function GET(request: NextRequest) {
   const token = request.cookies.get("employee_session")?.value;
@@ -12,8 +11,6 @@ export async function GET(request: NextRequest) {
 
   try {
     const sql = SQL;
-    await ensureHrTables(sql);
-
     const today = new Date().toISOString().split("T")[0];
     const now = new Date();
     const currentMonth = now.getMonth();
@@ -21,72 +18,124 @@ export async function GET(request: NextRequest) {
     const monthStart = new Date(currentYear, currentMonth, 1).toISOString().split("T")[0];
     const monthEnd = new Date(currentYear, currentMonth + 1, 0).toISOString().split("T")[0];
 
-    // Today's attendance
-    const todayAtt = await sql`
-      SELECT id, date, status, check_in, check_out FROM admin_attendance
-      WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id} AND date = ${today}
-      LIMIT 1
-    `;
+    // Today's attendance — wrap individually so one failure doesn't kill everything
+    let todayAtt: any[] = [];
+    try {
+      todayAtt = await sql`
+        SELECT id, date, status, check_in, check_out FROM admin_attendance
+        WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id} AND date = ${today}
+        LIMIT 1
+      `;
+    } catch (e) { console.error("dashboard: todayAtt failed:", (e as any)?.message); }
 
     // This month's attendance summary
-    const monthAtt = await sql`
-      SELECT status, count(*)::int as cnt FROM admin_attendance
-      WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id}
-        AND date >= ${monthStart} AND date <= ${monthEnd}
-      GROUP BY status
-    `;
+    let monthAtt: any[] = [];
+    try {
+      monthAtt = await sql`
+        SELECT status, count(*)::int as cnt FROM admin_attendance
+        WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id}
+          AND date >= ${monthStart} AND date <= ${monthEnd}
+        GROUP BY status
+      `;
+    } catch (e) { console.error("dashboard: monthAtt failed:", (e as any)?.message); }
 
     // This month's attendance records for calendar
-    const monthRecords = await sql`
-      SELECT date, status, check_in, check_out FROM admin_attendance
-      WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id}
-        AND date >= ${monthStart} AND date <= ${monthEnd}
-      ORDER BY date ASC
-    `;
+    let monthRecords: any[] = [];
+    try {
+      monthRecords = await sql`
+        SELECT date, status, check_in, check_out FROM admin_attendance
+        WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id}
+          AND date >= ${monthStart} AND date <= ${monthEnd}
+        ORDER BY date ASC
+      `;
+    } catch (e) { console.error("dashboard: monthRecords failed:", (e as any)?.message); }
 
     // Pending leave requests count
-    const pendingLeave = await sql`
-      SELECT count(*)::int as cnt FROM admin_leave
-      WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id} AND status = 'pending'
-    `;
+    let pendingLeaveCount = 0;
+    try {
+      const pendingLeave = await sql`
+        SELECT count(*)::int as cnt FROM admin_leave
+        WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id} AND status = 'pending'
+      `;
+      pendingLeaveCount = pendingLeave[0]?.cnt || 0;
+    } catch (e) { console.error("dashboard: pendingLeave failed:", (e as any)?.message); }
 
     // Pending/overdue tasks
-    const openTasks = await sql`
-      SELECT count(*)::int as cnt FROM admin_staff_tasks
-      WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id}
-        AND status IN ('pending', 'in_progress', 'overdue')
-    `;
+    let openTasksCount = 0;
+    try {
+      const openTasks = await sql`
+        SELECT count(*)::int as cnt FROM admin_staff_tasks
+        WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id}
+          AND status IN ('pending', 'in_progress', 'overdue')
+      `;
+      openTasksCount = openTasks[0]?.cnt || 0;
+    } catch (e) { console.error("dashboard: openTasks failed:", (e as any)?.message); }
 
-    // KPI tasks
-    const kpiTasks = await sql`
-      SELECT id, title, description, expected_outcome, weight, is_kpi, frequency, due_date, status
-      FROM admin_staff_tasks
-      WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id} AND is_kpi = true
-      ORDER BY created_at DESC
-    `;
+    // KPI tasks — is_kpi column may not exist, wrap defensively
+    let kpiTasks: any[] = [];
+    try {
+      kpiTasks = await sql`
+        SELECT id, title, description, expected_outcome, weight, is_kpi, frequency, due_date, status
+        FROM admin_staff_tasks
+        WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id} AND is_kpi = true
+        ORDER BY created_at DESC
+      `;
+    } catch (e) {
+      console.error("dashboard: kpiTasks failed:", (e as any)?.message);
+      // Fallback: try without is_kpi column
+      try {
+        kpiTasks = await sql`
+          SELECT id, title, description, frequency, due_date, status
+          FROM admin_staff_tasks
+          WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id}
+          ORDER BY created_at DESC
+        `;
+      } catch (e2) { console.error("dashboard: kpiTasks fallback failed:", (e2 as any)?.message); }
+    }
 
     // Recent reports (last 5)
-    const recentReports = await sql`
-      SELECT id, title, report_type, report_date, status, submitted_at
-      FROM admin_staff_reports
-      WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id}
-      ORDER BY submitted_at DESC
-      LIMIT 5
-    `;
+    let recentReports: any[] = [];
+    try {
+      recentReports = await sql`
+        SELECT id, title, report_type, report_date, status, submitted_at
+        FROM admin_staff_reports
+        WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id}
+        ORDER BY submitted_at DESC
+        LIMIT 5
+      `;
+    } catch (e) { console.error("dashboard: recentReports failed:", (e as any)?.message); }
 
     // Reports submitted this month
-    const monthReports = await sql`
-      SELECT count(*)::int as cnt FROM admin_staff_reports
-      WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id}
-        AND submitted_at >= ${monthStart}
-    `;
+    let reportsThisMonth = 0;
+    try {
+      const monthReports = await sql`
+        SELECT count(*)::int as cnt FROM admin_staff_reports
+        WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id}
+          AND submitted_at >= ${monthStart}
+      `;
+      reportsThisMonth = monthReports[0]?.cnt || 0;
+    } catch (e) { console.error("dashboard: monthReports failed:", (e as any)?.message); }
 
     // Payslips count
-    const payslipCount = await sql`
-      SELECT count(*)::int as cnt FROM admin_payroll_entries pe
-      JOIN admin_payroll_runs pr ON pr.id = pe.run_id
-      WHERE pe.tenant_slug = ${session.tenantSlug} AND pe.employee_id = ${session.id}
-    `;
+    let payslipCount = 0;
+    try {
+      const pc = await sql`
+        SELECT count(*)::int as cnt FROM admin_payroll_entries pe
+        JOIN admin_payroll_runs pr ON pr.id = pe.run_id
+        WHERE pe.tenant_slug = ${session.tenantSlug} AND pe.employee_id = ${session.id}
+      `;
+      payslipCount = pc[0]?.cnt || 0;
+    } catch (e) {
+      console.error("dashboard: payslipCount failed:", (e as any)?.message);
+      // Fallback: try just admin_payroll_entries
+      try {
+        const pc = await sql`
+          SELECT count(*)::int as cnt FROM admin_payroll_entries
+          WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id}
+        `;
+        payslipCount = pc[0]?.cnt || 0;
+      } catch (e2) { console.error("dashboard: payslipCount fallback failed:", (e2 as any)?.message); }
+    }
 
     // Build attendance summary
     const attSummary: Record<string, number> = {};
@@ -107,7 +156,6 @@ export async function GET(request: NextRequest) {
     if (!todayAtt[0]?.check_in) {
       pendingActions.push({ label: "Check in for today", tab: "attendance", urgent: true });
     } else if (todayAtt[0]?.check_in && !todayAtt[0]?.check_out) {
-      const checkInHour = parseInt(todayAtt[0].check_in?.split(":")[0] || "0");
       if (now.getHours() >= 17) {
         pendingActions.push({ label: "Don't forget to check out", tab: "attendance", urgent: true });
       }
@@ -130,18 +178,18 @@ export async function GET(request: NextRequest) {
       pendingActions.push({ label: "Submit your weekly report", tab: "reports", urgent: dayOfWeek >= 6 });
     }
 
-    if (pendingLeave[0]?.cnt > 0) {
-      pendingActions.push({ label: `${pendingLeave[0].cnt} leave request(s) pending approval`, tab: "profile", urgent: false });
+    if (pendingLeaveCount > 0) {
+      pendingActions.push({ label: `${pendingLeaveCount} leave request(s) pending approval`, tab: "profile", urgent: false });
     }
 
-    if (openTasks[0]?.cnt > 0) {
-      pendingActions.push({ label: `${openTasks[0].cnt} task(s) need attention`, tab: "reports", urgent: false });
+    if (openTasksCount > 0) {
+      pendingActions.push({ label: `${openTasksCount} task(s) need attention`, tab: "reports", urgent: false });
     }
 
     // Calculate on-time rate
     const totalDays = Object.values(attSummary).reduce((a, b) => a + b, 0);
-    const presentDays = (attSummary["present"] || 0) + (attSummary["half_day"] || 0);
-    const onTimeRate = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
+    const presentDaysCount = (attSummary["present"] || 0) + (attSummary["half_day"] || 0);
+    const onTimeRate = totalDays > 0 ? Math.round((presentDaysCount / totalDays) * 100) : 0;
 
     return NextResponse.json({
       today: todayAtt[0] || null,
@@ -154,11 +202,11 @@ export async function GET(request: NextRequest) {
         absentDays: attSummary["absent"] || 0,
         halfDays: attSummary["half_day"] || 0,
         onTimeRate,
-        pendingLeave: pendingLeave[0]?.cnt || 0,
-        openTasks: openTasks[0]?.cnt || 0,
+        pendingLeave: pendingLeaveCount,
+        openTasks: openTasksCount,
         kpiCount: kpiTasks.length,
-        reportsThisMonth: monthReports[0]?.cnt || 0,
-        payslipCount: payslipCount[0]?.cnt || 0,
+        reportsThisMonth,
+        payslipCount,
       },
       kpis: kpiTasks,
       recentReports,
