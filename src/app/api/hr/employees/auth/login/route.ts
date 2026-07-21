@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { authenticateEmployee, createEmployeeToken } from "@/lib/hr/auth";
 import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limit";
 
@@ -8,7 +7,6 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  // Rate limit: 5 login attempts per minute per IP
   const rateKey = `emp-login:${getRateLimitKey(request)}`;
   const { allowed, retryAfter } = checkRateLimit(rateKey, 5, 60_000);
   if (!allowed) {
@@ -38,26 +36,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Set secure session cookie
     const token = createEmployeeToken(session);
-    const cookieStore = await cookies();
-    cookieStore.set("employee_session", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 12, // 12 hours
-      path: "/",
-    });
+    const maxAge = 60 * 60 * 12;
 
-    // Also set a non-httpOnly cookie for client-side access to basic info
-    cookieStore.set("employee_tenant", session.tenantSlug, {
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 12,
-      path: "/",
-    });
-
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: {
         id: session.id,
@@ -68,6 +50,22 @@ export async function POST(request: NextRequest) {
         jobTitle: session.jobTitle,
       },
     });
+
+    response.cookies.set("employee_session", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge,
+      path: "/",
+    });
+    response.cookies.set("employee_tenant", session.tenantSlug, {
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge,
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("Employee login error:", error);
     return NextResponse.json(

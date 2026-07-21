@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { signSession } from "@/lib/session";
 import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limit";
 import { sql as SQL } from "@/lib/sql-client";
@@ -7,8 +6,7 @@ import { authenticateEmployee, createEmployeeToken } from "@/lib/hr/auth";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
-  // Rate limit: 5 login attempts per minute per IP
-  const rateKey = `tenant-login:${getRateLimitKey(request)}`;
+  const rateKey = `login:${getRateLimitKey(request)}`;
   const { allowed, retryAfter } = checkRateLimit(rateKey, 5, 60_000);
   if (!allowed) {
     return NextResponse.json(
@@ -29,148 +27,113 @@ export async function POST(request: NextRequest) {
     }
 
     const sql = SQL;
+    const lowerEmail = email.toLowerCase();
 
-    // Look up tenant admin by email in tenant_admins table
+    // ── 1. Try tenant admin ──
     const adminRows = await sql`
       SELECT ta.id, ta.email, ta.name, ta.password_hash, ta.role, ta.tenant_id,
-             t.slug as tenant_slug, t.name as tenant_name
+             t.slug as tenant_slug
       FROM tenant_admins ta
       JOIN tenants t ON t.id = ta.tenant_id
-      WHERE ta.email = ${email.toLowerCase()}
+      WHERE ta.email = ${lowerEmail}
       LIMIT 1
     `;
 
-    if (adminRows.length === 0) {
-      // Fallback: try employee login
-      // First, find the employee to get their tenant_slug
-      const empRows = await sql`
-        SELECT tenant_slug FROM admin_employees
-        WHERE email = ${email.toLowerCase()} AND is_portal_active = true
-        LIMIT 1
-      `;
+    if (adminRows.length > 0) {
+      const admin = adminRows[0] as any;
 
-      if (empRows.length > 0) {
-        const empTenantSlug = (empRows[0] as any).tenant_slug;
-        const session = await authenticateEmployee(empTenantSlug, email.toLowerCase(), password);
-
-        if (session) {
-          const token = createEmployeeToken(session);
-          const maxAge = 60 * 60 * 12; // 12 hours
-
-          const response = NextResponse.json({
-            success: true,
-            tenantSlug: session.tenantSlug,
-            isEmployee: true,
-            user: {
-              id: session.id,
-              email: session.email,
-              name: session.name,
-              role: session.role,
-            },
-          });
-          response.cookies.set("employee_session", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge,
-            path: "/",
-          });
-          response.cookies.set("employee_tenant", session.tenantSlug, {
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge,
-            path: "/",
-          });
-          return response;
+      if (admin.password_hash) {
+        const isValid = await bcrypt.compare(password, admin.password_hash);
+        if (!isValid) {
+          return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
         }
-      }
-
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
-    }
-
-    const admin = adminRows[0] as any;
-
-    // Verify password if hash exists
-    if (admin.password_hash) {
-      const isValid = await bcrypt.compare(password, admin.password_hash);
-      if (!isValid) {
-        return NextResponse.json(
-          { error: "Invalid credentials" },
-          { status: 401 }
-        );
-      }
-    } else {
-      // No password hash set yet — reject in production, allow in dev
-      if (process.env.NODE_ENV === "production") {
+      } else if (process.env.NODE_ENV === "production") {
         return NextResponse.json(
           { error: "Password not set for this account. Please contact your superadmin." },
           { status: 403 }
         );
       }
+
+      const tenantSlug = admin.tenant_slug;
+      const now = Date.now();
+      const maxAge = 7 * 24 * 60 * 60;
+
+      const payload = {
+        id: String(admin.id),
+        email: admin.email,
+        name: admin.name,
+        tenantSlug,
+        roleId: admin.role || "admin",
+        iat: now,
+        exp: now + maxAge * 1000,
+      };
+      const token = signSession(payload);
+
+      const response = NextResponse.json({
+        success: true,
+        role: "tenant_admin",
+        tenantSlug,
+        user: { id: String(admin.id), email: admin.email, name: admin.name, roleId: admin.role || "admin" },
+      });
+
+      const cookieOpts = { httpOnly: true, path: "/", sameSite: "lax" as const, secure: process.env.NODE_ENV === "production", maxAge };
+      response.cookies.set("syspro_session", token, cookieOpts);
+      response.cookies.set("tenantSlug", tenantSlug, { ...cookieOpts, httpOnly: false });
+      response.cookies.set("X-User-Id", String(admin.id), { ...cookieOpts, httpOnly: false });
+      response.cookies.set("X-User-Email", encodeURIComponent(email), { ...cookieOpts, httpOnly: false });
+      response.cookies.set("X-Role-Id", admin.role || "admin", { ...cookieOpts, httpOnly: false });
+
+      return response;
     }
 
-    const tenantSlug = admin.tenant_slug;
-    const now = Date.now();
-    const maxAge = 7 * 24 * 60 * 60; // 7 days in seconds
+    // ── 2. Try employee ──
+    const empRows = await sql`
+      SELECT tenant_slug FROM admin_employees
+      WHERE email = ${lowerEmail} AND is_portal_active = true
+      LIMIT 1
+    `;
 
-    const payload = {
-      id: String(admin.id),
-      email: admin.email,
-      name: admin.name,
-      tenantSlug,
-      roleId: admin.role || "admin",
-      iat: now,
-      exp: now + maxAge * 1000,
-    };
+    if (empRows.length > 0) {
+      const empTenantSlug = (empRows[0] as any).tenant_slug;
+      const session = await authenticateEmployee(empTenantSlug, lowerEmail, password);
 
-    const token = signSession(payload);
+      if (session) {
+        const token = createEmployeeToken(session);
+        const maxAge = 60 * 60 * 12;
 
-    const cookieStore = await cookies();
-    cookieStore.set("syspro_session", token, {
-      httpOnly: true,
-      path: "/",
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      maxAge,
-    });
-    cookieStore.set("tenantSlug", tenantSlug, {
-      path: "/",
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      maxAge,
-    });
-    cookieStore.set("X-User-Id", String(admin.id), {
-      path: "/",
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      maxAge,
-    });
-    cookieStore.set("X-User-Email", encodeURIComponent(email), {
-      path: "/",
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      maxAge,
-    });
-    cookieStore.set("X-Role-Id", admin.role || "admin", {
-      path: "/",
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      maxAge,
-    });
+        const response = NextResponse.json({
+          success: true,
+          role: "employee",
+          tenantSlug: session.tenantSlug,
+          user: {
+            id: session.id,
+            email: session.email,
+            name: session.name,
+            role: session.role,
+          },
+        });
 
-    return NextResponse.json({
-      success: true,
-      tenantSlug,
-      user: { id: String(admin.id), email: admin.email, name: admin.name, roleId: admin.role || "admin" },
-    });
+        response.cookies.set("employee_session", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge,
+          path: "/",
+        });
+        response.cookies.set("employee_tenant", session.tenantSlug, {
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge,
+          path: "/",
+        });
+
+        return response;
+      }
+    }
+
+    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   } catch (error) {
     console.error("Login error:", error);
-    return NextResponse.json(
-      { error: "Authentication failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Authentication failed" }, { status: 500 });
   }
 }
