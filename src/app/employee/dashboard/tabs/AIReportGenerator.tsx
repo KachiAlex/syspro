@@ -180,8 +180,8 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
     recognition.maxAlternatives = 1;
 
     let finalTranscript = transcriptRef.current;
-    let networkRetries = 0;
-    const MAX_RETRIES = 5;
+    let networkRetryCount = 0;
+    let restartDelay = 1000; // Start with 1s delay, increase exponentially
 
     recognition.onresult = (event: any) => {
       let interim = '';
@@ -195,6 +195,9 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
       }
       setCurrentTranscript(finalTranscript.trim());
       setInterimText(interim);
+      // Reset retry state on successful result
+      networkRetryCount = 0;
+      restartDelay = 1000;
     };
 
     recognition.onerror = (event: any) => {
@@ -206,26 +209,37 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
         return;
       }
       if (event.error === 'network' || event.error === 'audio-capture') {
-        if (networkRetries < MAX_RETRIES && isRecordingRef.current) {
-          networkRetries++;
-          return;
-        }
-        setError('Network issue with speech recognition. Your transcript is preserved — you can continue typing or try again.');
-        setIsRecording(false);
-        isRecordingRef.current = false;
+        // Unlimited retries with exponential backoff — don't stop recording
+        // The onend handler will fire and restart after a delay
+        networkRetryCount++;
+        restartDelay = Math.min(restartDelay * 1.5, 5000); // Cap at 5s
+        console.log(`Speech network error, will retry in ${Math.round(restartDelay)}ms (attempt ${networkRetryCount})`);
+        // Don't show error to user — just silently retry
+        // Transcript so far is preserved in finalTranscript
         return;
       }
-      setError(`Speech issue: ${event.error}. Transcript preserved — continue typing or try again.`);
-      setIsRecording(false);
-      isRecordingRef.current = false;
+      // For other errors, don't stop — let onend handle restart
+      console.error('Speech recognition error:', event.error);
+      return;
     };
 
     recognition.onend = () => {
       if (isRecordingRef.current) {
-        if (networkRetries > 0) networkRetries = Math.max(0, networkRetries - 1);
-        try { recognition.start(); } catch {
-          setTimeout(() => { if (isRecordingRef.current) { try { recognition.start(); } catch {} } }, 300);
-        }
+        // Restart with delay — longer if we've had network errors
+        const delay = networkRetryCount > 0 ? restartDelay : 100;
+        setTimeout(() => {
+          if (!isRecordingRef.current) return;
+          try {
+            recognition.start();
+          } catch {
+            // If already started, try again after a longer delay
+            setTimeout(() => {
+              if (isRecordingRef.current) {
+                try { recognition.start(); } catch {}
+              }
+            }, 500);
+          }
+        }, delay);
       } else {
         setIsRecording(false);
         setInterimText('');
