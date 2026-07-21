@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Loader2, Plus, Target, FileText, CheckCircle, AlertCircle, TrendingUp, X, Clock, Copy, Save } from 'lucide-react';
+import { Loader2, Plus, Target, FileText, CheckCircle, AlertCircle, TrendingUp, X, Clock, Copy, Save, Sparkles } from 'lucide-react';
+import { AIReportGenerator } from './AIReportGenerator';
 
 type ReportType = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'annual';
 
@@ -18,6 +19,8 @@ export function ReportsTab() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [carryForwardData, setCarryForwardData] = useState<any>(null);
+  const [showAIForm, setShowAIForm] = useState(false);
+  const [aiSubmitting, setAiSubmitting] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -112,7 +115,12 @@ export function ReportsTab() {
       <div className="space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <h3 className="text-sm font-semibold text-gray-900">My Reports</h3>
-          <button onClick={() => { setCarryForwardData(null); setShowForm(true); }} className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"><Plus className="w-4 h-4" />Submit Report</button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowAIForm(true)} className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all">
+              <Sparkles className="w-4 h-4" />Generate with AI
+            </button>
+            <button onClick={() => { setCarryForwardData(null); setShowForm(true); }} className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"><Plus className="w-4 h-4" />Submit Report</button>
+          </div>
         </div>
         <div className="flex gap-1 flex-wrap">{reportTypes.map((rt) => (<button key={rt.value} onClick={() => setFilterType(rt.value)} className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${filterType === rt.value ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>{rt.label}</button>))}</div>
         {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"><AlertCircle className="w-4 h-4" />{error}</div>}
@@ -134,6 +142,27 @@ export function ReportsTab() {
       </div>
 
       {showForm && <ReportFormModal kpis={kpis} carryForward={carryForwardData} onClose={() => { setShowForm(false); setCarryForwardData(null); }} onSuccess={() => { setShowForm(false); setCarryForwardData(null); setSuccess('Report submitted successfully!'); fetchData(); }} />}
+
+      {showAIForm && <AIReportGenerator kpis={kpis} onClose={() => setShowAIForm(false)} onSubmit={async (data) => {
+        setShowAIForm(false);
+        setAiSubmitting(true);
+        try {
+          const res = await fetch('/api/hr/employees/portal/reports', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              reportType: data.reportType, reportDate: data.reportDate,
+              title: data.report.title, objectives: data.report.objectives, achievements: data.report.achievements,
+              challenges: data.report.challenges, nextSteps: data.report.next_steps, additionalNotes: data.report.additional_notes,
+              meetings: data.report.meetings, blockers: data.report.blockers, activities: data.report.activities,
+              kpiMetrics: data.report.kpiMetrics,
+            }),
+          });
+          const result = await res.json().catch(() => ({}));
+          if (res.ok) { setSuccess('AI-generated report submitted successfully!'); fetchData(); }
+          else setError(result.error || 'Failed to submit AI report');
+        } catch { setError('Network error submitting report'); }
+        finally { setAiSubmitting(false); }
+      }} />}
     </div>
   );
 }
