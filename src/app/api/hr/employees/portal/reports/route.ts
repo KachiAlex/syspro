@@ -48,7 +48,8 @@ export async function GET(request: NextRequest) {
         rows = await sql`
           SELECT id, title, report_type, report_date, objectives, achievements,
                  challenges, next_steps, additional_notes, meetings, blockers,
-                 activities, status, hod_comment, submitted_at, updated_at, appraisal
+                 activities, status, hod_comment, submitted_at, updated_at, appraisal,
+                 head_of_department, submitter_role, approver_role
           FROM admin_staff_reports
           WHERE tenant_slug = ${session.tenantSlug}
             AND employee_id = ${session.id}
@@ -60,7 +61,8 @@ export async function GET(request: NextRequest) {
         rows = await sql`
           SELECT id, title, report_type, report_date, objectives, achievements,
                  challenges, next_steps, additional_notes, meetings, blockers,
-                 activities, status, hod_comment, submitted_at, updated_at, appraisal
+                 activities, status, hod_comment, submitted_at, updated_at, appraisal,
+                 head_of_department, submitter_role, approver_role
           FROM admin_staff_reports
           WHERE tenant_slug = ${session.tenantSlug}
             AND employee_id = ${session.id}
@@ -128,25 +130,49 @@ export async function POST(request: NextRequest) {
     const d = parsed.data;
     const id = randomUUID();
 
-    // Get employee's department and HOD
+    // Get employee's department, role, and HOD info
     const empInfo = await sql`
-      SELECT department_id FROM admin_employees
+      SELECT department_id, role, name FROM admin_employees
       WHERE id = ${session.id} AND tenant_slug = ${session.tenantSlug}
       LIMIT 1
     `;
     const departmentId = empInfo[0]?.department_id || "";
+    const employeeRole = (empInfo[0]?.role || session.role || "staff").toLowerCase();
 
-    // Find HOD for this department
+    // Determine routing based on role
+    // staff -> HOD of their department
+    // hod -> HR/Admin (tenant admin)
+    // executive -> tenant admin
+    let approverRole = "hod";
+    let approverId: string | null = null;
     let hodName = "N/A";
-    if (departmentId) {
-      const hod = await sql`
-        SELECT name FROM admin_employees
-        WHERE tenant_slug = ${session.tenantSlug}
-          AND department_id = ${departmentId}
-          AND role = 'hod'
-        LIMIT 1
-      `;
-      if (hod.length > 0) hodName = hod[0].name;
+
+    if (employeeRole === "executive" || employeeRole === "ceo" || employeeRole === "cfo" || employeeRole === "coo" || employeeRole === "cto") {
+      // Executive reports go to tenant admin
+      approverRole = "tenant_admin";
+      approverId = null; // any tenant admin can approve
+      hodName = "Tenant Admin";
+    } else if (employeeRole === "hod" || employeeRole === "head_of_department") {
+      // HOD reports go to HR/Admin
+      approverRole = "hr_admin";
+      approverId = null; // any HR admin can approve
+      hodName = "HR Admin";
+    } else {
+      // Staff reports go to their HOD
+      approverRole = "hod";
+      if (departmentId) {
+        const hod = await sql`
+          SELECT id, name FROM admin_employees
+          WHERE tenant_slug = ${session.tenantSlug}
+            AND department_id = ${departmentId}
+            AND (role = 'hod' OR role = 'head_of_department')
+          LIMIT 1
+        `;
+        if (hod.length > 0) {
+          hodName = hod[0].name;
+          approverId = hod[0].id;
+        }
+      }
     }
 
     // Store KPI metrics in the appraisal JSON field
@@ -159,7 +185,7 @@ export async function POST(request: NextRequest) {
         id, tenant_slug, employee_id, title, report_type, report_date,
         objectives, achievements, challenges, next_steps, additional_notes,
         meetings, blockers, activities, head_of_department, department_id,
-        status, appraisal
+        status, appraisal, submitter_role, approver_role, approver_id
       ) VALUES (
         ${id}, ${session.tenantSlug}, ${session.id},
         ${d.title || `${d.reportType} report for ${d.reportDate}`},
@@ -168,7 +194,8 @@ export async function POST(request: NextRequest) {
         ${d.nextSteps}, ${d.additionalNotes},
         ${d.meetings}, ${d.blockers}, ${d.activities},
         ${hodName}, ${departmentId},
-        'pending', ${appraisal}::jsonb
+        'pending', ${appraisal}::jsonb,
+        ${employeeRole}, ${approverRole}, ${approverId}
       )
     `;
 

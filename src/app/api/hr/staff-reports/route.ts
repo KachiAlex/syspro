@@ -148,6 +148,7 @@ export async function GET(request: NextRequest) {
     const tenantSlug = searchParams.get('tenantSlug');
     const employeeId = searchParams.get('employeeId') ?? undefined;
     const status = searchParams.get('status') ?? undefined;
+    const approverRole = searchParams.get('approverRole') ?? undefined;
 
     if (!tenantSlug) {
       return NextResponse.json(
@@ -156,7 +157,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const reports = await listStaffReports(tenantSlug, { employeeId, status });
+    const reports = await listStaffReports(tenantSlug, { employeeId, status, approverRole } as any);
     return NextResponse.json({ reports });
   } catch (error) {
     console.error('Error fetching staff reports:', error);

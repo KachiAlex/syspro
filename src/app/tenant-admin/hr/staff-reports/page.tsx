@@ -102,6 +102,7 @@ export default function ReportsPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [selectedReport, setSelectedReport] = useState<StaffReport | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterApprover, setFilterApprover] = useState<string>('all');
   const [reviewComment, setReviewComment] = useState('');
   const [reviewingStatus, setReviewingStatus] = useState<string | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -112,7 +113,7 @@ export default function ReportsPage() {
     try {
       const [fetchedEmployees, fetchedReports] = await Promise.all([
         HRService.getEmployees(tenantSlug).catch(() => []),
-        HRService.getStaffReports(tenantSlug).catch(() => []),
+        HRService.getStaffReports(tenantSlug, filterApprover !== 'all' ? filterApprover : undefined).catch(() => []),
       ]);
       setEmployees(fetchedEmployees.map((e: any) => ({
         id: e.id,
@@ -127,7 +128,7 @@ export default function ReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, [tenantSlug]);
+  }, [tenantSlug, filterApprover]);
 
   useEffect(() => {
     loadData();
@@ -344,6 +345,16 @@ export default function ReportsPage() {
             {STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
+          </select>
+          <select
+            value={filterApprover}
+            onChange={(e) => setFilterApprover(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Sources</option>
+            <option value="hr_admin">HOD Reports</option>
+            <option value="tenant_admin">Executive Reports</option>
+            <option value="hod">Staff Reports (via HOD)</option>
           </select>
           </div>
         </div>

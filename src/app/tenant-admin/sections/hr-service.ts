@@ -125,8 +125,11 @@ export class HRService {
     }));
   }
 
-  static async getStaffReports(tenantSlug: string): Promise<any[]> {
-    const response = await apiClient.get(`/hr/staff-reports?tenantSlug=${tenantSlug}`);
+  static async getStaffReports(tenantSlug: string, approverRole?: string): Promise<any[]> {
+    const url = approverRole
+      ? `/hr/staff-reports?tenantSlug=${tenantSlug}&approverRole=${approverRole}`
+      : `/hr/staff-reports?tenantSlug=${tenantSlug}`;
+    const response = await apiClient.get(url);
     return response.data.reports || [];
   }
 

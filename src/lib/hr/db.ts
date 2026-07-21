@@ -191,6 +191,10 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
     await sql`alter table if exists admin_staff_reports add column if not exists version integer default 1`;
     await sql`alter table if exists admin_staff_reports add column if not exists resubmission_of_id text`;
     await sql`alter table if exists admin_staff_reports add column if not exists rejected_at timestamptz`;
+    await sql`alter table if exists admin_staff_reports add column if not exists submitter_role text default 'staff'`;
+    await sql`alter table if exists admin_staff_reports add column if not exists approver_role text default 'hod'`;
+    await sql`alter table if exists admin_staff_reports add column if not exists approver_id text`;
+    await sql`create index if not exists idx_admin_staff_reports_approver on admin_staff_reports(tenant_slug, approver_role, approver_id)`;
 
     await sql`
       create table if not exists admin_staff_report_templates (
@@ -1452,7 +1456,7 @@ export async function insertStaffReport(row: {
 
 export async function listStaffReports(
   tenantSlug: string,
-  filters?: { employeeId?: string; status?: string }
+  filters?: { employeeId?: string; status?: string; approverRole?: string }
 ) {
   const sql = SQL;
   await ensureHrTables(sql);
@@ -1467,6 +1471,10 @@ export async function listStaffReports(
   if (filters?.status) {
     params.push(filters.status);
     query += ` and status = $${params.length}`;
+  }
+  if (filters?.approverRole) {
+    params.push(filters.approverRole);
+    query += ` and approver_role = $${params.length}`;
   }
 
   query += ` order by submitted_at desc`;

@@ -135,7 +135,7 @@ export function ReportsTab() {
                 <button onClick={() => handleCarryForward(r)} className="text-xs text-blue-600 font-medium hover:text-blue-700 inline-flex items-center gap-1"><Copy className="w-3 h-3" />Carry forward</button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3"><div><p className="text-xs font-semibold text-gray-700">Objectives</p><p className="text-xs text-gray-600 mt-0.5">{r.objectives}</p></div><div><p className="text-xs font-semibold text-gray-700">Achievements</p><p className="text-xs text-gray-600 mt-0.5">{r.achievements}</p></div>{r.challenges && <div><p className="text-xs font-semibold text-gray-700">Challenges</p><p className="text-xs text-gray-600 mt-0.5">{r.challenges}</p></div>}{r.next_steps && <div><p className="text-xs font-semibold text-gray-700">Next Steps</p><p className="text-xs text-gray-600 mt-0.5">{r.next_steps}</p></div>}</div>
-              {r.hod_comment && <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2"><p className="text-xs font-semibold text-amber-700">HOD Comment:</p><p className="text-xs text-amber-600 mt-0.5">{r.hod_comment}</p></div>}
+              {r.hod_comment && <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2"><p className="text-xs font-semibold text-amber-700">Reviewer Feedback:</p><p className="text-xs text-amber-600 mt-0.5">{r.hod_comment}</p></div>}
             </div>
           ))}</div>
         )}

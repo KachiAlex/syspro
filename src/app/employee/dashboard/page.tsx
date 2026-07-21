@@ -7,6 +7,8 @@ import { DashboardTab } from './tabs/DashboardTab';
 import { AttendanceTab } from './tabs/AttendanceTab';
 import { ReportsTab } from './tabs/ReportsTab';
 import { ProfileTab } from './tabs/ProfileTab';
+import { ApprovalsTab } from './tabs/ApprovalsTab';
+import { ClipboardCheck } from 'lucide-react';
 
 interface EmployeeProfile {
   id: string; name: string; email: string; jobTitle: string; role: string;
@@ -14,7 +16,7 @@ interface EmployeeProfile {
   hireDate: string; salary: number; lastLogin: string;
 }
 
-type Tab = 'dashboard' | 'attendance' | 'reports' | 'profile';
+type Tab = 'dashboard' | 'attendance' | 'reports' | 'approvals' | 'profile';
 
 export default function EmployeeDashboardPage() {
   const router = useRouter();
@@ -69,10 +71,14 @@ export default function EmployeeDashboardPage() {
   const fmtRole = (r: string) => r ? r.charAt(0).toUpperCase() + r.slice(1) : 'Staff';
   const totalBadges = badgeCounts.attendance + badgeCounts.reports + badgeCounts.profile;
 
+  const employeeRole = (profile.role || 'staff').toLowerCase();
+  const canApprove = ['hod', 'head_of_department', 'hr', 'hr_admin', 'hr_manager'].includes(employeeRole);
+
   const navItems: { key: Tab; label: string; icon: React.ReactNode; badge?: number }[] = [
     { key: 'dashboard', label: 'Dashboard', icon: <User className="w-5 h-5" /> },
     { key: 'attendance', label: 'Attendance', icon: <CalendarCheck className="w-5 h-5" />, badge: badgeCounts.attendance || undefined },
     { key: 'reports', label: 'KPI Reports', icon: <Target className="w-5 h-5" />, badge: badgeCounts.reports || undefined },
+    ...(canApprove ? [{ key: 'approvals' as Tab, label: 'Approvals', icon: <ClipboardCheck className="w-5 h-5" /> }] : []),
     { key: 'profile', label: 'Profile & More', icon: <UserCircle className="w-5 h-5" />, badge: badgeCounts.profile || undefined },
   ];
 
@@ -145,6 +151,7 @@ export default function EmployeeDashboardPage() {
           {activeTab === 'dashboard' && <DashboardTab profile={profile} onNavigate={(tab) => setActiveTab(tab as Tab)} />}
           {activeTab === 'attendance' && <AttendanceTab />}
           {activeTab === 'reports' && <ReportsTab />}
+          {activeTab === 'approvals' && canApprove && <ApprovalsTab />}
           {activeTab === 'profile' && <ProfileTab profile={profile} />}
         </main>
       </div>
