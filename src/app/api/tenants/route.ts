@@ -252,7 +252,6 @@ export async function POST(request: Request) {
         seats = excluded.seats,
         admin_name = excluded.admin_name,
         admin_email = excluded.admin_email,
-        admin_password_hash = excluded.admin_password_hash,
         admin_notes = excluded.admin_notes,
         default_region_id = excluded.default_region_id,
         default_region_name = excluded.default_region_name,
@@ -264,6 +263,15 @@ export async function POST(request: Request) {
     `;
 
       const tenantSummary = mapTenantRow(returnedRows[0]);
+
+    // Also upsert a tenant_admins row so the admin can log in immediately
+    await SQL`
+      INSERT INTO tenant_admins (tenant_id, email, name, role, password_hash)
+      SELECT ${tenantId}, ${payload.adminEmail.toLowerCase()}, ${payload.adminName}, 'admin', ${passwordHash}
+      WHERE NOT EXISTS (
+        SELECT 1 FROM tenant_admins WHERE tenant_id = ${tenantId} AND email = ${payload.adminEmail.toLowerCase()}
+      )
+    `;
 
     return NextResponse.json(
       {

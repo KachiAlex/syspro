@@ -36,7 +36,7 @@ export async function POST(
   const { slug } = await params;
   try {
     const body = await request.json();
-    const { email, name, role } = body;
+    const { email, name, role, password } = body;
 
     if (!email || !name) {
       return NextResponse.json({ error: 'Missing required fields: email, name' }, { status: 400 });
@@ -48,9 +48,20 @@ export async function POST(
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
+    // Hash password if provided, otherwise try to copy from tenants.admin_password_hash
+    let passwordHash: string | null = null;
+    if (password) {
+      passwordHash = await bcrypt.hash(password, 12);
+    } else {
+      const tenantRow = await sql`SELECT admin_password_hash FROM tenants WHERE slug = ${slug}`;
+      if (tenantRow.length > 0 && tenantRow[0].admin_password_hash) {
+        passwordHash = tenantRow[0].admin_password_hash;
+      }
+    }
+
     const result = await sql`
-      INSERT INTO tenant_admins (tenant_id, email, name, role)
-      VALUES (${tenant[0].id}, ${email}, ${name}, ${role || 'admin'})
+      INSERT INTO tenant_admins (tenant_id, email, name, role, password_hash)
+      VALUES (${tenant[0].id}, ${email.toLowerCase()}, ${name}, ${role || 'admin'}, ${passwordHash})
       RETURNING *
     `;
 

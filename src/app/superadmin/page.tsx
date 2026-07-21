@@ -530,6 +530,7 @@ export default function SuperadminPage() {
           email: adminFormData.email,
           name: adminFormData.name,
           role: adminFormData.role,
+          password: adminFormData.password || undefined,
         }),
       });
       if (response.ok) {
