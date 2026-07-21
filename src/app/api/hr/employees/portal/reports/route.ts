@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decodeEmployeeToken } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
+import { ensureHrTables } from "@/lib/hr/db";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 
@@ -150,6 +151,9 @@ export async function POST(request: NextRequest) {
   try {
     const sql = SQL;
 
+    // Ensure table and columns exist (runs migrations)
+    try { await ensureHrTables(sql); } catch (e) { console.error("ensureHrTables failed (non-fatal):", (e as any)?.message); }
+
     const body = await request.json();
     const parsed = reportSchema.safeParse(body);
     if (!parsed.success) {
@@ -212,30 +216,53 @@ export async function POST(request: NextRequest) {
       ? JSON.stringify({ kpiMetrics: d.kpiMetrics })
       : null;
 
-    await sql`
-      INSERT INTO admin_staff_reports (
-        id, tenant_slug, employee_id, title, report_type, report_date,
-        objectives, achievements, challenges, next_steps, additional_notes,
-        meetings, blockers, activities, head_of_department, department_id,
-        status, appraisal, submitter_role, approver_role, approver_id, team_members
-      ) VALUES (
-        ${id}, ${session.tenantSlug}, ${session.id},
-        ${d.title || `${d.reportType} report for ${d.reportDate}`},
-        ${d.reportType}, ${d.reportDate},
-        ${d.objectives}, ${d.achievements}, ${d.challenges},
-        ${d.nextSteps}, ${d.additionalNotes},
-        ${d.meetings}, ${d.blockers}, ${d.activities},
-        ${hodName}, ${departmentId},
-        'pending', ${appraisal}::jsonb,
-        ${employeeRole}, ${approverRole}, ${approverId},
-        ${d.teamMembers}
-      )
-    `;
+    try {
+      await sql`
+        INSERT INTO admin_staff_reports (
+          id, tenant_slug, employee_id, title, report_type, report_date,
+          objectives, achievements, challenges, next_steps, additional_notes,
+          meetings, blockers, activities, head_of_department, department_id,
+          status, appraisal, submitter_role, approver_role, approver_id, team_members
+        ) VALUES (
+          ${id}, ${session.tenantSlug}, ${session.id},
+          ${d.title || `${d.reportType} report for ${d.reportDate}`},
+          ${d.reportType}, ${d.reportDate},
+          ${d.objectives}, ${d.achievements}, ${d.challenges},
+          ${d.nextSteps}, ${d.additionalNotes},
+          ${d.meetings}, ${d.blockers}, ${d.activities},
+          ${hodName}, ${departmentId},
+          'pending', ${appraisal}::jsonb,
+          ${employeeRole}, ${approverRole}, ${approverId},
+          ${d.teamMembers}
+        )
+      `;
+    } catch (insertErr: any) {
+      console.error("Full insert failed, trying without new columns:", insertErr?.message);
+      // Fallback: insert without team_members, submitter_role, approver_role, approver_id
+      // (these columns may not exist on the production DB yet)
+      await sql`
+        INSERT INTO admin_staff_reports (
+          id, tenant_slug, employee_id, title, report_type, report_date,
+          objectives, achievements, challenges, next_steps, additional_notes,
+          meetings, blockers, activities, head_of_department, department_id,
+          status, appraisal
+        ) VALUES (
+          ${id}, ${session.tenantSlug}, ${session.id},
+          ${d.title || `${d.reportType} report for ${d.reportDate}`},
+          ${d.reportType}, ${d.reportDate},
+          ${d.objectives}, ${d.achievements}, ${d.challenges},
+          ${d.nextSteps}, ${d.additionalNotes},
+          ${d.meetings}, ${d.blockers}, ${d.activities},
+          ${hodName}, ${departmentId},
+          'pending', ${appraisal}::jsonb
+        )
+      `;
+    }
 
     const record = await sql`SELECT * FROM admin_staff_reports WHERE id = ${id}`;
     return NextResponse.json({ success: true, report: record[0] }, { status: 201 });
-  } catch (error) {
-    console.error("Employee report create error:", error);
-    return NextResponse.json({ error: "Failed to submit report" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Employee report create error:", error?.message || error, error?.stack);
+    return NextResponse.json({ error: "Failed to submit report", detail: error?.message || String(error) }, { status: 500 });
   }
 }
