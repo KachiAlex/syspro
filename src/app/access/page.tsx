@@ -92,7 +92,11 @@ export default function AccessPage() {
         return;
       }
       const data = await res.json();
-      router.push('/tenant-admin?tenantSlug=' + data.tenantSlug);
+      if (data.isEmployee) {
+        router.push('/employee/dashboard');
+      } else {
+        router.push('/tenant-admin?tenantSlug=' + data.tenantSlug);
+      }
     } catch (err) {
       setError('Login failed. Please check your credentials and try again.');
     } finally {

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { signSession } from "@/lib/session";
 import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limit";
 import { sql as SQL } from "@/lib/sql-client";
+import { authenticateEmployee, createEmployeeToken } from "@/lib/hr/auth";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
@@ -40,6 +41,51 @@ export async function POST(request: NextRequest) {
     `;
 
     if (adminRows.length === 0) {
+      // Fallback: try employee login
+      // First, find the employee to get their tenant_slug
+      const empRows = await sql`
+        SELECT tenant_slug FROM admin_employees
+        WHERE email = ${email.toLowerCase()} AND is_portal_active = true
+        LIMIT 1
+      `;
+
+      if (empRows.length > 0) {
+        const empTenantSlug = (empRows[0] as any).tenant_slug;
+        const session = await authenticateEmployee(empTenantSlug, email.toLowerCase(), password);
+
+        if (session) {
+          const token = createEmployeeToken(session);
+          const cookieStore = await cookies();
+          const maxAge = 60 * 60 * 12; // 12 hours
+
+          cookieStore.set("employee_session", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge,
+            path: "/",
+          });
+          cookieStore.set("employee_tenant", session.tenantSlug, {
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge,
+            path: "/",
+          });
+
+          return NextResponse.json({
+            success: true,
+            tenantSlug: session.tenantSlug,
+            isEmployee: true,
+            user: {
+              id: session.id,
+              email: session.email,
+              name: session.name,
+              role: session.role,
+            },
+          });
+        }
+      }
+
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }
