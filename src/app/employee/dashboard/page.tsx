@@ -167,7 +167,7 @@ export default function EmployeeDashboardPage() {
           <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
           <p className="text-gray-700">{error}</p>
           <button
-            onClick={() => router.replace('/login')}}
+            onClick={() => router.replace('/login')}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Back to login
