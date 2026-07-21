@@ -62,7 +62,7 @@ export async function authenticateEmployee(
   const rows = await sql`
     select id, name, email, tenant_slug, role, department_id, job_title, password_hash, is_portal_active
     from admin_employees
-    where tenant_slug = ${tenantSlug} and email = ${email}
+    where tenant_slug = ${tenantSlug} and email = ${email.toLowerCase()}
     limit 1
   `;
 

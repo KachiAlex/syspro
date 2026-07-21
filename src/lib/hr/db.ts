@@ -285,11 +285,11 @@ export async function insertEmployee(row: {
   const sql = SQL;
   await ensureHrTables(sql);
 
-  // Check for duplicate email within tenant
+  // Check for duplicate email within tenant (case-insensitive)
   const existingEmp = await sql`
     select id, name from admin_employees
     where tenant_slug = ${row.tenantSlug}
-      and email = ${row.email}
+      and email = ${row.email.toLowerCase()}
     limit 1
   `;
   if ((existingEmp as any[]).length > 0) {
@@ -320,7 +320,7 @@ export async function insertEmployee(row: {
       reporting_manager_id, branch_id, region_id, cost_center, hire_date,
       salary, employment_type, role, status, created_by
     ) values (
-      ${id}, ${row.tenantSlug}, ${row.name}, ${row.email}, ${row.phone ?? null},
+      ${id}, ${row.tenantSlug}, ${row.name}, ${row.email.toLowerCase()}, ${row.phone ?? null},
       ${row.departmentId}, ${row.jobTitle}, ${row.reportingManagerId ?? null},
       ${row.branchId ?? null}, ${row.regionId ?? null}, ${row.costCenter ?? null},
       ${row.hireDate ?? null}, ${row.salary ?? null}, ${row.employmentType ?? "full-time"},

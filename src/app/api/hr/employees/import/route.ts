@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
           const employee = await insertEmployee({
             tenantSlug,
             name: fullName,
-            email,
+            email: email.toLowerCase(),
             departmentId,
             jobTitle: position,
             hireDate: startDate,
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
           // Always create portal account for imported employees
           const password = defaultPassword || generatePassword();
           await setEmployeePassword(tenantSlug, employee.id, password);
-          portalCredentials.push({ name: fullName, email, password });
+          portalCredentials.push({ name: fullName, email: email.toLowerCase(), password });
         } catch (err: any) {
           const msg = err?.message || err?.toString?.() || "Unknown error";
           errors.push(`Row ${i + 1}: ${msg}`);

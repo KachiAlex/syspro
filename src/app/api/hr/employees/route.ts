@@ -18,7 +18,7 @@ const listSchema = z.object({
 const createSchema = z.object({
   tenantSlug: z.string().min(1),
   name: z.string().min(1),
-  email: z.string().email(),
+  email: z.string().email().transform((v) => v.toLowerCase()),
   phone: z.string().optional(),
   departmentId: z.string().optional(),
   departmentName: z.string().optional(),

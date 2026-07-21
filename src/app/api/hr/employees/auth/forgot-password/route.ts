@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     // Find the employee
     const employees = await SQL`
       select id, name, email from admin_employees
-      where tenant_slug = ${tenantSlug} and email = ${email} and status = 'active'
+      where tenant_slug = ${tenantSlug} and email = ${email.toLowerCase()} and status = 'active'
       limit 1
     `;
 
