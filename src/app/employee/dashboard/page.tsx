@@ -2,12 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, LogOut, Loader2, AlertCircle, CalendarCheck, Target, UserCircle, Menu, Bell } from 'lucide-react';
+import { User, LogOut, Loader2, AlertCircle, CalendarCheck, Target, UserCircle, Menu, Bell, ClipboardList, Receipt, Plane, Wallet, CheckSquare } from 'lucide-react';
 import { DashboardTab } from './tabs/DashboardTab';
 import { AttendanceTab } from './tabs/AttendanceTab';
 import { ReportsTab } from './tabs/ReportsTab';
 import { ProfileTab } from './tabs/ProfileTab';
 import { ApprovalsTab } from './tabs/ApprovalsTab';
+import { TasksTab } from './tabs/TasksTab';
+import { ExpensesTab } from './tabs/ExpensesTab';
+import { LeaveTab } from './tabs/LeaveTab';
+import { PayslipsTab } from './tabs/PayslipsTab';
 import { ClipboardCheck } from 'lucide-react';
 
 interface EmployeeProfile {
@@ -16,7 +20,7 @@ interface EmployeeProfile {
   hireDate: string; salary: number; lastLogin: string;
 }
 
-type Tab = 'dashboard' | 'attendance' | 'reports' | 'approvals' | 'profile';
+type Tab = 'dashboard' | 'tasks' | 'attendance' | 'reports' | 'expenses' | 'leave' | 'payslips' | 'approvals' | 'profile';
 
 export default function EmployeeDashboardPage() {
   const router = useRouter();
@@ -73,11 +77,16 @@ export default function EmployeeDashboardPage() {
 
   const employeeRole = (profile.role || 'staff').toLowerCase();
   const canApprove = ['hod', 'head_of_department', 'hr', 'hr_admin', 'hr_manager'].includes(employeeRole);
+  const canAssignTasks = ['hod', 'head_of_department', 'hr', 'hr_admin', 'hr_manager'].includes(employeeRole);
 
   const navItems: { key: Tab; label: string; icon: React.ReactNode; badge?: number }[] = [
     { key: 'dashboard', label: 'Dashboard', icon: <User className="w-5 h-5" /> },
+    { key: 'tasks', label: 'Tasks & KPIs', icon: <ClipboardList className="w-5 h-5" /> },
     { key: 'attendance', label: 'Attendance', icon: <CalendarCheck className="w-5 h-5" />, badge: badgeCounts.attendance || undefined },
     { key: 'reports', label: 'KPI Reports', icon: <Target className="w-5 h-5" />, badge: badgeCounts.reports || undefined },
+    { key: 'expenses', label: 'Expenses', icon: <Receipt className="w-5 h-5" /> },
+    { key: 'leave', label: 'Leave', icon: <Plane className="w-5 h-5" /> },
+    { key: 'payslips', label: 'Payslips', icon: <Wallet className="w-5 h-5" /> },
     ...(canApprove ? [{ key: 'approvals' as Tab, label: 'Approvals', icon: <ClipboardCheck className="w-5 h-5" /> }] : []),
     { key: 'profile', label: 'Profile & More', icon: <UserCircle className="w-5 h-5" />, badge: badgeCounts.profile || undefined },
   ];
@@ -149,8 +158,12 @@ export default function EmployeeDashboardPage() {
 
         <main className="flex-1 p-4 md:p-6 max-w-5xl mx-auto w-full">
           {activeTab === 'dashboard' && <DashboardTab profile={profile} onNavigate={(tab) => setActiveTab(tab as Tab)} />}
+          {activeTab === 'tasks' && <TasksTab profile={profile} />}
           {activeTab === 'attendance' && <AttendanceTab />}
           {activeTab === 'reports' && <ReportsTab />}
+          {activeTab === 'expenses' && <ExpensesTab profile={profile} />}
+          {activeTab === 'leave' && <LeaveTab profile={profile} />}
+          {activeTab === 'payslips' && <PayslipsTab profile={profile} />}
           {activeTab === 'approvals' && canApprove && <ApprovalsTab />}
           {activeTab === 'profile' && <ProfileTab profile={profile} />}
         </main>

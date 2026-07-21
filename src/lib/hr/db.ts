@@ -224,6 +224,9 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
     await sql`alter table if exists admin_staff_tasks add column if not exists expected_outcome text`;
     await sql`alter table if exists admin_staff_tasks add column if not exists weight integer default 1`;
     await sql`alter table if exists admin_staff_tasks add column if not exists is_kpi boolean default false`;
+    // Expand frequency constraint to support monthly, quarterly, annual
+    await sql`alter table if exists admin_staff_tasks drop constraint if exists admin_staff_tasks_frequency_check`;
+    await sql`alter table if exists admin_staff_tasks add constraint admin_staff_tasks_frequency_check check (frequency in ('daily','weekly','monthly','quarterly','annual','one-time'))`;
 
   // Staff tasks assigned by HODs
   await sql`
@@ -233,7 +236,7 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
       employee_id text not null,
       title text not null,
       description text,
-      frequency text not null check (frequency in ('daily','weekly','one-time')),
+      frequency text not null check (frequency in ('daily','weekly','monthly','quarterly','annual','one-time')),
       due_date text not null,
       status text default 'pending' check (status in ('pending','in_progress','completed','overdue')),
       assigned_by text not null,
