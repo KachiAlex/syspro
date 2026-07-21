@@ -107,8 +107,9 @@ async function testReportSubmission(token) {
 
   // 3. Fetch reports to confirm
   console.log('\n3. Fetching reports to confirm...');
+  await new Promise(r => setTimeout(r, 1000));
   const fetchRes = await fetch(`${BASE}/api/hr/employees/portal/reports`, {
-    headers: { 'Cookie': `employee_session=${token}` },
+    headers: { 'Cookie': `employee_session=${token}`, 'Origin': ORIGIN },
   });
 
   const fetchData = await fetchRes.json().catch(() => ({}));
@@ -121,6 +122,9 @@ async function testReportSubmission(token) {
       console.log('   Meetings:', latest.meetings ? '✅ has content' : '❌ empty');
       console.log('   Blockers:', latest.blockers ? '✅ has content' : '❌ empty');
       console.log('   Activities:', latest.activities ? '✅ has content' : '❌ empty');
+    } else {
+      console.log('   (No reports returned — checking raw response...)');
+      console.log('   Raw:', JSON.stringify(fetchData).slice(0, 200));
     }
   } else {
     console.error('❌ Fetch reports failed:', fetchRes.status, fetchData.error || fetchData);

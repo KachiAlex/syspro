@@ -105,7 +105,24 @@ export async function GET(request: NextRequest) {
             LIMIT 50
           `;
         }
-      } catch (e2) { console.error("reports: fallback fetch failed:", (e2 as any)?.message); }
+      } catch (e2) {
+        console.error("reports: fallback fetch failed:", (e2 as any)?.message);
+        // Third fallback: select only essential columns
+        try {
+          rows = await sql`
+            SELECT id, title, report_type, report_date, objectives, achievements,
+                   challenges, next_steps, additional_notes, status,
+                   submitted_at, updated_at, head_of_department
+            FROM admin_staff_reports
+            WHERE tenant_slug = ${session.tenantSlug}
+              AND employee_id = ${session.id}
+            ORDER BY submitted_at DESC
+            LIMIT 50
+          `;
+        } catch (e3) {
+          console.error("reports: minimal fetch failed:", (e3 as any)?.message);
+        }
+      }
     }
 
     // Fetch KPI tasks — try with is_kpi column, fallback without
