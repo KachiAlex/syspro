@@ -62,7 +62,9 @@ export async function POST(request: NextRequest) {
 - Fix grammar, remove filler words (um, uh, like, you know), and organize into logical sentences
 - Use bullet points for lists of items
 - Keep all meaningful content — don't drop details the employee mentioned
-- If a section is empty or missing, return an empty string for that field
+- CRITICAL: Map each labeled section to the corresponding JSON field. [ACTIVITIES] → activities, [ACHIEVEMENTS] → achievements, [OBJECTIVES] → objectives, [CHALLENGES] → challenges, [MEETINGS] → meetings, [BLOCKERS] → blockers, [NEXT STEPS] → next_steps, [ADDITIONAL NOTES] → additional_notes
+- If a section has content, you MUST include that content in the corresponding JSON field — do NOT leave it empty
+- If a section is truly empty or missing from the transcript, return an empty string for that field
 - You may pull relevant content from one section into another if it clearly belongs there (e.g., an achievement mentioned in the activities section)
 
 `
@@ -121,7 +123,7 @@ Return ONLY the JSON object:`;
         model: GROQ_MODEL,
         messages,
         temperature: 0.3,
-        max_tokens: 2000,
+        max_tokens: 4000,
         response_format: { type: "json_object" },
       }),
     });
