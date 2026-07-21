@@ -91,6 +91,10 @@ export default function LoginPage() {
         return;
       }
       if (data.role === 'employee') {
+        if (data.token) {
+          document.cookie = `employee_session=${data.token}; path=/; max-age=${60 * 60 * 12}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
+          document.cookie = `employee_tenant=${data.tenantSlug}; path=/; max-age=${60 * 60 * 12}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
+        }
         window.location.href = '/employee/dashboard';
       } else {
         window.location.href = '/tenant-admin?tenantSlug=' + data.tenantSlug;

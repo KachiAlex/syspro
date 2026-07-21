@@ -100,12 +100,12 @@ export async function POST(request: NextRequest) {
       if (session) {
         const token = createEmployeeToken(session);
         const maxAge = 60 * 60 * 12;
-        const isProd = process.env.NODE_ENV === "production";
 
         const response = NextResponse.json({
           success: true,
           role: "employee",
           tenantSlug: session.tenantSlug,
+          token,
           user: {
             id: session.id,
             email: session.email,
@@ -114,9 +114,19 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        const cookieFlags = `Path=/; Max-Age=${maxAge}; SameSite=Lax${isProd ? "; Secure; HttpOnly" : "; HttpOnly"}`;
-        response.headers.set("Set-Cookie", `employee_session=${token}; ${cookieFlags}`);
-        response.headers.append("Set-Cookie", `employee_tenant=${session.tenantSlug}; Path=/; Max-Age=${maxAge}; SameSite=Lax${isProd ? "; Secure" : ""}`);
+        response.cookies.set("employee_session", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge,
+          path: "/",
+        });
+        response.cookies.set("employee_tenant", session.tenantSlug, {
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge,
+          path: "/",
+        });
 
         return response;
       }
