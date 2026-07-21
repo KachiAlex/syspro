@@ -78,13 +78,14 @@ export async function GET(request: NextRequest) {
     const monthReports = await sql`
       SELECT count(*)::int as cnt FROM admin_staff_reports
       WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id}
-        AND submitted_at >= ${monthStart}::date
+        AND submitted_at >= ${monthStart}
     `;
 
     // Payslips count
     const payslipCount = await sql`
-      SELECT count(*)::int as cnt FROM admin_payroll
-      WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id}
+      SELECT count(*)::int as cnt FROM admin_payroll_entries pe
+      JOIN admin_payroll_runs pr ON pr.id = pe.run_id
+      WHERE pe.tenant_slug = ${session.tenantSlug} AND pe.employee_id = ${session.id}
     `;
 
     // Build attendance summary
@@ -162,8 +163,8 @@ export async function GET(request: NextRequest) {
       kpis: kpiTasks,
       recentReports,
     });
-  } catch (error) {
-    console.error("Dashboard summary error:", error);
-    return NextResponse.json({ error: "Failed to load dashboard" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Dashboard summary error:", error?.message || error);
+    return NextResponse.json({ error: "Failed to load dashboard", detail: error?.message || String(error) }, { status: 500 });
   }
 }

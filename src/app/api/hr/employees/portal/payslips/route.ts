@@ -20,15 +20,15 @@ export async function GET(request: NextRequest) {
 
   try {
     const rows = await SQL`
-      select pe.id, pe.period, pe.base_salary, pe.transport_allowance,
+      select pe.id, pr.period, pe.base_salary, pe.transport_allowance,
              pe.housing_allowance, pe.meal_allowance, pe.bonus,
              pe.tax, pe.pension, pe.health_insurance, pe.other_deductions,
-             pe.net_pay, pe.status, pe.created_at
+             pe.net_pay, pr.status, pe.created_at
       from admin_payroll_entries pe
-      join admin_payroll_runs pr on pr.id = pe.payroll_run_id
-      where pr.tenant_slug = ${session.tenantSlug}
+      join admin_payroll_runs pr on pr.id = pe.run_id
+      where pe.tenant_slug = ${session.tenantSlug}
         and pe.employee_id = ${session.id}
-      order by pe.period desc
+      order by pr.period desc
       limit 24
     `;
 
