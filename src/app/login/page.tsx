@@ -91,9 +91,9 @@ export default function LoginPage() {
         return;
       }
       if (data.role === 'employee') {
-        router.push('/employee/dashboard');
+        window.location.href = '/employee/dashboard';
       } else {
-        router.push('/tenant-admin?tenantSlug=' + data.tenantSlug);
+        window.location.href = '/tenant-admin?tenantSlug=' + data.tenantSlug;
       }
     } catch (err) {
       setError('Login failed. Please check your credentials and try again.');
