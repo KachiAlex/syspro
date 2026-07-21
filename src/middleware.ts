@@ -184,7 +184,14 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  
+  // Allow microphone access on employee dashboard pages
+  if (pathname.startsWith('/employee')) {
+    response.headers.set('Permissions-Policy', 'microphone=(self), camera=(), geolocation=()');
+  }
+  
+  return response;
 }
 
 export const config = {
