@@ -54,6 +54,7 @@ async function main() {
 
   const loginData = await loginRes.json();
   console.log('Login succeeded:', loginData.user?.name, loginData.user?.email);
+  console.log('   User ID:', loginData.user?.id);
 
   const cookie = loginRes.headers.get('set-cookie');
   const token = cookie?.match(/employee_session=([^;]+)/)?.[1];

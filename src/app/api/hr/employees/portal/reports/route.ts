@@ -121,6 +121,18 @@ export async function GET(request: NextRequest) {
           `;
         } catch (e3) {
           console.error("reports: minimal fetch failed:", (e3 as any)?.message);
+          // Ultimate fallback: SELECT * 
+          try {
+            rows = await sql`
+              SELECT * FROM admin_staff_reports
+              WHERE tenant_slug = ${session.tenantSlug}
+                AND employee_id = ${session.id}
+              ORDER BY submitted_at DESC
+              LIMIT 50
+            `;
+          } catch (e4) {
+            console.error("reports: SELECT * fallback failed:", (e4 as any)?.message);
+          }
         }
       }
     }
