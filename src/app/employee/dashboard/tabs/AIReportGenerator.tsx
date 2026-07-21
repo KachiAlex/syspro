@@ -105,6 +105,8 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
     recognition.lang = 'en-US';
 
     let finalTranscript = transcriptRef.current;
+    let networkRetries = 0;
+    const MAX_RETRIES = 5;
 
     recognition.onresult = (event: any) => {
       let interim = '';
@@ -121,22 +123,51 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
     };
 
     recognition.onerror = (event: any) => {
-      if (event.error === 'no-speech') return;
-      if (event.error === 'not-allowed') {
+      // Ignore benign errors — these don't require stopping
+      if (event.error === 'no-speech' || event.error === 'aborted') return;
+
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
         setError('Microphone access denied. Please allow microphone permissions and try again.');
-      } else if (event.error === 'network') {
-        setError('Network error during speech recognition. Please try again.');
-      } else {
-        setError(`Speech recognition error: ${event.error}`);
+        setIsRecording(false);
+        isRecordingRef.current = false;
+        return;
       }
+
+      if (event.error === 'network' || event.error === 'audio-capture') {
+        // Network errors are often transient with Web Speech API — retry silently
+        if (networkRetries < MAX_RETRIES && isRecordingRef.current) {
+          networkRetries++;
+          console.log(`Speech recognition network error, retrying (${networkRetries}/${MAX_RETRIES})...`);
+          return; // Don't stop — onend will fire and auto-restart
+        }
+        setError('Network connection issue with speech recognition. You can continue typing in the transcript box, or try again.');
+        setIsRecording(false);
+        isRecordingRef.current = false;
+        return;
+      }
+
+      // For other errors, show message but keep transcript
+      console.error('Speech recognition error:', event.error);
+      setError(`Speech recognition issue: ${event.error}. Your transcript so far is preserved — you can continue typing or try again.`);
       setIsRecording(false);
       isRecordingRef.current = false;
     };
 
     recognition.onend = () => {
-      // Auto-restart if still recording (handles browser timeout)
+      // Auto-restart if still recording (handles browser timeout and network retries)
       if (isRecordingRef.current) {
-        try { recognition.start(); } catch {}
+        // Reset retry counter on successful restart cycle
+        if (networkRetries > 0) networkRetries = Math.max(0, networkRetries - 1);
+        try {
+          recognition.start();
+        } catch {
+          // If start fails (already started), wait a moment and retry
+          setTimeout(() => {
+            if (isRecordingRef.current) {
+              try { recognition.start(); } catch {}
+            }
+          }, 300);
+        }
       } else {
         setIsRecording(false);
         setInterimText('');
