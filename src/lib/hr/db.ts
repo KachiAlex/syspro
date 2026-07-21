@@ -183,6 +183,14 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
   await sql`create index if not exists idx_admin_staff_reports_status on admin_staff_reports(status)`;
   await sql`create index if not exists idx_admin_staff_reports_hod on admin_staff_reports(tenant_slug, head_of_department)`;
 
+    // Add columns that may be missing if the table was created before they were added
+    await sql`alter table if exists admin_staff_reports add column if not exists title text`;
+    await sql`alter table if exists admin_staff_reports add column if not exists raw_transcript text`;
+    await sql`alter table if exists admin_staff_reports add column if not exists refined_text text`;
+    await sql`alter table if exists admin_staff_reports add column if not exists meetings text`;
+    await sql`alter table if exists admin_staff_reports add column if not exists blockers text`;
+    await sql`alter table if exists admin_staff_reports add column if not exists activities text`;
+    await sql`alter table if exists admin_staff_reports add column if not exists team_members text[] default '{}'`;
     await sql`alter table if exists admin_staff_reports add column if not exists template_id text`;
     await sql`alter table if exists admin_staff_reports add column if not exists template_snapshot jsonb default null`;
     await sql`alter table if exists admin_staff_reports add column if not exists department_id text`;
@@ -194,7 +202,6 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
     await sql`alter table if exists admin_staff_reports add column if not exists submitter_role text default 'staff'`;
     await sql`alter table if exists admin_staff_reports add column if not exists approver_role text default 'hod'`;
     await sql`alter table if exists admin_staff_reports add column if not exists approver_id text`;
-    await sql`alter table if exists admin_staff_reports add column if not exists team_members text[] default '{}'`;
     await sql`create index if not exists idx_admin_staff_reports_approver on admin_staff_reports(tenant_slug, approver_role, approver_id)`;
 
     await sql`
