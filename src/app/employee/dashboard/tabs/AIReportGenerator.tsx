@@ -66,25 +66,38 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
   // Setup speech recognition
   const startRecording = useCallback(async () => {
     setError(null);
+    console.log('startRecording called');
+
+    // Check if mediaDevices is available (requires HTTPS)
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setError('Microphone access requires HTTPS. The current page may not be served over a secure connection. Please switch to text mode.');
+      return;
+    }
 
     // Explicitly request mic permission first — this triggers the browser prompt
     try {
+      console.log('Requesting mic permission...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Stop the stream immediately — we just needed the permission prompt
       stream.getTracks().forEach(t => t.stop());
+      console.log('Mic permission granted');
     } catch (err: any) {
+      console.error('Mic permission error:', err);
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         setError('Microphone access denied. Please allow microphone permissions in your browser settings and try again.');
       } else if (err.name === 'NotFoundError') {
         setError('No microphone found. Please connect a microphone or switch to text mode.');
       } else {
-        setError('Could not access microphone. Please try again or switch to text mode.');
+        setError('Could not access microphone: ' + (err.message || err.name) + '. Please try again or switch to text mode.');
       }
       return;
     }
 
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) { setError('Speech recognition is not supported in this browser. Please use Chrome or Edge, or switch to text mode.'); setSpeechSupported(false); return; }
+    if (!SR) {
+      setError('Speech recognition is not supported in this browser. Please use Chrome or Edge, or switch to text mode to type your report.');
+      setSpeechSupported(false);
+      return;
+    }
 
     const recognition = new SR();
     recognition.continuous = true;
@@ -295,8 +308,8 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
                 <div className="space-y-3">
                   {!speechSupported && <div className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">Speech recognition not supported in this browser. Use Chrome or Edge, or switch to text mode.</div>}
                   <div className="flex items-center justify-center py-6">
-                    <button onClick={isRecording ? stopRecording : startRecording} disabled={!speechSupported}
-                      className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-blue-600 hover:bg-blue-700'} text-white disabled:opacity-40 disabled:cursor-not-allowed`}>
+                    <button onClick={isRecording ? stopRecording : startRecording}
+                      className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-blue-600 hover:bg-blue-700'} text-white`}>
                       {isRecording ? <MicOff className="w-8 h-8" /> : <Mic className="w-8 h-8" />}
                       {isRecording && <span className="absolute inset-0 rounded-full border-4 border-red-300 animate-ping" />}
                     </button>
