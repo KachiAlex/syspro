@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
 
     // Determine which reports this user can approve
     let rows: any[] = [];
+    let myReports: any[] = []; // HOD's own reports pending higher-level approval
 
     if (employeeRole === "hod" || employeeRole === "head_of_department") {
       // HOD sees reports from staff in their department
@@ -76,6 +77,25 @@ export async function GET(request: NextRequest) {
             `;
           }
         }
+
+        // Also fetch HOD's own reports that are pending HR/admin approval
+        try {
+          myReports = await sql`
+            SELECT r.id, r.title, r.report_type, r.report_date, r.objectives,
+                   r.achievements, r.challenges, r.next_steps, r.additional_notes,
+                   r.meetings, r.blockers, r.activities, r.status, r.hod_comment,
+                   r.submitted_at, r.updated_at, r.appraisal,
+                   r.submitter_role, r.approver_role, r.approver_id
+            FROM admin_staff_reports r
+            WHERE r.tenant_slug = ${session.tenantSlug}
+              AND r.employee_id = ${session.id}
+              AND r.status IN ('pending', 'under_review', 'approved', 'needs_edit', 'rejected')
+            ORDER BY r.submitted_at DESC
+            LIMIT 50
+          `;
+        } catch (e) {
+          console.error("Approve GET myReports failed:", (e as any)?.message);
+        }
       }
     } else if (employeeRole === "hr" || employeeRole === "hr_admin" || employeeRole === "hr_manager") {
       try {
@@ -124,7 +144,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ pendingReports: rows });
+    return NextResponse.json({ pendingReports: rows, myReports });
   } catch (error: any) {
     console.error("Approve GET error:", error?.message);
     return NextResponse.json({ error: "Failed to load pending reports" }, { status: 500 });

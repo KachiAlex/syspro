@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Loader2, Plus, Target, FileText, CheckCircle, AlertCircle, TrendingUp, X, Clock, Copy, Save, Sparkles } from 'lucide-react';
+import { Loader2, Plus, Target, FileText, CheckCircle, AlertCircle, TrendingUp, X, Clock, Copy, Save, Sparkles, LayoutGrid, List } from 'lucide-react';
 import { AIReportGenerator } from './AIReportGenerator';
 
 type ReportType = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'annual';
@@ -21,6 +21,7 @@ export function ReportsTab() {
   const [carryForwardData, setCarryForwardData] = useState<any>(null);
   const [showAIForm, setShowAIForm] = useState(false);
   const [aiSubmitting, setAiSubmitting] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -116,6 +117,23 @@ export function ReportsTab() {
         <div className="flex items-center justify-between flex-wrap gap-3">
           <h3 className="text-sm font-semibold text-gray-900">My Reports</h3>
           <div className="flex items-center gap-2">
+            {/* View toggle */}
+            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-0.5">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+                title="Grid view"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+                title="List view"
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
             <button onClick={() => setShowAIForm(true)} className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all">
               <Sparkles className="w-4 h-4" />Generate with AI
             </button>
@@ -127,7 +145,39 @@ export function ReportsTab() {
         {success && <div className="flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700"><CheckCircle className="w-4 h-4" />{success}</div>}
         {loading ? <div className="p-8 text-center"><Loader2 className="w-6 h-6 text-blue-600 animate-spin mx-auto" /></div> : reports.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center"><FileText className="w-10 h-10 text-gray-300 mx-auto mb-3" /><p className="text-sm text-gray-400 mb-4">No reports submitted yet</p><button onClick={() => setShowForm(true)} className="text-sm text-blue-600 font-medium hover:text-blue-700">Submit your first report →</button></div>
+        ) : viewMode === 'list' ? (
+          /* List view */
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left text-xs font-semibold text-gray-600 px-4 py-3">Title</th>
+                  <th className="text-left text-xs font-semibold text-gray-600 px-4 py-3 hidden md:table-cell">Type</th>
+                  <th className="text-left text-xs font-semibold text-gray-600 px-4 py-3 hidden md:table-cell">Date</th>
+                  <th className="text-left text-xs font-semibold text-gray-600 px-4 py-3">Status</th>
+                  <th className="text-left text-xs font-semibold text-gray-600 px-4 py-3 hidden lg:table-cell">Submitted</th>
+                  <th className="text-right text-xs font-semibold text-gray-600 px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {reports.map((r) => (
+                  <tr key={r.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <p className="text-sm font-medium text-gray-900 truncate max-w-[200px]">{r.title || `${r.report_type} report`}</p>
+                      <p className="text-xs text-gray-400 truncate max-w-[200px] md:hidden">{r.report_type} · {fmtDate(r.report_date)}</p>
+                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell"><span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 capitalize">{r.report_type}</span></td>
+                    <td className="px-4 py-3 hidden md:table-cell"><span className="text-xs text-gray-600">{fmtDate(r.report_date)}</span></td>
+                    <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${r.status==='approved'?'bg-green-100 text-green-800':r.status==='under_review'?'bg-blue-100 text-blue-800':r.status==='needs_edit'?'bg-amber-100 text-amber-800':'bg-gray-100 text-gray-600'}`}>{r.status.replace('_',' ')}</span></td>
+                    <td className="px-4 py-3 hidden lg:table-cell"><span className="text-xs text-gray-400">{fmtDate(r.submitted_at)}</span></td>
+                    <td className="px-4 py-3 text-right"><button onClick={() => handleCarryForward(r)} className="text-xs text-blue-600 font-medium hover:text-blue-700 inline-flex items-center gap-1"><Copy className="w-3 h-3" /></button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
+          /* Grid view (default) */
           <div className="space-y-3">{reports.map((r) => (
             <div key={r.id} className="bg-white rounded-2xl border border-gray-200 p-4">
               <div className="flex items-start justify-between mb-2">

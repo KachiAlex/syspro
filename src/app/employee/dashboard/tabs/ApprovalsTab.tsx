@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Loader2, CheckCircle, XCircle, AlertCircle, FileText,
-  ChevronDown, ChevronUp, Clock, MessageSquare, User,
+  ChevronDown, ChevronUp, Clock, MessageSquare, User, Users, FolderOpen,
 } from 'lucide-react';
 
 interface PendingReport {
@@ -32,12 +32,14 @@ interface PendingReport {
 
 export function ApprovalsTab() {
   const [reports, setReports] = useState<PendingReport[]>([]);
+  const [myReports, setMyReports] = useState<PendingReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [commentMap, setCommentMap] = useState<Record<string, string>>({});
+  const [activeCategory, setActiveCategory] = useState<'team' | 'mine'>('team');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -46,6 +48,7 @@ export function ApprovalsTab() {
       if (res.ok) {
         const data = await res.json();
         setReports(data.pendingReports || []);
+        setMyReports(data.myReports || []);
       } else {
         setError('Failed to load pending reports');
       }
@@ -75,7 +78,8 @@ export function ApprovalsTab() {
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setSuccess(`Report ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'sent back for edits'}`);
-        setReports(reports.filter(r => r.id !== reportId));
+        setReports(prev => prev.filter(r => r.id !== reportId));
+        setMyReports(prev => prev.filter(r => r.id !== reportId));
         setCommentMap(prev => { const n = { ...prev }; delete n[reportId]; return n; });
         setTimeout(() => setSuccess(null), 3000);
       } else {
@@ -95,6 +99,10 @@ export function ApprovalsTab() {
     return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 text-blue-600 animate-spin" /></div>;
   }
 
+  const hasMyReports = myReports.length > 0;
+  const activeReports = activeCategory === 'team' ? reports : myReports;
+  const pendingCount = reports.length;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -104,24 +112,54 @@ export function ApprovalsTab() {
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200">
           <Clock className="w-4 h-4 text-amber-600" />
-          <span className="text-sm font-medium text-amber-700">{reports.length} pending</span>
+          <span className="text-sm font-medium text-amber-700">{pendingCount} pending</span>
         </div>
       </div>
 
       {error && <div className="flex items-start gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"><AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" /><span>{error}</span></div>}
       {success && <div className="flex items-start gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700"><CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" /><span>{success}</span></div>}
 
-      {reports.length === 0 ? (
+      {/* Category tabs — only show if HOD has own reports */}
+      {hasMyReports && (
+        <div className="flex items-center gap-2 border-b border-gray-200">
+          <button
+            onClick={() => setActiveCategory('team')}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeCategory === 'team' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            Team Reports
+            {pendingCount > 0 && <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-700">{pendingCount}</span>}
+          </button>
+          <button
+            onClick={() => setActiveCategory('mine')}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeCategory === 'mine' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <FolderOpen className="w-4 h-4" />
+            My Reports
+            <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-gray-100 text-gray-600">{myReports.length}</span>
+          </button>
+        </div>
+      )}
+
+      {activeReports.length === 0 ? (
         <div className="text-center py-12">
           <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
             <CheckCircle className="w-7 h-7 text-gray-400" />
           </div>
-          <p className="text-sm font-medium text-gray-600">All caught up!</p>
-          <p className="text-xs text-gray-400 mt-1">No reports pending your approval</p>
+          <p className="text-sm font-medium text-gray-600">
+            {activeCategory === 'team' ? 'All caught up!' : 'No reports submitted yet'}
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            {activeCategory === 'team' ? 'No reports pending your approval' : 'Your submitted reports will appear here'}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
-          {reports.map((r) => (
+          {activeReports.map((r) => (
             <div key={r.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               {/* Header row */}
               <div className="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-50" onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
@@ -177,7 +215,8 @@ export function ApprovalsTab() {
 
                   <div className="text-xs text-gray-400 pt-1">Submitted: {formatDateTime(r.submitted_at)}</div>
 
-                  {/* Comment box */}
+                  {/* Comment box — only for team reports (not own reports) */}
+                  {activeCategory === 'team' && (
                   <div className="pt-2 border-t border-gray-200">
                     <label className="text-xs font-semibold text-gray-700 flex items-center gap-1 mb-1">
                       <MessageSquare className="w-3 h-3" />Comment / Reason {actionLoading === r.id && <Loader2 className="w-3 h-3 animate-spin" />}
@@ -190,8 +229,20 @@ export function ApprovalsTab() {
                       placeholder="Add a comment or reason (required for rejection)..."
                     />
                   </div>
+                  )}
 
-                  {/* Action buttons */}
+                  {/* Show reviewer feedback for own reports */}
+                  {activeCategory === 'mine' && r.hod_comment && (
+                    <div className="pt-2 border-t border-gray-200">
+                      <div className="rounded-lg bg-amber-50 px-3 py-2">
+                        <p className="text-xs font-semibold text-amber-700 flex items-center gap-1"><MessageSquare className="w-3 h-3" />Reviewer Feedback</p>
+                        <p className="text-xs text-amber-600 mt-0.5">{r.hod_comment}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action buttons — only for team reports */}
+                  {activeCategory === 'team' && (
                   <div className="flex items-center gap-2 pt-1">
                     <button
                       onClick={() => handleAction(r.id, 'approve')}
@@ -215,6 +266,7 @@ export function ApprovalsTab() {
                       <XCircle className="w-3.5 h-3.5" />Reject
                     </button>
                   </div>
+                  )}
                 </div>
               )}
             </div>
