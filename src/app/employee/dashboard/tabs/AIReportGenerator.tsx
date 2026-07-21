@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Loader2, Mic, MicOff, Sparkles, FileText, X, CheckCircle, AlertCircle,
-  RefreshCw, Edit3, Volume2, Type, ChevronRight, ChevronLeft, Wand2,
+  Loader2, Mic, MicOff, Sparkles, X, CheckCircle, AlertCircle,
+  RefreshCw, Type, Wand2, ChevronRight, ArrowRight, ArrowLeft,
 } from 'lucide-react';
 
 type ReportType = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'annual';
@@ -16,22 +16,102 @@ interface AIGeneratedReport {
   raw_transcript: string;
 }
 
-type Step = 'input' | 'generating' | 'review';
+type Step = 'setup' | 'dictate' | 'generating' | 'review';
+
+interface DictationSection {
+  key: string;
+  label: string;
+  prompt: string;
+  placeholder: string;
+  required: boolean;
+  icon: string;
+}
+
+const DICTATION_SECTIONS: DictationSection[] = [
+  {
+    key: 'activities',
+    label: 'Activities',
+    prompt: "What did you do today? Describe the main tasks and activities you worked on.",
+    placeholder: "e.g., I worked on the quarterly financial report, attended a team meeting about the new project, and reviewed three vendor proposals...",
+    required: true,
+    icon: '📋',
+  },
+  {
+    key: 'achievements',
+    label: 'Achievements',
+    prompt: "What did you accomplish or complete? Mention any milestones, deliverables, or successes.",
+    placeholder: "e.g., I completed the financial analysis ahead of schedule, resolved the client billing issue, and got approval for the new budget...",
+    required: true,
+    icon: '🎯',
+  },
+  {
+    key: 'objectives',
+    label: 'Objectives',
+    prompt: "What were your goals or objectives for this period? What did you set out to achieve?",
+    placeholder: "e.g., My main objective was to finalize the Q3 report, close out the vendor selection process, and prepare the team presentation...",
+    required: true,
+    icon: '📌',
+  },
+  {
+    key: 'challenges',
+    label: 'Challenges',
+    prompt: "Did you face any challenges or difficulties? Describe what was hard and how you handled it.",
+    placeholder: "e.g., The main challenge was missing data from the finance team which delayed the report. I had to follow up multiple times...",
+    required: false,
+    icon: '⚠️',
+  },
+  {
+    key: 'meetings',
+    label: 'Meetings',
+    prompt: "What meetings did you attend? Briefly mention who they were with and what was discussed.",
+    placeholder: "e.g., I had a 1-on-1 with my manager about project priorities, and a team standup where we discussed the sprint progress...",
+    required: false,
+    icon: '👥',
+  },
+  {
+    key: 'blockers',
+    label: 'Blockers',
+    prompt: "Is anything blocking your progress? Are you waiting on anything or anyone?",
+    placeholder: "e.g., I'm blocked on the vendor selection because I'm waiting for the procurement team to approve the shortlist...",
+    required: false,
+    icon: '🚫',
+  },
+  {
+    key: 'next_steps',
+    label: 'Next Steps',
+    prompt: "What are your next steps? What will you work on next?",
+    placeholder: "e.g., Tomorrow I'll start on the monthly reconciliation, follow up with procurement, and prepare the board presentation draft...",
+    required: false,
+    icon: '➡️',
+  },
+  {
+    key: 'additional_notes',
+    label: 'Additional Notes',
+    prompt: "Anything else you'd like to add? Any notes, observations, or context for your manager?",
+    placeholder: "e.g., I'd like to flag that the current reporting tool is slowing us down and we should consider upgrading...",
+    required: false,
+    icon: '📝',
+  },
+];
 
 export function AIReportGenerator({ kpis, onClose, onSubmit }: {
   kpis: KpiTask[];
   onClose: () => void;
   onSubmit: (data: { reportType: ReportType; reportDate: string; report: AIGeneratedReport }) => void;
 }) {
-  const [step, setStep] = useState<Step>('input');
+  const [step, setStep] = useState<Step>('setup');
   const [reportType, setReportType] = useState<ReportType>('daily');
   const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
-  const [transcript, setTranscript] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
-  const [interimText, setInterimText] = useState('');
-  const [speechSupported, setSpeechSupported] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generatedReport, setGeneratedReport] = useState<AIGeneratedReport | null>(null);
+
+  // Dictation state
+  const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
+  const [sectionTranscripts, setSectionTranscripts] = useState<Record<string, string>>({});
+  const [currentTranscript, setCurrentTranscript] = useState('');
+  const [interimText, setInterimText] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(true);
   const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice');
 
   // Editable fields for review step
@@ -49,13 +129,10 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
   const recognitionRef = useRef<any>(null);
   const transcriptRef = useRef('');
   const isRecordingRef = useRef(false);
-  const wordCount = transcript.trim().split(/\s+/).filter(Boolean).length;
 
-  // Keep refs in sync
-  useEffect(() => { transcriptRef.current = transcript; }, [transcript]);
+  useEffect(() => { transcriptRef.current = currentTranscript; }, [currentTranscript]);
   useEffect(() => { isRecordingRef.current = isRecording; }, [isRecording]);
 
-  // Check Web Speech API support
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -63,38 +140,35 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
     }
   }, []);
 
-  // Setup speech recognition
+  const currentSection = DICTATION_SECTIONS[currentSectionIdx];
+  const completedSections = DICTATION_SECTIONS.filter(s => sectionTranscripts[s.key]?.trim().length > 0).length;
+  const totalSections = DICTATION_SECTIONS.length;
+
   const startRecording = useCallback(async () => {
     setError(null);
-    console.log('startRecording called');
 
-    // Check if mediaDevices is available (requires HTTPS)
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setError('Microphone access requires HTTPS. The current page may not be served over a secure connection. Please switch to text mode.');
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError('Microphone access requires HTTPS. Please switch to text mode.');
       return;
     }
 
-    // Explicitly request mic permission first — this triggers the browser prompt
     try {
-      console.log('Requesting mic permission...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach(t => t.stop());
-      console.log('Mic permission granted');
     } catch (err: any) {
-      console.error('Mic permission error:', err);
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setError('Microphone access denied. Please allow microphone permissions in your browser settings and try again.');
+        setError('Microphone access denied. Please allow microphone permissions in your browser settings.');
       } else if (err.name === 'NotFoundError') {
         setError('No microphone found. Please connect a microphone or switch to text mode.');
       } else {
-        setError('Could not access microphone: ' + (err.message || err.name) + '. Please try again or switch to text mode.');
+        setError('Could not access microphone. Please try again or switch to text mode.');
       }
       return;
     }
 
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) {
-      setError('Speech recognition is not supported in this browser. Please use Chrome or Edge, or switch to text mode to type your report.');
+      setError('Speech recognition is not supported in this browser. Please use Chrome or Edge, or switch to text mode.');
       setSpeechSupported(false);
       return;
     }
@@ -103,6 +177,7 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
+    recognition.maxAlternatives = 1;
 
     let finalTranscript = transcriptRef.current;
     let networkRetries = 0;
@@ -118,55 +193,38 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
           interim += result[0].transcript;
         }
       }
-      setTranscript(finalTranscript.trim());
+      setCurrentTranscript(finalTranscript.trim());
       setInterimText(interim);
     };
 
     recognition.onerror = (event: any) => {
-      // Ignore benign errors — these don't require stopping
       if (event.error === 'no-speech' || event.error === 'aborted') return;
-
       if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-        setError('Microphone access denied. Please allow microphone permissions and try again.');
+        setError('Microphone access denied. Please allow microphone permissions.');
         setIsRecording(false);
         isRecordingRef.current = false;
         return;
       }
-
       if (event.error === 'network' || event.error === 'audio-capture') {
-        // Network errors are often transient with Web Speech API — retry silently
         if (networkRetries < MAX_RETRIES && isRecordingRef.current) {
           networkRetries++;
-          console.log(`Speech recognition network error, retrying (${networkRetries}/${MAX_RETRIES})...`);
-          return; // Don't stop — onend will fire and auto-restart
+          return;
         }
-        setError('Network connection issue with speech recognition. You can continue typing in the transcript box, or try again.');
+        setError('Network issue with speech recognition. Your transcript is preserved — you can continue typing or try again.');
         setIsRecording(false);
         isRecordingRef.current = false;
         return;
       }
-
-      // For other errors, show message but keep transcript
-      console.error('Speech recognition error:', event.error);
-      setError(`Speech recognition issue: ${event.error}. Your transcript so far is preserved — you can continue typing or try again.`);
+      setError(`Speech issue: ${event.error}. Transcript preserved — continue typing or try again.`);
       setIsRecording(false);
       isRecordingRef.current = false;
     };
 
     recognition.onend = () => {
-      // Auto-restart if still recording (handles browser timeout and network retries)
       if (isRecordingRef.current) {
-        // Reset retry counter on successful restart cycle
         if (networkRetries > 0) networkRetries = Math.max(0, networkRetries - 1);
-        try {
-          recognition.start();
-        } catch {
-          // If start fails (already started), wait a moment and retry
-          setTimeout(() => {
-            if (isRecordingRef.current) {
-              try { recognition.start(); } catch {}
-            }
-          }, 300);
+        try { recognition.start(); } catch {
+          setTimeout(() => { if (isRecordingRef.current) { try { recognition.start(); } catch {} } }, 300);
         }
       } else {
         setIsRecording(false);
@@ -190,17 +248,88 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
     setInterimText('');
   }, []);
 
-  // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch {}
-      }
-    };
+    return () => { if (recognitionRef.current) { try { recognitionRef.current.stop(); } catch {} } };
   }, []);
 
-  const handleGenerate = async () => {
-    if (transcript.trim().length < 10) { setError('Please dictate or type at least a few sentences before generating.'); return; }
+  const goToSection = (idx: number) => {
+    stopRecording();
+    if (idx < 0 || idx >= DICTATION_SECTIONS.length) return;
+    if (currentTranscript.trim()) {
+      setSectionTranscripts(prev => ({ ...prev, [currentSection.key]: currentTranscript.trim() }));
+    }
+    setCurrentSectionIdx(idx);
+    const sectionKey = DICTATION_SECTIONS[idx].key;
+    setCurrentTranscript(sectionTranscripts[sectionKey] || '');
+    setError(null);
+  };
+
+  const handleNextSection = () => {
+    stopRecording();
+    if (currentTranscript.trim()) {
+      setSectionTranscripts(prev => ({ ...prev, [currentSection.key]: currentTranscript.trim() }));
+    }
+    if (currentSectionIdx < DICTATION_SECTIONS.length - 1) {
+      const nextIdx = currentSectionIdx + 1;
+      setCurrentSectionIdx(nextIdx);
+      const nextKey = DICTATION_SECTIONS[nextIdx].key;
+      setCurrentTranscript(sectionTranscripts[nextKey] || '');
+      setError(null);
+    } else {
+      const allTranscripts = { ...sectionTranscripts };
+      if (currentTranscript.trim()) {
+        allTranscripts[currentSection.key] = currentTranscript.trim();
+      }
+      setSectionTranscripts(allTranscripts);
+      handleGenerate(allTranscripts);
+    }
+  };
+
+  const handlePrevSection = () => {
+    stopRecording();
+    if (currentTranscript.trim()) {
+      setSectionTranscripts(prev => ({ ...prev, [currentSection.key]: currentTranscript.trim() }));
+    }
+    if (currentSectionIdx > 0) {
+      const prevIdx = currentSectionIdx - 1;
+      setCurrentSectionIdx(prevIdx);
+      const prevKey = DICTATION_SECTIONS[prevIdx].key;
+      setCurrentTranscript(sectionTranscripts[prevKey] || '');
+      setError(null);
+    }
+  };
+
+  const handleSkipSection = () => {
+    stopRecording();
+    setCurrentTranscript('');
+    if (currentSectionIdx < DICTATION_SECTIONS.length - 1) {
+      handleNextSection();
+    } else {
+      handleGenerate({ ...sectionTranscripts, [currentSection.key]: '' });
+    }
+  };
+
+  const buildCombinedTranscript = (transcripts: Record<string, string>) => {
+    const parts: string[] = [];
+    for (const section of DICTATION_SECTIONS) {
+      const text = transcripts[section.key]?.trim();
+      if (text) {
+        parts.push(`[${section.label.toUpperCase()}]\n${text}`);
+      }
+    }
+    return parts.join('\n\n');
+  };
+
+  const handleGenerate = async (transcripts?: Record<string, string>) => {
+    const allTranscripts = transcripts || sectionTranscripts;
+    const combined = buildCombinedTranscript(allTranscripts);
+
+    if (combined.trim().length < 10) {
+      setError('Please dictate or type content for at least one section before generating.');
+      setStep('dictate');
+      return;
+    }
+
     setStep('generating');
     setError(null);
     try {
@@ -208,10 +337,11 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          transcript,
+          transcript: combined,
           reportType,
           reportDate,
           kpiContext: kpis.map(k => ({ title: k.title, description: k.description, expected_outcome: k.expected_outcome })),
+          sectioned: true,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -231,11 +361,11 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
         setStep('review');
       } else {
         setError(data.error || 'Failed to generate report. Please try again.');
-        setStep('input');
+        setStep('dictate');
       }
     } catch {
       setError('Network error. Please try again.');
-      setStep('input');
+      setStep('dictate');
     }
   };
 
@@ -255,14 +385,16 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
         activities: editActivities,
         additional_notes: editAdditionalNotes,
         kpiMetrics: editKpiMetrics,
-        raw_transcript: transcript,
+        raw_transcript: buildCombinedTranscript(sectionTranscripts),
       },
     });
   };
 
   const handleRegenerate = () => {
-    setStep('input');
+    setStep('dictate');
     setGeneratedReport(null);
+    setCurrentSectionIdx(0);
+    setCurrentTranscript(sectionTranscripts[DICTATION_SECTIONS[0].key] || '');
   };
 
   const reportTypes: { value: ReportType; label: string; desc: string }[] = [
@@ -272,6 +404,8 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
     { value: 'quarterly', label: 'Quarterly', desc: 'Quarterly review' },
     { value: 'annual', label: 'Annual', desc: 'Yearly review' },
   ];
+
+  const wordCount = currentTranscript.trim().split(/\s+/).filter(Boolean).length;
 
   return (
     <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
@@ -287,20 +421,29 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
 
         {/* Step indicator */}
         <div className="px-6 py-3 border-b border-gray-100 flex items-center gap-2">
-          <StepBadge num={1} label="Dictate" active={step === 'input'} done={step !== 'input'} />
-          <div className={`h-px flex-1 ${step !== 'input' ? 'bg-green-400' : 'bg-gray-200'}`} />
-          <StepBadge num={2} label="AI Process" active={step === 'generating'} done={step === 'review'} />
+          <StepBadge num={1} label="Setup" active={step === 'setup'} done={step !== 'setup'} />
+          <div className={`h-px flex-1 ${step !== 'setup' ? 'bg-green-400' : 'bg-gray-200'}`} />
+          <StepBadge num={2} label="Dictate" active={step === 'dictate'} done={step === 'generating' || step === 'review'} />
+          <div className={`h-px flex-1 ${step === 'generating' || step === 'review' ? 'bg-green-400' : 'bg-gray-200'}`} />
+          <StepBadge num={3} label="AI Process" active={step === 'generating'} done={step === 'review'} />
           <div className={`h-px flex-1 ${step === 'review' ? 'bg-green-400' : 'bg-gray-200'}`} />
-          <StepBadge num={3} label="Review & Edit" active={step === 'review'} done={false} />
+          <StepBadge num={4} label="Review" active={step === 'review'} done={false} />
         </div>
 
         <div className="p-6">
           {error && <div className="mb-4 flex items-start gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"><AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" /><span>{error}</span></div>}
 
-          {/* Step 1: Input */}
-          {step === 'input' && (
+          {/* Step 1: Setup */}
+          {step === 'setup' && (
             <div className="space-y-5">
-              {/* Report config */}
+              <div className="text-center py-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  <Wand2 className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-base font-semibold text-gray-900">Generate a Report with AI</h3>
+                <p className="text-sm text-gray-500 mt-1">Dictate or type your report section by section, and AI will structure it into a professional report.</p>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1.5">Report Type</label>
@@ -314,79 +457,139 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
                 </div>
               </div>
 
-              {/* KPI context */}
               {kpis.length > 0 && (
                 <div className="rounded-xl bg-purple-50 border border-purple-200 p-3">
-                  <p className="text-xs font-semibold text-purple-700 mb-1">AI will match your dictation to these KPIs:</p>
+                  <p className="text-xs font-semibold text-purple-700 mb-1">Your KPIs — mention progress on these during dictation:</p>
                   <div className="flex flex-wrap gap-1.5">
                     {kpis.map(k => <span key={k.id} className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">{k.title}</span>)}
                   </div>
                 </div>
               )}
 
-              {/* Input mode toggle */}
+              {/* Section preview */}
+              <div className="rounded-xl bg-gray-50 border border-gray-200 p-4">
+                <p className="text-xs font-semibold text-gray-700 mb-2">You'll be guided through {DICTATION_SECTIONS.length} sections:</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {DICTATION_SECTIONS.map((s, i) => (
+                    <div key={s.key} className="flex items-center gap-2 text-xs text-gray-600">
+                      <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500">{i + 1}</span>
+                      <span>{s.icon}</span>
+                      <span>{s.label}</span>
+                      {s.required && <span className="text-red-400">*</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex items-center gap-2">
                 <button onClick={() => setInputMode('voice')} className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${inputMode === 'voice' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                   <Mic className="w-3.5 h-3.5" />Voice Dictation
                 </button>
-                <button onClick={() => { stopRecording(); setInputMode('text'); }} className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${inputMode === 'text' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                <button onClick={() => setInputMode('text')} className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${inputMode === 'text' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                   <Type className="w-3.5 h-3.5" />Type / Paste
                 </button>
               </div>
 
-              {/* Voice input */}
-              {inputMode === 'voice' && (
-                <div className="space-y-3">
-                  {!speechSupported && <div className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">Speech recognition not supported in this browser. Use Chrome or Edge, or switch to text mode.</div>}
-                  <div className="flex items-center justify-center py-6">
-                    <button onClick={isRecording ? stopRecording : startRecording}
-                      className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-blue-600 hover:bg-blue-700'} text-white`}>
-                      {isRecording ? <MicOff className="w-8 h-8" /> : <Mic className="w-8 h-8" />}
-                      {isRecording && <span className="absolute inset-0 rounded-full border-4 border-red-300 animate-ping" />}
-                    </button>
-                  </div>
-                  <p className="text-center text-xs text-gray-500">{isRecording ? 'Listening... Click to stop' : 'Click the mic to start dictating'}</p>
-                </div>
-              )}
-
-              {/* Transcript display */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold text-gray-700">Transcript {inputMode === 'voice' && isRecording && <span className="text-red-500 ml-1">● Recording</span>}</label>
-                  {wordCount > 0 && <span className="text-xs text-gray-400">{wordCount} words</span>}
-                </div>
-                <textarea
-                  value={transcript + (interimText ? ' ' + interimText : '')}
-                  onChange={(e) => { setTranscript(e.target.value); setInterimText(''); }}
-                  rows={6}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 resize-y"
-                  placeholder={inputMode === 'voice' ? 'Your dictation will appear here. You can also edit manually...' : 'Type or paste your report content here. Describe what you did, what you achieved, challenges faced, and next steps...'}
-                />
-                {transcript && (
-                  <button onClick={() => { setTranscript(''); setInterimText(''); }} className="mt-1 text-xs text-gray-400 hover:text-gray-600">Clear transcript</button>
-                )}
-              </div>
-
-              {/* Tips */}
-              <div className="rounded-xl bg-blue-50 border border-blue-200 p-3">
-                <p className="text-xs font-semibold text-blue-700 mb-1">Tips for best results:</p>
-                <ul className="text-xs text-blue-600 space-y-0.5">
-                  <li>• Speak naturally — mention your objectives, achievements, challenges, and next steps</li>
-                  <li>• Include specific numbers and metrics for KPI tracking</li>
-                  <li>• Mention meetings attended and any blockers encountered</li>
-                  <li>• You can edit the transcript before generating</li>
-                </ul>
-              </div>
-
-              {/* Generate button */}
-              <button onClick={handleGenerate} disabled={transcript.trim().length < 10}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                <Sparkles className="w-4 h-4" />Generate Report with AI
+              <button onClick={() => { setStep('dictate'); setCurrentSectionIdx(0); setCurrentTranscript(''); setSectionTranscripts({}); }} className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all">
+                Start Guided Dictation <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           )}
 
-          {/* Step 2: Generating */}
+          {/* Step 2: Dictate (section by section) */}
+          {step === 'dictate' && (
+            <div className="space-y-4">
+              {/* Progress bar */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-purple-500 to-blue-600 rounded-full transition-all duration-300" style={{ width: `${(completedSections / totalSections) * 100}%` }} />
+                </div>
+                <span className="text-xs font-medium text-gray-500">{completedSections}/{totalSections}</span>
+              </div>
+
+              {/* Section tabs */}
+              <div className="flex flex-wrap gap-1">
+                {DICTATION_SECTIONS.map((s, i) => {
+                  const isDone = sectionTranscripts[s.key]?.trim().length > 0;
+                  const isCurrent = i === currentSectionIdx;
+                  return (
+                    <button key={s.key} onClick={() => goToSection(i)} className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg transition-colors ${isCurrent ? 'bg-blue-600 text-white' : isDone ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                      {isDone && <CheckCircle className="w-3 h-3" />}
+                      <span>{s.icon}</span>
+                      <span>{s.label}</span>
+                      {s.required && !isDone && <span className="text-red-400">*</span>}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Current section prompt */}
+              <div className="rounded-xl bg-blue-50 border border-blue-200 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">{currentSection.icon}</div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-gray-900">Section {currentSectionIdx + 1}: {currentSection.label}{currentSection.required && <span className="text-red-500 ml-1">*</span>}</h4>
+                    <p className="text-sm text-blue-700 mt-1">{currentSection.prompt}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Voice input */}
+              {inputMode === 'voice' && (
+                <div className="flex items-center justify-center py-4">
+                  <button onClick={isRecording ? stopRecording : startRecording}
+                    className={`relative w-16 h-16 rounded-full flex items-center justify-center transition-all ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-blue-600 hover:bg-blue-700'} text-white`}>
+                    {isRecording ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+                    {isRecording && <span className="absolute inset-0 rounded-full border-4 border-red-300 animate-ping" />}
+                  </button>
+                </div>
+              )}
+
+              {/* Transcript */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-gray-700">
+                    {currentSection.label} {isRecording && <span className="text-red-500 ml-1">● Recording</span>}
+                  </label>
+                  {wordCount > 0 && <span className="text-xs text-gray-400">{wordCount} words</span>}
+                </div>
+                <textarea
+                  value={currentTranscript + (interimText ? ' ' + interimText : '')}
+                  onChange={(e) => { setCurrentTranscript(e.target.value); setInterimText(''); }}
+                  rows={5}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 resize-y"
+                  placeholder={currentSection.placeholder}
+                />
+                {currentTranscript && (
+                  <button onClick={() => { setCurrentTranscript(''); setInterimText(''); }} className="mt-1 text-xs text-gray-400 hover:text-gray-600">Clear this section</button>
+                )}
+              </div>
+
+              {/* Navigation */}
+              <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                <button onClick={handlePrevSection} disabled={currentSectionIdx === 0} className="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed">
+                  <ArrowLeft className="w-3.5 h-3.5" />Previous
+                </button>
+
+                <div className="flex items-center gap-2">
+                  {!currentSection.required && (
+                    <button onClick={handleSkipSection} className="px-3 py-2 text-xs font-medium text-gray-400 hover:text-gray-600">Skip</button>
+                  )}
+                  {currentSectionIdx < DICTATION_SECTIONS.length - 1 ? (
+                    <button onClick={handleNextSection} className="inline-flex items-center gap-1 px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                      Next Section <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  ) : (
+                    <button onClick={handleNextSection} className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg hover:from-purple-700 hover:to-blue-700">
+                      <Sparkles className="w-3.5 h-3.5" />Generate Report
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Generating */}
           {step === 'generating' && (
             <div className="py-16 text-center">
               <div className="relative inline-block">
@@ -395,8 +598,8 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
                 </div>
                 <div className="absolute -inset-2 border-4 border-purple-200 rounded-2xl animate-ping opacity-75" />
               </div>
-              <h3 className="text-sm font-semibold text-gray-900 mt-4">AI is processing your dictation...</h3>
-              <p className="text-xs text-gray-500 mt-1">Structuring your transcript into a professional {reportType} report</p>
+              <h3 className="text-sm font-semibold text-gray-900 mt-4">AI is refining your report...</h3>
+              <p className="text-xs text-gray-500 mt-1">Structuring your dictation into a professional {reportType} report</p>
               <div className="flex items-center justify-center gap-1.5 mt-4">
                 <Loader2 className="w-4 h-4 text-purple-600 animate-spin" />
                 <span className="text-xs text-gray-400">This usually takes 5-10 seconds</span>
@@ -404,22 +607,20 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
             </div>
           )}
 
-          {/* Step 3: Review & Edit */}
+          {/* Step 4: Review & Edit */}
           {step === 'review' && generatedReport && (
             <div className="space-y-4">
               <div className="flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2">
                 <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-xs text-green-700">AI generated your report. Review and edit each field below before submitting.</span>
+                <span className="text-xs text-green-700">AI generated your report from {completedSections} sections. Review and edit before submitting.</span>
               </div>
 
               <div className="flex items-center gap-2">
-                <button onClick={handleRegenerate} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                  <RefreshCw className="w-3.5 h-3.5" />Regenerate
+                <button onClick={handleRegenerate} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                  <RefreshCw className="w-3.5 h-3.5" />Back to Dictation
                 </button>
-                <span className="text-xs text-gray-400">Go back to edit transcript and regenerate</span>
               </div>
 
-              {/* Editable fields */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Title</label>
                 <input type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500" />
@@ -438,7 +639,6 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
               </div>
               <EditField label="Additional Notes" value={editAdditionalNotes} onChange={setEditAdditionalNotes} />
 
-              {/* KPI Metrics */}
               {editKpiMetrics.length > 0 && (
                 <div className="border-t border-gray-200 pt-4">
                   <label className="block text-xs font-semibold text-gray-700 mb-2">KPI Metrics (AI-detected)</label>
@@ -457,13 +657,12 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
                 </div>
               )}
 
-              {/* Submit */}
               <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
-                <button onClick={handleSubmit} className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                <button onClick={handleSubmit} className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
                   <CheckCircle className="w-4 h-4" />Submit Report
                 </button>
-                <button onClick={handleRegenerate} className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                  <RefreshCw className="w-4 h-4" />Back to Transcript
+                <button onClick={handleRegenerate} className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                  <RefreshCw className="w-4 h-4" />Back to Dictation
                 </button>
                 <button onClick={onClose} className="ml-auto px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-700">Cancel</button>
               </div>

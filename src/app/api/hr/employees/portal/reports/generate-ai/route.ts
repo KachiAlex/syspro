@@ -54,28 +54,43 @@ export async function POST(request: NextRequest) {
       templateStr += templateSections.map((s: any) => `- ${s.name || s.title}: ${s.prompt || s.description || ""}`).join("\n");
     }
 
+    const isSectioned = body.sectioned === true;
+
+    const sectionedInstructions = isSectioned
+      ? `The transcript is already organized into labeled sections (e.g., [ACTIVITIES], [ACHIEVEMENTS], etc.). For each section:
+- Refine the spoken/casual language into clear, professional business writing
+- Fix grammar, remove filler words (um, uh, like, you know), and organize into logical sentences
+- Use bullet points for lists of items
+- Keep all meaningful content — don't drop details the employee mentioned
+- If a section is empty or missing, return an empty string for that field
+- You may pull relevant content from one section into another if it clearly belongs there (e.g., an achievement mentioned in the activities section)
+
+`
+      : "";
+
     const systemPrompt = `You are a professional report writing assistant for an employee portal. Your job is to take a raw transcript (from voice dictation or typed text) and transform it into a well-structured, professional ${reportType} report.
 
-The report must include these fields:
-1. title — A concise, professional title for the report
-2. objectives — What the employee aimed to achieve during this period (extract from transcript, phrase professionally)
-3. achievements — What was accomplished (extract and refine from transcript)
-4. challenges — Any difficulties encountered (extract from transcript, if none mentioned leave empty)
-5. next_steps — Planned next actions (extract from transcript, if none mentioned infer from context)
-6. meetings — Any meetings attended (extract from transcript, if none leave empty)
-7. blockers — Anything blocking progress (extract from transcript, if none leave empty)
-8. activities — Key activities performed (extract and list from transcript)
+${sectionedInstructions}The report must include these fields:
+1. title — A concise, professional title for the report (e.g., "Daily Activity Report — July 21, 2026")
+2. objectives — What the employee aimed to achieve during this period
+3. achievements — What was accomplished (milestones, deliverables, successes)
+4. challenges — Any difficulties encountered (if none, return empty string)
+5. next_steps — Planned next actions (if none mentioned, infer from context)
+6. meetings — Any meetings attended (if none, return empty string)
+7. blockers — Anything blocking progress (if none, return empty string)
+8. activities — Key activities performed (list format with bullet points)
 9. additional_notes — Any other relevant information not captured above
 10. kpiMetrics — Array of objects with {name, target, actual, status} for any KPI progress mentioned
 
 Rules:
 - Convert casual/spoken language into professional business writing
-- Be concise but thorough — don't invent information not in the transcript
+- Be concise but thorough — preserve ALL meaningful information from the transcript
 - Use bullet points where appropriate (use • character)
 - If a field has no relevant content from the transcript, return an empty string
 - For kpiMetrics, only include entries if the transcript mentions specific metrics or KPI progress
 - The status for kpiMetrics should be one of: "on_track", "ahead", "behind", "not_started"
 - Maintain the employee's original meaning — don't exaggerate or downplay
+- Fix transcription errors contextually (e.g., "financing report" → "financial report", "procurement" if clearly meant)
 
 You MUST respond with ONLY a valid JSON object, no markdown, no explanation. The JSON must have exactly these keys:
 {"title":"","objectives":"","achievements":"","challenges":"","next_steps":"","meetings":"","blockers":"","activities":"","additional_notes":"","kpiMetrics":[]}`;
