@@ -3,8 +3,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Loader2, Mic, MicOff, Sparkles, X, CheckCircle, AlertCircle,
-  RefreshCw, Type, Wand2, ChevronRight, ArrowRight, ArrowLeft,
+  RefreshCw, Type, Wand2, ChevronRight, ArrowRight, ArrowLeft, Search, UserPlus, Users,
 } from 'lucide-react';
+
+interface Colleague {
+  id: string;
+  name: string;
+  email: string;
+  job_title: string | null;
+  role: string | null;
+  department_id: string | null;
+  department_name: string | null;
+}
 
 type ReportType = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'annual';
 
@@ -14,6 +24,7 @@ interface AIGeneratedReport {
   next_steps: string; meetings: string; blockers: string; activities: string;
   additional_notes: string; kpiMetrics: { name: string; target: string; actual: string; status: string }[];
   raw_transcript: string;
+  team_members?: string[];
 }
 
 type Step = 'setup' | 'dictate' | 'generating' | 'review';
@@ -97,7 +108,7 @@ const DICTATION_SECTIONS: DictationSection[] = [
 export function AIReportGenerator({ kpis, onClose, onSubmit }: {
   kpis: KpiTask[];
   onClose: () => void;
-  onSubmit: (data: { reportType: ReportType; reportDate: string; report: AIGeneratedReport }) => void;
+  onSubmit: (data: { reportType: ReportType; reportDate: string; report: AIGeneratedReport; teamMembers: string[] }) => void;
 }) {
   const [step, setStep] = useState<Step>('setup');
   const [reportType, setReportType] = useState<ReportType>('daily');
@@ -126,6 +137,13 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
   const [editAdditionalNotes, setEditAdditionalNotes] = useState('');
   const [editKpiMetrics, setEditKpiMetrics] = useState<{ name: string; target: string; actual: string; status: string }[]>([]);
 
+  // Team member tagging state
+  const [taggedMembers, setTaggedMembers] = useState<Colleague[]>([]);
+  const [colleagueSearch, setColleagueSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<Colleague[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+
   const recognitionRef = useRef<any>(null);
   const transcriptRef = useRef('');
   const isRecordingRef = useRef(false);
@@ -139,6 +157,44 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
       setSpeechSupported(!!SR);
     }
   }, []);
+
+  // Debounced colleague search
+  useEffect(() => {
+    if (!colleagueSearch.trim()) {
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+      return;
+    }
+    setSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/hr/employees/portal/colleagues?q=${encodeURIComponent(colleagueSearch.trim())}`);
+        if (res.ok) {
+          const data = await res.json();
+          // Filter out already tagged members
+          const taggedIds = new Set(taggedMembers.map(m => m.id));
+          setSearchResults((data.colleagues || []).filter((c: Colleague) => !taggedIds.has(c.id)));
+          setShowSearchDropdown(true);
+        }
+      } catch {
+        // ignore
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [colleagueSearch, taggedMembers]);
+
+  const tagMember = (colleague: Colleague) => {
+    setTaggedMembers(prev => [...prev, colleague]);
+    setColleagueSearch('');
+    setSearchResults([]);
+    setShowSearchDropdown(false);
+  };
+
+  const untagMember = (id: string) => {
+    setTaggedMembers(prev => prev.filter(m => m.id !== id));
+  };
 
   const currentSection = DICTATION_SECTIONS[currentSectionIdx];
   const completedSections = DICTATION_SECTIONS.filter(s => sectionTranscripts[s.key]?.trim().length > 0).length;
@@ -269,46 +325,55 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
   const goToSection = (idx: number) => {
     stopRecording();
     if (idx < 0 || idx >= DICTATION_SECTIONS.length) return;
-    if (currentTranscript.trim()) {
-      setSectionTranscripts(prev => ({ ...prev, [currentSection.key]: currentTranscript.trim() }));
+    // Use transcriptRef to get the latest dictated text (avoids stale state)
+    const latestTranscript = transcriptRef.current.trim();
+    if (latestTranscript) {
+      setSectionTranscripts(prev => ({ ...prev, [currentSection.key]: latestTranscript }));
     }
     setCurrentSectionIdx(idx);
     const sectionKey = DICTATION_SECTIONS[idx].key;
-    setCurrentTranscript(sectionTranscripts[sectionKey] || '');
+    const nextText = sectionTranscripts[sectionKey] || '';
+    setCurrentTranscript(nextText);
+    transcriptRef.current = nextText;
     setError(null);
   };
 
   const handleNextSection = () => {
     stopRecording();
-    if (currentTranscript.trim()) {
-      setSectionTranscripts(prev => ({ ...prev, [currentSection.key]: currentTranscript.trim() }));
+    // Use transcriptRef to get the latest dictated text (avoids stale state)
+    const latestTranscript = transcriptRef.current.trim();
+    const updatedTranscripts = { ...sectionTranscripts };
+    if (latestTranscript) {
+      updatedTranscripts[currentSection.key] = latestTranscript;
+      setSectionTranscripts(updatedTranscripts);
     }
     if (currentSectionIdx < DICTATION_SECTIONS.length - 1) {
       const nextIdx = currentSectionIdx + 1;
       setCurrentSectionIdx(nextIdx);
       const nextKey = DICTATION_SECTIONS[nextIdx].key;
-      setCurrentTranscript(sectionTranscripts[nextKey] || '');
+      const nextText = updatedTranscripts[nextKey] || '';
+      setCurrentTranscript(nextText);
+      transcriptRef.current = nextText;
       setError(null);
     } else {
-      const allTranscripts = { ...sectionTranscripts };
-      if (currentTranscript.trim()) {
-        allTranscripts[currentSection.key] = currentTranscript.trim();
-      }
-      setSectionTranscripts(allTranscripts);
-      handleGenerate(allTranscripts);
+      handleGenerate(updatedTranscripts);
     }
   };
 
   const handlePrevSection = () => {
     stopRecording();
-    if (currentTranscript.trim()) {
-      setSectionTranscripts(prev => ({ ...prev, [currentSection.key]: currentTranscript.trim() }));
+    // Use transcriptRef to get the latest dictated text
+    const latestTranscript = transcriptRef.current.trim();
+    if (latestTranscript) {
+      setSectionTranscripts(prev => ({ ...prev, [currentSection.key]: latestTranscript }));
     }
     if (currentSectionIdx > 0) {
       const prevIdx = currentSectionIdx - 1;
       setCurrentSectionIdx(prevIdx);
       const prevKey = DICTATION_SECTIONS[prevIdx].key;
-      setCurrentTranscript(sectionTranscripts[prevKey] || '');
+      const prevText = sectionTranscripts[prevKey] || '';
+      setCurrentTranscript(prevText);
+      transcriptRef.current = prevText;
       setError(null);
     }
   };
@@ -316,11 +381,25 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
   const handleSkipSection = () => {
     stopRecording();
     setCurrentTranscript('');
-    if (currentSectionIdx < DICTATION_SECTIONS.length - 1) {
-      handleNextSection();
-    } else {
-      handleGenerate({ ...sectionTranscripts, [currentSection.key]: '' });
-    }
+    transcriptRef.current = '';
+    // Remove this section's transcript since we're skipping it
+    setSectionTranscripts(prev => {
+      const next = { ...prev };
+      delete next[currentSection.key];
+      if (currentSectionIdx < DICTATION_SECTIONS.length - 1) {
+        const nextIdx = currentSectionIdx + 1;
+        setCurrentSectionIdx(nextIdx);
+        const nextKey = DICTATION_SECTIONS[nextIdx].key;
+        const nextText = next[nextKey] || '';
+        setCurrentTranscript(nextText);
+        transcriptRef.current = nextText;
+        setError(null);
+        return next;
+      } else {
+        handleGenerate(next);
+        return next;
+      }
+    });
   };
 
   const buildCombinedTranscript = (transcripts: Record<string, string>) => {
@@ -401,6 +480,7 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
         kpiMetrics: editKpiMetrics,
         raw_transcript: buildCombinedTranscript(sectionTranscripts),
       },
+      teamMembers: taggedMembers.map(m => m.name),
     });
   };
 
@@ -479,6 +559,73 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
                   </div>
                 </div>
               )}
+
+              {/* Team member tagging */}
+              <div className="rounded-xl border border-gray-200 p-4">
+                <label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5 mb-2">
+                  <Users className="w-3.5 h-3.5" />Tag Team Members
+                  <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+
+                {/* Tagged members */}
+                {taggedMembers.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {taggedMembers.map(m => (
+                      <span key={m.id} className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
+                        {m.name}
+                        {m.department_name && <span className="text-blue-400">· {m.department_name}</span>}
+                        <button onClick={() => untagMember(m.id)} className="ml-0.5 hover:text-blue-900"><X className="w-3 h-3" /></button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Search input */}
+                <div className="relative">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                    <input
+                      type="text"
+                      value={colleagueSearch}
+                      onChange={(e) => setColleagueSearch(e.target.value)}
+                      onFocus={() => searchResults.length > 0 && setShowSearchDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowSearchDropdown(false), 200)}
+                      placeholder="Search by name, role, or department..."
+                      className="w-full pl-8 pr-3 py-2 text-xs border border-gray-300 rounded-lg outline-none focus:border-blue-500"
+                    />
+                    {searching && <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 animate-spin" />}
+                  </div>
+
+                  {/* Search results dropdown */}
+                  {showSearchDropdown && searchResults.length > 0 && (
+                    <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {searchResults.map(c => (
+                        <button
+                          key={c.id}
+                          onClick={() => tagMember(c)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-blue-50 border-b border-gray-100 last:border-0"
+                        >
+                          <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 flex-shrink-0">
+                            {c.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-medium text-gray-900 truncate">{c.name}</p>
+                            <p className="text-[10px] text-gray-400 truncate">
+                              {c.job_title || c.role || 'Staff'}{c.department_name ? ` · ${c.department_name}` : ''}
+                            </p>
+                          </div>
+                          <UserPlus className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {showSearchDropdown && searchResults.length === 0 && !searching && colleagueSearch.trim() && (
+                    <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-center text-xs text-gray-400">
+                      No colleagues found matching "{colleagueSearch}"
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Section preview */}
               <div className="rounded-xl bg-gray-50 border border-gray-200 p-4">

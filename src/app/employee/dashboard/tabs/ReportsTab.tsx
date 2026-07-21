@@ -154,7 +154,7 @@ export function ReportsTab() {
               title: data.report.title, objectives: data.report.objectives, achievements: data.report.achievements,
               challenges: data.report.challenges, nextSteps: data.report.next_steps, additionalNotes: data.report.additional_notes,
               meetings: data.report.meetings, blockers: data.report.blockers, activities: data.report.activities,
-              kpiMetrics: data.report.kpiMetrics,
+              kpiMetrics: data.report.kpiMetrics, teamMembers: data.teamMembers,
             }),
           });
           const result = await res.json().catch(() => ({}));

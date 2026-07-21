@@ -16,6 +16,7 @@ const reportSchema = z.object({
   meetings: z.string().optional().default(""),
   blockers: z.string().optional().default(""),
   activities: z.string().optional().default(""),
+  teamMembers: z.array(z.string()).optional().default([]),
   kpiMetrics: z.array(z.object({
     kpiId: z.string().optional(),
     name: z.string(),
@@ -216,7 +217,7 @@ export async function POST(request: NextRequest) {
         id, tenant_slug, employee_id, title, report_type, report_date,
         objectives, achievements, challenges, next_steps, additional_notes,
         meetings, blockers, activities, head_of_department, department_id,
-        status, appraisal, submitter_role, approver_role, approver_id
+        status, appraisal, submitter_role, approver_role, approver_id, team_members
       ) VALUES (
         ${id}, ${session.tenantSlug}, ${session.id},
         ${d.title || `${d.reportType} report for ${d.reportDate}`},
@@ -226,7 +227,8 @@ export async function POST(request: NextRequest) {
         ${d.meetings}, ${d.blockers}, ${d.activities},
         ${hodName}, ${departmentId},
         'pending', ${appraisal}::jsonb,
-        ${employeeRole}, ${approverRole}, ${approverId}
+        ${employeeRole}, ${approverRole}, ${approverId},
+        ${d.teamMembers}
       )
     `;
 
