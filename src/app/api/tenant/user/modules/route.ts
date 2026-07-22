@@ -82,9 +82,11 @@ export async function GET(request: NextRequest) {
     employeeModules = await cached(cacheKey, 30_000, async () => {
       try {
         // First try by ID (works for employees whose session ID matches admin_employees.id)
+        // Don't require is_portal_active — the user is already authenticated via session.
+        // portal_permissions should be respected regardless of portal login status.
         let empRows = await sql`
           SELECT portal_permissions FROM admin_employees
-          WHERE id = ${effectiveUserId} AND tenant_slug = ${tenantSlug} AND is_portal_active = true
+          WHERE id = ${effectiveUserId} AND tenant_slug = ${tenantSlug}
           LIMIT 1
         `;
         let emp = (empRows as any[])[0];
@@ -94,7 +96,7 @@ export async function GET(request: NextRequest) {
         if (!emp && sessionEmail) {
           empRows = await sql`
             SELECT portal_permissions FROM admin_employees
-            WHERE email = ${sessionEmail} AND tenant_slug = ${tenantSlug} AND is_portal_active = true
+            WHERE lower(email) = lower(${sessionEmail}) AND tenant_slug = ${tenantSlug}
             LIMIT 1
           `;
           emp = (empRows as any[])[0];
@@ -174,6 +176,14 @@ export async function GET(request: NextRequest) {
       ...permissions,
       isEmployee,
       employeeModules,
+      _debug: {
+        effectiveUserId,
+        sessionEmail,
+        roleId,
+        isFullAdmin,
+        hasModuleRestrictions,
+        employeeModulesRaw: employeeModules,
+      },
     });
   } catch (error) {
     console.error("Failed to fetch combined permissions:", error);

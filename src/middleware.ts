@@ -207,16 +207,17 @@ export async function middleware(request: NextRequest) {
         try {
           const { sql } = await import('@/lib/sql-client');
           // Try by ID first, then by email (for tenant_admins users with different ID)
+          // Don't require is_portal_active — user is already authenticated via session.
           let empRows = await sql`
             SELECT portal_permissions FROM admin_employees
-            WHERE id = ${userId} AND tenant_slug = ${tenantSlug} AND is_portal_active = true
+            WHERE id = ${userId} AND tenant_slug = ${tenantSlug}
             LIMIT 1
           `;
           let emp = (empRows as any[])[0];
           if (!emp && sessionEmail) {
             empRows = await sql`
               SELECT portal_permissions FROM admin_employees
-              WHERE email = ${sessionEmail} AND tenant_slug = ${tenantSlug} AND is_portal_active = true
+              WHERE lower(email) = lower(${sessionEmail}) AND tenant_slug = ${tenantSlug}
               LIMIT 1
             `;
             emp = (empRows as any[])[0];
