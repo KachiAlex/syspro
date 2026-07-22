@@ -197,6 +197,26 @@ export async function middleware(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
 
+      // Verify the actual role from the database for tenant admin users.
+      // The session defaults NULL roles to "admin", but the user might be a
+      // HOD or other non-admin role with portal_permissions restrictions.
+      if (sessionEmail && !roleId?.includes('employee')) {
+        try {
+          const { sql } = await import('@/lib/sql-client');
+          const adminRows = await sql`
+            SELECT role FROM tenant_admins
+            WHERE lower(email) = lower(${sessionEmail}) AND tenant_slug = ${tenantSlug}
+            LIMIT 1
+          `;
+          const adminRow = (adminRows as any[])[0];
+          if (adminRow) {
+            roleId = adminRow.role || "viewer";
+          }
+        } catch {
+          // If the lookup fails, keep the session's roleId
+        }
+      }
+
       try {
         const perms = await getTenantUserPermissions(tenantSlug, userId, roleId ?? undefined);
 

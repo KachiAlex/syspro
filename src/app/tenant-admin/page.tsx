@@ -351,6 +351,14 @@ export default function TenantAdminDashboard() {
     return "just now";
   };
 
+  if (perms.loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-2 border-theme-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   if (showEmployeeDashboard) {
     return <EmployeeDashboard />;
   }

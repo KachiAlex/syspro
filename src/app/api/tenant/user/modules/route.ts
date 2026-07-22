@@ -47,8 +47,7 @@ export async function GET(request: NextRequest) {
     if (session) {
       effectiveUserId = session.id;
       sessionEmail = session.email;
-      // ALWAYS use roleId from the signed session — it is the source of truth.
-      // Override any roleId from query params or cookies to prevent privilege escalation.
+      // Use roleId from the signed session as initial value
       roleId = session.roleId || undefined;
     }
   }
@@ -67,6 +66,29 @@ export async function GET(request: NextRequest) {
 
   if (!effectiveUserId) {
     return NextResponse.json({ error: "userId is required" }, { status: 400 });
+  }
+
+  // For tenant admin users, verify the actual role from the database.
+  // The session defaults NULL roles to "admin", but the user might be a
+  // HOD or other non-admin role. We need the real DB role to prevent
+  // accidentally granting admin access.
+  if (!isEmployee && sessionEmail) {
+    try {
+      const adminRows = await sql`
+        SELECT role FROM tenant_admins
+        WHERE lower(email) = lower(${sessionEmail}) AND tenant_slug = ${tenantSlug}
+        LIMIT 1
+      `;
+      const adminRow = (adminRows as any[])[0];
+      if (adminRow) {
+        // Use the actual DB role. If it's NULL, don't default to "admin" —
+        // use "viewer" as a safe default. The portal_permissions will
+        // determine what modules the user can access.
+        roleId = adminRow.role || "viewer";
+      }
+    } catch {
+      // If the lookup fails, keep the session's roleId
+    }
   }
 
   try {
