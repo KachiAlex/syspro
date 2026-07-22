@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Loader2, Plus, CheckCircle, XCircle, Clock, DollarSign,
-  AlertCircle, X, Receipt
+  AlertCircle, X, Receipt, Paperclip, Upload, FileText, ExternalLink
 } from 'lucide-react';
 
 interface EmployeeProfile {
@@ -20,6 +20,7 @@ interface Expense {
   currency: string;
   date: string;
   status: string;
+  receipt_url?: string;
   approver_comment?: string;
   approver_name?: string;
   created_at: string;
@@ -227,6 +228,11 @@ export function ExpensesTab({ profile }: { profile: EmployeeProfile }) {
                       <span>{exp.date}</span>
                       {exp.approver_name && <span>Reviewed by: {exp.approver_name}</span>}
                     </div>
+                    {exp.receipt_url && (
+                      <a href={exp.receipt_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-xs text-blue-600 font-medium hover:text-blue-700">
+                        <ExternalLink className="w-3 h-3" /> View attachment
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>
@@ -253,6 +259,62 @@ function SubmitExpenseModal({ onClose, onSubmitted }: { onClose: () => void; onS
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File size must be under 10MB');
+      return;
+    }
+    const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowed.includes(file.type)) {
+      setError('Only PDF, JPEG, PNG, and WebP files are allowed');
+      return;
+    }
+    setError(null);
+    setAttachment(file);
+    setAttachmentUrl(null);
+  };
+
+  const uploadAttachment = async (): Promise<string | null> => {
+    if (!attachment) return null;
+    setUploading(true);
+    try {
+      const reader = new FileReader();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(attachment);
+      });
+      const base64 = dataUrl.split(',')[1];
+      const res = await fetch('/api/hr/employees/portal/expenses/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: attachment.name,
+          mimeType: attachment.type,
+          data: base64,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.url) {
+        setAttachmentUrl(data.url);
+        return data.url;
+      } else {
+        setError(data.error || 'Failed to upload attachment');
+        return null;
+      }
+    } catch {
+      setError('Failed to upload attachment');
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!category || !description || !amount) {
@@ -267,10 +329,19 @@ function SubmitExpenseModal({ onClose, onSubmitted }: { onClose: () => void; onS
     setSubmitting(true);
     setError(null);
     try {
+      let receiptUrl: string | undefined;
+      if (attachment) {
+        const uploaded = await uploadAttachment();
+        if (uploaded) receiptUrl = uploaded;
+        else {
+          setSubmitting(false);
+          return;
+        }
+      }
       const res = await fetch('/api/hr/employees/portal/expenses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category, description, amount: amt, date }),
+        body: JSON.stringify({ category, description, amount: amt, date, receiptUrl }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -343,6 +414,38 @@ function SubmitExpenseModal({ onClose, onSubmitted }: { onClose: () => void; onS
                 className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+          </div>
+
+          {/* Attachment */}
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1.5">
+              Attachment <span className="text-gray-400 font-normal">(optional — receipt or justification)</span>
+            </label>
+            {!attachment ? (
+              <label className="flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-colors">
+                <Upload className="w-5 h-5 text-gray-400" />
+                <span className="text-sm text-gray-500">Click to upload receipt (PDF, JPEG, PNG, WebP — max 10MB)</span>
+                <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={handleFileSelect} />
+              </label>
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50">
+                <FileText className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                <span className="text-sm text-gray-700 truncate flex-1">{attachment.name}</span>
+                <span className="text-xs text-gray-400 flex-shrink-0">{(attachment.size / 1024).toFixed(0)} KB</span>
+                {attachmentUrl && <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />}
+                <button
+                  onClick={() => { setAttachment(null); setAttachmentUrl(null); }}
+                  className="p-1 rounded text-gray-400 hover:bg-gray-200 hover:text-red-600 flex-shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            {uploading && (
+              <p className="text-xs text-blue-600 mt-1.5 flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" /> Uploading attachment...
+              </p>
+            )}
           </div>
         </div>
 
