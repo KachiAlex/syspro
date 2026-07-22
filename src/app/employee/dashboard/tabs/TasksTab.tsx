@@ -88,14 +88,13 @@ export function TasksTab({ profile }: { profile: EmployeeProfile }) {
 
   const loadColleagues = useCallback(async () => {
     try {
-      const deptParam = profile.departmentId ? `?departmentId=${profile.departmentId}` : '';
-      const res = await fetch(`/api/hr/employees/portal/colleagues${deptParam}`);
+      const res = await fetch('/api/hr/employees/portal/colleagues');
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setColleagues(data.colleagues || []);
       }
     } catch {}
-  }, [profile.departmentId]);
+  }, []);
 
   useEffect(() => { loadTasks(); if (canAssign) loadColleagues(); }, [loadTasks, loadColleagues, canAssign]);
 

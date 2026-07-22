@@ -18,6 +18,25 @@ export async function GET(request: NextRequest) {
     const departmentId = url.searchParams.get("departmentId")?.trim() || "";
     const role = url.searchParams.get("role")?.trim() || "";
 
+    // If no departmentId provided, auto-detect from the caller's profile (for HODs)
+    let effectiveDeptId = departmentId;
+    if (!effectiveDeptId) {
+      try {
+        const selfInfo = await SQL`
+          SELECT department_id, role FROM admin_employees
+          WHERE id = ${session.id} AND tenant_slug = ${session.tenantSlug}
+          LIMIT 1
+        `;
+        const selfRole = (selfInfo[0]?.role || 'staff').toLowerCase();
+        const isHOD = selfRole === 'hod' || selfRole === 'head_of_department';
+        if (isHOD && selfInfo[0]?.department_id) {
+          effectiveDeptId = selfInfo[0].department_id;
+        }
+      } catch (e) {
+        console.error('colleagues self-lookup failed:', (e as any)?.message);
+      }
+    }
+
     let rows: any[] = [];
     try {
       if (q) {
@@ -33,7 +52,7 @@ export async function GET(request: NextRequest) {
           ORDER BY e.name ASC
           LIMIT 20
         `;
-      } else if (departmentId) {
+      } else if (effectiveDeptId) {
         rows = await SQL`
           SELECT e.id, e.name, e.email, e.job_title, e.role, e.department_id,
                  d.name as department_name
@@ -42,7 +61,7 @@ export async function GET(request: NextRequest) {
           WHERE e.tenant_slug = ${session.tenantSlug}
             AND e.id != ${session.id}
             AND e.status = 'active'
-            AND e.department_id = ${departmentId}
+            AND e.department_id = ${effectiveDeptId}
           ORDER BY e.name ASC
           LIMIT 50
         `;
@@ -88,6 +107,17 @@ export async function GET(request: NextRequest) {
             ORDER BY name ASC
             LIMIT 20
           `;
+        } else if (effectiveDeptId) {
+          rows = await SQL`
+            SELECT id, name, email, job_title, role, department_id
+            FROM admin_employees
+            WHERE tenant_slug = ${session.tenantSlug}
+              AND id != ${session.id}
+              AND status = 'active'
+              AND department_id = ${effectiveDeptId}
+            ORDER BY name ASC
+            LIMIT 50
+          `;
         } else {
           rows = await SQL`
             SELECT id, name, email, job_title, role, department_id
@@ -96,7 +126,7 @@ export async function GET(request: NextRequest) {
               AND id != ${session.id}
               AND status = 'active'
             ORDER BY name ASC
-            LIMIT 20
+            LIMIT 50
           `;
         }
       } catch (e2) {

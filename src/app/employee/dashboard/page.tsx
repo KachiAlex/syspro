@@ -235,7 +235,7 @@ export default function EmployeeDashboardPage() {
           {activeTab === 'payslips' && <PayslipsTab profile={profile} />}
           {activeTab === 'approvals' && canApprove && <ApprovalsTab />}
           {activeTab === 'appraisal' && canAppraise && <AppraisalTab profile={profile} />}
-          {activeTab === 'profile' && <ProfileTab profile={profile} />}
+          {activeTab === 'profile' && <ProfileTab profile={profile} onProfileUpdate={(updated) => setProfile(updated)} />}
         </main>
       </div>
     </div>
