@@ -277,7 +277,7 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
         {/* Scrollable Navigation */}
         <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[rgba(128,128,128,0.2)] scrollbar-track-transparent">
           <div className="p-4 lg:p-6">
-            <SidebarNav userId={user?.id} roleId={user?.roleId} />
+            <SidebarNav />
           </div>
         </div>
 

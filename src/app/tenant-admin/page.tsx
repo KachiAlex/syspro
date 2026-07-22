@@ -79,16 +79,6 @@ export default function TenantAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // DEBUG: Permanent overlay visible on every render
-  const _debugOverlay = (
-    <div className="fixed top-0 right-0 z-[9999] bg-black text-white p-3 text-xs max-w-md pointer-events-auto">
-      <div>loading={String(perms.loading)}</div>
-      <div>isAdmin={String(perms.isAdmin)}</div>
-      <div>employeeModules={JSON.stringify(perms.employeeModules)}</div>
-      <div>tenantSlug={tenantSlug}</div>
-    </div>
-  );
-
   // Role-based dashboard rendering:
   // - Admin role: full admin dashboard with all metrics
   // - Non-admin roles with module activations: employee dashboard with module cards
@@ -365,29 +355,16 @@ export default function TenantAdminDashboard() {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="w-8 h-8 border-2 border-theme-accent border-t-transparent rounded-full animate-spin" />
-        {_debugOverlay}
       </div>
     );
   }
 
-  // DEBUG: Temporary banner to diagnose permission state
-  console.log("DEBUG perms:", JSON.stringify({ isAdmin: perms.isAdmin, loading: perms.loading, employeeModules: perms.employeeModules, hasModuleRestrictions, showEmployeeDashboard }));
-
   if (showEmployeeDashboard) {
-    return <>{_debugOverlay}<EmployeeDashboard /></>;
+    return <EmployeeDashboard />;
   }
 
-  // DEBUG: Show banner if admin dashboard is being rendered
   return (
     <div className="space-y-8">
-      {_debugOverlay}
-      {/* DEBUG BANNER */}
-      <div className="bg-yellow-100 border border-yellow-400 text-yellow-900 p-4 rounded-xl text-sm">
-        <strong>DEBUG:</strong> Rendering ADMIN dashboard. 
-        isAdmin={String(perms.isAdmin)}, hasModuleRestrictions={String(hasModuleRestrictions)}, 
-        showEmployeeDashboard={String(showEmployeeDashboard)}, 
-        employeeModules={JSON.stringify(perms.employeeModules)}
-      </div>
       {/* Header */}
       <div>
         <h1 className="text-2xl font-extrabold brand-gradient-text">Dashboard Overview</h1>
