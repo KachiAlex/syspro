@@ -30,6 +30,7 @@ import { useTenantContext } from "@/components/tenant-admin/tenant-context";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
+import { EmployeeDashboard } from "@/components/tenant-admin/employee-dashboard";
 
 interface DashboardMetric {
   label: string;
@@ -78,10 +79,14 @@ export default function TenantAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const hasModuleRestrictions = Object.keys(perms.employeeModules || {}).length > 0;
+  const showEmployeeDashboard = !perms.isAdmin && hasModuleRestrictions;
+
   useEffect(() => {
     if (!tenantSlug || perms.loading) return;
+    if (showEmployeeDashboard) return;
     loadDashboard();
-  }, [tenantSlug, perms.loading]);
+  }, [tenantSlug, perms.loading, showEmployeeDashboard]);
 
   const loadDashboard = async () => {
     setLoading(true);
@@ -342,6 +347,10 @@ export default function TenantAdminDashboard() {
     if (mins > 0) return `${mins}m ago`;
     return "just now";
   };
+
+  if (showEmployeeDashboard) {
+    return <EmployeeDashboard />;
+  }
 
   return (
     <div className="space-y-8">
