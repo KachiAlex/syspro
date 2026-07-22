@@ -183,6 +183,16 @@ export function SidebarNav({ className, userId, roleId }: SidebarNavProps) {
 
   return (
     <nav className={cn("space-y-1", className)}>
+      {/* DEBUG SIDEBAR */}
+      <div className="bg-red-900 text-white p-2 text-xs rounded mb-2">
+        SIDEBAR DEBUG:<br/>
+        loading={String(perms.loading)}<br/>
+        isAdmin={String(perms.isAdmin)}<br/>
+        visibleCount={visibleItems.length}<br/>
+        modules={JSON.stringify(perms.employeeModules)}<br/>
+        userId={userId || "none"}<br/>
+        roleId={roleId || "none"}
+      </div>
       {visibleItems.map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
         const Icon = item.icon;
