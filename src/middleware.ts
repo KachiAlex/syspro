@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getTenantUserPermissions } from '@/lib/tenant-admin/permissions';
 import { verifySession } from '@/lib/session';
+import { checkRateLimit, getRateLimitKey } from '@/lib/rate-limit';
 
 function getRequiredPermissionForPath(pathname: string): string | null {
   if (pathname === '/api/tenant/user/permissions' || pathname.startsWith('/api/auth/') || pathname === '/api/employee-lookup') return null;
@@ -73,6 +74,17 @@ export async function middleware(request: NextRequest) {
       return NextResponse.json(
         { error: 'CSRF validation failed: invalid origin' },
         { status: 403 }
+      );
+    }
+  }
+
+  // General API rate limiting (auth routes have their own limits)
+  if (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth/') && !pathname.startsWith('/api/hr/employees/auth/')) {
+    const { allowed, retryAfter } = checkRateLimit(`api:${getRateLimitKey(request)}`, 120, 60_000);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please slow down.' },
+        { status: 429, headers: { 'Retry-After': retryAfter.toString() } }
       );
     }
   }

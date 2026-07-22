@@ -1,5 +1,6 @@
 import { sql } from "@/lib/sql-client";
 import { setupTenantAdminSchema } from "./schema";
+import { cached, invalidatePrefix } from "@/lib/cache";
 
 let permissionsTablesEnsured = false;
 async function ensurePermissionsTables() {
@@ -55,6 +56,28 @@ export interface TenantUserPermissions {
 }
 
 export async function getTenantUserPermissions(
+  tenantSlug: string,
+  userId: string,
+  roleId?: string
+): Promise<TenantUserPermissions> {
+  const cacheKey = `perms:${tenantSlug}:${userId}:${roleId || "none"}`;
+  return cached(cacheKey, 30_000, async () => {
+    return _getTenantUserPermissions(tenantSlug, userId, roleId);
+  });
+}
+
+/**
+ * Invalidate cached permissions for a tenant (call when permissions change).
+ */
+export function invalidateTenantPermissions(tenantSlug: string, userId?: string): void {
+  if (userId) {
+    invalidatePrefix(`perms:${tenantSlug}:${userId}:`);
+  } else {
+    invalidatePrefix(`perms:${tenantSlug}:`);
+  }
+}
+
+async function _getTenantUserPermissions(
   tenantSlug: string,
   userId: string,
   roleId?: string

@@ -20,12 +20,12 @@ import {
   Receipt,
   TrendingUp,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  UserCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
-import { useEmployeeModules } from "@/hooks/use-employee-modules";
 
 const navigationItems = [
   {
@@ -136,16 +136,13 @@ interface SidebarNavProps {
   roleId?: string;
 }
 
-function canView(permission: string | undefined, perms: ReturnType<typeof useTenantPermissions>, empModules: ReturnType<typeof useEmployeeModules>) {
+function canView(permission: string | undefined, perms: ReturnType<typeof useTenantPermissions>) {
   if (!permission) return true;
   if (perms.isAdmin) return true;
 
-  // If this is an employee (not a tenant admin), check module permissions
-  if (empModules.isEmployee) {
-    // Map sidebar permission keys to employee module keys
-    // 'crm' covers both CRM and Sales & Procurement in the sidebar
-    const moduleKey = permission;
-    return empModules.modules[moduleKey] === true;
+  // If this is an employee, check module permissions
+  if (perms.isEmployee) {
+    return perms.employeeModules[permission] === true;
   }
 
   if (permission.startsWith("dashboard:")) {
@@ -158,9 +155,8 @@ function canView(permission: string | undefined, perms: ReturnType<typeof useTen
 export function SidebarNav({ className, userId, roleId }: SidebarNavProps) {
   const pathname = usePathname();
   const perms = useTenantPermissions(userId, roleId);
-  const empModules = useEmployeeModules();
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
-  const visibleItems = navigationItems.filter((item) => canView(item.permission, perms, empModules));
+  const visibleItems = navigationItems.filter((item) => canView(item.permission, perms));
 
   const toggleSection = (title: string) => {
     setCollapsedSections(prev => {
@@ -244,6 +240,24 @@ export function SidebarNav({ className, userId, roleId }: SidebarNavProps) {
           </div>
         );
       })}
+
+      {/* Self-Service link for employees */}
+      {perms.isEmployee && (
+        <div className="pt-4 mt-4 border-t border-theme-border">
+          <Link
+            href="/employee/dashboard"
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200 touch-manipulation",
+              pathname.startsWith("/employee")
+                ? "bg-theme-accent-subtle text-theme-accent shadow-sm"
+                : "text-theme-sidebar-text hover:bg-theme-sidebar-hover hover:text-theme-sidebar-text-active hover:translate-x-1"
+            )}
+          >
+            <UserCircle className="h-5 w-5 flex-shrink-0 text-theme-text-tertiary" />
+            <span className="truncate">My Self-Service</span>
+          </Link>
+        </div>
+      )}
     </nav>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, Plus, Search, Shield, UserCheck, UserX, CheckCircle, AlertCircle, Clock, X, Monitor, Loader2, ToggleLeft, ToggleRight, RotateCcw } from 'lucide-react';
+import { Users, Plus, Search, Shield, UserCheck, UserX, CheckCircle, AlertCircle, Clock, X, Monitor, Loader2, ToggleLeft, ToggleRight, RotateCcw, Grid3x3, List, Save, Layers } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { apiClient } from '@/lib/api-client';
 
@@ -254,6 +254,16 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
   const [defaults, setDefaults] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
   const [modalMsg, setModalMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "matrix">("list");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [presets, setPresets] = useState<any[]>([]);
+  const [showPresetMenu, setShowPresetMenu] = useState(false);
+  const [showSavePreset, setShowSavePreset] = useState(false);
+  const [newPresetName, setNewPresetName] = useState("");
+  const [bulkModules, setBulkModules] = useState<Record<string, boolean>>({});
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const loadEmployees = useCallback(async () => {
     if (!tenantSlug) { setLoading(false); return; }
@@ -273,6 +283,111 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
   }, [tenantSlug]);
 
   useEffect(() => { loadEmployees(); }, [loadEmployees]);
+
+  // Load presets
+  useEffect(() => {
+    if (!tenantSlug) return;
+    fetch(`/api/hr/employees/module-presets?tenantSlug=${encodeURIComponent(tenantSlug)}`)
+      .then(res => res.json())
+      .then(data => setPresets(data.presets || []))
+      .catch(() => {});
+  }, [tenantSlug]);
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === filteredEmployees.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredEmployees.map((e: any) => e.id)));
+    }
+  }
+
+  async function applyPreset(preset: any) {
+    if (selectedIds.size === 0) {
+      alert("Select employees first to apply a preset.");
+      return;
+    }
+    if (!confirm(`Apply "${preset.name}" to ${selectedIds.size} selected employee(s)?`)) return;
+    setBulkSaving(true);
+    try {
+      const res = await fetch("/api/hr/employees/bulk-modules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantSlug,
+          employeeIds: Array.from(selectedIds),
+          modules: preset.modules,
+          mode: "replace",
+        }),
+      });
+      if (res.ok) {
+        await loadEmployees();
+        setBulkMsg({ type: "success", text: `Applied "${preset.name}" to ${selectedIds.size} employees` });
+        setTimeout(() => setBulkMsg(null), 3000);
+      }
+    } catch {
+      setBulkMsg({ type: "error", text: "Failed to apply preset" });
+    } finally {
+      setBulkSaving(false);
+      setShowPresetMenu(false);
+    }
+  }
+
+  async function savePreset() {
+    if (!newPresetName.trim() || !tenantSlug) return;
+    try {
+      const res = await fetch("/api/hr/employees/module-presets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantSlug, name: newPresetName, modules: bulkModules }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPresets([...presets, data.preset]);
+        setNewPresetName("");
+        setShowSavePreset(false);
+      }
+    } catch {
+      alert("Failed to save preset");
+    }
+  }
+
+  async function applyBulkModules() {
+    if (selectedIds.size === 0) return;
+    setBulkSaving(true);
+    setBulkMsg(null);
+    try {
+      const res = await fetch("/api/hr/employees/bulk-modules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantSlug,
+          employeeIds: Array.from(selectedIds),
+          modules: bulkModules,
+          mode: "replace",
+        }),
+      });
+      if (res.ok) {
+        await loadEmployees();
+        setBulkMsg({ type: "success", text: `Updated module access for ${selectedIds.size} employees` });
+        setTimeout(() => { setShowBulkModal(false); setBulkMsg(null); }, 1500);
+      } else {
+        setBulkMsg({ type: "error", text: "Failed to update modules" });
+      }
+    } catch {
+      setBulkMsg({ type: "error", text: "Network error" });
+    } finally {
+      setBulkSaving(false);
+    }
+  }
 
   const filteredEmployees = employees.filter((emp: any) => {
     const matchesSearch = (emp.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -408,8 +523,8 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
       </div>
 
       {/* Search & filter */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="relative flex-1 max-w-md min-w-[200px]">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-theme-text-tertiary w-4 h-4" />
           <input
             type="text"
@@ -428,7 +543,82 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
           <option value="active">Portal Active</option>
           <option value="inactive">Portal Inactive</option>
         </select>
+
+        {/* View toggle */}
+        <div className="flex items-center border border-theme-border rounded-lg overflow-hidden">
+          <button
+            onClick={() => setViewMode("list")}
+            className={`px-3 py-2 text-sm ${viewMode === "list" ? "bg-theme-accent text-white" : "text-theme-text-secondary hover:bg-theme-muted"}`}
+            title="List view"
+          >
+            <List className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setViewMode("matrix")}
+            className={`px-3 py-2 text-sm ${viewMode === "matrix" ? "bg-theme-accent text-white" : "text-theme-text-secondary hover:bg-theme-muted"}`}
+            title="Matrix view"
+          >
+            <Grid3x3 className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Presets dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setShowPresetMenu(!showPresetMenu)}
+            disabled={selectedIds.size === 0}
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium border border-theme-border rounded-lg hover:bg-theme-muted disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Layers className="w-4 h-4" /> Presets
+            {selectedIds.size > 0 && <span className="text-xs bg-theme-accent text-white rounded-full px-1.5">{selectedIds.size}</span>}
+          </button>
+          {showPresetMenu && (
+            <div className="absolute right-0 mt-1 w-64 rounded-lg border border-theme-border bg-theme-surface shadow-xl z-20 max-h-80 overflow-y-auto">
+              {presets.length === 0 ? (
+                <div className="p-3 text-sm text-theme-text-tertiary text-center">No presets saved yet</div>
+              ) : (
+                presets.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => applyPreset(p)}
+                    disabled={bulkSaving}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-theme-muted border-b border-theme-border last:border-0"
+                  >
+                    <div className="font-medium text-theme-text-primary">{p.name}</div>
+                    <div className="text-xs text-theme-text-tertiary">
+                      {Object.entries(p.modules).filter(([, v]) => v).map(([k]) => k).join(", ") || "No modules"}
+                    </div>
+                  </button>
+                ))
+              )}
+              <button
+                onClick={() => { setShowSavePreset(true); setShowPresetMenu(false); }}
+                className="w-full text-left px-3 py-2 text-sm text-theme-accent hover:bg-theme-muted border-t border-theme-border"
+              >
+                + Save current as preset
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Bulk assign button */}
+        <button
+          onClick={() => { setBulkModules(getDefaultPermissions("staff")); setShowBulkModal(true); }}
+          disabled={selectedIds.size === 0}
+          className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white brand-gradient rounded-lg hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <Shield className="w-4 h-4" /> Bulk Assign
+          {selectedIds.size > 0 && <span className="text-xs bg-white/20 rounded-full px-1.5">{selectedIds.size}</span>}
+        </button>
       </div>
+
+      {/* Bulk status message */}
+      {bulkMsg && (
+        <div className={`rounded-lg p-3 text-sm flex items-center gap-2 ${bulkMsg.type === "success" ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-400"}`}>
+          {bulkMsg.type === "success" ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+          {bulkMsg.text}
+        </div>
+      )}
 
       {error && (
         <div className="rounded-lg bg-red-500/10 p-3 text-sm text-red-400 flex items-center gap-2">
@@ -436,12 +626,84 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
         </div>
       )}
 
-      {/* Employee table */}
+      {/* Employee table / Matrix view */}
+      {viewMode === "matrix" ? (
+        /* Matrix View */
+        <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-theme-muted border-b border-theme-border">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider sticky left-0 bg-theme-muted z-10">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.size === filteredEmployees.length && filteredEmployees.length > 0}
+                      onChange={toggleSelectAll}
+                      className="rounded border-theme-border"
+                    />
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider sticky left-12 bg-theme-muted z-10 min-w-[160px]">Employee</th>
+                  {BUSINESS_MODULES.map((mod) => (
+                    <th key={mod.key} className="px-3 py-3 text-center text-xs font-medium text-theme-text-secondary uppercase tracking-wider min-w-[80px]" title={mod.label}>
+                      {mod.key === "self_service" ? "Self" : mod.key.charAt(0).toUpperCase() + mod.key.slice(1, 4)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-theme-border">
+                {loading ? (
+                  <tr><td colSpan={BUSINESS_MODULES.length + 2} className="px-6 py-12 text-center"><Loader2 className="w-6 h-6 text-theme-accent animate-spin mx-auto" /></td></tr>
+                ) : filteredEmployees.length === 0 ? (
+                  <tr><td colSpan={BUSINESS_MODULES.length + 2} className="px-6 py-12 text-center text-sm text-theme-text-secondary">No employees found</td></tr>
+                ) : (
+                  filteredEmployees.map((emp: any) => {
+                    const perms = emp.portalPermissions || getDefaultPermissions(emp.role);
+                    return (
+                      <tr key={emp.id} className="hover:bg-theme-muted">
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(emp.id)}
+                            onChange={() => toggleSelect(emp.id)}
+                            className="rounded border-theme-border"
+                          />
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap sticky left-12 bg-theme-surface">
+                          <p className="text-sm font-medium text-theme-text-primary truncate">{emp.name}</p>
+                          <p className="text-xs text-theme-text-tertiary truncate">{emp.role || "staff"}</p>
+                        </td>
+                        {BUSINESS_MODULES.map((mod) => (
+                          <td key={mod.key} className="px-3 py-2 text-center">
+                            {perms[mod.key] === true ? (
+                              <CheckCircle className="w-4 h-4 text-green-500 mx-auto" />
+                            ) : (
+                              <div className="w-4 h-4 mx-auto rounded-full border border-gray-300" />
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+      /* List View */
       <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-theme-muted border-b border-theme-border">
               <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider w-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.size === filteredEmployees.length && filteredEmployees.length > 0}
+                    onChange={toggleSelectAll}
+                    className="rounded border-theme-border"
+                  />
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Employee</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Role</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Department</th>
@@ -454,13 +716,13 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
             <tbody className="divide-y divide-theme-border">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={8} className="px-6 py-12 text-center">
                     <Loader2 className="w-6 h-6 text-theme-accent animate-spin mx-auto" />
                   </td>
                 </tr>
               ) : filteredEmployees.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-sm text-theme-text-secondary">
+                  <td colSpan={8} className="px-6 py-12 text-center text-sm text-theme-text-secondary">
                     {employees.length === 0
                       ? "No employees found. Check that employees exist for this tenant."
                       : `No ${filterPortal === "active" ? "portal-active" : filterPortal === "inactive" ? "portal-inactive" : ""} employees found. (${employees.length} total employees loaded)`}
@@ -469,6 +731,14 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
               ) : (
                 filteredEmployees.map((emp: any) => (
                   <tr key={emp.id} className="hover:bg-theme-muted">
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(emp.id)}
+                        onChange={() => toggleSelect(emp.id)}
+                        className="rounded border-theme-border"
+                      />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 bg-theme-accent-subtle rounded-full flex items-center justify-center">
@@ -523,6 +793,7 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
           </table>
         </div>
       </div>
+      )}
 
       {/* Permissions Modal */}
       {editingEmp && (
@@ -597,6 +868,100 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
                   {saving ? "Saving..." : "Save Permissions"}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Assign Modal */}
+      {showBulkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) setShowBulkModal(false); }}>
+          <div className="w-full max-w-lg rounded-xl bg-theme-surface p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-theme-text-primary">Bulk Module Assignment</h2>
+                <p className="text-xs text-theme-text-secondary mt-0.5">Assigning to {selectedIds.size} selected employee(s)</p>
+              </div>
+              <button onClick={() => setShowBulkModal(false)} className="text-theme-text-tertiary hover:text-theme-text-secondary">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {bulkMsg && (
+              <div className={`mb-4 rounded-lg p-3 text-sm flex items-center gap-2 ${bulkMsg.type === "success" ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-400"}`}>
+                {bulkMsg.type === "success" ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                {bulkMsg.text}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {BUSINESS_MODULES.map((mod) => (
+                <div key={mod.key} className={`flex items-center justify-between p-3 rounded-lg border ${bulkModules[mod.key] ? "border-blue-200 bg-blue-50" : "border-gray-200 bg-gray-50"}`}>
+                  <div className="flex items-center gap-3">
+                    {bulkModules[mod.key] ? <ToggleRight className="w-5 h-5 text-blue-600" /> : <ToggleLeft className="w-5 h-5 text-gray-400" />}
+                    <span className="text-sm font-medium text-theme-text-primary">{mod.label}</span>
+                    {mod.alwaysOn && <span className="ml-2 text-xs text-gray-400">(always on)</span>}
+                  </div>
+                  <button
+                    onClick={() => { if (!mod.alwaysOn) setBulkModules((prev) => ({ ...prev, [mod.key]: !prev[mod.key] })); }}
+                    disabled={mod.alwaysOn}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${bulkModules[mod.key] ? "bg-blue-600" : "bg-gray-300"} ${mod.alwaysOn ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${bulkModules[mod.key] ? "translate-x-6" : "translate-x-1"}`} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 flex items-center justify-between pt-4 border-t border-theme-border">
+              <button
+                onClick={() => { setShowSavePreset(true); }}
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-theme-text-secondary border border-theme-border rounded-lg hover:bg-theme-muted"
+              >
+                <Save className="w-4 h-4" /> Save as Preset
+              </button>
+              <div className="flex gap-2">
+                <button onClick={() => setShowBulkModal(false)} className="rounded-lg border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-secondary hover:bg-theme-muted">Cancel</button>
+                <button
+                  onClick={applyBulkModules}
+                  disabled={bulkSaving}
+                  className="rounded-lg brand-gradient px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 inline-flex items-center gap-2"
+                >
+                  {bulkSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                  {bulkSaving ? "Applying..." : `Apply to ${selectedIds.size} Employee(s)`}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save Preset Modal */}
+      {showSavePreset && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) setShowSavePreset(false); }}>
+          <div className="w-full max-w-sm rounded-xl bg-theme-surface p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-theme-text-primary">Save Module Preset</h2>
+              <button onClick={() => setShowSavePreset(false)} className="text-theme-text-tertiary hover:text-theme-text-secondary">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <input
+              type="text"
+              placeholder="Preset name (e.g. Sales Team, Accounting)"
+              value={newPresetName}
+              onChange={(e) => setNewPresetName(e.target.value)}
+              className="w-full px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent mb-4"
+            />
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setShowSavePreset(false)} className="rounded-lg border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-secondary hover:bg-theme-muted">Cancel</button>
+              <button
+                onClick={savePreset}
+                disabled={!newPresetName.trim()}
+                className="rounded-lg brand-gradient px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 inline-flex items-center gap-2"
+              >
+                <Save className="w-4 h-4" /> Save Preset
+              </button>
             </div>
           </div>
         </div>

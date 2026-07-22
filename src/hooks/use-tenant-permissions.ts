@@ -7,6 +7,8 @@ import type { UserPermissions } from "@/hooks/use-permissions";
 export interface TenantPermissions extends UserPermissions {
   dashboards: string[];
   isAdmin: boolean;
+  isEmployee: boolean;
+  employeeModules: Record<string, boolean>;
 }
 
 const DEFAULT: TenantPermissions = {
@@ -20,6 +22,8 @@ const DEFAULT: TenantPermissions = {
   projects: "none",
   dashboards: [],
   isAdmin: false,
+  isEmployee: false,
+  employeeModules: {},
   loading: true,
 };
 
@@ -54,7 +58,7 @@ export function useTenantPermissions(userId?: string, roleId?: string): TenantPe
 
       try {
         const res = await fetch(
-          `/api/tenant/user/permissions?tenantSlug=${encodeURIComponent(
+          `/api/tenant/user/modules?tenantSlug=${encodeURIComponent(
             tenantSlug
           )}${uid ? `&userId=${encodeURIComponent(uid)}` : ""}${roleParam}`,
           { cache: "no-store" }

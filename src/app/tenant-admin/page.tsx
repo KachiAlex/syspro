@@ -17,6 +17,8 @@ import Link from "next/link";
 import { useTenantContext } from "@/components/tenant-admin/tenant-context";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { EmployeeDashboard } from "@/components/tenant-admin/employee-dashboard";
+import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
 
 interface DashboardMetric {
   label: string;
@@ -45,6 +47,7 @@ interface Transaction {
 
 export default function TenantAdminDashboard() {
   const { tenantSlug } = useTenantContext();
+  const perms = useTenantPermissions();
   const [metrics, setMetrics] = useState<DashboardMetric[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [userCount, setUserCount] = useState(0);
@@ -52,9 +55,14 @@ export default function TenantAdminDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!tenantSlug) return;
+    if (!tenantSlug || perms.isEmployee) return;
     loadDashboard();
-  }, [tenantSlug]);
+  }, [tenantSlug, perms.isEmployee]);
+
+  // Show employee dashboard for employees
+  if (perms.isEmployee) {
+    return <EmployeeDashboard />;
+  }
 
   const loadDashboard = async () => {
     setLoading(true);

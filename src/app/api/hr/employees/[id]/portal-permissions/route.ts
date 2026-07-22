@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables } from "@/lib/hr/db";
+import { invalidateTenantPermissions } from "@/lib/tenant-admin/permissions";
+import { invalidatePrefix } from "@/lib/cache";
 
 const BUSINESS_MODULES = [
   "self_service",
@@ -99,9 +101,21 @@ export async function PATCH(
   const tenantSlug = body.tenantSlug as string;
   const permissions = body.permissions as Record<string, boolean> | undefined;
   const resetToDefaults = body.resetToDefaults === true;
+  const actorId = body.actorId as string | undefined;
+  const actorName = body.actorName as string | undefined;
 
   try {
     await ensureHrTables(SQL);
+
+    // Fetch old permissions for audit trail
+    const oldRows = await SQL`
+      SELECT name, role, portal_permissions FROM admin_employees
+      WHERE id = ${id} AND tenant_slug = ${tenantSlug}
+      LIMIT 1
+    `;
+    const oldEmp = (oldRows as any[])[0];
+    const oldPerms = oldEmp?.portal_permissions || null;
+    const empName = oldEmp?.name || "";
 
     let finalPermissions: Record<string, boolean> | null = null;
 
@@ -137,6 +151,38 @@ export async function PATCH(
           updated_at = now()
       WHERE id = ${id} AND tenant_slug = ${tenantSlug}
     `;
+
+    // Invalidate cached permissions for this employee
+    invalidateTenantPermissions(tenantSlug, id);
+    invalidatePrefix(`perms:${tenantSlug}:${id}:`);
+    invalidatePrefix(`empmods:${tenantSlug}:${id}`);
+
+    // Log audit entry
+    try {
+      await SQL`
+        CREATE TABLE IF NOT EXISTS admin_permission_audit (
+          id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+          tenant_slug TEXT NOT NULL,
+          actor_id TEXT,
+          actor_name TEXT,
+          action TEXT NOT NULL,
+          target_id TEXT,
+          target_name TEXT,
+          old_value JSONB,
+          new_value JSONB,
+          created_at TIMESTAMPTZ DEFAULT now()
+        )
+      `;
+      await SQL`
+        INSERT INTO admin_permission_audit (tenant_slug, actor_id, actor_name, action, target_id, target_name, old_value, new_value)
+        VALUES (${tenantSlug}, ${actorId || null}, ${actorName || null}, ${resetToDefaults ? "reset_permissions" : "update_permissions"},
+                ${id}, ${empName},
+                ${oldPerms ? JSON.stringify(oldPerms) : null}::jsonb,
+                ${JSON.stringify(finalPermissions)}::jsonb)
+      `;
+    } catch (auditErr) {
+      console.error("Audit log failed (non-fatal):", (auditErr as any)?.message);
+    }
 
     return NextResponse.json({ success: true, permissions: finalPermissions });
   } catch (error: any) {
