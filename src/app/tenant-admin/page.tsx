@@ -359,12 +359,23 @@ export default function TenantAdminDashboard() {
     );
   }
 
+  // DEBUG: Temporary banner to diagnose permission state
+  console.log("DEBUG perms:", JSON.stringify({ isAdmin: perms.isAdmin, loading: perms.loading, employeeModules: perms.employeeModules, hasModuleRestrictions, showEmployeeDashboard }));
+
   if (showEmployeeDashboard) {
     return <EmployeeDashboard />;
   }
 
+  // DEBUG: Show banner if admin dashboard is being rendered
   return (
     <div className="space-y-8">
+      {/* DEBUG BANNER */}
+      <div className="bg-yellow-100 border border-yellow-400 text-yellow-900 p-4 rounded-xl text-sm">
+        <strong>DEBUG:</strong> Rendering ADMIN dashboard. 
+        isAdmin={String(perms.isAdmin)}, hasModuleRestrictions={String(hasModuleRestrictions)}, 
+        showEmployeeDashboard={String(showEmployeeDashboard)}, 
+        employeeModules={JSON.stringify(perms.employeeModules)}
+      </div>
       {/* Header */}
       <div>
         <h1 className="text-2xl font-extrabold brand-gradient-text">Dashboard Overview</h1>
