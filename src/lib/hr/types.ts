@@ -57,6 +57,7 @@ export interface EmployeeRecord {
   lastLogin: string | null;
   createdAt: string;
   updatedAt: string;
+  portalPermissions: Record<string, boolean> | null;
 }
 
 // ============================================================================

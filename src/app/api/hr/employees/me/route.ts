@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
         nationality: raw.nationality ?? null,
         stateOfOrigin: raw.state_of_origin ?? null,
         city: raw.city ?? null,
+        portalPermissions: raw.portal_permissions ?? null,
       },
     });
   } catch (error) {
@@ -147,6 +148,7 @@ export async function PATCH(request: NextRequest) {
         nationality: row.nationality ?? null,
         stateOfOrigin: row.state_of_origin ?? null,
         city: row.city ?? null,
+        portalPermissions: row.portal_permissions ?? null,
       },
     });
   } catch (error: any) {

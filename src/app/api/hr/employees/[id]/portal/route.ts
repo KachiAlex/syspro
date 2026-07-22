@@ -3,6 +3,20 @@ import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables } from "@/lib/hr/db";
 import { setEmployeePassword, generatePassword } from "@/lib/hr/auth";
 
+function getDefaultPermissions(role: string): Record<string, boolean> {
+  const r = (role || "staff").toLowerCase();
+  const perms: Record<string, boolean> = {
+    dashboard: true, tasks: true, attendance: true, reports: true,
+    expenses: true, leave: true, payslips: true, profile: true,
+    approvals: false, appraisal: false,
+  };
+  const isHOD = r === "hod" || r === "head_of_department";
+  const isHR = r === "hr" || r === "hr_admin" || r === "hr_manager";
+  if (isHOD || isHR) perms.approvals = true;
+  if (isHR) perms.appraisal = true;
+  return perms;
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -30,13 +44,25 @@ export async function PATCH(
       const pwd = password || generatePassword();
       await setEmployeePassword(tenantSlug, id, pwd);
 
-      // Fetch employee details for credential response
+      // Fetch employee details for credential response + role for default permissions
       const rows = await SQL`
-        select name, email from admin_employees
+        select name, email, role, portal_permissions from admin_employees
         where id = ${id} and tenant_slug = ${tenantSlug}
         limit 1
       `;
       const emp = (rows as any[])[0];
+
+      // Set default permissions if none exist yet
+      if (emp && !emp.portal_permissions) {
+        const defaults = getDefaultPermissions(emp.role);
+        await SQL`
+          update admin_employees
+          set portal_permissions = ${JSON.stringify(defaults)}::jsonb,
+              updated_at = now()
+          where id = ${id} and tenant_slug = ${tenantSlug}
+        `;
+      }
+
       return NextResponse.json({
         success: true,
         isPortalActive: true,
@@ -52,6 +78,25 @@ export async function PATCH(
           updated_at = now()
       where id = ${id} and tenant_slug = ${tenantSlug}
     `;
+
+    // When activating via toggle, also set default permissions if none exist
+    if (isPortalActive) {
+      const rows = await SQL`
+        select role, portal_permissions from admin_employees
+        where id = ${id} and tenant_slug = ${tenantSlug}
+        limit 1
+      `;
+      const emp = (rows as any[])[0];
+      if (emp && !emp.portal_permissions) {
+        const defaults = getDefaultPermissions(emp.role);
+        await SQL`
+          update admin_employees
+          set portal_permissions = ${JSON.stringify(defaults)}::jsonb,
+              updated_at = now()
+          where id = ${id} and tenant_slug = ${tenantSlug}
+        `;
+      }
+    }
 
     return NextResponse.json({ success: true, isPortalActive });
   } catch (error) {

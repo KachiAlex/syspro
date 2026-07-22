@@ -53,6 +53,7 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
   await sql`alter table if exists admin_employees add column if not exists nationality text`;
   await sql`alter table if exists admin_employees add column if not exists state_of_origin text`;
   await sql`alter table if exists admin_employees add column if not exists city text`;
+  await sql`alter table if exists admin_employees add column if not exists portal_permissions jsonb`;
 
   await sql`
     create table if not exists admin_attendance (
@@ -312,6 +313,7 @@ function normalizeEmployeeRow(row: any): EmployeeRecord {
     lastLogin: row.last_login ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    portalPermissions: row.portal_permissions ?? null,
   };
 }
 

@@ -111,6 +111,29 @@ export async function setEmployeePassword(
         updated_at = now()
     where id = ${employeeId} and tenant_slug = ${tenantSlug}
   `;
+
+  // Auto-set default portal permissions if none exist yet
+  const empRows = await sql`
+    select role, portal_permissions from admin_employees
+    where id = ${employeeId} and tenant_slug = ${tenantSlug}
+    limit 1
+  `;
+  const emp = (empRows as any[])[0];
+  if (emp && !emp.portal_permissions) {
+    const r = (emp.role || "staff").toLowerCase();
+    const defaults: Record<string, boolean> = {
+      dashboard: true, tasks: true, attendance: true, reports: true,
+      expenses: true, leave: true, payslips: true, profile: true,
+      approvals: ["hod", "head_of_department", "hr", "hr_admin", "hr_manager"].includes(r),
+      appraisal: ["hr", "hr_admin", "hr_manager"].includes(r),
+    };
+    await sql`
+      update admin_employees
+      set portal_permissions = ${JSON.stringify(defaults)}::jsonb,
+          updated_at = now()
+      where id = ${employeeId} and tenant_slug = ${tenantSlug}
+    `;
+  }
 }
 
 /**

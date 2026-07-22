@@ -1,25 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { Users, Plus, Edit, Trash2, Eye, Search, Filter, Shield, UserCheck, UserX, Mail, Phone, Calendar, Building, CheckCircle, AlertCircle, Clock, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Users, Plus, Search, Shield, UserCheck, UserX, CheckCircle, AlertCircle, Clock, X, Monitor, Loader2, ToggleLeft, ToggleRight, RotateCcw } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
-import { AdminService } from '@/app/tenant-admin/services/admin-service';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: string;
-  department: string;
-  branch: string;
-  status: 'active' | 'inactive' | 'suspended';
-  lastLogin: string;
-  joinDate: string;
-  permissions: string[];
-  avatar: string;
-}
+import { apiClient } from '@/lib/api-client';
 
 interface Role {
   id: string;
@@ -29,93 +13,6 @@ interface Role {
   userCount: number;
   color: string;
 }
-
-const INITIAL_USERS: User[] = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    email: 'sarah.johnson@techcorp.com',
-    phone: '+1 (555) 123-4567',
-    role: 'System Administrator',
-    department: 'IT',
-    branch: 'New York Headquarters',
-    status: 'active',
-    lastLogin: '2024-04-03 09:15:00',
-    joinDate: '2018-03-15',
-    permissions: ['Full Access', 'User Management', 'System Settings', 'Branch Management'],
-    avatar: 'SJ'
-  },
-  {
-    id: '2',
-    name: 'James Wilson',
-    email: 'james.wilson@techcorp.com',
-    phone: '+1 (555) 234-5678',
-    role: 'Branch Manager',
-    department: 'Operations',
-    branch: 'London Branch',
-    status: 'active',
-    lastLogin: '2024-04-03 08:30:00',
-    joinDate: '2019-07-22',
-    permissions: ['Branch Management', 'User Management', 'Reporting'],
-    avatar: 'JW'
-  },
-  {
-    id: '3',
-    name: 'Yuki Tanaka',
-    email: 'yuki.tanaka@techcorp.com',
-    phone: '+81 (3) 1234-5678',
-    role: 'Sales Manager',
-    department: 'Sales',
-    branch: 'Tokyo Office',
-    status: 'active',
-    lastLogin: '2024-04-02 22:45:00',
-    joinDate: '2020-11-10',
-    permissions: ['Sales Management', 'Reporting', 'Customer Management'],
-    avatar: 'YT'
-  },
-  {
-    id: '4',
-    name: 'Michael Chen',
-    email: 'michael.chen@techcorp.com',
-    phone: '+61 (2) 1234-5678',
-    role: 'Financial Analyst',
-    department: 'Finance',
-    branch: 'Sydney Branch',
-    status: 'inactive',
-    lastLogin: '2024-03-28 16:20:00',
-    joinDate: '2021-02-28',
-    permissions: ['Financial Reporting', 'Budget Management'],
-    avatar: 'MC'
-  },
-  {
-    id: '5',
-    name: 'Ahmed Hassan',
-    email: 'ahmed.hassan@techcorp.com',
-    phone: '+971 (4) 123-4567',
-    role: 'HR Manager',
-    department: 'Human Resources',
-    branch: 'Dubai Office',
-    status: 'active',
-    lastLogin: '2024-04-03 07:00:00',
-    joinDate: '2022-05-15',
-    permissions: ['HR Management', 'Payroll', 'Employee Records'],
-    avatar: 'AH'
-  },
-  {
-    id: '6',
-    name: 'Emma Davis',
-    email: 'emma.davis@techcorp.com',
-    phone: '+1 (555) 345-6789',
-    role: 'Marketing Specialist',
-    department: 'Marketing',
-    branch: 'New York Headquarters',
-    status: 'suspended',
-    lastLogin: '2024-03-15 14:30:00',
-    joinDate: '2020-09-10',
-    permissions: ['Content Management', 'Campaign Management'],
-    avatar: 'ED'
-  }
-];
 
 const roles: Role[] = [
   {
@@ -171,99 +68,13 @@ const roles: Role[] = [
 export default function UsersPage() {
   const { tenantSlug } = useTenantContext();
   const [activeTab, setActiveTab] = useState<'users' | 'roles'>('users');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRole, setSelectedRole] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all');
-  const [selectedBranch, setSelectedBranch] = useState('all');
-  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
-  const [showAddUser, setShowAddUser] = useState(false);
-  const [addUserLoading, setAddUserLoading] = useState(false);
-  const [addUserError, setAddUserError] = useState<string | null>(null);
-  const [userForm, setUserForm] = useState({ name: '', email: '', role: '', department: '', branch: '', status: 'active' });
-
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = selectedRole === 'all' || user.role === selectedRole;
-    const matchesStatus = selectedStatus === 'all' || user.status === selectedStatus;
-    const matchesBranch = selectedBranch === 'all' || user.branch === selectedBranch;
-    return matchesSearch && matchesRole && matchesStatus && matchesBranch;
-  });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'inactive': return 'bg-theme-accent-subtle text-theme-accent';
-      case 'suspended': return 'bg-red-100 text-red-800';
-      default: return 'bg-theme-accent-subtle text-theme-accent';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'active': return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'inactive': return <Clock className="w-4 h-4 text-theme-text-secondary" />;
-      case 'suspended': return <AlertCircle className="w-4 h-4 text-red-600" />;
-      default: return <AlertCircle className="w-4 h-4 text-theme-text-secondary" />;
-    }
-  };
-
-  const branches = [...new Set(users.map(u => u.branch))];
-  const rolesList = [...new Set(users.map(u => u.role))];
-  const activeUsers = users.filter(u => u.status === 'active').length;
-  const inactiveUsers = users.filter(u => u.status === 'inactive').length;
-  const suspendedUsers = users.filter(u => u.status === 'suspended').length;
-
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
-  };
-
-  async function handleAddUser(e: React.FormEvent) {
-    e.preventDefault();
-    if (!userForm.name.trim() || !userForm.email.trim()) {
-      setAddUserError('Name and email are required');
-      return;
-    }
-    if (!tenantSlug) return;
-    setAddUserLoading(true);
-    setAddUserError(null);
-    try {
-      const data = await AdminService.createUser(tenantSlug, {
-        name: userForm.name.trim(),
-        email: userForm.email.trim(),
-        status: userForm.status,
-        role: userForm.role,
-      });
-      const newUser: User = {
-        id: data.user?.id || Date.now().toString(),
-        name: userForm.name.trim(),
-        email: userForm.email.trim(),
-        phone: '',
-        role: userForm.role || 'User',
-        department: userForm.department || '—',
-        branch: userForm.branch || '—',
-        status: userForm.status as User['status'],
-        lastLogin: '—',
-        joinDate: new Date().toISOString().split('T')[0],
-        permissions: [],
-        avatar: getInitials(userForm.name),
-      };
-      setUsers((prev) => [...prev, newUser]);
-      setShowAddUser(false);
-      setUserForm({ name: '', email: '', role: '', department: '', branch: '', status: 'active' });
-    } catch (err: any) {
-      setAddUserError(err?.message || 'Failed to create user');
-    } finally {
-      setAddUserLoading(false);
-    }
-  }
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-theme-text-primary">Users & Roles</h1>
-          <p className="text-sm text-theme-text-secondary mt-1">User management and permissions</p>
+          <p className="text-sm text-theme-text-secondary mt-1">Manage portal users and their tab access permissions</p>
         </div>
       </div>
 
@@ -276,7 +87,7 @@ export default function UsersPage() {
               : 'border-transparent text-theme-text-secondary hover:text-theme-text-primary'
           }`}
         >
-          Users ({users.length})
+          Portal Users
         </button>
         <button
           onClick={() => setActiveTab('roles')}
@@ -291,171 +102,7 @@ export default function UsersPage() {
       </div>
 
       {activeTab === 'users' && (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-theme-text-secondary">Total Users</p>
-                  <p className="text-3xl font-bold text-theme-text-primary mt-2">{users.length}</p>
-                  <p className="text-xs text-theme-accent mt-2">↑ 4 new this month</p>
-                </div>
-                <Users className="w-12 h-12 text-theme-accent" />
-              </div>
-            </div>
-            <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-theme-text-secondary">Active</p>
-                  <p className="text-3xl font-bold text-green-600 mt-2">{activeUsers}</p>
-                  <p className="text-xs text-green-600 mt-2">{((activeUsers / users.length) * 100).toFixed(1)}% active</p>
-                </div>
-                <UserCheck className="w-12 h-12 text-green-500" />
-              </div>
-            </div>
-            <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-theme-text-secondary">Inactive</p>
-                  <p className="text-3xl font-bold text-theme-text-secondary mt-2">{inactiveUsers}</p>
-                  <p className="text-xs text-theme-text-secondary mt-2">Not recently active</p>
-                </div>
-                <Clock className="w-12 h-12 text-gray-100" />
-              </div>
-            </div>
-            <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-theme-text-secondary">Suspended</p>
-                  <p className="text-3xl font-bold text-red-600 mt-2">{suspendedUsers}</p>
-                  <p className="text-xs text-red-600 mt-2">Access restricted</p>
-                </div>
-                <UserX className="w-12 h-12 text-red-500" />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 flex-1">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-theme-text-tertiary w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search users..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
-                />
-              </div>
-              <select
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-                className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
-              >
-                <option value="all">All Roles</option>
-                {rolesList.map(role => (
-                  <option key={role} value={role}>{role}</option>
-                ))}
-              </select>
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="suspended">Suspended</option>
-              </select>
-              <select
-                value={selectedBranch}
-                onChange={(e) => setSelectedBranch(e.target.value)}
-                className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
-              >
-                <option value="all">All Branches</option>
-                {branches.map(branch => (
-                  <option key={branch} value={branch}>{branch}</option>
-                ))}
-              </select>
-            </div>
-            <button onClick={() => setShowAddUser(true)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white brand-gradient rounded-lg hover:opacity-90">
-              <Plus className="w-4 h-4" />
-              Add User
-            </button>
-          </div>
-
-          <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-theme-muted border-b border-theme-border">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">User</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Role</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Department</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Branch</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Last Login</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-theme-border">
-                  {filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-theme-muted">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-theme-accent-subtle rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-theme-accent">{getInitials(user.name)}</span>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-theme-text-primary">{user.name}</p>
-                            <p className="text-xs text-theme-text-secondary">{user.email}</p>
-                            <p className="text-xs text-theme-text-secondary">{user.phone}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-theme-text-primary">{user.role}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-theme-text-primary">{user.department}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-theme-text-primary">{user.branch}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(user.status)}
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
-                            {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-primary">
-                        {user.lastLogin}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-accent hover:text-theme-accent-hover">
-                            <Eye className="w-3 h-3" />
-                            View
-                          </button>
-                          <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-text-secondary hover:text-theme-text-primary">
-                            <Edit className="w-3 h-3" />
-                            Edit
-                          </button>
-                          <button className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-theme-danger">
-                            <Trash2 className="w-3 h-3" />
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
+        <PortalAccessPanel tenantSlug={tenantSlug} />
       )}
 
       {activeTab === 'roles' && (
@@ -553,62 +200,395 @@ export default function UsersPage() {
           </div>
         </>
       )}
-      {showAddUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) setShowAddUser(false); }}>
-          <div className="w-full max-w-md rounded-xl bg-theme-surface p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+
+    </div>
+  );
+}
+
+const PORTAL_TABS = [
+  { key: "dashboard", label: "Dashboard", alwaysOn: true },
+  { key: "tasks", label: "Tasks & KPIs", alwaysOn: true },
+  { key: "attendance", label: "Attendance", alwaysOn: true },
+  { key: "reports", label: "KPI Reports", alwaysOn: true },
+  { key: "expenses", label: "Expenses", alwaysOn: false },
+  { key: "leave", label: "Leave", alwaysOn: false },
+  { key: "payslips", label: "Payslips", alwaysOn: false },
+  { key: "approvals", label: "Approvals", alwaysOn: false },
+  { key: "appraisal", label: "AI Appraisal", alwaysOn: false },
+  { key: "profile", label: "Profile", alwaysOn: true },
+];
+
+function getDefaultPermissions(role: string): Record<string, boolean> {
+  const r = (role || "staff").toLowerCase();
+  const perms: Record<string, boolean> = {};
+  for (const tab of PORTAL_TABS) {
+    perms[tab.key] = tab.alwaysOn;
+  }
+  perms.expenses = true;
+  perms.leave = true;
+  perms.payslips = true;
+  const isHOD = r === "hod" || r === "head_of_department";
+  const isHR = r === "hr" || r === "hr_admin" || r === "hr_manager";
+  if (isHOD || isHR) perms.approvals = true;
+  if (isHR) perms.appraisal = true;
+  return perms;
+}
+
+function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterPortal, setFilterPortal] = useState<"all" | "active" | "inactive">("active");
+  const [editingEmp, setEditingEmp] = useState<any | null>(null);
+  const [permissions, setPermissions] = useState<Record<string, boolean>>({});
+  const [defaults, setDefaults] = useState<Record<string, boolean>>({});
+  const [saving, setSaving] = useState(false);
+  const [modalMsg, setModalMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const loadEmployees = useCallback(async () => {
+    if (!tenantSlug) { setLoading(false); return; }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await apiClient.get(`/hr/employees?tenantSlug=${encodeURIComponent(tenantSlug)}&limit=500`, { skipCache: true });
+      const list = res.data.employees || [];
+      console.log('[PortalUsers] fetched employees:', list.length, 'portal active:', list.filter((e: any) => e.isPortalActive).length, list);
+      setEmployees(list);
+    } catch (e: any) {
+      console.error('[PortalUsers] fetch error:', e);
+      setError(e?.message || "Failed to load employees");
+    } finally {
+      setLoading(false);
+    }
+  }, [tenantSlug]);
+
+  useEffect(() => { loadEmployees(); }, [loadEmployees]);
+
+  const filteredEmployees = employees.filter((emp: any) => {
+    const matchesSearch = (emp.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (emp.email || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const isPortalActive = emp.isPortalActive === true;
+    const matchesFilter = filterPortal === "all" ||
+                          (filterPortal === "active" && isPortalActive) ||
+                          (filterPortal === "inactive" && !isPortalActive);
+    return matchesSearch && matchesFilter;
+  });
+
+  const portalActiveCount = employees.filter((e: any) => e.isPortalActive).length;
+
+  async function openPermissionsModal(emp: any) {
+    setEditingEmp(emp);
+    setModalMsg(null);
+    try {
+      const res = await fetch(`/api/hr/employees/${emp.id}/portal-permissions?tenantSlug=${encodeURIComponent(tenantSlug || "")}`);
+      const data = await res.json();
+      if (res.ok) {
+        setPermissions(data.permissions || getDefaultPermissions(emp.role));
+        setDefaults(data.defaults || getDefaultPermissions(emp.role));
+      } else {
+        setPermissions(getDefaultPermissions(emp.role));
+        setDefaults(getDefaultPermissions(emp.role));
+      }
+    } catch {
+      setPermissions(getDefaultPermissions(emp.role));
+      setDefaults(getDefaultPermissions(emp.role));
+    }
+  }
+
+  async function savePermissions() {
+    if (!editingEmp) return;
+    setSaving(true);
+    setModalMsg(null);
+    try {
+      const res = await fetch(`/api/hr/employees/${editingEmp.id}/portal-permissions`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantSlug, permissions }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setModalMsg({ type: "success", text: "Permissions updated successfully" });
+        setEmployees(employees.map((e: any) => e.id === editingEmp.id ? { ...e, portalPermissions: permissions } : e));
+        setTimeout(() => { setEditingEmp(null); setModalMsg(null); }, 1200);
+      } else {
+        setModalMsg({ type: "error", text: data.error || "Failed to save" });
+      }
+    } catch {
+      setModalMsg({ type: "error", text: "Network error" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function resetToDefaults() {
+    if (!editingEmp) return;
+    setSaving(true);
+    setModalMsg(null);
+    try {
+      const res = await fetch(`/api/hr/employees/${editingEmp.id}/portal-permissions`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantSlug, resetToDefaults: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setPermissions(data.permissions || defaults);
+        setModalMsg({ type: "success", text: "Reset to role defaults" });
+        setEmployees(employees.map((e: any) => e.id === editingEmp.id ? { ...e, portalPermissions: data.permissions } : e));
+      } else {
+        setModalMsg({ type: "error", text: data.error || "Failed to reset" });
+      }
+    } catch {
+      setModalMsg({ type: "error", text: "Network error" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function getEnabledCount(emp: any): number {
+    const perms = emp.portalPermissions || getDefaultPermissions(emp.role);
+    return Object.entries(perms).filter(([, v]) => v === true).length;
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-theme-text-secondary">Total Employees</p>
+              <p className="text-3xl font-bold text-theme-text-primary mt-2">{employees.length}</p>
+            </div>
+            <Users className="w-12 h-12 text-theme-accent" />
+          </div>
+        </div>
+        <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-theme-text-secondary">Portal Active</p>
+              <p className="text-3xl font-bold text-green-600 mt-2">{portalActiveCount}</p>
+            </div>
+            <Monitor className="w-12 h-12 text-green-500" />
+          </div>
+        </div>
+        <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-theme-text-secondary">Portal Inactive</p>
+              <p className="text-3xl font-bold text-theme-text-secondary mt-2">{employees.length - portalActiveCount}</p>
+            </div>
+            <UserX className="w-12 h-12 text-gray-400" />
+          </div>
+        </div>
+      </div>
+
+      {/* Info banner */}
+      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+        <div className="flex items-start gap-3">
+          <Monitor className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-blue-900">Portal Users & Tab Access</p>
+            <p className="text-xs text-blue-700 mt-1">
+              These are employees with active portal accounts. Manage which dashboard tabs each employee can access.
+              To activate a new employee's portal, use the HR & Operations section. Permissions default based on role but can be customized per employee.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Search & filter */}
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-theme-text-tertiary w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search employees..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
+          />
+        </div>
+        <select
+          value={filterPortal}
+          onChange={(e) => setFilterPortal(e.target.value as any)}
+          className="px-3 py-2 border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
+        >
+          <option value="all">All Employees</option>
+          <option value="active">Portal Active</option>
+          <option value="inactive">Portal Inactive</option>
+        </select>
+      </div>
+
+      {error && (
+        <div className="rounded-lg bg-red-500/10 p-3 text-sm text-red-400 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4" /> {error}
+        </div>
+      )}
+
+      {/* Employee table */}
+      <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-theme-muted border-b border-theme-border">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Employee</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Role</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Department</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Portal</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Tabs Enabled</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Last Login</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-theme-border">
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center">
+                    <Loader2 className="w-6 h-6 text-theme-accent animate-spin mx-auto" />
+                  </td>
+                </tr>
+              ) : filteredEmployees.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-sm text-theme-text-secondary">
+                    {employees.length === 0
+                      ? "No employees found. Check that employees exist for this tenant."
+                      : `No ${filterPortal === "active" ? "portal-active" : filterPortal === "inactive" ? "portal-inactive" : ""} employees found. (${employees.length} total employees loaded)`}
+                  </td>
+                </tr>
+              ) : (
+                filteredEmployees.map((emp: any) => (
+                  <tr key={emp.id} className="hover:bg-theme-muted">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-theme-accent-subtle rounded-full flex items-center justify-center">
+                          <span className="text-xs font-medium text-theme-accent">
+                            {(emp.name || "?").split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-theme-text-primary">{emp.name}</p>
+                          <p className="text-xs text-theme-text-secondary">{emp.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-theme-text-primary capitalize">{emp.role || "staff"}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-theme-text-primary">{emp.jobTitle || emp.departmentId || "—"}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {emp.isPortalActive ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <CheckCircle className="w-3 h-3" /> Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                          <Clock className="w-3 h-3" /> Inactive
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-theme-text-primary">{getEnabledCount(emp)}/{PORTAL_TABS.length}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-secondary">
+                      {emp.lastLogin ? new Date(emp.lastLogin).toLocaleDateString() : "—"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => openPermissionsModal(emp)}
+                        disabled={!emp.isPortalActive}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-accent hover:text-theme-accent-hover disabled:opacity-40 disabled:cursor-not-allowed"
+                        title={emp.isPortalActive ? "Manage tab permissions" : "Portal not active — activate in HR section first"}
+                      >
+                        <Shield className="w-3 h-3" />
+                        Manage Permissions
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Permissions Modal */}
+      {editingEmp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) setEditingEmp(null); }}>
+          <div className="w-full max-w-lg rounded-xl bg-theme-surface p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-theme-text-primary">Add User</h2>
-              <button onClick={() => setShowAddUser(false)} className="text-theme-text-tertiary hover:text-theme-text-secondary">
+              <div>
+                <h2 className="text-lg font-semibold text-theme-text-primary">Portal Tab Permissions</h2>
+                <p className="text-xs text-theme-text-secondary mt-0.5">{editingEmp.name} — {editingEmp.email}</p>
+              </div>
+              <button onClick={() => setEditingEmp(null)} className="text-theme-text-tertiary hover:text-theme-text-secondary">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            {addUserError && (
-              <div className="mb-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-400">{addUserError}</div>
+
+            {modalMsg && (
+              <div className={`mb-4 rounded-lg p-3 text-sm flex items-center gap-2 ${modalMsg.type === "success" ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-400"}`}>
+                {modalMsg.type === "success" ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                {modalMsg.text}
+              </div>
             )}
-            <form onSubmit={handleAddUser} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-theme-text-secondary">Full Name</label>
-                <input value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary" placeholder="John Doe" required />
+
+            <div className="space-y-2">
+              {PORTAL_TABS.map((tab) => (
+                <div
+                  key={tab.key}
+                  className={`flex items-center justify-between p-3 rounded-lg border ${permissions[tab.key] ? "border-blue-200 bg-blue-50" : "border-gray-200 bg-gray-50"}`}
+                >
+                  <div className="flex items-center gap-3">
+                    {permissions[tab.key] ? (
+                      <ToggleRight className="w-5 h-5 text-blue-600" />
+                    ) : (
+                      <ToggleLeft className="w-5 h-5 text-gray-400" />
+                    )}
+                    <div>
+                      <span className="text-sm font-medium text-theme-text-primary">{tab.label}</span>
+                      {tab.alwaysOn && (
+                        <span className="ml-2 text-xs text-gray-400">(always on)</span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (tab.alwaysOn) return;
+                      setPermissions((prev) => ({ ...prev, [tab.key]: !prev[tab.key] }));
+                    }}
+                    disabled={tab.alwaysOn}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${permissions[tab.key] ? "bg-blue-600" : "bg-gray-300"} ${tab.alwaysOn ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${permissions[tab.key] ? "translate-x-6" : "translate-x-1"}`} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 flex items-center justify-between pt-4 border-t border-theme-border">
+              <button
+                onClick={resetToDefaults}
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-theme-text-secondary border border-theme-border rounded-lg hover:bg-theme-muted transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" /> Reset to Role Defaults
+              </button>
+              <div className="flex gap-2">
+                <button onClick={() => setEditingEmp(null)} className="rounded-lg border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-secondary hover:bg-theme-muted">Cancel</button>
+                <button
+                  onClick={savePermissions}
+                  disabled={saving}
+                  className="rounded-lg brand-gradient px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 inline-flex items-center gap-2"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                  {saving ? "Saving..." : "Save Permissions"}
+                </button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-theme-text-secondary">Email</label>
-                <input type="email" value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary" placeholder="john@company.com" required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-theme-text-secondary">Role</label>
-                <select value={userForm.role} onChange={(e) => setUserForm({ ...userForm, role: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary">
-                  <option value="">Select role</option>
-                  {roles.map(role => (
-                    <option key={role.id} value={role.name}>{role.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-theme-text-secondary">Department</label>
-                <input value={userForm.department} onChange={(e) => setUserForm({ ...userForm, department: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary" placeholder="e.g. Operations" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-theme-text-secondary">Branch</label>
-                <select value={userForm.branch} onChange={(e) => setUserForm({ ...userForm, branch: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary">
-                  <option value="">Select branch</option>
-                  {branches.map(branch => (
-                    <option key={branch} value={branch}>{branch}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-theme-text-secondary">Status</label>
-                <select value={userForm.status} onChange={(e) => setUserForm({ ...userForm, status: e.target.value })} className="mt-1 w-full rounded-lg border border-theme-border px-3 py-2 text-sm text-theme-text-primary">
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="suspended">Suspended</option>
-                </select>
-              </div>
-              <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setShowAddUser(false)} className="rounded-lg border border-theme-border px-4 py-2 text-sm font-medium text-theme-text-secondary hover:bg-theme-muted">Cancel</button>
-                <button type="submit" disabled={addUserLoading} className="rounded-lg brand-gradient px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50">{addUserLoading ? 'Adding...' : 'Add User'}</button>
-              </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
