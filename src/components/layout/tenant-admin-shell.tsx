@@ -269,7 +269,7 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
             </div>
             <div>
               <h2 className="text-lg font-bold text-theme-sidebar-text-active font-jakarta">Syspro</h2>
-              <p className="text-sm text-theme-sidebar-text">Admin Dashboard</p>
+              <p className="text-sm text-theme-sidebar-text">{perms.isAdmin ? "Admin Dashboard" : "Employee Portal"}</p>
             </div>
           </div>
         </div>
