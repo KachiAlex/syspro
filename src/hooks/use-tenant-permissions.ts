@@ -20,6 +20,8 @@ const DEFAULT: TenantPermissions = {
   crm: "none",
   finance: "none",
   projects: "none",
+  sales: "none",
+  analytics: "none",
   dashboards: [],
   isAdmin: false,
   isEmployee: false,
@@ -29,7 +31,7 @@ const DEFAULT: TenantPermissions = {
 
 function normalizeFromRole(roleId?: string): TenantPermissions {
   const id = roleId?.toLowerCase() || "viewer";
-  const allDashboards = ["admin", "automation", "finance", "people", "crm", "projects", "reports", "billing"];
+  const allDashboards = ["admin", "automation", "finance", "people", "crm", "projects", "reports", "billing", "sales", "analytics"];
   if (id === "admin") {
     return { ...DEFAULT, loading: false, isAdmin: true, admin: "admin", dashboards: allDashboards };
   }

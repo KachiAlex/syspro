@@ -69,8 +69,8 @@ function getDashboardKey(pathname: string): string | null {
   if (pathname.startsWith('/tenant-admin/hr')) return 'people';
   if (pathname.startsWith('/tenant-admin/crm')) return 'crm';
   if (pathname.startsWith('/tenant-admin/projects')) return 'projects';
-  if (pathname.startsWith('/tenant-admin/analytics')) return 'reports';
-  if (pathname.startsWith('/tenant-admin/sales') || pathname.startsWith('/tenant-admin/inventory')) return 'crm';
+  if (pathname.startsWith('/tenant-admin/analytics')) return 'analytics';
+  if (pathname.startsWith('/tenant-admin/sales') || pathname.startsWith('/tenant-admin/inventory')) return 'sales';
   return null;
 }
 
@@ -142,6 +142,7 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
     perms.loading ||
     !dashboardKey ||
     perms.isAdmin ||
+    perms.employeeModules[dashboardKey] === true ||
     perms.dashboards.includes(dashboardKey) ||
     ((perms as any)[dashboardKey] !== 'none' && (perms as any)[dashboardKey] !== undefined);
 

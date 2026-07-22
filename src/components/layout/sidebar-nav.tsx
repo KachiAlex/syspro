@@ -20,8 +20,7 @@ import {
   Receipt,
   TrendingUp,
   ChevronDown,
-  ChevronRight,
-  UserCircle
+  ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -139,20 +138,16 @@ interface SidebarNavProps {
 function canView(permission: string | undefined, perms: ReturnType<typeof useTenantPermissions>) {
   if (!permission) return true;
 
-  // If user has module restrictions (portal_permissions), enforce them
-  const hasModuleRestrictions = Object.keys(perms.employeeModules || {}).length > 0;
-  if (hasModuleRestrictions) {
-    // Map sidebar permission keys to employeeModules keys
-    const moduleKey = permission === "people" ? "people"
-      : permission === "analytics" ? "analytics"
-      : permission;
-    if (perms.employeeModules[moduleKey] !== true) {
-      return false;
-    }
-  }
-
+  // Admins always see everything
   if (perms.isAdmin) return true;
 
+  // If user has module restrictions (portal_permissions), only show activated modules
+  const hasModuleRestrictions = Object.keys(perms.employeeModules || {}).length > 0;
+  if (hasModuleRestrictions) {
+    return perms.employeeModules[permission] === true;
+  }
+
+  // No module restrictions: check role-based permission level
   if (permission.startsWith("dashboard:")) {
     return perms.dashboards.includes(permission.replace("dashboard:", ""));
   }
@@ -249,23 +244,6 @@ export function SidebarNav({ className, userId, roleId }: SidebarNavProps) {
         );
       })}
 
-      {/* Self-Service link for employees */}
-      {perms.isEmployee && (
-        <div className="pt-4 mt-4 border-t border-theme-border">
-          <Link
-            href="/employee/dashboard"
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200 touch-manipulation",
-              pathname.startsWith("/employee")
-                ? "bg-theme-accent-subtle text-theme-accent shadow-sm"
-                : "text-theme-sidebar-text hover:bg-theme-sidebar-hover hover:text-theme-sidebar-text-active hover:translate-x-1"
-            )}
-          >
-            <UserCircle className="h-5 w-5 flex-shrink-0 text-theme-text-tertiary" />
-            <span className="truncate">My Self-Service</span>
-          </Link>
-        </div>
-      )}
     </nav>
   );
 }

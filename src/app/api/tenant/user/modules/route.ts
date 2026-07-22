@@ -110,6 +110,8 @@ export async function GET(request: NextRequest) {
         crm: level("crm"),
         finance: level("finance"),
         projects: level("projects"),
+        sales: level("sales"),
+        analytics: level("analytics"),
         dashboards: [],
         isAdmin: false,
       };

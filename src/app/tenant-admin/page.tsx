@@ -29,7 +29,6 @@ import Link from "next/link";
 import { useTenantContext } from "@/components/tenant-admin/tenant-context";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { EmployeeDashboard } from "@/components/tenant-admin/employee-dashboard";
 import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
 
 interface DashboardMetric {
@@ -80,25 +79,26 @@ export default function TenantAdminDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!tenantSlug || perms.isEmployee) return;
+    if (!tenantSlug || perms.loading) return;
     loadDashboard();
-  }, [tenantSlug, perms.isEmployee]);
-
-  if (perms.isEmployee) {
-    return <EmployeeDashboard />;
-  }
+  }, [tenantSlug, perms.loading]);
 
   const loadDashboard = async () => {
     setLoading(true);
     setError(null);
     const slug = encodeURIComponent(tenantSlug!);
 
+    // Determine which modules the user can access
+    const canFinance = perms.isAdmin || perms.finance !== 'none' || perms.employeeModules.finance === true;
+    const canCRM = perms.isAdmin || perms.crm !== 'none' || perms.employeeModules.crm === true;
+    const canHR = perms.isAdmin || perms.people !== 'none' || perms.employeeModules.people === true;
+
     try {
       const [financeRes, crmRes, empRes, leaveRes] = await Promise.allSettled([
-        fetch(`/api/finance/dashboard?tenantSlug=${slug}&timeframe=last_30_days`).then(r => r.ok ? r.json() : null),
-        fetch(`/api/crm/dashboard?tenantSlug=${slug}`).then(r => r.ok ? r.json() : null),
-        fetch(`/api/hr/employees?tenantSlug=${slug}&limit=500`, { cache: "no-store" }).then(r => r.ok ? r.json() : null),
-        fetch(`/api/hr/leave?tenantSlug=${slug}&status=pending`, { cache: "no-store" }).then(r => r.ok ? r.json() : null),
+        canFinance ? fetch(`/api/finance/dashboard?tenantSlug=${slug}&timeframe=last_30_days`).then(r => r.ok ? r.json() : null) : Promise.resolve(null),
+        canCRM ? fetch(`/api/crm/dashboard?tenantSlug=${slug}`).then(r => r.ok ? r.json() : null) : Promise.resolve(null),
+        canHR ? fetch(`/api/hr/employees?tenantSlug=${slug}&limit=500`, { cache: "no-store" }).then(r => r.ok ? r.json() : null) : Promise.resolve(null),
+        canHR ? fetch(`/api/hr/leave?tenantSlug=${slug}&status=pending`, { cache: "no-store" }).then(r => r.ok ? r.json() : null) : Promise.resolve(null),
       ]);
 
       // Process finance data
@@ -287,12 +287,20 @@ export default function TenantAdminDashboard() {
   };
 
   const quickActions: QuickAction[] = [
-    { label: "New Bill", href: "/tenant-admin/bills", icon: <Plus className="w-4 h-4" /> },
-    { label: "Add Expense", href: "/tenant-admin/expenses", icon: <Plus className="w-4 h-4" /> },
-    { label: "Create Invoice", href: "/tenant-admin/finance", icon: <Plus className="w-4 h-4" /> },
-    { label: "Add Lead", href: "/tenant-admin/crm/leads", icon: <Plus className="w-4 h-4" /> },
-    { label: "Add Employee", href: "/tenant-admin/hr/staff", icon: <Plus className="w-4 h-4" /> },
-    { label: "New Project", href: "/tenant-admin/projects", icon: <Plus className="w-4 h-4" /> },
+    ...(perms.isAdmin || perms.finance !== 'none' || perms.employeeModules.finance === true ? [
+      { label: "New Bill", href: "/tenant-admin/bills", icon: <Plus className="w-4 h-4" /> },
+      { label: "Add Expense", href: "/tenant-admin/expenses", icon: <Plus className="w-4 h-4" /> },
+      { label: "Create Invoice", href: "/tenant-admin/finance", icon: <Plus className="w-4 h-4" /> },
+    ] : []),
+    ...(perms.isAdmin || perms.crm !== 'none' || perms.employeeModules.crm === true ? [
+      { label: "Add Lead", href: "/tenant-admin/crm/leads", icon: <Plus className="w-4 h-4" /> },
+    ] : []),
+    ...(perms.isAdmin || perms.people !== 'none' || perms.employeeModules.people === true ? [
+      { label: "Add Employee", href: "/tenant-admin/hr/staff", icon: <Plus className="w-4 h-4" /> },
+    ] : []),
+    ...(perms.isAdmin || perms.projects !== 'none' || perms.employeeModules.projects === true ? [
+      { label: "New Project", href: "/tenant-admin/projects", icon: <Plus className="w-4 h-4" /> },
+    ] : []),
   ];
 
   const statusBadge = (status: string) => {
@@ -390,48 +398,60 @@ export default function TenantAdminDashboard() {
 
           {/* Secondary Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            <Link href="/tenant-admin/crm/leads" className="gradient-card bg-theme-surface rounded-lg border border-theme-border p-4 hover:border-theme-accent/30 transition-colors">
-              <div className="flex items-center gap-2 mb-2">
-                <Target className="w-4 h-4 text-blue-400" />
-                <span className="text-xs text-theme-text-secondary">Leads</span>
-              </div>
-              <p className="text-xl font-bold text-theme-text-primary">{crmStats?.totals?.totalLeads || 0}</p>
-            </Link>
-            <Link href="/tenant-admin/crm/customers" className="gradient-card bg-theme-surface rounded-lg border border-theme-border p-4 hover:border-theme-accent/30 transition-colors">
-              <div className="flex items-center gap-2 mb-2">
-                <UserCheck className="w-4 h-4 text-green-400" />
-                <span className="text-xs text-theme-text-secondary">Customers</span>
-              </div>
-              <p className="text-xl font-bold text-theme-text-primary">{crmStats?.totals?.totalCustomers || 0}</p>
-            </Link>
-            <Link href="/tenant-admin/users" className="gradient-card bg-theme-surface rounded-lg border border-theme-border p-4 hover:border-theme-accent/30 transition-colors">
-              <div className="flex items-center gap-2 mb-2">
-                <Users className="w-4 h-4 text-violet-400" />
-                <span className="text-xs text-theme-text-secondary">Portal Users</span>
-              </div>
-              <p className="text-xl font-bold text-theme-text-primary">{hrStats.portalActive}</p>
-            </Link>
-            <Link href="/tenant-admin/hr/attendance" className="gradient-card bg-theme-surface rounded-lg border border-theme-border p-4 hover:border-theme-accent/30 transition-colors">
-              <div className="flex items-center gap-2 mb-2">
-                <Calendar className="w-4 h-4 text-amber-400" />
-                <span className="text-xs text-theme-text-secondary">On Leave</span>
-              </div>
-              <p className="text-xl font-bold text-theme-text-primary">{hrStats.onLeave}</p>
-            </Link>
-            <Link href="/tenant-admin/crm/pipeline" className="gradient-card bg-theme-surface rounded-lg border border-theme-border p-4 hover:border-theme-accent/30 transition-colors">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-4 h-4 text-emerald-400" />
-                <span className="text-xs text-theme-text-secondary">Deals Won</span>
-              </div>
-              <p className="text-xl font-bold text-theme-text-primary">{crmStats?.totals?.dealsWon || 0}</p>
-            </Link>
-            <Link href="/tenant-admin/analytics" className="gradient-card bg-theme-surface rounded-lg border border-theme-border p-4 hover:border-theme-accent/30 transition-colors">
-              <div className="flex items-center gap-2 mb-2">
-                <BarChart3 className="w-4 h-4 text-rose-400" />
-                <span className="text-xs text-theme-text-secondary">Conversion</span>
-              </div>
-              <p className="text-xl font-bold text-theme-text-primary">{crmStats?.totals?.conversionRate?.toFixed(1) || 0}%</p>
-            </Link>
+            {(perms.isAdmin || perms.crm !== 'none' || perms.employeeModules.crm === true) && (
+              <Link href="/tenant-admin/crm/leads" className="gradient-card bg-theme-surface rounded-lg border border-theme-border p-4 hover:border-theme-accent/30 transition-colors">
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="w-4 h-4 text-blue-400" />
+                  <span className="text-xs text-theme-text-secondary">Leads</span>
+                </div>
+                <p className="text-xl font-bold text-theme-text-primary">{crmStats?.totals?.totalLeads || 0}</p>
+              </Link>
+            )}
+            {(perms.isAdmin || perms.crm !== 'none' || perms.employeeModules.crm === true) && (
+              <Link href="/tenant-admin/crm/customers" className="gradient-card bg-theme-surface rounded-lg border border-theme-border p-4 hover:border-theme-accent/30 transition-colors">
+                <div className="flex items-center gap-2 mb-2">
+                  <UserCheck className="w-4 h-4 text-green-400" />
+                  <span className="text-xs text-theme-text-secondary">Customers</span>
+                </div>
+                <p className="text-xl font-bold text-theme-text-primary">{crmStats?.totals?.totalCustomers || 0}</p>
+              </Link>
+            )}
+            {(perms.isAdmin || perms.people !== 'none' || perms.employeeModules.people === true) && (
+              <Link href="/tenant-admin/users" className="gradient-card bg-theme-surface rounded-lg border border-theme-border p-4 hover:border-theme-accent/30 transition-colors">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="w-4 h-4 text-violet-400" />
+                  <span className="text-xs text-theme-text-secondary">Portal Users</span>
+                </div>
+                <p className="text-xl font-bold text-theme-text-primary">{hrStats.portalActive}</p>
+              </Link>
+            )}
+            {(perms.isAdmin || perms.people !== 'none' || perms.employeeModules.people === true) && (
+              <Link href="/tenant-admin/hr/attendance" className="gradient-card bg-theme-surface rounded-lg border border-theme-border p-4 hover:border-theme-accent/30 transition-colors">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs text-theme-text-secondary">On Leave</span>
+                </div>
+                <p className="text-xl font-bold text-theme-text-primary">{hrStats.onLeave}</p>
+              </Link>
+            )}
+            {(perms.isAdmin || perms.crm !== 'none' || perms.employeeModules.crm === true) && (
+              <Link href="/tenant-admin/crm/pipeline" className="gradient-card bg-theme-surface rounded-lg border border-theme-border p-4 hover:border-theme-accent/30 transition-colors">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs text-theme-text-secondary">Deals Won</span>
+                </div>
+                <p className="text-xl font-bold text-theme-text-primary">{crmStats?.totals?.dealsWon || 0}</p>
+              </Link>
+            )}
+            {(perms.isAdmin || perms.analytics !== 'none' || perms.employeeModules.analytics === true) && (
+              <Link href="/tenant-admin/analytics" className="gradient-card bg-theme-surface rounded-lg border border-theme-border p-4 hover:border-theme-accent/30 transition-colors">
+                <div className="flex items-center gap-2 mb-2">
+                  <BarChart3 className="w-4 h-4 text-rose-400" />
+                  <span className="text-xs text-theme-text-secondary">Conversion</span>
+                </div>
+                <p className="text-xl font-bold text-theme-text-primary">{crmStats?.totals?.conversionRate?.toFixed(1) || 0}%</p>
+              </Link>
+            )}
           </div>
 
           {/* Quick Actions */}
@@ -494,6 +514,7 @@ export default function TenantAdminDashboard() {
             </div>
 
             {/* Pending Approvals */}
+            {(perms.isAdmin || perms.people !== 'none' || perms.employeeModules.people === true) && (
             <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-theme-text-primary">Pending Approvals</h3>
@@ -528,9 +549,12 @@ export default function TenantAdminDashboard() {
                 </div>
               )}
             </div>
+            )}
+
           </div>
 
           {/* Recent Transactions */}
+          {(perms.isAdmin || perms.finance !== 'none' || perms.employeeModules.finance === true) && (
           <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-theme-text-primary">Recent Transactions</h3>
@@ -578,9 +602,10 @@ export default function TenantAdminDashboard() {
               </div>
             )}
           </div>
+          )}
 
           {/* Recent Leads */}
-          {recentLeads.length > 0 && (
+          {recentLeads.length > 0 && (perms.isAdmin || perms.crm !== 'none' || perms.employeeModules.crm === true) && (
             <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-theme-text-primary">Recent Leads</h3>

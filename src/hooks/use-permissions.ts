@@ -19,6 +19,8 @@ export interface UserPermissions {
   crm: PermissionLevel;
   finance: PermissionLevel;
   projects: PermissionLevel;
+  sales: PermissionLevel;
+  analytics: PermissionLevel;
 
   // User info
   userId?: string;
@@ -40,6 +42,8 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
   crm: "none",
   finance: "none",
   projects: "none",
+  sales: "none",
+  analytics: "none",
   loading: true,
 };
 

@@ -20,8 +20,9 @@ function getRequiredPermissionForPath(pathname: string): string | null {
   if (pathname.startsWith('/api/crm/')) return 'crm';
   if (pathname.startsWith('/api/hr/') || pathname.startsWith('/api/tenant/employees')) return 'people';
   if (pathname.startsWith('/api/projects/')) return 'projects';
-  if (pathname.startsWith('/api/reports/')) return 'reports';
-  if (pathname.startsWith('/api/inventory/')) return 'crm';
+  if (pathname.startsWith('/api/sales/') || pathname.startsWith('/api/suppliers/') || pathname.startsWith('/api/purchase-orders/')) return 'sales';
+  if (pathname.startsWith('/api/reports/') || pathname.startsWith('/api/analytics/')) return 'analytics';
+  if (pathname.startsWith('/api/inventory/')) return 'sales';
   if (
     pathname.startsWith('/api/tenant/branches') ||
     pathname.startsWith('/api/tenant/users') ||
@@ -119,17 +120,9 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // Employees can only access the main dashboard route, not other admin pages
-    // This applies in both dev and production
-    if (hasEmployeeSession && !hasSession) {
-      const allowedEmpPaths = ['/tenant-admin', '/tenant-admin/'];
-      const isDashboardOnly = allowedEmpPaths.some(p => pathname === p);
-      if (!isDashboardOnly) {
-        return NextResponse.redirect(
-          new URL('/tenant-admin', request.url)
-        );
-      }
-    }
+    // Employees share the same tenant-admin routes as admins.
+    // Access to specific modules is controlled by the sidebar canView logic,
+    // the shell's allowed check, and the API permission enforcement below.
   }
 
   // Enforce dashboard permissions on tenant-scoped API routes

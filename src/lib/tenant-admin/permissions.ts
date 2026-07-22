@@ -22,6 +22,8 @@ export const DASHBOARD_PERMISSION_KEYS: Record<string, string> = {
   projects: "dashboard:projects",
   reports: "dashboard:reports",
   billing: "dashboard:billing",
+  sales: "dashboard:sales",
+  analytics: "dashboard:analytics",
 };
 
 const MODULE_PERMISSION_KEYS: Record<string, string[]> = {
@@ -32,6 +34,8 @@ const MODULE_PERMISSION_KEYS: Record<string, string[]> = {
   automation: ["automation.read", "automation.write"],
   projects: ["projects.read", "projects.write"],
   admin: ["admin.read", "admin.write"],
+  sales: ["sales.read", "sales.write"],
+  analytics: ["analytics.read", "analytics.write"],
 };
 
 function keyToLevel(key: string): "none" | "read" | "write" | "admin" {
@@ -51,6 +55,8 @@ export interface TenantUserPermissions {
   crm: "none" | "read" | "write" | "admin";
   finance: "none" | "read" | "write" | "admin";
   projects: "none" | "read" | "write" | "admin";
+  sales: "none" | "read" | "write" | "admin";
+  analytics: "none" | "read" | "write" | "admin";
   dashboards: string[];
   isAdmin: boolean;
 }
@@ -105,7 +111,7 @@ async function _getTenantUserPermissions(
   // Admin role always gets full permissions, even if they have entries in
   // admin_user_roles with limited perms. This prevents accidental lockout.
   if (isAdminRole || isDevUser) {
-    const allDashboards = ["admin", "automation", "finance", "people", "crm", "projects", "reports", "billing"];
+    const allDashboards = ["admin", "automation", "finance", "people", "crm", "projects", "reports", "billing", "sales", "analytics"];
     return {
       people: "admin",
       admin: "admin",
@@ -115,13 +121,15 @@ async function _getTenantUserPermissions(
       crm: "admin",
       finance: "admin",
       projects: "admin",
+      sales: "admin",
+      analytics: "admin",
       dashboards: allDashboards,
       isAdmin: true,
     };
   }
 
   if (keys.length === 0 && process.env.NODE_ENV !== "production") {
-    const allDashboards = ["admin", "automation", "finance", "people", "crm", "projects", "reports", "billing"];
+    const allDashboards = ["admin", "automation", "finance", "people", "crm", "projects", "reports", "billing", "sales", "analytics"];
     return {
       people: "admin",
       admin: "admin",
@@ -131,6 +139,8 @@ async function _getTenantUserPermissions(
       crm: "admin",
       finance: "admin",
       projects: "admin",
+      sales: "admin",
+      analytics: "admin",
       dashboards: allDashboards,
       isAdmin: true,
     };
@@ -145,6 +155,8 @@ async function _getTenantUserPermissions(
     crm: "none",
     finance: "none",
     projects: "none",
+    sales: "none",
+    analytics: "none",
   };
 
   const dashboards: string[] = [];
