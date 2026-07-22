@@ -101,7 +101,26 @@ async function _getTenantUserPermissions(
   // dashboard access to admin users and dev accounts so the UI remains usable.
   const isDevUser = userId?.startsWith("dev-user-");
   const isAdminRole = roleId?.toLowerCase() === "admin";
-  if (keys.length === 0 && (process.env.NODE_ENV !== "production" || isDevUser || isAdminRole)) {
+
+  // Admin role always gets full permissions, even if they have entries in
+  // admin_user_roles with limited perms. This prevents accidental lockout.
+  if (isAdminRole || isDevUser) {
+    const allDashboards = ["admin", "automation", "finance", "people", "crm", "projects", "reports", "billing"];
+    return {
+      people: "admin",
+      admin: "admin",
+      integrations: "admin",
+      billing: "admin",
+      automation: "admin",
+      crm: "admin",
+      finance: "admin",
+      projects: "admin",
+      dashboards: allDashboards,
+      isAdmin: true,
+    };
+  }
+
+  if (keys.length === 0 && process.env.NODE_ENV !== "production") {
     const allDashboards = ["admin", "automation", "finance", "people", "crm", "projects", "reports", "billing"];
     return {
       people: "admin",

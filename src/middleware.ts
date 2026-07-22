@@ -103,22 +103,33 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/tenant-admin') &&
     pathname !== '/tenant-admin/tenant-signin'
   ) {
-    if (isProduction) {
-      const hasSession = request.cookies.has('syspro_session');
-      const hasEmployeeSession = request.cookies.has('employee_session');
-      const hasUserId =
-        request.cookies.has('X-User-Id') ||
-        request.cookies.has('dev-user-id') ||
-        request.cookies.has('userId');
-      const hasSuperadmin = request.cookies.has('superadmin_auth');
+    const hasSession = request.cookies.has('syspro_session');
+    const hasEmployeeSession = request.cookies.has('employee_session');
+    const hasUserId =
+      request.cookies.has('X-User-Id') ||
+      request.cookies.has('dev-user-id') ||
+      request.cookies.has('userId');
+    const hasSuperadmin = request.cookies.has('superadmin_auth');
 
+    if (isProduction) {
       if (!hasSession && !hasEmployeeSession && !hasUserId && !hasSuperadmin) {
         return NextResponse.redirect(
           new URL('/login?error=auth_required', request.url)
         );
       }
     }
-    // In development, the tenant-admin layout handles dev fallbacks
+
+    // Employees can only access the main dashboard route, not other admin pages
+    // This applies in both dev and production
+    if (hasEmployeeSession && !hasSession) {
+      const allowedEmpPaths = ['/tenant-admin', '/tenant-admin/'];
+      const isDashboardOnly = allowedEmpPaths.some(p => pathname === p);
+      if (!isDashboardOnly) {
+        return NextResponse.redirect(
+          new URL('/tenant-admin', request.url)
+        );
+      }
+    }
   }
 
   // Enforce dashboard permissions on tenant-scoped API routes

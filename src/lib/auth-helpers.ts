@@ -14,6 +14,7 @@ export interface SessionUser {
   name?: string;
   tenantSlug?: string;
   roleId: string;
+  isEmployee?: boolean;
 }
 
 /**
@@ -49,6 +50,7 @@ export function getCurrentUser(request: NextRequest): SessionUser | null {
   }
 
   // Method 0b: Check employee_session cookie (set by employee login)
+  // Only used if syspro_session didn't return a user
   try {
     if (typeof (request as any).cookies?.get === "function") {
       const empCookie = (request as any).cookies.get("employee_session")?.value;
@@ -61,6 +63,7 @@ export function getCurrentUser(request: NextRequest): SessionUser | null {
             name: session.name,
             tenantSlug: session.tenantSlug,
             roleId: session.roleId || "staff",
+            isEmployee: true,
           };
         }
       }

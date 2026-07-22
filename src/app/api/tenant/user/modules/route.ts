@@ -71,25 +71,29 @@ export async function GET(request: NextRequest) {
     let permissions = await getTenantUserPermissions(tenantSlug, effectiveUserId, roleId ?? undefined);
 
     // Always fetch module permissions (portal_permissions) for any user
-    const cacheKey = `empmods:${tenantSlug}:${effectiveUserId}`;
-    employeeModules = await cached(cacheKey, 30_000, async () => {
-      try {
-        const empRows = await sql`
-          SELECT portal_permissions FROM admin_employees
-          WHERE id = ${effectiveUserId} AND tenant_slug = ${tenantSlug} AND is_portal_active = true
-          LIMIT 1
-        `;
-        const emp = (empRows as any[])[0];
-        if (emp && emp.portal_permissions) {
-          return typeof emp.portal_permissions === 'string'
-            ? JSON.parse(emp.portal_permissions)
-            : emp.portal_permissions;
+    // EXCEPT full admins — they should never be restricted by portal_permissions
+    const isFullAdmin = roleId?.toLowerCase() === "admin" || permissions.isAdmin;
+    if (!isFullAdmin) {
+      const cacheKey = `empmods:${tenantSlug}:${effectiveUserId}`;
+      employeeModules = await cached(cacheKey, 30_000, async () => {
+        try {
+          const empRows = await sql`
+            SELECT portal_permissions FROM admin_employees
+            WHERE id = ${effectiveUserId} AND tenant_slug = ${tenantSlug} AND is_portal_active = true
+            LIMIT 1
+          `;
+          const emp = (empRows as any[])[0];
+          if (emp && emp.portal_permissions) {
+            return typeof emp.portal_permissions === 'string'
+              ? JSON.parse(emp.portal_permissions)
+              : emp.portal_permissions;
+          }
+          return {};
+        } catch {
+          return {};
         }
-        return {};
-      } catch {
-        return {};
-      }
-    });
+      });
+    }
 
     const hasModuleRestrictions = Object.keys(employeeModules).length > 0;
 
