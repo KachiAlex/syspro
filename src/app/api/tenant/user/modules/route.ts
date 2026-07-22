@@ -70,43 +70,62 @@ export async function GET(request: NextRequest) {
     // Fetch role-based permissions
     let permissions = await getTenantUserPermissions(tenantSlug, effectiveUserId, roleId ?? undefined);
 
-    // If employee, also fetch module permissions
-    if (isEmployee || (!permissions.isAdmin && permissions.dashboards.length === 0)) {
-      const cacheKey = `empmods:${tenantSlug}:${effectiveUserId}`;
-      employeeModules = await cached(cacheKey, 30_000, async () => {
-        try {
-          const empRows = await sql`
-            SELECT portal_permissions FROM admin_employees
-            WHERE id = ${effectiveUserId} AND tenant_slug = ${tenantSlug} AND is_portal_active = true
-            LIMIT 1
-          `;
-          const emp = (empRows as any[])[0];
-          if (emp && emp.portal_permissions) {
-            return typeof emp.portal_permissions === 'string'
-              ? JSON.parse(emp.portal_permissions)
-              : emp.portal_permissions;
-          }
-          return {};
-        } catch {
-          return {};
+    // Always fetch module permissions (portal_permissions) for any user
+    const cacheKey = `empmods:${tenantSlug}:${effectiveUserId}`;
+    employeeModules = await cached(cacheKey, 30_000, async () => {
+      try {
+        const empRows = await sql`
+          SELECT portal_permissions FROM admin_employees
+          WHERE id = ${effectiveUserId} AND tenant_slug = ${tenantSlug} AND is_portal_active = true
+          LIMIT 1
+        `;
+        const emp = (empRows as any[])[0];
+        if (emp && emp.portal_permissions) {
+          return typeof emp.portal_permissions === 'string'
+            ? JSON.parse(emp.portal_permissions)
+            : emp.portal_permissions;
         }
-      });
+        return {};
+      } catch {
+        return {};
+      }
+    });
 
-      if (isEmployee && Object.keys(employeeModules).length > 0) {
-        // Override role-based perms with employee module perms
-        const level = (key: string) => employeeModules[key] === true ? "write" : "none";
-        permissions = {
-          people: level("people"),
-          admin: level("admin"),
-          integrations: "none",
-          billing: "none",
-          automation: level("automation"),
-          crm: level("crm"),
-          finance: level("finance"),
-          projects: level("projects"),
-          dashboards: [],
-          isAdmin: false,
-        };
+    const hasModuleRestrictions = Object.keys(employeeModules).length > 0;
+
+    if (isEmployee && hasModuleRestrictions) {
+      // For employees: completely override role-based perms with module perms
+      const level = (key: string) => employeeModules[key] === true ? "write" : "none";
+      permissions = {
+        people: level("people"),
+        admin: level("admin"),
+        integrations: "none",
+        billing: "none",
+        automation: level("automation"),
+        crm: level("crm"),
+        finance: level("finance"),
+        projects: level("projects"),
+        dashboards: [],
+        isAdmin: false,
+      };
+    } else if (!isEmployee && hasModuleRestrictions) {
+      // For non-employees (HOD, staff, etc.): restrict visible modules to only those
+      // explicitly enabled in portal_permissions. Role-based perm level is kept for
+      // allowed modules, but modules not in portal_permissions are set to "none".
+      const moduleKeys = ["crm", "finance", "people", "projects", "sales", "analytics", "automation", "admin"];
+      for (const mk of moduleKeys) {
+        if (employeeModules[mk] !== true) {
+          (permissions as any)[mk] = "none";
+        }
+      }
+      // Also restrict dashboards to only allowed modules
+      const allowedDashboards = permissions.dashboards.filter(
+        (d) => employeeModules[d] === true || d === "admin" && employeeModules["admin"] === true
+      );
+      permissions = { ...permissions, dashboards: allowedDashboards };
+      // Non-employees with module restrictions should not have full admin
+      if (employeeModules["admin"] !== true) {
+        permissions = { ...permissions, isAdmin: false, admin: "none" };
       }
     }
 

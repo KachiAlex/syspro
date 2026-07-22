@@ -138,12 +138,20 @@ interface SidebarNavProps {
 
 function canView(permission: string | undefined, perms: ReturnType<typeof useTenantPermissions>) {
   if (!permission) return true;
-  if (perms.isAdmin) return true;
 
-  // If this is an employee, check module permissions
-  if (perms.isEmployee) {
-    return perms.employeeModules[permission] === true;
+  // If user has module restrictions (portal_permissions), enforce them
+  const hasModuleRestrictions = Object.keys(perms.employeeModules || {}).length > 0;
+  if (hasModuleRestrictions) {
+    // Map sidebar permission keys to employeeModules keys
+    const moduleKey = permission === "people" ? "people"
+      : permission === "analytics" ? "analytics"
+      : permission;
+    if (perms.employeeModules[moduleKey] !== true) {
+      return false;
+    }
   }
+
+  if (perms.isAdmin) return true;
 
   if (permission.startsWith("dashboard:")) {
     return perms.dashboards.includes(permission.replace("dashboard:", ""));
