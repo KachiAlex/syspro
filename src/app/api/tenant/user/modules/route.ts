@@ -41,10 +41,12 @@ export async function GET(request: NextRequest) {
 
   // Check syspro_session (tenant admin) FIRST — takes priority over employee session
   const sysSession = request.cookies.get("syspro_session")?.value;
+  let sessionEmail: string | undefined;
   if (sysSession) {
     const session = verifySession(sysSession);
     if (session) {
       effectiveUserId = session.id;
+      sessionEmail = session.email;
       // ALWAYS use roleId from the signed session — it is the source of truth.
       // Override any roleId from query params or cookies to prevent privilege escalation.
       roleId = session.roleId || undefined;
@@ -71,34 +73,66 @@ export async function GET(request: NextRequest) {
     // Fetch role-based permissions
     let permissions = await getTenantUserPermissions(tenantSlug, effectiveUserId, roleId ?? undefined);
 
-    // Always fetch module permissions (portal_permissions) for any user
-    // EXCEPT full admins — they should never be restricted by portal_permissions
-    const isFullAdmin = roleId?.toLowerCase() === "admin" || permissions.isAdmin;
-    if (!isFullAdmin) {
-      const cacheKey = `empmods:${tenantSlug}:${effectiveUserId}`;
-      employeeModules = await cached(cacheKey, 30_000, async () => {
-        try {
-          const empRows = await sql`
+    // Always fetch module permissions (portal_permissions) for any user.
+    // Even if roleId is "admin", we still check — a HOD user may have been
+    // created in tenant_admins with a NULL role (which defaults to "admin"
+    // at login time) but have portal_permissions set in admin_employees.
+    // Only skip if we're certain this is a true admin with no portal_permissions.
+    const cacheKey = `empmods:${tenantSlug}:${effectiveUserId}:${sessionEmail || ''}`;
+    employeeModules = await cached(cacheKey, 30_000, async () => {
+      try {
+        // First try by ID (works for employees whose session ID matches admin_employees.id)
+        let empRows = await sql`
+          SELECT portal_permissions FROM admin_employees
+          WHERE id = ${effectiveUserId} AND tenant_slug = ${tenantSlug} AND is_portal_active = true
+          LIMIT 1
+        `;
+        let emp = (empRows as any[])[0];
+
+        // If not found by ID, try by email (handles tenant_admins users whose
+        // admin_employees record has a different ID)
+        if (!emp && sessionEmail) {
+          empRows = await sql`
             SELECT portal_permissions FROM admin_employees
-            WHERE id = ${effectiveUserId} AND tenant_slug = ${tenantSlug} AND is_portal_active = true
+            WHERE email = ${sessionEmail} AND tenant_slug = ${tenantSlug} AND is_portal_active = true
             LIMIT 1
           `;
-          const emp = (empRows as any[])[0];
-          if (emp && emp.portal_permissions) {
-            return typeof emp.portal_permissions === 'string'
-              ? JSON.parse(emp.portal_permissions)
-              : emp.portal_permissions;
-          }
-          return {};
-        } catch {
-          return {};
+          emp = (empRows as any[])[0];
         }
-      });
-    }
+
+        if (emp && emp.portal_permissions) {
+          return typeof emp.portal_permissions === 'string'
+            ? JSON.parse(emp.portal_permissions)
+            : emp.portal_permissions;
+        }
+        return {};
+      } catch {
+        return {};
+      }
+    });
+
+    // If no portal_permissions found, this user has no module restrictions.
+    // Full admins with no portal_permissions get unrestricted access.
+    const isFullAdmin = roleId?.toLowerCase() === "admin" || permissions.isAdmin;
 
     const hasModuleRestrictions = Object.keys(employeeModules).length > 0;
 
-    if (isEmployee && hasModuleRestrictions) {
+    // If user has portal_permissions set, apply restrictions regardless of roleId.
+    // This handles HOD users who may be in tenant_admins with role defaulting to
+    // "admin" but have module activations in admin_employees.
+    if (hasModuleRestrictions && isFullAdmin && !isEmployee) {
+      // Override: treat as non-admin with module restrictions
+      const moduleKeys = ["crm", "finance", "people", "projects", "sales", "analytics", "automation", "admin"];
+      for (const mk of moduleKeys) {
+        if (employeeModules[mk] !== true) {
+          (permissions as any)[mk] = "none";
+        }
+      }
+      const allowedDashboards = permissions.dashboards.filter(
+        (d) => employeeModules[d] === true
+      );
+      permissions = { ...permissions, dashboards: allowedDashboards, isAdmin: false, admin: "none" };
+    } else if (isEmployee && hasModuleRestrictions) {
       // For employees: completely override role-based perms with module perms
       const level = (key: string) => employeeModules[key] === true ? "write" : "none";
       permissions = {

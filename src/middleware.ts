@@ -136,10 +136,12 @@ export async function middleware(request: NextRequest) {
 
       // 1. Try extracting from syspro_session cookie first
       const sessionCookie = request.cookies.get('syspro_session')?.value;
+      let sessionEmail: string | undefined;
       if (sessionCookie) {
         const session = verifySession(sessionCookie);
         if (session) {
           userId = session.id;
+          sessionEmail = session.email;
           tenantSlug = session.tenantSlug || undefined;
           roleId = session.roleId || undefined;
         }
@@ -197,6 +199,48 @@ export async function middleware(request: NextRequest) {
 
       try {
         const perms = await getTenantUserPermissions(tenantSlug, userId, roleId ?? undefined);
+
+        // Always check portal_permissions from admin_employees, even for syspro_session users.
+        // This handles HOD users who exist in tenant_admins with role defaulting to "admin"
+        // but have module activations in admin_employees.
+        let modulePerms: Record<string, boolean> | null = null;
+        try {
+          const { sql } = await import('@/lib/sql-client');
+          // Try by ID first, then by email (for tenant_admins users with different ID)
+          let empRows = await sql`
+            SELECT portal_permissions FROM admin_employees
+            WHERE id = ${userId} AND tenant_slug = ${tenantSlug} AND is_portal_active = true
+            LIMIT 1
+          `;
+          let emp = (empRows as any[])[0];
+          if (!emp && sessionEmail) {
+            empRows = await sql`
+              SELECT portal_permissions FROM admin_employees
+              WHERE email = ${sessionEmail} AND tenant_slug = ${tenantSlug} AND is_portal_active = true
+              LIMIT 1
+            `;
+            emp = (empRows as any[])[0];
+          }
+          if (emp && emp.portal_permissions) {
+            modulePerms = typeof emp.portal_permissions === 'string'
+              ? JSON.parse(emp.portal_permissions)
+              : emp.portal_permissions;
+          }
+        } catch (empErr) {
+          console.error('Portal permissions lookup failed:', empErr);
+        }
+
+        // If user has portal_permissions, use them for access control
+        if (modulePerms && Object.keys(modulePerms).length > 0) {
+          const moduleKey = permissionKey === 'reports' ? 'analytics' : permissionKey;
+          if (modulePerms[moduleKey] === true || modulePerms[permissionKey] === true) {
+            const response = NextResponse.next();
+            return response;
+          }
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        // No portal_permissions — fall back to role-based permissions
         const hasAccess =
           perms.isAdmin ||
           perms.dashboards.includes(permissionKey) ||
@@ -218,12 +262,12 @@ export async function middleware(request: NextRequest) {
                 `;
                 const emp = (empRows as any[])[0];
                 if (emp && emp.portal_permissions) {
-                  const modulePerms = typeof emp.portal_permissions === 'string'
+                  const empModulePerms = typeof emp.portal_permissions === 'string'
                     ? JSON.parse(emp.portal_permissions)
                     : emp.portal_permissions;
                   // Map permission keys: 'sales' module covers inventory/sales, 'analytics' covers reports
                   const moduleKey = permissionKey === 'reports' ? 'analytics' : permissionKey;
-                  if (modulePerms[moduleKey] === true || modulePerms[permissionKey] === true) {
+                  if (empModulePerms[moduleKey] === true || empModulePerms[permissionKey] === true) {
                     // Access granted via employee module permission
                     const response = NextResponse.next();
                     return response;
