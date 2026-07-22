@@ -136,18 +136,22 @@ interface SidebarNavProps {
 }
 
 function canView(permission: string | undefined, perms: ReturnType<typeof useTenantPermissions>) {
+  // Dashboard (no permission required) is always visible
   if (!permission) return true;
 
-  // Admins always see everything
+  // Admin role gets full sidebar access
   if (perms.isAdmin) return true;
 
-  // If user has module restrictions (portal_permissions), only show activated modules
-  const hasModuleRestrictions = Object.keys(perms.employeeModules || {}).length > 0;
+  // Non-admin roles: sidebar is driven solely by module activations (portal_permissions).
+  // Only show modules the admin has explicitly activated for this user.
+  const modulePerms = perms.employeeModules || {};
+  const hasModuleRestrictions = Object.keys(modulePerms).length > 0;
+
   if (hasModuleRestrictions) {
-    return perms.employeeModules[permission] === true;
+    return modulePerms[permission] === true;
   }
 
-  // No module restrictions: check role-based permission level
+  // Non-admin with no module activations: check role-based permission level as fallback
   if (permission.startsWith("dashboard:")) {
     return perms.dashboards.includes(permission.replace("dashboard:", ""));
   }

@@ -54,6 +54,9 @@ export function EmployeeDashboard() {
   const modulePerms = perms.employeeModules || {};
   const assignedModules = Object.entries(modulePerms).filter(([, v]) => v === true).map(([k]) => k);
   const firstName = profile?.name?.split(" ")[0] || "there";
+  const roleLabel = perms.roleId
+    ? perms.roleId.charAt(0).toUpperCase() + perms.roleId.slice(1).toLowerCase()
+    : "Team Member";
 
   return (
     <div className="space-y-6">
@@ -61,7 +64,7 @@ export function EmployeeDashboard() {
       <div className="rounded-xl bg-gradient-to-r from-theme-accent to-theme-primary p-6 text-white">
         <h1 className="text-2xl font-bold">Welcome, {firstName}</h1>
         <p className="text-sm opacity-90 mt-1">
-          {profile?.jobTitle || "Team Member"} {profile?.role ? `· ${profile.role}` : ""}
+          {roleLabel} {profile?.jobTitle ? `· ${profile.jobTitle}` : ""}
         </p>
       </div>
 

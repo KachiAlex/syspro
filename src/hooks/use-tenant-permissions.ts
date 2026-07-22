@@ -8,6 +8,7 @@ export interface TenantPermissions extends UserPermissions {
   dashboards: string[];
   isAdmin: boolean;
   isEmployee: boolean;
+  roleId?: string;
   employeeModules: Record<string, boolean>;
 }
 
@@ -25,6 +26,7 @@ const DEFAULT: TenantPermissions = {
   dashboards: [],
   isAdmin: false,
   isEmployee: false,
+  roleId: undefined,
   employeeModules: {},
   loading: true,
 };

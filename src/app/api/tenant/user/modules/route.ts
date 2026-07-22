@@ -175,6 +175,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       ...permissions,
       isEmployee,
+      roleId: roleId || undefined,
       employeeModules,
       _debug: {
         effectiveUserId,

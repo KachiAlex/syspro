@@ -258,7 +258,7 @@ export async function middleware(request: NextRequest) {
                 const { sql } = await import('@/lib/sql-client');
                 const empRows = await sql`
                   SELECT portal_permissions FROM admin_employees
-                  WHERE id = ${userId} AND tenant_slug = ${tenantSlug} AND is_portal_active = true
+                  WHERE id = ${userId} AND tenant_slug = ${tenantSlug}
                   LIMIT 1
                 `;
                 const emp = (empRows as any[])[0];

@@ -137,14 +137,16 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
 
   const dashboardKey = getDashboardKey(safePath || '');
   const perms = useTenantPermissions(user?.id, user?.roleId);
+
+  // Role-based route access:
+  // - Admin role: full access to all routes
+  // - Non-admin roles: only access routes for modules activated in portal_permissions
   const allowed =
     !safePath ||
     perms.loading ||
     !dashboardKey ||
     perms.isAdmin ||
-    perms.employeeModules[dashboardKey] === true ||
-    perms.dashboards.includes(dashboardKey) ||
-    ((perms as any)[dashboardKey] !== 'none' && (perms as any)[dashboardKey] !== undefined);
+    (perms.employeeModules && perms.employeeModules[dashboardKey] === true);
 
   if (!mounted) {
     return <div className="min-h-screen bg-theme-bg" />;

@@ -79,6 +79,9 @@ export default function TenantAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Role-based dashboard rendering:
+  // - Admin role: full admin dashboard with all metrics
+  // - Non-admin roles with module activations: employee dashboard with module cards
   const hasModuleRestrictions = Object.keys(perms.employeeModules || {}).length > 0;
   const showEmployeeDashboard = !perms.isAdmin && hasModuleRestrictions;
 
