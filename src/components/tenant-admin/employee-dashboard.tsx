@@ -6,9 +6,14 @@ import {
   CalendarCheck, Target, Receipt, Plane, Wallet, ClipboardList,
   TrendingUp, Users, DollarSign, FolderKanban, ShoppingCart,
   BarChart3, Zap, Settings, ArrowRight, Loader2, UserCircle,
-  CheckCircle, Clock, ChevronDown, ChevronRight
+  CheckCircle, Clock, ChevronDown, ChevronRight, ArrowLeft
 } from "lucide-react";
 import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
+import { AttendanceTab } from "@/app/employee/dashboard/tabs/AttendanceTab";
+import { LeaveTab } from "@/app/employee/dashboard/tabs/LeaveTab";
+import { ExpensesTab } from "@/app/employee/dashboard/tabs/ExpensesTab";
+import { TasksTab } from "@/app/employee/dashboard/tabs/TasksTab";
+import { PayslipsTab } from "@/app/employee/dashboard/tabs/PayslipsTab";
 
 const MODULE_CARDS: Record<string, { label: string; href: string; icon: any; color: string }> = {
   crm: { label: "CRM", href: "/tenant-admin/crm", icon: Users, color: "from-blue-500 to-indigo-600" },
@@ -21,11 +26,14 @@ const MODULE_CARDS: Record<string, { label: string; href: string; icon: any; col
   admin: { label: "Admin", href: "/tenant-admin/admin", icon: Settings, color: "from-gray-500 to-slate-600" },
 };
 
+type SelfServiceTab = 'attendance' | 'tasks' | 'expenses' | 'leave' | 'payslips' | null;
+
 export function EmployeeDashboard() {
   const perms = useTenantPermissions();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selfServiceOpen, setSelfServiceOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState<SelfServiceTab>(null);
 
   useEffect(() => {
     async function loadProfile() {
@@ -62,14 +70,41 @@ export function EmployeeDashboard() {
     ? perms.roleId.charAt(0).toUpperCase() + perms.roleId.slice(1).toLowerCase()
     : "Team Member";
 
-  const selfServiceItems = [
-    { label: "Attendance", desc: "Check In/Out", href: "/employee/dashboard", icon: CalendarCheck, color: "bg-blue-100 text-blue-600" },
-    { label: "Tasks & KPIs", desc: "View Tasks", href: "/employee/dashboard", icon: Target, color: "bg-green-100 text-green-600" },
-    { label: "Expenses", desc: "Submit", href: "/employee/dashboard", icon: Receipt, color: "bg-orange-100 text-orange-600" },
-    { label: "Payslips", desc: "View", href: "/employee/dashboard", icon: Wallet, color: "bg-purple-100 text-purple-600" },
-    { label: "Leave", desc: "Request Leave", href: "/employee/dashboard", icon: Plane, color: "bg-cyan-100 text-cyan-600" },
-    { label: "Profile", desc: "View Profile", href: "/employee/dashboard", icon: UserCircle, color: "bg-gray-100 text-gray-600" },
+  const selfServiceItems: { key: SelfServiceTab; label: string; desc: string; icon: any; color: string }[] = [
+    { key: 'attendance', label: "Attendance", desc: "Check In/Out", icon: CalendarCheck, color: "bg-blue-100 text-blue-600" },
+    { key: 'tasks', label: "Tasks & KPIs", desc: "View Tasks", icon: Target, color: "bg-green-100 text-green-600" },
+    { key: 'expenses', label: "Expenses", desc: "Submit", icon: Receipt, color: "bg-orange-100 text-orange-600" },
+    { key: 'leave', label: "Leave", desc: "Request Leave", icon: Plane, color: "bg-cyan-100 text-cyan-600" },
+    { key: 'payslips', label: "Payslips", desc: "View", icon: Wallet, color: "bg-purple-100 text-purple-600" },
   ];
+
+  if (activeTab) {
+    const activeItem = selfServiceItems.find(i => i.key === activeTab);
+    return (
+      <div className="space-y-6">
+        <button
+          onClick={() => setActiveTab(null)}
+          className="inline-flex items-center gap-2 text-sm text-theme-text-secondary hover:text-theme-text-primary transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Dashboard
+        </button>
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${activeItem?.color}`}>
+            {activeItem && <activeItem.icon className="w-5 h-5" />}
+          </div>
+          <h2 className="text-xl font-bold text-theme-text-primary">{activeItem?.label}</h2>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200">
+          {activeTab === 'attendance' && <AttendanceTab />}
+          {activeTab === 'tasks' && <TasksTab profile={profile} />}
+          {activeTab === 'expenses' && <ExpensesTab profile={profile} />}
+          {activeTab === 'leave' && <LeaveTab profile={profile} />}
+          {activeTab === 'payslips' && <PayslipsTab profile={profile} />}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -111,7 +146,7 @@ export function EmployeeDashboard() {
         </div>
       )}
 
-      {/* Self-Service collapsible section */}
+      {/* Self-Service section */}
       <div className="rounded-xl border border-theme-border bg-theme-surface overflow-hidden">
         <button
           onClick={() => setSelfServiceOpen(!selfServiceOpen)}
@@ -137,10 +172,10 @@ export function EmployeeDashboard() {
             {selfServiceItems.map((item) => {
               const Icon = item.icon;
               return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-theme-border hover:bg-theme-muted transition-colors"
+                <button
+                  key={item.key}
+                  onClick={() => setActiveTab(item.key)}
+                  className="flex items-center gap-3 p-3 rounded-lg border border-theme-border hover:bg-theme-muted transition-colors text-left"
                 >
                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${item.color}`}>
                     <Icon className="w-4 h-4" />
@@ -149,7 +184,7 @@ export function EmployeeDashboard() {
                     <p className="text-xs text-theme-text-secondary">{item.label}</p>
                     <p className="text-sm font-medium text-theme-text-primary">{item.desc}</p>
                   </div>
-                </Link>
+                </button>
               );
             })}
           </div>
