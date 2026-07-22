@@ -30,13 +30,9 @@ const DEFAULT: TenantPermissions = {
 };
 
 function normalizeFromRole(roleId?: string): TenantPermissions {
-  const id = roleId?.toLowerCase() || "viewer";
-  const allDashboards = ["admin", "automation", "finance", "people", "crm", "projects", "reports", "billing", "sales", "analytics"];
-  if (id === "admin") {
-    return { ...DEFAULT, loading: false, isAdmin: true, admin: "admin", dashboards: allDashboards };
-  }
-  // For all other roles (including unknown), return least-privilege defaults.
-  // The API will provide the actual permissions.
+  // The API is the source of truth for permissions.
+  // Never grant admin access based solely on roleId — the API will
+  // correctly apply module restrictions for HOD users with roleId "admin".
   return { ...DEFAULT, loading: false };
 }
 

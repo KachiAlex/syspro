@@ -159,7 +159,11 @@ export function SidebarNav({ className, userId, roleId }: SidebarNavProps) {
   const pathname = usePathname();
   const perms = useTenantPermissions(userId, roleId);
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
-  const visibleItems = navigationItems.filter((item) => canView(item.permission, perms));
+
+  // While permissions are loading, show nothing (prevents flash of admin sidebar)
+  const visibleItems = perms.loading
+    ? []
+    : navigationItems.filter((item) => canView(item.permission, perms));
 
   const toggleSection = (title: string) => {
     setCollapsedSections(prev => {
