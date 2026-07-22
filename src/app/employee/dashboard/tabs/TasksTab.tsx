@@ -27,6 +27,8 @@ interface Task {
   status: string;
   assigned_by: string;
   created_at: string;
+  completion_note?: string;
+  completed_at?: string;
 }
 
 interface Colleague {
@@ -86,17 +88,26 @@ export function TasksTab({ profile }: { profile: EmployeeProfile }) {
 
   const loadColleagues = useCallback(async () => {
     try {
-      const res = await fetch('/api/hr/employees/portal/colleagues');
+      const deptParam = profile.departmentId ? `?departmentId=${profile.departmentId}` : '';
+      const res = await fetch(`/api/hr/employees/portal/colleagues${deptParam}`);
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setColleagues(data.colleagues || []);
       }
     } catch {}
-  }, []);
+  }, [profile.departmentId]);
 
   useEffect(() => { loadTasks(); if (canAssign) loadColleagues(); }, [loadTasks, loadColleagues, canAssign]);
 
+  const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
+  const [completionNote, setCompletionNote] = useState('');
+
   const handleStatusUpdate = async (taskId: string, status: string) => {
+    if (status === 'completed') {
+      setCompletingTaskId(taskId);
+      setCompletionNote('');
+      return;
+    }
     try {
       const res = await fetch(`/api/hr/employees/portal/tasks/${taskId}`, {
         method: 'PATCH',
@@ -105,6 +116,22 @@ export function TasksTab({ profile }: { profile: EmployeeProfile }) {
       });
       if (res.ok) {
         setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
+      }
+    } catch {}
+  };
+
+  const handleCompleteWithNote = async () => {
+    if (!completingTaskId) return;
+    try {
+      const res = await fetch(`/api/hr/employees/portal/tasks/${completingTaskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'completed', completionNote: completionNote.trim() || undefined }),
+      });
+      if (res.ok) {
+        setTasks(prev => prev.map(t => t.id === completingTaskId ? { ...t, status: 'completed', completion_note: completionNote || undefined } : t));
+        setCompletingTaskId(null);
+        setCompletionNote('');
       }
     } catch {}
   };
@@ -221,6 +248,43 @@ export function TasksTab({ profile }: { profile: EmployeeProfile }) {
           onAssigned={() => { setShowAssign(false); loadTasks(); }}
         />
       )}
+
+      {/* Completion Note Modal */}
+      {completingTaskId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => { setCompletingTaskId(null); setCompletionNote(''); }}>
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+              <h3 className="font-bold text-gray-900">Complete Task</h3>
+              <button onClick={() => { setCompletingTaskId(null); setCompletionNote(''); }} className="p-1.5 rounded-lg hover:bg-gray-100"><X className="w-5 h-5 text-gray-500" /></button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                  Completion Note <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <textarea
+                  value={completionNote}
+                  onChange={e => setCompletionNote(e.target.value)}
+                  rows={4}
+                  placeholder="Describe what was accomplished, any evidence, or outcomes achieved..."
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                />
+                <p className="text-xs text-gray-400 mt-1">This note will be used in AI productivity appraisals</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 p-5 border-t border-gray-100">
+              <button onClick={() => { setCompletingTaskId(null); setCompletionNote(''); }} className="px-4 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100">Cancel</button>
+              <button
+                onClick={handleCompleteWithNote}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700"
+              >
+                <CheckCircle className="w-4 h-4" />
+                Mark Complete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -285,6 +349,13 @@ function TaskCard({
               <span className="font-medium text-gray-600">{task.employee_name}</span>
             )}
           </div>
+
+          {task.status === 'completed' && task.completion_note && (
+            <div className="mt-2 rounded-lg bg-green-50 px-3 py-2">
+              <p className="text-xs font-semibold text-green-700">Completion Note</p>
+              <p className="text-xs text-green-600 mt-0.5">{task.completion_note}</p>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5 items-end">

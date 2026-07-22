@@ -6,6 +6,7 @@ import { z } from "zod";
 
 const updateStatusSchema = z.object({
   status: z.enum(["pending", "in_progress", "completed", "overdue"]),
+  completionNote: z.string().max(1000).optional(),
 });
 
 /**
@@ -34,6 +35,7 @@ export async function PATCH(
 
     const taskId = params.id;
     const newStatus = parsed.data.status;
+    const completionNote = parsed.data.completionNote;
     const employeeRole = (session.role || "staff").toLowerCase();
     const isHOD = employeeRole === "hod" || employeeRole === "head_of_department";
 
@@ -78,11 +80,28 @@ export async function PATCH(
       }
     }
 
-    await sql`
-      UPDATE admin_staff_tasks
-      SET status = ${newStatus}, updated_at = now()
-      WHERE id = ${taskId} AND tenant_slug = ${session.tenantSlug}
-    `;
+    if (completionNote && newStatus === 'completed') {
+      try {
+        await sql`
+          UPDATE admin_staff_tasks
+          SET status = ${newStatus}, completion_note = ${completionNote}, completed_at = now(), updated_at = now()
+          WHERE id = ${taskId} AND tenant_slug = ${session.tenantSlug}
+        `;
+      } catch (e) {
+        // Fallback without completion_note column
+        await sql`
+          UPDATE admin_staff_tasks
+          SET status = ${newStatus}, updated_at = now()
+          WHERE id = ${taskId} AND tenant_slug = ${session.tenantSlug}
+        `;
+      }
+    } else {
+      await sql`
+        UPDATE admin_staff_tasks
+        SET status = ${newStatus}, updated_at = now()
+        WHERE id = ${taskId} AND tenant_slug = ${session.tenantSlug}
+      `;
+    }
 
     return NextResponse.json({ success: true, status: newStatus });
   } catch (error: any) {

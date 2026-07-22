@@ -224,6 +224,8 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
     await sql`alter table if exists admin_staff_tasks add column if not exists expected_outcome text`;
     await sql`alter table if exists admin_staff_tasks add column if not exists weight integer default 1`;
     await sql`alter table if exists admin_staff_tasks add column if not exists is_kpi boolean default false`;
+    await sql`alter table if exists admin_staff_tasks add column if not exists completion_note text`;
+    await sql`alter table if exists admin_staff_tasks add column if not exists completed_at timestamptz`;
     // Expand frequency constraint to support monthly, quarterly, annual
     await sql`alter table if exists admin_staff_tasks drop constraint if exists admin_staff_tasks_frequency_check`;
     await sql`alter table if exists admin_staff_tasks add constraint admin_staff_tasks_frequency_check check (frequency in ('daily','weekly','monthly','quarterly','annual','one-time'))`;

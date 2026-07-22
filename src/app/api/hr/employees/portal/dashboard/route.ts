@@ -143,6 +143,68 @@ export async function GET(request: NextRequest) {
       attSummary[row.status] = row.cnt;
     }
 
+    // HOD: pending expense and leave approvals
+    const employeeRole = (session.role || "staff").toLowerCase();
+    const isHOD = employeeRole === "hod" || employeeRole === "head_of_department";
+    const isHR = employeeRole === "hr" || employeeRole === "hr_admin" || employeeRole === "hr_manager";
+    let pendingExpenseApprovals = 0;
+    let pendingLeaveApprovals = 0;
+    if (isHOD || isHR) {
+      try {
+        const empInfo = await sql`
+          SELECT department_id FROM admin_employees
+          WHERE id = ${session.id} AND tenant_slug = ${session.tenantSlug}
+          LIMIT 1
+        `;
+        const deptId = empInfo[0]?.department_id;
+
+        if (deptId || isHR) {
+          // Pending expense approvals
+          try {
+            let expRows: any[];
+            if (isHR) {
+              expRows = await sql`
+                SELECT count(*)::int as cnt FROM admin_expense_requests
+                WHERE tenant_slug = ${session.tenantSlug} AND status = 'pending'
+              `;
+            } else {
+              expRows = await sql`
+                SELECT count(*)::int as cnt FROM admin_expense_requests er
+                JOIN admin_employees e ON er.employee_id = e.id
+                WHERE er.tenant_slug = ${session.tenantSlug}
+                  AND er.status = 'pending'
+                  AND er.employee_id != ${session.id}
+                  AND e.department_id = ${deptId}
+              `;
+            }
+            pendingExpenseApprovals = expRows[0]?.cnt || 0;
+          } catch (e) { console.error("dashboard: pendingExpenseApprovals failed:", (e as any)?.message); }
+
+          // Pending leave approvals
+          try {
+            let leaveRows: any[];
+            if (isHR) {
+              leaveRows = await sql`
+                SELECT count(*)::int as cnt FROM admin_leave_requests
+                WHERE tenant_slug = ${session.tenantSlug} AND status = 'pending'
+                  AND employee_id != ${session.id}
+              `;
+            } else {
+              leaveRows = await sql`
+                SELECT count(*)::int as cnt FROM admin_leave_requests lr
+                JOIN admin_employees e ON lr.employee_id = e.id
+                WHERE lr.tenant_slug = ${session.tenantSlug}
+                  AND lr.status = 'pending'
+                  AND lr.employee_id != ${session.id}
+                  AND e.department_id = ${deptId}
+              `;
+            }
+            pendingLeaveApprovals = leaveRows[0]?.cnt || 0;
+          } catch (e) { console.error("dashboard: pendingLeaveApprovals failed:", (e as any)?.message); }
+        }
+      } catch (e) { console.error("dashboard: HOD approvals failed:", (e as any)?.message); }
+    }
+
     // Build calendar data
     const calendarData: Record<string, { status: string; check_in: string | null; check_out: string | null }> = {};
     for (const row of monthRecords) {
@@ -184,6 +246,14 @@ export async function GET(request: NextRequest) {
 
     if (openTasksCount > 0) {
       pendingActions.push({ label: `${openTasksCount} task(s) need attention`, tab: "reports", urgent: false });
+    }
+
+    // HOD/HR: pending approvals
+    if (pendingExpenseApprovals > 0) {
+      pendingActions.push({ label: `${pendingExpenseApprovals} expense request(s) to review`, tab: "expenses", urgent: false });
+    }
+    if (pendingLeaveApprovals > 0) {
+      pendingActions.push({ label: `${pendingLeaveApprovals} leave request(s) to review`, tab: "leave", urgent: false });
     }
 
     // Calculate on-time rate

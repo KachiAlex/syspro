@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Loader2, Plus, Clock, CheckCircle, XCircle, AlertCircle, X,
-  Calendar, Plane
+  Calendar, Plane, ClipboardCheck, User
 } from 'lucide-react';
 
 interface EmployeeProfile {
@@ -22,6 +22,8 @@ interface LeaveRequest {
   reviewer_comment?: string;
   created_at: string;
   reviewed_at?: string;
+  employee_name?: string;
+  employee_job_title?: string;
 }
 
 const STATUS_CONFIG: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
@@ -41,9 +43,13 @@ const LEAVE_TYPES = [
 
 export function LeaveTab({ profile: _profile }: { profile: EmployeeProfile }) {
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
+  const [pendingApprovals, setPendingApprovals] = useState<LeaveRequest[]>([]);
+  const [isHOD, setIsHOD] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSubmit, setShowSubmit] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [view, setView] = useState<'mine' | 'approvals'>('mine');
 
   const loadRequests = useCallback(async () => {
     setLoading(true);
@@ -53,6 +59,8 @@ export function LeaveTab({ profile: _profile }: { profile: EmployeeProfile }) {
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setRequests(data.requests || []);
+        setPendingApprovals(data.pendingApprovals || []);
+        setIsHOD(data.isHOD || false);
       } else {
         setError(data.error || 'Failed to load leave requests');
       }
@@ -64,6 +72,28 @@ export function LeaveTab({ profile: _profile }: { profile: EmployeeProfile }) {
   }, []);
 
   useEffect(() => { loadRequests(); }, [loadRequests]);
+
+  const handleLeaveAction = async (leaveId: string, action: 'approve' | 'reject') => {
+    setActionLoading(leaveId);
+    setError(null);
+    try {
+      const res = await fetch('/api/hr/employees/portal/leave', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leaveId, action }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setPendingApprovals(prev => prev.filter(r => r.id !== leaveId));
+      } else {
+        setError(data.error || 'Failed to update leave');
+      }
+    } catch {
+      setError('Network error');
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const pendingCount = requests.filter(r => r.status === 'pending').length;
   const approvedCount = requests.filter(r => r.status === 'approved').length;
@@ -88,6 +118,33 @@ export function LeaveTab({ profile: _profile }: { profile: EmployeeProfile }) {
         </button>
       </div>
 
+      {/* HOD approval tabs */}
+      {isHOD && (
+        <div className="flex items-center gap-2 border-b border-gray-200">
+          <button
+            onClick={() => setView('mine')}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              view === 'mine' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Plane className="w-4 h-4" />
+            My Leave
+          </button>
+          <button
+            onClick={() => setView('approvals')}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              view === 'approvals' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <ClipboardCheck className="w-4 h-4" />
+            Pending Approvals
+            {pendingApprovals.length > 0 && <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-700">{pendingApprovals.length}</span>}
+          </button>
+        </div>
+      )}
+
+      {/* Stats — only show on 'mine' view */}
+      {view === 'mine' && (
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 mb-2">
@@ -108,6 +165,7 @@ export function LeaveTab({ profile: _profile }: { profile: EmployeeProfile }) {
           <p className="text-2xl font-bold text-gray-900">{approvedCount}</p>
         </div>
       </div>
+      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 flex items-center gap-2">
@@ -115,7 +173,63 @@ export function LeaveTab({ profile: _profile }: { profile: EmployeeProfile }) {
         </div>
       )}
 
-      {requests.length === 0 ? (
+      {/* Pending approvals view (HOD) */}
+      {view === 'approvals' && isHOD ? (
+        pendingApprovals.length === 0 ? (
+          <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
+            <CheckCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500 text-sm">No pending leave approvals</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {pendingApprovals.map(req => {
+              const leaveType = LEAVE_TYPES.find(l => l.value === req.leave_type)?.label || req.leave_type;
+              return (
+                <div key={req.id} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <h4 className="font-semibold text-gray-900 text-sm">{leaveType}</h4>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border bg-amber-100 text-amber-700 border-amber-200">
+                          <Clock className="w-3 h-3" /> Pending
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                        <User className="w-3 h-3" />
+                        <span className="font-medium text-gray-700">{req.employee_name}</span>
+                        {req.employee_job_title && <span>· {req.employee_job_title}</span>}
+                      </div>
+                      <p className="text-sm text-gray-600">{req.reason}</p>
+                      <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
+                        <span>{req.start_date} → {req.end_date}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => handleLeaveAction(req.id, 'approve')}
+                        disabled={actionLoading === req.id}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50"
+                      >
+                        {actionLoading === req.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleLeaveAction(req.id, 'reject')}
+                        disabled={actionLoading === req.id}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
+      ) : view === 'mine' && (
+      requests.length === 0 ? (
         <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
           <Plane className="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500 text-sm">No leave requests yet. Submit one to get started.</p>
@@ -148,6 +262,7 @@ export function LeaveTab({ profile: _profile }: { profile: EmployeeProfile }) {
             );
           })}
         </div>
+      )
       )}
 
       {showSubmit && (
