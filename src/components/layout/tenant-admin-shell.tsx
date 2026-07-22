@@ -136,7 +136,7 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
   };
 
   const dashboardKey = getDashboardKey(safePath || '');
-  const perms = useTenantPermissions(user?.id, user?.roleId);
+  const perms = useTenantPermissions();
 
   // Role-based route access:
   // - Admin role: full access to all routes
