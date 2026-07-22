@@ -6,7 +6,7 @@ import {
   CalendarCheck, Target, Receipt, Plane, Wallet, ClipboardList,
   TrendingUp, Users, DollarSign, FolderKanban, ShoppingCart,
   BarChart3, Zap, Settings, ArrowRight, Loader2, UserCircle,
-  CheckCircle, Clock
+  CheckCircle, Clock, ChevronDown, ChevronRight
 } from "lucide-react";
 import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
 
@@ -25,6 +25,7 @@ export function EmployeeDashboard() {
   const perms = useTenantPermissions();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [selfServiceOpen, setSelfServiceOpen] = useState(true);
 
   useEffect(() => {
     async function loadProfile() {
@@ -52,11 +53,23 @@ export function EmployeeDashboard() {
   }
 
   const modulePerms = perms.employeeModules || {};
-  const assignedModules = Object.entries(modulePerms).filter(([, v]) => v === true).map(([k]) => k);
+  const assignedModules = Object.entries(modulePerms)
+    .filter(([, v]) => v === true)
+    .map(([k]) => k)
+    .filter((k) => k !== "self_service");
   const firstName = profile?.name?.split(" ")[0] || "there";
   const roleLabel = perms.roleId
     ? perms.roleId.charAt(0).toUpperCase() + perms.roleId.slice(1).toLowerCase()
     : "Team Member";
+
+  const selfServiceItems = [
+    { label: "Attendance", desc: "Check In/Out", href: "/employee/dashboard", icon: CalendarCheck, color: "bg-blue-100 text-blue-600" },
+    { label: "Tasks & KPIs", desc: "View Tasks", href: "/employee/dashboard", icon: Target, color: "bg-green-100 text-green-600" },
+    { label: "Expenses", desc: "Submit", href: "/employee/dashboard", icon: Receipt, color: "bg-orange-100 text-orange-600" },
+    { label: "Payslips", desc: "View", href: "/employee/dashboard", icon: Wallet, color: "bg-purple-100 text-purple-600" },
+    { label: "Leave", desc: "Request Leave", href: "/employee/dashboard", icon: Plane, color: "bg-cyan-100 text-cyan-600" },
+    { label: "Profile", desc: "View Profile", href: "/employee/dashboard", icon: UserCircle, color: "bg-gray-100 text-gray-600" },
+  ];
 
   return (
     <div className="space-y-6">
@@ -68,61 +81,13 @@ export function EmployeeDashboard() {
         </p>
       </div>
 
-      {/* Quick stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Link href="/employee/dashboard" className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-4 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-              <CalendarCheck className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-xs text-theme-text-secondary">Attendance</p>
-              <p className="text-sm font-medium text-theme-text-primary">Check In/Out</p>
-            </div>
-          </div>
-        </Link>
-        <Link href="/employee/dashboard" className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-4 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-              <Target className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-xs text-theme-text-secondary">Tasks & KPIs</p>
-              <p className="text-sm font-medium text-theme-text-primary">View Tasks</p>
-            </div>
-          </div>
-        </Link>
-        <Link href="/employee/dashboard" className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-4 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-              <Receipt className="w-5 h-5 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-xs text-theme-text-secondary">Expenses</p>
-              <p className="text-sm font-medium text-theme-text-primary">Submit</p>
-            </div>
-          </div>
-        </Link>
-        <Link href="/employee/dashboard" className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-4 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-              <Wallet className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-xs text-theme-text-secondary">Payslips</p>
-              <p className="text-sm font-medium text-theme-text-primary">View</p>
-            </div>
-          </div>
-        </Link>
-      </div>
-
       {/* Assigned modules */}
       {assignedModules.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold text-theme-text-primary mb-3">Your Modules</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {assignedModules
-              .filter((k) => k !== "self_service" && MODULE_CARDS[k])
+              .filter((k) => MODULE_CARDS[k])
               .map((key) => {
                 const card = MODULE_CARDS[key];
                 const Icon = card.icon;
@@ -146,23 +111,49 @@ export function EmployeeDashboard() {
         </div>
       )}
 
-      {/* Self-service link */}
-      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
-        <div className="flex items-center justify-between">
+      {/* Self-Service collapsible section */}
+      <div className="rounded-xl border border-theme-border bg-theme-surface overflow-hidden">
+        <button
+          onClick={() => setSelfServiceOpen(!selfServiceOpen)}
+          className="w-full flex items-center justify-between p-4 hover:bg-theme-muted transition-colors"
+        >
           <div className="flex items-center gap-3">
-            <UserCircle className="w-5 h-5 text-blue-600" />
-            <div>
-              <p className="text-sm font-medium text-blue-900">Self-Service Portal</p>
-              <p className="text-xs text-blue-700">Attendance, expenses, leave, payslips, tasks, and profile</p>
+            <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center">
+              <UserCircle className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-semibold text-theme-text-primary">Self-Service</p>
+              <p className="text-xs text-theme-text-secondary">Attendance, expenses, leave, payslips, tasks & profile</p>
             </div>
           </div>
-          <Link
-            href="/employee/dashboard"
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-700 hover:text-blue-900"
-          >
-            Open <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+          {selfServiceOpen ? (
+            <ChevronDown className="w-5 h-5 text-theme-text-tertiary" />
+          ) : (
+            <ChevronRight className="w-5 h-5 text-theme-text-tertiary" />
+          )}
+        </button>
+        {selfServiceOpen && (
+          <div className="p-4 pt-0 grid grid-cols-2 md:grid-cols-3 gap-3">
+            {selfServiceItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="flex items-center gap-3 p-3 rounded-lg border border-theme-border hover:bg-theme-muted transition-colors"
+                >
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${item.color}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-theme-text-secondary">{item.label}</p>
+                    <p className="text-sm font-medium text-theme-text-primary">{item.desc}</p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
