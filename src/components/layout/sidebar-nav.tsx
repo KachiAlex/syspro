@@ -25,13 +25,14 @@ import {
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
+import { useEmployeeModules } from "@/hooks/use-employee-modules";
 
 const navigationItems = [
   {
     title: "Dashboard",
     href: "/tenant-admin",
     icon: Home,
-    permission: "admin",
+    permission: undefined,
   },
   {
     title: "CRM",
@@ -84,7 +85,7 @@ const navigationItems = [
     title: "Sales & Procurement",
     href: "/tenant-admin/sales",
     icon: ShoppingCart,
-    permission: "crm",
+    permission: "sales",
     children: [
       { title: "Sales Orders", href: "/tenant-admin/sales/orders" },
       { title: "Suppliers", href: "/tenant-admin/sales/suppliers" },
@@ -96,7 +97,7 @@ const navigationItems = [
     title: "Reports & Analytics",
     href: "/tenant-admin/analytics",
     icon: BarChart3,
-    permission: "finance",
+    permission: "analytics",
     children: [
       { title: "Dashboard", href: "/tenant-admin/analytics" },
       { title: "Financial Reports", href: "/tenant-admin/analytics/financial" },
@@ -135,9 +136,18 @@ interface SidebarNavProps {
   roleId?: string;
 }
 
-function canView(permission: string | undefined, perms: ReturnType<typeof useTenantPermissions>) {
+function canView(permission: string | undefined, perms: ReturnType<typeof useTenantPermissions>, empModules: ReturnType<typeof useEmployeeModules>) {
   if (!permission) return true;
   if (perms.isAdmin) return true;
+
+  // If this is an employee (not a tenant admin), check module permissions
+  if (empModules.isEmployee) {
+    // Map sidebar permission keys to employee module keys
+    // 'crm' covers both CRM and Sales & Procurement in the sidebar
+    const moduleKey = permission;
+    return empModules.modules[moduleKey] === true;
+  }
+
   if (permission.startsWith("dashboard:")) {
     return perms.dashboards.includes(permission.replace("dashboard:", ""));
   }
@@ -148,8 +158,9 @@ function canView(permission: string | undefined, perms: ReturnType<typeof useTen
 export function SidebarNav({ className, userId, roleId }: SidebarNavProps) {
   const pathname = usePathname();
   const perms = useTenantPermissions(userId, roleId);
+  const empModules = useEmployeeModules();
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
-  const visibleItems = navigationItems.filter((item) => canView(item.permission, perms));
+  const visibleItems = navigationItems.filter((item) => canView(item.permission, perms, empModules));
 
   const toggleSection = (title: string) => {
     setCollapsedSections(prev => {

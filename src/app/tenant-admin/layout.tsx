@@ -40,7 +40,7 @@ export default async function TenantAdminLayout({ children, searchParams }: { ch
     // noop
   }
 
-  const tenantSlug = urlTenant || refTenant || safeGet("X-Tenant-Slug") || safeGet("tenantSlug") || safeGetCookie("tenantSlug");
+  const tenantSlug = urlTenant || refTenant || safeGet("X-Tenant-Slug") || safeGet("tenantSlug") || safeGetCookie("tenantSlug") || safeGetCookie("employee_tenant");
 
   // Adapt headers to the shape expected by getCurrentUser (it expects a NextRequest-like object)
   const fakeReq = {

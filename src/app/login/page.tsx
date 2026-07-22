@@ -94,8 +94,9 @@ export default function LoginPage() {
         if (data.token) {
           document.cookie = `employee_session=${data.token}; path=/; max-age=${60 * 60 * 12}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
           document.cookie = `employee_tenant=${data.tenantSlug}; path=/; max-age=${60 * 60 * 12}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
+          document.cookie = `tenantSlug=${data.tenantSlug}; path=/; max-age=${60 * 60 * 12}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
         }
-        window.location.href = '/employee/dashboard';
+        window.location.href = '/tenant-admin?tenantSlug=' + data.tenantSlug;
       } else {
         window.location.href = '/tenant-admin?tenantSlug=' + data.tenantSlug;
       }

@@ -205,32 +205,41 @@ export default function UsersPage() {
   );
 }
 
-const PORTAL_TABS = [
-  { key: "dashboard", label: "Dashboard", alwaysOn: true },
-  { key: "tasks", label: "Tasks & KPIs", alwaysOn: true },
-  { key: "attendance", label: "Attendance", alwaysOn: true },
-  { key: "reports", label: "KPI Reports", alwaysOn: true },
-  { key: "expenses", label: "Expenses", alwaysOn: false },
-  { key: "leave", label: "Leave", alwaysOn: false },
-  { key: "payslips", label: "Payslips", alwaysOn: false },
-  { key: "approvals", label: "Approvals", alwaysOn: false },
-  { key: "appraisal", label: "AI Appraisal", alwaysOn: false },
-  { key: "profile", label: "Profile", alwaysOn: true },
+const BUSINESS_MODULES = [
+  { key: "self_service", label: "Self-Service (Dashboard, Attendance, Expenses, Leave, Payslips)", alwaysOn: true },
+  { key: "crm", label: "CRM (Leads, Customers, Sales Pipeline)", alwaysOn: false },
+  { key: "finance", label: "Finance (Accounting, Bills, Payments, Reports)", alwaysOn: false },
+  { key: "people", label: "HR & Operations (Staff, Payroll, Attendance Mgmt)", alwaysOn: false },
+  { key: "projects", label: "Projects (Active, Archive, Reports)", alwaysOn: false },
+  { key: "sales", label: "Sales & Procurement (Orders, Suppliers, Inventory)", alwaysOn: false },
+  { key: "analytics", label: "Reports & Analytics", alwaysOn: false },
+  { key: "automation", label: "Automation (Workflows, Rules)", alwaysOn: false },
+  { key: "admin", label: "Admin (Settings, Users, Audit, Health)", alwaysOn: false },
 ];
 
 function getDefaultPermissions(role: string): Record<string, boolean> {
   const r = (role || "staff").toLowerCase();
   const perms: Record<string, boolean> = {};
-  for (const tab of PORTAL_TABS) {
-    perms[tab.key] = tab.alwaysOn;
+  for (const mod of BUSINESS_MODULES) {
+    perms[mod.key] = mod.alwaysOn;
   }
-  perms.expenses = true;
-  perms.leave = true;
-  perms.payslips = true;
   const isHOD = r === "hod" || r === "head_of_department";
   const isHR = r === "hr" || r === "hr_admin" || r === "hr_manager";
-  if (isHOD || isHR) perms.approvals = true;
-  if (isHR) perms.appraisal = true;
+  const isAdmin = r === "admin" || r === "administrator";
+  if (isHOD) {
+    perms.projects = true;
+    perms.analytics = true;
+  }
+  if (isHR) {
+    perms.people = true;
+    perms.finance = true;
+    perms.analytics = true;
+  }
+  if (isAdmin) {
+    for (const mod of BUSINESS_MODULES) {
+      perms[mod.key] = true;
+    }
+  }
   return perms;
 }
 
@@ -389,10 +398,10 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
         <div className="flex items-start gap-3">
           <Monitor className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-blue-900">Portal Users & Tab Access</p>
+            <p className="text-sm font-medium text-blue-900">Employee Module Access</p>
             <p className="text-xs text-blue-700 mt-1">
-              These are employees with active portal accounts. Manage which dashboard tabs each employee can access.
-              To activate a new employee's portal, use the HR & Operations section. Permissions default based on role but can be customized per employee.
+              These are employees with active portal accounts. Assign which business modules each employee can access (CRM, Finance, HR, Projects, etc.).
+              To activate a new employee's portal, use the HR & Operations section. Module access defaults based on role but can be customized per employee.
             </p>
           </div>
         </div>
@@ -437,7 +446,7 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
                 <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Role</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Department</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Portal</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Tabs Enabled</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Modules</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Last Login</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-theme-text-secondary uppercase tracking-wider">Actions</th>
               </tr>
@@ -491,7 +500,7 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-theme-text-primary">{getEnabledCount(emp)}/{PORTAL_TABS.length}</span>
+                      <span className="text-sm text-theme-text-primary">{getEnabledCount(emp)}/{BUSINESS_MODULES.length}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-text-secondary">
                       {emp.lastLogin ? new Date(emp.lastLogin).toLocaleDateString() : "—"}
@@ -501,10 +510,10 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
                         onClick={() => openPermissionsModal(emp)}
                         disabled={!emp.isPortalActive}
                         className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-theme-accent hover:text-theme-accent-hover disabled:opacity-40 disabled:cursor-not-allowed"
-                        title={emp.isPortalActive ? "Manage tab permissions" : "Portal not active — activate in HR section first"}
+                        title={emp.isPortalActive ? "Manage module access" : "Portal not active — activate in HR section first"}
                       >
                         <Shield className="w-3 h-3" />
-                        Manage Permissions
+                        Manage Modules
                       </button>
                     </td>
                   </tr>
@@ -521,7 +530,7 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
           <div className="w-full max-w-lg rounded-xl bg-theme-surface p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-theme-text-primary">Portal Tab Permissions</h2>
+                <h2 className="text-lg font-semibold text-theme-text-primary">Module Access Permissions</h2>
                 <p className="text-xs text-theme-text-secondary mt-0.5">{editingEmp.name} — {editingEmp.email}</p>
               </div>
               <button onClick={() => setEditingEmp(null)} className="text-theme-text-tertiary hover:text-theme-text-secondary">
@@ -537,33 +546,33 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
             )}
 
             <div className="space-y-2">
-              {PORTAL_TABS.map((tab) => (
+              {BUSINESS_MODULES.map((mod) => (
                 <div
-                  key={tab.key}
-                  className={`flex items-center justify-between p-3 rounded-lg border ${permissions[tab.key] ? "border-blue-200 bg-blue-50" : "border-gray-200 bg-gray-50"}`}
+                  key={mod.key}
+                  className={`flex items-center justify-between p-3 rounded-lg border ${permissions[mod.key] ? "border-blue-200 bg-blue-50" : "border-gray-200 bg-gray-50"}`}
                 >
                   <div className="flex items-center gap-3">
-                    {permissions[tab.key] ? (
+                    {permissions[mod.key] ? (
                       <ToggleRight className="w-5 h-5 text-blue-600" />
                     ) : (
                       <ToggleLeft className="w-5 h-5 text-gray-400" />
                     )}
                     <div>
-                      <span className="text-sm font-medium text-theme-text-primary">{tab.label}</span>
-                      {tab.alwaysOn && (
+                      <span className="text-sm font-medium text-theme-text-primary">{mod.label}</span>
+                      {mod.alwaysOn && (
                         <span className="ml-2 text-xs text-gray-400">(always on)</span>
                       )}
                     </div>
                   </div>
                   <button
                     onClick={() => {
-                      if (tab.alwaysOn) return;
-                      setPermissions((prev) => ({ ...prev, [tab.key]: !prev[tab.key] }));
+                      if (mod.alwaysOn) return;
+                      setPermissions((prev) => ({ ...prev, [mod.key]: !prev[mod.key] }));
                     }}
-                    disabled={tab.alwaysOn}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${permissions[tab.key] ? "bg-blue-600" : "bg-gray-300"} ${tab.alwaysOn ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    disabled={mod.alwaysOn}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${permissions[mod.key] ? "bg-blue-600" : "bg-gray-300"} ${mod.alwaysOn ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                   >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${permissions[tab.key] ? "translate-x-6" : "translate-x-1"}`} />
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${permissions[mod.key] ? "translate-x-6" : "translate-x-1"}`} />
                   </button>
                 </div>
               ))}

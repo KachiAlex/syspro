@@ -27,7 +27,7 @@ export type PermissionLevel = "none" | "read" | "write" | "admin";
  * In production: Verify JWT token or get from next-auth session
  */
 export function getCurrentUser(request: NextRequest): SessionUser | null {
-  // Method 0: Check syspro_session cookie (set by /access page)
+  // Method 0a: Check syspro_session cookie (set by tenant admin login)
   try {
     if (typeof (request as any).cookies?.get === "function") {
       const sessionCookie = (request as any).cookies.get("syspro_session")?.value;
@@ -40,6 +40,27 @@ export function getCurrentUser(request: NextRequest): SessionUser | null {
             name: session.name,
             tenantSlug: session.tenantSlug,
             roleId: session.roleId || "viewer",
+          };
+        }
+      }
+    }
+  } catch (e) {
+    // ignore session parsing errors
+  }
+
+  // Method 0b: Check employee_session cookie (set by employee login)
+  try {
+    if (typeof (request as any).cookies?.get === "function") {
+      const empCookie = (request as any).cookies.get("employee_session")?.value;
+      if (empCookie) {
+        const session = verifySession(empCookie);
+        if (session && session.id) {
+          return {
+            id: session.id,
+            email: session.email,
+            name: session.name,
+            tenantSlug: session.tenantSlug,
+            roleId: session.roleId || "staff",
           };
         }
       }
@@ -128,6 +149,14 @@ export async function validateTenantAccess(user: SessionUser, requestedTenantSlu
   // Otherwise, check the database for tenant membership/role assignment.
   try {
     const sql = SQL;
+
+    // Check if user is an employee in this tenant
+    const empRows = await sql`
+      SELECT 1 FROM admin_employees
+      WHERE id = ${user.id} AND tenant_slug = ${requestedTenantSlug} AND is_portal_active = true
+      LIMIT 1
+    `;
+    if (Array.isArray(empRows) && empRows.length > 0) return true;
 
     // Check tenant_user_roles first (role assignment table)
     const roleRows = await sql`

@@ -121,11 +121,19 @@ export async function setEmployeePassword(
   const emp = (empRows as any[])[0];
   if (emp && !emp.portal_permissions) {
     const r = (emp.role || "staff").toLowerCase();
+    const isHOD = r === "hod" || r === "head_of_department";
+    const isHR = r === "hr" || r === "hr_admin" || r === "hr_manager";
+    const isAdmin = r === "admin" || r === "administrator";
     const defaults: Record<string, boolean> = {
-      dashboard: true, tasks: true, attendance: true, reports: true,
-      expenses: true, leave: true, payslips: true, profile: true,
-      approvals: ["hod", "head_of_department", "hr", "hr_admin", "hr_manager"].includes(r),
-      appraisal: ["hr", "hr_admin", "hr_manager"].includes(r),
+      self_service: true,
+      crm: false,
+      finance: isHR || isAdmin,
+      people: isHR || isAdmin,
+      projects: isHOD || isAdmin,
+      sales: false,
+      analytics: isHOD || isHR || isAdmin,
+      automation: isAdmin,
+      admin: isAdmin,
     };
     await sql`
       update admin_employees

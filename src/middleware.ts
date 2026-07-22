@@ -93,13 +93,14 @@ export async function middleware(request: NextRequest) {
   ) {
     if (isProduction) {
       const hasSession = request.cookies.has('syspro_session');
+      const hasEmployeeSession = request.cookies.has('employee_session');
       const hasUserId =
         request.cookies.has('X-User-Id') ||
         request.cookies.has('dev-user-id') ||
         request.cookies.has('userId');
       const hasSuperadmin = request.cookies.has('superadmin_auth');
 
-      if (!hasSession && !hasUserId && !hasSuperadmin) {
+      if (!hasSession && !hasEmployeeSession && !hasUserId && !hasSuperadmin) {
         return NextResponse.redirect(
           new URL('/login?error=auth_required', request.url)
         );
@@ -125,6 +126,19 @@ export async function middleware(request: NextRequest) {
           userId = session.id;
           tenantSlug = session.tenantSlug || undefined;
           roleId = session.roleId || undefined;
+        }
+      }
+
+      // 1b. Try employee_session cookie
+      if (!userId) {
+        const empCookie = request.cookies.get('employee_session')?.value;
+        if (empCookie) {
+          const session = verifySession(empCookie);
+          if (session) {
+            userId = session.id;
+            tenantSlug = session.tenantSlug || undefined;
+            roleId = session.roleId || undefined;
+          }
         }
       }
 
@@ -172,7 +186,38 @@ export async function middleware(request: NextRequest) {
           perms.dashboards.includes(permissionKey) ||
           ((perms as any)[permissionKey] !== 'none' &&
             (perms as any)[permissionKey] !== undefined);
+
         if (!hasAccess) {
+          // Check if user is an employee with module permissions
+          const empCookie = request.cookies.get('employee_session')?.value;
+          if (empCookie) {
+            const empSession = verifySession(empCookie);
+            if (empSession && empSession.id === userId) {
+              try {
+                const { sql } = await import('@/lib/sql-client');
+                const empRows = await sql`
+                  SELECT portal_permissions FROM admin_employees
+                  WHERE id = ${userId} AND tenant_slug = ${tenantSlug} AND is_portal_active = true
+                  LIMIT 1
+                `;
+                const emp = (empRows as any[])[0];
+                if (emp && emp.portal_permissions) {
+                  const modulePerms = typeof emp.portal_permissions === 'string'
+                    ? JSON.parse(emp.portal_permissions)
+                    : emp.portal_permissions;
+                  // Map permission keys: 'sales' module covers inventory/sales, 'analytics' covers reports
+                  const moduleKey = permissionKey === 'reports' ? 'analytics' : permissionKey;
+                  if (modulePerms[moduleKey] === true || modulePerms[permissionKey] === true) {
+                    // Access granted via employee module permission
+                    const response = NextResponse.next();
+                    return response;
+                  }
+                }
+              } catch (empErr) {
+                console.error('Employee module permission check failed:', empErr);
+              }
+            }
+          }
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
       } catch (err) {

@@ -2,39 +2,44 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables } from "@/lib/hr/db";
 
-const ALL_TABS = [
-  "dashboard",
-  "tasks",
-  "attendance",
-  "reports",
-  "expenses",
-  "leave",
-  "payslips",
-  "approvals",
-  "appraisal",
-  "profile",
+const BUSINESS_MODULES = [
+  "self_service",
+  "crm",
+  "finance",
+  "people",
+  "projects",
+  "sales",
+  "analytics",
+  "automation",
+  "admin",
 ] as const;
 
-const ALWAYS_ON = new Set(["dashboard", "tasks", "attendance", "reports", "profile"]);
+const ALWAYS_ON = new Set(["self_service"]);
 
 export function getDefaultPermissions(role: string): Record<string, boolean> {
   const r = (role || "staff").toLowerCase();
   const base: Record<string, boolean> = {};
-  for (const tab of ALL_TABS) {
-    base[tab] = ALWAYS_ON.has(tab);
+  for (const mod of BUSINESS_MODULES) {
+    base[mod] = ALWAYS_ON.has(mod);
   }
-  base.expenses = true;
-  base.leave = true;
-  base.payslips = true;
 
   const isHOD = r === "hod" || r === "head_of_department";
   const isHR = r === "hr" || r === "hr_admin" || r === "hr_manager";
+  const isAdmin = r === "admin" || r === "administrator";
 
-  if (isHOD || isHR) {
-    base.approvals = true;
+  if (isHOD) {
+    base.projects = true;
+    base.analytics = true;
   }
   if (isHR) {
-    base.appraisal = true;
+    base.people = true;
+    base.finance = true;
+    base.analytics = true;
+  }
+  if (isAdmin) {
+    for (const mod of BUSINESS_MODULES) {
+      base[mod] = true;
+    }
   }
   return base;
 }
@@ -110,13 +115,13 @@ export async function PATCH(
       if (!emp) return NextResponse.json({ error: "Employee not found" }, { status: 404 });
       finalPermissions = getDefaultPermissions(emp.role);
     } else if (permissions) {
-      // Validate: only known tabs, always-on tabs stay true
+      // Validate: only known modules, always-on modules stay true
       const cleaned: Record<string, boolean> = {};
-      for (const tab of ALL_TABS) {
-        if (ALWAYS_ON.has(tab)) {
-          cleaned[tab] = true;
+      for (const mod of BUSINESS_MODULES) {
+        if (ALWAYS_ON.has(mod)) {
+          cleaned[mod] = true;
         } else {
-          cleaned[tab] = permissions[tab] === true;
+          cleaned[mod] = permissions[mod] === true;
         }
       }
       finalPermissions = cleaned;
