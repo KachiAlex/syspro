@@ -83,6 +83,9 @@ export async function POST(request: NextRequest) {
       response.cookies.set("X-User-Email", encodeURIComponent(email), { ...cookieOpts, httpOnly: false });
       response.cookies.set("X-Role-Id", admin.role || "admin", { ...cookieOpts, httpOnly: false });
 
+      // Clear any stale employee session to prevent cross-contamination
+      response.cookies.set("employee_session", "", { path: "/", maxAge: 0 });
+
       return response;
     }
 
@@ -127,6 +130,11 @@ export async function POST(request: NextRequest) {
           maxAge,
           path: "/",
         });
+
+        // Clear any stale admin session to prevent cross-contamination
+        response.cookies.set("syspro_session", "", { path: "/", maxAge: 0 });
+        response.cookies.set("X-User-Id", "", { path: "/", maxAge: 0 });
+        response.cookies.set("X-Role-Id", "", { path: "/", maxAge: 0 });
 
         return response;
       }

@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     request.cookies.get("X-User-Id")?.value ||
     request.cookies.get("dev-user-id")?.value ||
     request.cookies.get("userId")?.value;
-  const roleId =
+  let roleId =
     searchParams.get("roleId") ||
     request.headers.get("x-role-id") ||
     request.cookies.get("X-Role-Id")?.value ||
@@ -37,21 +37,28 @@ export async function GET(request: NextRequest) {
   let isEmployee = false;
   let employeeModules: Record<string, boolean> = {};
 
-  if (!effectiveUserId) {
-    const sysSession = request.cookies.get("syspro_session")?.value;
-    if (sysSession) {
-      const session = verifySession(sysSession);
-      if (session) effectiveUserId = session.id;
+  // Check syspro_session (tenant admin) FIRST — takes priority over employee session
+  const sysSession = request.cookies.get("syspro_session")?.value;
+  if (sysSession) {
+    const session = verifySession(sysSession);
+    if (session) {
+      effectiveUserId = session.id;
+      // Also extract roleId from session if not already set
+      if (!roleId && session.roleId) {
+        roleId = session.roleId;
+      }
     }
   }
 
-  // Check employee session
-  const empCookie = request.cookies.get("employee_session")?.value;
-  if (empCookie) {
-    const empSession = verifySession(empCookie);
-    if (empSession && empSession.id) {
-      effectiveUserId = empSession.id;
-      isEmployee = true;
+  // Only check employee session if no admin session was found
+  if (!effectiveUserId) {
+    const empCookie = request.cookies.get("employee_session")?.value;
+    if (empCookie) {
+      const empSession = verifySession(empCookie);
+      if (empSession && empSession.id) {
+        effectiveUserId = empSession.id;
+        isEmployee = true;
+      }
     }
   }
 
