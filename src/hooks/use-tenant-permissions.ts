@@ -33,6 +33,8 @@ function normalizeFromRole(roleId?: string): TenantPermissions {
   if (id === "admin") {
     return { ...DEFAULT, loading: false, isAdmin: true, admin: "admin", dashboards: allDashboards };
   }
+  // For all other roles (including unknown), return least-privilege defaults.
+  // The API will provide the actual permissions.
   return { ...DEFAULT, loading: false };
 }
 

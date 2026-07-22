@@ -55,11 +55,13 @@ export default async function TenantAdminLayout({ children, searchParams }: { ch
   // developing the tenant-admin UI.
   let effectiveUser = user;
   if (effectiveUser && (!effectiveUser.roleId || effectiveUser.roleId === "viewer")) {
-    effectiveUser = { ...effectiveUser, roleId: safeGetCookie("X-Role-Id") || "admin" };
+    // Use the X-Role-Id cookie if available, but NEVER default to "admin".
+    // Default to "viewer" (least privilege) to prevent unauthorized admin access.
+    effectiveUser = { ...effectiveUser, roleId: safeGetCookie("X-Role-Id") || "viewer" };
   }
   if (!effectiveUser) {
     const cookieUserId = safeGetCookie("X-User-Id") || safeGetCookie("dev-user-id") || safeGetCookie("userId");
-    const cookieRole = safeGetCookie("X-Role-Id") || "admin";
+    const cookieRole = safeGetCookie("X-Role-Id") || "viewer";
     const cookieTenant = tenantSlug || urlTenant;
     if (cookieTenant) {
       effectiveUser = {

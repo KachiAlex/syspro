@@ -116,7 +116,7 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
     setMounted(true);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     const expire = "expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;";
     document.cookie = `X-User-Id=; ${expire}`;
     document.cookie = `dev-user-id=; ${expire}`;
@@ -125,6 +125,13 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
     document.cookie = `X-User-Email=; ${expire}`;
     document.cookie = `tenantSlug=; ${expire}`;
     document.cookie = `X-Tenant-Slug=; ${expire}`;
+    document.cookie = `employee_tenant=; ${expire}`;
+    // Call server-side logout to clear httpOnly session cookies
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // ignore — proceed with redirect anyway
+    }
     window.location.href = "/login";
   };
 

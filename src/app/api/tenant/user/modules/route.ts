@@ -21,6 +21,8 @@ export async function GET(request: NextRequest) {
     request.cookies.get("X-User-Id")?.value ||
     request.cookies.get("dev-user-id")?.value ||
     request.cookies.get("userId")?.value;
+  // roleId from query params/cookies is only a dev fallback.
+  // In production, roleId is always extracted from the signed session below.
   let roleId =
     searchParams.get("roleId") ||
     request.headers.get("x-role-id") ||
@@ -43,10 +45,9 @@ export async function GET(request: NextRequest) {
     const session = verifySession(sysSession);
     if (session) {
       effectiveUserId = session.id;
-      // Also extract roleId from session if not already set
-      if (!roleId && session.roleId) {
-        roleId = session.roleId;
-      }
+      // ALWAYS use roleId from the signed session — it is the source of truth.
+      // Override any roleId from query params or cookies to prevent privilege escalation.
+      roleId = session.roleId || undefined;
     }
   }
 
