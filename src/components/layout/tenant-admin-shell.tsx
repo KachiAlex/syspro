@@ -141,10 +141,14 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
   // Role-based route access:
   // - Admin role: full access to all routes
   // - Non-admin roles: only access routes for modules activated in portal_permissions
+  // - The base /tenant-admin route is always allowed — the page component
+  //   decides whether to show the admin dashboard or employee dashboard
+  const isDashboardRoute = dashboardKey === 'admin' && (safePath === '/tenant-admin' || safePath === '');
   const allowed =
     !safePath ||
     perms.loading ||
     !dashboardKey ||
+    isDashboardRoute ||
     perms.isAdmin ||
     (perms.employeeModules && perms.employeeModules[dashboardKey] === true);
 
