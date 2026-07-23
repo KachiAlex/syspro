@@ -102,7 +102,7 @@ export function EmployeeDashboard() {
           }`}
         >
           <LayoutDashboard className="w-4 h-4" />
-          Dashboard
+          Overview
         </button>
         <button
           onClick={() => setTopTab('self-service')}
