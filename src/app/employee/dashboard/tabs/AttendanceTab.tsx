@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, Play, Square, CalendarCheck, Clock, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, Timer, MapPin } from 'lucide-react';
+import { Loader2, Play, Square, CalendarCheck, Clock, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, Timer, MapPin, Users } from 'lucide-react';
 
+interface EmployeeProfile { id: string; name: string; email: string; jobTitle: string; role: string; departmentId: string; employmentType: string; status: string; hireDate: string; salary: number; lastLogin: string; }
 interface TodayRecord { id: string; date: string; status: string; check_in: string | null; check_out: string | null; check_in_lat: number | null; check_in_lng: number | null; check_out_lat: number | null; check_out_lng: number | null; }
 interface AttendanceRecord { id: string; date: string; status: string; check_in: string | null; check_out: string | null; notes: string | null; check_in_lat: number | null; check_in_lng: number | null; }
+interface TeamMember { id: string; name: string; job_title: string; role: string; status: string | null; check_in: string | null; check_out: string | null; }
 
-export function AttendanceTab() {
+export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
   const [todayRecord, setTodayRecord] = useState<TodayRecord | null>(null);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -14,6 +16,25 @@ export function AttendanceTab() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [calMonth, setCalMonth] = useState(new Date());
+  const [teamAttendance, setTeamAttendance] = useState<TeamMember[]>([]);
+  const [teamLoading, setTeamLoading] = useState(false);
+
+  const employeeRole = (profile?.role || 'staff').toLowerCase();
+  const canViewTeam = ['hod', 'head_of_department', 'hr', 'hr_admin', 'hr_manager'].includes(employeeRole);
+
+  const fetchTeamAttendance = useCallback(async () => {
+    setTeamLoading(true);
+    try {
+      const res = await fetch('/api/hr/employees/portal/attendance/department');
+      if (res.ok) {
+        const data = await res.json();
+        setTeamAttendance(data.teamAttendance || []);
+      }
+    } catch { /* ignore */ }
+    finally { setTeamLoading(false); }
+  }, []);
+
+  useEffect(() => { if (canViewTeam) fetchTeamAttendance(); }, [canViewTeam, fetchTeamAttendance]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -223,6 +244,42 @@ export function AttendanceTab() {
           ))}
         </div>
       </div>
+
+      {/* Team Attendance (HOD/HR only) */}
+      {canViewTeam && (
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-2">
+            <Users className="w-5 h-5 text-blue-600" />
+            <h3 className="text-sm font-semibold text-gray-900">Team Attendance — Today</h3>
+            {teamLoading && <Loader2 className="w-4 h-4 text-blue-600 animate-spin ml-auto" />}
+          </div>
+          {teamAttendance.length === 0 && !teamLoading ? (
+            <div className="p-8 text-center text-sm text-gray-500">No team members found.</div>
+          ) : (
+            <div className="overflow-x-auto"><table className="w-full min-w-[600px]"><thead className="bg-gray-50 border-b border-gray-200"><tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Name</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Role</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Check In</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 whitespace-nowrap">Check Out</th>
+            </tr></thead><tbody className="divide-y divide-gray-200">{teamAttendance.map((m) => (
+              <tr key={m.id} className="hover:bg-gray-50">
+                <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{m.name}</td>
+                <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap capitalize">{m.job_title || m.role}</td>
+                <td className="px-4 py-3 text-sm whitespace-nowrap">
+                  {m.check_in ? (
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${m.status==='present'?'bg-green-100 text-green-800':m.status==='late'?'bg-amber-100 text-amber-800':'bg-gray-100 text-gray-600'}`}>{m.status || 'present'}</span>
+                  ) : (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">Not checked in</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{m.check_in || '—'}</td>
+                <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{m.check_out || '—'}</td>
+              </tr>
+            ))}</tbody></table></div>
+          )}
+        </div>
+      )}
 
       {/* Recent records table */}
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">

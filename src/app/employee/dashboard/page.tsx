@@ -240,7 +240,7 @@ export default function EmployeeDashboardPage() {
         <main className="flex-1 p-4 md:p-6 max-w-5xl mx-auto w-full">
           {activeTab === 'dashboard' && perms.dashboard !== false && <DashboardTab profile={profile} onNavigate={(tab) => setActiveTab(tab as Tab)} />}
           {activeTab === 'tasks' && perms.tasks !== false && <TasksTab profile={profile} />}
-          {activeTab === 'attendance' && perms.attendance !== false && <AttendanceTab />}
+          {activeTab === 'attendance' && perms.attendance !== false && <AttendanceTab profile={profile} />}
           {activeTab === 'reports' && perms.reports !== false && <ReportsTab />}
           {activeTab === 'expenses' && perms.expenses !== false && <ExpensesTab profile={profile} />}
           {activeTab === 'leave' && perms.leave !== false && <LeaveTab profile={profile} />}
