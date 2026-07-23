@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     // Check if there's already an attendance record for today
     const existing = await sql`
-      SELECT id, check_in, check_out, status FROM admin_attendance
+      SELECT * FROM admin_attendance
       WHERE tenant_slug = ${session.tenantSlug}
         AND employee_id = ${session.id}
         AND date = ${today}

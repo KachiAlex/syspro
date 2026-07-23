@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decodeEmployeeToken, resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
+import { ensureHrTables } from "@/lib/hr/db";
 
 export async function GET(request: NextRequest) {
   const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
     const sql = SQL;
+    await ensureHrTables(sql);
     const today = new Date().toISOString().split("T")[0];
     const now = new Date();
     const currentMonth = now.getMonth();

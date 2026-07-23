@@ -60,7 +60,13 @@ export function DashboardTab({ profile, onNavigate }: {
       });
       const d = await res.json().catch(() => ({}));
       if (res.ok) { setSuccess(action === 'check_in' ? 'Checked in!' : 'Checked out!'); fetchData(); }
-      else { setError(d.error || 'Action failed'); if (res.status === 400) fetchData(); }
+      else {
+        setError(d.error || 'Action failed');
+        if (res.status === 400 && d.record) {
+          setData(prev => prev ? { ...prev, today: d.record } : prev);
+          fetchData();
+        }
+      }
     } catch { setError('Network error'); }
     finally { setActionLoading(false); }
   };

@@ -66,11 +66,20 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
       check_in text,
       check_out text,
       notes text,
+      check_in_lat numeric(10,7),
+      check_in_lng numeric(10,7),
+      check_out_lat numeric(10,7),
+      check_out_lng numeric(10,7),
       created_at timestamptz default now()
     )
   `;
   await sql`create index if not exists idx_admin_attendance_tenant on admin_attendance(tenant_slug)`;
   await sql`create index if not exists idx_admin_attendance_emp_date on admin_attendance(employee_id, date)`;
+  // Add location columns to existing tables (safe with if not exists)
+  await sql`alter table if exists admin_attendance add column if not exists check_in_lat numeric(10,7)`;
+  await sql`alter table if exists admin_attendance add column if not exists check_in_lng numeric(10,7)`;
+  await sql`alter table if exists admin_attendance add column if not exists check_out_lat numeric(10,7)`;
+  await sql`alter table if exists admin_attendance add column if not exists check_out_lng numeric(10,7)`;
 
   await sql`
     create table if not exists admin_leave (

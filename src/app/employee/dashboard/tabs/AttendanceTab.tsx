@@ -74,7 +74,10 @@ export function AttendanceTab() {
         fetchData();
       } else {
         setError(d.error || 'Action failed');
-        if (res.status === 400 && d.record) fetchData();
+        if (res.status === 400 && d.record) {
+          setTodayRecord(d.record);
+          fetchData();
+        }
       }
     } catch { setError('Network error'); }
     finally { setActionLoading(false); }
