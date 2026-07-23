@@ -50,7 +50,7 @@ export function AttendanceTab() {
           setLocationStatus('denied');
           resolve(null);
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
       );
     });
   };
@@ -72,7 +72,10 @@ export function AttendanceTab() {
         const locNote = location ? ' (location recorded)' : ' (no location)';
         setSuccess((action === 'check_in' ? 'Checked in successfully!' : 'Checked out successfully!') + locNote);
         fetchData();
-      } else setError(d.error || 'Action failed');
+      } else {
+        setError(d.error || 'Action failed');
+        if (res.status === 400 && d.record) fetchData();
+      }
     } catch { setError('Network error'); }
     finally { setActionLoading(false); }
   };
