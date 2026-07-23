@@ -44,6 +44,7 @@ export function EmployeeDashboard() {
   const [loading, setLoading] = useState(true);
   const [topTab, setTopTab] = useState<TopTab>('dashboard');
   const [selfSub, setSelfSub] = useState<SelfServiceSub>('attendance');
+  const [announcements, setAnnouncements] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadProfile() {
@@ -60,6 +61,18 @@ export function EmployeeDashboard() {
       }
     }
     loadProfile();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/hr/employees/portal/announcements');
+        if (res.ok) {
+          const data = await res.json();
+          setAnnouncements(data.announcements || []);
+        }
+      } catch {}
+    })();
   }, []);
 
   if (loading || perms.loading) {
@@ -115,6 +128,7 @@ export function EmployeeDashboard() {
         <div className="space-y-6">
           <DashboardTab
             profile={profileData}
+            announcements={announcements}
             onNavigate={(tab) => {
               const subMap: Record<string, SelfServiceSub> = {
                 attendance: 'attendance',

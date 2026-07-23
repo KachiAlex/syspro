@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Loader2, Play, Square, CalendarCheck, Clock, Target, ClipboardList,
-  CheckCircle, AlertCircle, TrendingUp, FileText, ChevronRight, Zap, MapPin,
+  CheckCircle, AlertCircle, TrendingUp, FileText, ChevronRight, Zap, MapPin, Megaphone,
 } from 'lucide-react';
 
 interface DashboardData {
@@ -20,9 +20,10 @@ interface DashboardData {
   recentReports: any[];
 }
 
-export function DashboardTab({ profile, onNavigate }: {
+export function DashboardTab({ profile, onNavigate, announcements }: {
   profile: { name: string; email: string; jobTitle: string; role: string; departmentId: string; employmentType: string; hireDate: string; salary: number };
   onNavigate: (tab: string) => void;
+  announcements?: any[];
 }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -93,6 +94,33 @@ export function DashboardTab({ profile, onNavigate }: {
 
   return (
     <div className="space-y-6">
+      {/* Announcements */}
+      {announcements && announcements.length > 0 && (
+        <div className="space-y-2">
+          {announcements.map((a) => (
+            <div key={a.id} className={`rounded-xl p-4 border flex items-start gap-3 ${
+              a.priority === 'urgent' ? 'bg-red-50 border-red-200' :
+              a.priority === 'high' ? 'bg-amber-50 border-amber-200' :
+              'bg-blue-50 border-blue-200'
+            }`}>
+              <Megaphone className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+                a.priority === 'urgent' ? 'text-red-600' :
+                a.priority === 'high' ? 'text-amber-600' :
+                'text-blue-600'
+              }`} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900">{a.title}</p>
+                <p className="text-xs text-gray-600 mt-0.5">{a.message}</p>
+                <p className="text-[10px] text-gray-400 mt-1">
+                  {a.created_by_name ? `${a.created_by_name} · ` : ''}
+                  {new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Welcome + Pending Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Welcome banner */}

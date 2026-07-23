@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decodeEmployeeToken, resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
-import { ensureHrTables } from "@/lib/hr/db";
+import { ensureHrTables, insertNotification } from "@/lib/hr/db";
 
 export async function GET(request: NextRequest) {
   const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -174,7 +174,7 @@ export async function PATCH(request: NextRequest) {
     let reports: any[] = [];
     try {
       reports = await sql`
-        SELECT id, approver_role, approver_id, department_id, status
+        SELECT id, employee_id, approver_role, approver_id, department_id, status
         FROM admin_staff_reports
         WHERE id = ${reportId} AND tenant_slug = ${session.tenantSlug}
         LIMIT 1
@@ -182,7 +182,7 @@ export async function PATCH(request: NextRequest) {
     } catch (e) {
       // Fallback without approver_role/approver_id columns
       reports = await sql`
-        SELECT id, department_id, status
+        SELECT id, employee_id, department_id, status
         FROM admin_staff_reports
         WHERE id = ${reportId} AND tenant_slug = ${session.tenantSlug}
         LIMIT 1
@@ -255,6 +255,32 @@ export async function PATCH(request: NextRequest) {
         `;
       }
     }
+
+    // Notify the report submitter about the decision
+    try {
+      const reportEmployeeId = report.employee_id;
+      if (reportEmployeeId) {
+        const actionLabels: Record<string, string> = {
+          approved: 'Report Approved',
+          rejected: 'Report Rejected',
+          needs_edit: 'Report Needs Edits',
+        };
+        const types: Record<string, string> = {
+          approved: 'success',
+          rejected: 'warning',
+          needs_edit: 'warning',
+        };
+        await insertNotification({
+          tenantSlug: session.tenantSlug,
+          employeeId: reportEmployeeId,
+          type: (types[newStatus] || 'info') as 'success' | 'warning' | 'info',
+          category: 'hr',
+          title: actionLabels[newStatus] || 'Report Update',
+          message: `Your report has been ${newStatus.replace('_', ' ')} by ${session.name}${comment ? ': ' + comment : ''}`,
+          actionUrl: '/employee/dashboard?tab=reports',
+        });
+      }
+    } catch (e) { console.error('Report notification failed:', (e as any)?.message); }
 
     return NextResponse.json({ success: true, status: newStatus });
   } catch (error: any) {

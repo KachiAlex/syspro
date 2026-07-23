@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decodeEmployeeToken, resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
+import { insertNotification } from "@/lib/hr/db";
 import { z } from "zod";
 
 /**
@@ -140,6 +141,30 @@ export async function POST(request: NextRequest) {
          ${d.date}, ${d.receiptUrl || null}, 'pending')
     `;
 
+    // Notify HODs in the same department about the new expense
+    if (deptId) {
+      try {
+        const hods = await SQL`
+          SELECT id FROM admin_employees
+          WHERE tenant_slug = ${session.tenantSlug}
+            AND department_id = ${deptId}
+            AND role IN ('hod', 'head_of_department')
+            AND id != ${session.id}
+        `;
+        for (const hod of hods) {
+          await insertNotification({
+            tenantSlug: session.tenantSlug,
+            employeeId: hod.id,
+            type: 'info',
+            category: 'finance',
+            title: 'New Expense Request',
+            message: `${session.name} submitted a ${d.category} expense of ₦${d.amount.toLocaleString()}`,
+            actionUrl: '/employee/dashboard?tab=expenses',
+          });
+        }
+      } catch (e) { console.error('Expense notification to HOD failed:', (e as any)?.message); }
+    }
+
     return NextResponse.json({ success: true, id }, { status: 201 });
   } catch (error: any) {
     console.error("Portal expense create error:", error?.message);
@@ -196,6 +221,9 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
+    // Get employee_id for notification
+    const expRow = await SQL`SELECT employee_id FROM admin_employee_expenses WHERE id = ${expenseId} AND tenant_slug = ${session.tenantSlug} LIMIT 1`;
+
     await SQL`
       UPDATE admin_employee_expenses
       SET status = ${newStatus},
@@ -206,6 +234,21 @@ export async function PATCH(request: NextRequest) {
           updated_at = now()
       WHERE id = ${expenseId} AND tenant_slug = ${session.tenantSlug}
     `;
+
+    // Notify the employee about the decision
+    try {
+      if (expRow.length > 0) {
+        await insertNotification({
+          tenantSlug: session.tenantSlug,
+          employeeId: expRow[0].employee_id,
+          type: action === 'approve' ? 'success' : 'warning',
+          category: 'finance',
+          title: `Expense ${action === 'approve' ? 'Approved' : 'Rejected'}`,
+          message: `Your expense request has been ${newStatus} by ${session.name}${comment ? ': ' + comment : ''}`,
+          actionUrl: '/employee/dashboard?tab=expenses',
+        });
+      }
+    } catch (e) { console.error('Expense notification to employee failed:', (e as any)?.message); }
 
     return NextResponse.json({ success: true, status: newStatus });
   } catch (error: any) {

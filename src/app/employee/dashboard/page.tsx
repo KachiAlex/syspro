@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, LogOut, Loader2, AlertCircle, CalendarCheck, Target, UserCircle, Menu, Bell, ClipboardList, Receipt, Plane, Wallet, CheckSquare, Sparkles, ChevronRight, X } from 'lucide-react';
+import { User, LogOut, Loader2, AlertCircle, CalendarCheck, Target, UserCircle, Menu, Bell, ClipboardList, Receipt, Plane, Wallet, CheckSquare, Sparkles, ChevronRight, X, CheckCheck, Megaphone } from 'lucide-react';
 import { DashboardTab } from './tabs/DashboardTab';
 import { AttendanceTab } from './tabs/AttendanceTab';
 import { ReportsTab } from './tabs/ReportsTab';
@@ -32,6 +32,9 @@ export default function EmployeeDashboardPage() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
   const [pendingActions, setPendingActions] = useState<{ label: string; tab: string; urgent: boolean }[]>([]);
   const [badgeCounts, setBadgeCounts] = useState<{ attendance: number; reports: number; profile: number; expenses: number; leave: number }>({ attendance: 0, reports: 0, profile: 0, expenses: 0, leave: 0 });
 
@@ -70,6 +73,50 @@ export default function EmployeeDashboardPage() {
     })();
   }, [profile]);
 
+  // Fetch notifications from DB
+  useEffect(() => {
+    if (!profile) return;
+    let interval: NodeJS.Timeout;
+    const fetchNotifs = async () => {
+      try {
+        const res = await fetch('/api/hr/employees/portal/notifications?limit=20');
+        if (res.ok) {
+          const data = await res.json();
+          setNotifications(data.notifications || []);
+          setUnreadCount(data.unreadCount || 0);
+        }
+      } catch {}
+    };
+    fetchNotifs();
+    interval = setInterval(fetchNotifs, 30000);
+    return () => clearInterval(interval);
+  }, [profile]);
+
+  // Fetch announcements
+  useEffect(() => {
+    if (!profile) return;
+    (async () => {
+      try {
+        const res = await fetch('/api/hr/employees/portal/announcements');
+        if (res.ok) {
+          const data = await res.json();
+          setAnnouncements(data.announcements || []);
+        }
+      } catch {}
+    })();
+  }, [profile]);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await fetch('/api/hr/employees/portal/notifications', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markAll: true }),
+      });
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+    } catch {}
+  };
+
   const handleLogout = async () => {
     await fetch('/api/hr/employees/auth/logout', { method: 'POST' }).catch(() => {});
     router.replace('/login');
@@ -80,7 +127,7 @@ export default function EmployeeDashboardPage() {
   if (!profile) return null;
 
   const fmtRole = (r: string) => r ? r.charAt(0).toUpperCase() + r.slice(1) : 'Staff';
-  const totalBadges = badgeCounts.attendance + badgeCounts.reports + badgeCounts.profile + badgeCounts.expenses + badgeCounts.leave;
+  const totalBadges = unreadCount + badgeCounts.attendance + badgeCounts.reports + badgeCounts.profile + badgeCounts.expenses + badgeCounts.leave;
 
   const employeeRole = (profile.role || 'staff').toLowerCase();
 
@@ -135,32 +182,45 @@ export default function EmployeeDashboardPage() {
           >
             <div className="relative">
               <Bell className="w-4 h-4 text-slate-400" />
-              {totalBadges > 0 && <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full text-[8px] font-bold flex items-center justify-center text-white">{totalBadges}</span>}
+              {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full text-[8px] font-bold flex items-center justify-center text-white">{unreadCount}</span>}
             </div>
-            <span className="text-xs text-slate-400">{totalBadges > 0 ? `${totalBadges} pending action${totalBadges > 1 ? 's' : ''}` : 'All caught up'}</span>
+            <span className="text-xs text-slate-400">{unreadCount > 0 ? `${unreadCount} new notification${unreadCount > 1 ? 's' : ''}` : 'All caught up'}</span>
           </button>
           {notifOpen && (
-            <div className="absolute left-3 right-3 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-80 overflow-y-auto">
+            <div className="absolute left-3 right-3 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
               <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
                 <span className="text-xs font-semibold text-gray-900">Notifications</span>
-                <button onClick={() => setNotifOpen(false)} className="text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button>
+                <div className="flex items-center gap-2">
+                  {unreadCount > 0 && <button onClick={handleMarkAllRead} className="text-[10px] text-blue-600 hover:text-blue-700 flex items-center gap-1"><CheckCheck className="w-3 h-3" />Mark all read</button>}
+                  <button onClick={() => setNotifOpen(false)} className="text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button>
+                </div>
               </div>
-              {pendingActions.length === 0 ? (
+              {notifications.length === 0 ? (
                 <div className="px-3 py-6 text-center">
                   <CheckSquare className="w-6 h-6 text-green-400 mx-auto mb-1" />
-                  <p className="text-xs text-gray-400">All caught up!</p>
+                  <p className="text-xs text-gray-400">No notifications yet</p>
                 </div>
               ) : (
                 <div className="py-1">
-                  {pendingActions.map((action, i) => (
+                  {notifications.map((n) => (
                     <button
-                      key={i}
-                      onClick={() => { setActiveTab(action.tab as Tab); setNotifOpen(false); setSidebarOpen(false); }}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-left text-xs hover:bg-gray-50 transition-colors ${action.urgent ? 'text-red-700' : 'text-gray-700'}`}
+                      key={n.id}
+                      onClick={() => {
+                        if (n.action_url) {
+                          const url = new URL(n.action_url, window.location.origin);
+                          const tab = url.searchParams.get('tab') as Tab;
+                          if (tab) setActiveTab(tab);
+                        }
+                        setNotifOpen(false); setSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-start gap-2 px-3 py-2.5 text-left text-xs hover:bg-gray-50 transition-colors ${!n.is_read ? 'bg-blue-50/50' : ''}`}
                     >
-                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${action.urgent ? 'bg-red-500' : 'bg-amber-500'}`} />
-                      <span className="flex-1">{action.label}</span>
-                      <ChevronRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${!n.is_read ? (n.type === 'success' ? 'bg-green-500' : n.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500') : 'bg-gray-300'}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-medium ${!n.is_read ? 'text-gray-900' : 'text-gray-500'}`}>{n.title}</p>
+                        <p className="text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
+                        <p className="text-[10px] text-gray-400 mt-1">{new Date(n.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -204,30 +264,43 @@ export default function EmployeeDashboardPage() {
           <div className="relative">
             <button onClick={() => setNotifOpen(!notifOpen)}>
               <Bell className="w-5 h-5 text-gray-600" />
-              {totalBadges > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold flex items-center justify-center text-white">{totalBadges}</span>}
+              {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold flex items-center justify-center text-white">{unreadCount}</span>}
             </button>
             {notifOpen && (
-              <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-200 z-50 w-72 max-h-80 overflow-y-auto">
+              <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-200 z-50 w-72 max-h-96 overflow-y-auto">
                 <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
                   <span className="text-xs font-semibold text-gray-900">Notifications</span>
-                  <button onClick={() => setNotifOpen(false)} className="text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button>
+                  <div className="flex items-center gap-2">
+                    {unreadCount > 0 && <button onClick={handleMarkAllRead} className="text-[10px] text-blue-600 hover:text-blue-700 flex items-center gap-1"><CheckCheck className="w-3 h-3" />Mark all</button>}
+                    <button onClick={() => setNotifOpen(false)} className="text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button>
+                  </div>
                 </div>
-                {pendingActions.length === 0 ? (
+                {notifications.length === 0 ? (
                   <div className="px-3 py-6 text-center">
                     <CheckSquare className="w-6 h-6 text-green-400 mx-auto mb-1" />
-                    <p className="text-xs text-gray-400">All caught up!</p>
+                    <p className="text-xs text-gray-400">No notifications yet</p>
                   </div>
                 ) : (
                   <div className="py-1">
-                    {pendingActions.map((action, i) => (
+                    {notifications.map((n) => (
                       <button
-                        key={i}
-                        onClick={() => { setActiveTab(action.tab as Tab); setNotifOpen(false); }}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-left text-xs hover:bg-gray-50 transition-colors ${action.urgent ? 'text-red-700' : 'text-gray-700'}`}
+                        key={n.id}
+                        onClick={() => {
+                          if (n.action_url) {
+                            const url = new URL(n.action_url, window.location.origin);
+                            const tab = url.searchParams.get('tab') as Tab;
+                            if (tab) setActiveTab(tab);
+                          }
+                          setNotifOpen(false);
+                        }}
+                        className={`w-full flex items-start gap-2 px-3 py-2.5 text-left text-xs hover:bg-gray-50 transition-colors ${!n.is_read ? 'bg-blue-50/50' : ''}`}
                       >
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${action.urgent ? 'bg-red-500' : 'bg-amber-500'}`} />
-                        <span className="flex-1">{action.label}</span>
-                        <ChevronRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${!n.is_read ? (n.type === 'success' ? 'bg-green-500' : n.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500') : 'bg-gray-300'}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className={`font-medium ${!n.is_read ? 'text-gray-900' : 'text-gray-500'}`}>{n.title}</p>
+                          <p className="text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
+                          <p className="text-[10px] text-gray-400 mt-1">{new Date(n.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                        </div>
                       </button>
                     ))}
                   </div>
@@ -238,7 +311,7 @@ export default function EmployeeDashboardPage() {
         </header>
 
         <main className="flex-1 p-4 md:p-6 max-w-5xl mx-auto w-full">
-          {activeTab === 'dashboard' && perms.dashboard !== false && <DashboardTab profile={profile} onNavigate={(tab) => setActiveTab(tab as Tab)} />}
+          {activeTab === 'dashboard' && perms.dashboard !== false && <DashboardTab profile={profile} onNavigate={(tab) => setActiveTab(tab as Tab)} announcements={announcements} />}
           {activeTab === 'tasks' && perms.tasks !== false && <TasksTab profile={profile} />}
           {activeTab === 'attendance' && perms.attendance !== false && <AttendanceTab profile={profile} />}
           {activeTab === 'reports' && perms.reports !== false && <ReportsTab />}

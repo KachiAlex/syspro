@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decodeEmployeeToken, resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
-import { ensureHrTables } from "@/lib/hr/db";
+import { ensureHrTables, insertNotification } from "@/lib/hr/db";
 import { z } from "zod";
 
 /**
@@ -185,6 +185,19 @@ export async function POST(request: NextRequest) {
            ${d.frequency}, ${d.dueDate}, 'pending', ${session.name})
       `;
     }
+
+    // Notify the assigned employee
+    try {
+      await insertNotification({
+        tenantSlug: session.tenantSlug,
+        employeeId: d.employeeId,
+        type: 'info',
+        category: 'hr',
+        title: d.isKpi ? 'New KPI Assigned' : 'New Task Assigned',
+        message: `${session.name} assigned you: "${d.title}" (due ${d.dueDate})`,
+        actionUrl: '/employee/dashboard?tab=tasks',
+      });
+    } catch (e) { console.error('Task notification failed:', (e as any)?.message); }
 
     return NextResponse.json({ success: true, id }, { status: 201 });
   } catch (error: any) {

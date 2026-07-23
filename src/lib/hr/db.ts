@@ -293,6 +293,44 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
   await sql`create index if not exists idx_admin_leave_requests_tenant on admin_leave_requests(tenant_slug)`;
   await sql`create index if not exists idx_admin_leave_requests_emp on admin_leave_requests(tenant_slug, employee_id)`;
   await sql`create index if not exists idx_admin_leave_requests_status on admin_leave_requests(status)`;
+
+  // Notifications
+  await sql`
+    create table if not exists admin_notifications (
+      id text primary key,
+      tenant_slug text not null,
+      employee_id text not null,
+      type text not null default 'info' check (type in ('info','success','warning','error')),
+      category text not null default 'hr' check (category in ('hr','finance','crm','projects','system','general')),
+      title text not null,
+      message text not null,
+      action_url text,
+      is_read boolean default false,
+      created_at timestamptz default now(),
+      read_at timestamptz
+    )
+  `;
+  await sql`create index if not exists idx_admin_notifications_emp on admin_notifications(tenant_slug, employee_id, is_read)`;
+  await sql`create index if not exists idx_admin_notifications_created on admin_notifications(created_at desc)`;
+
+  // Announcements
+  await sql`
+    create table if not exists admin_announcements (
+      id text primary key,
+      tenant_slug text not null,
+      title text not null,
+      message text not null,
+      audience text default 'all' check (audience in ('all','department','role')),
+      target_id text,
+      priority text default 'medium' check (priority in ('low','medium','high','urgent')),
+      created_by text,
+      created_by_name text,
+      created_at timestamptz default now(),
+      expires_at timestamptz,
+      is_active boolean default true
+    )
+  `;
+  await sql`create index if not exists idx_admin_announcements_tenant on admin_announcements(tenant_slug, is_active, created_at desc)`;
 }
 
 // ============================================================================
@@ -1821,4 +1859,130 @@ export async function deleteStaffTask(tenantSlug: string, id: string) {
     delete from admin_staff_tasks
     where id = ${id} and tenant_slug = ${tenantSlug}
   `;
+}
+
+// ============================================================================
+// NOTIFICATIONS
+// ============================================================================
+
+export async function insertNotification(params: {
+  tenantSlug: string;
+  employeeId: string;
+  type?: 'info' | 'success' | 'warning' | 'error';
+  category?: 'hr' | 'finance' | 'crm' | 'projects' | 'system' | 'general';
+  title: string;
+  message: string;
+  actionUrl?: string | null;
+}) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const id = randomUUID();
+  await sql`
+    insert into admin_notifications (id, tenant_slug, employee_id, type, category, title, message, action_url)
+    values (${id}, ${params.tenantSlug}, ${params.employeeId}, ${params.type || 'info'}, ${params.category || 'hr'}, ${params.title}, ${params.message}, ${params.actionUrl || null})
+  `;
+  return id;
+}
+
+export async function listNotifications(
+  tenantSlug: string,
+  employeeId: string,
+  opts?: { unreadOnly?: boolean; limit?: number }
+) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const limit = opts?.limit ?? 50;
+  if (opts?.unreadOnly) {
+    return await sql`
+      select * from admin_notifications
+      where tenant_slug = ${tenantSlug} and employee_id = ${employeeId} and is_read = false
+      order by created_at desc limit ${limit}
+    `;
+  }
+  return await sql`
+    select * from admin_notifications
+    where tenant_slug = ${tenantSlug} and employee_id = ${employeeId}
+    order by created_at desc limit ${limit}
+  `;
+}
+
+export async function markNotificationRead(tenantSlug: string, notificationId: string, employeeId: string) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  await sql`
+    update admin_notifications set is_read = true, read_at = now()
+    where id = ${notificationId} and tenant_slug = ${tenantSlug} and employee_id = ${employeeId}
+  `;
+}
+
+export async function markAllNotificationsRead(tenantSlug: string, employeeId: string) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  await sql`
+    update admin_notifications set is_read = true, read_at = now()
+    where tenant_slug = ${tenantSlug} and employee_id = ${employeeId} and is_read = false
+  `;
+}
+
+export async function getUnreadNotificationCount(tenantSlug: string, employeeId: string) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const rows = await sql`
+    select count(*)::int as cnt from admin_notifications
+    where tenant_slug = ${tenantSlug} and employee_id = ${employeeId} and is_read = false
+  `;
+  return (rows as any[])[0]?.cnt ?? 0;
+}
+
+// ============================================================================
+// ANNOUNCEMENTS
+// ============================================================================
+
+export async function insertAnnouncement(params: {
+  tenantSlug: string;
+  title: string;
+  message: string;
+  audience?: 'all' | 'department' | 'role';
+  targetId?: string | null;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  createdBy?: string | null;
+  createdByName?: string | null;
+  expiresAt?: string | null;
+}) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const id = randomUUID();
+  await sql`
+    insert into admin_announcements (id, tenant_slug, title, message, audience, target_id, priority, created_by, created_by_name, expires_at)
+    values (${id}, ${params.tenantSlug}, ${params.title}, ${params.message}, ${params.audience || 'all'}, ${params.targetId || null}, ${params.priority || 'medium'}, ${params.createdBy || null}, ${params.createdByName || null}, ${params.expiresAt || null})
+  `;
+  return id;
+}
+
+export async function listAnnouncements(
+  tenantSlug: string,
+  opts?: { activeOnly?: boolean; limit?: number }
+) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const limit = opts?.limit ?? 20;
+  if (opts?.activeOnly) {
+    return await sql`
+      select * from admin_announcements
+      where tenant_slug = ${tenantSlug} and is_active = true
+      and (expires_at is null or expires_at > now())
+      order by created_at desc limit ${limit}
+    `;
+  }
+  return await sql`
+    select * from admin_announcements
+    where tenant_slug = ${tenantSlug}
+    order by created_at desc limit ${limit}
+  `;
+}
+
+export async function deleteAnnouncement(tenantSlug: string, id: string) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  await sql`delete from admin_announcements where id = ${id} and tenant_slug = ${tenantSlug}`;
 }

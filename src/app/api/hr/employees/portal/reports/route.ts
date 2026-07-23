@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decodeEmployeeToken, resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
-import { ensureHrTables } from "@/lib/hr/db";
+import { ensureHrTables, insertNotification } from "@/lib/hr/db";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 
@@ -276,6 +276,31 @@ export async function POST(request: NextRequest) {
     }
 
     const record = await sql`SELECT * FROM admin_staff_reports WHERE id = ${id}`;
+
+    // Notify HODs in the department about the new report
+    if (departmentId) {
+      try {
+        const hods = await sql`
+          SELECT id FROM admin_employees
+          WHERE tenant_slug = ${session.tenantSlug}
+            AND department_id = ${departmentId}
+            AND role IN ('hod', 'head_of_department')
+            AND id != ${session.id}
+        `;
+        for (const hod of hods) {
+          await insertNotification({
+            tenantSlug: session.tenantSlug,
+            employeeId: hod.id,
+            type: 'info',
+            category: 'hr',
+            title: 'New Report Submitted',
+            message: `${session.name} submitted a ${d.reportType} report for ${d.reportDate}`,
+            actionUrl: '/employee/dashboard?tab=approvals',
+          });
+        }
+      } catch (e) { console.error('Report notification to HOD failed:', (e as any)?.message); }
+    }
+
     return NextResponse.json({ success: true, report: record[0] }, { status: 201 });
   } catch (error: any) {
     console.error("Employee report create error:", error?.message || error, error?.stack);

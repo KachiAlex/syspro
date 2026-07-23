@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decodeEmployeeToken, resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
-import { ensureHrTables } from "@/lib/hr/db";
+import { ensureHrTables, insertNotification } from "@/lib/hr/db";
 import { z } from "zod";
 
 /**
@@ -100,6 +100,32 @@ export async function POST(request: NextRequest) {
          ${parsed.data.reason}, 'pending', now())
     `;
 
+    // Notify HODs in the same department about the new leave request
+    try {
+      const empInfo = await SQL`SELECT department_id FROM admin_employees WHERE id = ${session.id} AND tenant_slug = ${session.tenantSlug} LIMIT 1`;
+      const deptId = empInfo[0]?.department_id;
+      if (deptId) {
+        const hods = await SQL`
+          SELECT id FROM admin_employees
+          WHERE tenant_slug = ${session.tenantSlug}
+            AND department_id = ${deptId}
+            AND role IN ('hod', 'head_of_department')
+            AND id != ${session.id}
+        `;
+        for (const hod of hods) {
+          await insertNotification({
+            tenantSlug: session.tenantSlug,
+            employeeId: hod.id,
+            type: 'info',
+            category: 'hr',
+            title: 'New Leave Request',
+            message: `${session.name} requested ${parsed.data.leaveType} leave from ${parsed.data.startDate} to ${parsed.data.endDate}`,
+            actionUrl: '/employee/dashboard?tab=leave',
+          });
+        }
+      }
+    } catch (e) { console.error('Leave notification to HOD failed:', (e as any)?.message); }
+
     return NextResponse.json({ success: true, id }, { status: 201 });
   } catch (error) {
     console.error("Portal leave create error:", error);
@@ -165,6 +191,9 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
+    // Get the employee_id for the leave request
+    const leaveRow = await SQL`SELECT employee_id FROM admin_leave_requests WHERE id = ${leaveId} AND tenant_slug = ${session.tenantSlug} LIMIT 1`;
+
     await SQL`
       UPDATE admin_leave_requests
       SET status = ${newStatus},
@@ -174,6 +203,21 @@ export async function PATCH(request: NextRequest) {
           reviewed_at = now()
       WHERE id = ${leaveId} AND tenant_slug = ${session.tenantSlug}
     `;
+
+    // Notify the employee about the decision
+    try {
+      if (leaveRow.length > 0) {
+        await insertNotification({
+          tenantSlug: session.tenantSlug,
+          employeeId: leaveRow[0].employee_id,
+          type: action === 'approve' ? 'success' : 'warning',
+          category: 'hr',
+          title: `Leave ${action === 'approve' ? 'Approved' : 'Rejected'}`,
+          message: `Your leave request has been ${newStatus} by ${session.name}${comment ? ': ' + comment : ''}`,
+          actionUrl: '/employee/dashboard?tab=leave',
+        });
+      }
+    } catch (e) { console.error('Leave notification to employee failed:', (e as any)?.message); }
 
     return NextResponse.json({ success: true, status: newStatus });
   } catch (error: any) {

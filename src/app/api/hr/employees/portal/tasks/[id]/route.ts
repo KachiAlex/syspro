@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decodeEmployeeToken, resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
-import { ensureHrTables } from "@/lib/hr/db";
+import { ensureHrTables, insertNotification } from "@/lib/hr/db";
 import { z } from "zod";
 
 const updateStatusSchema = z.object({
@@ -77,6 +77,15 @@ export async function PATCH(
       }
     }
 
+    // Get task info for notification
+    let taskEmployeeId: string | null = null;
+    let taskTitle: string | null = null;
+    try {
+      const taskRow = await sql`SELECT employee_id, title FROM admin_staff_tasks WHERE id = ${taskId} AND tenant_slug = ${session.tenantSlug} LIMIT 1`;
+      taskEmployeeId = taskRow[0]?.employee_id || null;
+      taskTitle = taskRow[0]?.title || null;
+    } catch {}
+
     if (completionNote && newStatus === 'completed') {
       try {
         await sql`
@@ -98,6 +107,34 @@ export async function PATCH(
         SET status = ${newStatus}, updated_at = now()
         WHERE id = ${taskId} AND tenant_slug = ${session.tenantSlug}
       `;
+    }
+
+    // Notify HODs when an employee completes a task
+    if (newStatus === 'completed' && taskEmployeeId && taskTitle) {
+      try {
+        const empInfo = await sql`SELECT department_id FROM admin_employees WHERE id = ${taskEmployeeId} AND tenant_slug = ${session.tenantSlug} LIMIT 1`;
+        const deptId = empInfo[0]?.department_id;
+        if (deptId) {
+          const hods = await sql`
+            SELECT id FROM admin_employees
+            WHERE tenant_slug = ${session.tenantSlug}
+              AND department_id = ${deptId}
+              AND role IN ('hod', 'head_of_department')
+              AND id != ${session.id}
+          `;
+          for (const hod of hods) {
+            await insertNotification({
+              tenantSlug: session.tenantSlug,
+              employeeId: hod.id,
+              type: 'success',
+              category: 'hr',
+              title: 'Task Completed',
+              message: `${session.name} completed: "${taskTitle}"`,
+              actionUrl: '/employee/dashboard?tab=tasks',
+            });
+          }
+        }
+      } catch (e) { console.error('Task completion notification failed:', (e as any)?.message); }
     }
 
     return NextResponse.json({ success: true, status: newStatus });
