@@ -53,6 +53,8 @@ interface AttendanceRecord {
   checkOut: string;
   status: string;
   hours: number;
+  checkInLat: number | null;
+  checkInLng: number | null;
 }
 
 interface LeaveRequest {
@@ -296,7 +298,9 @@ const HRComponent: React.FC = () => {
         checkIn: r.checkIn || r.check_in || '—',
         checkOut: r.checkOut || r.check_out || '—',
         status: r.status,
-        hours: r.hours || 0
+        hours: r.hours || 0,
+        checkInLat: r.checkInLat ?? r.check_in_lat ?? null,
+        checkInLng: r.checkInLng ?? r.check_in_lng ?? null,
       })));
       setAttendanceStats(fetchedStats);
       setLeaveRequests(fetchedLeave.map((r: any) => ({
@@ -716,6 +720,7 @@ const HRComponent: React.FC = () => {
                 <th className="px-4 py-3 text-left font-semibold text-theme-text-primary">Check Out</th>
                 <th className="px-4 py-3 text-left font-semibold text-theme-text-primary">Status</th>
                 <th className="px-4 py-3 text-left font-semibold text-theme-text-primary">Hours</th>
+                <th className="px-4 py-3 text-left font-semibold text-theme-text-primary">Location</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-theme-border">
@@ -736,11 +741,18 @@ const HRComponent: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-theme-text-secondary">{record.hours}</td>
+                    <td className="px-4 py-3 text-theme-text-secondary text-xs">
+                      {record.checkInLat != null ? (
+                        <a href={`https://www.google.com/maps?q=${record.checkInLat},${record.checkInLng}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                          {Number(record.checkInLat).toFixed(4)}, {Number(record.checkInLng).toFixed(4)}
+                        </a>
+                      ) : '—'}
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-theme-text-secondary">
+                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-theme-text-secondary">
                     No attendance records for today
                   </td>
                 </tr>

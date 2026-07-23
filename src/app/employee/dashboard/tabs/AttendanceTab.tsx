@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, Play, Square, CalendarCheck, Clock, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, Timer } from 'lucide-react';
+import { Loader2, Play, Square, CalendarCheck, Clock, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, Timer, MapPin } from 'lucide-react';
 
-interface TodayRecord { id: string; date: string; status: string; check_in: string | null; check_out: string | null; }
-interface AttendanceRecord { id: string; date: string; status: string; check_in: string | null; check_out: string | null; notes: string | null; }
+interface TodayRecord { id: string; date: string; status: string; check_in: string | null; check_out: string | null; check_in_lat: number | null; check_in_lng: number | null; check_out_lat: number | null; check_out_lng: number | null; }
+interface AttendanceRecord { id: string; date: string; status: string; check_in: string | null; check_out: string | null; notes: string | null; check_in_lat: number | null; check_in_lng: number | null; }
 
 export function AttendanceTab() {
   const [todayRecord, setTodayRecord] = useState<TodayRecord | null>(null);
@@ -30,16 +30,49 @@ export function AttendanceTab() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'fetching' | 'granted' | 'denied'>('idle');
+
+  const getLocation = (): Promise<{ latitude: number; longitude: number } | null> => {
+    return new Promise((resolve) => {
+      if (!('geolocation' in navigator)) {
+        setLocationStatus('denied');
+        resolve(null);
+        return;
+      }
+      setLocationStatus('fetching');
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLocationStatus('granted');
+          resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+        },
+        (err) => {
+          console.warn('Geolocation error:', err.message);
+          setLocationStatus('denied');
+          resolve(null);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    });
+  };
+
   const handleAction = async (action: 'check_in' | 'check_out') => {
     setActionLoading(true); setError(null); setSuccess(null);
     try {
+      const location = await getLocation();
       const res = await fetch('/api/hr/employees/portal/attendance/check-in', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({
+          action,
+          latitude: location?.latitude,
+          longitude: location?.longitude,
+        }),
       });
       const d = await res.json().catch(() => ({}));
-      if (res.ok) { setSuccess(action === 'check_in' ? 'Checked in successfully!' : 'Checked out successfully!'); fetchData(); }
-      else setError(d.error || 'Action failed');
+      if (res.ok) {
+        const locNote = location ? ' (location recorded)' : ' (no location)';
+        setSuccess((action === 'check_in' ? 'Checked in successfully!' : 'Checked out successfully!') + locNote);
+        fetchData();
+      } else setError(d.error || 'Action failed');
     } catch { setError('Network error'); }
     finally { setActionLoading(false); }
   };
@@ -120,6 +153,24 @@ export function AttendanceTab() {
             <button onClick={() => handleAction('check_out')} disabled={actionLoading || !hasCheckedIn || hasCheckedOut} className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Square className="w-4 h-4" />}{hasCheckedOut ? 'Checked Out' : 'Check Out'}</button>
           </div>
           <p className="text-xs text-gray-400 mt-3 text-center">Current time: {currentTime}</p>
+          {locationStatus === 'denied' && (
+            <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
+              <MapPin className="w-3.5 h-3.5" />
+              Location permission denied. Check-in will work but location won&apos;t be recorded.
+            </div>
+          )}
+          {locationStatus === 'granted' && (
+            <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-green-50 px-3 py-2 text-xs text-green-700">
+              <MapPin className="w-3.5 h-3.5" />
+              Location access granted
+            </div>
+          )}
+          {todayRecord?.check_in_lat != null && (
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-400">
+              <MapPin className="w-3 h-3" />
+              Check-in location: {Number(todayRecord.check_in_lat).toFixed(5)}, {Number(todayRecord.check_in_lng).toFixed(5)}
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-200 p-5">

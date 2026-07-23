@@ -723,6 +723,10 @@ function normalizeAttendanceRow(row: any): AttendanceRecord {
     checkIn: row.check_in ?? null,
     checkOut: row.check_out ?? null,
     notes: row.notes ?? null,
+    checkInLat: row.check_in_lat != null ? Number(row.check_in_lat) : null,
+    checkInLng: row.check_in_lng != null ? Number(row.check_in_lng) : null,
+    checkOutLat: row.check_out_lat != null ? Number(row.check_out_lat) : null,
+    checkOutLng: row.check_out_lng != null ? Number(row.check_out_lng) : null,
     createdAt: row.created_at,
   };
 }

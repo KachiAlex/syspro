@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Loader2, Play, Square, CalendarCheck, Clock, Target, ClipboardList,
-  CheckCircle, AlertCircle, TrendingUp, FileText, ChevronRight, Zap,
+  CheckCircle, AlertCircle, TrendingUp, FileText, ChevronRight, Zap, MapPin,
 } from 'lucide-react';
 
 interface DashboardData {
@@ -44,9 +44,19 @@ export function DashboardTab({ profile, onNavigate }: {
     setActionLoading(true);
     setError(null); setSuccess(null);
     try {
+      let location: { latitude: number; longitude: number } | null = null;
+      if ('geolocation' in navigator) {
+        location = await new Promise((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+            () => resolve(null),
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+          );
+        });
+      }
       const res = await fetch('/api/hr/employees/portal/attendance/check-in', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, latitude: location?.latitude, longitude: location?.longitude }),
       });
       const d = await res.json().catch(() => ({}));
       if (res.ok) { setSuccess(action === 'check_in' ? 'Checked in!' : 'Checked out!'); fetchData(); }

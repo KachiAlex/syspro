@@ -106,6 +106,10 @@ export interface AttendanceRecord {
   checkIn: string | null;
   checkOut: string | null;
   notes: string | null;
+  checkInLat: number | null;
+  checkInLng: number | null;
+  checkOutLat: number | null;
+  checkOutLng: number | null;
   createdAt: string;
 }
 

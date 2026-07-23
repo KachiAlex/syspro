@@ -12,6 +12,8 @@ interface AttendanceRecord {
   checkOut: string;
   status: string;
   hours: number;
+  checkInLat: number | null;
+  checkInLng: number | null;
 }
 
 interface LeaveRequest {
@@ -47,7 +49,9 @@ export default function AttendancePage() {
         checkIn: r.checkIn || r.check_in || '—',
         checkOut: r.checkOut || r.check_out || '—',
         status: r.status,
-        hours: r.hours || 0
+        hours: r.hours || 0,
+        checkInLat: r.checkInLat ?? r.check_in_lat ?? null,
+        checkInLng: r.checkInLng ?? r.check_in_lng ?? null,
       })));
       setAttendanceStats(fetchedStats);
       setLeaveRequests(fetchedLeave.map((r: any) => ({
@@ -150,6 +154,7 @@ export default function AttendancePage() {
                 <th className="px-4 py-3 text-left font-semibold text-gray-900">Check Out</th>
                 <th className="px-4 py-3 text-left font-semibold text-gray-900">Status</th>
                 <th className="px-4 py-3 text-left font-semibold text-gray-900">Hours</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-900">Location</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -170,11 +175,18 @@ export default function AttendancePage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-600">{record.hours}</td>
+                    <td className="px-4 py-3 text-gray-600 text-xs">
+                      {record.checkInLat != null ? (
+                        <a href={`https://www.google.com/maps?q=${record.checkInLat},${record.checkInLng}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                          {Number(record.checkInLat).toFixed(4)}, {Number(record.checkInLng).toFixed(4)}
+                        </a>
+                      ) : '—'}
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-600">
+                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-600">
                     No attendance records for selected date
                   </td>
                 </tr>
