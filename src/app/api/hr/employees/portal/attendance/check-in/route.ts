@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
 
     if (action === "check_in") {
       if (existing.length > 0 && existing[0].check_in) {
+        console.log('[check-in] Already checked in. Record:', { id: existing[0].id, check_in: existing[0].check_in, status: existing[0].status, employee_id: existing[0].employee_id, date: existing[0].date });
         return NextResponse.json(
           { error: "Already checked in today", record: existing[0] },
           { status: 400 }

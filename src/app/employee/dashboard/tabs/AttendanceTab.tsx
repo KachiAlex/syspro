@@ -21,7 +21,7 @@ export function AttendanceTab() {
       const res = await fetch('/api/hr/employees/portal/attendance/check-in');
       if (res.ok) {
         const data = await res.json();
-        setTodayRecord(data.today || null);
+        setTodayRecord(prev => data.today || prev);
         setRecords(data.records || []);
       }
     } catch { setError('Failed to load attendance'); }
@@ -76,7 +76,6 @@ export function AttendanceTab() {
         setError(d.error || 'Action failed');
         if (res.status === 400 && d.record) {
           setTodayRecord(d.record);
-          fetchData();
         }
       }
     } catch { setError('Network error'); }

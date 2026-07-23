@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
         WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id} AND date = ${today}
         LIMIT 1
       `;
+      console.log('[dashboard] todayAtt query:', { tenantSlug: session.tenantSlug, employeeId: session.id, date: today, resultCount: todayAtt.length, firstRow: todayAtt[0] });
     } catch (e) { console.error("dashboard: todayAtt failed:", (e as any)?.message); }
 
     // This month's attendance summary

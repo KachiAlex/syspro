@@ -33,7 +33,10 @@ export function DashboardTab({ profile, onNavigate }: {
   const fetchData = useCallback(async () => {
     try {
       const res = await fetch('/api/hr/employees/portal/dashboard');
-      if (res.ok) setData(await res.json());
+      if (res.ok) {
+        const fresh = await res.json();
+        setData(prev => prev ? { ...fresh, today: fresh.today || prev.today } : fresh);
+      }
     } catch { setError('Failed to load dashboard'); }
     finally { setLoading(false); }
   }, []);
@@ -63,8 +66,7 @@ export function DashboardTab({ profile, onNavigate }: {
       else {
         setError(d.error || 'Action failed');
         if (res.status === 400 && d.record) {
-          setData(prev => prev ? { ...prev, today: d.record } : prev);
-          fetchData();
+          setData(prev => prev ? { ...prev, today: d.record } : { today: d.record, attendanceSummary: {}, calendarData: {}, pendingActions: [], stats: { presentDays: 0, lateDays: 0, absentDays: 0, halfDays: 0, onTimeRate: 0, pendingLeave: 0, openTasks: 0, kpiCount: 0, reportsThisMonth: 0, payslipCount: 0 }, kpis: [], recentReports: [] });
         }
       }
     } catch { setError('Network error'); }
