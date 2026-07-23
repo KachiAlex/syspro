@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Loader2, Plus, Trash2, CheckCircle, Clock, AlertCircle, Target,
-  Calendar, Filter, X, Zap
+  Calendar, Filter, X, Zap, Play, RotateCcw
 } from 'lucide-react';
 
 interface EmployeeProfile {
@@ -200,6 +200,13 @@ export function TasksTab({ profile }: { profile: EmployeeProfile }) {
             }`}
           >
             {s === 'all' ? 'All' : s.replace('_', ' ')}
+            {s === 'completed' && completedCount > 0 && (
+              <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
+                filterStatus === s ? 'bg-white/20 text-white' : 'bg-green-200 text-green-700'
+              }`}>
+                {completedCount}
+              </span>
+            )}
           </button>
         ))}
         <button
@@ -357,28 +364,71 @@ function TaskCard({
           )}
         </div>
 
-        <div className="flex flex-col gap-1.5 items-end">
-          {!canManage && (
-            <select
-              value={task.status}
-              onChange={(e) => onStatusUpdate(task.id, e.target.value)}
-              className="text-xs px-2 py-1 rounded-lg border border-gray-200 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="pending">Pending</option>
-              <option value="in_progress">In Progress</option>
-              <option value="completed">Completed</option>
-              <option value="overdue">Overdue</option>
-            </select>
-          )}
-          {canManage && (
-            <button
-              onClick={() => onDelete(task.id)}
-              className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+        {canManage && (
+          <button
+            onClick={() => onDelete(task.id)}
+            className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors flex-shrink-0"
+            title="Delete task"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Action buttons row */}
+      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+        {/* Staff action buttons */}
+        {!canManage && task.status === 'pending' && (
+          <button
+            onClick={() => onStatusUpdate(task.id, 'in_progress')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+          >
+            <Play className="w-3.5 h-3.5" /> Start Task
+          </button>
+        )}
+        {!canManage && task.status === 'in_progress' && (
+          <button
+            onClick={() => onStatusUpdate(task.id, 'completed')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 transition-colors"
+          >
+            <CheckCircle className="w-3.5 h-3.5" /> Mark Resolved
+          </button>
+        )}
+        {!canManage && task.status === 'overdue' && (
+          <button
+            onClick={() => onStatusUpdate(task.id, 'in_progress')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+          >
+            <Play className="w-3.5 h-3.5" /> Start Task
+          </button>
+        )}
+        {!canManage && task.status === 'completed' && (
+          <button
+            onClick={() => onStatusUpdate(task.id, 'in_progress')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors"
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> Reopen
+          </button>
+        )}
+
+        {/* HOD status management buttons */}
+        {canManage && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {(['pending', 'in_progress', 'completed', 'overdue'] as const).map(s => (
+              <button
+                key={s}
+                onClick={() => onStatusUpdate(task.id, s)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${
+                  task.status === s
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {s === 'in_progress' ? 'In Progress' : s.charAt(0).toUpperCase() + s.slice(1)}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
