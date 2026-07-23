@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
+import { DashboardTab } from "@/app/employee/dashboard/tabs/DashboardTab";
 import { AttendanceTab } from "@/app/employee/dashboard/tabs/AttendanceTab";
 import { LeaveTab } from "@/app/employee/dashboard/tabs/LeaveTab";
 import { ExpensesTab } from "@/app/employee/dashboard/tabs/ExpensesTab";
@@ -117,9 +118,29 @@ export function EmployeeDashboard() {
         </button>
       </div>
 
-      {/* Dashboard tab content */}
+      {/* Overview tab content */}
       {topTab === 'dashboard' && (
         <div className="space-y-6">
+          <DashboardTab
+            profile={profileData}
+            onNavigate={(tab) => {
+              const subMap: Record<string, SelfServiceSub> = {
+                attendance: 'attendance',
+                tasks: 'tasks',
+                expenses: 'expenses',
+                leave: 'leave',
+                reports: 'tasks',
+                profile: 'payslips',
+              };
+              const sub = subMap[tab];
+              if (sub) {
+                setSelfSub(sub);
+                setTopTab('self-service');
+              }
+            }}
+          />
+
+          {/* Assigned modules */}
           {assignedModules.length > 0 && (
             <div>
               <h2 className="text-lg font-semibold text-theme-text-primary mb-3">Your Modules</h2>
