@@ -1,32 +1,67 @@
 import { NextRequest, NextResponse } from "next/server";
-import { decodeEmployeeToken } from "@/lib/hr/auth";
+import { decodeEmployeeToken, resolveEmployeeSession } from "@/lib/hr/auth";
 import { getEmployeeById } from "@/lib/hr/db";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables } from "@/lib/hr/db";
 import { z } from "zod";
 
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get("employee_session")?.value;
+  const session = resolveEmployeeSession(request);
 
-  if (!token) {
+  if (!session) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const session = decodeEmployeeToken(token);
-  if (!session) {
-    return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-  }
-
   try {
-    const employee = await getEmployeeById(session.id, session.tenantSlug);
+    let employee = await getEmployeeById(session.id, session.tenantSlug);
+    
+    // If not found by ID (tenant admin users may have different ID in admin_employees),
+    // try looking up by email
     if (!employee) {
-      return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+      try {
+        const rows = await SQL`select * from admin_employees where lower(email) = lower(${session.email}) and tenant_slug = ${session.tenantSlug} limit 1`;
+        const raw = (rows as any[])[0];
+        if (raw) {
+          employee = await getEmployeeById(raw.id, session.tenantSlug);
+        }
+      } catch {}
+    }
+    
+    if (!employee) {
+      // Return a minimal profile from session data so self-service tabs don't crash
+      return NextResponse.json({
+        employee: {
+          id: session.id,
+          name: session.name,
+          email: session.email,
+          jobTitle: "",
+          role: session.role,
+          departmentId: "",
+          employmentType: "",
+          status: "active",
+          hireDate: "",
+          salary: 0,
+          lastLogin: null,
+          phone: null,
+          address: null,
+          maritalStatus: null,
+          profilePicture: null,
+          gender: null,
+          dateOfBirth: null,
+          emergencyContactName: null,
+          emergencyContactPhone: null,
+          nationality: null,
+          stateOfOrigin: null,
+          city: null,
+          portalPermissions: null,
+        },
+      });
     }
 
     // Fetch raw row for personal info columns not in normalizeEmployeeRow
     let raw: any = {};
     try {
-      const rows = await SQL`select * from admin_employees where id = ${session.id} and tenant_slug = ${session.tenantSlug} limit 1`;
+      const rows = await SQL`select * from admin_employees where id = ${employee.id} and tenant_slug = ${session.tenantSlug} limit 1`;
       raw = (rows as any[])[0] || {};
     } catch (e) { console.error("me: raw fetch failed:", (e as any)?.message); }
 
@@ -83,10 +118,8 @@ const updateProfileSchema = z.object({
  * Employee updates their own personal information.
  */
 export async function PATCH(request: NextRequest) {
-  const token = request.cookies.get("employee_session")?.value;
-  if (!token) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  const session = decodeEmployeeToken(token);
-  if (!session) return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+  const session = resolveEmployeeSession(request);
+  if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
     const body = await request.json();

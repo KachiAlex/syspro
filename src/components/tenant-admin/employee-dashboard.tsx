@@ -78,6 +78,8 @@ export function EmployeeDashboard() {
     { key: 'payslips', label: "Payslips", desc: "View", icon: Wallet, color: "bg-purple-100 text-purple-600" },
   ];
 
+  const profileData = profile || { id: '', name: 'Employee', email: '', jobTitle: '', role: 'staff', departmentId: '', employmentType: '', status: 'active', hireDate: '', salary: 0 };
+
   if (activeTab) {
     const activeItem = selfServiceItems.find(i => i.key === activeTab);
     return (
@@ -97,10 +99,10 @@ export function EmployeeDashboard() {
         </div>
         <div className="bg-white rounded-xl border border-gray-200">
           {activeTab === 'attendance' && <AttendanceTab />}
-          {activeTab === 'tasks' && <TasksTab profile={profile} />}
-          {activeTab === 'expenses' && <ExpensesTab profile={profile} />}
-          {activeTab === 'leave' && <LeaveTab profile={profile} />}
-          {activeTab === 'payslips' && <PayslipsTab profile={profile} />}
+          {activeTab === 'tasks' && <TasksTab profile={profileData} />}
+          {activeTab === 'expenses' && <ExpensesTab profile={profileData} />}
+          {activeTab === 'leave' && <LeaveTab profile={profileData} />}
+          {activeTab === 'payslips' && <PayslipsTab profile={profileData} />}
         </div>
       </div>
     );

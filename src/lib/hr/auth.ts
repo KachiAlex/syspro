@@ -207,3 +207,36 @@ export function decodeEmployeeToken(token: string): EmployeeSession | null {
     jobTitle: "",
   };
 }
+
+/**
+ * Resolve an employee session from either the employee_session or syspro_session cookie.
+ * This allows HOD/staff users authenticated via the tenant admin portal to access
+ * employee self-service APIs without needing a separate employee login.
+ */
+export function resolveEmployeeSession(request: Request): EmployeeSession | null {
+  // Try employee_session first (direct employee portal login)
+  const empToken = request.cookies.get("employee_session")?.value;
+  if (empToken) {
+    const session = decodeEmployeeToken(empToken);
+    if (session) return session;
+  }
+
+  // Fall back to syspro_session (tenant admin portal login)
+  const adminToken = request.cookies.get("syspro_session")?.value;
+  if (adminToken) {
+    const payload = verifySession(adminToken);
+    if (payload) {
+      return {
+        id: payload.id,
+        email: payload.email,
+        name: payload.name || "",
+        tenantSlug: payload.tenantSlug || "",
+        role: payload.roleId || "staff",
+        departmentId: "",
+        jobTitle: "",
+      };
+    }
+  }
+
+  return null;
+}

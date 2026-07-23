@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { decodeEmployeeToken } from "@/lib/hr/auth";
+import { decodeEmployeeToken, resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
 
 /**
@@ -7,16 +7,7 @@ import { sql as SQL } from "@/lib/sql-client";
  * Returns the logged-in employee's payslip history.
  */
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get("employee_session")?.value;
-
-  if (!token) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
-
-  const session = decodeEmployeeToken(token);
-  if (!session) {
-    return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-  }
+  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
     const rows = await SQL`

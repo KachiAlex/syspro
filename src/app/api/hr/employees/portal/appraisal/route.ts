@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { decodeEmployeeToken } from "@/lib/hr/auth";
+import { decodeEmployeeToken, resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables } from "@/lib/hr/db";
 
@@ -12,10 +12,7 @@ const GROQ_MODEL = "llama-3.3-70b-versatile";
  * HR-only.
  */
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get("employee_session")?.value;
-  if (!token) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  const session = decodeEmployeeToken(token);
-  if (!session) return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const employeeRole = (session.role || "staff").toLowerCase();
   const isHR = employeeRole === "hr" || employeeRole === "hr_admin" || employeeRole === "hr_manager";
@@ -118,10 +115,7 @@ export async function GET(request: NextRequest) {
  * HR-only. Uses Groq AI to analyze KPI completion + report quality.
  */
 export async function POST(request: NextRequest) {
-  const token = request.cookies.get("employee_session")?.value;
-  if (!token) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  const session = decodeEmployeeToken(token);
-  if (!session) return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const employeeRole = (session.role || "staff").toLowerCase();
   const isHR = employeeRole === "hr" || employeeRole === "hr_admin" || employeeRole === "hr_manager";

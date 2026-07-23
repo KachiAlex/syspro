@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { decodeEmployeeToken } from "@/lib/hr/auth";
+import { decodeEmployeeToken, resolveEmployeeSession } from "@/lib/hr/auth";
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -16,10 +16,7 @@ function getR2Env() {
 }
 
 export async function POST(request: NextRequest) {
-  const token = request.cookies.get("employee_session")?.value;
-  if (!token) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  const session = decodeEmployeeToken(token);
-  if (!session) return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
     const body = await request.json();
