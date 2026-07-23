@@ -84,14 +84,6 @@ export function EmployeeDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Welcome header */}
-      <div className="rounded-xl bg-gradient-to-r from-theme-accent to-theme-primary p-6 text-white">
-        <h1 className="text-2xl font-bold">Welcome, {firstName}</h1>
-        <p className="text-sm opacity-90 mt-1">
-          {roleLabel} {profile?.jobTitle ? `· ${profile.jobTitle}` : ""}
-        </p>
-      </div>
-
       {/* Top-level tabs */}
       <div className="flex gap-1 border-b border-theme-border">
         <button
