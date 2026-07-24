@@ -92,6 +92,7 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
       if (res.ok) {
         const locNote = location ? ' (location recorded)' : ' (no location)';
         setSuccess((action === 'check_in' ? 'Checked in successfully!' : 'Checked out successfully!') + locNote);
+        if (d.record) setTodayRecord(d.record);
         fetchData();
       } else {
         setError(d.error || 'Action failed');
@@ -103,6 +104,14 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
     finally { setActionLoading(false); }
   };
 
+  const fmtTime = (t: string | null | undefined) => {
+    if (!t) return '—';
+    try {
+      const dt = new Date(t);
+      if (!isNaN(dt.getTime())) return dt.toLocaleTimeString('en-US', { hour12: false });
+    } catch {}
+    return t;
+  };
   const fmtDate = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : '—';
   const today = new Date().toISOString().split('T')[0];
   const now = new Date();
@@ -110,11 +119,11 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
 
   const calcWorkHours = (checkIn: string | null, checkOut: string | null) => {
     if (!checkIn || !checkOut) return null;
-    const [inH, inM] = checkIn.split(':').map(Number);
-    const [outH, outM] = checkOut.split(':').map(Number);
-    const diff = (outH * 60 + outM) - (inH * 60 + inM);
-    if (diff <= 0) return null;
-    return `${Math.floor(diff / 60)}h ${diff % 60}m`;
+    const inMs = new Date(checkIn).getTime();
+    const outMs = new Date(checkOut).getTime();
+    if (isNaN(inMs) || isNaN(outMs) || outMs <= inMs) return null;
+    const diffMin = Math.round((outMs - inMs) / 60000);
+    return `${Math.floor(diffMin / 60)}h ${diffMin % 60}m`;
   };
 
   const todayWorkHours = calcWorkHours(todayRecord?.check_in || null, todayRecord?.check_out || null);
@@ -171,8 +180,8 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
           {success && <div className="mb-3 flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-xs text-green-700"><CheckCircle className="w-3.5 h-3.5" />{success}</div>}
           {showCheckOutReminder && <div className="mb-3 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 animate-pulse"><Clock className="w-3.5 h-3.5" />Don&apos;t forget to check out!</div>}
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50"><div className="flex items-center gap-2"><Play className={`w-4 h-4 ${hasCheckedIn ? 'text-green-600' : 'text-gray-400'}`} /><span className="text-xs text-gray-600">Check In</span></div><span className={`text-sm font-bold ${hasCheckedIn ? 'text-green-700' : 'text-gray-400'}`}>{todayRecord?.check_in || '—'}</span></div>
-            <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50"><div className="flex items-center gap-2"><Square className={`w-4 h-4 ${hasCheckedOut ? 'text-blue-600' : 'text-gray-400'}`} /><span className="text-xs text-gray-600">Check Out</span></div><span className={`text-sm font-bold ${hasCheckedOut ? 'text-blue-700' : 'text-gray-400'}`}>{todayRecord?.check_out || '—'}</span></div>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50"><div className="flex items-center gap-2"><Play className={`w-4 h-4 ${hasCheckedIn ? 'text-green-600' : 'text-gray-400'}`} /><span className="text-xs text-gray-600">Check In</span></div><span className={`text-sm font-bold ${hasCheckedIn ? 'text-green-700' : 'text-gray-400'}`}>{fmtTime(todayRecord?.check_in)}</span></div>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50"><div className="flex items-center gap-2"><Square className={`w-4 h-4 ${hasCheckedOut ? 'text-blue-600' : 'text-gray-400'}`} /><span className="text-xs text-gray-600">Check Out</span></div><span className={`text-sm font-bold ${hasCheckedOut ? 'text-blue-700' : 'text-gray-400'}`}>{fmtTime(todayRecord?.check_out)}</span></div>
           </div>
           <div className="flex gap-2 mt-4">
             <button onClick={() => handleAction('check_in')} disabled={actionLoading || hasCheckedIn} className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}{hasCheckedIn ? 'Checked In' : 'Check In'}</button>
@@ -239,7 +248,7 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d} className="text-center text-xs font-semibold text-gray-400 py-1">{d}</div>)}
           {calendarCells.map((cell, i) => (
             <div key={i} className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs relative ${!cell.date ? 'bg-transparent' : cell.record?.status === 'present' ? 'bg-green-100 text-green-700' : cell.record?.status === 'late' ? 'bg-amber-100 text-amber-700' : cell.record?.status === 'half_day' ? 'bg-blue-100 text-blue-700' : cell.record?.status === 'absent' ? 'bg-red-100 text-red-700' : cell.isToday ? 'bg-blue-50 text-blue-600 ring-1 ring-blue-300' : 'bg-gray-50 text-gray-400'}`}>
-              {cell.day && (<><span className="font-medium">{cell.day}</span>{cell.record?.check_in && <span className="text-[8px] opacity-60 mt-0.5">{cell.record.check_in}</span>}</>)}
+              {cell.day && (<><span className="font-medium">{cell.day}</span>{cell.record?.check_in && <span className="text-[8px] opacity-60 mt-0.5">{fmtTime(cell.record.check_in)}</span>}</>)}
             </div>
           ))}
         </div>
@@ -273,8 +282,8 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">Not checked in</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{m.check_in || '—'}</td>
-                <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{m.check_out || '—'}</td>
+                <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{fmtTime(m.check_in)}</td>
+                <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{fmtTime(m.check_out)}</td>
               </tr>
             ))}</tbody></table></div>
           )}
@@ -296,8 +305,8 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
             <tr key={a.id} className="hover:bg-gray-50">
               <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{fmtDate(a.date)}</td>
               <td className="px-4 py-3 text-sm whitespace-nowrap"><span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${a.status==='present'?'bg-green-100 text-green-800':a.status==='late'?'bg-amber-100 text-amber-800':a.status==='half_day'?'bg-blue-100 text-blue-800':'bg-red-100 text-red-800'}`}>{a.status.replace('_',' ')}</span></td>
-              <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{a.check_in || '—'}</td>
-              <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{a.check_out || '—'}</td>
+              <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{fmtTime(a.check_in)}</td>
+              <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{fmtTime(a.check_out)}</td>
               <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{calcWorkHours(a.check_in, a.check_out) || '—'}</td>
               <td className="px-4 py-3 text-sm text-gray-500">{a.notes || '—'}</td>
             </tr>

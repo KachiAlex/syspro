@@ -25,7 +25,8 @@ export async function POST(request: NextRequest) {
     } catch (e) { /* ignore migration errors */ }
 
     const today = new Date().toISOString().split("T")[0];
-    const now = new Date().toLocaleTimeString("en-US", { hour12: false });
+    const nowFull = new Date().toISOString();
+    const nowTime = new Date().toLocaleTimeString("en-US", { hour12: false });
 
     // Check if there's already an attendance record for today
     const existing = await sql`
@@ -50,22 +51,22 @@ export async function POST(request: NextRequest) {
 
       if (existing.length > 0) {
         // Update existing record (maybe was created by admin as absent)
-        await sql`
+        const updated = await sql`
           UPDATE admin_attendance
-          SET check_in = ${now}, status = ${status}, check_in_lat = ${latitude}, check_in_lng = ${longitude}
+          SET check_in = ${nowFull}, status = ${status}, check_in_lat = ${latitude}, check_in_lng = ${longitude}
           WHERE id = ${existing[0].id}
+          RETURNING *
         `;
-        const updated = await sql`SELECT * FROM admin_attendance WHERE id = ${existing[0].id}`;
         return NextResponse.json({ success: true, record: updated[0] });
       }
 
       const id = randomUUID();
-      await sql`
+      const inserted = await sql`
         INSERT INTO admin_attendance (id, tenant_slug, employee_id, employee_name, date, status, check_in, check_in_lat, check_in_lng)
-        VALUES (${id}, ${session.tenantSlug}, ${session.id}, ${session.name}, ${today}, ${status}, ${now}, ${latitude}, ${longitude})
+        VALUES (${id}, ${session.tenantSlug}, ${session.id}, ${session.name}, ${today}, ${status}, ${nowFull}, ${latitude}, ${longitude})
+        RETURNING *
       `;
-      const record = await sql`SELECT * FROM admin_attendance WHERE id = ${id}`;
-      return NextResponse.json({ success: true, record: record[0] });
+      return NextResponse.json({ success: true, record: inserted[0] });
     }
 
     if (action === "check_out") {
@@ -82,12 +83,12 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      await sql`
+      const updated = await sql`
         UPDATE admin_attendance
-        SET check_out = ${now}, check_out_lat = ${latitude}, check_out_lng = ${longitude}
+        SET check_out = ${nowFull}, check_out_lat = ${latitude}, check_out_lng = ${longitude}
         WHERE id = ${existing[0].id}
+        RETURNING *
       `;
-      const updated = await sql`SELECT * FROM admin_attendance WHERE id = ${existing[0].id}`;
       return NextResponse.json({ success: true, record: updated[0] });
     }
 

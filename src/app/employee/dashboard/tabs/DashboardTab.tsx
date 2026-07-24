@@ -63,8 +63,13 @@ export function DashboardTab({ profile, onNavigate, announcements }: {
         body: JSON.stringify({ action, latitude: location?.latitude, longitude: location?.longitude }),
       });
       const d = await res.json().catch(() => ({}));
-      if (res.ok) { setSuccess(action === 'check_in' ? 'Checked in!' : 'Checked out!'); fetchData(); }
-      else {
+      if (res.ok) {
+        setSuccess(action === 'check_in' ? 'Checked in!' : 'Checked out!');
+        if (d.record) {
+          setData(prev => prev ? { ...prev, today: d.record } : { today: d.record, attendanceSummary: {}, calendarData: {}, pendingActions: [], stats: { presentDays: 0, lateDays: 0, absentDays: 0, halfDays: 0, onTimeRate: 0, pendingLeave: 0, openTasks: 0, kpiCount: 0, reportsThisMonth: 0, payslipCount: 0 }, kpis: [], recentReports: [] });
+        }
+        fetchData();
+      } else {
         setError(d.error || 'Action failed');
         if (res.status === 400 && d.record) {
           setData(prev => prev ? { ...prev, today: d.record } : { today: d.record, attendanceSummary: {}, calendarData: {}, pendingActions: [], stats: { presentDays: 0, lateDays: 0, absentDays: 0, halfDays: 0, onTimeRate: 0, pendingLeave: 0, openTasks: 0, kpiCount: 0, reportsThisMonth: 0, payslipCount: 0 }, kpis: [], recentReports: [] });
@@ -85,6 +90,11 @@ export function DashboardTab({ profile, onNavigate, announcements }: {
   const currentTime = now.toLocaleTimeString('en-US', { hour12: false });
   const firstName = profile.name.split(' ')[0];
   const fmtRole = (r: string) => r ? r.charAt(0).toUpperCase() + r.slice(1) : 'Staff';
+  const fmtTime = (t: string | null | undefined) => {
+    if (!t) return '—';
+    try { const dt = new Date(t); if (!isNaN(dt.getTime())) return dt.toLocaleTimeString('en-US', { hour12: false }); } catch {}
+    return t;
+  };
 
   // Mini calendar - current week
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -174,11 +184,11 @@ export function DashboardTab({ profile, onNavigate, announcements }: {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-500">Check In</span>
-              <span className={`text-sm font-bold ${hasCheckedIn ? 'text-green-700' : 'text-gray-400'}`}>{data.today?.check_in || '—'}</span>
+              <span className={`text-sm font-bold ${hasCheckedIn ? 'text-green-700' : 'text-gray-400'}`}>{fmtTime(data.today?.check_in)}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-500">Check Out</span>
-              <span className={`text-sm font-bold ${hasCheckedOut ? 'text-blue-700' : 'text-gray-400'}`}>{data.today?.check_out || '—'}</span>
+              <span className={`text-sm font-bold ${hasCheckedOut ? 'text-blue-700' : 'text-gray-400'}`}>{fmtTime(data.today?.check_out)}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-500">Status</span>
