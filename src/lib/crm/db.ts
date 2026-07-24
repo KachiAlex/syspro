@@ -123,6 +123,11 @@ export async function ensureCrmTables(sql: SqlClient = SQL) {
   await sql`alter table crm_customers add column if not exists converted_from_lead_id text`;
   await sql`alter table crm_deals add column if not exists contact_id text`;
   await sql`alter table crm_deals add column if not exists name text`;
+
+  // Add created_by columns for ownership tracking (employee portal CRM)
+  await sql`alter table crm_leads add column if not exists created_by text`;
+  await sql`alter table crm_contacts add column if not exists created_by text`;
+  await sql`alter table crm_deals add column if not exists created_by text`;
 }
 
 export async function insertCustomer(row: {
@@ -232,6 +237,7 @@ function normalizeContactRow(row: CrmContactRecord): CrmContact {
     status: row.status,
     tags: Array.isArray(row.tags) ? row.tags : row.tags ? [row.tags].flat() : [],
     importedAt: row.imported_at ?? row.created_at,
+    createdBy: (row as any).created_by as string | null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -247,6 +253,7 @@ export async function insertContact(row: {
   status?: string | null;
   tags?: string[];
   importedAt?: string;
+  createdBy?: string;
 }) {
   const sql = SQL;
   await ensureCrmTables(sql);
@@ -263,7 +270,8 @@ export async function insertContact(row: {
       source,
       status,
       tags,
-      imported_at
+      imported_at,
+      created_by
     ) values (
       ${id},
       ${row.tenantSlug},
@@ -274,7 +282,8 @@ export async function insertContact(row: {
       ${row.source ?? "CSV import"},
       ${row.status ?? "New"},
       ${tagsLiteral}::text[],
-      ${row.importedAt ?? null}
+      ${row.importedAt ?? null},
+      ${row.createdBy ?? null}
     )
     returning *
   `) as CrmContactRecord[];
@@ -289,7 +298,7 @@ export async function insertContacts(rows: Array<Parameters<typeof insertContact
   return inserted;
 }
 
-export async function listContacts(filters: { tenantSlug: string; tag?: string | null; limit?: number; offset?: number }) {
+export async function listContacts(filters: { tenantSlug: string; tag?: string | null; limit?: number; offset?: number; createdBy?: string }) {
   const sql = SQL;
   await ensureCrmTables(sql);
   const limit = Math.min(Math.max(filters.limit ?? 50, 1), 100);
@@ -302,6 +311,11 @@ export async function listContacts(filters: { tenantSlug: string; tag?: string |
     from crm_contacts
     where tenant_slug = $1
   `;
+
+  if (filters.createdBy) {
+    params.push(filters.createdBy);
+    query += ` and created_by = $${params.length}`;
+  }
 
   if (tagFilter) {
     params.push(tagFilter);
@@ -318,11 +332,15 @@ export async function listContacts(filters: { tenantSlug: string; tag?: string |
   return rows.map(normalizeContactRow);
 }
 
-export async function countContacts(filters: { tenantSlug: string; tag?: string | null }) {
+export async function countContacts(filters: { tenantSlug: string; tag?: string | null; createdBy?: string }) {
   const sql = SQL;
   await ensureCrmTables(sql);
   const params: any[] = [filters.tenantSlug];
   let query = `select count(*)::int as cnt from crm_contacts where tenant_slug = $1`;
+  if (filters.createdBy) {
+    params.push(filters.createdBy);
+    query += ` and created_by = $${params.length}`;
+  }
   if (filters.tag) {
     params.push(filters.tag);
     query += ` and array_position(coalesce(tags, array[]::text[]), $${params.length}) is not null`;
@@ -403,21 +421,23 @@ export async function insertDeal(row: {
   expectedClose?: string;
   assignedOfficerId?: string;
   status?: string;
+  createdBy?: string;
 }) {
   const sql = SQL;
   await ensureCrmTables(sql);
   const id = randomUUID();
-  await sql`
+  const inserted = await sql`
     insert into crm_deals (
-      id, tenant_slug, customer_id, lead_id, contact_id, name, stage, value, currency, probability, expected_close, assigned_officer_id, status
+      id, tenant_slug, customer_id, lead_id, contact_id, name, stage, value, currency, probability, expected_close, assigned_officer_id, status, created_by
     ) values (
       ${id}, ${row.tenantSlug}, ${row.customerId ?? null}, ${row.leadId ?? null}, ${row.contactId ?? null},
       ${row.name ?? null}, ${row.stage}, ${row.value}, ${row.currency ?? "₦"},
-      ${row.probability ?? null}, ${row.expectedClose ?? null}, ${row.assignedOfficerId ?? null}, ${row.status ?? "open"}
+      ${row.probability ?? null}, ${row.expectedClose ?? null}, ${row.assignedOfficerId ?? null}, ${row.status ?? "open"},
+      ${row.createdBy ?? null}
     )
+    returning *
   `;
-  const inserted = (await sql`select * from crm_deals where id = ${id} limit 1`) as Record<string, unknown>[];
-  return normalizeDealRow(inserted[0]);
+  return normalizeDealRow((inserted as any[])[0]);
 }
 
 export async function updateDeal(id: string, updates: Partial<{
@@ -454,7 +474,7 @@ export async function updateDeal(id: string, updates: Partial<{
   return updated.length ? normalizeDealRow(updated[0]) : null;
 }
 
-export async function listDeals(filters: Partial<{ tenantSlug: string; customerId?: string; leadId?: string; stage?: string; limit?: number; offset?: number }>) {
+export async function listDeals(filters: Partial<{ tenantSlug: string; customerId?: string; leadId?: string; stage?: string; limit?: number; offset?: number; createdBy?: string }>) {
   const sql = SQL;
   await ensureCrmTables(sql);
   const params: any[] = [];
@@ -475,6 +495,10 @@ export async function listDeals(filters: Partial<{ tenantSlug: string; customerI
   if (filters.stage) {
     params.push(filters.stage);
     where += ` and stage = $${idx++}`;
+  }
+  if (filters.createdBy) {
+    params.push(filters.createdBy);
+    where += ` and created_by = $${idx++}`;
   }
   const limit = Math.min(Math.max(filters.limit ?? 50, 1), 200);
   const offset = Math.max(filters.offset ?? 0, 0);
@@ -483,7 +507,7 @@ export async function listDeals(filters: Partial<{ tenantSlug: string; customerI
   return rows.map(normalizeDealRow);
 }
 
-export async function countDeals(filters: Partial<{ tenantSlug: string; customerId?: string; leadId?: string; stage?: string }>) {
+export async function countDeals(filters: Partial<{ tenantSlug: string; customerId?: string; leadId?: string; stage?: string; createdBy?: string }>) {
   const sql = SQL;
   await ensureCrmTables(sql);
   const params: any[] = [];
@@ -504,6 +528,10 @@ export async function countDeals(filters: Partial<{ tenantSlug: string; customer
   if (filters.stage) {
     params.push(filters.stage);
     where += ` and stage = $${idx++}`;
+  }
+  if (filters.createdBy) {
+    params.push(filters.createdBy);
+    where += ` and created_by = $${idx++}`;
   }
   const query = `select count(*)::int as cnt from crm_deals ${where}`;
   const rows = (await db.query(query, params)).rows as any[];
@@ -532,25 +560,24 @@ export async function insertLead(row: {
   currency?: string;
   notes?: string;
   contactId?: string;
+  createdBy?: string;
 }) {
   const sql = SQL;
   await ensureCrmTables(sql);
   const id = randomUUID();
-  await sql`
+  const inserted = await sql`
     insert into crm_leads (
       id, tenant_slug, region_id, branch_id, company_name, contact_name, contact_email, contact_phone,
-      source, stage, score, assigned_officer_id, expected_value, currency, notes, contact_id
+      source, stage, score, assigned_officer_id, expected_value, currency, notes, contact_id, created_by
     ) values (
       ${id}, ${row.tenantSlug}, ${row.regionId}, ${row.branchId}, ${row.companyName}, ${row.contactName},
       ${row.contactEmail ?? null}, ${row.contactPhone ?? null}, ${row.source}, ${row.stage}, 0,
       ${row.assignedOfficerId ?? null}, ${row.expectedValue ?? null}, ${row.currency ?? "₦"}, ${row.notes ?? null},
-      ${row.contactId ?? null}
+      ${row.contactId ?? null}, ${row.createdBy ?? null}
     )
+    returning *
   `;
-  const inserted = (await sql`
-    select * from crm_leads where id = ${id} limit 1
-  `) as Record<string, unknown>[];
-  return normalizeLeadRow(inserted[0]);
+  return normalizeLeadRow((inserted as any[])[0]);
 }
 
 export async function updateLead(id: string, updates: Partial<{
@@ -609,7 +636,7 @@ export async function getLead(id: string) {
   return rows.length ? normalizeLeadRow(rows[0]) : null;
 }
 
-export async function listLeads(filters: Partial<{ tenantSlug: string; regionId: string; branchId: string; salesOfficerId: string; stage: string; source: string; search: string; limit: number; offset: number }>) {
+export async function listLeads(filters: Partial<{ tenantSlug: string; regionId: string; branchId: string; salesOfficerId: string; stage: string; source: string; search: string; limit: number; offset: number; createdBy: string }>) {
   const sql = SQL;
   await ensureCrmTables(sql);
   const params: any[] = [];
@@ -630,6 +657,10 @@ export async function listLeads(filters: Partial<{ tenantSlug: string; regionId:
   if (filters.salesOfficerId) {
     params.push(filters.salesOfficerId);
     where += ` and assigned_officer_id = $${idx++}`;
+  }
+  if (filters.createdBy) {
+    params.push(filters.createdBy);
+    where += ` and created_by = $${idx++}`;
   }
   if (filters.stage) {
     params.push(filters.stage);
@@ -659,7 +690,7 @@ export async function listLeads(filters: Partial<{ tenantSlug: string; regionId:
   return rows.map(normalizeLeadRow);
 }
 
-export async function countLeads(filters: Partial<{ tenantSlug: string; regionId: string; branchId: string; salesOfficerId: string; stage: string; source: string; search: string }>) {
+export async function countLeads(filters: Partial<{ tenantSlug: string; regionId: string; branchId: string; salesOfficerId: string; stage: string; source: string; search: string; createdBy: string }>) {
   const sql = SQL;
   await ensureCrmTables(sql);
   const params: any[] = [];
@@ -680,6 +711,10 @@ export async function countLeads(filters: Partial<{ tenantSlug: string; regionId
   if (filters.salesOfficerId) {
     params.push(filters.salesOfficerId);
     where += ` and assigned_officer_id = $${idx++}`;
+  }
+  if (filters.createdBy) {
+    params.push(filters.createdBy);
+    where += ` and created_by = $${idx++}`;
   }
   if (filters.stage) {
     params.push(filters.stage);
@@ -719,6 +754,7 @@ function normalizeLeadRow(row: any) {
     currency: row.currency as string,
     notes: row.notes as string | null,
     contactId: (row.contact_id as string | null) ?? null,
+    createdBy: (row.created_by as string | null) ?? null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -739,6 +775,7 @@ function normalizeDealRow(row: any) {
     expectedClose: row.expected_close as string | null,
     assignedOfficerId: row.assigned_officer_id as string | null,
     status: row.status as string,
+    createdBy: (row.created_by as string | null) ?? null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };

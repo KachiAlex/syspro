@@ -53,6 +53,7 @@ export type CrmLead = {
   expectedValue?: number;
   currency?: string;
   notes?: string;
+  createdBy?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -147,6 +148,7 @@ export type CrmContact = {
   status: string | null;
   tags: string[];
   importedAt: string;
+  createdBy?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -165,6 +167,7 @@ export type CrmDeal = {
   status: "open" | "won" | "lost";
   linkedProjectId?: string;
   linkedInvoiceId?: string;
+  createdBy?: string | null;
   createdAt: string;
   updatedAt: string;
 };

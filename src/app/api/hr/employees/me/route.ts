@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
           stateOfOrigin: null,
           city: null,
           portalPermissions: null,
+          tenantSlug: session.tenantSlug,
         },
       });
     }
@@ -90,6 +91,7 @@ export async function GET(request: NextRequest) {
         stateOfOrigin: raw.state_of_origin ?? null,
         city: raw.city ?? null,
         portalPermissions: raw.portal_permissions ?? null,
+        tenantSlug: session.tenantSlug,
       },
     });
   } catch (error) {

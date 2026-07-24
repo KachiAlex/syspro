@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, LogOut, Loader2, AlertCircle, CalendarCheck, Target, UserCircle, Menu, Bell, ClipboardList, Receipt, Plane, Wallet, CheckSquare, Sparkles, ChevronRight, X, CheckCheck, Megaphone } from 'lucide-react';
+import { User, LogOut, Loader2, AlertCircle, CalendarCheck, Target, UserCircle, Menu, Bell, ClipboardList, Receipt, Plane, Wallet, CheckSquare, Sparkles, ChevronRight, X, CheckCheck, Megaphone, Users } from 'lucide-react';
 import { DashboardTab } from './tabs/DashboardTab';
 import { AttendanceTab } from './tabs/AttendanceTab';
 import { ReportsTab } from './tabs/ReportsTab';
@@ -13,6 +13,7 @@ import { ExpensesTab } from './tabs/ExpensesTab';
 import { LeaveTab } from './tabs/LeaveTab';
 import { PayslipsTab } from './tabs/PayslipsTab';
 import { AppraisalTab } from './tabs/AppraisalTab';
+import { CrmTab } from './tabs/CrmTab';
 import { ClipboardCheck } from 'lucide-react';
 
 interface EmployeeProfile {
@@ -20,9 +21,10 @@ interface EmployeeProfile {
   departmentId: string; employmentType: string; status: string;
   hireDate: string; salary: number; lastLogin: string;
   portalPermissions?: Record<string, boolean> | null;
+  tenantSlug?: string;
 }
 
-type Tab = 'dashboard' | 'tasks' | 'attendance' | 'reports' | 'expenses' | 'leave' | 'payslips' | 'approvals' | 'appraisal' | 'profile';
+type Tab = 'dashboard' | 'tasks' | 'attendance' | 'reports' | 'expenses' | 'leave' | 'payslips' | 'approvals' | 'appraisal' | 'crm' | 'profile';
 
 export default function EmployeeDashboardPage() {
   const router = useRouter();
@@ -137,6 +139,7 @@ export default function EmployeeDashboardPage() {
     expenses: true, leave: true, payslips: true, profile: true,
     approvals: ['hod', 'head_of_department', 'hr', 'hr_admin', 'hr_manager'].includes(employeeRole),
     appraisal: ['hr', 'hr_admin', 'hr_manager'].includes(employeeRole),
+    crm: true,
   };
   const perms: Record<string, boolean> = profile.portalPermissions
     ? { ...roleDefaults, ...profile.portalPermissions }
@@ -155,6 +158,7 @@ export default function EmployeeDashboardPage() {
     ...(perms.payslips !== false ? [{ key: 'payslips' as Tab, label: 'Payslips', icon: <Wallet className="w-5 h-5" /> }] : []),
     ...(canApprove ? [{ key: 'approvals' as Tab, label: 'Approvals', icon: <ClipboardCheck className="w-5 h-5" /> }] : []),
     ...(canAppraise ? [{ key: 'appraisal' as Tab, label: 'AI Appraisal', icon: <Sparkles className="w-5 h-5" /> }] : []),
+    ...(perms.crm !== false ? [{ key: 'crm' as Tab, label: 'CRM', icon: <Users className="w-5 h-5" /> }] : []),
     ...(perms.profile !== false ? [{ key: 'profile' as Tab, label: 'Profile & More', icon: <UserCircle className="w-5 h-5" />, badge: badgeCounts.profile || undefined }] : []),
   ];
 
@@ -320,6 +324,7 @@ export default function EmployeeDashboardPage() {
           {activeTab === 'payslips' && perms.payslips !== false && <PayslipsTab profile={profile} />}
           {activeTab === 'approvals' && canApprove && <ApprovalsTab />}
           {activeTab === 'appraisal' && canAppraise && <AppraisalTab profile={profile} />}
+          {activeTab === 'crm' && perms.crm !== false && <CrmTab profile={profile} />}
           {activeTab === 'profile' && perms.profile !== false && <ProfileTab profile={profile} onProfileUpdate={(updated) => setProfile(updated)} />}
         </main>
       </div>

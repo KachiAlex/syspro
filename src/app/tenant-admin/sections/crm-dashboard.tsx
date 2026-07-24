@@ -251,8 +251,9 @@ async function crmFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function fetchLeads(params: { tenantSlug: string }) {
+async function fetchLeads(params: { tenantSlug: string; viewMode?: string }) {
   const searchParams = new URLSearchParams({ tenantSlug: params.tenantSlug, limit: "50" });
+  if (params.viewMode) searchParams.set("viewMode", params.viewMode);
   try {
     return await crmFetch<LeadsResponse>(`/crm/leads?${searchParams.toString()}`);
   } catch (error) {
@@ -261,8 +262,9 @@ async function fetchLeads(params: { tenantSlug: string }) {
   }
 }
 
-async function fetchContacts(params: { tenantSlug: string }) {
+async function fetchContacts(params: { tenantSlug: string; viewMode?: string }) {
   const searchParams = new URLSearchParams({ tenantSlug: params.tenantSlug, limit: "50" });
+  if (params.viewMode) searchParams.set("viewMode", params.viewMode);
   try {
     return await crmFetch<ContactsResponse>(`/crm/contacts?${searchParams.toString()}`);
   } catch (error) {
@@ -271,8 +273,9 @@ async function fetchContacts(params: { tenantSlug: string }) {
   }
 }
 
-async function fetchDeals(params: { tenantSlug: string }) {
+async function fetchDeals(params: { tenantSlug: string; viewMode?: string }) {
   const searchParams = new URLSearchParams({ tenantSlug: params.tenantSlug, limit: "50" });
+  if (params.viewMode) searchParams.set("viewMode", params.viewMode);
   try {
     return await crmFetch<DealsResponse>(`/crm/deals?${searchParams.toString()}`);
   } catch (error) {
@@ -322,8 +325,10 @@ async function importCustomersRequest(tenantSlug: string, rows: ImportedCustomer
   return results;
 }
 
-async function fetchDashboard(params: { tenantSlug: string }) {
+async function fetchDashboard(params: { tenantSlug: string; viewMode?: string }) {
   try {
+    const searchParams = new URLSearchParams({ tenantSlug: params.tenantSlug });
+    if (params.viewMode) searchParams.set("viewMode", params.viewMode);
     return await crmFetch<{
       payload: {
         totals: {
@@ -334,7 +339,7 @@ async function fetchDashboard(params: { tenantSlug: string }) {
           recentConverted: number;
         };
       };
-    }>(`/crm/dashboard?tenantSlug=${params.tenantSlug}`);
+    }>(`/crm/dashboard?${searchParams.toString()}`);
   } catch (error) {
     console.error("Failed to fetch dashboard:", error);
     return null;
@@ -534,11 +539,20 @@ function formatCurrency(value: number, currencySymbol: string) {
   return formatted.replace(/\.0K$/, "K");
 }
 
-export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { tenantSlug?: string | null; initialTab?: "overview" | "leads" | "contacts" | "deals" | "customers" }) {
+export type CrmViewMode = "all" | "team" | "mine";
+
+export default function CRMDashboard({ tenantSlug, initialTab = "overview", viewMode, onViewModeChange }: {
+  tenantSlug?: string | null;
+  initialTab?: "overview" | "leads" | "contacts" | "deals" | "customers";
+  viewMode?: CrmViewMode;
+  onViewModeChange?: (mode: CrmViewMode) => void;
+}) {
   const tenantContext = useTenantContext();
   const effectiveTenant = tenantSlug ?? tenantContext.tenantSlug;
   const regionId = tenantContext.regionId;
   const branchId = tenantContext.branchId;
+  const [internalViewMode, setInternalViewMode] = useState<CrmViewMode | undefined>(viewMode);
+  const effectiveViewMode = viewMode ?? internalViewMode;
 
   const [activeTab, setActiveTab] = useState<"overview" | "leads" | "contacts" | "deals" | "customers">(initialTab);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -595,11 +609,11 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
     setErrorMessage(null);
     try {
       const [leadData, contactData, dealData, customerData, dashboardData, activityData] = await Promise.all([
-        fetchLeads({ tenantSlug: effectiveTenant }),
-        fetchContacts({ tenantSlug: effectiveTenant }),
-        fetchDeals({ tenantSlug: effectiveTenant }),
+        fetchLeads({ tenantSlug: effectiveTenant, viewMode: effectiveViewMode }),
+        fetchContacts({ tenantSlug: effectiveTenant, viewMode: effectiveViewMode }),
+        fetchDeals({ tenantSlug: effectiveTenant, viewMode: effectiveViewMode }),
         fetchCustomers({ tenantSlug: effectiveTenant }),
-        fetchDashboard({ tenantSlug: effectiveTenant }),
+        fetchDashboard({ tenantSlug: effectiveTenant, viewMode: effectiveViewMode }),
         fetchActivities({ tenantSlug: effectiveTenant }),
       ]);
 
@@ -645,7 +659,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
     } finally {
       setIsLoading(false);
     }
-  }, [effectiveTenant]);
+  }, [effectiveTenant, effectiveViewMode]);
 
   useEffect(() => {
     loadData();
@@ -1308,9 +1322,37 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview" }: { 
       )}
 
       {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-theme-text-primary">CRM Dashboard</h1>
-        <p className="text-theme-text-secondary mt-1">Manage customer relationships, sales pipeline, and business growth</p>
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-theme-text-primary">CRM Dashboard</h1>
+          <p className="text-theme-text-secondary mt-1">Manage customer relationships, sales pipeline, and business growth</p>
+        </div>
+        {effectiveViewMode && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-theme-text-secondary">View:</span>
+            <div className="flex bg-theme-muted border border-theme-border rounded-lg overflow-hidden">
+              {([
+                { key: "mine" as const, label: "My" },
+                { key: "team" as const, label: "Team" },
+                { key: "all" as const, label: "All" },
+              ] as const).map((opt) => {
+              const active = effectiveViewMode === opt.key;
+              const handleViewChange = onViewModeChange ?? setInternalViewMode;
+              return (
+                <button
+                  key={opt.key}
+                  onClick={() => handleViewChange(opt.key)}
+                  className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                    active ? "bg-blue-600 text-white" : "text-theme-text-primary hover:bg-gray-100"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Tab Navigation */}

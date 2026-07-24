@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { crmFiltersSchema } from "@/lib/crm/types";
 import { countLeads, listLeads, countContacts, listContacts, countDeals, listDeals, countCustomers, getConversionStats } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
+import { resolveCrmAuth } from "@/lib/crm/auth";
+import { sql as SQL } from "@/lib/sql-client";
+
+async function getTeamMemberIds(tenantSlug: string, departmentId: string): Promise<string[]> {
+  if (!departmentId) return [];
+  const sql = SQL;
+  const rows = await sql`
+    select id from admin_employees
+    where tenant_slug = ${tenantSlug} and department_id = ${departmentId} and status = 'active'
+  `;
+  return (rows as any[]).map(r => r.id);
+}
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
@@ -13,15 +25,53 @@ export async function GET(request: NextRequest) {
   }
 
   const tenantSlug = parseResult.data.tenantSlug;
+  const viewMode = url.searchParams.get("viewMode") || undefined;
+  const auth = await resolveCrmAuth(request);
+
+  let filterCreatedBy: string | undefined;
+  let teamIds: string[] = [];
+
+  if (auth && auth.session.tenantSlug === tenantSlug) {
+    if (viewMode === "mine" || (!viewMode && auth.scope === "mine")) {
+      filterCreatedBy = auth.employeeId;
+    } else if (viewMode === "team" || (!viewMode && auth.scope === "team")) {
+      teamIds = await getTeamMemberIds(auth.session.tenantSlug, auth.departmentId);
+      if (teamIds.length === 0) {
+        filterCreatedBy = auth.employeeId;
+      }
+    }
+  }
 
   try {
-    const [leads, totalLeads, contacts, totalContacts, deals, totalDeals, totalCustomers, conversionStats] = await Promise.all([
-      listLeads({ tenantSlug, limit: 10 }),
-      countLeads({ tenantSlug }),
-      listContacts({ tenantSlug, limit: 10 }),
-      countContacts({ tenantSlug }),
-      listDeals({ tenantSlug, limit: 10 }),
-      countDeals({ tenantSlug }),
+    let leads: any[], contacts: any[], deals: any[];
+    let totalLeads: number, totalContacts: number, totalDeals: number;
+
+    if (teamIds.length > 0) {
+      const { db } = await import("@/lib/sql-client");
+      const placeholders = teamIds.map((_, i) => `$${i + 2}`).join(",");
+      const [leadRows, contactRows, dealRows] = await Promise.all([
+        db.query(`select * from crm_leads where tenant_slug = $1 and created_by in (${placeholders}) order by created_at desc limit 10`, [tenantSlug, ...teamIds]),
+        db.query(`select * from crm_contacts where tenant_slug = $1 and created_by in (${placeholders}) order by created_at desc limit 10`, [tenantSlug, ...teamIds]),
+        db.query(`select * from crm_deals where tenant_slug = $1 and created_by in (${placeholders}) order by created_at desc limit 10`, [tenantSlug, ...teamIds]),
+      ]);
+      leads = leadRows.rows;
+      contacts = contactRows.rows;
+      deals = dealRows.rows;
+      totalLeads = leads.length;
+      totalContacts = contacts.length;
+      totalDeals = deals.length;
+    } else {
+      [leads, totalLeads, contacts, totalContacts, deals, totalDeals] = await Promise.all([
+        listLeads({ tenantSlug, limit: 10, createdBy: filterCreatedBy }),
+        countLeads({ tenantSlug, createdBy: filterCreatedBy }),
+        listContacts({ tenantSlug, limit: 10, createdBy: filterCreatedBy }),
+        countContacts({ tenantSlug, createdBy: filterCreatedBy }),
+        listDeals({ tenantSlug, limit: 10, createdBy: filterCreatedBy }),
+        countDeals({ tenantSlug, createdBy: filterCreatedBy }),
+      ]);
+    }
+
+    const [totalCustomers, conversionStats] = await Promise.all([
       countCustomers({ tenantSlug }),
       getConversionStats({ tenantSlug }),
     ]);
