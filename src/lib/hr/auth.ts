@@ -5,6 +5,7 @@
 
 import { randomUUID, randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
+import type { NextRequest } from "next/server";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables } from "./db";
 import { signSession, verifySession } from "@/lib/session";
@@ -213,7 +214,7 @@ export function decodeEmployeeToken(token: string): EmployeeSession | null {
  * This allows HOD/staff users authenticated via the tenant admin portal to access
  * employee self-service APIs without needing a separate employee login.
  */
-export function resolveEmployeeSession(request: Request): EmployeeSession | null {
+export function resolveEmployeeSession(request: NextRequest): EmployeeSession | null {
   // Try employee_session first (direct employee portal login)
   const empToken = request.cookies.get("employee_session")?.value;
   if (empToken) {

@@ -175,12 +175,15 @@ export const requisitionCreateSchema = z.object({
   headcount: z.number().int().positive().default(1),
   budget: z.number().nonnegative().optional(),
   requiredSkills: z.array(z.string()).default([]),
+  preferredSkills: z.array(z.string()).default([]),
   minExperienceYears: z.number().int().nonnegative().optional(),
   employmentType: employmentTypeEnum,
   description: z.string().min(1),
   requirements: z.string().optional(),
   location: z.string().optional(),
   salaryRange: z.string().optional(),
+  requiredCertifications: z.array(z.string()).default([]),
+  educationLevel: z.string().optional(),
   postedAt: z.string().datetime().optional(),
   requestedBy: z.string().optional().default('system'),
 });
@@ -193,12 +196,15 @@ export const requisitionUpdateSchema = z.object({
   headcount: z.number().int().positive().optional(),
   budget: z.number().nonnegative().optional(),
   requiredSkills: z.array(z.string()).optional(),
+  preferredSkills: z.array(z.string()).optional(),
   minExperienceYears: z.number().int().nonnegative().optional(),
   employmentType: employmentTypeEnum.optional(),
   description: z.string().optional(),
   requirements: z.string().optional(),
   location: z.string().optional(),
   salaryRange: z.string().optional(),
+  requiredCertifications: z.array(z.string()).optional(),
+  educationLevel: z.string().optional(),
   status: requisitionStatusEnum.optional(),
   postedAt: z.string().datetime().optional(),
   closedAt: z.string().datetime().optional(),
@@ -216,12 +222,15 @@ export interface JobRequisitionRecord {
   headcount: number;
   budget: number | null;
   requiredSkills: string[];
+  preferredSkills: string[];
   minExperienceYears: number | null;
   employmentType: string;
   description: string;
   requirements: string | null;
   location: string | null;
   salaryRange: string | null;
+  requiredCertifications: string[];
+  educationLevel: string | null;
   status: string;
   approvalFlowId: string | null;
   requestedBy: string;
@@ -269,6 +278,9 @@ export const candidateCreateSchema = z.object({
   skills: z.array(z.string()).default([]),
   experienceYears: z.number().nonnegative().optional(),
   education: z.string().optional(),
+  certifications: z.array(z.string()).default([]),
+  expectedSalary: z.number().nonnegative().optional(),
+  location: z.string().optional(),
   notes: z.string().optional(),
   tags: z.array(z.string()).default([]),
 });
@@ -284,6 +296,9 @@ export const candidateUpdateSchema = z.object({
   skills: z.array(z.string()).optional(),
   experienceYears: z.number().nonnegative().optional(),
   education: z.string().optional(),
+  certifications: z.array(z.string()).optional(),
+  expectedSalary: z.number().nonnegative().optional(),
+  location: z.string().optional(),
   notes: z.string().optional(),
   tags: z.array(z.string()).optional(),
   overallScore: z.number().min(0).max(100).optional(),
@@ -304,6 +319,9 @@ export interface CandidateRecord {
   skills: string[];
   experienceYears: number | null;
   education: string | null;
+  certifications: string[];
+  expectedSalary: number | null;
+  location: string | null;
   notes: string | null;
   tags: string[];
   overallScore: number | null;
@@ -536,6 +554,9 @@ export interface ScreeningResult {
   passed: boolean;
   score: number;
   maxScore: number;
+  confidence: number;
+  autoRejected: boolean;
+  autoRejectReasons: string[];
   breakdown: Array<{
     criteria: string;
     weight: number;
@@ -546,6 +567,7 @@ export interface ScreeningResult {
     reason: string;
   }>;
   reasons: string[];
+  keywordMatches: Array<{ keyword: string; found: boolean; source: string }>;
 }
 
 export const screeningConfigSchema = z.object({
@@ -555,6 +577,26 @@ export const screeningConfigSchema = z.object({
   selectionValue: z.number().int().positive(),
   minScoreThreshold: z.number().int().min(0).max(100).default(0),
   isEnabled: z.boolean().default(true),
+  customWeights: z.object({
+    experience: z.number().min(0).max(1).optional(),
+    requiredSkills: z.number().min(0).max(1).optional(),
+    preferredSkills: z.number().min(0).max(1).optional(),
+    education: z.number().min(0).max(1).optional(),
+    certifications: z.number().min(0).max(1).optional(),
+    source: z.number().min(0).max(1).optional(),
+    resume: z.number().min(0).max(1).optional(),
+    completeness: z.number().min(0).max(1).optional(),
+    location: z.number().min(0).max(1).optional(),
+    salary: z.number().min(0).max(1).optional(),
+    keywords: z.number().min(0).max(1).optional(),
+  }).optional(),
+  autoRejectRules: z.array(z.object({
+    field: z.enum(["experience", "requiredSkills", "education", "certifications", "resume"]),
+    operator: z.enum(["lt", "eq", "missing"]),
+    value: z.any().optional(),
+  })).default([]),
+  autoRejectBelowScore: z.number().int().min(0).max(100).default(0),
+  autoTalentPoolRejected: z.boolean().default(false),
 });
 
 export type ScreeningConfigInput = z.infer<typeof screeningConfigSchema>;
@@ -566,6 +608,10 @@ export interface ScreeningConfigRecord {
   selectionValue: number;
   minScoreThreshold: number;
   isEnabled: boolean;
+  customWeights: Record<string, number> | null;
+  autoRejectRules: Array<{ field: string; operator: string; value?: any }> | null;
+  autoRejectBelowScore: number;
+  autoTalentPoolRejected: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -573,12 +619,19 @@ export interface ScreeningConfigRecord {
 export interface BatchScreeningResult {
   screened: number;
   shortlisted: number;
+  autoRejected: number;
+  talentPooled: number;
   thresholdScore: number;
   results: Array<{
     applicationId: string;
+    candidateId: string;
     candidateName: string;
     aiScore: number;
+    confidence: number;
     status: string;
+    autoRejected: boolean;
+    autoRejectReasons: string[];
     breakdown: ScreeningResult["breakdown"];
+    keywordMatches: Array<{ keyword: string; found: boolean; source: string }>;
   }>;
 }

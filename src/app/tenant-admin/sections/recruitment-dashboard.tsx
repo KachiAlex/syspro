@@ -62,6 +62,18 @@ export const RecruitmentDashboard: React.FC = () => {
   const [showScreeningResults, setShowScreeningResults] = useState(false);
   const [screeningResult, setScreeningResult] = useState<BatchScreeningResult | null>(null);
 
+  // Enhanced screening config state
+  const [screeningCustomWeights, setScreeningCustomWeights] = useState<Record<string, number>>({});
+  const [screeningAutoRejectRules, setScreeningAutoRejectRules] = useState<Array<{ field: string; operator: string; value?: any }>>([]);
+  const [screeningAutoRejectScore, setScreeningAutoRejectScore] = useState(0);
+  const [screeningTalentPool, setScreeningTalentPool] = useState(false);
+
+  // Results modal state
+  const [resultsFilter, setResultsFilter] = useState<'all' | 'shortlist' | 'screened' | 'auto_rejected'>('all');
+  const [resultsSortBy, setResultsSortBy] = useState<'score' | 'name' | 'confidence'>('score');
+  const [resultsSortDir, setResultsSortDir] = useState<'asc' | 'desc'>('desc');
+  const [expandedCandidate, setExpandedCandidate] = useState<string | null>(null);
+
   const loadData = useCallback(async () => {
     if (!tenantSlug) return;
     setLoading(true);
@@ -258,10 +270,18 @@ export const RecruitmentDashboard: React.FC = () => {
         setScreeningMode(config.selectionMode);
         setScreeningValue(config.selectionValue);
         setScreeningThreshold(config.minScoreThreshold);
+        setScreeningCustomWeights(config.customWeights ?? {});
+        setScreeningAutoRejectRules(config.autoRejectRules ?? []);
+        setScreeningAutoRejectScore(config.autoRejectBelowScore ?? 0);
+        setScreeningTalentPool(config.autoTalentPoolRejected ?? false);
       } else {
         setScreeningMode('percentage');
         setScreeningValue(20);
         setScreeningThreshold(0);
+        setScreeningCustomWeights({});
+        setScreeningAutoRejectRules([]);
+        setScreeningAutoRejectScore(0);
+        setScreeningTalentPool(false);
       }
       setShowScreeningConfig(true);
     } catch (err) {
@@ -281,6 +301,10 @@ export const RecruitmentDashboard: React.FC = () => {
         selectionValue: screeningValue,
         minScoreThreshold: screeningThreshold,
         isEnabled: true,
+        customWeights: Object.keys(screeningCustomWeights).length > 0 ? screeningCustomWeights : null,
+        autoRejectRules: screeningAutoRejectRules.length > 0 ? screeningAutoRejectRules : null,
+        autoRejectBelowScore: screeningAutoRejectScore,
+        autoTalentPoolRejected: screeningTalentPool,
       });
       setShowScreeningConfig(false);
     } catch (err) {
@@ -837,7 +861,7 @@ export const RecruitmentDashboard: React.FC = () => {
       {/* AI Screening Config Modal */}
       {showScreeningConfig && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md bg-theme-card border border-theme-border rounded-xl p-6 shadow-xl">
+          <div className="w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-theme-card border border-theme-border rounded-xl p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-theme-text-primary flex items-center gap-2">
                 <Settings className="w-5 h-5 text-purple-400" />
@@ -850,6 +874,7 @@ export const RecruitmentDashboard: React.FC = () => {
             <p className="text-sm text-theme-text-secondary mb-4">Role: <span className="font-medium text-theme-text-primary">{screeningReqTitle}</span></p>
 
             <div className="space-y-4">
+              {/* Selection Mode */}
               <div>
                 <label className="block text-sm font-medium text-theme-text-secondary mb-2">Selection Mode</label>
                 <div className="flex gap-2">
@@ -882,9 +907,10 @@ export const RecruitmentDashboard: React.FC = () => {
                 />
               </div>
 
+              {/* Min Score Threshold */}
               <div>
                 <label className="block text-sm font-medium text-theme-text-secondary mb-2">
-                  Minimum AI Score Threshold (0–100)
+                  Minimum AI Score Threshold (0-100)
                 </label>
                 <input
                   type="range"
@@ -899,6 +925,150 @@ export const RecruitmentDashboard: React.FC = () => {
                   <span className="font-medium text-theme-text-primary">{screeningThreshold}</span>
                   <span>100</span>
                 </div>
+              </div>
+
+              {/* Custom Weights */}
+              <div className="border border-theme-border rounded-lg p-4 bg-theme-muted/50">
+                <label className="block text-sm font-medium text-theme-text-secondary mb-3 flex items-center gap-2">
+                  <SlidersHorizontal className="w-4 h-4 text-purple-400" />
+                  Custom Scoring Weights (0 = use default)
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { key: 'experience', label: 'Experience' },
+                    { key: 'requiredSkills', label: 'Required Skills' },
+                    { key: 'preferredSkills', label: 'Preferred Skills' },
+                    { key: 'education', label: 'Education' },
+                    { key: 'certifications', label: 'Certifications' },
+                    { key: 'source', label: 'Source Quality' },
+                    { key: 'resume', label: 'Resume' },
+                    { key: 'completeness', label: 'Completeness' },
+                    { key: 'location', label: 'Location' },
+                    { key: 'salary', label: 'Salary Match' },
+                    { key: 'keywords', label: 'JD Keywords' },
+                  ].map(({ key, label }) => (
+                    <div key={key}>
+                      <label className="text-xs text-theme-text-tertiary">{label}</label>
+                      <input
+                        type="range"
+                        min={0}
+                        max={1}
+                        step={0.05}
+                        value={screeningCustomWeights[key] ?? 0}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          setScreeningCustomWeights(prev => {
+                            const next = { ...prev };
+                            if (val === 0) delete next[key];
+                            else next[key] = val;
+                            return next;
+                          });
+                        }}
+                        className="w-full"
+                      />
+                      <span className="text-xs text-theme-text-secondary">{(screeningCustomWeights[key] ?? 0).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-theme-text-tertiary mt-2">Weights are auto-normalized. Leave at 0 to use defaults.</p>
+              </div>
+
+              {/* Auto-Reject Rules */}
+              <div className="border border-theme-border rounded-lg p-4 bg-theme-muted/50">
+                <label className="block text-sm font-medium text-theme-text-secondary mb-3 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-400" />
+                  Auto-Reject Rules
+                </label>
+                <div className="space-y-2">
+                  {screeningAutoRejectRules.map((rule, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <select
+                        value={rule.field}
+                        onChange={(e) => {
+                          const next = [...screeningAutoRejectRules];
+                          next[idx] = { ...next[idx], field: e.target.value };
+                          setScreeningAutoRejectRules(next);
+                        }}
+                        className="px-2 py-1 bg-theme-muted border border-theme-border rounded text-xs text-theme-text-primary"
+                      >
+                        <option value="experience">Experience</option>
+                        <option value="requiredSkills">Required Skills</option>
+                        <option value="education">Education</option>
+                        <option value="certifications">Certifications</option>
+                        <option value="resume">Resume</option>
+                      </select>
+                      <select
+                        value={rule.operator}
+                        onChange={(e) => {
+                          const next = [...screeningAutoRejectRules];
+                          next[idx] = { ...next[idx], operator: e.target.value };
+                          setScreeningAutoRejectRules(next);
+                        }}
+                        className="px-2 py-1 bg-theme-muted border border-theme-border rounded text-xs text-theme-text-primary"
+                      >
+                        <option value="lt">Less than</option>
+                        <option value="missing">Missing</option>
+                      </select>
+                      {rule.operator === 'lt' && (
+                        <input
+                          type="number"
+                          value={rule.value ?? 0}
+                          onChange={(e) => {
+                            const next = [...screeningAutoRejectRules];
+                            next[idx] = { ...next[idx], value: parseInt(e.target.value) || 0 };
+                            setScreeningAutoRejectRules(next);
+                          }}
+                          className="w-16 px-2 py-1 bg-theme-muted border border-theme-border rounded text-xs text-theme-text-primary"
+                        />
+                      )}
+                      <button
+                        onClick={() => setScreeningAutoRejectRules(screeningAutoRejectRules.filter((_, i) => i !== idx))}
+                        className="text-red-400 hover:text-red-300"
+                      >
+                        <XCircle className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => setScreeningAutoRejectRules([...screeningAutoRejectRules, { field: 'experience', operator: 'lt', value: 1 }])}
+                    className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" /> Add Rule
+                  </button>
+                </div>
+              </div>
+
+              {/* Auto-Reject Score Threshold */}
+              <div>
+                <label className="block text-sm font-medium text-theme-text-secondary mb-2">
+                  Auto-Reject Below Score (0 = disabled)
+                </label>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={screeningAutoRejectScore}
+                  onChange={(e) => setScreeningAutoRejectScore(parseInt(e.target.value))}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-theme-text-tertiary mt-1">
+                  <span>Off</span>
+                  <span className="font-medium text-theme-text-primary">{screeningAutoRejectScore}</span>
+                  <span>100</span>
+                </div>
+              </div>
+
+              {/* Talent Pool Toggle */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setScreeningTalentPool(!screeningTalentPool)}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${screeningTalentPool ? 'bg-green-500' : 'bg-theme-border'}`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${screeningTalentPool ? 'translate-x-5' : ''}`} />
+                </button>
+                <label className="text-sm text-theme-text-secondary">
+                  Auto-route rejected candidates to talent pool
+                </label>
               </div>
             </div>
 
@@ -926,18 +1096,47 @@ export const RecruitmentDashboard: React.FC = () => {
       {/* AI Screening Results Modal */}
       {showScreeningResults && screeningResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-2xl max-h-[80vh] overflow-y-auto bg-theme-card border border-theme-border rounded-xl p-6 shadow-xl">
+          <div className="w-full max-w-4xl max-h-[85vh] overflow-y-auto bg-theme-card border border-theme-border rounded-xl p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-theme-text-primary flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-purple-400" />
                 AI Screening Results
               </h3>
-              <button onClick={() => setShowScreeningResults(false)} className="text-theme-text-tertiary hover:text-theme-text-primary">
-                <XCircle className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    if (!screeningResult) return;
+                    const headers = ['Candidate', 'AI Score', 'Confidence', 'Status', 'Auto-Rejected', 'Auto-Reject Reasons', 'Breakdown'];
+                    const rows = screeningResult.results.map((r) => [
+                      r.candidateName,
+                      r.aiScore,
+                      r.confidence ?? '',
+                      r.status,
+                      r.autoRejected ? 'Yes' : 'No',
+                      (r.autoRejectReasons ?? []).join('; '),
+                      r.breakdown.map((b) => `${b.criteria}: ${b.score}/${b.maxScore}`).join('; '),
+                    ]);
+                    const csv = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `screening-results-${screeningReqId}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-theme-text-primary bg-theme-muted border border-theme-border rounded-lg hover:bg-theme-sidebar-hover"
+                >
+                  <FileText className="w-3.5 h-3.5" /> Export CSV
+                </button>
+                <button onClick={() => setShowScreeningResults(false)} className="text-theme-text-tertiary hover:text-theme-text-primary">
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            {/* Stats */}
+            <div className="grid grid-cols-5 gap-3 mb-4">
               <div className="bg-theme-muted rounded-lg p-3 text-center">
                 <p className="text-xs text-theme-text-secondary">Screened</p>
                 <p className="text-xl font-bold text-theme-text-primary">{screeningResult.screened}</p>
@@ -947,35 +1146,160 @@ export const RecruitmentDashboard: React.FC = () => {
                 <p className="text-xl font-bold text-green-400">{screeningResult.shortlisted}</p>
               </div>
               <div className="bg-theme-muted rounded-lg p-3 text-center">
+                <p className="text-xs text-theme-text-secondary">Auto-Rejected</p>
+                <p className="text-xl font-bold text-red-400">{screeningResult.autoRejected ?? 0}</p>
+              </div>
+              <div className="bg-theme-muted rounded-lg p-3 text-center">
+                <p className="text-xs text-theme-text-secondary">Talent Pooled</p>
+                <p className="text-xl font-bold text-blue-400">{screeningResult.talentPooled ?? 0}</p>
+              </div>
+              <div className="bg-theme-muted rounded-lg p-3 text-center">
                 <p className="text-xs text-theme-text-secondary">Cutoff Score</p>
                 <p className="text-xl font-bold text-purple-400">{screeningResult.thresholdScore}</p>
               </div>
             </div>
 
+            {/* Filter & Sort Controls */}
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              <span className="text-xs text-theme-text-secondary">Filter:</span>
+              {(['all', 'shortlist', 'screened', 'auto_rejected'] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setResultsFilter(f)}
+                  className={`px-2 py-1 rounded text-xs font-medium border transition-colors ${resultsFilter === f ? 'bg-purple-500/10 text-purple-400 border-purple-500/30' : 'bg-theme-muted text-theme-text-secondary border-theme-border hover:bg-theme-sidebar-hover'}`}
+                >
+                  {f === 'all' ? 'All' : f === 'shortlist' ? 'Shortlisted' : f === 'screened' ? 'Screened' : 'Auto-Rejected'}
+                </button>
+              ))}
+              <span className="text-xs text-theme-text-secondary ml-3">Sort by:</span>
+              {(['score', 'name', 'confidence'] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => {
+                    if (resultsSortBy === s) {
+                      setResultsSortDir(resultsSortDir === 'asc' ? 'desc' : 'asc');
+                    } else {
+                      setResultsSortBy(s);
+                      setResultsSortDir('desc');
+                    }
+                  }}
+                  className={`px-2 py-1 rounded text-xs font-medium border transition-colors ${resultsSortBy === s ? 'bg-purple-500/10 text-purple-400 border-purple-500/30' : 'bg-theme-muted text-theme-text-secondary border-theme-border hover:bg-theme-sidebar-hover'}`}
+                >
+                  {s === 'score' ? 'Score' : s === 'name' ? 'Name' : 'Confidence'} {resultsSortBy === s ? (resultsSortDir === 'asc' ? '↑' : '↓') : ''}
+                </button>
+              ))}
+            </div>
+
+            {/* Results Table */}
             <div className="overflow-x-auto rounded-lg border border-theme-border">
               <table className="w-full text-sm">
                 <thead className="bg-theme-muted">
                   <tr>
-                    {['Candidate', 'AI Score', 'Status', 'Top Criteria'].map((h) => (
-                      <th key={h} className="px-3 py-2 text-left font-medium text-theme-text-secondary">{h}</th>
-                    ))}
+                    <th className="px-3 py-2 text-left font-medium text-theme-text-secondary">Candidate</th>
+                    <th className="px-3 py-2 text-left font-medium text-theme-text-secondary">AI Score</th>
+                    <th className="px-3 py-2 text-left font-medium text-theme-text-secondary">Confidence</th>
+                    <th className="px-3 py-2 text-left font-medium text-theme-text-secondary">Status</th>
+                    <th className="px-3 py-2 text-left font-medium text-theme-text-secondary">Details</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-theme-border">
-                  {screeningResult.results.map((r) => (
-                    <tr key={r.applicationId} className="hover:bg-theme-sidebar-hover">
-                      <td className="px-3 py-2 text-theme-text-primary font-medium">{r.candidateName}</td>
-                      <td className="px-3 py-2 text-theme-text-secondary">{r.aiScore}/100</td>
-                      <td className="px-3 py-2">
-                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs border ${statusBadge(r.status)}`}>
-                          {r.status}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-theme-text-secondary text-xs">
-                        {r.breakdown.slice(0, 2).map((b) => `${b.criteria}: ${b.score}`).join(', ')}
-                      </td>
-                    </tr>
-                  ))}
+                  {screeningResult.results
+                    .filter((r) => resultsFilter === 'all' || r.status === resultsFilter)
+                    .sort((a, b) => {
+                      let cmp = 0;
+                      if (resultsSortBy === 'score') cmp = a.aiScore - b.aiScore;
+                      else if (resultsSortBy === 'name') cmp = a.candidateName.localeCompare(b.candidateName);
+                      else if (resultsSortBy === 'confidence') cmp = (a.confidence ?? 0) - (b.confidence ?? 0);
+                      return resultsSortDir === 'asc' ? cmp : -cmp;
+                    })
+                    .map((r) => (
+                      <React.Fragment key={r.applicationId}>
+                        <tr
+                          className="hover:bg-theme-sidebar-hover cursor-pointer"
+                          onClick={() => setExpandedCandidate(expandedCandidate === r.applicationId ? null : r.applicationId)}
+                        >
+                          <td className="px-3 py-2 text-theme-text-primary font-medium">
+                            <div className="flex items-center gap-1">
+                              <ChevronRight className={`w-3 h-3 transition-transform ${expandedCandidate === r.applicationId ? 'rotate-90' : ''}`} />
+                              {r.candidateName}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className={`font-bold ${r.aiScore >= 70 ? 'text-green-400' : r.aiScore >= 40 ? 'text-yellow-400' : 'text-red-400'}`}>{r.aiScore}/100</span>
+                          </td>
+                          <td className="px-3 py-2 text-theme-text-secondary">
+                            {r.confidence != null ? `${Math.round(r.confidence * 100)}%` : '-'}
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs border ${statusBadge(r.status)}`}>
+                              {r.status}
+                            </span>
+                            {r.autoRejected && (
+                              <span className="ml-1 inline-flex px-2 py-0.5 rounded-full text-xs border bg-red-500/10 text-red-400 border-red-500/30">
+                                Auto-Rejected
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-theme-text-secondary text-xs">
+                            {r.breakdown.slice(0, 2).map((b) => `${b.criteria}: ${b.score}`).join(', ')}
+                          </td>
+                        </tr>
+                        {expandedCandidate === r.applicationId && (
+                          <tr className="bg-theme-muted/30">
+                            <td colSpan={5} className="px-4 py-3">
+                              {/* Auto-reject reasons */}
+                              {r.autoRejected && (r.autoRejectReasons ?? []).length > 0 && (
+                                <div className="mb-3 p-2 rounded bg-red-500/10 border border-red-500/20">
+                                  <p className="text-xs font-medium text-red-400 mb-1">Auto-Reject Reasons:</p>
+                                  <ul className="text-xs text-red-300 list-disc list-inside">
+                                    {(r.autoRejectReasons ?? []).map((reason, i) => <li key={i}>{reason}</li>)}
+                                  </ul>
+                                </div>
+                              )}
+                              {/* Full breakdown */}
+                              <div className="space-y-1.5">
+                                {r.breakdown.map((b, i) => (
+                                  <div key={i} className="flex items-center gap-2 text-xs">
+                                    <span className="text-theme-text-secondary w-40">{b.criteria}</span>
+                                    <div className="flex-1 h-2 bg-theme-muted rounded-full overflow-hidden">
+                                      <div
+                                        className={`h-full rounded-full ${b.score >= b.maxScore * 0.7 ? 'bg-green-500' : b.score >= b.maxScore * 0.4 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                        style={{ width: `${(b.score / b.maxScore) * 100}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-theme-text-primary w-16 text-right">{b.score}/{b.maxScore}</span>
+                                    <span className="text-theme-text-tertiary w-12 text-right">w: {(b.weight * 100).toFixed(0)}%</span>
+                                  </div>
+                                ))}
+                              </div>
+                              {/* Keyword matches */}
+                              {r.keywordMatches && r.keywordMatches.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-theme-border">
+                                  <p className="text-xs font-medium text-theme-text-secondary mb-1">Job Description Keywords:</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {r.keywordMatches.map((kw, i) => (
+                                      <span
+                                        key={i}
+                                        className={`px-2 py-0.5 rounded text-xs border ${kw.found ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-theme-muted text-theme-text-tertiary border-theme-border'}`}
+                                      >
+                                        {kw.keyword} {kw.found ? '✓' : '✗'}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {/* Full reason text */}
+                              <div className="mt-3 pt-3 border-t border-theme-border">
+                                <p className="text-xs font-medium text-theme-text-secondary mb-1">Detailed Reasons:</p>
+                                <ul className="text-xs text-theme-text-tertiary list-disc list-inside">
+                                  {r.breakdown.map((b, i) => <li key={i}><strong>{b.criteria}:</strong> {b.reason}</li>)}
+                                </ul>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
                 </tbody>
               </table>
             </div>

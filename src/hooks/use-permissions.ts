@@ -122,6 +122,8 @@ export function getDefaultPermissionsForRole(roleId: string): UserPermissions {
         crm: "write",
         finance: "write",
         projects: "write",
+        sales: "write",
+        analytics: "write",
       };
     }
 
@@ -136,6 +138,8 @@ export function getDefaultPermissionsForRole(roleId: string): UserPermissions {
         crm: "write",
         finance: "read",
         projects: "write",
+        sales: "write",
+        analytics: "read",
       };
     }
 
@@ -150,6 +154,8 @@ export function getDefaultPermissionsForRole(roleId: string): UserPermissions {
         crm: "write",
         finance: "read",
         projects: "write",
+        sales: "write",
+        analytics: "read",
       };
     }
 
@@ -165,6 +171,8 @@ export function getDefaultPermissionsForRole(roleId: string): UserPermissions {
         crm: "read",
         finance: "read",
         projects: "read",
+        sales: "read",
+        analytics: "read",
       };
     }
   }

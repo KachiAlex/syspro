@@ -22,6 +22,9 @@ const createSchema = z.object({
   skills: z.array(z.string()).default([]),
   experienceYears: z.number().nonnegative().optional(),
   education: z.string().optional(),
+  certifications: z.array(z.string()).default([]),
+  expectedSalary: z.number().nonnegative().optional(),
+  location: z.string().optional(),
   notes: z.string().optional(),
   tags: z.array(z.string()).default([]),
 });

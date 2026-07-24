@@ -183,6 +183,9 @@ export function RequisitionModal({
   const [budget, setBudget] = useState<number | ''>('');
   const [minExperienceYears, setMinExperienceYears] = useState<number | ''>('');
   const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
+  const [preferredSkills, setPreferredSkills] = useState<string[]>([]);
+  const [requiredCertifications, setRequiredCertifications] = useState<string[]>([]);
+  const [educationLevel, setEducationLevel] = useState('');
   const [showCreateDept, setShowCreateDept] = useState(false);
   const [newDeptName, setNewDeptName] = useState('');
   const [newDeptDescription, setNewDeptDescription] = useState('');
@@ -217,9 +220,13 @@ export function RequisitionModal({
       setBudget(initialData.budget ?? '');
       setMinExperienceYears(initialData.minExperienceYears ?? '');
       setRequiredSkills(initialData.requiredSkills || []);
+      setPreferredSkills((initialData as any)?.preferredSkills || []);
+      setRequiredCertifications((initialData as any)?.requiredCertifications || []);
+      setEducationLevel((initialData as any)?.educationLevel || '');
     } else {
       setTitle(''); setDepartmentId(''); setDescription(''); setRequirements(''); setLocation('');
       setEmploymentType('full-time'); setSalaryRange(''); setHeadcount(1); setBudget(''); setMinExperienceYears(''); setRequiredSkills([]);
+      setPreferredSkills([]); setRequiredCertifications([]); setEducationLevel('');
     }
   }, [initialData, isOpen]);
 
@@ -233,7 +240,7 @@ export function RequisitionModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await onSubmit({ title, departmentId, description, requirements, location, employmentType, salaryRange, headcount: headcount || 1, budget: budget || undefined, minExperienceYears: minExperienceYears || undefined, requiredSkills });
+      await onSubmit({ title, departmentId, description, requirements, location, employmentType, salaryRange, headcount: headcount || 1, budget: budget || undefined, minExperienceYears: minExperienceYears || undefined, requiredSkills, preferredSkills, requiredCertifications, educationLevel: educationLevel || undefined });
       onClose();
     } catch (err: any) {
       const msg = err?.message || 'Failed to create requisition';
@@ -315,6 +322,18 @@ export function RequisitionModal({
           <NumberField label="Min Experience (yrs)" value={minExperienceYears} onChange={setMinExperienceYears} min={0} />
         </div>
         <TagsField label="Required Skills" tags={requiredSkills} onChange={setRequiredSkills} />
+        <TagsField label="Preferred Skills" tags={preferredSkills} onChange={setPreferredSkills} />
+        <TagsField label="Required Certifications" tags={requiredCertifications} onChange={setRequiredCertifications} />
+        <SelectField label="Education Level" value={educationLevel} onChange={setEducationLevel} options={[
+          { value: '', label: 'Any / Not specified' },
+          { value: 'high_school', label: 'High School' },
+          { value: 'diploma', label: 'Diploma' },
+          { value: 'associate', label: 'Associate Degree' },
+          { value: 'bachelor', label: 'Bachelor\'s Degree' },
+          { value: 'master', label: 'Master\'s Degree' },
+          { value: 'mba', label: 'MBA' },
+          { value: 'phd', label: 'PhD / Doctorate' },
+        ]} />
         <div className="flex justify-end gap-3 pt-2">
           <CancelBtn onClose={onClose} />
           <SubmitBtn label={mode === 'edit' ? 'Save Changes' : 'Create Requisition'} />
@@ -335,6 +354,9 @@ export function CandidateModal({ isOpen, onClose, onSubmit, mode = 'create', ini
   const [skills, setSkills] = useState<string[]>([]);
   const [experienceYears, setExperienceYears] = useState<number | ''>('');
   const [education, setEducation] = useState('');
+  const [certifications, setCertifications] = useState<string[]>([]);
+  const [expectedSalary, setExpectedSalary] = useState<number | ''>('');
+  const [candLocation, setCandLocation] = useState('');
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
@@ -348,10 +370,13 @@ export function CandidateModal({ isOpen, onClose, onSubmit, mode = 'create', ini
       setSkills(initialData.skills || []);
       setExperienceYears(initialData.experienceYears ?? '');
       setEducation(initialData.education || '');
+      setCertifications((initialData as any)?.certifications || []);
+      setExpectedSalary((initialData as any)?.expectedSalary ?? '');
+      setCandLocation((initialData as any)?.location || '');
       setNotes(initialData.notes || '');
     } else {
       setFullName(''); setEmail(''); setPhone(''); setResumeUrl(''); setSource('manual');
-      setCurrentStage('new'); setSkills([]); setExperienceYears(''); setEducation(''); setNotes('');
+      setCurrentStage('new'); setSkills([]); setExperienceYears(''); setEducation(''); setCertifications([]); setExpectedSalary(''); setCandLocation(''); setNotes('');
     }
   }, [initialData, isOpen]);
 
@@ -359,7 +384,7 @@ export function CandidateModal({ isOpen, onClose, onSubmit, mode = 'create', ini
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ fullName, email, phone, resumeUrl, source, currentStage, skills, experienceYears: experienceYears || undefined, education, notes });
+    onSubmit({ fullName, email, phone, resumeUrl, source, currentStage, skills, experienceYears: experienceYears || undefined, education, certifications, expectedSalary: expectedSalary || undefined, location: candLocation, notes });
     onClose();
   };
 
@@ -391,6 +416,11 @@ export function CandidateModal({ isOpen, onClose, onSubmit, mode = 'create', ini
         <TagsField label="Skills" tags={skills} onChange={setSkills} />
         <NumberField label="Experience (years)" value={experienceYears} onChange={setExperienceYears} min={0} />
         <TextField label="Education" value={education} onChange={setEducation} />
+        <TagsField label="Certifications" tags={certifications} onChange={setCertifications} />
+        <div className="grid grid-cols-2 gap-4">
+          <NumberField label="Expected Salary" value={expectedSalary} onChange={setExpectedSalary} min={0} />
+          <TextField label="Location" value={candLocation} onChange={setCandLocation} />
+        </div>
         <TextArea label="Notes" value={notes} onChange={setNotes} />
         <div className="flex justify-end gap-3 pt-2">
           <CancelBtn onClose={onClose} />

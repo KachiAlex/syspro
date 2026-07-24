@@ -1,7 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import bcrypt from "bcryptjs";
 
-const sql = neon(process.env.DATABASE_URL);
+const sql = neon(process.env.DATABASE_URL!);
 
 async function main() {
   const rows = await sql`SELECT password_hash FROM admin_employees WHERE email = 'onyedika.akoma@gmail.com'`;

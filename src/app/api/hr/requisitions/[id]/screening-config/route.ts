@@ -8,6 +8,14 @@ const configSchema = z.object({
   selectionValue: z.number().int().positive(),
   minScoreThreshold: z.number().int().min(0).max(100).optional(),
   isEnabled: z.boolean().optional(),
+  customWeights: z.record(z.string(), z.number()).optional(),
+  autoRejectRules: z.array(z.object({
+    field: z.enum(["experience", "requiredSkills", "education", "certifications", "resume"]),
+    operator: z.enum(["lt", "eq", "missing"]),
+    value: z.any(),
+  })).optional(),
+  autoRejectBelowScore: z.number().int().min(0).max(100).optional(),
+  autoTalentPoolRejected: z.boolean().optional(),
 });
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -46,6 +54,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       selectionValue: parsed.data.selectionValue,
       minScoreThreshold: parsed.data.minScoreThreshold ?? 0,
       isEnabled: parsed.data.isEnabled ?? true,
+      customWeights: parsed.data.customWeights ?? null,
+      autoRejectRules: parsed.data.autoRejectRules ?? null,
+      autoRejectBelowScore: parsed.data.autoRejectBelowScore ?? 0,
+      autoTalentPoolRejected: parsed.data.autoTalentPoolRejected ?? false,
     });
     return NextResponse.json({ config });
   } catch (error) {

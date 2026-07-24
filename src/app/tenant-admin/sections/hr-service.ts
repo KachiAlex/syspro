@@ -539,6 +539,9 @@ export class HRService {
     headcount?: number;
     budget?: number;
     requiredSkills?: string[];
+    preferredSkills?: string[];
+    requiredCertifications?: string[];
+    educationLevel?: string;
     minExperienceYears?: number;
     requirements?: string;
     location?: string;
@@ -575,6 +578,9 @@ export class HRService {
     skills?: string[];
     experienceYears?: number;
     education?: string;
+    certifications?: string[];
+    expectedSalary?: number;
+    location?: string;
     notes?: string;
     tags?: string[];
   }): Promise<CandidateRecord> {
@@ -628,6 +634,10 @@ export class HRService {
       selectionValue: number;
       minScoreThreshold?: number;
       isEnabled?: boolean;
+      customWeights?: Record<string, number> | null;
+      autoRejectRules?: Array<{ field: string; operator: string; value?: any }> | null;
+      autoRejectBelowScore?: number;
+      autoTalentPoolRejected?: boolean;
     }
   ): Promise<ScreeningConfigRecord | null> {
     const response = await apiClient.post(`/hr/requisitions/${requisitionId}/screening-config`, {

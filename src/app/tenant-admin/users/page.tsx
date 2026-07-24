@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, Plus, Search, Shield, UserCheck, UserX, CheckCircle, AlertCircle, Clock, X, Monitor, Loader2, ToggleLeft, ToggleRight, RotateCcw, Grid3x3, List, Save, Layers } from 'lucide-react';
+import { Users, Plus, Search, Shield, UserCheck, UserX, CheckCircle, AlertCircle, Clock, X, Monitor, Loader2, ToggleLeft, ToggleRight, RotateCcw, Grid3x3, List, Save, Layers, Edit } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { apiClient } from '@/lib/api-client';
 

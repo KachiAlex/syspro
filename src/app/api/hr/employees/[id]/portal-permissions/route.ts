@@ -18,7 +18,7 @@ const BUSINESS_MODULES = [
 
 const ALWAYS_ON = new Set(["self_service"]);
 
-export function getDefaultPermissions(role: string): Record<string, boolean> {
+function getDefaultPermissions(role: string): Record<string, boolean> {
   const r = (role || "staff").toLowerCase();
   const base: Record<string, boolean> = {};
   for (const mod of BUSINESS_MODULES) {

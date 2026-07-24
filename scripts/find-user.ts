@@ -11,7 +11,7 @@ async function main() {
     JOIN tenants t ON t.id = ta.tenant_id
     WHERE ta.email ILIKE '%onyedika%' OR ta.email ILIKE '%akoma%'
   `;
-  admins.forEach(r => console.log(r));
+  admins.forEach((r: any) => console.log(r));
 
   // Check users table
   console.log('\n=== users table ===');
@@ -20,7 +20,7 @@ async function main() {
       SELECT id, email, name, tenant_slug FROM users
       WHERE email ILIKE '%onyedika%' OR email ILIKE '%akoma%'
     `;
-    users.forEach(r => console.log(r));
+    users.forEach((r: any) => console.log(r));
   } catch (e) {
     console.log('users table error:', (e as any).message);
   }
@@ -32,7 +32,7 @@ async function main() {
       SELECT id, email, first_name, last_name, tenant_slug FROM employees
       WHERE email ILIKE '%onyedika%' OR email ILIKE '%akoma%'
     `;
-    emps.forEach(r => console.log(r));
+    emps.forEach((r: any) => console.log(r));
   } catch (e) {
     console.log('employees table error:', (e as any).message);
   }
@@ -45,7 +45,7 @@ async function main() {
     JOIN tenants t ON t.id = ta.tenant_id
     ORDER BY ta.created_at DESC
   `;
-  allAdmins.forEach(r => console.log(r));
+  allAdmins.forEach((r: any) => console.log(r));
 
   process.exit(0);
 }

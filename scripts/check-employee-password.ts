@@ -36,7 +36,7 @@ async function main() {
       WHERE tenant_slug = 'kreatixtech'
       ORDER BY name
     `;
-    all.forEach(e => console.log(`  ${e.email} | ${e.name} | active=${e.is_portal_active} | status=${e.status} | has_pwd=${e.has_pwd}`));
+    all.forEach((e: any) => console.log(`  ${e.email} | ${e.name} | active=${e.is_portal_active} | status=${e.status} | has_pwd=${e.has_pwd}`));
     process.exit(0);
   }
 
