@@ -1,107 +1,236 @@
 import { NextRequest, NextResponse } from "next/server";
-import { decodeEmployeeToken, resolveEmployeeSession } from "@/lib/hr/auth";
+import { resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables } from "@/lib/hr/db";
+import {
+  generateAppraisal,
+  computeDeterministicMetrics,
+  type AppraisalPeriod,
+  type AppraisalResult,
+} from "@/lib/ai/appraisal-engine";
+import {
+  saveAppraisal,
+  getAppraisalHistory,
+  getDepartmentAppraisals,
+  getTenantAppraisals,
+  shareAppraisalWithEmployee,
+  acknowledgeAppraisal,
+  getEmployeeSharedAppraisals,
+  getAppraisalConfig,
+  saveAppraisalConfig,
+  getPeerFeedbackForEmployee,
+  getEmployeeGoals,
+  type AppraisalConfigRecord,
+} from "@/lib/hr/db-appraisals";
 
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+// ─── Period helpers ───
 
-/**
- * GET /api/hr/employees/portal/appraisal?employeeId=...
- * Returns data needed for AI appraisal: KPIs, reports, tasks for the employee.
- * HR-only.
- */
+function getPeriodRange(period: AppraisalPeriod): { start: string; end: string } {
+  const end = new Date();
+  const start = new Date();
+  switch (period) {
+    case 'weekly':
+      start.setDate(start.getDate() - 7);
+      break;
+    case 'monthly':
+      start.setMonth(start.getMonth() - 1);
+      break;
+    case 'quarterly':
+      start.setMonth(start.getMonth() - 3);
+      break;
+    case 'annual':
+      start.setFullYear(start.getFullYear() - 1);
+      break;
+    default:
+      start.setMonth(start.getMonth() - 1);
+  }
+  return { start: start.toISOString(), end: end.toISOString() };
+}
+
+// ─── Data Fetching ───
+
+async function fetchEmployeeData(tenantSlug: string, employeeId: string, periodStart: string) {
+  const empRows = await SQL`
+    SELECT id, name, email, job_title, role, department_id, hire_date
+    FROM admin_employees
+    WHERE id = ${employeeId} AND tenant_slug = ${tenantSlug}
+    LIMIT 1
+  `;
+  const employee = (empRows as any[])[0];
+  if (!employee) return null;
+
+  let tasks: any[] = [];
+  try {
+    tasks = await SQL`
+      SELECT id, title, description, expected_outcome, weight, is_kpi, frequency, due_date, status, completion_note
+      FROM admin_staff_tasks
+      WHERE tenant_slug = ${tenantSlug} AND employee_id = ${employeeId}
+        AND created_at >= ${periodStart}
+      ORDER BY created_at DESC
+      LIMIT 200
+    `;
+  } catch {
+    tasks = await SQL`
+      SELECT id, title, description, frequency, due_date, status
+      FROM admin_staff_tasks
+      WHERE tenant_slug = ${tenantSlug} AND employee_id = ${employeeId}
+      ORDER BY created_at DESC
+      LIMIT 200
+    `;
+  }
+
+  let reports: any[] = [];
+  try {
+    reports = await SQL`
+      SELECT id, title, report_type, report_date, objectives, achievements, challenges,
+             next_steps, meetings, blockers, activities, additional_notes, refined_text,
+             status, submitted_at, appraisal
+      FROM admin_staff_reports
+      WHERE tenant_slug = ${tenantSlug} AND employee_id = ${employeeId}
+        AND submitted_at >= ${periodStart}
+      ORDER BY submitted_at DESC
+      LIMIT 100
+    `;
+  } catch {
+    reports = await SQL`
+      SELECT id, title, report_type, report_date, objectives, achievements, status, submitted_at
+      FROM admin_staff_reports
+      WHERE tenant_slug = ${tenantSlug} AND employee_id = ${employeeId}
+      ORDER BY submitted_at DESC
+      LIMIT 100
+    `;
+  }
+
+  let attendance: any[] = [];
+  try {
+    attendance = await SQL`
+      SELECT status, check_in, check_out, date
+      FROM admin_attendance
+      WHERE tenant_slug = ${tenantSlug} AND employee_id = ${employeeId}
+        AND date >= ${periodStart.split('T')[0]}
+      ORDER BY date DESC
+      LIMIT 90
+    `;
+  } catch {}
+
+  let peerFeedback: any[] = [];
+  try {
+    peerFeedback = await getPeerFeedbackForEmployee(tenantSlug, employeeId);
+  } catch {}
+
+  let goals: any[] = [];
+  try {
+    goals = await getEmployeeGoals(tenantSlug, employeeId);
+  } catch {}
+
+  return { employee, tasks, reports, attendance, peerFeedback, goals };
+}
+
+// ─── GET: Fetch appraisal data, history, benchmarks, config ───
+
 export async function GET(request: NextRequest) {
-  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const session = resolveEmployeeSession(request);
+  if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const employeeRole = (session.role || "staff").toLowerCase();
   const isHR = employeeRole === "hr" || employeeRole === "hr_admin" || employeeRole === "hr_manager";
-  if (!isHR) {
-    return NextResponse.json({ error: "Only HR can access appraisals" }, { status: 403 });
-  }
+
+  const url = new URL(request.url);
+  const employeeId = url.searchParams.get("employeeId");
+  const action = url.searchParams.get("action") || "data";
 
   try {
-    try { await ensureHrTables(SQL); } catch (e) { console.error("ensureHrTables failed:", (e as any)?.message); }
+    await ensureHrTables(SQL);
 
-    const url = new URL(request.url);
-    const employeeId = url.searchParams.get("employeeId");
-    if (!employeeId) {
-      return NextResponse.json({ error: "employeeId is required" }, { status: 400 });
+    if (action === "config") {
+      if (!isHR) return NextResponse.json({ error: "Only HR can manage appraisal config" }, { status: 403 });
+      const config = await getAppraisalConfig(session.tenantSlug);
+      return NextResponse.json({ config });
     }
 
-    // Fetch employee info
-    const empRows = await SQL`
-      SELECT id, name, email, job_title, role, department_id, hire_date
-      FROM admin_employees
-      WHERE id = ${employeeId} AND tenant_slug = ${session.tenantSlug}
-      LIMIT 1
-    `;
-    if (empRows.length === 0) {
-      return NextResponse.json({ error: "Employee not found" }, { status: 404 });
-    }
-    const employee = empRows[0];
-
-    // Fetch KPIs / tasks
-    let tasks: any[] = [];
-    try {
-      tasks = await SQL`
-        SELECT id, title, description, expected_outcome, weight, is_kpi, frequency, due_date, status, completion_note
-        FROM admin_staff_tasks
-        WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${employeeId}
-        ORDER BY created_at DESC
-        LIMIT 100
-      `;
-    } catch (e) {
-      tasks = await SQL`
-        SELECT id, title, description, frequency, due_date, status
-        FROM admin_staff_tasks
-        WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${employeeId}
-        ORDER BY created_at DESC
-        LIMIT 100
-      `;
+    if (action === "history") {
+      if (!employeeId) return NextResponse.json({ error: "employeeId is required" }, { status: 400 });
+      const history = await getAppraisalHistory(session.tenantSlug, employeeId, 50);
+      return NextResponse.json({ history });
     }
 
-    // Fetch reports
-    let reports: any[] = [];
-    try {
-      reports = await SQL`
-        SELECT id, title, report_type, report_date, objectives, achievements, challenges,
-               next_steps, meetings, blockers, activities, status, submitted_at, appraisal
-        FROM admin_staff_reports
-        WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${employeeId}
-        ORDER BY submitted_at DESC
-        LIMIT 50
+    if (action === "benchmark") {
+      if (!isHR) return NextResponse.json({ error: "Only HR can view benchmarks" }, { status: 403 });
+      if (!employeeId) return NextResponse.json({ error: "employeeId is required" }, { status: 400 });
+      const empRows = await SQL`
+        SELECT department_id FROM admin_employees
+        WHERE id = ${employeeId} AND tenant_slug = ${session.tenantSlug}
+        LIMIT 1
       `;
-    } catch (e) {
-      reports = await SQL`
-        SELECT id, title, report_type, report_date, objectives, achievements, status, submitted_at
-        FROM admin_staff_reports
-        WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${employeeId}
-        ORDER BY submitted_at DESC
-        LIMIT 50
-      `;
+      const emp = (empRows as any[])[0];
+      if (!emp?.department_id) return NextResponse.json({ benchmark: null });
+      const deptAppraisals = await getDepartmentAppraisals(session.tenantSlug, emp.department_id, 100);
+      const latestByEmp = new Map<string, AppraisalResult>();
+      for (const a of deptAppraisals) {
+        if (!latestByEmp.has(a.employeeId)) latestByEmp.set(a.employeeId, a);
+      }
+      const peerScores = Array.from(latestByEmp.values()).filter(a => a.employeeId !== employeeId);
+      const deptAvg = peerScores.length > 0
+        ? Math.round(peerScores.reduce((s, a) => s + a.overallScore, 0) / peerScores.length)
+        : null;
+      const empAppraisal = latestByEmp.get(employeeId);
+      const percentile = peerScores.length > 0 && empAppraisal
+        ? Math.round(peerScores.filter(a => a.overallScore <= empAppraisal.overallScore).length / peerScores.length * 100)
+        : null;
+      return NextResponse.json({
+        benchmark: {
+          departmentAverage: deptAvg,
+          percentileRank: percentile,
+          peerCount: peerScores.length,
+          peerScores: peerScores.map(a => ({ employeeId: a.employeeId, score: a.overallScore, rating: a.rating })),
+        },
+      });
     }
 
-    // Fetch attendance summary (last 30 days)
-    let attendance: any[] = [];
-    try {
-      attendance = await SQL`
-        SELECT status, check_in, check_out, date
-        FROM admin_attendance
-        WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${employeeId}
-          AND date >= NOW() - INTERVAL '30 days'
-        ORDER BY date DESC
-        LIMIT 30
-      `;
-    } catch (e) {
-      // Attendance table may not exist
+    if (action === "self") {
+      const targetId = employeeId || session.id;
+      const shared = await getEmployeeSharedAppraisals(session.tenantSlug, targetId);
+      return NextResponse.json({ appraisals: shared });
     }
+
+    if (action === "list") {
+      if (!isHR) return NextResponse.json({ error: "Only HR can list all appraisals" }, { status: 403 });
+      const all = await getTenantAppraisals(session.tenantSlug, 200);
+      return NextResponse.json({ appraisals: all });
+    }
+
+    // Default: fetch data for appraisal generation
+    if (!employeeId) return NextResponse.json({ error: "employeeId is required" }, { status: 400 });
+    if (!isHR) return NextResponse.json({ error: "Only HR can access appraisal data" }, { status: 403 });
+
+    const period = (url.searchParams.get("period") as AppraisalPeriod) || "monthly";
+    const { start, end } = getPeriodRange(period);
+    const data = await fetchEmployeeData(session.tenantSlug, employeeId, start);
+    if (!data) return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+
+    const previousAppraisals = await getAppraisalHistory(session.tenantSlug, employeeId, 5);
+
+    let departmentAppraisals: AppraisalResult[] = [];
+    if (data.employee.department_id) {
+      try {
+        departmentAppraisals = await getDepartmentAppraisals(session.tenantSlug, data.employee.department_id, 50);
+      } catch {}
+    }
+
+    let config: AppraisalConfigRecord | null = null;
+    try { config = await getAppraisalConfig(session.tenantSlug); } catch {}
+
+    const quickMetrics = computeDeterministicMetrics(data.tasks, data.reports, data.attendance);
 
     return NextResponse.json({
-      employee,
-      tasks,
-      reports,
-      attendance,
+      ...data,
+      period,
+      periodStart: start,
+      periodEnd: end,
+      previousAppraisals,
+      departmentAppraisals: departmentAppraisals.filter(a => a.employeeId !== employeeId),
+      config,
+      quickMetrics,
     });
   } catch (error: any) {
     console.error("Appraisal GET error:", error?.message);
@@ -109,164 +238,122 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/**
- * POST /api/hr/employees/portal/appraisal
- * Generates an AI-based productivity appraisal for an employee.
- * HR-only. Uses Groq AI to analyze KPI completion + report quality.
- */
+// ─── POST: Generate appraisal ───
+
 export async function POST(request: NextRequest) {
-  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const session = resolveEmployeeSession(request);
+  if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const employeeRole = (session.role || "staff").toLowerCase();
   const isHR = employeeRole === "hr" || employeeRole === "hr_admin" || employeeRole === "hr_manager";
-  if (!isHR) {
-    return NextResponse.json({ error: "Only HR can generate appraisals" }, { status: 403 });
-  }
-
-  const groqKey = process.env.GROQ_API_KEY;
-  if (!groqKey) {
-    return NextResponse.json({
-      error: "AI feature is not configured. Set GROQ_API_KEY environment variable.",
-    }, { status: 503 });
-  }
+  if (!isHR) return NextResponse.json({ error: "Only HR can generate appraisals" }, { status: 403 });
 
   try {
     const body = await request.json();
-    const { employee, tasks, reports, attendance } = body;
+    const { employeeId, period = "monthly", weights, useAI = true, persist = true } = body;
+    if (!employeeId) return NextResponse.json({ error: "employeeId is required" }, { status: 400 });
 
-    if (!employee || !tasks || !reports) {
-      return NextResponse.json({ error: "Missing required data" }, { status: 400 });
+    let config: AppraisalConfigRecord | null = null;
+    try { config = await getAppraisalConfig(session.tenantSlug); } catch {}
+
+    const mergedWeights = { ...(config?.weights || {}), ...(weights || {}) };
+    const shouldUseAI = useAI && (config?.useAI ?? true);
+    const groqKey = shouldUseAI ? process.env.GROQ_API_KEY : undefined;
+
+    const { start, end } = getPeriodRange(period as AppraisalPeriod);
+    const data = await fetchEmployeeData(session.tenantSlug, employeeId, start);
+    if (!data) return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+
+    const previousAppraisals = await getAppraisalHistory(session.tenantSlug, employeeId, 5);
+
+    let departmentAppraisals: AppraisalResult[] = [];
+    if (data.employee.department_id) {
+      try {
+        departmentAppraisals = await getDepartmentAppraisals(session.tenantSlug, data.employee.department_id, 50);
+      } catch {}
     }
 
-    // Build context for AI
-    const kpiTasks = tasks.filter((t: any) => t.is_kpi);
-    const completedTasks = tasks.filter((t: any) => t.status === "completed");
-    const pendingTasks = tasks.filter((t: any) => t.status === "pending" || t.status === "in_progress");
-    const overdueTasks = tasks.filter((t: any) => t.status === "overdue" || (t.due_date && new Date(t.due_date) < new Date() && t.status !== "completed"));
-
-    const approvedReports = reports.filter((r: any) => r.status === "approved");
-    const pendingReports = reports.filter((r: any) => r.status === "pending" || r.status === "under_review");
-    const rejectedReports = reports.filter((r: any) => r.status === "rejected" || r.status === "needs_edit");
-
-    const presentDays = attendance.filter((a: any) => a.status === "present").length;
-    const lateDays = attendance.filter((a: any) => a.status === "late").length;
-    const absentDays = attendance.filter((a: any) => a.status === "absent").length;
-
-    const kpiCompletionRate = kpiTasks.length > 0
-      ? Math.round((kpiTasks.filter((t: any) => t.status === "completed").length / kpiTasks.length) * 100)
-      : 0;
-
-    const reportApprovalRate = reports.length > 0
-      ? Math.round((approvedReports.length / reports.length) * 100)
-      : 0;
-
-    const attendanceRate = attendance.length > 0
-      ? Math.round((presentDays / attendance.length) * 100)
-      : 0;
-
-    const systemPrompt = `You are an expert HR analyst. Generate a comprehensive productivity appraisal for an employee based on their KPI completion, report quality, and attendance data.
-
-Return a JSON object with this exact structure:
-{
-  "overallScore": <number 1-100>,
-  "categories": {
-    "kpiPerformance": { "score": <1-100>, "summary": "<2-3 sentences>" },
-    "reportQuality": { "score": <1-100>, "summary": "<2-3 sentences>" },
-    "attendance": { "score": <1-100>, "summary": "<2-3 sentences>" },
-    "taskExecution": { "score": <1-100>, "summary": "<2-3 sentences>" }
-  },
-  "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
-  "improvements": ["<area 1>", "<area 2>", "<area 3>"],
-  "recommendation": "<1 paragraph summary with actionable recommendations>",
-  "rating": "<one of: Excellent | Good | Satisfactory | Needs Improvement | Poor>"
-}
-
-Be fair, data-driven, and constructive. Use the metrics provided to justify scores.`;
-
-    const userPrompt = `Employee: ${employee.name} (${employee.job_title || "Staff"})
-Role: ${employee.role}
-Hire Date: ${employee.hire_date || "N/A"}
-
-KPI/TASK METRICS:
-- Total KPIs: ${kpiTasks.length}
-- KPI Completion Rate: ${kpiCompletionRate}%
-- Completed Tasks: ${completedTasks.length}
-- Pending/In-Progress Tasks: ${pendingTasks.length}
-- Overdue Tasks: ${overdueTasks.length}
-
-KPI Details:
-${kpiTasks.slice(0, 10).map((t: any, i: number) => `${i+1}. ${t.title} (Weight: ${t.weight || 1}, Status: ${t.status}, Due: ${t.due_date || "N/A"})${t.expected_outcome ? ` — Expected: ${t.expected_outcome}` : ""}${t.completion_note ? ` — Completion Note: ${t.completion_note}` : ""}`).join("\n")}
-
-REPORT METRICS:
-- Total Reports: ${reports.length}
-- Approved: ${approvedReports.length}
-- Pending/Under Review: ${pendingReports.length}
-- Rejected/Needs Edit: ${rejectedReports.length}
-- Report Approval Rate: ${reportApprovalRate}%
-
-Recent Report Summaries (last 5):
-${reports.slice(0, 5).map((r: any, i: number) => `${i+1}. ${r.title || r.report_type + " report"} (${r.report_type}, ${r.report_date}) — Status: ${r.status}
-   Objectives: ${(r.objectives || "").substring(0, 200)}
-   Achievements: ${(r.achievements || "").substring(0, 200)}
-   ${r.challenges ? "Challenges: " + r.challenges.substring(0, 150) : ""}`).join("\n")}
-
-ATTENDANCE METRICS (last 30 days):
-- Present: ${presentDays} days
-- Late: ${lateDays} days
-- Absent: ${absentDays} days
-- Attendance Rate: ${attendanceRate}%
-
-Generate the appraisal now.`;
-
-    const messages = [
-      { role: "system" as const, content: systemPrompt },
-      { role: "user" as const, content: userPrompt },
-    ];
-
-    const aiRes = await fetch(GROQ_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${groqKey}`,
+    const result = await generateAppraisal(
+      {
+        employee: data.employee,
+        tasks: data.tasks,
+        reports: data.reports,
+        attendance: data.attendance,
+        previousAppraisals,
+        departmentAppraisals: departmentAppraisals.filter(a => a.employeeId !== employeeId),
+        peerFeedback: data.peerFeedback,
+        goals: data.goals,
+        weights: mergedWeights,
+        period: period as AppraisalPeriod,
+        periodStart: start,
+        periodEnd: end,
+        useAI: shouldUseAI,
       },
-      body: JSON.stringify({
-        model: GROQ_MODEL,
-        messages,
-        temperature: 0.4,
-        max_tokens: 2000,
-        response_format: { type: "json_object" },
-      }),
-    });
+      groqKey,
+    );
+    result.tenantSlug = session.tenantSlug;
 
-    if (!aiRes.ok) {
-      const errText = await aiRes.text().catch(() => "");
-      console.error("Groq API error:", aiRes.status, errText);
-      return NextResponse.json({ error: "AI service error" }, { status: 502 });
-    }
-
-    const aiData = await aiRes.json();
-    const content = aiData.choices?.[0]?.message?.content;
-
-    if (!content) {
-      return NextResponse.json({ error: "AI returned empty response" }, { status: 500 });
-    }
-
-    let appraisal;
-    try {
-      appraisal = JSON.parse(content);
-    } catch {
-      // Try to extract JSON from the content
-      const match = content.match(/\{[\s\S]*\}/);
-      if (match) {
-        appraisal = JSON.parse(match[0]);
-      } else {
-        return NextResponse.json({ error: "AI returned invalid JSON" }, { status: 500 });
+    let appraisalId: string | undefined;
+    if (persist) {
+      try {
+        appraisalId = await saveAppraisal(session.tenantSlug, result, session.name);
+        result.id = appraisalId;
+      } catch (e) {
+        console.error("Failed to persist appraisal:", (e as any)?.message);
       }
     }
 
-    return NextResponse.json({ success: true, appraisal });
+    return NextResponse.json({ success: true, appraisal: result, appraisalId });
   } catch (error: any) {
     console.error("Appraisal POST error:", error?.message);
     return NextResponse.json({ error: "Failed to generate appraisal" }, { status: 500 });
+  }
+}
+
+// ─── PATCH: Config, share, acknowledge ───
+
+export async function PATCH(request: NextRequest) {
+  const session = resolveEmployeeSession(request);
+  if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
+  const employeeRole = (session.role || "staff").toLowerCase();
+  const isHR = employeeRole === "hr" || employeeRole === "hr_admin" || employeeRole === "hr_manager";
+
+  try {
+    const body = await request.json();
+    const { action } = body;
+
+    if (action === "saveConfig") {
+      if (!isHR) return NextResponse.json({ error: "Only HR can save appraisal config" }, { status: 403 });
+      await saveAppraisalConfig(session.tenantSlug, {
+        weights: body.weights,
+        autoGenerate: body.autoGenerate,
+        autoGenerateFrequency: body.autoGenerateFrequency,
+        autoGenerateDay: body.autoGenerateDay,
+        useAI: body.useAI,
+        roleTemplates: body.roleTemplates,
+      });
+      return NextResponse.json({ success: true });
+    }
+
+    if (action === "share") {
+      if (!isHR) return NextResponse.json({ error: "Only HR can share appraisals" }, { status: 403 });
+      const { appraisalId } = body;
+      if (!appraisalId) return NextResponse.json({ error: "appraisalId is required" }, { status: 400 });
+      await shareAppraisalWithEmployee(session.tenantSlug, appraisalId);
+      return NextResponse.json({ success: true });
+    }
+
+    if (action === "acknowledge") {
+      const { appraisalId } = body;
+      if (!appraisalId) return NextResponse.json({ error: "appraisalId is required" }, { status: 400 });
+      await acknowledgeAppraisal(session.tenantSlug, appraisalId);
+      return NextResponse.json({ success: true });
+    }
+
+    return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+  } catch (error: any) {
+    console.error("Appraisal PATCH error:", error?.message);
+    return NextResponse.json({ error: "Failed to update appraisal" }, { status: 500 });
   }
 }

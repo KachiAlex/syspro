@@ -331,6 +331,111 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
     )
   `;
   await sql`create index if not exists idx_admin_announcements_tenant on admin_announcements(tenant_slug, is_active, created_at desc)`;
+
+  // Employee Appraisals (Phase 1+)
+  await sql`
+    create table if not exists admin_employee_appraisals (
+      id text primary key,
+      tenant_slug text not null,
+      employee_id text not null,
+      employee_name text,
+      department_id text,
+      period text not null default 'monthly' check (period in ('weekly','monthly','quarterly','annual','custom')),
+      period_start timestamptz not null,
+      period_end timestamptz not null,
+      overall_score integer not null,
+      rating text not null,
+      categories jsonb not null,
+      strengths text[] default '{}',
+      improvements text[] default '{}',
+      recommendation text,
+      sentiment_score numeric(3,2) default 0,
+      anomalies text[] default '{}',
+      trend_delta integer,
+      previous_score integer,
+      department_average integer,
+      percentile_rank integer,
+      generated_by text not null default 'deterministic' check (generated_by in ('ai','deterministic','hybrid')),
+      weights_used jsonb not null,
+      metrics jsonb not null,
+      peer_feedback jsonb,
+      goal_alignment jsonb,
+      generated_by_name text,
+      is_shared boolean default false,
+      employee_acknowledged boolean default false,
+      acknowledged_at timestamptz,
+      created_at timestamptz default now()
+    )
+  `;
+  await sql`create index if not exists idx_admin_appraisals_tenant on admin_employee_appraisals(tenant_slug)`;
+  await sql`create index if not exists idx_admin_appraisals_emp on admin_employee_appraisals(tenant_slug, employee_id, created_at desc)`;
+  await sql`create index if not exists idx_admin_appraisals_dept on admin_employee_appraisals(tenant_slug, department_id)`;
+  await sql`create index if not exists idx_admin_appraisals_period on admin_employee_appraisals(tenant_slug, employee_id, period)`;
+
+  // Appraisal Configuration (per-tenant weights, templates, auto-generation settings)
+  await sql`
+    create table if not exists admin_appraisal_config (
+      id text primary key,
+      tenant_slug text not null unique,
+      weights jsonb not null default '{}',
+      auto_generate boolean default false,
+      auto_generate_frequency text default 'monthly' check (auto_generate_frequency in ('weekly','monthly','quarterly','annual')),
+      auto_generate_day integer default 1,
+      use_ai boolean default true,
+      role_templates jsonb default '{}',
+      created_at timestamptz default now(),
+      updated_at timestamptz default now()
+    )
+  `;
+
+  // Peer Feedback (Phase 4 — 360-degree)
+  await sql`
+    create table if not exists admin_peer_feedback (
+      id text primary key,
+      tenant_slug text not null,
+      employee_id text not null,
+      reviewer_id text not null,
+      reviewer_name text,
+      reviewer_role text default 'peer',
+      rating integer not null check (rating between 1 and 5),
+      collaboration_score integer check (collaboration_score between 1 and 100),
+      communication_score integer check (communication_score between 1 and 100),
+      reliability_score integer check (reliability_score between 1 and 100),
+      strengths text[] default '{}',
+      improvements text[] default '{}',
+      comments text,
+      period text default 'monthly',
+      is_anonymous boolean default false,
+      created_at timestamptz default now()
+    )
+  `;
+  await sql`create index if not exists idx_admin_peer_feedback_emp on admin_peer_feedback(tenant_slug, employee_id, created_at desc)`;
+  await sql`create index if not exists idx_admin_peer_feedback_reviewer on admin_peer_feedback(tenant_slug, reviewer_id)`;
+
+  // Employee Goals / OKRs (Phase 4)
+  await sql`
+    create table if not exists admin_employee_goals (
+      id text primary key,
+      tenant_slug text not null,
+      employee_id text not null,
+      title text not null,
+      description text,
+      target_metric text,
+      target_value numeric,
+      actual_value numeric default 0,
+      status text default 'not_started' check (status in ('not_started','in_progress','on_track','ahead','behind','achieved','completed','cancelled')),
+      priority text default 'medium' check (priority in ('low','medium','high','critical')),
+      start_date timestamptz,
+      due_date timestamptz,
+      completed_at timestamptz,
+      linked_task_ids text[] default '{}',
+      created_by text,
+      created_at timestamptz default now(),
+      updated_at timestamptz default now()
+    )
+  `;
+  await sql`create index if not exists idx_admin_goals_emp on admin_employee_goals(tenant_slug, employee_id, status)`;
+  await sql`create index if not exists idx_admin_goals_tenant on admin_employee_goals(tenant_slug)`;
 }
 
 // ============================================================================
