@@ -1323,9 +1323,9 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
 
       {/* Page Header */}
       <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-theme-text-primary">CRM Dashboard</h1>
-          <p className="text-theme-text-secondary mt-1">Manage customer relationships, sales pipeline, and business growth</p>
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-theme-text-primary">CRM Dashboard</h1>
+          <p className="text-theme-text-secondary mt-1 text-sm sm:text-base">Manage customer relationships, sales pipeline, and business growth</p>
         </div>
         {effectiveViewMode && (
           <div className="flex items-center gap-2">
@@ -1371,14 +1371,14 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2 px-6 py-4 font-medium border-b-2 transition-colors ${
+                className={`flex items-center gap-2 px-3 sm:px-6 py-3 sm:py-4 font-medium border-b-2 transition-colors text-sm sm:text-base ${
                   isActive
                     ? "border-blue-500 text-theme-accent"
                     : "border-transparent text-theme-text-primary hover:text-theme-text-secondary hover:bg-gray-50"
                 }`}
               >
-                <Icon className="w-5 h-5" />
-                {tab.label}
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                <span className="hidden sm:inline">{tab.label}</span>
               </button>
             );
           })}
@@ -1396,7 +1396,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
       <div className="bg-theme-muted rounded-xl border border-theme-border">
         {/* Overview Tab */}
         {activeTab === "overview" && (
-          <div className="p-8 space-y-6">
+          <div className="p-4 sm:p-8 space-y-6">
             {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="bg-theme-muted rounded-xl border border-theme-border p-6">

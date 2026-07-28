@@ -51,14 +51,14 @@ const periodToTimeframe: Record<string, string> = {
 };
 
 const categoryColors = [
-  "bg-[#6366F1]",
+  "bg-[#E31E24]",
   "bg-[#10B981]",
   "bg-[#F59E0B]",
-  "bg-[#818CF8]",
+  "bg-[#E8286E]",
   "bg-[#EF4444]",
   "bg-[#14B8A6]",
   "bg-[#FCD34D]",
-  "bg-[#6366F1]",
+  "bg-[#C0208A]",
 ];
 
 export default function FinanceDashboard() {
@@ -170,7 +170,7 @@ export default function FinanceDashboard() {
         <select
           value={period}
           onChange={(e) => setPeriod(e.target.value)}
-          className="px-4 py-2 border border-theme-border rounded-[10px] text-sm font-medium text-theme-text-primary bg-theme-muted hover:bg-theme-surface focus:outline-none focus:border-[rgba(99,102,241,.4)] focus:shadow-[0_0_0_3px_rgba(99,102,241,.08)] cursor-pointer"
+          className="px-4 py-2 border border-theme-border rounded-[10px] text-sm font-medium text-theme-text-primary bg-theme-muted hover:bg-theme-surface focus:outline-none focus:border-[rgba(227,30,36,.4)] focus:shadow-[0_0_0_3px_rgba(227,30,36,.08)] cursor-pointer"
         >
           <option value="month" className="bg-theme-surface text-theme-text-primary">This Month</option>
           <option value="quarter" className="bg-theme-surface text-theme-text-primary">This Quarter</option>
@@ -306,10 +306,10 @@ export default function FinanceDashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Link
           href="/tenant-admin/expenses"
-          className="p-5 bg-theme-surface rounded-[14px] border border-theme-border hover:border-[rgba(99,102,241,.3)] transition-all text-center group"
+          className="p-5 bg-theme-surface rounded-[14px] border border-theme-border hover:border-[rgba(227,30,36,.3)] transition-all text-center group"
           style={{ boxShadow: '0 4px 14px rgba(0,0,0,.2)' }}
         >
-          <div className="w-10 h-10 rounded-[10px] bg-[rgba(99,102,241,.12)] flex items-center justify-center mx-auto mb-3">
+          <div className="w-10 h-10 rounded-[10px] bg-[rgba(227,30,36,.12)] flex items-center justify-center mx-auto mb-3">
             <DollarSign className="h-5 w-5 text-theme-accent" />
           </div>
           <p className="text-sm font-medium text-theme-text-primary font-jakarta group-hover:text-theme-accent transition-colors">Manage Expenses</p>

@@ -33,7 +33,7 @@ export function ViewSubscriptionModal({
             <p className="text-lg font-semibold text-gray-900 mt-1">{subscription.plan}</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-xs font-medium text-slate-500">Status</p>
               <div className="mt-1 inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
@@ -298,7 +298,7 @@ export function ViewInvoiceModal({
           </div>
 
           {/* Details */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-xs font-medium text-slate-500">Bill To</p>
               <p className="text-sm font-semibold text-gray-900 mt-1">{invoice.customerName || "—"}</p>

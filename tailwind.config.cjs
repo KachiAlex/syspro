@@ -12,8 +12,8 @@ module.exports = {
       },
       colors: {
         accent: {
-          DEFAULT: '#6366F1',
-          600: '#4F46E5',
+          DEFAULT: '#E31E24',
+          600: '#C0208A',
         },
         navy: {
           DEFAULT: '#0B1120',
@@ -21,9 +21,9 @@ module.exports = {
           3: '#1E2A3B',
         },
         indigo: {
-          DEFAULT: '#6366F1',
-          2: '#4F46E5',
-          3: '#818CF8',
+          DEFAULT: '#E31E24',
+          2: '#C0208A',
+          3: '#E8286E',
         },
         amber: {
           DEFAULT: '#F59E0B',

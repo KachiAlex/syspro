@@ -21,12 +21,12 @@ interface TenantAdminShellProps {
 function useSidebarState() {
   const [collapsed, setCollapsed] = useState(false);
   useEffect(() => {
-    const saved = localStorage.getItem("syspro:sidebar-collapsed");
+    const saved = localStorage.getItem("pisairtel:sidebar-collapsed");
     if (saved) setCollapsed(saved === "true");
   }, []);
   const toggle = () => {
     setCollapsed((prev) => {
-      localStorage.setItem("syspro:sidebar-collapsed", String(!prev));
+      localStorage.setItem("pisairtel:sidebar-collapsed", String(!prev));
       return !prev;
     });
   };
@@ -264,11 +264,9 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
         {/* Sidebar Header - Desktop */}
         <div className="hidden lg:block p-6 border-b border-theme-sidebar-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[10px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#6366F1,#4F46E5)', boxShadow: '0 0 16px rgba(99,102,241,.4)' }}>
-              <span className="text-white font-bold text-lg font-jakarta">S</span>
-            </div>
+            <img src="/pisairtel-erp-badge.svg" alt="Pisairtel ERP" width={40} height={40} style={{ borderRadius: '50%', objectFit: 'cover' }} />
             <div>
-              <h2 className="text-lg font-bold text-theme-sidebar-text-active font-jakarta">Syspro</h2>
+              <h2 className="text-lg font-bold text-theme-sidebar-text-active font-jakarta">Pisairtel ERP</h2>
               <p className="text-sm text-theme-sidebar-text">{perms.isAdmin ? "Admin Dashboard" : "Employee Portal"}</p>
             </div>
           </div>
@@ -338,7 +336,7 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
                 <Menu className="h-5 w-5 text-theme-sidebar-text" />
               </button>
 
-              {/* Search Bar */}
+              {/* Search Bar - Desktop */}
               <button
                 onClick={() => setSearchOpen(true)}
                 className="hidden sm:flex items-center gap-2 px-3 py-2 bg-theme-muted border border-theme-border rounded-[10px] hover:bg-theme-surface transition-colors min-w-0 max-w-xs"
@@ -349,6 +347,14 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
                   <Command className="w-3 h-3" />
                   K
                 </kbd>
+              </button>
+
+              {/* Search Button - Mobile */}
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="sm:hidden p-2 rounded-lg hover:bg-theme-sidebar-hover transition-colors"
+              >
+                <Search className="h-5 w-5 text-theme-sidebar-text" />
               </button>
 
               {/* Breadcrumb */}
@@ -382,11 +388,11 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
                   <span className="block w-5 h-5" />
                 )}
               </button>
-              <button className="relative p-2 text-theme-sidebar-text hover:text-theme-sidebar-text-active hover:bg-theme-sidebar-hover rounded-lg transition-colors">
+              <button className="relative p-2 text-theme-sidebar-text hover:text-theme-sidebar-text-active hover:bg-theme-sidebar-hover rounded-lg transition-colors hidden sm:block">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-theme-danger rounded-full"></span>
               </button>
-              <button className="p-2 text-theme-sidebar-text hover:text-theme-sidebar-text-active hover:bg-theme-sidebar-hover rounded-lg transition-colors">
+              <button className="p-2 text-theme-sidebar-text hover:text-theme-sidebar-text-active hover:bg-theme-sidebar-hover rounded-lg transition-colors hidden sm:block">
                 <Settings className="w-5 h-5" />
               </button>
               <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-theme-border">

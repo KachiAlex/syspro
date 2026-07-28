@@ -444,7 +444,7 @@ export function ViewCampaignModal({
           </div>
 
           {/* Channel & Status */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Channel</p>
               <p className="text-sm text-gray-900 mt-1 capitalize">{campaign.channel.replace("_", " ")}</p>
@@ -468,7 +468,7 @@ export function ViewCampaignModal({
           </div>
 
           {/* Budget & Spend */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Budget</p>
               <p className="text-sm font-semibold text-gray-900 mt-1">
@@ -484,7 +484,7 @@ export function ViewCampaignModal({
           </div>
 
           {/* Revenue & ROI */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Revenue</p>
               <p className="text-sm font-semibold text-green-600 mt-1">
@@ -498,7 +498,7 @@ export function ViewCampaignModal({
           </div>
 
           {/* Dates */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Start Date</p>
               <p className="text-sm text-gray-900 mt-1">{new Date(campaign.startDate).toLocaleDateString()}</p>

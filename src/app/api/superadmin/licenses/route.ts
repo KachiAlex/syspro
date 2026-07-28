@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
-    const licenseKey = `SYSPRO-${type.toUpperCase()}-${tenantSlug.toUpperCase()}-${randomUUID().slice(0, 8)}`;
+    const licenseKey = `PISAIRTEL-${type.toUpperCase()}-${tenantSlug.toUpperCase()}-${randomUUID().slice(0, 8)}`;
     const expiryDate = expiry ? expiry.slice(0, 10) : null;
 
     const result = await sql`

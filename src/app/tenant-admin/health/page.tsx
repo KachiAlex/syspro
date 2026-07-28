@@ -454,7 +454,7 @@ export default function HealthPage() {
                     {service.status.charAt(0).toUpperCase() + service.status.slice(1)}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-4 mb-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
                   <div className="flex items-center gap-2">
                     <Cpu className="w-4 h-4 text-gray-400" />
                     <span className="text-xs text-gray-600">CPU: {service.cpu}%</span>

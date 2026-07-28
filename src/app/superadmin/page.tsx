@@ -666,9 +666,7 @@ export default function SuperadminPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg,#6366F1,#4F46E5)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 12px rgba(99,102,241,.35)' }}>
-                <svg width={17} height={17} viewBox="0 0 24 24" fill="none"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3z" fill="white" opacity=".9" /><path d="M14 14h7v7h-7z" fill="white" opacity=".45" /></svg>
-              </div>
+              <img src="/pisairtel-erp-badge.svg" alt="Pisairtel ERP" width={32} height={32} style={{ borderRadius: '50%', objectFit: 'cover' }} />
               <h1 className="text-2xl font-bold text-gray-900">Superadmin Portal</h1>
             </div>
             {activeTab === 'tenants' && (

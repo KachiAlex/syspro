@@ -1,7 +1,18 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { AppShell } from "@/components/layout/app-shell";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0B1120" },
+  ],
+};
 
 // Automation engine startup is intentionally disabled in the frontend build.
 // Server runtime should start the automation engine separately where appropriate.
@@ -9,7 +20,7 @@ import "./globals.css";
 const BODY_FONT_STACK = "font-sans antialiased";
 
 export const metadata: Metadata = {
-  title: "SYS: Neural Supply Planner",
+  title: "Pisairtel ERP",
   description:
     "AI-forward ERP workspace for manufacturing supply chains and multi-tenant finance.",
 };
@@ -24,7 +35,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('syspro:theme');if(!t){if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches){t='light';}else{t='dark';}}document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('pisairtel:theme');if(!t){if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches){t='light';}else{t='dark';}}document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`,
           }}
         />
       </head>

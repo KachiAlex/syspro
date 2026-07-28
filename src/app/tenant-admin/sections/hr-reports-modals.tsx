@@ -164,7 +164,7 @@ export const GenerateReportModal: React.FC<GenerateReportModalProps> = ({
             <label className="block text-sm font-medium text-gray-900 mb-2">
               Format
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {['pdf', 'excel', 'csv'].map((format) => (
                 <label key={format} className="flex items-center gap-2 cursor-pointer">
                   <input

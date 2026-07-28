@@ -116,7 +116,7 @@ export function CreateProjectModal({
             />
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Project Name <span className="text-red-600">*</span>
@@ -175,7 +175,7 @@ export function CreateProjectModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Subsidiary
@@ -218,7 +218,7 @@ export function CreateProjectModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Start Date <span className="text-red-600">*</span>
@@ -246,7 +246,7 @@ export function CreateProjectModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Budget Approved
@@ -323,7 +323,7 @@ export function ViewProjectModal({
         </div>
 
         <div className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-600">Project Name</p>
               <p className="text-lg font-medium text-gray-900">{project.name}</p>
@@ -346,7 +346,7 @@ export function ViewProjectModal({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-600">Status</p>
               <p className="text-lg font-medium text-gray-900 capitalize">
@@ -375,7 +375,7 @@ export function ViewProjectModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-600">Start Date</p>
               <p className="text-lg font-medium text-gray-900">{project.startDate}</p>
@@ -386,7 +386,7 @@ export function ViewProjectModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-600">Budget Approved</p>
               <p className="text-lg font-medium text-gray-900">${project.budgetApproved.toFixed(2)}</p>
@@ -644,7 +644,7 @@ export function ManageTasksModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Due Date <span className="text-red-600">*</span>

@@ -748,7 +748,7 @@ export default function BudgetPlanningWorkspace({
 
             <div className="p-6 space-y-4">
               {/* Basic Info */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-1">
                     Budget Code
@@ -795,7 +795,7 @@ export default function BudgetPlanningWorkspace({
               </div>
 
               {/* Period and Type */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-1">
                     Period Type
@@ -854,7 +854,7 @@ export default function BudgetPlanningWorkspace({
               </div>
 
               {/* Budget Amount & Enforcement */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-1">
                     Total Budget Amount
@@ -903,7 +903,7 @@ export default function BudgetPlanningWorkspace({
 
                 {/* Add Line Form */}
                 <div className="bg-gray-50 p-3 rounded-lg mb-3 space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <input
                       type="text"
                       placeholder="Account Code (e.g., 5010)"

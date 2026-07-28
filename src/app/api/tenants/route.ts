@@ -144,7 +144,7 @@ export async function POST(request: Request) {
     }
 
     const payload = parsed.data;
-    const computedDomain = `${payload.companySlug}.syspro.local`;
+    const computedDomain = `${payload.companySlug}.pisairtel.local`;
     const computedSchema = `${payload.companySlug.replace(/-/g, "_")}_schema`;
     const defaultRegionId = payload.defaultRegionId || `${payload.companySlug}-region-default`;
     const defaultRegionName = payload.defaultRegionName || payload.region;

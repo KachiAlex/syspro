@@ -104,7 +104,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/tenant-admin') &&
     pathname !== '/tenant-admin/tenant-signin'
   ) {
-    const hasSession = request.cookies.has('syspro_session');
+    const hasSession = request.cookies.has('pisairtel_session');
     const hasEmployeeSession = request.cookies.has('employee_session');
     const hasUserId =
       request.cookies.has('X-User-Id') ||
@@ -134,8 +134,8 @@ export async function middleware(request: NextRequest) {
       let userId: string | undefined;
       let roleId: string | undefined;
 
-      // 1. Try extracting from syspro_session cookie first
-      const sessionCookie = request.cookies.get('syspro_session')?.value;
+      // 1. Try extracting from pisairtel_session cookie first
+      const sessionCookie = request.cookies.get('pisairtel_session')?.value;
       let sessionEmail: string | undefined;
       if (sessionCookie) {
         const session = verifySession(sessionCookie);
@@ -220,7 +220,7 @@ export async function middleware(request: NextRequest) {
       try {
         const perms = await getTenantUserPermissions(tenantSlug, userId, roleId ?? undefined);
 
-        // Always check portal_permissions from admin_employees, even for syspro_session users.
+        // Always check portal_permissions from admin_employees, even for pisairtel_session users.
         // This handles HOD users who exist in tenant_admins with role defaulting to "admin"
         // but have module activations in admin_employees.
         let modulePerms: Record<string, boolean> | null = null;

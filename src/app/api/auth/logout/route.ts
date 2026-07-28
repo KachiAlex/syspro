@@ -9,7 +9,7 @@ export async function POST() {
     sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
   };
-  response.cookies.set("syspro_session", "", clearOpts);
+  response.cookies.set("pisairtel_session", "", clearOpts);
   response.cookies.set("employee_session", "", clearOpts);
   response.cookies.set("tenantSlug", "", { ...clearOpts, httpOnly: false });
   response.cookies.set("X-User-Id", "", { ...clearOpts, httpOnly: false });

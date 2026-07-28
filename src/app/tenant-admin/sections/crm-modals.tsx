@@ -214,7 +214,7 @@ export function CreateLeadModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-1">
                 Status
@@ -492,7 +492,7 @@ export function CreateContactModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-1">
                 Type
@@ -793,7 +793,7 @@ export function CreateDealModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-1">
                 Stage
@@ -1373,7 +1373,7 @@ export function ConvertToLeadModal({
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-1">Initial Stage</label>
               <select
@@ -1544,7 +1544,7 @@ export function ConvertToCustomerModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-1">Region ID</label>
               <input
@@ -1689,7 +1689,7 @@ export function CreateCustomerModal({
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black bg-white disabled:bg-white"
               placeholder="Acme Corporation" disabled={readOnly || isLoading} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-1">First Name</label>
               <input type="text" value={formData.contactFirstName} onChange={(e) => setFormData({ ...formData, contactFirstName: e.target.value })}

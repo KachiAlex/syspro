@@ -210,7 +210,7 @@ export function decodeEmployeeToken(token: string): EmployeeSession | null {
 }
 
 /**
- * Resolve an employee session from either the employee_session or syspro_session cookie.
+ * Resolve an employee session from either the employee_session or pisairtel_session cookie.
  * This allows HOD/staff users authenticated via the tenant admin portal to access
  * employee self-service APIs without needing a separate employee login.
  */
@@ -222,8 +222,8 @@ export function resolveEmployeeSession(request: NextRequest): EmployeeSession | 
     if (session) return session;
   }
 
-  // Fall back to syspro_session (tenant admin portal login)
-  const adminToken = request.cookies.get("syspro_session")?.value;
+  // Fall back to pisairtel_session (tenant admin portal login)
+  const adminToken = request.cookies.get("pisairtel_session")?.value;
   if (adminToken) {
     const payload = verifySession(adminToken);
     if (payload) {

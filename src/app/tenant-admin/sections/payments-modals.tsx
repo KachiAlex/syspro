@@ -298,7 +298,7 @@ export function ViewPaymentModal({
             <p className="text-2xl font-bold text-gray-900 mt-1">₦{payment.amount.toLocaleString()}</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-xs font-medium text-slate-500">Method</p>
               <p className="text-sm font-semibold text-gray-900 mt-1 capitalize">{payment.method}</p>

@@ -308,7 +308,7 @@ export function RequisitionModal({
         )}
         <TextArea label="Description" value={description} onChange={setDescription} required />
         <TextArea label="Requirements" value={requirements} onChange={setRequirements} />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <TextField label="Location" value={location} onChange={setLocation} />
           <SelectField label="Employment Type" value={employmentType} onChange={setEmploymentType} options={[
             { value: 'full-time', label: 'Full-time' }, { value: 'part-time', label: 'Part-time' },
@@ -316,7 +316,7 @@ export function RequisitionModal({
           ]} />
         </div>
         <TextField label="Salary Range" value={salaryRange} onChange={setSalaryRange} placeholder="e.g. $80k - $120k" />
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <NumberField label="Headcount" value={headcount} onChange={setHeadcount} min={1} />
           <NumberField label="Budget" value={budget} onChange={setBudget} min={0} />
           <NumberField label="Min Experience (yrs)" value={minExperienceYears} onChange={setMinExperienceYears} min={0} />
@@ -393,7 +393,7 @@ export function CandidateModal({ isOpen, onClose, onSubmit, mode = 'create', ini
       <form onSubmit={handleSubmit} className="space-y-4">
         <TextField label="Full Name" value={fullName} onChange={setFullName} required />
         <TextField label="Email" value={email} onChange={setEmail} required type="email" />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <TextField label="Phone" value={phone} onChange={setPhone} />
           <SelectField label="Source" value={source} onChange={setSource} options={[
           { value: '', label: 'Select source...' },
@@ -417,7 +417,7 @@ export function CandidateModal({ isOpen, onClose, onSubmit, mode = 'create', ini
         <NumberField label="Experience (years)" value={experienceYears} onChange={setExperienceYears} min={0} />
         <TextField label="Education" value={education} onChange={setEducation} />
         <TagsField label="Certifications" tags={certifications} onChange={setCertifications} />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <NumberField label="Expected Salary" value={expectedSalary} onChange={setExpectedSalary} min={0} />
           <TextField label="Location" value={candLocation} onChange={setCandLocation} />
         </div>
@@ -513,7 +513,7 @@ export function InterviewModal({
     <ModalOverlay onClose={onClose} title={mode === 'edit' ? 'Edit Interview' : 'Schedule Interview'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <SelectField label="Application" value={applicationId} onChange={setApplicationId} required options={appOptions} />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <NumberField label="Round" value={roundNumber} onChange={setRoundNumber} min={1} />
           <SelectField label="Type" value={type} onChange={setType} options={[
             { value: 'phone_screen', label: 'Phone Screen' }, { value: 'technical', label: 'Technical' },
@@ -577,11 +577,11 @@ export function OfferModal({
     <ModalOverlay onClose={onClose} title={mode === 'edit' ? 'Edit Offer' : 'Create Offer'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <SelectField label="Application" value={applicationId} onChange={setApplicationId} required options={appOptions} />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <NumberField label="Salary" value={salary} onChange={setSalary} required />
           <NumberField label="Bonus" value={bonus} onChange={setBonus} />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <TextField label="Start Date" value={startDate} onChange={setStartDate} type="date" />
           <TextField label="Expires At" value={expiresAt} onChange={setExpiresAt} type="date" />
         </div>
@@ -645,7 +645,7 @@ export function DepartmentModal({
         <TextArea label="Description" value={description} onChange={setDescription} />
         <SelectField label="Head" value={managerId} onChange={setManagerId} options={userOptions} />
         <SelectField label="Parent Department" value={parentDepartmentId} onChange={setParentDepartmentId} options={parentOptions} />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <NumberField label="Budget" value={budget} onChange={setBudget} min={0} />
           <TextField label="Cost Center" value={costCenter} onChange={setCostCenter} />
         </div>

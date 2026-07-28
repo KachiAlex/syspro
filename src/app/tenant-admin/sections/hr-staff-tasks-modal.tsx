@@ -237,7 +237,7 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
                 className="bg-theme-bg w-full px-3 py-2 border border-theme-border rounded-lg text-sm text-theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-theme-text-primary mb-1">Weight (1-10)</label>
                 <input

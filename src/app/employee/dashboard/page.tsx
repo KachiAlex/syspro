@@ -314,7 +314,7 @@ export default function EmployeeDashboardPage() {
           </div>
         </header>
 
-        <main className={`flex-1 p-4 md:p-6 mx-auto w-full ${activeTab === 'crm' ? 'max-w-7xl' : 'max-w-5xl'}`}>
+        <main className={`flex-1 p-4 md:p-6 mx-auto w-full ${activeTab === 'crm' ? 'max-w-7xl' : 'max-w-5xl'} pb-20 lg:pb-6`}>
           {activeTab === 'dashboard' && perms.dashboard !== false && <DashboardTab profile={profile} onNavigate={(tab) => setActiveTab(tab as Tab)} announcements={announcements} />}
           {activeTab === 'tasks' && perms.tasks !== false && <TasksTab profile={profile} />}
           {activeTab === 'attendance' && perms.attendance !== false && <AttendanceTab profile={profile} />}
@@ -327,6 +327,30 @@ export default function EmployeeDashboardPage() {
           {activeTab === 'crm' && perms.crm !== false && <CrmTab profile={profile} />}
           {activeTab === 'profile' && perms.profile !== false && <ProfileTab profile={profile} onProfileUpdate={(updated) => setProfile(updated)} />}
         </main>
+
+        {/* Mobile bottom navigation */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className="flex items-center justify-around px-2 py-1.5">
+            {navItems.filter(item => ['dashboard', 'tasks', 'attendance', 'crm'].includes(item.key)).map((item) => (
+              <button
+                key={item.key}
+                onClick={() => setActiveTab(item.key)}
+                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-colors relative ${activeTab === item.key ? 'text-blue-600' : 'text-gray-500'}`}
+              >
+                {item.icon}
+                <span className="text-[10px] font-medium">{item.label.split(' ')[0]}</span>
+                {item.badge != null && item.badge > 0 && <span className="absolute top-0 right-1 w-3.5 h-3.5 bg-amber-400 rounded-full text-[8px] font-bold flex items-center justify-center text-amber-900">{item.badge}</span>}
+              </button>
+            ))}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+              <span className="text-[10px] font-medium">More</span>
+            </button>
+          </div>
+        </nav>
       </div>
     </div>
   );

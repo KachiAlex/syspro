@@ -544,7 +544,7 @@ export const StaffReportModal: React.FC<StaffReportModalProps> = ({
                   </p>
                 ) : (
                   <>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="bg-theme-muted p-3 rounded-lg border border-theme-border">
                         <div className="text-xs text-theme-text-secondary">Overall Score</div>
                         <div className="text-2xl font-bold text-theme-text-primary">{refined.appraisal.overallScore}/100</div>

@@ -17,7 +17,7 @@ interface ThemeContextValue {
   setTheme: (t: Theme) => void;
 }
 
-const STORAGE_KEY = "syspro:theme";
+const STORAGE_KEY = "pisairtel:theme";
 
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "dark";

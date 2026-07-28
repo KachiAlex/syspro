@@ -817,7 +817,7 @@ function PayrollTab({
                   {record.status}
                 </span>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <p className="text-xs text-gray-500">Base Salary</p>
                   <p className="text-sm font-semibold text-gray-900">${record.baseSalary.toLocaleString()}</p>

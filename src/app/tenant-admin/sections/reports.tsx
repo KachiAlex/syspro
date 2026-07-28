@@ -134,7 +134,7 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
     <div className="space-y-6">
       {/* Summary cards (fast, top-line metrics) */}
       {summary && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="rounded-2xl border border-slate-100 bg-theme-muted p-4 text-sm text-slate-700">
             <div className="text-xs text-slate-400">Reports</div>
             <div className="text-2xl font-semibold">{summary.totalReports}</div>

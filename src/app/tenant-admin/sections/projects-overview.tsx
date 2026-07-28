@@ -314,7 +314,7 @@ export default function ProjectsOverview({
                   <p className="text-sm text-theme-text-secondary mb-4 line-clamp-2">{project.description}</p>
                 )}
 
-                <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 text-sm">
                   <div>
                     <p className="text-theme-text-tertiary text-xs mb-1">Start Date</p>
                     <p className="font-medium text-theme-text-primary">{project.startDate}</p>

@@ -16,7 +16,7 @@ function PulseCanvas() {
     let w = 0, h = 0;
     const lines = Array.from({ length: 6 }, (_, i) => ({
       points: Array.from({ length: 70 }, () => ({ x: 0, y: 0, vy: 0 })),
-      color: ['rgba(99,102,241,', 'rgba(245,158,11,', 'rgba(99,102,241,', 'rgba(16,185,129,', 'rgba(129,140,248,', 'rgba(245,158,11,'][i],
+      color: ['rgba(227,30,36,', 'rgba(245,158,11,', 'rgba(227,30,36,', 'rgba(16,185,129,', 'rgba(232,40,110,', 'rgba(245,158,11,'][i],
       speed: 0.25 + i * 0.06, offset: i * 16, alpha: 0.08 + i * 0.05,
     }));
     function resize() {
@@ -55,11 +55,9 @@ function PulseCanvas() {
 }
 
 /* ── Logo ── */
-function SysproLogo({ size = 34 }: { size?: number }) {
+function PisairtelLogo({ size = 34 }: { size?: number }) {
   return (
-    <div style={{ width: size, height: size, borderRadius: 9, background: 'linear-gradient(135deg,#6366F1,#4F46E5)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 16px rgba(99,102,241,.4)' }}>
-      <svg width={size * 0.53} height={size * 0.53} viewBox="0 0 24 24" fill="none"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3z" fill="white" opacity=".9" /><path d="M14 14h7v7h-7z" fill="white" opacity=".45" /></svg>
-    </div>
+    <img src="/pisairtel-erp-badge.svg" alt="Pisairtel ERP" width={size} height={size} style={{ borderRadius: '50%', objectFit: 'cover' }} />
   );
 }
 
@@ -112,29 +110,29 @@ export default function LoginPage() {
       {/* ── LEFT PANEL ── */}
       <div className="hidden lg:flex flex-[.48] relative flex-col justify-between p-[56px] overflow-hidden">
         <PulseCanvas />
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, rgba(99,102,241,.07) 0%, transparent 70%)' }} />
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, rgba(227,30,36,.07) 0%, transparent 70%)' }} />
 
         <div className="relative z-[2]">
           <Link href="/" className="flex items-center gap-[10px]">
-            <SysproLogo size={34} />
-            <span className="font-jakarta text-[20px] font-extrabold tracking-[-.02em]" style={{ background: 'linear-gradient(90deg,#F8FAFC,#94A3B8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Syspro</span>
+            <PisairtelLogo size={34} />
+            <span className="font-jakarta text-[20px] font-extrabold tracking-[-.02em]" style={{ background: 'linear-gradient(90deg,#F8FAFC,#94A3B8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Pisairtel ERP</span>
           </Link>
         </div>
 
         <div className="relative z-[2] max-w-[360px]">
           <div className="font-jakarta text-[28px] font-extrabold text-[#F8FAFC] leading-[1.3] mb-[14px] tracking-[-.015em]">Your business,<br />running itself.</div>
-          <p className="text-[14.5px] text-[#94A3B8] leading-[1.65]">Syspro connects your CRM, Finance, HR, Inventory, and Projects into one living system. Every action triggers the next — automatically.</p>
+          <p className="text-[14.5px] text-[#94A3B8] leading-[1.65]">Pisairtel ERP connects your CRM, Finance, HR, Inventory, and Projects into one living system. Every action triggers the next — automatically.</p>
         </div>
 
-        <div className="relative z-[2] text-[11.5px] text-[#64748B]">© 2026 Syspro</div>
+        <div className="relative z-[2] text-[11.5px] text-[#64748B]">© 2026 Pisairtel ERP</div>
       </div>
 
       {/* ── RIGHT PANEL ── */}
       <div className="flex-1 flex items-center justify-center p-[6%] lg:p-[4%]">
         <div className="w-full max-w-[380px]">
           <div className="flex items-center gap-[10px] lg:hidden mb-[28px]">
-            <SysproLogo size={30} />
-            <span className="font-jakarta text-[18px] font-extrabold" style={{ background: 'linear-gradient(90deg,#F8FAFC,#94A3B8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Syspro</span>
+            <PisairtelLogo size={30} />
+            <span className="font-jakarta text-[18px] font-extrabold" style={{ background: 'linear-gradient(90deg,#F8FAFC,#94A3B8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Pisairtel ERP</span>
           </div>
 
           <h1 className="font-jakarta text-[22px] font-extrabold text-[#F8FAFC] mb-[6px] tracking-[-.01em]">Sign in</h1>
@@ -154,7 +152,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full bg-[#111827] border border-[rgba(255,255,255,0.07)] rounded-[10px] px-[14px] py-[10px] text-[13.5px] text-[#F8FAFC] placeholder-[#64748B] outline-none transition-all focus:border-[rgba(99,102,241,.4)] focus:shadow-[0_0_0_3px_rgba(99,102,241,.08)]"
+                className="w-full bg-[#111827] border border-[rgba(255,255,255,0.07)] rounded-[10px] px-[14px] py-[10px] text-[13.5px] text-[#F8FAFC] placeholder-[#64748B] outline-none transition-all focus:border-[rgba(227,30,36,.4)] focus:shadow-[0_0_0_3px_rgba(227,30,36,.08)]"
                 placeholder="you@company.com"
               />
             </div>
@@ -166,7 +164,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full bg-[#111827] border border-[rgba(255,255,255,0.07)] rounded-[10px] px-[14px] py-[10px] pr-[38px] text-[13.5px] text-[#F8FAFC] placeholder-[#64748B] outline-none transition-all focus:border-[rgba(99,102,241,.4)] focus:shadow-[0_0_0_3px_rgba(99,102,241,.08)]"
+                  className="w-full bg-[#111827] border border-[rgba(255,255,255,0.07)] rounded-[10px] px-[14px] py-[10px] pr-[38px] text-[13.5px] text-[#F8FAFC] placeholder-[#64748B] outline-none transition-all focus:border-[rgba(227,30,36,.4)] focus:shadow-[0_0_0_3px_rgba(227,30,36,.08)]"
                   placeholder="••••••••"
                 />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-[12px] top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#94A3B8] transition-colors cursor-pointer">
@@ -180,16 +178,16 @@ export default function LoginPage() {
             </div>
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-[8px] cursor-pointer">
-                <input type="checkbox" className="w-[14px] h-[14px] accent-[#6366F1] rounded-[3px] bg-[#111827] border border-[rgba(255,255,255,0.07)] cursor-pointer" />
+                <input type="checkbox" className="w-[14px] h-[14px] accent-[#E31E24] rounded-[3px] bg-[#111827] border border-[rgba(255,255,255,0.07)] cursor-pointer" />
                 <span className="text-[12px] text-[#94A3B8]">Remember me</span>
               </label>
-              <Link href="/employee/forgot-password" className="text-[12px] text-[#6366F1] hover:text-[#818CF8] cursor-pointer transition-colors">Forgot password?</Link>
+              <Link href="/employee/forgot-password" className="text-[12px] text-[#E31E24] hover:text-[#E8286E] cursor-pointer transition-colors">Forgot password?</Link>
             </div>
             <button
               type="submit"
               disabled={loading}
               className="w-full py-[11px] rounded-[10px] text-white font-jakarta text-[13.5px] font-bold cursor-pointer transition-all hover:-translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ background: 'linear-gradient(135deg,#6366F1,#4F46E5)', boxShadow: '0 4px 14px rgba(99,102,241,.35)' }}
+              style={{ background: 'linear-gradient(135deg,#E31E24,#C0208A)', boxShadow: '0 4px 14px rgba(227,30,36,.35)' }}
             >
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
@@ -197,12 +195,12 @@ export default function LoginPage() {
 
           <div className="mt-[20px] pt-[20px] border-t border-[rgba(255,255,255,0.07)] text-center">
             <span className="text-[12.5px] text-[#64748B]">Are you a system administrator? </span>
-            <Link href="/superadmin/login" className="text-[12.5px] text-[#6366F1] hover:text-[#818CF8] font-semibold transition-colors">Superadmin login</Link>
+            <Link href="/superadmin/login" className="text-[12.5px] text-[#E31E24] hover:text-[#E8286E] font-semibold transition-colors">Superadmin login</Link>
           </div>
 
           <div className="mt-[10px] text-center">
             <span className="text-[12.5px] text-[#64748B]">Don't have an account? </span>
-            <Link href="/" className="text-[12.5px] text-[#6366F1] hover:text-[#818CF8] font-semibold transition-colors">Create free workspace</Link>
+            <Link href="/" className="text-[12.5px] text-[#E31E24] hover:text-[#E8286E] font-semibold transition-colors">Create free workspace</Link>
           </div>
         </div>
       </div>

@@ -28,10 +28,10 @@ export type PermissionLevel = "none" | "read" | "write" | "admin";
  * In production: Verify JWT token or get from next-auth session
  */
 export function getCurrentUser(request: NextRequest): SessionUser | null {
-  // Method 0a: Check syspro_session cookie (set by tenant admin login)
+  // Method 0a: Check pisairtel_session cookie (set by tenant admin login)
   try {
     if (typeof (request as any).cookies?.get === "function") {
-      const sessionCookie = (request as any).cookies.get("syspro_session")?.value;
+      const sessionCookie = (request as any).cookies.get("pisairtel_session")?.value;
       if (sessionCookie) {
         const session = verifySession(sessionCookie);
         if (session && session.id) {
@@ -50,7 +50,7 @@ export function getCurrentUser(request: NextRequest): SessionUser | null {
   }
 
   // Method 0b: Check employee_session cookie (set by employee login)
-  // Only used if syspro_session didn't return a user
+  // Only used if pisairtel_session didn't return a user
   try {
     if (typeof (request as any).cookies?.get === "function") {
       const empCookie = (request as any).cookies.get("employee_session")?.value;

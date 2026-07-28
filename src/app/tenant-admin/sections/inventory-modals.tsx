@@ -106,7 +106,7 @@ export function CreateProductModal({
             />
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 SKU <span className="text-red-600">*</span>
@@ -137,7 +137,7 @@ export function CreateProductModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Category <span className="text-red-600">*</span>
@@ -186,7 +186,7 @@ export function CreateProductModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Initial Quantity <span className="text-red-600">*</span>
@@ -216,7 +216,7 @@ export function CreateProductModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Unit Cost
@@ -291,7 +291,7 @@ export function ViewProductModal({
         </div>
 
         <div className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-600">SKU</p>
               <p className="text-lg font-medium text-gray-900">{product.sku}</p>
@@ -302,7 +302,7 @@ export function ViewProductModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-600">Category</p>
               <p className="text-lg font-medium text-gray-900">{product.category}</p>
@@ -313,7 +313,7 @@ export function ViewProductModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-600">Unit Cost</p>
               <p className="text-lg font-medium text-gray-900">${parseFloat(product.unitCost || 0).toFixed(2)}</p>
@@ -324,7 +324,7 @@ export function ViewProductModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-600">Reorder Level</p>
               <p className="text-lg font-medium text-gray-900">{product.reorderLevel} units</p>

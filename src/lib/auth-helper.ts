@@ -28,7 +28,7 @@ export function extractAuthContext(request: NextRequest): AuthContext {
   let userRole: string | undefined;
   let sessionTenantSlug: string | undefined;
 
-  const sessionCookie = request.cookies.get("syspro_session")?.value;
+  const sessionCookie = request.cookies.get("pisairtel_session")?.value;
   if (sessionCookie) {
     const session = verifySession(sessionCookie);
     if (session) {

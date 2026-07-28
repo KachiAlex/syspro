@@ -1290,7 +1290,7 @@ export function ViewPurchaseOrderModal({
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5 text-gray-500" /></button>
         </div>
         <div className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div><p className="text-sm text-gray-500">PO Number</p><p className="font-medium text-gray-900">{po.poNumber}</p></div>
             <div><p className="text-sm text-gray-500">Supplier</p><p className="font-medium text-gray-900">{po.supplier}</p></div>
             <div><p className="text-sm text-gray-500">Status</p><p className="font-medium text-gray-900">{po.status}</p></div>

@@ -17,7 +17,7 @@ function getSessionSecret(): string {
 	// Fallback: derive a stable secret from DATABASE_URL so the app doesn't crash
 	const fallback = process.env.DATABASE_URL || "fallback-dev-secret-change-me";
 	console.warn("SESSION_SECRET not set — using derived fallback. Set SESSION_SECRET for proper security.");
-	return createHmac("sha256", "syspro-session-key").update(fallback).digest("base64url");
+	return createHmac("sha256", "pisairtel-session-key").update(fallback).digest("base64url");
 }
 
 function hmacSign(data: string): string {
@@ -91,7 +91,7 @@ export function verifySession(value: string): SessionPayload | null {
 
 export function cookieOptions() {
 	return {
-		name: "syspro_session",
+		name: "pisairtel_session",
 		options: {
 			httpOnly: true,
 			path: "/",

@@ -87,7 +87,7 @@ export default function SuperadminLoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-12 pr-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-red-500 focus:border-transparent focus:bg-gray-700/70"
-                    placeholder="admin@syspro.com"
+                    placeholder="admin@pisairtel.app"
                   />
                 </div>
               </div>

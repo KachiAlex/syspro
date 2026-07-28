@@ -39,8 +39,8 @@ export async function GET(request: NextRequest) {
   let isEmployee = false;
   let employeeModules: Record<string, boolean> = {};
 
-  // Check syspro_session (tenant admin) FIRST — takes priority over employee session
-  const sysSession = request.cookies.get("syspro_session")?.value;
+  // Check pisairtel_session (tenant admin) FIRST — takes priority over employee session
+  const sysSession = request.cookies.get("pisairtel_session")?.value;
   let sessionEmail: string | undefined;
   if (sysSession) {
     const session = verifySession(sysSession);

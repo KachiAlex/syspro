@@ -17,7 +17,7 @@ export interface EmailResult {
 }
 
 function getFromAddress(): string {
-  return process.env.EMAIL_FROM || "noreply@syspro.app";
+  return process.env.EMAIL_FROM || "noreply@pisairtel.app";
 }
 
 /**
@@ -77,7 +77,7 @@ export async function sendPasswordResetEmail(
         We received a request to reset your password. Click the button below to choose a new password:
       </p>
       <div style="text-align: center; margin: 32px 0;">
-        <a href="${resetUrl}" style="display: inline-block; padding: 12px 32px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
+        <a href="${resetUrl}" style="display: inline-block; padding: 12px 32px; background: #E31E24; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
           Reset Password
         </a>
       </div>
@@ -85,12 +85,12 @@ export async function sendPasswordResetEmail(
         If you didn't request this, you can safely ignore this email. The link expires in 30 minutes.
       </p>
       <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-      <p style="color: #94a3b8; font-size: 12px;">SysPro ERP — This is an automated message, please do not reply.</p>
+      <p style="color: #94a3b8; font-size: 12px;">Pisairtel ERP — This is an automated message, please do not reply.</p>
     </div>
   `;
   const text = `Hi ${name},\n\nWe received a request to reset your password. Visit this link to choose a new password:\n${resetUrl}\n\nIf you didn't request this, you can safely ignore this email. The link expires in 30 minutes.`;
 
-  return sendEmail({ to, subject: "Reset your SysPro password", html, text });
+  return sendEmail({ to, subject: "Reset your Pisairtel password", html, text });
 }
 
 /**
@@ -116,7 +116,7 @@ export async function sendPortalActivationEmail(
         <p style="margin: 0; color: #1e293b; font-size: 15px; font-weight: 600; font-family: monospace;">${password}</p>
       </div>
       <div style="text-align: center; margin: 24px 0;">
-        <a href="${loginUrl}" style="display: inline-block; padding: 12px 32px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
+        <a href="${loginUrl}" style="display: inline-block; padding: 12px 32px; background: #E31E24; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
           Log in to Portal
         </a>
       </div>
@@ -124,12 +124,12 @@ export async function sendPortalActivationEmail(
         Please change your password after logging in for the first time.
       </p>
       <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-      <p style="color: #94a3b8; font-size: 12px;">SysPro ERP — This is an automated message, please do not reply.</p>
+      <p style="color: #94a3b8; font-size: 12px;">Pisairtel ERP — This is an automated message, please do not reply.</p>
     </div>
   `;
   const text = `Hi ${name},\n\nYour employee portal account has been activated.\n\nEmail: ${to}\nTemporary Password: ${password}\n\nLog in at: ${loginUrl}\n\nPlease change your password after logging in.`;
 
-  return sendEmail({ to, subject: "Your SysPro portal account is active", html, text });
+  return sendEmail({ to, subject: "Your Pisairtel portal account is active", html, text });
 }
 
 /**
@@ -158,10 +158,10 @@ export async function sendExpenseNotificationEmail(
         <p style="margin: 0; color: #1e293b; font-size: 15px; font-weight: 600;">${currency} ${Number(amount).toLocaleString()}</p>
       </div>
       <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-      <p style="color: #94a3b8; font-size: 12px;">SysPro ERP — This is an automated message, please do not reply.</p>
+      <p style="color: #94a3b8; font-size: 12px;">Pisairtel ERP — This is an automated message, please do not reply.</p>
     </div>
   `;
-  const text = `Hi ${name},\n\nYour expense "${description}" for ${currency} ${amount} has been ${status}.\n\nSysPro ERP`;
+  const text = `Hi ${name},\n\nYour expense "${description}" for ${currency} ${amount} has been ${status}.\n\nPisairtel ERP`;
 
   return sendEmail({ to, subject: `Expense ${status}: ${description}`, html, text });
 }

@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       });
 
       const cookieOpts = { httpOnly: true, path: "/", sameSite: "lax" as const, secure: process.env.NODE_ENV === "production", maxAge };
-      response.cookies.set("syspro_session", token, cookieOpts);
+      response.cookies.set("pisairtel_session", token, cookieOpts);
       response.cookies.set("tenantSlug", tenantSlug, { ...cookieOpts, httpOnly: false });
       response.cookies.set("X-User-Id", String(admin.id), { ...cookieOpts, httpOnly: false });
       response.cookies.set("X-User-Email", encodeURIComponent(email), { ...cookieOpts, httpOnly: false });
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
         });
 
         // Clear any stale admin session to prevent cross-contamination
-        response.cookies.set("syspro_session", "", { path: "/", maxAge: 0 });
+        response.cookies.set("pisairtel_session", "", { path: "/", maxAge: 0 });
         response.cookies.set("X-User-Id", "", { path: "/", maxAge: 0 });
         response.cookies.set("X-Role-Id", "", { path: "/", maxAge: 0 });
 

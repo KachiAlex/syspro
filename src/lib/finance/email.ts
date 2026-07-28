@@ -98,12 +98,12 @@ export function getExpenseSubmittedTemplate(
         </div>
       </div>
 
-      <p><a href="http://syspro.local/tenant-admin?tab=expenses&id=${expense.expenseId}" class="button">Review Expense</a></p>
+      <p><a href="http://pisairtel.local/tenant-admin?tab=expenses&id=${expense.expenseId}" class="button">Review Expense</a></p>
       
       <p>Please review and approve or reject this expense in the system.</p>
     </div>
     <div class="footer">
-      <p>© 2026 Syspro ERP | This is an automated message, please do not reply</p>
+      <p>© 2026 Pisairtel ERP | This is an automated message, please do not reply</p>
     </div>
   </div>
 </body>
@@ -167,7 +167,7 @@ export function getExpenseApprovedTemplate(
       <p>This expense is now ready for payment processing. You will receive another notification once it has been paid.</p>
     </div>
     <div class="footer">
-      <p>© 2026 Syspro ERP | This is an automated message, please do not reply</p>
+      <p>© 2026 Pisairtel ERP | This is an automated message, please do not reply</p>
     </div>
   </div>
 </body>
@@ -236,7 +236,7 @@ export function getExpenseRejectedTemplate(
       <p>Please address the concerns and resubmit the expense if needed. Contact ${approverName} for clarification.</p>
     </div>
     <div class="footer">
-      <p>© 2026 Syspro ERP | This is an automated message, please do not reply</p>
+      <p>© 2026 Pisairtel ERP | This is an automated message, please do not reply</p>
     </div>
   </div>
 </body>
@@ -302,7 +302,7 @@ export function getExpensePaidTemplate(
       <p>The funds have been processed and will be in your account shortly.</p>
     </div>
     <div class="footer">
-      <p>© 2026 Syspro ERP | This is an automated message, please do not reply</p>
+      <p>© 2026 Pisairtel ERP | This is an automated message, please do not reply</p>
     </div>
   </div>
 </body>

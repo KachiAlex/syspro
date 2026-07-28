@@ -933,7 +933,7 @@ export const RecruitmentDashboard: React.FC = () => {
                   <SlidersHorizontal className="w-4 h-4 text-purple-400" />
                   Custom Scoring Weights (0 = use default)
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
                     { key: 'experience', label: 'Experience' },
                     { key: 'requiredSkills', label: 'Required Skills' },
