@@ -40,3 +40,17 @@ export function useTenantContext() {
   }
   return context;
 }
+
+const FALLBACK_TENANT_CONTEXT: TenantContextValue = {
+  tenantSlug: "",
+  regionId: "default",
+  regionName: "Primary Region",
+  branchId: "default",
+  branchName: "Headquarters",
+  currency: "USD",
+};
+
+export function useTenantContextSafe(): TenantContextValue {
+  const context = useContext(TenantContext);
+  return context ?? FALLBACK_TENANT_CONTEXT;
+}

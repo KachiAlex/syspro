@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { CRM_LEAD_STAGES, CRM_LEAD_SOURCES } from "@/lib/crm/types";
 import { updateLead, getLead, deleteLead } from "@/lib/crm/db";
+import { resolveCrmAuth } from "@/lib/crm/auth";
 import { handleDatabaseError } from "@/lib/api-errors";
 
 const patchSchema = z.object({
@@ -39,6 +40,17 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     }
     if (existing.tenantSlug !== parsed.data.tenantSlug) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    const auth = await resolveCrmAuth(request);
+    if (!auth) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    if (auth.session.tenantSlug !== parsed.data.tenantSlug) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+    if (!auth.isAdmin && !auth.isHOD && existing.createdBy !== auth.employeeId) {
+      return NextResponse.json({ error: "You can only edit your own leads" }, { status: 403 });
     }
 
     const lead = await updateLead(params.id, {
@@ -92,6 +104,17 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     }
     if (existing.tenantSlug !== tenantSlug) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    const auth = await resolveCrmAuth(request);
+    if (!auth) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    if (auth.session.tenantSlug !== tenantSlug) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+    if (!auth.isAdmin && !auth.isHOD && existing.createdBy !== auth.employeeId) {
+      return NextResponse.json({ error: "You can only delete your own leads" }, { status: 403 });
     }
 
     const success = await deleteLead(params.id);

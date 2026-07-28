@@ -3,8 +3,8 @@ import { z } from "zod";
 import { CRM_LEAD_STAGES, CRM_LEAD_SOURCES } from "@/lib/crm/types";
 import { insertLead, listLeads, countLeads } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
-import { resolveCrmAuth } from "@/lib/crm/auth";
-import { sql as SQL, db } from "@/lib/sql-client";
+import { resolveCrmAuth, getTeamMemberIds } from "@/lib/crm/auth";
+import { db } from "@/lib/sql-client";
 
 const leadSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -21,16 +21,6 @@ const leadSchema = z.object({
   currency: z.string().optional(),
   notes: z.string().optional(),
 });
-
-async function getTeamMemberIds(tenantSlug: string, departmentId: string, selfId: string): Promise<string[]> {
-  if (!departmentId) return [];
-  const sql = SQL;
-  const rows = await sql`
-    select id from admin_employees
-    where tenant_slug = ${tenantSlug} and department_id = ${departmentId} and status = 'active'
-  `;
-  return (rows as any[]).map(r => r.id);
-}
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
@@ -97,7 +87,7 @@ export async function GET(request: NextRequest) {
       if (viewMode === "mine" || (!viewMode && auth.scope === "mine")) {
         filterCreatedBy = auth.employeeId;
       } else if (viewMode === "team" || (!viewMode && auth.scope === "team")) {
-        const teamIds = await getTeamMemberIds(auth.session.tenantSlug, auth.departmentId, auth.employeeId);
+        const teamIds = await getTeamMemberIds(auth.session.tenantSlug, auth.departmentId);
         if (teamIds.length > 0) {
           const placeholders = teamIds.map((_, i) => `$${i + 2}`).join(",");
           const rows = (await db.query(

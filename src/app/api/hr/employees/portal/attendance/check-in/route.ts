@@ -26,7 +26,6 @@ export async function POST(request: NextRequest) {
 
     const today = new Date().toISOString().split("T")[0];
     const nowFull = new Date().toISOString();
-    const nowTime = new Date().toLocaleTimeString("en-US", { hour12: false });
 
     // Check if there's already an attendance record for today
     const existing = await sql`

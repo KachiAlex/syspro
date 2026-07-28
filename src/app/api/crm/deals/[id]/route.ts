@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { CRM_PIPELINE_STAGES } from "@/lib/crm/types";
-import { updateDeal, deleteDeal, updateLead, logActivity } from "@/lib/crm/db";
+import { updateDeal, deleteDeal, updateLead, logActivity, getDeal } from "@/lib/crm/db";
+import { resolveCrmAuth } from "@/lib/crm/auth";
 import { insertFinanceInvoice } from "@/lib/finance/db";
 import { writeFinanceEvent } from "@/lib/finance/events";
 import { getCurrentUser } from "@/lib/auth-helpers";
@@ -30,6 +31,22 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   }
 
   try {
+    const existing = await getDeal(params.id);
+    if (!existing) {
+      return NextResponse.json({ error: "Deal not found" }, { status: 404 });
+    }
+
+    const auth = await resolveCrmAuth(request);
+    if (!auth) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    if (auth.session.tenantSlug !== existing.tenantSlug) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+    if (!auth.isAdmin && !auth.isHOD && existing.createdBy !== auth.employeeId) {
+      return NextResponse.json({ error: "You can only edit your own deals" }, { status: 403 });
+    }
+
     const deal = await updateDeal(params.id, {
       stage: parsed.data.stage,
       probability: parsed.data.probability,
@@ -124,6 +141,22 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
   const params = await context.params;
 
   try {
+    const existing = await getDeal(params.id);
+    if (!existing) {
+      return NextResponse.json({ error: "Deal not found" }, { status: 404 });
+    }
+
+    const auth = await resolveCrmAuth(request);
+    if (!auth) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    if (auth.session.tenantSlug !== existing.tenantSlug) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+    if (!auth.isAdmin && !auth.isHOD && existing.createdBy !== auth.employeeId) {
+      return NextResponse.json({ error: "You can only delete your own deals" }, { status: 403 });
+    }
+
     const deleted = await deleteDeal(params.id);
     if (!deleted) {
       return NextResponse.json({ error: "Deal not found" }, { status: 404 });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { updateCustomer, listCustomers, countCustomers } from "@/lib/crm/db";
+import { resolveCrmAuth } from "@/lib/crm/auth";
 import { handleDatabaseError } from "@/lib/api-errors";
 import { db } from "@/lib/sql-client";
 
@@ -29,6 +30,14 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     return NextResponse.json({ error: "Customer not found" }, { status: 404 });
   }
 
+  const auth = await resolveCrmAuth(request);
+  if (!auth) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+  if (auth.session.tenantSlug !== parsed.data.tenantSlug) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
     const customer = await updateCustomer(id, {
       name: parsed.data.name,
@@ -50,6 +59,14 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
   const existing = await getCustomerById(id);
   if (!existing || existing.tenant_slug !== tenantSlug) {
     return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+  }
+
+  const auth = await resolveCrmAuth(request);
+  if (!auth) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+  if (auth.session.tenantSlug !== tenantSlug) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
   try {

@@ -314,7 +314,7 @@ export default function EmployeeDashboardPage() {
           </div>
         </header>
 
-        <main className="flex-1 p-4 md:p-6 max-w-5xl mx-auto w-full">
+        <main className={`flex-1 p-4 md:p-6 mx-auto w-full ${activeTab === 'crm' ? 'max-w-7xl' : 'max-w-5xl'}`}>
           {activeTab === 'dashboard' && perms.dashboard !== false && <DashboardTab profile={profile} onNavigate={(tab) => setActiveTab(tab as Tab)} announcements={announcements} />}
           {activeTab === 'tasks' && perms.tasks !== false && <TasksTab profile={profile} />}
           {activeTab === 'attendance' && perms.attendance !== false && <AttendanceTab profile={profile} />}

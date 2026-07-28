@@ -39,7 +39,7 @@ export type CrmMetric = {
 
 export type CrmLead = {
   id: string;
-  tenantId: string;
+  tenantSlug: string;
   regionId: string;
   branchId: string;
   companyName: string;
@@ -85,7 +85,7 @@ export type CrmLeadActivity = {
 
 export type CrmCustomer = {
   id: string;
-  tenantId: string;
+  tenantSlug: string;
   name: string;
   regionId: string;
   branchId: string;
@@ -133,6 +133,7 @@ export type CrmContactRecord = {
   status: string | null;
   tags: string[] | null;
   imported_at: string | null;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -155,14 +156,14 @@ export type CrmContact = {
 
 export type CrmDeal = {
   id: string;
-  tenantId: string;
+  tenantSlug: string;
   customerId: string;
   leadId?: string;
   stage: CrmPipelineStage;
   value: number;
   currency: string;
-  probability: number;
-  expectedClose: string;
+  probability: number | null;
+  expectedClose: string | null;
   assignedOfficerId?: string;
   status: "open" | "won" | "lost";
   linkedProjectId?: string;

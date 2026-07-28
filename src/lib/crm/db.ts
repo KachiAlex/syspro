@@ -545,6 +545,13 @@ export async function deleteDeal(id: string) {
   return deleted.length > 0;
 }
 
+export async function getDeal(id: string) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  const rows = (await sql`select * from crm_deals where id = ${id} limit 1`) as any[];
+  return rows.length ? normalizeDealRow(rows[0]) : null;
+}
+
 export async function insertLead(row: {
   tenantSlug: string;
   regionId: string;

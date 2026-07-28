@@ -43,26 +43,11 @@ export function CrmTab({ profile }: { profile: EmployeeProfile }) {
   }
 
   return (
-    <div className="space-y-4">
-      {availableModes.length > 1 && (
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600">View:</span>
-          <div className="flex bg-gray-100 border border-gray-200 rounded-lg overflow-hidden">
-            {availableModes.map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                  viewMode === mode ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {mode === 'mine' ? 'My Data' : mode === 'team' ? 'Team' : 'All'}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-      <CRMDashboard tenantSlug={tenantSlug} viewMode={viewMode} onViewModeChange={setViewMode} />
-    </div>
+    <CRMDashboard
+      tenantSlug={tenantSlug}
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
+      allowedViewModes={availableModes}
+    />
   );
 }

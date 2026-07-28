@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { insertContact, insertContacts, listContacts, countContacts } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
-import { resolveCrmAuth } from "@/lib/crm/auth";
-import { sql as SQL, db } from "@/lib/sql-client";
+import { resolveCrmAuth, getTeamMemberIds } from "@/lib/crm/auth";
+import { db } from "@/lib/sql-client";
 
 const contactPayloadSchema = z.object({
   company: z.string().min(1),
@@ -37,16 +37,6 @@ const listSchema = z.object({
   limit: z.coerce.number().min(1).max(100).optional(),
   offset: z.coerce.number().min(0).optional(),
 });
-
-async function getTeamMemberIds(tenantSlug: string, departmentId: string): Promise<string[]> {
-  if (!departmentId) return [];
-  const sql = SQL;
-  const rows = await sql`
-    select id from admin_employees
-    where tenant_slug = ${tenantSlug} and department_id = ${departmentId} and status = 'active'
-  `;
-  return (rows as any[]).map(r => r.id);
-}
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getLead, updateLead, insertCustomer, insertDeal, recordConversion, logActivity } from "@/lib/crm/db";
+import { resolveCrmAuth } from "@/lib/crm/auth";
 import { handleDatabaseError } from "@/lib/api-errors";
 
 const convertSchema = z.object({
@@ -32,6 +33,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     if ((lead as any).tenant_slug !== parsed.data.tenantSlug && (lead as any).tenantSlug !== parsed.data.tenantSlug) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
+
+    const auth = await resolveCrmAuth(request);
 
     const customerName = parsed.data.customerName || (lead as any).companyName || (lead as any).company_name;
     const customer = await insertCustomer({
@@ -70,6 +73,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         value: expectedValue ? Number(expectedValue) : 0,
         currency: (lead as any).currency ?? "₦",
         probability: 50,
+        createdBy: auth?.employeeId,
       }).catch(() => null);
     }
 

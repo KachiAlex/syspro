@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { insertCustomer, listCustomers, countCustomers } from "@/lib/crm/db";
+import { resolveCrmAuth } from "@/lib/crm/auth";
 import { handleDatabaseError } from "@/lib/api-errors";
 
 const customerSchema = z.object({
@@ -33,6 +34,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+  const auth = await resolveCrmAuth(request);
+  if (!auth) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+  if (auth.session.tenantSlug !== parsed.data.tenantSlug) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
     const customers = await listCustomers({
       tenantSlug: parsed.data.tenantSlug,
@@ -55,6 +64,14 @@ export async function POST(request: NextRequest) {
   const parsed = customerSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const auth = await resolveCrmAuth(request);
+  if (!auth) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+  if (auth.session.tenantSlug !== parsed.data.tenantSlug) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
   try {

@@ -53,3 +53,12 @@ export async function resolveCrmAuth(request: NextRequest): Promise<CrmAuthResul
     departmentId,
   };
 }
+
+export async function getTeamMemberIds(tenantSlug: string, departmentId: string): Promise<string[]> {
+  if (!departmentId) return [];
+  const rows = await SQL`
+    select id from admin_employees
+    where tenant_slug = ${tenantSlug} and department_id = ${departmentId} and status = 'active'
+  `;
+  return (rows as any[]).map(r => r.id);
+}

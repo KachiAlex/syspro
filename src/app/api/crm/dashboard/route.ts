@@ -2,18 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { crmFiltersSchema } from "@/lib/crm/types";
 import { countLeads, listLeads, countContacts, listContacts, countDeals, listDeals, countCustomers, getConversionStats } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
-import { resolveCrmAuth } from "@/lib/crm/auth";
-import { sql as SQL } from "@/lib/sql-client";
-
-async function getTeamMemberIds(tenantSlug: string, departmentId: string): Promise<string[]> {
-  if (!departmentId) return [];
-  const sql = SQL;
-  const rows = await sql`
-    select id from admin_employees
-    where tenant_slug = ${tenantSlug} and department_id = ${departmentId} and status = 'active'
-  `;
-  return (rows as any[]).map(r => r.id);
-}
+import { resolveCrmAuth, getTeamMemberIds } from "@/lib/crm/auth";
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);

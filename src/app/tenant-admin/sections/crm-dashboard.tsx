@@ -41,8 +41,7 @@ import {
   LEAD_SOURCE_OPTIONS,
   DEAL_STAGE_OPTIONS,
 } from "./crm-modals";
-import { useTenantContext } from "@/components/tenant-admin/tenant-context";
-import { apiClient } from "@/lib/api-client";
+import { useTenantContextSafe } from "@/components/tenant-admin/tenant-context";
 import { CRM_LEAD_STAGES, CRM_LEAD_SOURCES, CRM_PIPELINE_STAGES } from "@/lib/crm/types";
 
 const LEAD_STAGE_LABELS = Object.fromEntries(LEAD_STAGE_OPTIONS.map((option) => [option.value, option.label]));
@@ -541,13 +540,14 @@ function formatCurrency(value: number, currencySymbol: string) {
 
 export type CrmViewMode = "all" | "team" | "mine";
 
-export default function CRMDashboard({ tenantSlug, initialTab = "overview", viewMode, onViewModeChange }: {
+export default function CRMDashboard({ tenantSlug, initialTab = "overview", viewMode, onViewModeChange, allowedViewModes }: {
   tenantSlug?: string | null;
   initialTab?: "overview" | "leads" | "contacts" | "deals" | "customers";
   viewMode?: CrmViewMode;
   onViewModeChange?: (mode: CrmViewMode) => void;
+  allowedViewModes?: CrmViewMode[];
 }) {
-  const tenantContext = useTenantContext();
+  const tenantContext = useTenantContextSafe();
   const effectiveTenant = tenantSlug ?? tenantContext.tenantSlug;
   const regionId = tenantContext.regionId;
   const branchId = tenantContext.branchId;
@@ -1335,7 +1335,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                 { key: "mine" as const, label: "My" },
                 { key: "team" as const, label: "Team" },
                 { key: "all" as const, label: "All" },
-              ] as const).map((opt) => {
+              ] as const).filter((opt) => (allowedViewModes ? allowedViewModes.includes(opt.key) : true)).map((opt) => {
               const active = effectiveViewMode === opt.key;
               const handleViewChange = onViewModeChange ?? setInternalViewMode;
               return (

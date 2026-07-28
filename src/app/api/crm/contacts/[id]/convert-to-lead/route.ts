@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getContact, insertLead, updateContact, logActivity } from "@/lib/crm/db";
 import { CRM_LEAD_STAGES, CRM_LEAD_SOURCES } from "@/lib/crm/types";
+import { resolveCrmAuth } from "@/lib/crm/auth";
 import { handleDatabaseError } from "@/lib/api-errors";
 
 const convertSchema = z.object({
@@ -35,6 +36,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
+    const auth = await resolveCrmAuth(request);
+
     const lead = await insertLead({
       tenantSlug: parsed.data.tenantSlug,
       regionId: parsed.data.regionId,
@@ -48,6 +51,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       expectedValue: parsed.data.expectedValue,
       notes: parsed.data.notes,
       contactId: params.id,
+      createdBy: auth?.employeeId,
     });
 
     // Mark contact as converted
