@@ -37,7 +37,7 @@ export class ProjectService {
         budget: projectData.budget.replace(/[$,]/g, ''), // Remove currency symbols and commas
       });
 
-      return response.data;
+      return response.data.project;
     } catch (error) {
       console.error('Failed to create project:', error);
       throw new Error('Failed to create project. Please try again.');
@@ -82,7 +82,7 @@ export class ProjectService {
         budget: updates.budget?.replace(/[$,]/g, ''), // Remove currency symbols and commas
       });
 
-      return response.data;
+      return response.data.project;
     } catch (error) {
       console.error('Failed to update project:', error);
       throw new Error('Failed to update project. Please try again.');
@@ -115,7 +115,7 @@ export class ProjectService {
         tenantSlug
       });
 
-      return response.data;
+      return response.data.project;
     } catch (error) {
       console.error('Failed to restore project:', error);
       throw new Error('Failed to restore project. Please try again.');
@@ -127,34 +127,29 @@ export class ProjectService {
     manager?: string;
   }): Promise<ProjectResponse[]> {
     try {
-      const params = new URLSearchParams();
-      params.append('tenantSlug', tenantSlug);
-      params.append('archived', 'true');
-      
+      const response = await apiClient.get(`/projects/archive?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+      let projects: ProjectResponse[] = response.data.projects || [];
       if (filters?.search) {
-        params.append('search', filters.search);
+        const q = filters.search.toLowerCase();
+        projects = projects.filter((p) => p.name.toLowerCase().includes(q) || p.manager.toLowerCase().includes(q));
       }
-      
       if (filters?.manager) {
-        params.append('manager', filters.manager);
+        const q = filters.manager.toLowerCase();
+        projects = projects.filter((p) => p.manager.toLowerCase().includes(q));
       }
-
-      const response = await apiClient.get(`/projects?${params.toString()}`);
-      return response.data.projects || [];
+      return projects;
     } catch (error) {
       console.error('Failed to fetch archived projects:', error);
       return [];
     }
   }
 
-  static async bulkRestoreProjects(tenantSlug: string, projectIds: string[]): Promise<ProjectResponse[]> {
+  static async bulkRestoreProjects(tenantSlug: string, projectIds: string[]): Promise<void> {
     try {
-      const response = await apiClient.post(`/projects/bulk-restore`, {
+      await apiClient.post(`/projects/restore`, {
         tenantSlug,
         projectIds
       });
-
-      return response.data.projects || [];
     } catch (error) {
       console.error('Failed to bulk restore projects:', error);
       throw new Error('Failed to restore selected projects. Please try again.');
@@ -168,9 +163,10 @@ export class ProjectService {
     archived: number;
     totalBudget: number;
     completionRate: number;
+    avgDuration: number;
   }> {
     try {
-      const response = await apiClient.get(`/projects/stats?tenantSlug=${tenantSlug}`);
+      const response = await apiClient.get(`/projects/stats?tenantSlug=${encodeURIComponent(tenantSlug)}`);
       return response.data;
     } catch (error) {
       console.error('Failed to fetch project stats:', error);
@@ -181,7 +177,8 @@ export class ProjectService {
         completed: 0,
         archived: 0,
         totalBudget: 0,
-        completionRate: 0
+        completionRate: 0,
+        avgDuration: 0,
       };
     }
   }

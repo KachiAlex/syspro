@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Briefcase, CheckCircle, Archive, BarChart3, TrendingUp } from 'lucide-react';
+import { Briefcase, CheckCircle, Archive, BarChart3, TrendingUp, ListChecks } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { ProjectService, ProjectResponse } from './services/projectService';
 
@@ -54,7 +54,7 @@ export default function ProjectsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Active</p>
-              <p className="text-3xl font-bold text-green-600 mt-2">7</p>
+              <p className="text-3xl font-bold text-green-600 mt-2">{activeProjects}</p>
             </div>
             <CheckCircle className="w-12 h-12 text-green-500" />
           </div>
@@ -65,7 +65,7 @@ export default function ProjectsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Completed</p>
-              <p className="text-3xl font-bold text-blue-600 mt-2">4</p>
+              <p className="text-3xl font-bold text-blue-600 mt-2">{completedProjects}</p>
             </div>
             <Archive className="w-12 h-12 text-blue-500" />
           </div>
@@ -76,7 +76,7 @@ export default function ProjectsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Completion Rate</p>
-              <p className="text-3xl font-bold text-purple-600 mt-2">65%</p>
+              <p className="text-3xl font-bold text-purple-600 mt-2">{completionRate}%</p>
             </div>
             <TrendingUp className="w-12 h-12 text-purple-100" />
           </div>
@@ -95,7 +95,7 @@ export default function ProjectsPage() {
           </div>
           <p className="text-sm text-gray-600 mb-4">Manage and track ongoing projects</p>
           <div className="flex items-center justify-between">
-            <span className="text-2xl font-bold text-green-600">7</span>
+            <span className="text-2xl font-bold text-green-600">{activeProjects}</span>
             <span className="text-xs font-medium text-blue-600">View →</span>
           </div>
         </Link>
@@ -110,7 +110,7 @@ export default function ProjectsPage() {
           </div>
           <p className="text-sm text-gray-600 mb-4">View completed and archived projects</p>
           <div className="flex items-center justify-between">
-            <span className="text-2xl font-bold text-amber-600">4</span>
+            <span className="text-2xl font-bold text-amber-600">{completedProjects}</span>
             <span className="text-xs font-medium text-blue-600">View →</span>
           </div>
         </Link>
@@ -127,6 +127,20 @@ export default function ProjectsPage() {
           <div className="flex items-center justify-between">
             <span className="text-2xl font-bold text-blue-600">{totalProjects}</span>
             <span className="text-xs font-medium text-blue-600">View →</span>
+          </div>
+        </Link>
+
+        <Link
+          href={`/tenant-admin/projects/tasks`}
+          className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <ListChecks className="w-6 h-6 text-indigo-600" />
+            <h3 className="text-lg font-semibold text-gray-900">Task Manager</h3>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">Assign and manage tasks across all projects</p>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-indigo-600">Open →</span>
           </div>
         </Link>
       </div>

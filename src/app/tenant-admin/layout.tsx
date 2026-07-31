@@ -8,7 +8,7 @@ import { ToastProvider } from "@/components/ui/toast-provider";
 import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 import { sql as SQL } from "@/lib/sql-client";
 
-export default async function TenantAdminLayout({ children, searchParams }: { children: React.ReactNode; searchParams?: Record<string, string> }) {
+export default async function TenantAdminLayout({ children }: { children: React.ReactNode }) {
   // `headers()` is async in some Next runtimes; await to avoid sync access
   const h = await headers();
 
@@ -19,8 +19,6 @@ export default async function TenantAdminLayout({ children, searchParams }: { ch
   // Prefer explicit tenant header; then fallback to cookies (set by the access portal)
   const serverCookies = await cookies();
   const safeGetCookie = (k: string) => (typeof (serverCookies as any)?.get === "function" ? (serverCookies as any).get(k)?.value : undefined);
-  const urlTenant = searchParams?.tenantSlug;
-
   // Fallback: sometimes `searchParams` aren't available to layouts during
   // certain server render paths. Try to parse `tenantSlug` from the referer
   // header (the Access page navigates with `?tenantSlug=...`) so the layout
@@ -40,7 +38,7 @@ export default async function TenantAdminLayout({ children, searchParams }: { ch
     // noop
   }
 
-  const tenantSlug = urlTenant || refTenant || safeGet("X-Tenant-Slug") || safeGet("tenantSlug") || safeGetCookie("tenantSlug") || safeGetCookie("employee_tenant");
+  const tenantSlug = refTenant || safeGet("X-Tenant-Slug") || safeGet("tenantSlug") || safeGetCookie("tenantSlug") || safeGetCookie("employee_tenant");
 
   // Adapt headers to the shape expected by getCurrentUser (it expects a NextRequest-like object)
   const fakeReq = {
@@ -62,7 +60,7 @@ export default async function TenantAdminLayout({ children, searchParams }: { ch
   if (!effectiveUser) {
     const cookieUserId = safeGetCookie("X-User-Id") || safeGetCookie("dev-user-id") || safeGetCookie("userId");
     const cookieRole = safeGetCookie("X-Role-Id") || "viewer";
-    const cookieTenant = tenantSlug || urlTenant;
+    const cookieTenant = tenantSlug;
     if (cookieTenant) {
       effectiveUser = {
         id: cookieUserId || "dev-user-1",
@@ -76,7 +74,6 @@ export default async function TenantAdminLayout({ children, searchParams }: { ch
 
   // Prepare debug info early so we can log and render diagnostics before any redirects
   const debugInfoEarly = {
-    urlTenant,
     refTenant,
     cookieTenant: safeGetCookie("tenantSlug"),
     headerTenant: safeGet("X-Tenant-Slug"),
@@ -145,7 +142,6 @@ export default async function TenantAdminLayout({ children, searchParams }: { ch
 
   // Debug banner: show what the server sees for tenant/user/cookies
   const debugInfo = {
-    urlTenant,
     refTenant,
     cookieTenant: safeGetCookie("tenantSlug"),
     headerTenant: safeGet("X-Tenant-Slug"),

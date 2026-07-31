@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { RotateCcw, Eye, Trash2, Search } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
@@ -30,6 +30,17 @@ export default function ProjectArchivePage() {
   const [showRestoreModal, setShowRestoreModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<ArchivedProject | null>(null);
+
+  useEffect(() => {
+    if (!tenantSlug) return;
+    ProjectService.getArchivedProjects(tenantSlug)
+      .then((data) => {
+        setProjects(data as unknown as ArchivedProject[]);
+      })
+      .catch((err) => {
+        console.error('Failed to load archived projects:', err);
+      });
+  }, [tenantSlug]);
 
   const filteredProjects = projects.filter((project) => {
     if (searchQuery) {
@@ -257,15 +268,15 @@ export default function ProjectArchivePage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Total Budget Spent</span>
-              <span className="font-semibold text-gray-900">$230,000</span>
+              <span className="font-semibold text-gray-900">${projects.reduce((sum, p) => sum + (parseFloat(p.budget.replace(/[^0-9.]/g, '')) || 0), 0).toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Avg Team Size</span>
-              <span className="font-semibold text-gray-900">5 members</span>
+              <span className="font-semibold text-gray-900">{projects.length > 0 ? Math.round(projects.reduce((sum, p) => sum + (p.teamMembers || 0), 0) / projects.length) : 0} members</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Success Rate</span>
-              <span className="font-semibold text-green-600">100%</span>
+              <span className="font-semibold text-green-600">{projects.length > 0 ? Math.round((projects.filter(p => p.finalStatus === 'Completed' || p.finalStatus === 'Archived').length / projects.length) * 100) : 0}%</span>
             </div>
           </div>
         </div>

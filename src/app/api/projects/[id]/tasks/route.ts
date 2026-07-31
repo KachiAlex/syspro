@@ -4,6 +4,7 @@ import {
   getTasksForProject,
   createTask,
   getOrCreateDefaultWorkstream,
+  getAssignmentsForTasks,
 } from "@/lib/projects/db";
 import { Task } from "@/lib/projects/types";
 
@@ -34,7 +35,7 @@ const dbToPriority = (n: number) => {
   return "medium";
 };
 
-function toClientTask(task: Task) {
+function toClientTask(task: Task, assignments: any[] = []) {
   return {
     id: task.id,
     projectId: task.projectId,
@@ -42,7 +43,12 @@ function toClientTask(task: Task) {
     description: task.description ?? "",
     status: dbToStatus[task.status] ?? task.status,
     priority: dbToPriority(Number(task.priority ?? 2)),
-    assignee: "",
+    assignee: assignments.length > 0 ? assignments.map((a) => a.employee_name).join(", ") : "",
+    assignedEmployees: assignments.map((a) => ({
+      id: a.employee_id,
+      name: a.employee_name,
+      department: a.employee_department_name ?? "",
+    })),
     dueDate: task.plannedEndDate ? new Date(task.plannedEndDate).toISOString() : "",
   };
 }
@@ -54,7 +60,16 @@ export async function GET(
   try {
     const context = validateTenantContext(request as any, "read");
     const tasks = await getTasksForProject(params.id, context.tenantSlug);
-    return NextResponse.json({ tasks: tasks.map(toClientTask) });
+    const assignmentRows = await getAssignmentsForTasks(tasks.map((t) => t.id), context.tenantSlug);
+    const assignmentsByTask = new Map<string, any[]>();
+    for (const row of assignmentRows) {
+      const list = assignmentsByTask.get(row.task_id) ?? [];
+      list.push(row);
+      assignmentsByTask.set(row.task_id, list);
+    }
+    return NextResponse.json({
+      tasks: tasks.map((t) => toClientTask(t, assignmentsByTask.get(t.id) ?? [])),
+    });
   } catch (error) {
     console.error('Failed to fetch tasks:', error);
     const message = error instanceof Error ? error.message : 'Failed to fetch tasks';

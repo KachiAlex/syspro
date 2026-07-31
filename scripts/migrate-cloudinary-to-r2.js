@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+ssh#!/usr/bin/env node
 /*
   Migrate resume files from Cloudinary URLs stored in admin_candidates to Cloudflare R2.
   Requires DATABASE_URL, R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY,

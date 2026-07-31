@@ -34,7 +34,7 @@ export default function ProjectReportsPage() {
     canCreateReports: false,
     reportingLevel: 'staff'
   });
-  const [currentUser, setCurrentUser] = useState('John Doe');
+  const [currentUser, setCurrentUser] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
   const [availableRecipients, setAvailableRecipients] = useState<User[]>([]);
   
@@ -50,16 +50,20 @@ export default function ProjectReportsPage() {
     if (!tenantSlug) return;
     async function load() {
       try {
-        const [projectsRes, statsRes, reportsRes, recipientsRes] = await Promise.all([
+        const [projectsRes, statsRes, reportsRes, recipientsRes, meRes, permsRes] = await Promise.all([
           fetch(`/api/projects?tenantSlug=${encodeURIComponent(tenantSlug)}`),
           fetch(`/api/projects/stats?tenantSlug=${encodeURIComponent(tenantSlug)}`),
           fetch(`/api/projects/reports?tenantSlug=${encodeURIComponent(tenantSlug)}`),
           fetch(`/api/projects/recipients?tenantSlug=${encodeURIComponent(tenantSlug)}`),
+          fetch(`/api/auth/me`, { cache: 'no-store' }),
+          fetch(`/api/tenant/user/permissions?tenantSlug=${encodeURIComponent(tenantSlug)}`, { cache: 'no-store' }),
         ]);
         const projectsData = await projectsRes.json().catch(() => ({}));
         const statsData = await statsRes.json().catch(() => ({}));
         const reportsData = await reportsRes.json().catch(() => ({}));
         const recipientsData = await recipientsRes.json().catch(() => ({}));
+        const meData = await meRes.json().catch(() => ({}));
+        const permsData = await permsRes.json().catch(() => ({}));
 
         setProjects(projectsData.projects || []);
         setStats({
@@ -70,6 +74,22 @@ export default function ProjectReportsPage() {
         });
         setReports(reportsData.reports || []);
         setAvailableRecipients(recipientsData.recipients || []);
+
+        if (meData.name) {
+          setCurrentUser(meData.name);
+        }
+
+        if (permsData && !permsData.error) {
+          const isAdmin = permsData.isAdmin === true;
+          const projectsPerm = permsData.projects || 'none';
+          const canWrite = projectsPerm === 'write' || projectsPerm === 'admin' || isAdmin;
+          setUserRole({
+            canViewReports: true,
+            canSubmitReports: true,
+            canCreateReports: canWrite,
+            reportingLevel: isAdmin ? 'admin' : 'staff',
+          });
+        }
       } catch (err) {
         console.error('Failed to load project reports data:', err);
       } finally {

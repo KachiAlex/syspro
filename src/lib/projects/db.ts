@@ -673,6 +673,127 @@ export async function createTaskAssignment(
   }
 }
 
+export async function getAssignmentsForTask(
+  taskId: string,
+  tenantSlug: string
+): Promise<any[]> {
+  try {
+    const result = await db.query(
+      `
+      SELECT
+        ta.*,
+        e.name AS employee_name,
+        e.email AS employee_email,
+        e.department_id AS employee_department_id,
+        d.name AS employee_department_name
+      FROM task_assignments ta
+      LEFT JOIN admin_employees e ON e.id = ta.employee_id
+      LEFT JOIN admin_departments d ON d.id = e.department_id
+      WHERE ta.task_id = $1 AND ta.tenant_slug = $2
+        AND ta.status NOT IN ('REJECTED', 'REASSIGNED')
+      ORDER BY ta.created_at ASC
+      `,
+      [taskId, tenantSlug]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching task assignments:", error);
+    throw error;
+  }
+}
+
+export async function getAssignmentsForTasks(
+  taskIds: string[],
+  tenantSlug: string
+): Promise<any[]> {
+  if (taskIds.length === 0) return [];
+  try {
+    const result = await db.query(
+      `
+      SELECT
+        ta.*,
+        e.name AS employee_name,
+        e.email AS employee_email,
+        e.department_id AS employee_department_id,
+        d.name AS employee_department_name
+      FROM task_assignments ta
+      LEFT JOIN admin_employees e ON e.id = ta.employee_id
+      LEFT JOIN admin_departments d ON d.id = e.department_id
+      WHERE ta.task_id = ANY($1::uuid[]) AND ta.tenant_slug = $2
+        AND ta.status NOT IN ('REJECTED', 'REASSIGNED')
+      ORDER BY ta.created_at ASC
+      `,
+      [taskIds, tenantSlug]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching task assignments for tasks:", error);
+    throw error;
+  }
+}
+
+export async function getHODsForEmployees(
+  employeeIds: string[],
+  tenantSlug: string
+): Promise<Map<string, { hodId: string; hodName: string; departmentName: string }>> {
+  const result = new Map<string, { hodId: string; hodName: string; departmentName: string }>();
+  if (employeeIds.length === 0) return result;
+  try {
+    const res = await db.query(
+      `
+      SELECT e.id AS employee_id, d.manager_id AS hod_id, m.name AS hod_name, d.name AS department_name
+      FROM admin_employees e
+      JOIN admin_departments d ON d.id = e.department_id AND d.tenant_slug = e.tenant_slug
+      LEFT JOIN admin_employees m ON m.id = d.manager_id
+      WHERE e.id = ANY($1::text[]) AND e.tenant_slug = $2 AND d.manager_id IS NOT NULL
+      `,
+      [employeeIds, tenantSlug]
+    );
+    for (const row of res.rows) {
+      result.set(row.employee_id, {
+        hodId: row.hod_id,
+        hodName: row.hod_name ?? "HOD",
+        departmentName: row.department_name ?? "",
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching HODs for employees:", error);
+  }
+  return result;
+}
+
+export async function removeTaskAssignment(
+  id: string,
+  tenantSlug: string
+): Promise<boolean> {
+  try {
+    const existing = await db.query(
+      `SELECT task_id FROM task_assignments WHERE id = $1 AND tenant_slug = $2`,
+      [id, tenantSlug]
+    );
+    if (!existing.rows[0]) return false;
+    const taskId = existing.rows[0].task_id;
+
+    const result = await db.query(
+      `DELETE FROM task_assignments WHERE id = $1 AND tenant_slug = $2 RETURNING id`,
+      [id, tenantSlug]
+    );
+
+    const remaining = await db.query(
+      `SELECT COUNT(*)::int AS cnt FROM task_assignments WHERE task_id = $1 AND status NOT IN ('REJECTED', 'REASSIGNED')`,
+      [taskId]
+    );
+    if ((remaining.rows[0]?.cnt ?? 0) === 0) {
+      await db.query(`UPDATE tasks SET is_assigned = false WHERE id = $1`, [taskId]);
+    }
+
+    return (result.rowCount ?? 0) > 0;
+  } catch (error) {
+    console.error("Error removing task assignment:", error);
+    throw error;
+  }
+}
+
 export async function getAssignmentsForEmployee(
   employeeId: string,
   tenantSlug: string
@@ -1218,6 +1339,97 @@ export async function upsertProjectCapacitySnapshot(
     RETURNING *
     `,
     [tenantSlug, data.department, data.weekOf, data.availableHours, data.assignedHours, data.utilization, data.underUtilized, createdBy]
+  );
+  return result.rows[0] || null;
+}
+
+// ============================================================
+// PROJECT REPORT OPERATIONS
+// ============================================================
+
+async function ensureProjectReportsTable() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS project_reports (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      tenant_slug TEXT NOT NULL,
+      project_id TEXT,
+      report_type TEXT NOT NULL DEFAULT 'daily',
+      title TEXT,
+      content TEXT NOT NULL,
+      progress NUMERIC(5,2),
+      blockers JSONB NOT NULL DEFAULT '[]',
+      next_steps TEXT,
+      recipients JSONB NOT NULL DEFAULT '[]',
+      status TEXT NOT NULL DEFAULT 'submitted',
+      submitted_by TEXT NOT NULL,
+      submitted_by_name TEXT,
+      created_by TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
+export async function getProjectReports(
+  tenantSlug: string,
+  limit = 100
+): Promise<any[]> {
+  await ensureProjectReportsTable();
+  const result = await db.query(
+    `
+    SELECT r.*, p.name AS project_name
+    FROM project_reports r
+    LEFT JOIN projects p ON p.id = r.project_id
+    WHERE r.tenant_slug = $1
+    ORDER BY r.created_at DESC
+    LIMIT $2
+    `,
+    [tenantSlug, limit]
+  );
+  return result.rows;
+}
+
+export async function createProjectReport(
+  tenantSlug: string,
+  data: {
+    projectId?: string | null;
+    reportType: string;
+    title?: string | null;
+    content: string;
+    progress?: number | null;
+    blockers?: string[];
+    nextSteps?: string | null;
+    recipients?: string[];
+    status?: string;
+    submittedByName?: string | null;
+  },
+  createdBy: string
+): Promise<any | null> {
+  await ensureProjectReportsTable();
+  const result = await db.query(
+    `
+    INSERT INTO project_reports (
+      tenant_slug, project_id, report_type, title, content, progress,
+      blockers, next_steps, recipients, status, submitted_by, submitted_by_name, created_by
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+    RETURNING *
+    `,
+    [
+      tenantSlug,
+      data.projectId ?? null,
+      data.reportType,
+      data.title ?? null,
+      data.content,
+      data.progress ?? null,
+      JSON.stringify(data.blockers ?? []),
+      data.nextSteps ?? null,
+      JSON.stringify(data.recipients ?? []),
+      data.status ?? "submitted",
+      createdBy,
+      data.submittedByName ?? null,
+      createdBy,
+    ]
   );
   return result.rows[0] || null;
 }

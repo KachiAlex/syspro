@@ -6,7 +6,11 @@ import {
   getTasksForWorkstream,
   getAllTasksForTenant,
   updateTask,
+  createTaskAssignment,
+  getAssignmentsForTasks,
+  getHODsForEmployees,
 } from "@/lib/projects/db";
+import { insertNotification } from "@/lib/hr/db";
 import { suggestAssignments } from "@/lib/project-fit";
 import { updateAttendanceSignals } from "@/lib/attendance";
 
@@ -71,23 +75,38 @@ export async function GET(request: NextRequest) {
     rawTasks = await getAllTasksForTenant(context.tenantSlug);
   }
 
-  const tasks = rawTasks.map((t: any) => ({
-    id: t.id,
-    projectId: t.project_id,
-    workstreamId: t.workstream_id,
-    department: "",
-    title: t.title,
-    status: statusToPlanner[t.status] ?? t.status,
-    requiredSkills: t.required_skills || [],
-    dueDate: t.planned_end_date ? new Date(t.planned_end_date).toISOString() : "",
-    estimatedHours: Number(t.estimated_hours ?? 0),
-    effortHours: Number(t.estimated_hours ?? 0),
-    assignedTo: "Unassigned",
-    assignedEmployees: [],
-    assignedEmployeeIds: [],
-    contributionWeight: 0,
-    priority: priorityToPlanner(Number(t.priority ?? 2)),
-  }));
+  const assignmentRows = await getAssignmentsForTasks(rawTasks.map((t: any) => t.id), context.tenantSlug);
+  const assignmentsByTask = new Map<string, any[]>();
+  for (const row of assignmentRows) {
+    const list = assignmentsByTask.get(row.task_id) ?? [];
+    list.push(row);
+    assignmentsByTask.set(row.task_id, list);
+  }
+
+  const tasks = rawTasks.map((t: any) => {
+    const assignments = assignmentsByTask.get(t.id) ?? [];
+    return {
+      id: t.id,
+      projectId: t.project_id,
+      workstreamId: t.workstream_id,
+      department: "",
+      title: t.title,
+      status: statusToPlanner[t.status] ?? t.status,
+      requiredSkills: t.required_skills || [],
+      dueDate: t.planned_end_date ? new Date(t.planned_end_date).toISOString() : "",
+      estimatedHours: Number(t.estimated_hours ?? 0),
+      effortHours: Number(t.estimated_hours ?? 0),
+      assignedTo: assignments.length > 0 ? assignments.map((a) => a.employee_name).join(", ") : "Unassigned",
+      assignedEmployees: assignments.map((a) => ({
+        id: a.employee_id,
+        name: a.employee_name,
+        department: a.employee_department_name ?? "",
+      })),
+      assignedEmployeeIds: assignments.map((a) => a.employee_id),
+      contributionWeight: 0,
+      priority: priorityToPlanner(Number(t.priority ?? 2)),
+    };
+  });
 
   return NextResponse.json({ tasks });
 }
@@ -111,10 +130,8 @@ export async function POST(request: NextRequest) {
   const missing = [
     projectId,
     workstreamId,
-    department,
     title,
     description,
-    requiredSkills && requiredSkills.length > 0 ? requiredSkills.join() : undefined,
     estimatedHours,
     priority,
     dueDate,
@@ -133,7 +150,7 @@ export async function POST(request: NextRequest) {
     code: `TASK-${Date.now()}`,
     title: title!,
     description: description!,
-    requiredSkills,
+    requiredSkills: requiredSkills ?? [],
     estimatedHours: Number(estimatedHours),
     priority: priorityToDb[priority as string] ?? 2,
     plannedEndDate: new Date(dueDate),
@@ -144,19 +161,60 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Failed to create task" }, { status: 500 });
   }
 
-  const suggestions = suggestAssignments({
-    tenantSlug: context.tenantSlug,
-    department: department!,
-    requiredSkills: requiredSkills!,
-  });
+  // Smart suggestions are advisory only — department is optional and never
+  // restricts which employees can actually be assigned below.
+  const suggestions = department
+    ? suggestAssignments({
+        tenantSlug: context.tenantSlug,
+        department,
+        requiredSkills: requiredSkills ?? [],
+      })
+    : [];
 
+  // Persist real assignments. Any employee, regardless of department, may
+  // be assigned here — this list is not filtered by the suggestions above.
   if (assignedEmployees.length > 0) {
     const workDate = new Date().toISOString().split("T")[0];
     await Promise.all(
       assignedEmployees.map((employeeId: string) =>
-        sendAttendanceSignal({ tenantSlug: context.tenantSlug, employeeId, workDate, taskId: task.id })
+        createTaskAssignment(
+          context.tenantSlug,
+          {
+            taskId: task.id,
+            projectId,
+            employeeId,
+            assignmentStartDate: new Date(),
+            status: "ACCEPTED",
+          } as any,
+          context.userId
+        ).then(() =>
+          sendAttendanceSignal({ tenantSlug: context.tenantSlug, employeeId, workDate, taskId: task.id })
+        )
       )
     );
+
+    // Auto-tag HODs: notify each unique HOD whose department member was assigned
+    try {
+      const hodMap = await getHODsForEmployees(assignedEmployees, context.tenantSlug);
+      const notifiedHODs = new Set<string>();
+      for (const empId of assignedEmployees) {
+        const hod = hodMap.get(empId);
+        if (hod && !notifiedHODs.has(hod.hodId)) {
+          notifiedHODs.add(hod.hodId);
+          await insertNotification({
+            tenantSlug: context.tenantSlug,
+            employeeId: hod.hodId,
+            type: 'info',
+            category: 'projects',
+            title: 'Task Assigned to Your Department Member',
+            message: `Task "${task.title}" has been assigned to an employee in your department (${hod.departmentName}).`,
+            actionUrl: `/tenant-admin/projects/tasks`,
+          });
+        }
+      }
+    } catch (notifErr) {
+      console.error('Failed to notify HODs:', notifErr);
+    }
   }
 
   return NextResponse.json(

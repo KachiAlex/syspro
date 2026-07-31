@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Eye, Edit, Trash2, Search } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Search, ListChecks } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { CreateProjectModal } from '../components/CreateProjectModal';
 import { ViewProjectModal, EditProjectModal, DeleteProjectModal } from '../components/ActiveProjectModals';
+import { ProjectTasksModal } from '../components/ProjectTasksModal';
 import { ProjectService, ProjectFormData } from '../services/projectService';
 
 interface Project {
@@ -32,9 +33,17 @@ export default function ActiveProjectsPage() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showTasksModal, setShowTasksModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   const statuses = ['All', 'Planning', 'In Progress', 'On Hold', 'Completed'];
+
+  useEffect(() => {
+    if (!tenantSlug) return;
+    ProjectService.getProjects(tenantSlug).then((data) => {
+      setProjects(data as unknown as Project[]);
+    });
+  }, [tenantSlug]);
 
   const handleCreateProject = async (projectData: ProjectFormData) => {
     if (!tenantSlug) {
@@ -123,6 +132,11 @@ export default function ActiveProjectsPage() {
   const openDeleteModal = (project: Project) => {
     setSelectedProject(project);
     setShowDeleteModal(true);
+  };
+
+  const openTasksModal = (project: Project) => {
+    setSelectedProject(project);
+    setShowTasksModal(true);
   };
 
   const filteredProjects = projects.filter((project) => {
@@ -246,6 +260,13 @@ export default function ActiveProjectsPage() {
                         <Edit className="w-4 h-4" />
                       </button>
                       <button 
+                        onClick={() => openTasksModal(project)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-purple-600 hover:text-purple-700 transition-colors"
+                        title="Manage Tasks & Assignments"
+                      >
+                        <ListChecks className="w-4 h-4" />
+                      </button>
+                      <button 
                         onClick={() => openDeleteModal(project)}
                         className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-theme-danger transition-colors"
                         title="Delete Project"
@@ -281,7 +302,7 @@ export default function ActiveProjectsPage() {
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-900">Total Budget</span>
-              <span className="text-lg font-bold text-gray-900">$225,000</span>
+              <span className="text-lg font-bold text-gray-900">${filteredProjects.reduce((sum, p) => sum + (parseFloat(p.budget.replace(/[^0-9.]/g, '')) || 0), 0).toLocaleString()}</span>
             </div>
           </div>
         </div>
@@ -331,6 +352,16 @@ export default function ActiveProjectsPage() {
         onConfirm={handleDeleteProject}
         projectName={selectedProject?.name || ''}
       />
+
+      {selectedProject && (
+        <ProjectTasksModal
+          isOpen={showTasksModal}
+          onClose={() => setShowTasksModal(false)}
+          projectId={selectedProject.id}
+          projectName={selectedProject.name}
+          tenantSlug={tenantSlug}
+        />
+      )}
     </div>
   );
 }
