@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { Briefcase, MapPin, DollarSign, Users, Calendar, CheckCircle, Loader2, ArrowLeft, Upload, FileText, X } from "lucide-react";
+import { Briefcase, MapPin, DollarSign, Users, Calendar, CheckCircle, Loader2, ArrowLeft, Upload, FileText, X, Sparkles, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 interface Requisition {
@@ -40,6 +40,9 @@ export default function ApplyPage() {
   const [skillsInput, setSkillsInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [parsingResume, setParsingResume] = useState(false);
+  const [parseWarnings, setParseWarnings] = useState<string[]>([]);
+  const [autoFilled, setAutoFilled] = useState(false);
 
   useEffect(() => {
     if (!id || !tenantSlug) {
@@ -62,6 +65,59 @@ export default function ApplyPage() {
         setLoading(false);
       });
   }, [id, tenantSlug]);
+
+  const handleResumeSelected = async (file: File) => {
+    setResumeFile(file);
+    setParseWarnings([]);
+    setAutoFilled(false);
+
+    if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf") ||
+        file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || file.name.toLowerCase().endsWith(".docx") ||
+        file.type === "text/plain" || file.name.toLowerCase().endsWith(".txt")) {
+      setParsingResume(true);
+      try {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            const base64Data = result.split(",")[1];
+            resolve(base64Data);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        const parseRes = await fetch("/api/hr/resumes/parse", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: file.name,
+            mimeType: file.type || "application/octet-stream",
+            data: base64,
+          }),
+        });
+
+        const parseData = await parseRes.json();
+        if (parseRes.ok && parseData.parsed) {
+          const p = parseData.parsed;
+          if (p.fullName) setFullName(p.fullName);
+          if (p.email) setEmail(p.email);
+          if (p.phone) setPhone(p.phone);
+          if (p.education) setEducation(p.education);
+          if (p.experienceYears !== null) setExperienceYears(String(p.experienceYears));
+          if (p.skills && p.skills.length > 0) setSkillsInput(p.skills.join(", "));
+          setParseWarnings(p.warnings || []);
+          setAutoFilled(true);
+        } else if (!parseRes.ok) {
+          setParseWarnings([parseData.error || "Could not parse resume. Please fill in fields manually."]);
+        }
+      } catch (err: any) {
+        setParseWarnings(["Failed to parse resume: " + (err.message || "Unknown error")]);
+      } finally {
+        setParsingResume(false);
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -289,7 +345,7 @@ export default function ApplyPage() {
                         accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
-                          if (file) setResumeFile(file);
+                          if (file) handleResumeSelected(file);
                         }}
                         className="hidden"
                       />
@@ -306,7 +362,7 @@ export default function ApplyPage() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => { setResumeFile(null); setResumeUrl(""); }}
+                        onClick={() => { setResumeFile(null); setResumeUrl(""); setParseWarnings([]); setAutoFilled(false); }}
                         className="p-1 rounded-md hover:bg-red-500/10 text-gray-400 hover:text-red-400"
                       >
                         <X className="w-4 h-4" />
@@ -315,6 +371,38 @@ export default function ApplyPage() {
                   )}
                 </div>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">PDF, DOC, DOCX, TXT, PNG, JPG, WEBP. Max 10MB.</p>
+                {parsingResume && (
+                  <div className="mt-2 flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
+                    <Sparkles className="w-4 h-4 animate-pulse" />
+                    <span>Extracting details from your resume...</span>
+                  </div>
+                )}
+                {autoFilled && !parsingResume && parseWarnings.length === 0 && (
+                  <div className="mt-2 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Resume details imported successfully. Please review before submitting.</span>
+                  </div>
+                )}
+                {autoFilled && !parsingResume && parseWarnings.length > 0 && (
+                  <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-amber-800 dark:text-amber-300 mb-1">
+                          Some information couldn't be extracted from your resume:
+                        </p>
+                        <ul className="text-xs text-amber-700 dark:text-amber-400 list-disc list-inside space-y-0.5">
+                          {parseWarnings.map((w, i) => (
+                            <li key={i}>{w}</li>
+                          ))}
+                        </ul>
+                        <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                          Please fill in the missing fields above manually.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
