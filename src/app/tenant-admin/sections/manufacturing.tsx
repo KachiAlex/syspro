@@ -86,8 +86,8 @@ const STATUS_COLORS: Record<string, string> = {
   deprecated: "bg-red-100 text-red-800",
 };
 
-export default function Manufacturing({ tenantSlug }: { tenantSlug: string }) {
-  const [activeTab, setActiveTab] = useState<Tab>("bom");
+export default function Manufacturing({ tenantSlug, initialTab }: { tenantSlug: string; initialTab?: Tab }) {
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "bom");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
