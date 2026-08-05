@@ -114,16 +114,27 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
     load();
   }, [ts]);
 
-  async function handlePay(id: string) {
+  async function handlePay(invoice: Invoice) {
     try {
-      const res = await fetch(`/api/tenant/billing?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
-        method: "PATCH",
+      const amount = parseFloat(invoice.amount);
+      const res = await fetch(`/api/finance/invoices/${invoice.id}/receive-payment`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invoiceId: id, updates: { status: "paid" } }),
+        body: JSON.stringify({
+          tenantSlug: ts,
+          invoiceId: invoice.id,
+          amount,
+          method: "cash",
+          paymentDate: new Date().toISOString().split("T")[0],
+          confirmationDetails: "Marked as paid from billing UI",
+        }),
       });
       if (res.ok) {
         setSuccess("Invoice marked as paid");
         load();
+      } else {
+        const payload = await res.json().catch(() => null);
+        setError(payload?.error || "Failed to update invoice");
       }
     } catch (err) {
       console.error(err);
@@ -444,7 +455,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
                     </button>
                     {inv.status.toLowerCase() !== "paid" && (
                       <button
-                        onClick={() => handlePay(inv.id)}
+                        onClick={() => handlePay(inv)}
                         className="rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-900 hover:bg-green-200"
                       >
                         Mark Paid

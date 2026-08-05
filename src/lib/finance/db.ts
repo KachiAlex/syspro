@@ -744,6 +744,124 @@ export async function deleteFinanceInvoice(id: string): Promise<boolean> {
   return result.count > 0;
 }
 
+// AR Payment Receipt - receive payment against an invoice
+export async function receiveInvoicePayment(data: {
+  tenantSlug: string;
+  invoiceId: string;
+  amount: number;
+  method: string;
+  reference?: string;
+  paymentDate: string;
+  gateway?: string;
+  gatewayReference?: string;
+  confirmationDetails?: string;
+  metadata?: Record<string, unknown>;
+}): Promise<{ payment: FinancePayment; invoice: FinanceInvoice }> {
+  const sql = SQL;
+  await ensureFinanceTables(sql);
+
+  const [invoiceRow] = (await sql`
+    select * from finance_invoices where id = ${data.invoiceId} and tenant_slug = ${data.tenantSlug}
+  `) as FinanceInvoiceRecord[];
+
+  if (!invoiceRow) {
+    throw new Error("Invoice not found");
+  }
+
+  if (invoiceRow.status === "void" || invoiceRow.status === "paid") {
+    throw new Error(`Cannot receive payment for invoice with status: ${invoiceRow.status}`);
+  }
+
+  const newBalanceDue = Number(invoiceRow.balance_due) - data.amount;
+  const newStatus = newBalanceDue <= 0.01 ? "paid" : "partially_paid";
+
+  const [updatedInvoice] = (await sql`
+    update finance_invoices
+    set balance_due = ${Math.max(0, newBalanceDue)},
+        status = ${newStatus},
+        updated_at = now()
+    where id = ${data.invoiceId} and tenant_slug = ${data.tenantSlug}
+    returning *
+  `) as FinanceInvoiceRecord[];
+
+  const paymentId = `PAY-${randomUUID().slice(0, 8)}`;
+  const paymentRef = data.reference || `RCT-${Date.now()}`;
+  const netAmount = data.amount;
+
+  const [paymentRow] = (await sql`
+    insert into finance_payments (
+      id, tenant_slug, invoice_id, reference,
+      gross_amount, fees, net_amount, method,
+      gateway, gateway_reference, payment_date,
+      confirmation_details, status, linked_invoices, metadata
+    ) values (
+      ${paymentId}, ${data.tenantSlug}, ${data.invoiceId}, ${paymentRef},
+      ${data.amount}, 0, ${netAmount}, ${data.method},
+      ${data.gateway ?? "manual"}, ${data.gatewayReference ?? null}, ${data.paymentDate},
+      ${data.confirmationDetails ?? null}, "successful",
+      ${JSON.stringify([data.invoiceId])},
+      ${data.metadata ? JSON.stringify(data.metadata) : null}
+    )
+    returning *
+  `) as FinancePaymentRecord[];
+
+  const lineRows = (await sql`
+    select * from finance_invoice_lines where invoice_id = ${data.invoiceId}
+  `) as FinanceInvoiceLineRecord[];
+
+  const payment = normalizePaymentRecord(paymentRow);
+  const invoice = normalizeFinanceInvoiceRow(updatedInvoice, lineRows);
+
+  try {
+    const { createJournalEntry } = await import("./accounting");
+    await createJournalEntry({
+      tenantSlug: data.tenantSlug,
+      entryDate: data.paymentDate,
+      referenceType: "manual",
+      description: `AR Payment Receipt - ${paymentRef} - Invoice ${invoiceRow.invoice_number}`,
+      lines: [
+        {
+          accountCode: "1100",
+          debitAmount: data.amount,
+          creditAmount: 0,
+          description: `Payment received - ${paymentRef}`,
+        },
+        {
+          accountCode: "1200",
+          debitAmount: 0,
+          creditAmount: data.amount,
+          description: `AR applied to invoice ${invoiceRow.invoice_number}`,
+        },
+      ],
+      metadata: {
+        paymentId,
+        invoiceId: data.invoiceId,
+        invoiceNumber: invoiceRow.invoice_number,
+        amount: data.amount,
+        method: data.method,
+      },
+    });
+  } catch (err) {
+    console.error("Failed to create journal entry for AR payment:", err);
+  }
+
+  return { payment, invoice };
+}
+
+// Get payments for a specific invoice
+export async function getInvoicePayments(invoiceId: string, tenantSlug: string): Promise<FinancePayment[]> {
+  const sql = SQL;
+  await ensureFinanceTables(sql);
+
+  const rows = (await sql`
+    select * from finance_payments
+    where invoice_id = ${invoiceId} and tenant_slug = ${tenantSlug}
+    order by payment_date desc, created_at desc
+  `) as FinancePaymentRecord[];
+
+  return rows.map(normalizePaymentRecord);
+}
+
 // Payment Management Database Functions
 
 export type FinancePaymentRecord = {

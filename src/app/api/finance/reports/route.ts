@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     }
 
     const filters = {
-      tenantId: BigInt(0),
+      tenantSlug,
       periodStart: startDate ? new Date(startDate) : undefined,
       periodEnd: endDate ? new Date(endDate) : undefined,
     };

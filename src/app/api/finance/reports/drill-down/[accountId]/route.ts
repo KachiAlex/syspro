@@ -11,20 +11,17 @@ export async function GET(
   const { params } = context;
   try {
     const searchParams = request.nextUrl.searchParams;
-    
-    // Get tenant ID (required)
-    const tenantIdParam = searchParams.get("tenantId");
-    if (!tenantIdParam) {
+
+    const tenantSlug = searchParams.get("tenantSlug");
+    if (!tenantSlug) {
       return NextResponse.json(
-        { success: false, error: "tenantId is required" },
+        { success: false, error: "tenantSlug is required" },
         { status: 400 }
       );
     }
 
-    const tenantId = BigInt(tenantIdParam);
-    const accountId = BigInt(params.accountId);
+    const accountCode = params.accountId;
 
-    // Parse date parameters (optional)
     const periodStart = searchParams.get("periodStart")
       ? new Date(searchParams.get("periodStart")!)
       : undefined;
@@ -33,7 +30,6 @@ export async function GET(
       ? new Date(searchParams.get("periodEnd")!)
       : undefined;
 
-    // Validate dates if both provided
     if (periodStart && periodEnd && periodStart > periodEnd) {
       return NextResponse.json(
         { success: false, error: "periodStart must be before periodEnd" },
@@ -41,16 +37,14 @@ export async function GET(
       );
     }
 
-    // Get journal details
     const filters: ReportFilters = {
-      tenantId,
+      tenantSlug,
       periodStart,
       periodEnd,
     };
 
-    const details = await drillDownToJournalDetails(accountId, filters);
+    const details = await drillDownToJournalDetails(accountCode, filters);
 
-    // Return JSON
     return NextResponse.json({
       success: true,
       data: details,

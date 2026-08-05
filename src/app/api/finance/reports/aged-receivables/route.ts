@@ -9,16 +9,15 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     
-    // Get tenant ID (required)
-    const tenantIdParam = searchParams.get("tenantId");
-    if (!tenantIdParam) {
+    // Get tenant slug (required)
+    const tenantSlug = searchParams.get("tenantSlug");
+    if (!tenantSlug) {
       return NextResponse.json(
-        { success: false, error: "tenantId is required" },
+        { success: false, error: "tenantSlug is required" },
         { status: 400 }
       );
     }
 
-    const tenantId = BigInt(tenantIdParam);
     const format = searchParams.get("format") || "json";
 
     // Parse date parameter
@@ -28,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     // Generate report
     const filters: ReportFilters = {
-      tenantId,
+      tenantSlug,
       periodEnd: asOfDate,
     };
 

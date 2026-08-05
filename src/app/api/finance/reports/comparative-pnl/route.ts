@@ -7,16 +7,14 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     
-    // Get tenant ID (required)
-    const tenantIdParam = searchParams.get("tenantId");
-    if (!tenantIdParam) {
+    // Get tenant slug (required)
+    const tenantSlug = searchParams.get("tenantSlug");
+    if (!tenantSlug) {
       return NextResponse.json(
-        { success: false, error: "tenantId is required" },
+        { success: false, error: "tenantSlug is required" },
         { status: 400 }
       );
     }
-
-    const tenantId = BigInt(tenantIdParam);
 
     // Parse date parameters (all required for comparative)
     const currentPeriodStartParam = searchParams.get("currentPeriodStart");
@@ -57,7 +55,7 @@ export async function GET(request: NextRequest) {
 
     // Generate report
     const report = await generateComparativePnL(
-      tenantId,
+      tenantSlug,
       currentPeriodStart,
       currentPeriodEnd,
       previousPeriodStart,

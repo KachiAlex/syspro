@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  generatePnLReport,
-  generatePnLCSV,
+  drillDownToJournalDetails,
 } from "@/lib/finance/reports-db";
 import { ReportFilters } from "@/lib/finance/assets-reports";
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  context: any
+) {
+  const { params } = context;
   try {
     const searchParams = request.nextUrl.searchParams;
     
-    // Get tenant slug (required)
     const tenantSlug = searchParams.get("tenantSlug");
     if (!tenantSlug) {
       return NextResponse.json(
@@ -18,59 +20,37 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const format = searchParams.get("format") || "json";
+    const accountCode = params.accountCode;
 
-    // Parse date parameters
     const periodStart = searchParams.get("periodStart")
       ? new Date(searchParams.get("periodStart")!)
-      : new Date(new Date().getFullYear(), 0, 1);
+      : undefined;
 
     const periodEnd = searchParams.get("periodEnd")
       ? new Date(searchParams.get("periodEnd")!)
-      : new Date();
+      : undefined;
 
-    // Validate dates
-    if (periodStart > periodEnd) {
+    if (periodStart && periodEnd && periodStart > periodEnd) {
       return NextResponse.json(
         { success: false, error: "periodStart must be before periodEnd" },
         { status: 400 }
       );
     }
 
-    // Generate report
     const filters: ReportFilters = {
       tenantSlug,
       periodStart,
       periodEnd,
     };
 
-    const report = await generatePnLReport(filters);
+    const details = await drillDownToJournalDetails(accountCode, filters);
 
-    if (!report) {
-      return NextResponse.json(
-        { success: false, error: "Failed to generate P&L report" },
-        { status: 500 }
-      );
-    }
-
-    // Handle CSV export
-    if (format === "csv") {
-      const csv = generatePnLCSV(report);
-      return new NextResponse(csv, {
-        headers: {
-          "Content-Type": "text/csv",
-          "Content-Disposition": `attachment; filename="pnl-${new Date().toISOString().split('T')[0]}.csv"`,
-        },
-      });
-    }
-
-    // Return JSON
     return NextResponse.json({
       success: true,
-      data: report,
+      data: details,
     });
   } catch (error) {
-    console.error("Error generating P&L report:", error);
+    console.error("Error getting journal details:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

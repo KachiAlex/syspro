@@ -257,8 +257,8 @@ export type AssetDisposalCreateInput = z.infer<typeof assetDisposalCreateSchema>
  * FINANCIAL REPORTS TYPES
  */
 
-export type ReportType = "P_AND_L" | "BALANCE_SHEET" | "CASH_FLOW" | "AGED_RECEIVABLES" | "AGED_PAYABLES";
-export const REPORT_TYPES = ["P_AND_L", "BALANCE_SHEET", "CASH_FLOW", "AGED_RECEIVABLES", "AGED_PAYABLES"] as const;
+export type ReportType = "P_AND_L" | "BALANCE_SHEET" | "CASH_FLOW" | "AGED_RECEIVABLES" | "AGED_PAYABLES" | "TRIAL_BALANCE" | "GENERAL_LEDGER";
+export const REPORT_TYPES = ["P_AND_L", "BALANCE_SHEET", "CASH_FLOW", "AGED_RECEIVABLES", "AGED_PAYABLES", "TRIAL_BALANCE", "GENERAL_LEDGER"] as const;
 
 export type ExportFormat = "PDF" | "EXCEL" | "CSV";
 export const EXPORT_FORMATS = ["PDF", "EXCEL", "CSV"] as const;
@@ -278,7 +278,7 @@ export interface PnLReportLine {
 export interface PnLReport {
   periodStart: Date;
   periodEnd: Date;
-  tenantId: bigint;
+  tenantSlug: string;
   revenue: PnLReportLine[];
   expenses: PnLReportLine[];
   totalRevenue: number;
@@ -300,7 +300,7 @@ export interface BalanceSheetLine {
 
 export interface BalanceSheet {
   asOfDate: Date;
-  tenantId: bigint;
+  tenantSlug: string;
   assets: BalanceSheetLine[];
   liabilities: BalanceSheetLine[];
   equity: BalanceSheetLine[];
@@ -323,7 +323,7 @@ export interface CashFlowLine {
 export interface CashFlowReport {
   periodStart: Date;
   periodEnd: Date;
-  tenantId: bigint;
+  tenantSlug: string;
   operatingActivities: CashFlowLine[];
   investingActivities: CashFlowLine[];
   financingActivities: CashFlowLine[];
@@ -349,7 +349,7 @@ export interface AgedReceivable {
 
 export interface AgedReceivablesReport {
   asOfDate: Date;
-  tenantId: bigint;
+  tenantSlug: string;
   receivables: AgedReceivable[];
   totalOutstanding: number;
   currentAmount: number;
@@ -376,7 +376,7 @@ export interface AgedPayable {
 
 export interface AgedPayablesReport {
   asOfDate: Date;
-  tenantId: bigint;
+  tenantSlug: string;
   payables: AgedPayable[];
   totalOutstanding: number;
   currentAmount: number;
@@ -390,7 +390,7 @@ export interface AgedPayablesReport {
  * Report Filter Options
  */
 export interface ReportFilters {
-  tenantId: bigint;
+  tenantSlug: string;
   periodStart?: Date;
   periodEnd?: Date;
   branch?: string;
@@ -421,4 +421,52 @@ export interface ReportExport {
   fileName: string;
   contentType: string;
   data: Buffer | string;
+}
+
+/**
+ * Trial Balance
+ */
+export interface TrialBalanceLine {
+  accountCode: string;
+  accountName: string;
+  accountType: string;
+  totalDebit: number;
+  totalCredit: number;
+}
+
+export interface TrialBalanceReport {
+  asOfDate: Date;
+  tenantSlug: string;
+  lines: TrialBalanceLine[];
+  totalDebits: number;
+  totalCredits: number;
+  isBalanced: boolean;
+}
+
+/**
+ * General Ledger
+ */
+export interface GLLine {
+  entryNumber: string;
+  entryDate: Date;
+  accountCode: string;
+  accountName: string;
+  description: string;
+  debitAmount: number;
+  creditAmount: number;
+  runningBalance: number;
+  referenceType: string;
+  referenceId?: string;
+}
+
+export interface GeneralLedgerReport {
+  periodStart: Date;
+  periodEnd: Date;
+  tenantSlug: string;
+  accountCode?: string;
+  lines: GLLine[];
+  totalDebits: number;
+  totalCredits: number;
+  openingBalance: number;
+  closingBalance: number;
 }

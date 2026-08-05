@@ -9,22 +9,21 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     
-    // Get tenant ID (required)
-    const tenantIdParam = searchParams.get("tenantId");
-    if (!tenantIdParam) {
+    // Get tenant slug (required)
+    const tenantSlug = searchParams.get("tenantSlug");
+    if (!tenantSlug) {
       return NextResponse.json(
-        { success: false, error: "tenantId is required" },
+        { success: false, error: "tenantSlug is required" },
         { status: 400 }
       );
     }
 
-    const tenantId = BigInt(tenantIdParam);
     const format = searchParams.get("format") || "json";
 
     // Parse date parameters
     const periodStart = searchParams.get("periodStart")
       ? new Date(searchParams.get("periodStart")!)
-      : new Date(new Date().getFullYear(), 0, 1); // Jan 1 of current year
+      : new Date(new Date().getFullYear(), 0, 1);
 
     const periodEnd = searchParams.get("periodEnd")
       ? new Date(searchParams.get("periodEnd")!)
@@ -40,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     // Generate report
     const filters: ReportFilters = {
-      tenantId,
+      tenantSlug,
       periodStart,
       periodEnd,
     };
