@@ -14,6 +14,13 @@ type ModuleItem = {
   createdAt: string;
 };
 
+type IndustryProfile = {
+  key: string;
+  label: string;
+  description: string;
+  modules: string[];
+};
+
 const MODULE_DESCRIPTIONS: Record<string, string> = {
   crm: "Manage customer relationships, leads, and sales",
   finance: "Financial management and accounting",
@@ -21,17 +28,67 @@ const MODULE_DESCRIPTIONS: Record<string, string> = {
   projects: "Project tracking and management",
   billing: "Billing and invoicing",
   integrations: "Third-party integrations",
+  inventory: "Stock management and product catalog",
+  procurement: "Purchase orders and supplier management",
+  vendors: "Vendor and supplier directory",
+  manufacturing: "BOM, work orders, MRP, and production",
 };
+
+const INDUSTRY_PROFILE_OPTIONS: IndustryProfile[] = [
+  { key: "services", label: "Services", description: "Consulting, professional services, agencies", modules: ["crm", "projects", "billing", "finance", "hr", "people"] },
+  { key: "trading", label: "Trading / Distribution", description: "Wholesale, retail, distribution, import/export", modules: ["inventory", "procurement", "vendors", "billing", "finance", "hr", "crm"] },
+  { key: "manufacturing", label: "Manufacturing", description: "Production, assembly, and manufacturing operations", modules: ["inventory", "procurement", "vendors", "manufacturing", "billing", "finance", "hr", "crm"] },
+  { key: "mixed", label: "Mixed / Diversified", description: "Companies operating across multiple industries", modules: ["crm", "projects", "inventory", "procurement", "vendors", "manufacturing", "billing", "finance", "hr", "people"] },
+];
 
 const REGION_OPTIONS = ["Global HQ", "Americas", "EMEA", "APAC"];
 
 export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | null }) {
   const [modules, setModules] = useState<ModuleItem[]>([]);
+  const [industryProfiles, setIndustryProfiles] = useState<string[]>([]);
+  const [profilesLoading, setProfilesLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [region, setRegion] = useState<string>("Global HQ");
   const ts = tenantSlug ;
+
+  async function loadIndustryProfiles() {
+    setProfilesLoading(true);
+    try {
+      const res = await fetch(`/api/tenant/industry-profiles?tenantSlug=${encodeURIComponent(ts ?? '')}`, { cache: "no-store" });
+      if (!res.ok) return;
+      const payload = await res.json();
+      if (payload.success && payload.data?.profiles) {
+        setIndustryProfiles(payload.data.profiles);
+      }
+    } catch (err) {
+      console.error("Failed to load industry profiles:", err);
+    } finally {
+      setProfilesLoading(false);
+    }
+  }
+
+  async function toggleIndustryProfile(key: string) {
+    const newProfiles = industryProfiles.includes(key)
+      ? industryProfiles.filter((p) => p !== key)
+      : [...industryProfiles, key];
+    setIndustryProfiles(newProfiles);
+    try {
+      const res = await fetch(`/api/tenant/industry-profiles?tenantSlug=${encodeURIComponent(ts ?? '')}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ industryProfiles: newProfiles }),
+      });
+      if (!res.ok) throw new Error("Failed to update industry profiles");
+      setSuccess(`Industry profile ${newProfiles.includes(key) ? "enabled" : "disabled"}`);
+      setTimeout(() => setSuccess(null), 3000);
+      await load();
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
 
   async function load() {
     setLoading(true);
@@ -51,6 +108,7 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
 
   useEffect(() => {
     load();
+    loadIndustryProfiles();
   }, [ts]);
 
   async function toggleModule(m: ModuleItem) {
@@ -134,6 +192,50 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
             onClose={() => setSuccess(null)}
           />
         )}
+
+        {/* Industry Profiles Section */}
+        <div className="mt-6 mb-6 rounded-lg border border-slate-200 p-4 bg-slate-50/50">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Industry Profiles</h3>
+              <p className="text-xs text-slate-600 mt-0.5">Select industry profiles to auto-enable relevant modules. Multiple profiles can be active simultaneously.</p>
+            </div>
+            {profilesLoading && (
+              <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900"></div>
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {INDUSTRY_PROFILE_OPTIONS.map((profile) => {
+              const isActive = industryProfiles.includes(profile.key);
+              return (
+                <button
+                  key={profile.key}
+                  onClick={() => toggleIndustryProfile(profile.key)}
+                  className={`text-left rounded-lg border p-3 transition-all ${
+                    isActive
+                      ? "border-blue-400 bg-blue-50 ring-1 ring-blue-200"
+                      : "border-slate-200 bg-white hover:border-slate-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-gray-900">
+                      {isActive ? "✓" : "○"} {profile.label}
+                    </span>
+                    {isActive && (
+                      <span className="inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs text-slate-600">{profile.description}</p>
+                  <p className="mt-1.5 text-xs text-slate-400">
+                    <span className="font-medium">Modules:</span> {profile.modules.join(", ")}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <div className="mt-6">
           {loading ? (

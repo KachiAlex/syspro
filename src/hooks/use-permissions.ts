@@ -21,6 +21,7 @@ export interface UserPermissions {
   projects: PermissionLevel;
   sales: PermissionLevel;
   analytics: PermissionLevel;
+  manufacturing: PermissionLevel;
 
   // User info
   userId?: string;
@@ -44,6 +45,7 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
   projects: "none",
   sales: "none",
   analytics: "none",
+  manufacturing: "none",
   loading: true,
 };
 
@@ -124,6 +126,7 @@ export function getDefaultPermissionsForRole(roleId: string): UserPermissions {
         projects: "write",
         sales: "write",
         analytics: "write",
+        manufacturing: "write",
       };
     }
 
@@ -140,6 +143,7 @@ export function getDefaultPermissionsForRole(roleId: string): UserPermissions {
         projects: "write",
         sales: "write",
         analytics: "read",
+        manufacturing: "write",
       };
     }
 
@@ -156,6 +160,7 @@ export function getDefaultPermissionsForRole(roleId: string): UserPermissions {
         projects: "write",
         sales: "write",
         analytics: "read",
+        manufacturing: "read",
       };
     }
 
@@ -173,6 +178,7 @@ export function getDefaultPermissionsForRole(roleId: string): UserPermissions {
         projects: "read",
         sales: "read",
         analytics: "read",
+        manufacturing: "read",
       };
     }
   }

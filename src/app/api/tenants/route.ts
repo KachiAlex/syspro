@@ -29,6 +29,7 @@ const payloadSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
   region: z.string().min(2, "Region is required"),
   industry: z.string().min(2, "Industry is required"),
+  industryProfiles: z.array(z.enum(["services", "trading", "manufacturing", "mixed"])).optional(),
   seats: z.number().int().positive().nullable().optional(),
   adminName: z.string().min(2, "Admin name must be at least 2 characters"),
   adminEmail: z.string().email(),
@@ -217,7 +218,8 @@ export async function POST(request: Request) {
         default_region_id,
         default_region_name,
         default_branch_id,
-        default_branch_name
+        default_branch_name,
+        industry_profiles
       )
       values (
         ${tenantId},
@@ -226,7 +228,7 @@ export async function POST(request: Request) {
         ${computedCode},
         ${computedDomain},
         ${false},
-        ${JSON.stringify({})},
+        ${JSON.stringify({ industryProfiles: payload.industryProfiles ?? [] })},
         ${computedSchema},
         ${payload.region},
         ${payload.industry},
@@ -238,7 +240,8 @@ export async function POST(request: Request) {
         ${defaultRegionId},
         ${defaultRegionName},
         ${defaultBranchId},
-        ${defaultBranchName}
+        ${defaultBranchName},
+        ${JSON.stringify(payload.industryProfiles ?? [])}
       )
       on conflict (slug) do update set
         name = excluded.name,
@@ -256,8 +259,9 @@ export async function POST(request: Request) {
         default_region_id = excluded.default_region_id,
         default_region_name = excluded.default_region_name,
         default_branch_id = excluded.default_branch_id,
-        default_branch_name = excluded.default_branch_name
-        returning name, slug, region, status, ledger_delta, seats, admin_email,
+        default_branch_name = excluded.default_branch_name,
+        industry_profiles = excluded.industry_profiles
+      returning name, slug, region, status, ledger_delta, seats, admin_email,
                   default_region_id, default_region_name, default_branch_id, default_branch_name,
                   "isActive" as is_active, "schemaName" as schema_name
     `;

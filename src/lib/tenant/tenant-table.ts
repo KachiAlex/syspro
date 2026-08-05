@@ -38,5 +38,7 @@ export async function ensureTenantTable(sql: SqlClient) {
 
   await sql`alter table tenants add column if not exists "isActive" boolean default false`;
 
+  await sql`alter table tenants add column if not exists industry_profiles jsonb default '[]'::jsonb`;
+
   await sql`create unique index if not exists tenants_slug_key on tenants(slug)`;
 }

@@ -82,6 +82,30 @@ const DEFAULT_ACCOUNTS: Record<string, ChartOfAccount> = {
     name: "General Expenses",
     type: "expense",
     isActive: true
+  },
+  WIP_INVENTORY: {
+    code: "1300",
+    name: "Work In Progress",
+    type: "asset",
+    isActive: true
+  },
+  FINISHED_GOODS: {
+    code: "1400",
+    name: "Finished Goods Inventory",
+    type: "asset",
+    isActive: true
+  },
+  RAW_MATERIALS: {
+    code: "1500",
+    name: "Raw Materials Inventory",
+    type: "asset",
+    isActive: true
+  },
+  ACCOUNTS_RECEIVABLE: {
+    code: "1200",
+    name: "Accounts Receivable",
+    type: "asset",
+    isActive: true
   }
 };
 

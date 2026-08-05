@@ -2,16 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  Home, 
-  Users, 
-  DollarSign, 
-  UserCog, 
-  FolderKanban, 
-  Zap, 
-  ShoppingCart, 
-  Shield, 
-  FileText, 
+import {
+  Home,
+  Users,
+  DollarSign,
+  UserCog,
+  FolderKanban,
+  Zap,
+  ShoppingCart,
+  Shield,
+  FileText,
   Settings,
   BarChart3,
   Calendar,
@@ -20,7 +20,9 @@ import {
   Receipt,
   TrendingUp,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Factory,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -90,6 +92,18 @@ const navigationItems = [
       { title: "Suppliers", href: "/tenant-admin/sales/suppliers" },
       { title: "Purchase Orders", href: "/tenant-admin/sales/purchase-orders" },
       { title: "Inventory", href: "/tenant-admin/sales/inventory" },
+    ]
+  },
+  {
+    title: "Manufacturing",
+    href: "/tenant-admin/manufacturing",
+    icon: Factory,
+    permission: "manufacturing",
+    children: [
+      { title: "BOM Management", href: "/tenant-admin/manufacturing" },
+      { title: "Work Orders", href: "/tenant-admin/manufacturing/work-orders" },
+      { title: "MRP", href: "/tenant-admin/manufacturing/mrp" },
+      { title: "Quality Control", href: "/tenant-admin/manufacturing/quality" },
     ]
   },
   {

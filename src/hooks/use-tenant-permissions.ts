@@ -23,6 +23,7 @@ const DEFAULT: TenantPermissions = {
   projects: "none",
   sales: "none",
   analytics: "none",
+  manufacturing: "none",
   dashboards: [],
   isAdmin: false,
   isEmployee: false,
