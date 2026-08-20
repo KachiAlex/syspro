@@ -277,6 +277,12 @@ export async function releaseWorkOrder(id: string, tenantSlug: string): Promise<
       if (item.componentType !== "raw_material") continue;
       const unitCost = await getComponentUnitCost(item.componentSku, tenantSlug);
       totalMaterialCost += item.quantity * unitCost;
+
+      await sql`
+        update inventory_products
+        set current_stock = greatest(current_stock - ${item.quantity}, 0)
+        where tenant_slug = ${tenantSlug} and sku = ${item.componentSku}
+      `;
     }
 
     await sql`
@@ -357,6 +363,26 @@ export async function completeWorkOrder(id: string, tenantSlug: string): Promise
 
   if (row) {
     await postWipJournalEntry(id, tenantSlug, "complete");
+
+    const [existingProduct] = (await sql`
+      select id, current_stock from inventory_products
+      where tenant_slug = ${tenantSlug} and sku = ${wo.productSku}
+      limit 1
+    `) as any[];
+
+    if (existingProduct) {
+      await sql`
+        update inventory_products
+        set current_stock = current_stock + ${wo.quantity}
+        where id = ${existingProduct.id}
+      `;
+    } else {
+      const newId = randomUUID();
+      await sql`
+        insert into inventory_products (id, tenant_slug, name, sku, category, current_stock, min_stock, unit_cost, sale_price, created_at)
+        values (${newId}, ${tenantSlug}, ${wo.productName}, ${wo.productSku}, 'finished_goods', ${wo.quantity}, 0, ${unitCost}, 0, now())
+      `;
+    }
   }
 
   return row ? normalizeWorkOrder(row) : null;
@@ -401,7 +427,7 @@ export async function closeWorkOrder(id: string, tenantSlug: string): Promise<Wo
             description: `Material variance (${materialVariance > 0 ? "unfavorable" : "favorable"})`,
           },
           {
-            accountCode: "6100",
+            accountCode: "6200",
             debitAmount: materialVariance < 0 ? Math.abs(materialVariance) : 0,
             creditAmount: materialVariance > 0 ? materialVariance : 0,
             description: `Material variance offset`,
@@ -452,10 +478,10 @@ export async function updateOperation(
 
   const [row] = (await sql`
     update work_order_operations
-    set actual_minutes = ${updates.actualMinutes ?? null}::numeric,
-        status = ${updates.status ?? null}::text,
+    set actual_minutes = coalesce(${updates.actualMinutes ?? null}::numeric, actual_minutes),
+        status = coalesce(${updates.status ?? null}::text, status),
         completed_at = case when ${updates.status ?? null} = 'completed' then now() else completed_at end,
-        completed_by = ${updates.completedBy ?? null}::text,
+        completed_by = coalesce(${updates.completedBy ?? null}::text, completed_by),
         updated_at = now()
     where id = ${operationId} and work_order_id = ${workOrderId}
     returning *

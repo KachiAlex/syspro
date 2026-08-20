@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { db } from "@/lib/sql-client";
 
+async function ensureMatchTables() {
+  await db.query(`create table if not exists procurement_purchase_orders (id text primary key, tenant_slug text not null, po_number text, vendor_id text, items jsonb, quantity integer default 0, amount numeric default 0, delivery_date date, status text default 'sent', created_at timestamptz default now())`);
+  await db.query(`create table if not exists procurement_goods_receipts (id text primary key, tenant_slug text not null, po_id text, receipt_number text, vendor_id text, items jsonb, total_amount numeric default 0, status text default 'received', received_date timestamptz default now(), notes text, created_at timestamptz default now())`);
+  await db.query(`create table if not exists procurement_invoices (id text primary key, tenant_slug text not null, invoice_number text, vendor_id text, po_id text, amount numeric default 0, due_date date, status text default 'received', created_at timestamptz default now())`);
+}
+
 export async function GET(request: NextRequest) {
   try {
+    await ensureMatchTables();
     const context = validateTenantContext(request, "read");
     const tenantSlug = context.tenantSlug;
     const poId = new URL(request.url).searchParams.get("poId");

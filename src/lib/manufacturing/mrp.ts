@@ -1,4 +1,4 @@
-import { sql as SQL, SqlClient } from "../sql-client";
+import { sql as SQL } from "../sql-client";
 import { explodeBom } from "./bom";
 import { ensureBomTables } from "./bom";
 import { randomUUID } from "crypto";

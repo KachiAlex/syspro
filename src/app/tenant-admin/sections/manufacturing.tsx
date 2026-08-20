@@ -148,7 +148,7 @@ export default function Manufacturing({ tenantSlug, initialTab }: { tenantSlug: 
 
   useEffect(() => {
     if (activeTab === "bom") loadBoms();
-    else if (activeTab === "work-orders") loadWorkOrders();
+    else if (activeTab === "work-orders" || activeTab === "costing") loadWorkOrders();
     else if (activeTab === "quality") loadInspections();
   }, [activeTab, loadBoms, loadWorkOrders, loadInspections]);
 

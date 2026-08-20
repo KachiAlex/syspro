@@ -135,7 +135,7 @@ async function postStockMovementJournal(
           description,
           lines: [
             { accountCode: "6100", debitAmount: totalValue, creditAmount: 0, description: "COGS — inventory sold" },
-            { accountCode: "1500", debitAmount: 0, creditAmount: totalValue, description: "Inventory issued" },
+            { accountCode: "1500", debitAmount: 0, creditAmount: totalValue, description: "Inventory issued to customer" },
           ],
         });
         break;

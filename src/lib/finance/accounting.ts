@@ -106,6 +106,12 @@ const DEFAULT_ACCOUNTS: Record<string, ChartOfAccount> = {
     name: "Accounts Receivable",
     type: "asset",
     isActive: true
+  },
+  MATERIAL_VARIANCE: {
+    code: "6200",
+    name: "Material Variance",
+    type: "expense",
+    isActive: true
   }
 };
 

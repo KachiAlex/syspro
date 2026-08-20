@@ -3,8 +3,27 @@ import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { db } from "@/lib/sql-client";
 import { writeFinanceEvent } from "@/lib/finance/events";
 
+async function ensurePurchaseOrderTables() {
+  await db.query(`
+    create table if not exists procurement_purchase_orders (
+      id text primary key,
+      tenant_slug text not null,
+      po_number text not null,
+      vendor_id text,
+      items jsonb,
+      quantity integer default 0,
+      amount numeric default 0,
+      delivery_date date,
+      status text not null default 'sent' check (status in ('draft', 'sent', 'received', 'closed', 'cancelled')),
+      created_at timestamptz default now()
+    )
+  `);
+  await db.query(`create index if not exists procurement_po_tenant_idx on procurement_purchase_orders (tenant_slug)`);
+}
+
 export async function GET(request: NextRequest) {
   try {
+    await ensurePurchaseOrderTables();
     const context = validateTenantContext(request, "read");
     const { searchParams } = new URL(request.url);
     const tenantSlug = context.tenantSlug;
@@ -37,6 +56,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    await ensurePurchaseOrderTables();
     const context = validateTenantContext(request, "write");
     const body = await request.json();
     const { vendorId, items, quantity, amount, deliveryDate } = body;

@@ -2,8 +2,27 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { db } from "@/lib/sql-client";
 
+async function ensureInvoiceTables() {
+  await db.query(`
+    create table if not exists procurement_invoices (
+      id text primary key,
+      tenant_slug text not null,
+      invoice_number text not null,
+      vendor_id text,
+      po_id text,
+      amount numeric default 0,
+      due_date date,
+      status text not null default 'received' check (status in ('received', 'approved', 'paid', 'disputed')),
+      created_at timestamptz default now()
+    )
+  `);
+  await db.query(`create index if not exists procurement_invoices_tenant_idx on procurement_invoices (tenant_slug)`);
+  await db.query(`create index if not exists procurement_invoices_po_idx on procurement_invoices (po_id)`);
+}
+
 export async function GET(request: NextRequest) {
   try {
+    await ensureInvoiceTables();
     const context = validateTenantContext(request, "read");
     const { searchParams } = new URL(request.url);
     const tenantSlug = context.tenantSlug;
@@ -36,6 +55,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    await ensureInvoiceTables();
     const context = validateTenantContext(request, "write");
     const body = await request.json();
     const { vendorId, poId, amount, dueDate } = body;
