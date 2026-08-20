@@ -743,12 +743,14 @@ function CreateWorkOrderModal({ tenantSlug, onClose, onCreated }: { tenantSlug: 
 function RunMrpModal({ tenantSlug, onClose, onResult }: { tenantSlug: string; onClose: () => void; onResult: (reqs: MrpRequirement[]) => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [autoGenerate, setAutoGenerate] = useState(false);
   const [demands, setDemands] = useState([{ productSku: "", productName: "", quantity: "1", dueDate: "" }]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (demands.some(d => !d.productSku || !d.productName)) { setError("All demands need SKU and name"); return; }
-    setLoading(true); setError(null);
+    setLoading(true); setError(null); setSuccess(null);
     try {
       const res = await fetch(`/api/manufacturing/mrp`, {
         method: "POST",
@@ -762,11 +764,15 @@ function RunMrpModal({ tenantSlug, onClose, onResult }: { tenantSlug: string; on
             dueDate: d.dueDate || new Date().toISOString().split("T")[0],
             source: "manual",
           })),
+          autoGenerateRequisitions: autoGenerate,
         }),
       });
       const payload = await res.json().catch(() => ({}));
       if (!payload.success) throw new Error(payload.error || "Failed to run MRP");
       onResult(payload.data?.requirements || []);
+      if (payload.requisition) {
+        setSuccess(`Purchase requisition ${payload.requisition.requisitionNumber} created with ${payload.requisition.itemCount} item(s), total $${payload.requisition.totalAmount.toFixed(2)}`);
+      }
     } catch (err) { setError(err instanceof Error ? err.message : String(err)); }
     finally { setLoading(false); }
   }
@@ -775,6 +781,7 @@ function RunMrpModal({ tenantSlug, onClose, onResult }: { tenantSlug: string; on
     <Modal title="Run MRP Calculation" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && <div className="p-3 rounded-lg bg-red-50 text-red-800 text-sm">{error}</div>}
+        {success && <div className="p-3 rounded-lg bg-green-50 text-green-800 text-sm">{success}</div>}
         <p className="text-sm text-gray-600">Enter demand items to calculate material requirements. BOMs will be exploded and inventory checked automatically.</p>
         {demands.map((d, i) => (
           <div key={i} className="grid grid-cols-4 gap-2">
@@ -788,6 +795,10 @@ function RunMrpModal({ tenantSlug, onClose, onResult }: { tenantSlug: string; on
           className="text-blue-600 text-sm flex items-center gap-1">
           <Plus className="w-3 h-3" /> Add Demand
         </button>
+        <label className="flex items-center gap-2 text-sm text-gray-700">
+          <input type="checkbox" checked={autoGenerate} onChange={(e) => setAutoGenerate(e.target.checked)} className="rounded border-gray-300" />
+          Auto-generate purchase requisitions for shortage materials
+        </label>
         <div className="flex justify-end gap-2 pt-4">
           <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
           <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50">
