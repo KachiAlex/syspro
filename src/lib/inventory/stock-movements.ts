@@ -46,7 +46,8 @@ export async function ensureStockMovementTables(sql = SQL) {
 
 export async function recordStockMovement(
   tenantSlug: string,
-  movement: Omit<StockMovement, "id" | "createdAt" | "tenantSlug">
+  movement: Omit<StockMovement, "id" | "createdAt" | "tenantSlug">,
+  options?: { skipJournalEntry?: boolean }
 ): Promise<StockMovement> {
   const sql = SQL;
   await ensureStockMovementTables(sql);
@@ -67,7 +68,9 @@ export async function recordStockMovement(
     returning *
   `) as any[];
 
-  await postStockMovementJournal(tenantSlug, movement);
+  if (!options?.skipJournalEntry) {
+    await postStockMovementJournal(tenantSlug, movement);
+  }
 
   return row;
 }
@@ -76,6 +79,14 @@ async function postStockMovementJournal(
   tenantSlug: string,
   movement: Omit<StockMovement, "id" | "createdAt" | "tenantSlug">
 ): Promise<void> {
+  // Skip journal entries for movement types that are already handled by their
+  // source modules to prevent duplicate journal entries:
+  // - purchase_receipt: handled by goods-receipts API route
+  // - work_order_issue: handled by postWipJournalEntry in work-orders
+  // - work_order_receipt: handled by postWipJournalEntry in work-orders
+  const sourceHandledTypes: StockMovementType[] = ["purchase_receipt", "work_order_issue", "work_order_receipt"];
+  if (sourceHandledTypes.includes(movement.movementType)) return;
+
   const totalValue = movement.quantity * movement.unitCost;
   if (Math.abs(totalValue) < 0.01) return;
 

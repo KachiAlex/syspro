@@ -29,11 +29,31 @@ export async function GET(request: NextRequest) {
     await ensureRequisitionTables(sql);
 
     const status = request.nextUrl.searchParams.get("status");
-    const rows = status
-      ? (await sql`select * from procurement_requisitions where tenant_slug = ${tenantSlug} and status = ${status} order by created_at desc`)
-      : (await sql`select * from procurement_requisitions where tenant_slug = ${tenantSlug} order by created_at desc`);
+    const page = parseInt(request.nextUrl.searchParams.get("page") ?? "1");
+    const pageSize = parseInt(request.nextUrl.searchParams.get("pageSize") ?? "50");
+    const offset = (page - 1) * pageSize;
 
-    return NextResponse.json({ success: true, data: rows });
+    const [countRow] = (await (status
+      ? sql`select count(*)::int as total from procurement_requisitions where tenant_slug = ${tenantSlug} and status = ${status}`
+      : sql`select count(*)::int as total from procurement_requisitions where tenant_slug = ${tenantSlug}`
+    )) as any[];
+
+    const total = countRow?.total ?? 0;
+
+    const rows = status
+      ? (await sql`select * from procurement_requisitions where tenant_slug = ${tenantSlug} and status = ${status} order by created_at desc limit ${pageSize} offset ${offset}`)
+      : (await sql`select * from procurement_requisitions where tenant_slug = ${tenantSlug} order by created_at desc limit ${pageSize} offset ${offset}`);
+
+    return NextResponse.json({
+      success: true,
+      data: rows,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize) || 1,
+      },
+    });
   } catch (error) {
     console.error("Error fetching requisitions:", error);
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });

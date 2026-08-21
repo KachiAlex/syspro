@@ -16,11 +16,13 @@ async function ensureInventoryTables() {
       sale_price numeric default 0,
       supplier text,
       description text,
+      location text,
       created_at timestamptz default now()
     )
   `);
   await db.query(`create index if not exists idx_inventory_products_tenant on inventory_products (tenant_slug)`);
   await db.query(`create index if not exists idx_inventory_products_category on inventory_products (tenant_slug, category)`);
+  await db.query(`ALTER TABLE inventory_products ADD COLUMN IF NOT EXISTS location text`);
 }
 
 export async function GET(request: NextRequest) {
@@ -56,7 +58,7 @@ export async function POST(request: NextRequest) {
     await ensureInventoryTables();
     const context = validateTenantContext(request, "write");
     const body = await request.json();
-    const { name, sku, category, currentStock, minStock, unitCost, salePrice, supplier, description } = body;
+    const { name, sku, category, currentStock, minStock, unitCost, salePrice, supplier, description, location } = body;
     const tenantSlug = context.tenantSlug;
 
     if (!name || !sku || !category) {
@@ -78,12 +80,13 @@ export async function POST(request: NextRequest) {
       salePrice: salePrice || 0,
       supplier: supplier || "",
       description: description || "",
+      location: location || "",
       createdAt: new Date().toISOString(),
     };
 
     await db.query(
-      `insert into inventory_products (id, tenant_slug, name, sku, category, current_stock, min_stock, unit_cost, sale_price, supplier, description, created_at) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-      [product.id, product.tenantSlug, product.name, product.sku, product.category, product.currentStock, product.minStock, product.unitCost, product.salePrice, product.supplier, product.description, product.createdAt]
+      `insert into inventory_products (id, tenant_slug, name, sku, category, current_stock, min_stock, unit_cost, sale_price, supplier, description, location, created_at) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+      [product.id, product.tenantSlug, product.name, product.sku, product.category, product.currentStock, product.minStock, product.unitCost, product.salePrice, product.supplier, product.description, product.location, product.createdAt]
     );
 
     return NextResponse.json({ product }, { status: 201 });
@@ -101,7 +104,7 @@ export async function PATCH(request: NextRequest) {
     await ensureInventoryTables();
     const context = validateTenantContext(request, "write");
     const body = await request.json();
-    const { id, name, sku, category, currentStock, minStock, unitCost, salePrice, supplier, description } = body;
+    const { id, name, sku, category, currentStock, minStock, unitCost, salePrice, supplier, description, location } = body;
     const tenantSlug = context.tenantSlug;
 
     if (!id) {
@@ -121,6 +124,7 @@ export async function PATCH(request: NextRequest) {
     if (salePrice !== undefined) { updates.push(`sale_price = $${idx++}`); values.push(salePrice); }
     if (supplier !== undefined) { updates.push(`supplier = $${idx++}`); values.push(supplier); }
     if (description !== undefined) { updates.push(`description = $${idx++}`); values.push(description); }
+    if (location !== undefined) { updates.push(`location = $${idx++}`); values.push(location); }
 
     if (updates.length === 0) {
       return NextResponse.json({ error: "No fields to update" }, { status: 400 });
