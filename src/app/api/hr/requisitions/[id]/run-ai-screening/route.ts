@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { runBatchAIScreening } from "@/lib/hr/db-recruitment";
+import { runAgent } from "@/lib/ai/agent";
 
 const runSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -22,12 +22,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   try {
-    const result = await runBatchAIScreening(id, parsed.data.tenantSlug, {
-      selectionMode: parsed.data.selectionMode,
-      selectionValue: parsed.data.selectionValue,
-      minScoreThreshold: parsed.data.minScoreThreshold,
+    const agentResponse = await runAgent({
+      capability: "screen_candidates",
+      payload: {
+        requisitionId: id,
+        selectionMode: parsed.data.selectionMode,
+        selectionValue: parsed.data.selectionValue,
+        minScoreThreshold: parsed.data.minScoreThreshold,
+      },
+      tenantSlug: parsed.data.tenantSlug,
+      useAI: true,
     });
-    return NextResponse.json({ result });
+
+    if (!agentResponse.success) {
+      return NextResponse.json({ error: agentResponse.error ?? "Failed to run AI screening" }, { status: 500 });
+    }
+
+    return NextResponse.json({ result: agentResponse.result, metadata: agentResponse.metadata });
   } catch (error) {
     console.error("Batch AI screening failed", error);
     return NextResponse.json({ error: "Failed to run AI screening" }, { status: 500 });
