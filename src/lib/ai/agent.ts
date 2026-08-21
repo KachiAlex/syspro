@@ -1113,7 +1113,7 @@ async function handleProactiveInsights(
   };
 }
 
-// ─── Conversation Memory ───
+// ─── Conversation Memory (DB-backed for serverless) ───
 
 export interface ConversationTurn {
   capability: AgentCapability;
@@ -1122,24 +1122,28 @@ export interface ConversationTurn {
   timestamp: string;
 }
 
-const conversationStore = new Map<string, { turns: ConversationTurn[]; tenantSlug: string }>();
 const MAX_TURNS_PER_CONVERSATION = 10;
-const CONVERSATION_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const CONVERSATION_TTL_HOURS = 2;
 
-function getConversation(id: string, tenantSlug: string): { turns: ConversationTurn[]; tenantSlug: string } {
-  let conv = conversationStore.get(id);
-  if (!conv) {
-    conv = { turns: [], tenantSlug };
-    conversationStore.set(id, conv);
-  }
-  return conv;
-}
+let convTableEnsured = false;
 
-function addTurn(id: string, tenantSlug: string, turn: ConversationTurn) {
-  const conv = getConversation(id, tenantSlug);
-  conv.turns.push(turn);
-  if (conv.turns.length > MAX_TURNS_PER_CONVERSATION) {
-    conv.turns.shift();
+async function ensureConversationTable(): Promise<void> {
+  if (convTableEnsured) return;
+  try {
+    const { sql } = await import("@/lib/sql-client");
+    await sql`
+      create table if not exists ai_conversations (
+        id text primary key,
+        tenant_slug text not null,
+        turns jsonb not null default '[]'::jsonb,
+        created_at timestamptz not null default now(),
+        updated_at timestamptz not null default now()
+      )
+    `;
+    await sql`create index if not exists ai_conversations_tenant_idx on ai_conversations(tenant_slug)`;
+    convTableEnsured = true;
+  } catch (err) {
+    console.error("[ai/agent] Failed to ensure ai_conversations table:", err);
   }
 }
 
@@ -1154,29 +1158,78 @@ function summarizeResult(result: unknown): string {
   return str.slice(0, 200);
 }
 
-export function buildConversationContext(id: string): string {
-  const conv = conversationStore.get(id);
-  if (!conv || conv.turns.length === 0) return "";
-  const lines = conv.turns.map((t, i) =>
-    `Turn ${i + 1} [${t.capability}]: ${t.payloadSummary} → ${t.resultSummary}`,
-  );
-  return `\n\nPrevious conversation context:\n${lines.join("\n")}\n`;
-}
+async function addTurn(id: string, tenantSlug: string, turn: ConversationTurn): Promise<void> {
+  try {
+    await ensureConversationTable();
+    const { sql } = await import("@/lib/sql-client");
 
-export function getConversationHistory(id: string): ConversationTurn[] {
-  return conversationStore.get(id)?.turns ?? [];
-}
+    // Fetch existing conversation
+    const rows = await sql`
+      select turns from ai_conversations where id = ${id} limit 1
+    `;
+    const existing = (rows as any[])?.[0];
+    let turns: ConversationTurn[] = [];
 
-// Clean up expired conversations periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [id, conv] of conversationStore.entries()) {
-    const lastTurn = conv.turns[conv.turns.length - 1];
-    if (lastTurn && now - new Date(lastTurn.timestamp).getTime() > CONVERSATION_TTL_MS) {
-      conversationStore.delete(id);
+    if (existing?.turns) {
+      turns = typeof existing.turns === "string" ? JSON.parse(existing.turns) : existing.turns;
     }
+
+    turns.push(turn);
+    if (turns.length > MAX_TURNS_PER_CONVERSATION) {
+      turns = turns.slice(-MAX_TURNS_PER_CONVERSATION);
+    }
+
+    // Upsert
+    await sql`
+      insert into ai_conversations (id, tenant_slug, turns, created_at, updated_at)
+      values (${id}, ${tenantSlug}, ${JSON.stringify(turns)}::jsonb, now(), now())
+      on conflict (id) do update set turns = ${JSON.stringify(turns)}::jsonb, updated_at = now()
+    `;
+  } catch (err) {
+    console.error("[ai/agent] Failed to save conversation turn:", err);
   }
-}, 5 * 60 * 1000);
+}
+
+export async function buildConversationContext(id: string): Promise<string> {
+  try {
+    await ensureConversationTable();
+    const { sql } = await import("@/lib/sql-client");
+    const rows = await sql`
+      select turns from ai_conversations
+      where id = ${id}
+        and updated_at >= now() - interval '${CONVERSATION_TTL_HOURS} hours'
+      limit 1
+    `;
+    const conv = (rows as any[])?.[0];
+    if (!conv?.turns) return "";
+    const turns: ConversationTurn[] = typeof conv.turns === "string" ? JSON.parse(conv.turns) : conv.turns;
+    if (turns.length === 0) return "";
+    const lines = turns.map((t, i) =>
+      `Turn ${i + 1} [${t.capability}]: ${t.payloadSummary} → ${t.resultSummary}`,
+    );
+    return `\n\nPrevious conversation context:\n${lines.join("\n")}\n`;
+  } catch {
+    return "";
+  }
+}
+
+export async function getConversationHistory(id: string): Promise<ConversationTurn[]> {
+  try {
+    await ensureConversationTable();
+    const { sql } = await import("@/lib/sql-client");
+    const rows = await sql`
+      select turns from ai_conversations
+      where id = ${id}
+        and updated_at >= now() - interval '${CONVERSATION_TTL_HOURS} hours'
+      limit 1
+    `;
+    const conv = (rows as any[])?.[0];
+    if (!conv?.turns) return [];
+    return typeof conv.turns === "string" ? JSON.parse(conv.turns) : conv.turns;
+  } catch {
+    return [];
+  }
+}
 
 // ─── Main Agent Entry Point ───
 
@@ -1232,14 +1285,14 @@ export async function runAgent(request: AgentRequest): Promise<AgentResponse> {
         throw new Error(`Unknown capability: ${request.capability}`);
     }
 
-    // Store conversation turn if conversationId provided
+    // Store conversation turn if conversationId provided (fire-and-forget)
     if (request.conversationId) {
       addTurn(request.conversationId, request.tenantSlug, {
         capability: request.capability,
         payloadSummary: summarizePayload(request.payload),
         resultSummary: summarizeResult(handlerResult.result),
         timestamp: new Date().toISOString(),
-      });
+      }).catch(() => {});
     }
 
     const durationMs = Date.now() - startTime;

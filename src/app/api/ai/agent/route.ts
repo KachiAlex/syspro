@@ -3,6 +3,9 @@ import { z } from "zod";
 import { runAgent, CAPABILITY_DEFINITIONS, getConversationHistory, type AgentCapability } from "@/lib/ai/agent";
 import { resolveEmployeeSession } from "@/lib/hr/auth";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 // ─── Auth ───
 
 function authenticate(request: NextRequest): { tenantSlug: string; authMethod: "api_key" | "session" } | null {
@@ -24,6 +27,8 @@ function authenticate(request: NextRequest): { tenantSlug: string; authMethod: "
 
 // ─── Request Schema ───
 
+const MAX_PAYLOAD_SIZE = 50_000;
+
 const agentSchema = z.object({
   capability: z.enum([
     "screen_candidates",
@@ -34,9 +39,11 @@ const agentSchema = z.object({
     "proactive_insights",
   ]),
   payload: z.record(z.unknown()),
-  tenantSlug: z.string().min(1).optional(),
+  tenantSlug: z.string().min(1).max(100).optional(),
   useAI: z.boolean().optional(),
-  conversationId: z.string().optional(),
+  conversationId: z.string().max(200).optional(),
+}).refine((data) => JSON.stringify(data.payload).length <= MAX_PAYLOAD_SIZE, {
+  message: `Payload exceeds maximum size of ${MAX_PAYLOAD_SIZE} bytes`,
 });
 
 // ─── POST: Execute Agent ───
@@ -95,7 +102,7 @@ export async function GET(request: NextRequest) {
   const conversationId = request.nextUrl.searchParams.get("conversationId");
 
   if (conversationId) {
-    const history = getConversationHistory(conversationId);
+    const history = await getConversationHistory(conversationId);
     return NextResponse.json({ conversationId, turns: history });
   }
 

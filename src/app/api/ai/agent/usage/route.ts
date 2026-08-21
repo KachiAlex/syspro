@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUsageStats, getRecentLogs, checkQuota } from "@/lib/ai/usage-log";
 import { resolveEmployeeSession } from "@/lib/hr/auth";
 
+export const runtime = "nodejs";
+export const maxDuration = 30;
+
 // ─── Auth ───
 
 function authenticate(request: NextRequest): { tenantSlug: string } | null {

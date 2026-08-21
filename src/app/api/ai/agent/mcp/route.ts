@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { runAgent, CAPABILITY_DEFINITIONS, type AgentCapability } from "@/lib/ai/agent";
 import { resolveEmployeeSession } from "@/lib/hr/auth";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 /**
  * MCP-compatible tool server for the Syspro AI Agent.
  *
