@@ -27,6 +27,7 @@ import {
   ImportContactsModal,
   ConvertToLeadModal,
   ConvertToCustomerModal,
+  ConvertLeadToDealModal,
   CreateCustomerModal,
   ImportCustomersModal,
   LeadFormData,
@@ -37,6 +38,7 @@ import {
   CustomerFormData,
   ConvertToLeadFormData,
   ConvertToCustomerFormData,
+  ConvertLeadToDealFormData,
   LEAD_STAGE_OPTIONS,
   LEAD_SOURCE_OPTIONS,
   DEAL_STAGE_OPTIONS,
@@ -476,6 +478,27 @@ async function convertLeadToCustomer(
   return result;
 }
 
+async function convertLeadToDealAPI(
+  leadId: string,
+  tenantSlug: string,
+  data: ConvertLeadToDealFormData
+) {
+  const result = await crmFetch<{ deal: DealsResponse["deals"][number]; customer: unknown; leadId: string }>(
+    `/crm/leads/${leadId}/convert-to-deal`,
+    { method: "POST", body: JSON.stringify({
+      tenantSlug,
+      dealName: data.dealName,
+      stage: data.stage,
+      value: data.value ? Number(data.value) : undefined,
+      currency: data.currency,
+      probability: data.probability ? Number(data.probability) : undefined,
+      expectedClose: data.expectedClose || undefined,
+      notes: data.notes || undefined,
+    }) }
+  );
+  return result;
+}
+
 async function deleteContactRequest(id: string, tenantSlug: string) {
   await crmFetch(`/crm/contacts/${id}?tenantSlug=${tenantSlug}`, { method: "DELETE" });
 }
@@ -598,6 +621,8 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
   const [contactToConvert, setContactToConvert] = useState<ContactRow | null>(null);
   const [isConvertToCustomerModalOpen, setIsConvertToCustomerModalOpen] = useState(false);
   const [leadToConvert, setLeadToConvert] = useState<LeadRow | null>(null);
+  const [isConvertToDealModalOpen, setIsConvertToDealModalOpen] = useState(false);
+  const [leadToConvertToDeal, setLeadToConvertToDeal] = useState<LeadRow | null>(null);
 
   const [stats, setStats] = useState<DashboardStats>(DEFAULT_STATS);
   const [activities, setActivities] = useState<Array<{ id: string; entityType: string; action: string; description: string | null; createdAt: string }>>([]);
@@ -984,6 +1009,58 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
       setIsSubmitting(false);
       setContactToConvert(null);
       setIsConvertToLeadModalOpen(false);
+    }
+  };
+
+  const handleConvertLeadToDeal = async (data: ConvertLeadToDealFormData) => {
+    if (!leadToConvertToDeal || !effectiveTenant) return;
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    try {
+      const result = await convertLeadToDealAPI(leadToConvertToDeal.id, effectiveTenant, data);
+      const newDeal = toDealRow(result.deal);
+      setDeals((prev) => [{ ...newDeal, name: data.dealName, company: leadToConvertToDeal.companyName }, ...prev]);
+      setTotalDeals((prev) => prev + 1);
+      setStats((prev) => ({ ...prev, totalDeals: prev.totalDeals + 1, pipelineValue: prev.pipelineValue + newDeal.amount }));
+      // Update lead stage to qualified
+      setLeads((prev) => prev.map((l) => l.id === leadToConvertToDeal.id ? { ...l, stage: "qualified" as LeadStage } : l));
+      setSuccessMessage(`${leadToConvertToDeal.companyName} converted to deal successfully!`);
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Conversion failed");
+      throw error;
+    } finally {
+      setIsSubmitting(false);
+      setLeadToConvertToDeal(null);
+      setIsConvertToDealModalOpen(false);
+    }
+  };
+
+  const handleMarkDealWon = async (deal: DealRow) => {
+    if (!effectiveTenant) return;
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    try {
+      const updated = await updateDealRequest(deal.id, { stage: "closed_won" as DealStage });
+      const updatedRow = toDealRow(updated);
+      setDeals((prev) => prev.map((d) => d.id === deal.id ? updatedRow : d));
+      // Refresh customers since a new customer may have been auto-created
+      const freshCustomers = await fetchCustomers({ tenantSlug: effectiveTenant });
+      const freshDashboard = await fetchDashboard({ tenantSlug: effectiveTenant });
+      setCustomers(Array.isArray(freshCustomers?.customers) ? freshCustomers.customers.map(toCustomerRow) : []);
+      setTotalCustomers(freshCustomers?.total ?? 0);
+      setStats((prev) => ({
+        ...prev,
+        totalCustomers: freshCustomers?.total ?? prev.totalCustomers,
+        conversionRate: freshDashboard?.payload?.totals?.conversionRate ?? prev.conversionRate,
+        totalConverted: freshDashboard?.payload?.totals?.totalConverted ?? prev.totalConverted,
+      }));
+      setSuccessMessage(`Deal "${deal.name}" marked as won! Customer created/updated.`);
+      setTimeout(() => setSuccessMessage(null), 4000);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to mark deal as won");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1632,14 +1709,11 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                             <Edit2 className="w-4 h-4 text-theme-text-secondary" />
                           </button>
                           <button
-                            title="Create Deal"
+                            title="Convert to Deal"
                             className="p-1 hover:bg-green-100 rounded transition"
                             onClick={() => {
-                              openDealModal("create", undefined, {
-                                name: `Deal - ${lead.companyName}`,
-                                company: lead.companyName,
-                                leadId: lead.id,
-                              });
+                              setLeadToConvertToDeal(lead);
+                              setIsConvertToDealModalOpen(true);
                             }}
                           >
                             <Target className="w-4 h-4 text-green-400" />
@@ -1967,6 +2041,16 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                           >
                             <Edit2 className="w-4 h-4 text-theme-text-secondary" />
                           </button>
+                          {deal.stage !== "closed_won" && deal.stage !== "closed_lost" && (
+                            <button
+                              title="Mark as Won (Convert to Customer)"
+                              className="p-1 hover:bg-green-100 rounded transition"
+                              onClick={() => handleMarkDealWon(deal)}
+                              disabled={isSubmitting}
+                            >
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                            </button>
+                          )}
                           <button
                             onClick={() => {
                               setSelectedDeal(deal);
@@ -2088,6 +2172,15 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
         companyName={leadToConvert?.companyName ?? ""}
         onClose={() => { setIsConvertToCustomerModalOpen(false); setLeadToConvert(null); }}
         onSubmit={handleConvertLeadToCustomer}
+        isLoading={isSubmitting}
+      />
+
+      <ConvertLeadToDealModal
+        isOpen={isConvertToDealModalOpen}
+        leadContactName={leadToConvertToDeal?.contactName ?? ""}
+        companyName={leadToConvertToDeal?.companyName ?? ""}
+        onClose={() => { setIsConvertToDealModalOpen(false); setLeadToConvertToDeal(null); }}
+        onSubmit={handleConvertLeadToDeal}
         isLoading={isSubmitting}
       />
 

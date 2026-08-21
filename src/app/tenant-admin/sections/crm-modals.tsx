@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { X, AlertTriangle, Upload, UserPlus, Building2, FileDown } from "lucide-react";
+import { X, AlertTriangle, Upload, UserPlus, Building2, FileDown, Target } from "lucide-react";
 
 export const LEAD_STAGE_OPTIONS = [
   { value: "new", label: "New" },
@@ -1598,6 +1598,215 @@ export function ConvertToCustomerModal({
               disabled={isLoading}
             >
               {isLoading ? "Converting..." : "Convert to Customer"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Convert Lead → Deal Modal
+// ---------------------------------------------------------------------------
+export interface ConvertLeadToDealFormData {
+  dealName: string;
+  stage: string;
+  value: string;
+  currency: string;
+  probability: string;
+  expectedClose: string;
+  notes: string;
+}
+
+export function ConvertLeadToDealModal({
+  isOpen,
+  leadContactName,
+  companyName,
+  expectedValue,
+  onClose,
+  onSubmit,
+  isLoading,
+}: {
+  isOpen: boolean;
+  leadContactName: string;
+  companyName: string;
+  expectedValue?: number;
+  onClose: () => void;
+  onSubmit: (data: ConvertLeadToDealFormData) => Promise<void>;
+  isLoading: boolean;
+}) {
+  const [formData, setFormData] = useState<ConvertLeadToDealFormData>({
+    dealName: "",
+    stage: "prospecting",
+    value: "",
+    currency: "₦",
+    probability: "50",
+    expectedClose: "",
+    notes: "",
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        dealName: `Deal - ${companyName}`,
+        stage: "prospecting",
+        value: expectedValue ? String(expectedValue) : "",
+        currency: "₦",
+        probability: "50",
+        expectedClose: "",
+        notes: "",
+      });
+      setError(null);
+    }
+  }, [isOpen, companyName, expectedValue]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!formData.dealName.trim()) { setError("Deal name is required"); return; }
+    try {
+      await onSubmit(formData);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Conversion failed");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center gap-2">
+            <Target className="w-5 h-5 text-green-600" />
+            <h2 className="text-xl font-bold text-gray-900">Convert to Deal</h2>
+          </div>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition">
+            <X className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
+
+          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm text-green-800">
+              Converting lead <span className="font-semibold">{leadContactName}</span> ({companyName}) into a deal. A prospect customer will also be created.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-900 mb-1">Deal Name *</label>
+            <input
+              type="text"
+              value={formData.dealName}
+              onChange={(e) => setFormData({ ...formData, dealName: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+              placeholder="Deal name"
+              disabled={isLoading}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-900 mb-1">Pipeline Stage</label>
+            <select
+              value={formData.stage}
+              onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+              disabled={isLoading}
+            >
+              {DEAL_STAGE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Deal Value</label>
+              <input
+                type="number"
+                value={formData.value}
+                onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                placeholder="e.g. 50000"
+                min="0"
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Currency</label>
+              <input
+                type="text"
+                value={formData.currency}
+                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                placeholder="₦"
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Probability (%)</label>
+              <input
+                type="number"
+                value={formData.probability}
+                onChange={(e) => setFormData({ ...formData, probability: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                placeholder="50"
+                min="0"
+                max="100"
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Expected Close Date</label>
+              <input
+                type="date"
+                value={formData.expectedClose}
+                onChange={(e) => setFormData({ ...formData, expectedClose: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-900 mb-1">Notes (optional)</label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+              rows={2}
+              placeholder="Add any context about this deal..."
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+              disabled={isLoading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50"
+              disabled={isLoading}
+            >
+              {isLoading ? "Converting..." : "Convert to Deal"}
             </button>
           </div>
         </form>

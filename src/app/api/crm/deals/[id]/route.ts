@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { CRM_PIPELINE_STAGES } from "@/lib/crm/types";
-import { updateDeal, deleteDeal, updateLead, logActivity, getDeal } from "@/lib/crm/db";
+import { updateDeal, deleteDeal, updateLead, logActivity, getDeal, getLead, insertCustomer, updateCustomer, recordConversion } from "@/lib/crm/db";
 import { resolveCrmAuth } from "@/lib/crm/auth";
 import { insertFinanceInvoice } from "@/lib/finance/db";
 import { writeFinanceEvent } from "@/lib/finance/events";
@@ -62,6 +62,58 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
     // Chain 1: CRM → Finance auto-invoice on deal won
     if (parsed.data.stage === "closed_won") {
+      // Auto-create customer if deal doesn't have one
+      if (!deal.customerId && deal.leadId) {
+        try {
+          const leadData = await getLead(deal.leadId).catch(() => null);
+          const customerName = leadData ? (leadData as any).companyName : deal.name || "Customer";
+
+          const newCustomer = await insertCustomer({
+            tenantSlug: deal.tenantSlug,
+            regionId: (leadData as any)?.regionId ?? "default",
+            branchId: (leadData as any)?.branchId ?? "default",
+            name: customerName,
+            primaryContact: {
+              name: (leadData as any)?.contactName ?? "",
+              email: (leadData as any)?.contactEmail ?? null,
+              phone: (leadData as any)?.contactPhone ?? null,
+            },
+            status: "active",
+            convertedFromLeadId: deal.leadId ?? undefined,
+          });
+
+          // Link customer to deal via raw SQL since updateDeal doesn't support customerId
+          const { db } = await import("@/lib/sql-client");
+          await db.query(
+            `update crm_deals set customer_id = $1 where id = $2`,
+            [newCustomer.id, params.id]
+          ).catch(() => {});
+
+          // Record conversion
+          await recordConversion({
+            tenantSlug: deal.tenantSlug,
+            leadId: deal.leadId,
+            customerId: newCustomer.id,
+            sourceStage: "deal_won",
+          }).catch(() => {});
+
+          // Log customer creation
+          await logActivity({
+            tenantSlug: deal.tenantSlug,
+            entityType: "deal",
+            entityId: params.id,
+            action: "deal_won_customer_created",
+            description: `Customer "${customerName}" created from won deal`,
+            metadata: { dealId: params.id, customerId: newCustomer.id, leadId: deal.leadId },
+          }).catch(() => {});
+        } catch (custErr) {
+          console.error("[DealWon] Auto-customer creation failed:", custErr);
+        }
+      } else if (deal.customerId) {
+        // Update existing customer to active status
+        await updateCustomer(deal.customerId, { status: "active" }).catch(() => {});
+      }
+
       // Publish finance event
       writeFinanceEvent({
         tenantSlug: deal.tenantSlug,
