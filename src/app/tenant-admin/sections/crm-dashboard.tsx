@@ -28,6 +28,8 @@ import {
   ConvertToLeadModal,
   ConvertToCustomerModal,
   ConvertLeadToDealModal,
+  BulkConvertToLeadModal,
+  BulkEditContactsModal,
   CreateCustomerModal,
   ImportCustomersModal,
   LeadFormData,
@@ -39,6 +41,8 @@ import {
   ConvertToLeadFormData,
   ConvertToCustomerFormData,
   ConvertLeadToDealFormData,
+  BulkConvertToLeadFormData,
+  BulkEditContactsFormData,
   LEAD_STAGE_OPTIONS,
   LEAD_SOURCE_OPTIONS,
   DEAL_STAGE_OPTIONS,
@@ -624,6 +628,11 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
   const [isConvertToDealModalOpen, setIsConvertToDealModalOpen] = useState(false);
   const [leadToConvertToDeal, setLeadToConvertToDeal] = useState<LeadRow | null>(null);
 
+  const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(new Set());
+  const [isBulkConvertToLeadModalOpen, setIsBulkConvertToLeadModalOpen] = useState(false);
+  const [isBulkEditContactsModalOpen, setIsBulkEditContactsModalOpen] = useState(false);
+  const [showBulkDeleteContactsModal, setShowBulkDeleteContactsModal] = useState(false);
+
   const [stats, setStats] = useState<DashboardStats>(DEFAULT_STATS);
   const [activities, setActivities] = useState<Array<{ id: string; entityType: string; action: string; description: string | null; createdAt: string }>>([]);
   const pipelineCurrency = deals[0]?.currency ?? "₦";
@@ -1201,6 +1210,141 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
       setIsSubmitting(false);
       setSelectedContact(null);
       setContactModalMode("create");
+    }
+  };
+
+  // Bulk contact operations
+  const toggleContactSelection = (id: string) => {
+    setSelectedContactIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAllContacts = () => {
+    setSelectedContactIds((prev) => {
+      if (prev.size === filteredContacts.length) return new Set();
+      return new Set(filteredContacts.map((c) => c.id));
+    });
+  };
+
+  const clearContactSelection = () => setSelectedContactIds(new Set());
+
+  const handleBulkConvertToLead = async (data: BulkConvertToLeadFormData) => {
+    if (!effectiveTenant || selectedContactIds.size === 0) return;
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    const selected = contacts.filter((c) => selectedContactIds.has(c.id));
+    let successCount = 0;
+    let failCount = 0;
+    try {
+      for (const contact of selected) {
+        try {
+          await convertContactToLead(contact.id, effectiveTenant, {
+            stage: data.stage as LeadStage,
+            source: data.source as LeadSource,
+            expectedValue: "",
+            notes: data.notes || "",
+          }, regionId || undefined, branchId || undefined);
+          successCount++;
+        } catch {
+          failCount++;
+        }
+      }
+      const freshLeads = await fetchLeads({ tenantSlug: effectiveTenant, viewMode: effectiveViewMode });
+      const leadArray = Array.isArray(freshLeads?.leads) ? freshLeads.leads : [];
+      setLeads(leadArray.map(toLeadRow));
+      setTotalLeads(freshLeads?.total ?? 0);
+      setContacts((prev) => prev.map((c) => selectedContactIds.has(c.id) ? { ...c, status: "Converted to Lead" } : c));
+      setStats((prev) => ({ ...prev, totalLeads: freshLeads?.total ?? prev.totalLeads }));
+      if (failCount > 0) {
+        setErrorMessage(`${successCount} converted, ${failCount} failed.`);
+      } else {
+        setSuccessMessage(`${successCount} contact${successCount !== 1 ? "s" : ""} converted to leads!`);
+        setTimeout(() => setSuccessMessage(null), 3000);
+      }
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Bulk conversion failed");
+    } finally {
+      setIsSubmitting(false);
+      clearContactSelection();
+      setIsBulkConvertToLeadModalOpen(false);
+    }
+  };
+
+  const handleBulkDeleteContacts = async () => {
+    if (!effectiveTenant || selectedContactIds.size === 0) return;
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    let successCount = 0;
+    let failCount = 0;
+    try {
+      for (const id of selectedContactIds) {
+        try {
+          await deleteContactRequest(id, effectiveTenant);
+          successCount++;
+        } catch {
+          failCount++;
+        }
+      }
+      setContacts((prev) => prev.filter((c) => !selectedContactIds.has(c.id)));
+      setTotalContacts((prev) => Math.max(prev - successCount, 0));
+      setStats((prev) => ({ ...prev, totalContacts: Math.max(prev.totalContacts - successCount, 0) }));
+      if (failCount > 0) {
+        setErrorMessage(`${successCount} deleted, ${failCount} failed.`);
+      } else {
+        setSuccessMessage(`${successCount} contact${successCount !== 1 ? "s" : ""} deleted!`);
+        setTimeout(() => setSuccessMessage(null), 3000);
+      }
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Bulk delete failed");
+    } finally {
+      setIsSubmitting(false);
+      clearContactSelection();
+      setShowBulkDeleteContactsModal(false);
+    }
+  };
+
+  const handleBulkEditContacts = async (data: BulkEditContactsFormData) => {
+    if (!effectiveTenant || selectedContactIds.size === 0) return;
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    let successCount = 0;
+    let failCount = 0;
+    try {
+      for (const id of selectedContactIds) {
+        try {
+          const updates: Record<string, string> = {};
+          if (data.applyStatus) updates.status = data.status;
+          if (data.applySource) updates.source = data.source;
+          await updateContactRequest(id, { tenantSlug: effectiveTenant, ...updates });
+          successCount++;
+        } catch {
+          failCount++;
+        }
+      }
+      setContacts((prev) => prev.map((c) => {
+        if (!selectedContactIds.has(c.id)) return c;
+        return {
+          ...c,
+          status: data.applyStatus ? data.status : c.status,
+          source: data.applySource ? data.source : c.source,
+        };
+      }));
+      if (failCount > 0) {
+        setErrorMessage(`${successCount} updated, ${failCount} failed.`);
+      } else {
+        setSuccessMessage(`${successCount} contact${successCount !== 1 ? "s" : ""} updated!`);
+        setTimeout(() => setSuccessMessage(null), 3000);
+      }
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Bulk edit failed");
+    } finally {
+      setIsSubmitting(false);
+      clearContactSelection();
+      setIsBulkEditContactsModalOpen(false);
     }
   };
 
@@ -1795,11 +1939,57 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
               ))}
             </div>
 
+            {/* Bulk Action Bar */}
+            {selectedContactIds.size > 0 && (
+              <div className="flex flex-wrap items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <span className="text-sm font-medium text-blue-900">
+                  {selectedContactIds.size} selected
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setIsBulkConvertToLeadModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition"
+                    disabled={isSubmitting}
+                  >
+                    <ArrowRightCircle className="w-4 h-4" /> Convert to Leads
+                  </button>
+                  <button
+                    onClick={() => setIsBulkEditContactsModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+                    disabled={isSubmitting}
+                  >
+                    <Edit2 className="w-4 h-4" /> Bulk Edit
+                  </button>
+                  <button
+                    onClick={() => setShowBulkDeleteContactsModal(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition"
+                    disabled={isSubmitting}
+                  >
+                    <Trash2 className="w-4 h-4" /> Delete
+                  </button>
+                  <button
+                    onClick={clearContactSelection}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Contacts Table */}
             <div className="overflow-x-auto border border-gray-200 rounded-lg">
               <table className="w-full">
                 <thead className="bg-theme-bg border-b border-theme-border">
                   <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-theme-text-primary w-10">
+                      <input
+                        type="checkbox"
+                        checked={filteredContacts.length > 0 && selectedContactIds.size === filteredContacts.length}
+                        onChange={toggleSelectAllContacts}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Contact</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Company</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-theme-text-primary">Email</th>
@@ -1811,13 +2001,21 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                 <tbody className="divide-y divide-theme-border">
                   {filteredContacts.length === 0 && !isLoading && (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-sm text-theme-text-tertiary">
+                      <td colSpan={7} className="px-6 py-8 text-center text-sm text-theme-text-tertiary">
                         No contacts yet. Import or create a new contact to get started.
                       </td>
                     </tr>
                   )}
                   {filteredContacts.map((contact) => (
-                    <tr key={contact.id} className="hover:bg-gray-50">
+                    <tr key={contact.id} className={`hover:bg-gray-50 ${selectedContactIds.has(contact.id) ? "bg-blue-50" : ""}`}>
+                      <td className="px-4 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedContactIds.has(contact.id)}
+                          onChange={() => toggleContactSelection(contact.id)}
+                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </td>
                       <td className="px-6 py-4 font-medium text-theme-text-primary">{contact.contactName}</td>
                       <td className="px-6 py-4 text-theme-text-secondary">{contact.company}</td>
                       <td className="px-6 py-4 text-theme-text-secondary">{contact.contactEmail ?? "—"}</td>
@@ -2136,6 +2334,31 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
         isLoading={isSubmitting}
         itemName={selectedContact?.contactName}
         itemType="Contact"
+      />
+
+      <DeleteConfirmModal
+        isOpen={showBulkDeleteContactsModal}
+        onClose={() => setShowBulkDeleteContactsModal(false)}
+        onConfirm={handleBulkDeleteContacts}
+        isLoading={isSubmitting}
+        itemName={`${selectedContactIds.size} contacts`}
+        itemType="Contact"
+      />
+
+      <BulkConvertToLeadModal
+        isOpen={isBulkConvertToLeadModalOpen}
+        selectedCount={selectedContactIds.size}
+        onClose={() => setIsBulkConvertToLeadModalOpen(false)}
+        onSubmit={handleBulkConvertToLead}
+        isLoading={isSubmitting}
+      />
+
+      <BulkEditContactsModal
+        isOpen={isBulkEditContactsModalOpen}
+        selectedCount={selectedContactIds.size}
+        onClose={() => setIsBulkEditContactsModalOpen(false)}
+        onSubmit={handleBulkEditContacts}
+        isLoading={isSubmitting}
       />
 
       <DeleteConfirmModal

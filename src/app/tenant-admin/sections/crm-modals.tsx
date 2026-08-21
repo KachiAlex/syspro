@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { X, AlertTriangle, Upload, UserPlus, Building2, FileDown, Target } from "lucide-react";
+import { X, AlertTriangle, Upload, UserPlus, Building2, FileDown, Target, Edit2 } from "lucide-react";
 
 export const LEAD_STAGE_OPTIONS = [
   { value: "new", label: "New" },
@@ -1807,6 +1807,287 @@ export function ConvertLeadToDealModal({
               disabled={isLoading}
             >
               {isLoading ? "Converting..." : "Convert to Deal"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Bulk Convert Contacts → Leads Modal
+// ---------------------------------------------------------------------------
+export interface BulkConvertToLeadFormData {
+  stage: string;
+  source: string;
+  notes: string;
+}
+
+export function BulkConvertToLeadModal({
+  isOpen,
+  selectedCount,
+  onClose,
+  onSubmit,
+  isLoading,
+}: {
+  isOpen: boolean;
+  selectedCount: number;
+  onClose: () => void;
+  onSubmit: (data: BulkConvertToLeadFormData) => Promise<void>;
+  isLoading: boolean;
+}) {
+  const [formData, setFormData] = useState<BulkConvertToLeadFormData>({ stage: "new", source: "website", notes: "" });
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) { setError(null); setFormData({ stage: "new", source: "website", notes: "" }); }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    try {
+      await onSubmit(formData);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bulk conversion failed");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center gap-2">
+            <UserPlus className="w-5 h-5 text-green-600" />
+            <h2 className="text-xl font-bold text-gray-900">Bulk Convert to Leads</h2>
+          </div>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition">
+            <X className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
+
+          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm text-green-800">
+              Converting <span className="font-semibold">{selectedCount}</span> contact{selectedCount !== 1 ? "s" : ""} to leads. Each contact will be created as a new lead with the settings below.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Initial Stage</label>
+              <select
+                value={formData.stage}
+                onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                disabled={isLoading}
+              >
+                {LEAD_STAGE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Source</label>
+              <select
+                value={formData.source}
+                onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                disabled={isLoading}
+              >
+                <option value="website">Website</option>
+                <option value="walk_in">Walk-in</option>
+                <option value="campaign">Campaign</option>
+                <option value="referral">Referral</option>
+                <option value="api_import">API Import</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-900 mb-1">Notes (optional, applied to all)</label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+              rows={2}
+              placeholder="Add any context about these leads..."
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+              disabled={isLoading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50"
+              disabled={isLoading}
+            >
+              {isLoading ? "Converting..." : `Convert ${selectedCount} to Lead${selectedCount !== 1 ? "s" : ""}`}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Bulk Edit Contacts Modal
+// ---------------------------------------------------------------------------
+export interface BulkEditContactsFormData {
+  status: string;
+  source: string;
+  applyStatus: boolean;
+  applySource: boolean;
+}
+
+export function BulkEditContactsModal({
+  isOpen,
+  selectedCount,
+  onClose,
+  onSubmit,
+  isLoading,
+}: {
+  isOpen: boolean;
+  selectedCount: number;
+  onClose: () => void;
+  onSubmit: (data: BulkEditContactsFormData) => Promise<void>;
+  isLoading: boolean;
+}) {
+  const [formData, setFormData] = useState<BulkEditContactsFormData>({ status: "active", source: "website", applyStatus: false, applySource: false });
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) { setError(null); setFormData({ status: "active", source: "website", applyStatus: false, applySource: false }); }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!formData.applyStatus && !formData.applySource) {
+      setError("Select at least one field to update");
+      return;
+    }
+    try {
+      await onSubmit(formData);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bulk edit failed");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center gap-2">
+            <Edit2 className="w-5 h-5 text-blue-600" />
+            <h2 className="text-xl font-bold text-gray-900">Bulk Edit Contacts</h2>
+          </div>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition">
+            <X className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
+
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              Updating <span className="font-semibold">{selectedCount}</span> contact{selectedCount !== 1 ? "s" : ""}. Check the fields you want to update and choose new values.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.applyStatus}
+                onChange={(e) => setFormData({ ...formData, applyStatus: e.target.checked })}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                disabled={isLoading}
+              />
+              <span className="text-sm font-medium text-gray-900">Update Status</span>
+            </label>
+            {formData.applyStatus && (
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                disabled={isLoading}
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="prospect">Prospect</option>
+                <option value="Converted to Lead">Converted to Lead</option>
+              </select>
+            )}
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.applySource}
+                onChange={(e) => setFormData({ ...formData, applySource: e.target.checked })}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                disabled={isLoading}
+              />
+              <span className="text-sm font-medium text-gray-900">Update Source</span>
+            </label>
+            {formData.applySource && (
+              <select
+                value={formData.source}
+                onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                disabled={isLoading}
+              >
+                <option value="website">Website</option>
+                <option value="walk_in">Walk-in</option>
+                <option value="campaign">Campaign</option>
+                <option value="referral">Referral</option>
+                <option value="api_import">API Import</option>
+              </select>
+            )}
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+              disabled={isLoading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+              disabled={isLoading}
+            >
+              {isLoading ? "Updating..." : `Update ${selectedCount} Contact${selectedCount !== 1 ? "s" : ""}`}
             </button>
           </div>
         </form>
