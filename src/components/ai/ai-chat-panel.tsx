@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Sparkles, X, Send, Loader2, Bot, User, ChevronDown, ChevronRight } from "lucide-react";
+import { Sparkles, X, Send, Loader2, Bot, User, ChevronDown, ChevronRight, Gauge } from "lucide-react";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -29,6 +29,7 @@ export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => v
   const [showCapabilityMenu, setShowCapabilityMenu] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [expandedResults, setExpandedResults] = useState<Set<number>>(new Set());
+  const [quota, setQuota] = useState<{ dailyUsed: number; dailyLimit: number; monthlyUsed: number; monthlyLimit: number; exceeded: boolean } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -37,6 +38,17 @@ export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => v
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, loading]);
+
+  const fetchQuota = useCallback(async () => {
+    try {
+      const res = await fetch("/api/ai/agent/usage?view=quota");
+      if (res.ok) setQuota(await res.json());
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (open) fetchQuota();
+  }, [open, fetchQuota]);
 
   useEffect(() => {
     if (open && inputRef.current) {
@@ -92,6 +104,7 @@ export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => v
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, assistantMsg]);
+      fetchQuota();
     } catch (err: any) {
       setMessages((prev) => [
         ...prev,
@@ -160,6 +173,23 @@ export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => v
             </button>
           </div>
         </div>
+
+        {/* Quota bar */}
+        {quota && (
+          <div className={`px-4 py-1.5 border-b text-xs flex items-center gap-2 ${
+            quota.exceeded
+              ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800"
+              : "bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700"
+          }`}>
+            <Gauge className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="flex-1">
+              Daily: {quota.dailyUsed}/{quota.dailyLimit}
+              <span className="mx-1.5 opacity-40">|</span>
+              Monthly: {quota.monthlyUsed}/{quota.monthlyLimit}
+            </span>
+            {quota.exceeded && <span className="font-semibold">Quota exceeded</span>}
+          </div>
+        )}
 
         {/* Capability selector */}
         <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 relative">

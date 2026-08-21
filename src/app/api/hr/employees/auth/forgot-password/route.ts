@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql as SQL } from "@/lib/sql-client";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "@/lib/email";
-import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limit";
+import { checkRateLimitAsync, getRateLimitKey } from "@/lib/rate-limit";
 
 /**
  * POST /api/hr/employees/auth/forgot-password
@@ -11,7 +11,7 @@ import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limit";
 export async function POST(request: NextRequest) {
   // Rate limit: 3 requests per 5 minutes per IP
   const rateKey = `forgot-pw:${getRateLimitKey(request)}`;
-  const { allowed, retryAfter } = checkRateLimit(rateKey, 3, 300_000);
+  const { allowed, retryAfter } = await checkRateLimitAsync(rateKey, 3, 300_000);
   if (!allowed) {
     return NextResponse.json(
       { error: `Too many requests. Try again in ${retryAfter}s.` },

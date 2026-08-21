@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import { logAuditAction } from '@/lib/audit';
-import { getRateLimitKey, checkRateLimit } from '@/lib/rate-limit';
+import { getRateLimitKey, checkRateLimitAsync } from '@/lib/rate-limit';
 import { BulkTenantIdsSchema, safeParse } from '@/lib/validation';
 
 const sql = getSql();
@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limiting (stricter for deletes)
     const key = getRateLimitKey(request);
-    const { allowed } = checkRateLimit(key, 10, 60000);
+    const { allowed } = await checkRateLimitAsync(key, 10, 60000);
     if (!allowed) {
       return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
     }

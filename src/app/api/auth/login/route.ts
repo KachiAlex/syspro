@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { signSession } from "@/lib/session";
-import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limit";
+import { checkRateLimitAsync, getRateLimitKey } from "@/lib/rate-limit";
 import { sql as SQL } from "@/lib/sql-client";
 import { authenticateEmployee, createEmployeeToken } from "@/lib/hr/auth";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   const rateKey = `login:${getRateLimitKey(request)}`;
-  const { allowed, retryAfter } = checkRateLimit(rateKey, 5, 60_000);
+  const { allowed, retryAfter } = await checkRateLimitAsync(rateKey, 5, 60_000);
   if (!allowed) {
     return NextResponse.json(
       { error: `Too many login attempts. Try again in ${retryAfter}s.` },
