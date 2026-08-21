@@ -1184,6 +1184,28 @@ export async function runAgent(request: AgentRequest): Promise<AgentResponse> {
   const startTime = Date.now();
   const useAI = request.useAI !== false;
 
+  // Quota check (non-blocking — failures won't stop execution)
+  try {
+    const { checkQuota } = await import("@/lib/ai/usage-log");
+    const quota = await checkQuota(request.tenantSlug);
+    if (quota.exceeded) {
+      return {
+        success: false,
+        capability: request.capability,
+        result: null,
+        metadata: {
+          source: "deterministic",
+          model: null,
+          generatedAt: new Date().toISOString(),
+          durationMs: Date.now() - startTime,
+        },
+        error: `AI agent quota exceeded. Daily: ${quota.dailyUsed}/${quota.dailyLimit}, Monthly: ${quota.monthlyUsed}/${quota.monthlyLimit}. Please try again later or contact support.`,
+      };
+    }
+  } catch {
+    // Quota check failure should not block agent execution
+  }
+
   try {
     let handlerResult: { result: unknown; source: "ai" | "deterministic" | "heuristic" };
 
@@ -1220,6 +1242,21 @@ export async function runAgent(request: AgentRequest): Promise<AgentResponse> {
       });
     }
 
+    const durationMs = Date.now() - startTime;
+
+    // Log usage (fire-and-forget, non-blocking)
+    import("@/lib/ai/usage-log").then(({ logAgentCall }) =>
+      logAgentCall({
+        tenantSlug: request.tenantSlug,
+        capability: request.capability,
+        source: handlerResult.source,
+        success: true,
+        durationMs,
+        model: handlerResult.source === "ai" ? GROQ_MODEL : null,
+        conversationId: request.conversationId,
+      }),
+    ).catch(() => {});
+
     return {
       success: true,
       capability: request.capability,
@@ -1233,6 +1270,23 @@ export async function runAgent(request: AgentRequest): Promise<AgentResponse> {
       },
     };
   } catch (error) {
+    const errMsg = error instanceof Error ? error.message : "Agent execution failed";
+    const durationMs = Date.now() - startTime;
+
+    // Log failed usage (fire-and-forget)
+    import("@/lib/ai/usage-log").then(({ logAgentCall }) =>
+      logAgentCall({
+        tenantSlug: request.tenantSlug,
+        capability: request.capability,
+        source: "deterministic",
+        success: false,
+        durationMs,
+        model: null,
+        conversationId: request.conversationId,
+        errorMessage: errMsg,
+      }),
+    ).catch(() => {});
+
     return {
       success: false,
       capability: request.capability,
@@ -1241,9 +1295,9 @@ export async function runAgent(request: AgentRequest): Promise<AgentResponse> {
         source: "deterministic",
         model: null,
         generatedAt: new Date().toISOString(),
-        durationMs: Date.now() - startTime,
+        durationMs,
       },
-      error: error instanceof Error ? error.message : "Agent execution failed",
+      error: errMsg,
     };
   }
 }
