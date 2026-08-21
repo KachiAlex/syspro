@@ -204,7 +204,7 @@ export async function fetchVendors(
       ...(pagination?.limit && { limit: pagination.limit.toString() }),
     });
 
-    const response = await fetch(`${API_BASE}/vendors?${params}`, {
+    const response = await fetch(`${API_BASE}/finance/vendors?${params}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -222,7 +222,7 @@ export async function createVendor(
   vendorData: Partial<Vendor>
 ) {
   try {
-    const response = await fetch(`${API_BASE}/vendors?tenantSlug=${tenantSlug}`, {
+    const response = await fetch(`${API_BASE}/finance/vendors?tenantSlug=${tenantSlug}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(vendorData),
@@ -254,7 +254,7 @@ export async function fetchRequisitions(
       ...(filters?.status && { status: filters.status }),
       ...(filters?.department && { department: filters.department }),
       ...(pagination?.page && { page: pagination.page.toString() }),
-      ...(pagination?.limit && { limit: pagination.limit.toString() }),
+      ...(pagination?.limit && { pageSize: pagination.limit.toString() }),
     });
 
     const response = await fetch(`${API_BASE}/procurement/requisitions?${params}`, {
@@ -276,9 +276,9 @@ export async function approveRequisition(
 ) {
   try {
     const response = await fetch(
-      `${API_BASE}/procurement/requisitions/${requisitionId}/approve?tenantSlug=${tenantSlug}`,
+      `${API_BASE}/procurement/requisitions?tenantSlug=${tenantSlug}&id=${requisitionId}&action=approve`,
       {
-        method: "POST",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
       }
     );

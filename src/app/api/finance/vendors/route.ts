@@ -63,9 +63,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+    const page = parseInt(url.searchParams.get("page") ?? "1");
+    const pageSize = parseInt(url.searchParams.get("limit") ?? url.searchParams.get("pageSize") ?? "50");
+
     try {
-      const vendors = await listVendors({ ...parsed.data, tenantSlug: context.tenantSlug });
-      return NextResponse.json({ vendors });
+      const allVendors = await listVendors({ ...parsed.data, tenantSlug: context.tenantSlug });
+      const total = allVendors.length;
+      const start = (page - 1) * pageSize;
+      const vendors = allVendors.slice(start, start + pageSize);
+      return NextResponse.json({
+        vendors,
+        pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) || 1 },
+      });
     } catch (error) {
       console.error("Vendor list failed:", (error as any)?.stack || error);
       return NextResponse.json({ error: "Failed to list vendors", details: String((error as any)?.message ?? error) }, { status: 500 });

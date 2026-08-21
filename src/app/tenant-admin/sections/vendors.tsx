@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Eye, Edit, Download, Filter, Building, FileText, Star, TrendingUp, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Plus, Eye, Edit, Download, Filter, Building, FileText, Star, TrendingUp, RefreshCw, X } from 'lucide-react';
 
 interface Vendors {
   tenantSlug: string;
@@ -9,6 +9,7 @@ interface Vendors {
 
 const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
   const [vendors, setVendors] = useState<any[]>([]);
+  const [stats, setStats] = useState<{ totalVendors: number; activeVendors: number; byPaymentTerms: Record<string, number>; byCountry: Record<string, number> } | null>(null);
 
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -17,6 +18,9 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newVendor, setNewVendor] = useState({ name: '', code: '', email: '', phone: '', country: '', paymentTerms: 'net30' });
+  const [creating, setCreating] = useState(false);
 
   // Initialize last refreshed on mount
   useEffect(() => {
@@ -38,24 +42,28 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
     }
   }, [success]);
 
-  // Load vendors from API
-  async function loadVendors() {
+  // Load vendors and stats from API
+  const loadVendors = useCallback(async () => {
     if (!tenantSlug) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/finance/vendors?tenantSlug=${encodeURIComponent(tenantSlug ?? '')}`);
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(payload.error || "Failed to load vendors");
-      const rawVendors = payload.vendors || [];
-      // Map backend fields to frontend shape
+      const [vendRes, statsRes] = await Promise.all([
+        fetch(`/api/finance/vendors?tenantSlug=${encodeURIComponent(tenantSlug)}`).then(r => r.json()).catch(() => ({})),
+        fetch(`/api/finance/vendors?tenantSlug=${encodeURIComponent(tenantSlug)}&stats=true`).then(r => r.json()).catch(() => ({})),
+      ]);
+      const rawVendors = vendRes.vendors || [];
       setVendors(rawVendors.map((v: any) => ({
         id: v.id,
         name: v.name || v.code || "Unknown",
         category: v.country || "Other",
         status: v.isActive === false ? "Inactive" : "Active",
-        rating: 4.0,
-        spend: "$0",
+        rating: v.rating ?? 0,
+        spend: v.totalSpend ?? 0,
+        email: v.email || '',
+        phone: v.phone || '',
+        paymentTerms: v.paymentTerms || '',
       })));
+      if (statsRes.stats) setStats(statsRes.stats);
       setLastRefreshed(new Date());
     } catch (err) {
       console.error(err);
@@ -63,17 +71,57 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
     } finally {
       setLoading(false);
     }
-  }
+  }, [tenantSlug]);
 
   useEffect(() => {
     loadVendors();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tenantSlug]);
+  }, [loadVendors]);
 
   // Refresh vendors data
   const handleRefreshVendors = async () => {
     await loadVendors();
     setSuccess("Vendors refreshed successfully");
+  };
+
+  // Create vendor
+  const handleCreateVendor = async () => {
+    if (!newVendor.name || !newVendor.code) {
+      setError('Vendor name and code are required');
+      return;
+    }
+    setCreating(true);
+    try {
+      const res = await fetch(`/api/finance/vendors?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newVendor),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to create vendor');
+      setSuccess('Vendor created successfully');
+      setShowAddModal(false);
+      setNewVendor({ name: '', code: '', email: '', phone: '', country: '', paymentTerms: 'net30' });
+      await loadVendors();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create vendor');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // Export vendors as CSV
+  const handleExport = () => {
+    const headers = ['Name', 'Code', 'Email', 'Phone', 'Country', 'Payment Terms', 'Status'];
+    const rows = filteredVendors.map(v => [v.name, v.code || '', v.email || '', v.phone || '', v.category, v.paymentTerms || '', v.status]);
+    const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'vendors.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    setSuccess('Vendors exported successfully');
   };
 
   const filteredVendors = vendors.filter(v => {
@@ -122,7 +170,7 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-theme-text-secondary">Total Vendors</p>
-              <p className="text-xl font-bold text-theme-text-primary">{vendors.length}</p>
+              <p className="text-xl font-bold text-theme-text-primary">{stats?.totalVendors ?? vendors.length}</p>
             </div>
             <Building className="w-8 h-8 text-theme-accent" />
           </div>
@@ -130,8 +178,8 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
         <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-theme-text-secondary">Active Contracts</p>
-              <p className="text-xl font-bold text-theme-text-primary">89</p>
+              <p className="text-sm text-theme-text-secondary">Active Vendors</p>
+              <p className="text-xl font-bold text-theme-text-primary">{stats?.activeVendors ?? vendors.filter(v => v.status === 'Active').length}</p>
             </div>
             <FileText className="w-8 h-8 text-green-400" />
           </div>
@@ -139,8 +187,8 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
         <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-theme-text-secondary">Avg. Performance</p>
-              <p className="text-xl font-bold text-theme-text-primary">4.2/5</p>
+              <p className="text-sm text-theme-text-secondary">Countries</p>
+              <p className="text-xl font-bold text-theme-text-primary">{stats ? Object.keys(stats.byCountry).length : 0}</p>
             </div>
             <Star className="w-8 h-8 text-yellow-600" />
           </div>
@@ -148,8 +196,8 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
         <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-theme-text-secondary">This Month Spend</p>
-              <p className="text-xl font-bold text-theme-text-primary">$45,678</p>
+              <p className="text-sm text-theme-text-secondary">Payment Terms</p>
+              <p className="text-xl font-bold text-theme-text-primary">{stats ? Object.keys(stats.byPaymentTerms).length : 0}</p>
             </div>
             <TrendingUp className="w-8 h-8 text-theme-accent" />
           </div>
@@ -159,11 +207,11 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
       {/* Actions */}
       <div className="bg-theme-muted rounded-lg border border-gray-200 p-4 mb-6">
         <div className="flex flex-wrap gap-3">
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          <button onClick={() => setShowAddModal(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2 inline" />
             Add Vendor
           </button>
-          <button className="px-4 py-2 border border-gray-300 text-theme-text-primary rounded-lg hover:bg-gray-50">
+          <button onClick={handleExport} className="px-4 py-2 border border-gray-300 text-theme-text-primary rounded-lg hover:bg-gray-50">
             <Download className="w-4 h-4 mr-2 inline" />
             Export
           </button>
@@ -245,49 +293,121 @@ const VendorsComponent: React.FC<Vendors> = ({ tenantSlug }) => {
         ))}
       </div>
 
-      {/* Performance Overview */}
+      {/* Vendor Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
-          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Performance Distribution</h3>
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">By Country</h3>
           <div className="space-y-3">
-            {[
-              { level: 'Excellent', count: 45, pct: 27, color: 'bg-green-500' },
-              { level: 'Good', count: 67, pct: 40, color: 'bg-blue-500' },
-              { level: 'Average', count: 34, pct: 20, color: 'bg-yellow-500' },
-              { level: 'Poor', count: 21, pct: 13, color: 'bg-red-500' }
-            ].map((p, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <span className="text-sm font-medium w-20">{p.level}</span>
-                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                  <div className={`h-2 rounded-full ${p.color}`} style={{ width: `${p.pct}%` }}></div>
-                </div>
-                <span className="text-sm w-8 text-right">{p.count}</span>
-              </div>
-            ))}
+            {stats && Object.entries(stats.byCountry).length > 0 ? (
+              Object.entries(stats.byCountry).map(([country, count]) => {
+                const pct = stats.totalVendors > 0 ? Math.round((count / stats.totalVendors) * 100) : 0;
+                return (
+                  <div key={country} className="flex items-center gap-3">
+                    <span className="text-sm font-medium w-24 truncate">{country}</span>
+                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                      <div className="h-2 rounded-full bg-blue-500" style={{ width: `${pct}%` }}></div>
+                    </div>
+                    <span className="text-sm w-8 text-right">{count}</span>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-sm text-theme-text-secondary">No data available</p>
+            )}
           </div>
         </div>
 
         <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
-          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Top Vendors by Spend</h3>
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">By Payment Terms</h3>
           <div className="space-y-3">
-            {[
-              { name: 'Manufacturing Partners Inc', spend: '$234,567', pct: 35 },
-              { name: 'Tech Solutions Inc', spend: '$125,000', pct: 19 },
-              { name: 'Global Logistics Ltd', spend: '$89,234', pct: 13 }
-            ].map((v, i) => (
-              <div key={i} className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="font-medium text-theme-text-primary text-sm">{v.name}</p>
-                  <div className="flex-1 bg-gray-200 rounded-full h-2 mt-1">
-                    <div className="h-2 rounded-full bg-blue-500" style={{ width: `${v.pct}%` }}></div>
+            {stats && Object.entries(stats.byPaymentTerms).length > 0 ? (
+              Object.entries(stats.byPaymentTerms).map(([terms, count]) => {
+                const pct = stats.totalVendors > 0 ? Math.round((count / stats.totalVendors) * 100) : 0;
+                return (
+                  <div key={terms} className="flex items-center gap-3">
+                    <span className="text-sm font-medium w-24 uppercase">{terms}</span>
+                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                      <div className="h-2 rounded-full bg-green-500" style={{ width: `${pct}%` }}></div>
+                    </div>
+                    <span className="text-sm w-8 text-right">{count}</span>
                   </div>
-                </div>
-                <span className="font-semibold ml-3 text-sm">{v.spend}</span>
-              </div>
-            ))}
+                );
+              })
+            ) : (
+              <p className="text-sm text-theme-text-secondary">No data available</p>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Add Vendor Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Add Vendor</h3>
+              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <input
+                type="text"
+                placeholder="Vendor name *"
+                value={newVendor.name}
+                onChange={(e) => setNewVendor({ ...newVendor, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+              />
+              <input
+                type="text"
+                placeholder="Vendor code *"
+                value={newVendor.code}
+                onChange={(e) => setNewVendor({ ...newVendor, code: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                value={newVendor.email}
+                onChange={(e) => setNewVendor({ ...newVendor, email: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+              />
+              <input
+                type="text"
+                placeholder="Phone"
+                value={newVendor.phone}
+                onChange={(e) => setNewVendor({ ...newVendor, phone: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+              />
+              <input
+                type="text"
+                placeholder="Country"
+                value={newVendor.country}
+                onChange={(e) => setNewVendor({ ...newVendor, country: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+              />
+              <select
+                value={newVendor.paymentTerms}
+                onChange={(e) => setNewVendor({ ...newVendor, paymentTerms: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+              >
+                <option value="net30">Net 30</option>
+                <option value="net60">Net 60</option>
+                <option value="net90">Net 90</option>
+                <option value="immediate">Immediate</option>
+                <option value="cod">COD</option>
+              </select>
+              <button
+                onClick={handleCreateVendor}
+                disabled={creating}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {creating ? 'Creating...' : 'Create Vendor'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

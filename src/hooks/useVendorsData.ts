@@ -40,7 +40,7 @@ export function useVendorsData({
         page,
         limit: pageSize,
       });
-      setVendors(result.data || []);
+      setVendors(result.vendors || result.data || []);
       setTotal(result.pagination?.total || 0);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to load vendors";

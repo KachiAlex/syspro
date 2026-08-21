@@ -75,7 +75,16 @@ export async function GET(request: NextRequest) {
       listEmployees(parsed.data),
       countEmployees({ tenantSlug: parsed.data.tenantSlug, status: parsed.data.status, departmentId: parsed.data.departmentId }),
     ]);
-    return NextResponse.json({ employees, total });
+    const limit = parsed.data.limit ?? 50;
+    const offset = parsed.data.offset ?? 0;
+    const page = Math.floor(offset / limit) + 1;
+    const pageSize = limit;
+    const totalPages = Math.ceil(total / pageSize) || 1;
+    return NextResponse.json({
+      data: employees,
+      employees,
+      pagination: { page, pageSize, total, totalPages },
+    });
   } catch (error) {
     console.error("Employee list failed", error);
     return NextResponse.json({ error: "Failed to load employees" }, { status: 500 });

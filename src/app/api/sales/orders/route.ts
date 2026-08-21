@@ -23,12 +23,6 @@ async function ensureSalesOrdersTable() {
   await db.query(`CREATE INDEX IF NOT EXISTS idx_sales_orders_tenant ON sales_orders (tenant_slug)`);
 }
 
-const hardcodedCustomers: Record<string, string> = {
-  "1": "Acme Corp",
-  "2": "Tech Solutions",
-  "3": "Global Industries",
-};
-
 function parseItems(itemsRaw: any) {
   if (Array.isArray(itemsRaw)) return itemsRaw;
   if (!itemsRaw) return [];
@@ -99,7 +93,11 @@ export async function POST(request: NextRequest) {
     const quantity = computeQuantity(items);
     const id = `so_${Date.now()}`;
     const orderNumber = `SO-${Date.now().toString().slice(-6)}`;
-    const customerName = hardcodedCustomers[String(customerId)] ?? String(customerId);
+    let customerName = String(customerId);
+    try {
+      const custResult = await db.query(`SELECT name FROM crm_customers WHERE id = $1 AND tenant_slug = $2`, [String(customerId), context.tenantSlug]);
+      customerName = custResult.rows[0]?.name ?? String(customerId);
+    } catch { /* use raw ID as fallback */ }
     const createdAt = new Date().toISOString();
 
     await db.query(

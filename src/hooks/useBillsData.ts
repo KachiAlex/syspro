@@ -40,7 +40,7 @@ export function useBillsData({
         page,
         limit: pageSize,
       });
-      setBills(result.data || []);
+      setBills(result.bills || result.data || []);
       setTotal(result.pagination?.total || 0);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to load bills";

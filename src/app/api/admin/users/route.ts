@@ -1,70 +1,86 @@
 import { NextResponse } from 'next/server';
-import type { User } from '../../../../../src/lib/admin/types';
+import { randomUUID } from 'crypto';
+import { db, sql as SQL } from '@/lib/sql-client';
 
-// Minimal in-memory users store for initial API scaffolding. When `DATABASE_URL`
-// is present, this route can be extended to use the real DB.
-export const users = new Map<string, User>();
+async function ensureUsersTable() {
+  await SQL`
+    create table if not exists admin_users (
+      id text primary key,
+      tenant_slug text not null default 'default',
+      email text not null,
+      display_name text,
+      status text not null default 'invited',
+      contract_type text default 'full-time',
+      primary_role_id text,
+      metadata jsonb,
+      created_at timestamptz default now(),
+      updated_at timestamptz default now()
+    )
+  `;
+  await SQL`create index if not exists idx_admin_users_tenant on admin_users (tenant_slug)`;
+  await SQL`create index if not exists idx_admin_users_email on admin_users (email)`;
+}
 
-function sampleUser(): User {
+function mapUser(row: any) {
   return {
-    id: 'local-1',
-    tenantSlug: 'default',
-    email: 'admin@example.com',
-    displayName: 'Tenant Admin',
-    status: 'active',
-    contractType: 'full-time',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    id: row.id,
+    tenantSlug: row.tenant_slug,
+    email: row.email,
+    displayName: row.display_name,
+    status: row.status,
+    contractType: row.contract_type,
+    primaryRoleId: row.primary_role_id,
+    metadata: row.metadata,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
-users.set('local-1', sampleUser());
-
 export async function GET() {
-  const list = Array.from(users.values());
-  return NextResponse.json({ data: list });
+  try {
+    await ensureUsersTable();
+    const rows = (await SQL`select * from admin_users order by created_at desc`) as any[];
+    return NextResponse.json({ data: rows.map(mapUser) });
+  } catch (error) {
+    console.error('Failed to fetch users:', error);
+    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
   try {
+    await ensureUsersTable();
     const body = await request.json();
+
     // CSV import: { users: [{email, name}] }
     if (Array.isArray(body?.users)) {
-      const created: User[] = [];
+      const created: any[] = [];
       for (const user of body.users) {
         if (!user.email) continue;
-        const id = `local-${Math.random().toString(36).slice(2, 10)}`;
-        const u: User = {
-          id,
-          tenantSlug: 'default',
-          email: user.email,
-          displayName: user.name,
-          status: 'invited',
-          contractType: user.contractType ?? 'full-time',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        users.set(id, u);
-        created.push(u);
+        const id = randomUUID();
+        const now = new Date().toISOString();
+        const [row] = (await SQL`
+          insert into admin_users (id, tenant_slug, email, display_name, status, contract_type, created_at, updated_at)
+          values (${id}, 'default', ${user.email}, ${user.name ?? null}, 'invited', ${user.contractType ?? 'full-time'}, ${now}, ${now})
+          returning *
+        `) as any[];
+        if (row) created.push(mapUser(row));
       }
       return NextResponse.json({ data: created }, { status: 201 });
     }
+
     // Invite: { email, name? }
     if (!body?.email) return NextResponse.json({ error: 'missing email' }, { status: 400 });
-    const id = `local-${Math.random().toString(36).slice(2, 10)}`;
-    const u: User = {
-      id,
-      tenantSlug: 'default',
-      email: body.email,
-      displayName: body.name,
-      status: 'invited',
-      contractType: body.contractType ?? 'full-time',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    users.set(id, u);
-    return NextResponse.json({ data: u }, { status: 201 });
-  } catch (err) {
-    return NextResponse.json({ error: 'invalid json' }, { status: 400 });
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const [row] = (await SQL`
+      insert into admin_users (id, tenant_slug, email, display_name, status, contract_type, created_at, updated_at)
+      values (${id}, 'default', ${body.email}, ${body.name ?? null}, 'invited', ${body.contractType ?? 'full-time'}, ${now}, ${now})
+      returning *
+    `) as any[];
+    return NextResponse.json({ data: mapUser(row) }, { status: 201 });
+  } catch (error) {
+    console.error('Failed to create user:', error);
+    return NextResponse.json({ error: 'Failed to create user', details: String((error as any)?.message ?? error) }, { status: 500 });
   }
 }

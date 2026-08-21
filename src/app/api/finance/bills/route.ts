@@ -112,7 +112,20 @@ export async function GET(request: NextRequest) {
     }
 
     const bills = await listBills(parsed.data);
-    return NextResponse.json({ bills });
+
+    // Calculate pagination metadata
+    const limit = parsed.data.limit ?? 50;
+    const offset = parsed.data.offset ?? 0;
+    const page = Math.floor(offset / limit) + 1;
+    const pageSize = limit;
+    const hasMore = bills.length === pageSize;
+    const total = hasMore ? offset + bills.length + 1 : offset + bills.length;
+    const totalPages = Math.ceil(total / pageSize) || 1;
+
+    return NextResponse.json({
+      bills,
+      pagination: { page, pageSize, total, totalPages, hasMore },
+    });
 
   } catch (error) {
     console.error("Bills GET error:", (error as any)?.stack || error);

@@ -23,15 +23,8 @@ async function ensurePurchaseOrdersTable() {
   await db.query(`CREATE INDEX IF NOT EXISTS idx_purchase_orders_tenant ON purchase_orders (tenant_slug)`);
 }
 
-const hardcodedSuppliers: Record<string, string> = {
-  "1": "Office Supplies Co",
-  "2": "Tech Hardware Ltd",
-  "3": "Industrial Materials Inc",
-};
-
 async function resolveSupplierName(supplierId: string, tenantSlug: string) {
   if (!supplierId) return "";
-  if (hardcodedSuppliers[supplierId]) return hardcodedSuppliers[supplierId];
   try {
     const result = await db.query(`SELECT name FROM suppliers WHERE id = $1 AND tenant_slug = $2`, [supplierId, tenantSlug]);
     return result.rows[0]?.name ?? supplierId;
