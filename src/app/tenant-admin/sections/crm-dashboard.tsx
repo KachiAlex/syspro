@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   ArrowRightCircle,
   Building2,
+  UserCog,
 } from "lucide-react";
 import {
   CreateLeadModal,
@@ -30,6 +31,8 @@ import {
   ConvertLeadToDealModal,
   BulkConvertToLeadModal,
   BulkEditContactsModal,
+  AssignLeadModal,
+  TeamMember,
   CreateCustomerModal,
   ImportCustomersModal,
   LeadFormData,
@@ -72,6 +75,7 @@ interface LeadRow {
   score: number;
   source: LeadSource;
   assignedTo: string;
+  assignedOfficerId: string | null;
   createdAt: string;
 }
 
@@ -104,10 +108,12 @@ type LeadsResponse = {
     companyName: string;
     contactName: string;
     contactEmail: string | null;
+    contactPhone: string | null;
     stage: LeadStage;
     score: number;
     source: LeadSource;
     assignedOfficerId: string | null;
+    createdBy: string | null;
     createdAt: string;
   }>;
   total: number;
@@ -212,6 +218,7 @@ function toLeadRow(lead: LeadsResponse["leads"][number]): LeadRow {
     score: lead.score,
     source: lead.source,
     assignedTo: lead.assignedOfficerId || "Unassigned",
+    assignedOfficerId: lead.assignedOfficerId ?? null,
     createdAt: lead.createdAt,
   };
 }
@@ -360,6 +367,40 @@ async function fetchActivities(params: { tenantSlug: string; limit?: number }) {
     console.error("Failed to fetch activities:", error);
     return { activities: [] };
   }
+}
+
+async function fetchTeamMembers(tenantSlug: string): Promise<TeamMember[]> {
+  try {
+    const res = await fetch(`/api/hr/employees/portal/colleagues?tenantSlug=${tenantSlug}`, {
+      credentials: "include",
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const colleagues = (data.colleagues ?? data) as any[];
+    return colleagues.map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      email: c.email,
+      jobTitle: c.job_title ?? c.jobTitle,
+      departmentName: c.department_name ?? c.departmentName,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+async function assignLeadRequest(leadId: string, tenantSlug: string, assignedOfficerId: string) {
+  const res = await fetch(`/api/crm/leads/${leadId}/assign`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ tenantSlug, assignedOfficerId }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error ?? "Failed to assign lead");
+  }
+  return res.json();
 }
 
 async function createLead(payload: {
@@ -632,6 +673,10 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
   const [isBulkConvertToLeadModalOpen, setIsBulkConvertToLeadModalOpen] = useState(false);
   const [isBulkEditContactsModalOpen, setIsBulkEditContactsModalOpen] = useState(false);
   const [showBulkDeleteContactsModal, setShowBulkDeleteContactsModal] = useState(false);
+
+  const [isAssignLeadModalOpen, setIsAssignLeadModalOpen] = useState(false);
+  const [leadToAssign, setLeadToAssign] = useState<LeadRow | null>(null);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
   const [stats, setStats] = useState<DashboardStats>(DEFAULT_STATS);
   const [activities, setActivities] = useState<Array<{ id: string; entityType: string; action: string; description: string | null; createdAt: string }>>([]);
@@ -1348,6 +1393,37 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
     }
   };
 
+  const handleOpenAssignLead = async (lead: LeadRow) => {
+    setLeadToAssign(lead);
+    setIsAssignLeadModalOpen(true);
+    if (teamMembers.length === 0 && effectiveTenant) {
+      const members = await fetchTeamMembers(effectiveTenant);
+      setTeamMembers(members);
+    }
+  };
+
+  const handleAssignLead = async (assignedOfficerId: string) => {
+    if (!leadToAssign || !effectiveTenant) return;
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    try {
+      await assignLeadRequest(leadToAssign.id, effectiveTenant, assignedOfficerId);
+      const member = teamMembers.find((m) => m.id === assignedOfficerId);
+      setLeads((prev) => prev.map((l) =>
+        l.id === leadToAssign.id
+          ? { ...l, assignedOfficerId, assignedTo: member?.name ?? assignedOfficerId }
+          : l
+      ));
+      setSuccessMessage(`Lead assigned to ${member?.name ?? "team member"}!`);
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to assign lead");
+      throw error;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Deal Handlers
   const handleCreateDeal = async (data: DealFormData) => {
     if (!effectiveTenant) return;
@@ -1851,6 +1927,13 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                             onClick={() => openLeadModal("edit", lead)}
                           >
                             <Edit2 className="w-4 h-4 text-theme-text-secondary" />
+                          </button>
+                          <button
+                            title="Assign to Team Member"
+                            className="p-1 hover:bg-blue-100 rounded transition"
+                            onClick={() => handleOpenAssignLead(lead)}
+                          >
+                            <UserCog className="w-4 h-4 text-blue-500" />
                           </button>
                           <button
                             title="Convert to Deal"
@@ -2358,6 +2441,20 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
         selectedCount={selectedContactIds.size}
         onClose={() => setIsBulkEditContactsModalOpen(false)}
         onSubmit={handleBulkEditContacts}
+        isLoading={isSubmitting}
+      />
+
+      <AssignLeadModal
+        isOpen={isAssignLeadModalOpen}
+        leadContactName={leadToAssign?.contactName ?? ""}
+        leadCompanyName={leadToAssign?.companyName ?? ""}
+        currentAssignee={leadToAssign?.assignedTo ?? "Unassigned"}
+        teamMembers={teamMembers}
+        onClose={() => {
+          setIsAssignLeadModalOpen(false);
+          setLeadToAssign(null);
+        }}
+        onSubmit={handleAssignLead}
         isLoading={isSubmitting}
       />
 

@@ -85,14 +85,27 @@ export async function GET(request: NextRequest) {
 
     if (auth && auth.session.tenantSlug === tenantSlug) {
       if (viewMode === "mine" || (!viewMode && auth.scope === "mine")) {
-        filterCreatedBy = auth.employeeId;
+        // Show leads assigned to me OR created by me
+        const rows = (await db.query(
+          `select * from crm_leads where tenant_slug = $1 and (assigned_officer_id = $2 or created_by = $2) order by created_at desc`,
+          [tenantSlug, auth.employeeId]
+        )).rows as any[];
+        const leads = rows.map((r) => ({
+          id: r.id, tenantSlug: r.tenant_slug, regionId: r.region_id, branchId: r.branch_id,
+          companyName: r.company_name, contactName: r.contact_name, contactEmail: r.contact_email,
+          contactPhone: r.contact_phone, source: r.source, stage: r.stage, score: Number(r.score ?? 0),
+          assignedOfficerId: r.assigned_officer_id, expectedValue: r.expected_value ? Number(r.expected_value) : null,
+          currency: r.currency, notes: r.notes, createdBy: r.created_by ?? null,
+          createdAt: r.created_at, updatedAt: r.updated_at,
+        }));
+        return NextResponse.json({ leads, total: leads.length });
       } else if (viewMode === "team" || (!viewMode && auth.scope === "team")) {
         const teamIds = await getTeamMemberIds(auth.session.tenantSlug, auth.departmentId);
         if (teamIds.length > 0) {
           const placeholders = teamIds.map((_, i) => `$${i + 2}`).join(",");
           const rows = (await db.query(
-            `select * from crm_leads where tenant_slug = $1 and created_by in (${placeholders}) order by created_at desc`,
-            [tenantSlug, ...teamIds]
+            `select * from crm_leads where tenant_slug = $1 and (created_by in (${placeholders}) or assigned_officer_id in (${placeholders})) order by created_at desc`,
+            [tenantSlug, ...teamIds, ...teamIds]
           )).rows as any[];
           const leads = rows.map((r) => ({
             id: r.id, tenantSlug: r.tenant_slug, regionId: r.region_id, branchId: r.branch_id,
@@ -104,7 +117,20 @@ export async function GET(request: NextRequest) {
           }));
           return NextResponse.json({ leads, total: leads.length });
         }
-        filterCreatedBy = auth.employeeId;
+        // No team members found, fall back to own leads
+        const rows = (await db.query(
+          `select * from crm_leads where tenant_slug = $1 and (assigned_officer_id = $2 or created_by = $2) order by created_at desc`,
+          [tenantSlug, auth.employeeId]
+        )).rows as any[];
+        const leads = rows.map((r) => ({
+          id: r.id, tenantSlug: r.tenant_slug, regionId: r.region_id, branchId: r.branch_id,
+          companyName: r.company_name, contactName: r.contact_name, contactEmail: r.contact_email,
+          contactPhone: r.contact_phone, source: r.source, stage: r.stage, score: Number(r.score ?? 0),
+          assignedOfficerId: r.assigned_officer_id, expectedValue: r.expected_value ? Number(r.expected_value) : null,
+          currency: r.currency, notes: r.notes, createdBy: r.created_by ?? null,
+          createdAt: r.created_at, updatedAt: r.updated_at,
+        }));
+        return NextResponse.json({ leads, total: leads.length });
       }
     }
 

@@ -1816,6 +1816,160 @@ export function ConvertLeadToDealModal({
 }
 
 // ---------------------------------------------------------------------------
+// Assign Lead Modal
+// ---------------------------------------------------------------------------
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  jobTitle?: string;
+  departmentName?: string;
+}
+
+export function AssignLeadModal({
+  isOpen,
+  leadContactName,
+  leadCompanyName,
+  currentAssignee,
+  teamMembers,
+  onClose,
+  onSubmit,
+  isLoading,
+}: {
+  isOpen: boolean;
+  leadContactName: string;
+  leadCompanyName: string;
+  currentAssignee: string;
+  teamMembers: TeamMember[];
+  onClose: () => void;
+  onSubmit: (assignedOfficerId: string) => Promise<void>;
+  isLoading: boolean;
+}) {
+  const [selectedId, setSelectedId] = useState<string>("");
+  const [search, setSearch] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) { setError(null); setSearch(""); setSelectedId(""); }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const filteredMembers = teamMembers.filter((m) =>
+    m.name.toLowerCase().includes(search.toLowerCase()) ||
+    m.email.toLowerCase().includes(search.toLowerCase()) ||
+    (m.jobTitle ?? "").toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!selectedId) { setError("Please select a team member"); return; }
+    try {
+      await onSubmit(selectedId);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Assignment failed");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center gap-2">
+            <UserPlus className="w-5 h-5 text-blue-600" />
+            <h2 className="text-xl font-bold text-gray-900">Assign Lead</h2>
+          </div>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition">
+            <X className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
+
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              Assigning lead <span className="font-semibold">{leadContactName}</span> ({leadCompanyName}).
+              Currently assigned to: <span className="font-semibold">{currentAssignee}</span>
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-900 mb-1">Search Team Members</label>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white"
+              placeholder="Search by name, email, or title..."
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg">
+            {filteredMembers.length === 0 ? (
+              <p className="px-4 py-6 text-center text-sm text-gray-500">No team members found.</p>
+            ) : (
+              filteredMembers.map((member) => (
+                <label
+                  key={member.id}
+                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-blue-50 transition border-b border-gray-100 last:border-0 ${
+                    selectedId === member.id ? "bg-blue-50" : ""
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="assignee"
+                    value={member.id}
+                    checked={selectedId === member.id}
+                    onChange={(e) => setSelectedId(e.target.value)}
+                    className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                    disabled={isLoading}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">{member.name}</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {member.jobTitle ? `${member.jobTitle} • ` : ""}{member.email}
+                    </p>
+                    {member.departmentName && (
+                      <p className="text-xs text-gray-400">{member.departmentName}</p>
+                    )}
+                  </div>
+                </label>
+              ))
+            )}
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-900 font-medium hover:bg-gray-50 transition"
+              disabled={isLoading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+              disabled={isLoading || !selectedId}
+            >
+              {isLoading ? "Assigning..." : "Assign Lead"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Bulk Convert Contacts → Leads Modal
 // ---------------------------------------------------------------------------
 export interface BulkConvertToLeadFormData {
