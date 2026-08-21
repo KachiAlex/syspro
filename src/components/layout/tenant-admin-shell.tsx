@@ -6,7 +6,8 @@ import Link from "next/link";
 import { SidebarNav } from "./sidebar-nav";
 import { useTheme } from "@/components/theme/theme-provider";
 import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
-import { Menu, X, User, Bell, Settings, Search, Command, Home, ArrowRight, Sun, Moon, LogOut } from "lucide-react";
+import { AIChatPanel } from "@/components/ai/ai-chat-panel";
+import { Menu, X, User, Bell, Settings, Search, Command, Home, ArrowRight, Sun, Moon, LogOut, Sparkles } from "lucide-react";
 
 interface TenantAdminShellProps {
   children: React.ReactNode;
@@ -83,6 +84,7 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [aiChatOpen, setAiChatOpen] = useState(false);
 
   const filteredLinks = useMemo(() => {
     if (!searchQuery.trim()) return [];
@@ -97,9 +99,14 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
         event.preventDefault();
         setSearchOpen((prev) => !prev);
       }
+      if ((event.ctrlKey || event.metaKey) && event.key === 'j') {
+        event.preventDefault();
+        setAiChatOpen((prev) => !prev);
+      }
       if (event.key === 'Escape') {
         setSearchOpen(false);
         setSidebarOpen(false);
+        setAiChatOpen(false);
       }
       if ((event.ctrlKey || event.metaKey) && event.key === 'b') {
         event.preventDefault();
@@ -376,6 +383,16 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
 
             {/* Top bar actions */}
             <div className="flex items-center gap-3">
+              {/* AI Assistant button */}
+              <button
+                onClick={() => setAiChatOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium hover:from-blue-700 hover:to-indigo-700 transition-all shadow-sm"
+                title="AI Assistant (Ctrl+J)"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span className="hidden sm:inline">AI Assistant</span>
+              </button>
+
               {/* Theme toggle */}
               <button
                 onClick={toggleTheme}
@@ -439,6 +456,9 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
           </div>
         </div>
       </main>
+
+      {/* AI Chat Panel */}
+      <AIChatPanel open={aiChatOpen} onClose={() => setAiChatOpen(false)} />
     </div>
   );
 }
