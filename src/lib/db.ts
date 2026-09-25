@@ -1,42 +1,111 @@
-import { neon } from "@neondatabase/serverless";
+import { Pool, QueryResult } from "pg";
 
-const globalForSql = globalThis as typeof globalThis & {
-  neonSql?: ReturnType<typeof neon> | ((strings: TemplateStringsArray, ...args: any[]) => Promise<any>);
-  usesMock?: boolean;
+type SqlTemplateFn = ((
+  strings: TemplateStringsArray,
+  ...args: any[]
+) => Promise<any[]>) & {
+  query: (text: string, params?: any[]) => Promise<QueryResult>;
+  join: (parts: any[], sep?: string) => string;
+  readonly END: unique symbol;
 };
 
-// Db client singleton
-export function getSql() {
+const globalForSql = globalThis as typeof globalThis & {
+  pgPool?: Pool;
+  sqlClient?: SqlTemplateFn;
+};
+
+function buildSqlTemplateFn(pool: Pool): SqlTemplateFn {
+  const fn = async function sql(
+    strings: TemplateStringsArray,
+    ...args: any[]
+  ): Promise<any[]> {
+    let text = "";
+    const values: any[] = [];
+
+    for (let i = 0; i < strings.length; i++) {
+      text += strings[i];
+      if (i < args.length) {
+        const arg = args[i];
+        if (arg && typeof arg === "object" && "toSQL" in arg && typeof arg.toSQL === "function") {
+          const inner = arg.toSQL();
+          const offset = values.length;
+          text += inner.text.replace(/\$(\d+)/g, (_m: string, p1: string) => `$${Number(p1) + offset}`);
+          values.push(...inner.values);
+        } else if (arg && typeof arg === "object" && "text" in arg && "values" in arg) {
+          const offset = values.length;
+          text += arg.text.replace(/\$(\d+)/g, (_m: string, p1: string) => `$${Number(p1) + offset}`);
+          values.push(...arg.values);
+        } else {
+          values.push(arg);
+          text += `$${values.length}`;
+        }
+      }
+    }
+
+    const result = await pool.query(text, values);
+    return result.rows;
+  } as SqlTemplateFn;
+
+  fn.query = async function query(text: string, params?: any[]): Promise<QueryResult> {
+    return pool.query(text, params || []);
+  };
+
+  fn.join = function join(parts: any[], sep = ","): string {
+    return parts
+      .map((p: any) => {
+        if (p && typeof p === "object" && "toSQL" in p && typeof p.toSQL === "function") {
+          const inner = p.toSQL();
+          return inner.text;
+        }
+        if (p && typeof p === "object" && "text" in p) {
+          return p.text;
+        }
+        return String(p);
+      })
+      .join(sep);
+  };
+
+  return fn;
+}
+
+export function getSql(): SqlTemplateFn {
   const connectionString = process.env.DATABASE_URL;
   const isProduction = process.env.NODE_ENV === "production";
 
-  // If DATABASE_URL is configured, always try to use real database
   if (connectionString) {
-    if (!globalForSql.neonSql) {
+    if (!globalForSql.pgPool) {
       try {
-        globalForSql.neonSql = neon(connectionString);
-        console.log("✓ Connected to Neon database");
+        globalForSql.pgPool = new Pool({
+          connectionString,
+          max: 10,
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 10000,
+        });
+        globalForSql.sqlClient = buildSqlTemplateFn(globalForSql.pgPool);
+        console.log("Connected to Postgres database");
       } catch (err) {
-        console.error("Failed to initialize Neon client:", err);
-        // In production, fail loudly so the issue is visible immediately
+        console.error("Failed to initialize Postgres client:", err);
         if (isProduction) {
           throw new Error(
-            `DATABASE_URL is set but Neon client initialization failed in production. ` +
+            `DATABASE_URL is set but Postgres client initialization failed in production. ` +
             `Error: ${err instanceof Error ? err.message : String(err)}`
           );
         }
-        // Development fallback to mock
-        globalForSql.neonSql = (async function mockSql(_strings: TemplateStringsArray, ..._args: any[]) {
-          return [];
-        }) as any;
-        globalForSql.usesMock = true;
-        console.warn("⚠ Falling back to mock SQL client (development only)");
+        globalForSql.sqlClient = Object.assign(
+          async function mockSql() {
+            return [];
+          },
+          {
+            query: async () => ({ rows: [], rowCount: 0, command: "", oid: 0, fields: [], rowAsArray: false }),
+            join: () => "",
+          }
+        ) as any;
+        console.warn("Falling back to mock SQL client (development only)");
       }
     }
-    return globalForSql.neonSql as any;
+    return globalForSql.sqlClient!;
   }
 
-  // No DATABASE_URL configured
   if (isProduction) {
     throw new Error(
       `DATABASE_URL is not configured. ` +
@@ -44,14 +113,18 @@ export function getSql() {
     );
   }
 
-  // Development-only mock fallback
-  if (!globalForSql.neonSql) {
-    globalForSql.neonSql = (async function mockSql(_strings: TemplateStringsArray, ..._args: any[]) {
-      return [];
-    }) as any;
-    globalForSql.usesMock = true;
-    console.warn("⚠ DATABASE_URL not configured — using in-memory mock SQL client (dev only).");
+  if (!globalForSql.sqlClient) {
+    globalForSql.sqlClient = Object.assign(
+      async function mockSql() {
+        return [];
+      },
+      {
+        query: async () => ({ rows: [], rowCount: 0, command: "", oid: 0, fields: [], rowAsArray: false }),
+        join: () => "",
+      }
+    ) as any;
+    console.warn("DATABASE_URL not configured — using in-memory mock SQL client (dev only).");
   }
 
-  return globalForSql.neonSql as any;
+  return globalForSql.sqlClient!;
 }

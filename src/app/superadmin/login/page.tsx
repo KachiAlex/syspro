@@ -29,8 +29,12 @@ export default function SuperadminLoginPage() {
       if (response.ok) {
         router.push('/superadmin');
       } else {
-        const data = await response.json();
-        setError(data.error || 'Login failed');
+        try {
+          const data = await response.json();
+          setError(data.error || 'Login failed');
+        } catch {
+          setError('Login failed');
+        }
       }
     } catch (err) {
       setError('Network error');

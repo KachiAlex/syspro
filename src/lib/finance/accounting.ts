@@ -5,6 +5,7 @@
 
 import { randomUUID } from "crypto";
 import { db, sql as SQL, SqlClient } from "../sql-client";
+import { ensureOnce } from "@/lib/ensure-once";
 
 export interface JournalEntry {
   id: string;
@@ -107,6 +108,12 @@ const DEFAULT_ACCOUNTS: Record<string, ChartOfAccount> = {
     type: "asset",
     isActive: true
   },
+  PREPAID_EXPENSES: {
+    code: "1600",
+    name: "Prepaid Expenses",
+    type: "asset",
+    isActive: true
+  },
   MATERIAL_VARIANCE: {
     code: "6200",
     name: "Material Variance",
@@ -115,7 +122,11 @@ const DEFAULT_ACCOUNTS: Record<string, ChartOfAccount> = {
   }
 };
 
-export async function ensureAccountingTables(sql = SQL) {
+export function ensureAccountingTables(...args: Parameters<typeof ensureAccountingTablesRun>) {
+  return ensureOnce("finance/accounting:ensureAccountingTables", () => ensureAccountingTablesRun(...args));
+}
+
+async function ensureAccountingTablesRun(sql = SQL) {
   try {
     // Create journal entries table if not exists
     await sql`
@@ -132,6 +143,26 @@ export async function ensureAccountingTables(sql = SQL) {
       )
     `;
 
+    await sql`alter table if exists journal_entries add column if not exists journal_number text`;
+    await sql`alter table if exists journal_entries add column if not exists journal_type text`;
+    await sql`alter table if exists journal_entries add column if not exists fiscal_period_id uuid`;
+    await sql`alter table if exists journal_entries add column if not exists posting_date date`;
+    await sql`alter table if exists journal_entries add column if not exists reference text`;
+    await sql`alter table if exists journal_entries add column if not exists source text`;
+    await sql`alter table if exists journal_entries add column if not exists status text`;
+    await sql`alter table if exists journal_entries add column if not exists total_debit numeric(18,2) not null default 0`;
+    await sql`alter table if exists journal_entries add column if not exists total_credit numeric(18,2) not null default 0`;
+    await sql`alter table if exists journal_entries add column if not exists notes text`;
+    await sql`alter table if exists journal_entries add column if not exists approval_status text`;
+    await sql`alter table if exists journal_entries add column if not exists created_by text`;
+    await sql`alter table if exists journal_entries add column if not exists approved_by text`;
+    await sql`alter table if exists journal_entries add column if not exists approved_at timestamptz`;
+    await sql`alter table if exists journal_entries add column if not exists posted_at timestamptz`;
+    await sql`alter table if exists journal_entries add column if not exists reversed_entry_id uuid`;
+    await sql`alter table if exists journal_entries add column if not exists is_reversing boolean default false`;
+    await sql`alter table if exists journal_entries add column if not exists attachment_url text`;
+    await sql`alter table if exists journal_entries add column if not exists updated_at timestamptz default now()`;
+
     // Create journal entry lines table if not exists
     await sql`
       create table if not exists journal_entry_lines (
@@ -147,6 +178,18 @@ export async function ensureAccountingTables(sql = SQL) {
       )
     `;
 
+    await sql`alter table if exists journal_entry_lines add column if not exists journal_entry_id uuid`;
+    await sql`alter table if exists journal_entry_lines add column if not exists line_number integer`;
+    await sql`alter table if exists journal_entry_lines add column if not exists account_id uuid`;
+    await sql`alter table if exists journal_entry_lines add column if not exists branch_id text`;
+    await sql`alter table if exists journal_entry_lines add column if not exists department_id text`;
+    await sql`alter table if exists journal_entry_lines add column if not exists project_id text`;
+    await sql`alter table if exists journal_entry_lines add column if not exists cost_center_id text`;
+    await sql`alter table if exists journal_entry_lines add column if not exists is_reconciled boolean default false`;
+    await sql`alter table if exists journal_entry_lines add column if not exists reconciled_at timestamptz`;
+    await sql`alter table if exists journal_entry_lines add column if not exists debit numeric(18,2) default 0`;
+    await sql`alter table if exists journal_entry_lines add column if not exists credit numeric(18,2) default 0`;
+
     // Create chart of accounts table if not exists
     await sql`
       create table if not exists chart_of_accounts (
@@ -159,12 +202,36 @@ export async function ensureAccountingTables(sql = SQL) {
       )
     `;
 
+    await sql`alter table if exists chart_of_accounts add column if not exists id uuid default gen_random_uuid()`;
+    await sql`alter table if exists chart_of_accounts add column if not exists tenant_id text`;
+    await sql`alter table if exists chart_of_accounts add column if not exists account_code text`;
+    await sql`alter table if exists chart_of_accounts add column if not exists account_name text`;
+    await sql`alter table if exists chart_of_accounts add column if not exists account_type text`;
+    await sql`alter table if exists chart_of_accounts add column if not exists sub_type text`;
+    await sql`alter table if exists chart_of_accounts add column if not exists subtype text`;
+    await sql`alter table if exists chart_of_accounts add column if not exists balance numeric(18,2) default 0`;
+    await sql`alter table if exists chart_of_accounts add column if not exists description text`;
+    await sql`alter table if exists chart_of_accounts add column if not exists parent_account_id text`;
+    await sql`alter table if exists chart_of_accounts add column if not exists parent_accounts_id text`;
+    await sql`alter table if exists chart_of_accounts add column if not exists currency text default 'NGN'`;
+    await sql`alter table if exists chart_of_accounts add column if not exists is_system_account boolean default false`;
+    await sql`alter table if exists chart_of_accounts add column if not exists branch_id text`;
+    await sql`alter table if exists chart_of_accounts add column if not exists department_id text`;
+    await sql`alter table if exists chart_of_accounts add column if not exists project_id text`;
+    await sql`alter table if exists chart_of_accounts add column if not exists allow_manual_posting boolean default true`;
+    await sql`alter table if exists chart_of_accounts add column if not exists require_cost_center boolean default false`;
+    await sql`alter table if exists chart_of_accounts add column if not exists is_reconciliation_account boolean default false`;
+    await sql`alter table if exists chart_of_accounts add column if not exists created_by text`;
+    await sql`alter table if exists chart_of_accounts add column if not exists updated_at timestamptz default now()`;
+
     // Create indexes (sequential to avoid nested-array typing from template-tag results)
     await sql`create index if not exists journal_entries_tenant_idx on journal_entries (tenant_slug)`;
     await sql`create index if not exists journal_entries_reference_idx on journal_entries (reference_type, reference_id)`;
-    await sql`create index if not exists journal_lines_entry_idx on journal_entry_lines (entry_id)`;
-    await sql`create index if not exists journal_lines_account_idx on journal_entry_lines (account_code)`;
+    await sql`create index if not exists journal_entry_lines_entry_idx on journal_entry_lines (entry_id)`;
+    await sql`create index if not exists journal_entry_lines_account_idx on journal_entry_lines (account_code)`;
     await sql`create index if not exists coa_tenant_idx on chart_of_accounts (tenant_slug)`;
+    await sql`create index if not exists journal_entry_lines_je_idx on journal_entry_lines (journal_entry_id)`;
+    await sql`create index if not exists journal_entry_lines_account_id_idx on journal_entry_lines (account_id)`;
 
     // Seed default accounts if they don't exist
     await seedDefaultAccounts(sql);
@@ -284,16 +351,6 @@ export async function createBillJournalEntry(billId: string, bill: any): Promise
     });
   }
 
-  // Credit VAT Input Tax if applicable
-  if (bill.taxes > 0) {
-    lines.push({
-      accountCode: DEFAULT_ACCOUNTS.VAT_INPUT.code,
-      debitAmount: bill.taxes,
-      creditAmount: 0,
-      description: `VAT Input Tax - Bill: ${bill.billNumber}`
-    });
-  }
-
   // Credit Accounts Payable for total bill amount
   lines.push({
     accountCode: DEFAULT_ACCOUNTS.ACCOUNTS_PAYABLE.code,
@@ -354,7 +411,7 @@ export async function createPaymentJournalEntry(paymentId: string, payment: any)
   // If there's unapplied amount, credit it to a prepaid expense or similar
   if (payment.unappliedAmount > 0) {
     lines.push({
-      accountCode: DEFAULT_ACCOUNTS.ACCOUNTS_PAYABLE.code,
+      accountCode: DEFAULT_ACCOUNTS.PREPAID_EXPENSES.code,
       debitAmount: payment.unappliedAmount,
       creditAmount: 0,
       description: `Prepayment to Vendor - ${payment.paymentNumber} - Unapplied Amount`
@@ -393,35 +450,35 @@ export async function getJournalEntries(filters: {
   const limit = Math.min(Math.max(filters.limit ?? 50, 1), 200);
   const offset = Math.max(filters.offset ?? 0, 0);
 
-  const whereConditions: any[] = [];
-  whereConditions.push(sql`tenant_slug = ${filters.tenantSlug}`);
-  
+  const params: any[] = [];
+  let paramIndex = 1;
+  let whereClause = `tenant_slug = $${paramIndex}`;
+  params.push(filters.tenantSlug);
+  paramIndex++;
+
   if (filters.referenceType) {
-    whereConditions.push(sql`reference_type = ${filters.referenceType}`);
+    whereClause += ` and reference_type = $${paramIndex}`;
+    params.push(filters.referenceType);
+    paramIndex++;
   }
-  
+
   if (filters.referenceId) {
-    whereConditions.push(sql`reference_id = ${filters.referenceId}`);
+    whereClause += ` and reference_id = $${paramIndex}`;
+    params.push(filters.referenceId);
+    paramIndex++;
   }
 
-  const whereClause = whereConditions.length > 0 
-    ? SQL`where ${db.join(whereConditions, ' and ')}`
-    : sql``;
+  const queryText = `select * from journal_entries where ${whereClause} order by entry_date desc, created_at desc limit $${paramIndex} offset $${paramIndex + 1}`;
+  params.push(limit, offset);
 
-  const entries = (await sql`
-    select * from journal_entries 
-    ${whereClause}
-    order by entry_date desc, created_at desc
-    limit ${limit} offset ${offset}
-  `) as any[];
+  const entries = (await db.query<any>(queryText, params)).rows;
 
   if (!entries.length) return [];
 
-  const lines = (await sql`
-    select * from journal_entry_lines 
-    where entry_id = any(${entries.map(e => e.id)})
-    order by id
-  `) as any[];
+  const lines = (await db.query<any>(
+    `select * from journal_entry_lines where entry_id = any($1) order by id`,
+    [entries.map((e: any) => e.id)]
+  )).rows;
 
   const linesByEntry: Record<string, any[]> = {};
   lines.forEach(line => {

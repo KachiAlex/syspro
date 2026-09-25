@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { randomUUID } from 'crypto';
 import { getSql } from '@/lib/db';
 import { TenantPaginationSchema, CreateTenantSchema, safeParse } from '@/lib/validation';
+import { requireSuperAdmin } from "@/lib/api-auth";
 
 const sql = getSql();
 
 export async function GET(request: NextRequest) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   try {
     const url = new URL(request.url);
     const queryParams = {
@@ -31,13 +36,13 @@ export async function GET(request: NextRequest) {
       items = await sql`
         SELECT * FROM tenants
         WHERE name ILIKE ${like} OR slug ILIKE ${like}
-        ORDER BY created_at DESC
+        ORDER BY "createdAt" DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
     } else {
       items = await sql`
         SELECT * FROM tenants
-        ORDER BY created_at DESC
+        ORDER BY "createdAt" DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
     }
@@ -65,6 +70,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   try {
     const body = await request.json();
 
@@ -80,8 +88,8 @@ export async function POST(request: NextRequest) {
     const { name, slug, seats } = validation.data;
 
     const result = await sql`
-      INSERT INTO tenants (name, slug, seats)
-      VALUES (${name}, ${slug}, ${seats})
+      INSERT INTO tenants (id, name, slug, seats)
+      VALUES (${randomUUID()}, ${name}, ${slug}, ${seats})
       RETURNING *
     `;
 

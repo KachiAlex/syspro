@@ -6,11 +6,15 @@ import {
   deleteStaffReport,
 } from '@/lib/hr/db';
 import { AuditService } from '@/lib/tenant-admin/service';
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const VALID_REPORT_TYPES = ['daily', 'weekly', 'monthly', 'quarterly'];
 const VALID_STATUSES = ['pending', 'under_review', 'approved', 'needs_edit', 'rejected'];
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const {
@@ -113,6 +117,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const { reportId, status, tenantSlug, hodComment } = body;
@@ -143,6 +150,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const { searchParams } = new URL(request.url);
     const tenantSlug = searchParams.get('tenantSlug');
@@ -169,6 +179,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const { searchParams } = new URL(request.url);
     const tenantSlug = searchParams.get('tenantSlug');

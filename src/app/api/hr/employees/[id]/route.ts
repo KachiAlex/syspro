@@ -18,6 +18,7 @@ const updateSchema = z.object({
   hireDate: z.string().datetime().optional(),
   salary: z.number().nonnegative().optional(),
   employmentType: z.enum(["full-time", "part-time", "contract", "intern"]).optional(),
+  workMode: z.enum(["ONSITE", "REMOTE", "HYBRID", "FIELD"]).optional(),
   status: z.enum(["active", "inactive", "on-leave", "terminated"]).optional(),
   role: z.enum(["staff", "hod", "admin", "executive"]).optional(),
 });

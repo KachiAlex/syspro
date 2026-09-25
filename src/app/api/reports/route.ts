@@ -3,7 +3,11 @@ import { extractAuthContext, requirePermission, validateTenant } from "@/lib/aut
 import { CreateReportSchema, safeParse } from "@/lib/validation";
 import { createReport, listReports, listReportsCursor } from "@/lib/reporting/db";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "analytics", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const auth = extractAuthContext(request);
     const tenantSlug = validateTenant(auth.tenantSlug);
@@ -28,6 +32,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "analytics", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const auth = extractAuthContext(request);
     const tenantSlug = validateTenant(auth.tenantSlug);

@@ -11,6 +11,7 @@ import {
   recordTaxTransaction,
 } from "@/lib/finance/tax-management";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 const taxRateSchema = z.object({
   tenantSlug: z.string().min(1),
   taxType: z.enum(["vat", "wht", "paye", "company_tax", "custom"]),
@@ -41,6 +42,9 @@ const taxTransactionSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const tenantSlug = searchParams.get("tenantSlug");
@@ -70,6 +74,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const action = body.action || "create_return";
@@ -105,6 +112,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const searchParams = request.nextUrl.searchParams;

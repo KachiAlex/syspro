@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { db } from "@/lib/sql-client";
+import { getPagination } from "@/lib/pagination";
 import { writeFinanceEvent } from "@/lib/finance/events";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 async function ensurePurchaseOrderTables() {
   await db.query(`
     create table if not exists procurement_purchase_orders (
@@ -22,6 +24,9 @@ async function ensurePurchaseOrderTables() {
 }
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     await ensurePurchaseOrderTables();
     const context = validateTenantContext(request, "read");
@@ -29,22 +34,25 @@ export async function GET(request: NextRequest) {
     const tenantSlug = context.tenantSlug;
     const vendorId = searchParams.get("vendorId");
     const status = searchParams.get("status");
+    const { limit, offset } = getPagination(request);
 
-    const rows = (await db.query(
-      `select * from procurement_purchase_orders where tenant_slug = $1`,
-      [tenantSlug]
-    )).rows;
-    let orders = rows || [];
-
+    const params: any[] = [tenantSlug];
+    let where = `where tenant_slug = $1`;
     if (vendorId) {
-      orders = orders.filter((o: any) => o.vendor_id === vendorId);
+      params.push(vendorId);
+      where += ` and vendor_id = $${params.length}`;
     }
-
     if (status) {
-      orders = orders.filter((o: any) => o.status === status);
+      params.push(status);
+      where += ` and status = $${params.length}`;
     }
 
-    return NextResponse.json({ orders });
+    const orders = (await db.query(
+      `select * from procurement_purchase_orders ${where} order by created_at desc limit $${params.length + 1} offset $${params.length + 2}`,
+      [...params, limit, offset]
+    )).rows;
+
+    return NextResponse.json({ orders, limit, offset });
   } catch (error) {
     console.error("Error fetching purchase orders:", error);
     return NextResponse.json(
@@ -55,6 +63,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     await ensurePurchaseOrderTables();
     const context = validateTenantContext(request, "write");

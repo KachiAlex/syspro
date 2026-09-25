@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getVendor, updateVendor, deleteVendor, createVendor } from "@/lib/finance/vendors";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 const vendorUpdateSchema = z.object({
   name: z.string().min(1).optional(),
   email: z.string().email().optional(),
@@ -19,12 +20,23 @@ const vendorUpdateSchema = z.object({
   isActive: z.coerce.boolean().optional(),
 });
 
-export async function GET(_request: NextRequest, context: any) {
+/** Superadmin sessions carry no tenant — skip the tenant match for them. */
+function tenantMatches(userTenant: string | undefined, recordTenant: string | undefined | null) {
+  if (!userTenant) return true;
+  return recordTenant === userTenant;
+}
+
+export async function GET(request: NextRequest, context: any) {
+  const scope = await requireModuleAccess(request, "finance", "read");
+  if (!scope.ok) return scope.response;
+
   const { params } = context;
   const { id } = await params;
   try {
     const vendor = await getVendor(id);
-    if (!vendor) return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+    if (!vendor || !tenantMatches(scope.user.tenantSlug, vendor.tenantSlug)) {
+      return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+    }
     return NextResponse.json({ vendor });
   } catch (err) {
     console.error("Get vendor failed:", err);
@@ -33,6 +45,9 @@ export async function GET(_request: NextRequest, context: any) {
 }
 
 export async function PATCH(request: NextRequest, context: any) {
+  const scope = await requireModuleAccess(request, "finance", "write");
+  if (!scope.ok) return scope.response;
+
   const { params } = context;
   const { id } = await params;
   const body = await request.json().catch(() => null);
@@ -46,11 +61,16 @@ export async function PATCH(request: NextRequest, context: any) {
   }
 
     try {
+      // Verify the record belongs to the caller's tenant before mutating
+      const existing = await getVendor(id);
+      if (existing && !tenantMatches(scope.user.tenantSlug, existing.tenantSlug)) {
+        return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+      }
       const updated = await updateVendor(id, parsed.data as any);
       if (!updated) {
         // If update couldn't find the vendor, create it from the provided data
         try {
-          const created = await createVendor({ id, ...(parsed.data as any) });
+          const created = await createVendor({ id, tenantSlug: scope.user.tenantSlug, ...(parsed.data as any) });
           return NextResponse.json({ vendor: created }, { status: 201 });
         } catch (e) {
           return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
@@ -63,10 +83,17 @@ export async function PATCH(request: NextRequest, context: any) {
     }
 }
 
-export async function DELETE(_request: NextRequest, context: any) {
+export async function DELETE(request: NextRequest, context: any) {
+  const scope = await requireModuleAccess(request, "finance", "write");
+  if (!scope.ok) return scope.response;
+
   const { params } = context;
   const { id } = await params;
   try {
+    const existing = await getVendor(id);
+    if (!existing || !tenantMatches(scope.user.tenantSlug, existing.tenantSlug)) {
+      return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+    }
     const ok = await deleteVendor(id);
     if (!ok) return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
     return NextResponse.json({ success: true });

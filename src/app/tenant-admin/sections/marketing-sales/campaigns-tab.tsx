@@ -53,56 +53,29 @@ export default function CampaignsTab({
         setLoading(true);
         const res = await fetch(`/api/revops/campaigns?tenantSlug=${encodeURIComponent(tenantSlug)}`);
         
-        if (res.ok) {
-          const data = await res.json();
-          const campaignList = Array.isArray(data.data) ? data.data : [];
-          setCampaigns(campaignList);
-          onError("");
-        } else {
+        if (!res.ok) {
           throw new Error("Failed to fetch campaigns");
         }
+        const data = await res.json();
+        const rawList = Array.isArray(data.campaigns) ? data.campaigns : [];
+        const campaignList: Campaign[] = rawList.map((c: any) => ({
+          id: c.id,
+          name: c.name ?? "",
+          channel: c.channel ?? "",
+          status: c.status ?? "draft",
+          budget: Number(c.budget ?? 0),
+          actualSpend: Number(c.actualSpend ?? c.committedSpend ?? 0),
+          revenue: Number(c.revenueAttributed ?? c.revenue ?? 0),
+          roi: Number(c.roi ?? 0),
+          startDate: c.startDate ?? c.startAt ?? "",
+          endDate: c.endDate ?? c.endAt ?? undefined,
+        }));
+        setCampaigns(campaignList);
+        onError("");
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to load campaigns";
         onError(message);
-        // Show demo data
-        setCampaigns([
-          {
-            id: "1",
-            name: "Q1 Enterprise Push",
-            channel: "email",
-            status: "active",
-            budget: 50000,
-            actualSpend: 42000,
-            revenue: 120000,
-            roi: 2.86,
-            startDate: "2026-01-01",
-            endDate: "2026-03-31",
-          },
-          {
-            id: "2",
-            name: "Summer Marketing",
-            channel: "paid_search",
-            status: "active",
-            budget: 35000,
-            actualSpend: 31000,
-            revenue: 95000,
-            roi: 3.06,
-            startDate: "2026-06-01",
-            endDate: "2026-08-31",
-          },
-          {
-            id: "3",
-            name: "Partner Co-marketing",
-            channel: "partnerships",
-            status: "planning",
-            budget: 25000,
-            actualSpend: 0,
-            revenue: 0,
-            roi: 0,
-            startDate: "2026-04-15",
-            endDate: "2026-06-15",
-          },
-        ]);
+        setCampaigns([]);
       } finally {
         setLoading(false);
       }
@@ -126,11 +99,38 @@ export default function CampaignsTab({
       const res = await fetch('/api/revops/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, tenantSlug }),
+        body: JSON.stringify({
+          tenantSlug,
+          name: data.name,
+          channel: data.channel,
+          status: data.status,
+          budget: data.budget,
+          startDate: data.startDate,
+          endDate: data.endDate || undefined,
+          objective: data.status,
+          region: "Global",
+          subsidiary: "Default",
+          createdBy: "marketing.ui",
+        }),
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(payload.error || 'Failed to create campaign');
-      setCampaigns([payload.campaign, ...campaigns]);
+      const c = payload.campaign;
+      if (c) {
+        const newCampaign: Campaign = {
+          id: c.id,
+          name: c.name ?? data.name,
+          channel: c.channel ?? data.channel,
+          status: c.status ?? data.status,
+          budget: Number(c.budget ?? data.budget),
+          actualSpend: Number(c.actualSpend ?? c.committedSpend ?? 0),
+          revenue: Number(c.revenueAttributed ?? 0),
+          roi: Number(c.roi ?? 0),
+          startDate: c.startDate ?? c.startAt ?? data.startDate,
+          endDate: c.endDate ?? c.endAt ?? data.endDate,
+        };
+        setCampaigns([newCampaign, ...campaigns]);
+      }
       setSuccessMessage("Campaign created successfully!");
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
@@ -145,16 +145,35 @@ export default function CampaignsTab({
     if (!selectedCampaign) return;
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/api/revops/campaigns/${selectedCampaign.id}`, {
+      const res = await fetch(`/api/revops/campaigns?id=${encodeURIComponent(selectedCampaign.id)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, tenantSlug }),
+        body: JSON.stringify({
+          tenantSlug,
+          name: data.name,
+          channel: data.channel,
+          status: data.status,
+          budget: data.budget,
+          startDate: data.startDate,
+          endDate: data.endDate || undefined,
+        }),
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(payload.error || 'Failed to update campaign');
+      const c = payload.campaign;
       setCampaigns(
-        campaigns.map((c) =>
-          c.id === selectedCampaign.id ? { ...c, ...payload.campaign } : c
+        campaigns.map((item) =>
+          item.id === selectedCampaign.id
+            ? {
+                ...item,
+                name: c?.name ?? data.name,
+                channel: c?.channel ?? data.channel,
+                status: c?.status ?? data.status,
+                budget: Number(c?.budget ?? data.budget),
+                startDate: c?.startDate ?? c?.startAt ?? data.startDate,
+                endDate: c?.endDate ?? c?.endAt ?? data.endDate,
+              }
+            : item
         )
       );
       setSuccessMessage("Campaign updated successfully!");
@@ -172,7 +191,7 @@ export default function CampaignsTab({
     if (!selectedCampaign) return;
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/api/revops/campaigns/${selectedCampaign.id}?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+      const res = await fetch(`/api/revops/campaigns?id=${encodeURIComponent(selectedCampaign.id)}&tenantSlug=${encodeURIComponent(tenantSlug)}`, {
         method: 'DELETE',
       });
       if (!res.ok) {

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getJournalEntries, createJournalEntry } from "@/lib/finance/accounting";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const tenantSlug = searchParams.get("tenantSlug");
@@ -24,6 +28,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const { tenantSlug, entryDate, description, referenceType, lines } = body;

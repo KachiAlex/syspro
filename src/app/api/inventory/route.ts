@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { db } from "@/lib/sql-client";
+import { getPagination } from "@/lib/pagination";
 
 async function ensureInventoryTable() {
   await db.query(`
@@ -50,16 +51,28 @@ export async function GET(request: NextRequest) {
     const context = validateTenantContext(request, "read");
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
+    const { limit, offset } = getPagination(request);
 
-    let rows = (await db.query(
-      `SELECT * FROM inventory_products WHERE tenant_slug = $1 ORDER BY created_at DESC`,
-      [context.tenantSlug]
+    const params: any[] = [context.tenantSlug];
+    let where = `WHERE tenant_slug = $1`;
+    if (category) {
+      params.push(category);
+      where += ` AND category = $${params.length}`;
+    }
+
+    const rows = (await db.query(
+      `SELECT * FROM inventory_products ${where} ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      [...params, limit, offset]
     )).rows;
-    if (category) rows = rows.filter((p: any) => p.category === category);
+
+    // totalValue covers the whole filtered set, not just the current page
+    const totalRow = (await db.query(
+      `SELECT COALESCE(SUM(current_stock * sale_price), 0) AS total FROM inventory_products ${where}`,
+      params
+    )).rows[0];
 
     const items = rows.map(mapProductToItem);
-    const totalValue = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
-    return NextResponse.json({ items, totalValue });
+    return NextResponse.json({ items, totalValue: Number(totalRow?.total ?? 0), limit, offset });
   } catch (error) {
     console.error("Inventory fetch failed:", error);
     return NextResponse.json({ error: "Failed to fetch inventory", details: String((error as any)?.message ?? error) }, { status: 500 });
@@ -89,7 +102,8 @@ export async function POST(request: NextRequest) {
 
     const finalName = name ?? productName;
     const finalQuantity = Number(quantity ?? currentStock ?? 0);
-    const finalUnitPrice = Number(unitPrice ?? salePrice ?? 0);
+    const finalUnitCost = Number(unitPrice ?? 0);
+    const finalSalePrice = Number(salePrice ?? unitPrice ?? 0);
     const finalReorder = Number(reorderLevel ?? minStock ?? 0);
 
     if (!finalName || !sku || !category) {
@@ -101,10 +115,10 @@ export async function POST(request: NextRequest) {
 
     await db.query(
       `INSERT INTO inventory_products (id, tenant_slug, name, sku, category, current_stock, min_stock, unit_cost, sale_price, supplier, description, location, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-      [id, context.tenantSlug, finalName, sku, category, finalQuantity, finalReorder, finalUnitPrice, finalUnitPrice, supplier ?? "", description ?? "", location ?? "", createdAt]
+      [id, context.tenantSlug, finalName, sku, category, finalQuantity, finalReorder, finalUnitCost, finalSalePrice, supplier ?? "", description ?? "", location ?? "", createdAt]
     );
 
-    const product = { id, tenant_slug: context.tenantSlug, name: finalName, sku, category, current_stock: finalQuantity, min_stock: finalReorder, sale_price: finalUnitPrice, supplier: supplier ?? "", description: description ?? "", location: location ?? "", created_at: createdAt };
+    const product = { id, tenant_slug: context.tenantSlug, name: finalName, sku, category, current_stock: finalQuantity, min_stock: finalReorder, sale_price: finalSalePrice, supplier: supplier ?? "", description: description ?? "", location: location ?? "", created_at: createdAt };
     return NextResponse.json({ item: mapProductToItem(product), message: "Item added" }, { status: 201 });
   } catch (error) {
     console.error("Inventory create failed:", error);
@@ -126,8 +140,8 @@ export async function PATCH(request: NextRequest) {
       { key: "category", col: "category", val: body.category },
       { key: "current_stock", col: "current_stock", val: body.quantity ?? body.currentStock },
       { key: "min_stock", col: "min_stock", val: body.reorderLevel ?? body.minStock },
-      { key: "sale_price", col: "sale_price", val: body.unitPrice ?? body.salePrice },
-      { key: "unit_cost", col: "unit_cost", val: body.unitCost ?? body.unitPrice ?? body.salePrice },
+      { key: "sale_price", col: "sale_price", val: body.salePrice ?? body.unitPrice },
+      { key: "unit_cost", col: "unit_cost", val: body.unitCost ?? body.unitPrice },
       { key: "location", col: "location", val: body.location },
       { key: "supplier", col: "supplier", val: body.supplier },
       { key: "description", col: "description", val: body.description },

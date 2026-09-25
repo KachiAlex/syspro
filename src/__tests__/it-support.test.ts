@@ -1,99 +1,136 @@
 import { describe, expect, it } from "vitest";
 
+import { findBestEngineer } from "@/lib/itsupport/assignment";
 import {
-  addFieldJob,
-  addTicketComment,
-  createTicket,
-  getDashboardMetrics,
-  listFieldJobs,
-  listTicketActivities,
-  listTicketComments,
-  listTickets,
-  suggestAssignment,
-} from "@/lib/support-data";
+  checkSLABreach,
+  computeSLADueTimes,
+  getSLAForCategory,
+  shouldEscalate,
+} from "@/lib/itsupport/sla";
+import { canTransition, transitionTicket } from "@/lib/itsupport/workflow";
+import type { EngineerProfile, SLA, Ticket } from "@/lib/itsupport/types";
 
-function uniqueTenantSlug(label: string) {
-  const random = Math.random().toString(36).slice(2, 8);
-  return `${label}-${Date.now()}-${random}`;
+function makeTicket(overrides: Partial<Ticket> = {}): Ticket {
+  return {
+    id: "t-1",
+    tenantId: "tenant-x",
+    branchId: "branch-1",
+    department: "IT",
+    type: "internal",
+    impact: "high",
+    slaCategory: "high",
+    title: "VPN auth failure",
+    description: "Users cannot authenticate",
+    status: "new",
+    createdBy: "tester",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    slaResponseDue: new Date(Date.now() + 30 * 60000).toISOString(),
+    slaResolutionDue: new Date(Date.now() + 240 * 60000).toISOString(),
+    ...overrides,
+  };
 }
 
-describe("support data helpers", () => {
-  it("creates tickets with SLA context and exposes them in the queue", () => {
-    const tenantSlug = uniqueTenantSlug("ticket");
-    const initialCount = listTickets(tenantSlug).length;
+function makeEngineer(overrides: Partial<EngineerProfile> = {}): EngineerProfile {
+  return {
+    id: "eng-1",
+    tenantId: "tenant-x",
+    name: "Engineer One",
+    skills: [],
+    branchId: "branch-1",
+    onDuty: true,
+    workload: 3,
+    performanceScore: 5,
+    ...overrides,
+  };
+}
 
-    const ticket = createTicket({
-      tenantSlug,
-      title: "VPN auth failure",
-      description: "Users cannot authenticate",
-      ticketType: "internal",
-      source: "erp",
-      impactLevel: "high",
-      priority: "high",
-      serviceArea: "Internal IT",
-      region: "EMEA",
-      tags: ["vpn", "auth"],
-      createdBy: "tester",
-    });
-
-    const queue = listTickets(tenantSlug);
-    expect(queue).toHaveLength(initialCount + 1);
-    expect(queue[0].id).toBe(ticket.id);
-    expect(ticket.status).toBe("new");
-    expect(ticket.ticketNumber).toMatch(/^IT-\d{4}-\d{4}$/);
-    expect(ticket.responseDueAt).toBeTruthy();
-    expect(ticket.resolutionDueAt).toBeTruthy();
+describe("ticket workflow", () => {
+  it("allows valid transitions and rejects invalid ones", () => {
+    expect(canTransition("new", "acknowledged")).toBe(true);
+    expect(canTransition("acknowledged", "in_progress")).toBe(true);
+    expect(canTransition("resolved", "closed")).toBe(true);
+    expect(canTransition("resolved", "reopened")).toBe(true);
+    expect(canTransition("new", "resolved")).toBe(false);
+    expect(canTransition("closed", "in_progress")).toBe(false);
   });
 
-  it("logs comments and timeline entries for tickets", () => {
-    const tenantSlug = uniqueTenantSlug("comment");
-    const ticket = listTickets(tenantSlug)[0];
-
-    const comment = addTicketComment({
-      tenantSlug,
-      ticketId: ticket.id,
-      body: "Customer confirmed outage",
-      authorId: "agent-1",
-      commentType: "customer",
-      visibility: "external",
-    });
-
-    expect(comment).not.toBeNull();
-    const comments = listTicketComments(tenantSlug, ticket.id);
-    expect(comments.at(-1)?.body).toContain("Customer confirmed outage");
-
-    const activities = listTicketActivities(tenantSlug, ticket.id);
-    expect(activities.at(-1)?.activityType).toBe("comment_added");
+  it("transitions a ticket, stamps the stage, and emits an activity log", () => {
+    const ticket = makeTicket();
+    const { ticket: updated, log } = transitionTicket(ticket, "acknowledged", "agent-1");
+    expect(updated.status).toBe("acknowledged");
+    expect(updated.acknowledgedAt).toBeTruthy();
+    expect(log.action).toBe("transition");
+    expect(log.fromStatus).toBe("new");
+    expect(log.toStatus).toBe("acknowledged");
+    expect(log.actorId).toBe("agent-1");
   });
 
-  it("creates field jobs and surfaces them via listFieldJobs", () => {
-    const tenantSlug = uniqueTenantSlug("dispatch");
-    const ticket = listTickets(tenantSlug)[0];
+  it("throws on an invalid transition", () => {
+    const ticket = makeTicket({ status: "closed" });
+    expect(() => transitionTicket(ticket, "in_progress", "agent-1")).toThrow(
+      /Invalid transition/
+    );
+  });
+});
 
-    const job = addFieldJob({
-      tenantSlug,
-      ticketId: ticket.id,
-      engineerId: "eng-ade",
-      location: { region: "West Africa" },
-    });
+describe("SLA helpers", () => {
+  const slas: SLA[] = [
+    { id: "sla-1", tenantId: "tenant-x", category: "high", responseMinutes: 30, resolutionMinutes: 240, createdAt: "" },
+    { id: "sla-2", tenantId: "tenant-x", category: "low", responseMinutes: 480, resolutionMinutes: 2880, createdAt: "" },
+  ];
 
-    expect(job).not.toBeNull();
-    const jobs = listFieldJobs(tenantSlug, ticket.id);
-    expect(jobs).toHaveLength(1);
-    expect(jobs[0].status).toBe("scheduled");
+  it("finds the SLA for a category", () => {
+    expect(getSLAForCategory(slas, "high")?.id).toBe("sla-1");
+    expect(getSLAForCategory(slas, "critical")).toBeUndefined();
   });
 
-  it("provides assignment and dashboard insights", () => {
-    const tenantSlug = uniqueTenantSlug("insights");
-    const metrics = getDashboardMetrics(tenantSlug);
-    expect(metrics.totals.ticketsOpen).toBeGreaterThan(0);
-    expect(metrics.workload.length).toBeGreaterThan(0);
+  it("computes response and resolution due times", () => {
+    const now = new Date("2024-01-01T00:00:00Z");
+    const { responseDue, resolutionDue } = computeSLADueTimes(now, slas[0]);
+    expect(responseDue.getTime()).toBe(now.getTime() + 30 * 60000);
+    expect(resolutionDue.getTime()).toBe(now.getTime() + 240 * 60000);
+  });
 
-    const assignment = suggestAssignment({ tenantSlug, region: "West Africa", skills: ["fiber"] });
-    expect(assignment.primary).not.toBeNull();
-    expect(assignment.ranked.length).toBeGreaterThan(0);
-    if (assignment.primary) {
-      expect(assignment.primary.total).toBeGreaterThan(0);
-    }
+  it("detects breaches only after due times pass", () => {
+    const ticket = makeTicket();
+    const before = checkSLABreach(ticket, new Date(Date.now() - 60000));
+    expect(before.responseBreached).toBe(false);
+    expect(before.resolutionBreached).toBe(false);
+
+    const later = new Date(Date.now() + 300 * 60000);
+    const after = checkSLABreach(ticket, later);
+    expect(after.responseBreached).toBe(true);
+    expect(after.resolutionBreached).toBe(true);
+  });
+
+  it("escalates only on resolution breach without existing escalation", () => {
+    const past = new Date(Date.now() + 300 * 60000);
+    expect(shouldEscalate(makeTicket(), past)).toBe(true);
+    expect(shouldEscalate(makeTicket({ escalationLevel: "l1" }), past)).toBe(false);
+    expect(shouldEscalate(makeTicket(), new Date())).toBe(false);
+  });
+});
+
+describe("assignment engine", () => {
+  const ticket = makeTicket({ branchId: "branch-1", tags: ["vpn"] });
+
+  it("picks the best on-duty engineer in the same branch", () => {
+    const engineers = [
+      makeEngineer({ id: "off-duty", onDuty: false, performanceScore: 100 }),
+      makeEngineer({ id: "other-branch", branchId: "branch-2", performanceScore: 100 }),
+      makeEngineer({ id: "skilled", skills: ["vpn"], workload: 1, performanceScore: 8 }),
+      makeEngineer({ id: "busy", skills: [], workload: 9, performanceScore: 1 }),
+    ];
+    const { primary, backup } = findBestEngineer(ticket, engineers);
+    expect(primary?.id).toBe("skilled");
+    expect(backup?.id).toBe("busy");
+  });
+
+  it("returns empty when no engineer is eligible", () => {
+    const engineers = [makeEngineer({ onDuty: false })];
+    const { primary, backup } = findBestEngineer(ticket, engineers);
+    expect(primary).toBeUndefined();
+    expect(backup).toBeUndefined();
   });
 });

@@ -1,9 +1,14 @@
 import { randomUUID } from "crypto";
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
+import { ensureOnce } from "@/lib/ensure-once";
 
 /* using imported SQL */
 
-export async function ensureAdminTables(sql: SqlClient = SQL) {
+export function ensureAdminTables(...args: Parameters<typeof ensureAdminTablesRun>) {
+  return ensureOnce("admin/db:ensureAdminTables", () => ensureAdminTablesRun(...args));
+}
+
+async function ensureAdminTablesRun(sql: SqlClient = SQL) {
   // Departments table
   await sql`
     create table if not exists admin_departments (
@@ -160,7 +165,10 @@ export async function updateRole(id: string, tenantSlug: string, updates: { name
     values.push(updates.permissions);
   }
   if (parts.length === 0) return;
-  await sql`update admin_roles set ${sql(parts.join(", "))} where id = ${id} and tenant_slug = ${tenantSlug}`;
+  values.push(id);
+  values.push(tenantSlug);
+  const text = `update admin_roles set ${parts.join(", ")} where id = $${values.length - 1} and tenant_slug = $${values.length}`;
+  await db.query(text, values);
 }
 
 export async function deleteRole(id: string, tenantSlug: string, sql: SqlClient = SQL) {
@@ -281,14 +289,20 @@ export async function getModules(tenantSlug: string, sql: SqlClient = SQL) {
 
 export async function updateModule(id: string, tenantSlug: string, updates: { enabled?: boolean; flags?: any }, sql: SqlClient = SQL) {
   const parts = [];
+  const values = [];
   if (updates.enabled !== undefined) {
-    parts.push(`enabled = ${updates.enabled}`);
+    parts.push(`enabled = $${parts.length + 1}`);
+    values.push(updates.enabled);
   }
   if (updates.flags !== undefined) {
-    parts.push(`flags = '${JSON.stringify(updates.flags)}'`);
+    parts.push(`flags = $${parts.length + 1}::jsonb`);
+    values.push(JSON.stringify(updates.flags));
   }
   if (parts.length === 0) return;
-  await sql`update admin_modules set ${sql(parts.join(", "))} where id = ${id} and tenant_slug = ${tenantSlug}`;
+  values.push(id);
+  values.push(tenantSlug);
+  const text = `update admin_modules set ${parts.join(", ")} where id = $${values.length - 1} and tenant_slug = $${values.length}`;
+  await db.query(text, values);
 }
 
 export async function deleteModule(id: string, tenantSlug: string, sql: SqlClient = SQL) {

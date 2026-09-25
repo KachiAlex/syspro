@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder } from "@/lib/finance/purchase-orders";
 
-export async function GET(_request: NextRequest, context: any) {
+import { requireRecordTenant, requireModuleAccess } from "@/lib/api-auth";
+export async function GET(request: NextRequest, context: any) {
+  const scope = await requireModuleAccess(request, "finance", "read");
+  if (!scope.ok) return scope.response;
+
   const { params } = context;
   const { id } = params;
+  const owned = await requireRecordTenant("purchase_orders", id, scope.user);
+  if (!owned.ok) return owned.response;
   try {
     const po = await getPurchaseOrder(id);
     if (!po) return NextResponse.json({ error: "Purchase order not found" }, { status: 404 });
@@ -16,8 +22,13 @@ export async function GET(_request: NextRequest, context: any) {
 }
 
 export async function PATCH(request: NextRequest, context: any) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   const { params } = context;
   const { id } = params;
+  const _owned = await requireRecordTenant("purchase_orders", id, _scope.user);
+  if (!_owned.ok) return _owned.response;
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
 
@@ -31,9 +42,14 @@ export async function PATCH(request: NextRequest, context: any) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: any) {
+export async function DELETE(request: NextRequest, context: any) {
+  const scope = await requireModuleAccess(request, "finance", "write");
+  if (!scope.ok) return scope.response;
+
   const { params } = context;
   const { id } = params;
+  const owned = await requireRecordTenant("purchase_orders", id, scope.user);
+  if (!owned.ok) return owned.response;
   try {
     const ok = await deletePurchaseOrder(id);
     if (!ok) return NextResponse.json({ error: "Purchase order not found" }, { status: 404 });

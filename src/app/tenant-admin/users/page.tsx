@@ -516,7 +516,7 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
             <p className="text-sm font-medium text-blue-900">Employee Module Access</p>
             <p className="text-xs text-blue-700 mt-1">
               These are employees with active portal accounts. Assign which business modules each employee can access (CRM, Finance, HR, Projects, etc.).
-              To activate a new employee's portal, use the HR & Operations section. Module access defaults based on role but can be customized per employee.
+              To activate a new employee&apos;s portal, use the HR & Operations section. Module access defaults based on role but can be customized per employee.
             </p>
           </div>
         </div>

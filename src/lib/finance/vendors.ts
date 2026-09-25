@@ -31,8 +31,9 @@ export interface VendorRecord {
 interface VendorRowDB {
   id: string;
   tenant_slug?: string;
-  code: string;
-  name: string;
+  vendor_code: string;
+  legal_name: string;
+  display_name?: string;
   email?: string;
   phone?: string;
   address?: string;
@@ -40,13 +41,45 @@ interface VendorRowDB {
   state?: string;
   country?: string;
   tax_id?: string;
-  account_number?: string;
-  bank_code?: string;
-  bank_name?: string;
-  payment_terms?: string;
-  is_active?: boolean;
+  bank_details?: any;
+  default_payment_terms?: string;
+  status?: string;
   created_at?: string;
   updated_at?: string;
+}
+
+function extractBankDetails(bankDetails: any): { accountNumber?: string; bankCode?: string; bankName?: string } {
+  if (!bankDetails) return {};
+  const bd = typeof bankDetails === "string" ? JSON.parse(bankDetails) : bankDetails;
+  return {
+    accountNumber: bd?.accountNumber ?? bd?.account_number,
+    bankCode: bd?.bankCode ?? bd?.bank_code,
+    bankName: bd?.bankName ?? bd?.bank_name,
+  };
+}
+
+function mapVendorRow(r: VendorRowDB): VendorRecord {
+  const bank = extractBankDetails(r.bank_details);
+  return {
+    id: r.id,
+    tenantSlug: r.tenant_slug,
+    code: r.vendor_code,
+    name: r.display_name ?? r.legal_name,
+    email: r.email,
+    phone: r.phone,
+    address: r.address,
+    city: r.city,
+    state: r.state,
+    country: r.country,
+    taxId: r.tax_id,
+    accountNumber: bank.accountNumber,
+    bankCode: bank.bankCode,
+    bankName: bank.bankName,
+    paymentTerms: (r.default_payment_terms as VendorRecord['paymentTerms']) ?? 'net30',
+    isActive: r.status ? r.status === 'active' : true,
+    createdAt: r.created_at ?? new Date().toISOString(),
+    updatedAt: r.updated_at ?? new Date().toISOString(),
+  };
 }
 
 
@@ -116,10 +149,43 @@ export async function lookupVendor(
   query: string,
   type: "name" | "code" | "email" = "name"
 ): Promise<VendorLookupResult> {
-  // Prefer DB-backed lookup when connection configured
+  try {
+    const sql = SQL;
+    await ensureVendorTables(sql);
+
+    const like = `%${query}%`;
+    const dbRows = (await db.query<VendorRowDB>(
+      `select id, tenant_slug, vendor_code, legal_name, display_name, email, phone, address, city, state, country, tax_id, bank_details, default_payment_terms, status, created_at, updated_at
+       from vendors
+       where vendor_code ilike $1 or legal_name ilike $1 or display_name ilike $1
+       limit 10`,
+      [like]
+    )).rows;
+
+    if (dbRows.length > 0) {
+      const vendors = dbRows.map(mapVendorRow);
+      const lowerQuery = query.toLowerCase();
+      const exact = vendors.find((v) => {
+        switch (type) {
+          case "code":
+            return v.code.toLowerCase() === lowerQuery;
+          case "email":
+            return v.email?.toLowerCase() === lowerQuery;
+          case "name":
+          default:
+            return v.name.toLowerCase() === lowerQuery;
+        }
+      });
+      if (exact) {
+        return { found: true, vendor: exact };
+      }
+      return { found: false, similar: vendors.slice(0, 5) };
+    }
+    return { found: false, similar: [] };
+  } catch (error) {
+    console.error("Vendor DB lookup failed, falling back to sample data:", error);
     try {
       const lowerQuery = query.toLowerCase();
-      // Exact match
       let vendor = SAMPLE_VENDORS.find((v) => {
         switch (type) {
           case "code":
@@ -134,7 +200,6 @@ export async function lookupVendor(
       if (vendor) {
         return { found: true, vendor };
       }
-      // Fuzzy match
       const similar = SAMPLE_VENDORS.filter((v) => {
         switch (type) {
           case "code":
@@ -147,10 +212,11 @@ export async function lookupVendor(
         }
       }).slice(0, 5);
       return { found: false, similar: similar.length > 0 ? similar : undefined };
-    } catch (error) {
-      console.error("Vendor lookup failed:", error);
+    } catch (fallbackError) {
+      console.error("Vendor lookup fallback failed:", fallbackError);
       return { found: false };
     }
+  }
 }
 
 /**
@@ -164,7 +230,6 @@ export async function listVendors(
     country?: string;
   }
 ): Promise<VendorRecord[]> {
-  // Try DB first
   try {
     const sql = SQL;
     await ensureVendorTables(sql);
@@ -174,63 +239,26 @@ export async function listVendors(
       whereClauses.push(sql`tenant_slug = ${filters.tenantSlug}`);
     }
     if (filters?.isActive !== undefined) {
-      whereClauses.push(sql`is_active = ${filters.isActive}`);
+      whereClauses.push(sql`status = ${filters.isActive ? 'active' : 'inactive'}`);
     }
     if (filters?.paymentTerms) {
-      whereClauses.push(sql`payment_terms = ${filters.paymentTerms}`);
+      whereClauses.push(sql`default_payment_terms = ${filters.paymentTerms}`);
     }
     if (filters?.country) {
       whereClauses.push(sql`country = ${filters.country}`);
     }
 
     const rows = await SQL<VendorRowDB>`
-      select id, tenant_slug, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
+      select id, tenant_slug, vendor_code, legal_name, display_name, email, phone, address, city, state, country, tax_id, bank_details, default_payment_terms, status, created_at, updated_at
       from vendors
       ${whereClauses.length ? sql`where ${(sql as any).join(whereClauses, sql` and `)}` : sql``}
-      order by name asc
+      order by display_name asc
       limit 200
     `;
 
-    return rows.map((r) => ({
-      id: r.id,
-      tenantSlug: r.tenant_slug,
-      code: r.code,
-      name: r.name,
-      email: r.email,
-      phone: r.phone,
-      address: r.address,
-      city: r.city,
-      state: r.state,
-      country: r.country,
-      taxId: r.tax_id,
-      accountNumber: r.account_number,
-      bankCode: r.bank_code,
-      bankName: r.bank_name,
-      paymentTerms: (r.payment_terms as VendorRecord['paymentTerms']) ?? 'net30',
-      isActive: r.is_active ?? true,
-      createdAt: r.created_at ?? new Date().toISOString(),
-      updatedAt: r.updated_at ?? new Date().toISOString(),
-    }));
+    return rows.map(mapVendorRow);
   } catch (err) {
-    // Fallback to samples
-    let vendors = SAMPLE_VENDORS;
-
-    if (filters?.tenantSlug) {
-      vendors = vendors.filter((v) => v.tenantSlug === filters.tenantSlug);
-    }
-    if (filters?.isActive !== undefined) {
-      vendors = vendors.filter((v) => v.isActive === filters.isActive);
-    }
-
-    if (filters?.paymentTerms) {
-      vendors = vendors.filter((v) => v.paymentTerms === filters.paymentTerms);
-    }
-
-    if (filters?.country) {
-      vendors = vendors.filter((v) => v.country === filters.country);
-    }
-
-    return vendors;
+    throw err;
   }
 }
 
@@ -243,35 +271,16 @@ export async function getVendor(vendorId: string): Promise<VendorRecord | null> 
     await ensureVendorTables(sql);
 
     const rows = await SQL<VendorRowDB>`
-      select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
+      select id, vendor_code, legal_name, display_name, email, phone, address, city, state, country, tax_id, bank_details, default_payment_terms, status, created_at, updated_at
       from vendors
       where id = ${vendorId}
       limit 1
     `;
 
     if (!rows.length) return null;
-    const r = rows[0];
-    return {
-      id: r.id,
-      code: r.code,
-      name: r.name,
-      email: r.email,
-      phone: r.phone,
-      address: r.address,
-      city: r.city,
-      state: r.state,
-      country: r.country,
-      taxId: r.tax_id,
-      accountNumber: r.account_number,
-      bankCode: r.bank_code,
-      bankName: r.bank_name,
-      paymentTerms: (r.payment_terms as VendorRecord['paymentTerms']) ?? 'net30',
-      isActive: r.is_active ?? true,
-      createdAt: r.created_at ?? new Date().toISOString(),
-      updatedAt: r.updated_at ?? new Date().toISOString(),
-    };
+    return mapVendorRow(rows[0]);
   } catch (err) {
-    return SAMPLE_VENDORS.find((v) => v.id === vendorId) || null;
+    throw err;
   }
 }
 
@@ -283,60 +292,23 @@ export async function createVendor(payload: Partial<VendorRecord> & { tenantSlug
     const id = payload.id ?? randomUUID();
     const now = new Date().toISOString();
 
+    const bankDetails = JSON.stringify({
+      accountNumber: payload.accountNumber ?? null,
+      bankCode: payload.bankCode ?? null,
+      bankName: payload.bankName ?? null,
+    });
+
     const [row] = await SQL<VendorRowDB>`
       insert into vendors (
-        id, tenant_slug, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
+        id, tenant_slug, vendor_code, legal_name, display_name, email, phone, address, city, state, country, tax_id, bank_details, default_payment_terms, status, created_at, updated_at
       ) values (
-        ${id}, ${payload.tenantSlug ?? null}, ${payload.code ?? null}, ${payload.name ?? null}, ${payload.email ?? null}, ${payload.phone ?? null}, ${payload.address ?? null}, ${payload.city ?? null}, ${payload.state ?? null}, ${payload.country ?? null}, ${payload.taxId ?? null}, ${payload.accountNumber ?? null}, ${payload.bankCode ?? null}, ${payload.bankName ?? null}, ${payload.paymentTerms ?? "net30"}, ${payload.isActive ?? true}, ${now}, ${now}
+        ${id}, ${payload.tenantSlug ?? null}, ${payload.code ?? null}, ${payload.name ?? null}, ${payload.name ?? null}, ${payload.email ?? null}, ${payload.phone ?? null}, ${payload.address ?? null}, ${payload.city ?? null}, ${payload.state ?? null}, ${payload.country ?? null}, ${payload.taxId ?? null}, ${bankDetails}::jsonb, ${payload.paymentTerms ?? "net30"}, ${payload.isActive === false ? 'inactive' : 'active'}, ${now}, ${now}
       )
       returning *
     `;
-    return {
-      id: row.id,
-      tenantSlug: row.tenant_slug,
-      code: row.code,
-      name: row.name,
-      email: row.email,
-      phone: row.phone,
-      address: row.address,
-      city: row.city,
-      state: row.state,
-      country: row.country,
-      taxId: row.tax_id,
-      accountNumber: row.account_number,
-      bankCode: row.bank_code,
-      bankName: row.bank_name,
-      paymentTerms: (row.payment_terms as VendorRecord['paymentTerms']) ?? 'net30',
-      isActive: row.is_active ?? true,
-      createdAt: row.created_at ?? new Date().toISOString(),
-      updatedAt: row.updated_at ?? new Date().toISOString(),
-    };
+    return mapVendorRow(row);
   } catch (err) {
-    // Fallback: return sample created object
-    const now = new Date().toISOString();
-    const vendor: VendorRecord = {
-      id: payload.id ?? `vend-${randomUUID()}`,
-      tenantSlug: payload.tenantSlug,
-      code: payload.code ?? `V-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-      name: payload.name ?? "New Vendor",
-      email: payload.email,
-      phone: payload.phone,
-      address: payload.address,
-      city: payload.city,
-      state: payload.state,
-      country: payload.country,
-      taxId: payload.taxId,
-      accountNumber: payload.accountNumber,
-      bankCode: payload.bankCode,
-      bankName: payload.bankName,
-      paymentTerms: payload.paymentTerms ?? "net30",
-      isActive: payload.isActive ?? true,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    SAMPLE_VENDORS.push(vendor);
-    return vendor;
+    throw err;
   }
 }
 
@@ -345,8 +317,20 @@ export async function updateVendor(id: string, updates: Partial<VendorRecord>): 
     const sql = SQL;
     await ensureVendorTables(sql);
 
+    const hasBankUpdate = updates.accountNumber !== undefined || updates.bankCode !== undefined || updates.bankName !== undefined;
+    const bankDetails = hasBankUpdate
+      ? JSON.stringify({
+          accountNumber: updates.accountNumber ?? null,
+          bankCode: updates.bankCode ?? null,
+          bankName: updates.bankName ?? null,
+        })
+      : null;
+
+    const statusValue = updates.isActive !== undefined ? (updates.isActive ? 'active' : 'inactive') : null;
+
     const params = [
       updates.code ?? null,
+      updates.name ?? null,
       updates.name ?? null,
       updates.email ?? null,
       updates.phone ?? null,
@@ -355,72 +339,40 @@ export async function updateVendor(id: string, updates: Partial<VendorRecord>): 
       updates.state ?? null,
       updates.country ?? null,
       updates.taxId ?? null,
-      updates.accountNumber ?? null,
-      updates.bankCode ?? null,
-      updates.bankName ?? null,
+      bankDetails,
       updates.paymentTerms ?? null,
-      updates.isActive ?? null,
+      statusValue,
       id,
     ];
 
     const queryText = `update vendors set
-      code = coalesce($1, code),
-      name = coalesce($2, name),
-      email = coalesce($3, email),
-      phone = coalesce($4, phone),
-      address = coalesce($5, address),
-      city = coalesce($6, city),
-      state = coalesce($7, state),
-      country = coalesce($8, country),
-      tax_id = coalesce($9, tax_id),
-      account_number = coalesce($10, account_number),
-      bank_code = coalesce($11, bank_code),
-      bank_name = coalesce($12, bank_name),
-      payment_terms = coalesce($13, payment_terms),
-      is_active = coalesce($14, is_active),
+      vendor_code = coalesce($1, vendor_code),
+      legal_name = coalesce($2, legal_name),
+      display_name = coalesce($3, display_name),
+      email = coalesce($4, email),
+      phone = coalesce($5, phone),
+      address = coalesce($6, address),
+      city = coalesce($7, city),
+      state = coalesce($8, state),
+      country = coalesce($9, country),
+      tax_id = coalesce($10, tax_id),
+      bank_details = coalesce($11::jsonb, bank_details),
+      default_payment_terms = coalesce($12, default_payment_terms),
+      status = coalesce($13, status),
       updated_at = now()
-      where id = $15
+      where id = $14
       returning *`;
 
     const res = await db.query<VendorRowDB>(queryText, params);
     const row = res.rows[0];
 
     if (!row) {
-      // If DB update didn't find a row, fall back to in-memory SAMPLE_VENDORS
-      const idx = SAMPLE_VENDORS.findIndex((v) => v.id === id);
-      if (idx === -1) return null;
-      const existing = SAMPLE_VENDORS[idx];
-      const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() } as VendorRecord;
-      SAMPLE_VENDORS[idx] = updated;
-      return updated;
+      return null;
     }
 
-    return {
-      id: row.id,
-      code: row.code,
-      name: row.name,
-      email: row.email,
-      phone: row.phone,
-      address: row.address,
-      city: row.city,
-      state: row.state,
-      country: row.country,
-      taxId: row.tax_id,
-      accountNumber: row.account_number,
-      bankCode: row.bank_code,
-      bankName: row.bank_name,
-      paymentTerms: (row.payment_terms as VendorRecord['paymentTerms']) ?? 'net30',
-      isActive: row.is_active ?? true,
-      createdAt: row.created_at ?? new Date().toISOString(),
-      updatedAt: row.updated_at ?? new Date().toISOString(),
-    };
+    return mapVendorRow(row);
   } catch (err) {
-    const idx = SAMPLE_VENDORS.findIndex((v) => v.id === id);
-    if (idx === -1) return null;
-    const existing = SAMPLE_VENDORS[idx];
-    const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() } as VendorRecord;
-    SAMPLE_VENDORS[idx] = updated;
-    return updated;
+    throw err;
   }
 }
 
@@ -432,10 +384,7 @@ export async function deleteVendor(id: string): Promise<boolean> {
     const res = await db.query<{ count: number }>(`delete from vendors where id = $1`, [id]);
     return res.count > 0;
   } catch (err) {
-    const idx = SAMPLE_VENDORS.findIndex((v) => v.id === id);
-    if (idx === -1) return false;
-    SAMPLE_VENDORS.splice(idx, 1);
-    return true;
+    throw err;
   }
 }
 
@@ -445,20 +394,19 @@ async function ensureVendorTables(sql: SqlClient) {
       create table if not exists vendors (
         id text primary key,
         tenant_slug text,
-        code text,
-        name text not null,
-        email text,
-        phone text,
-        address text,
-        city text,
-        state text,
-        country text,
+        vendor_code text not null,
+        legal_name text not null,
+        display_name text,
+        vendor_type text not null default 'goods' check (vendor_type in ('service','goods')),
+        status text not null default 'active' check (status in ('active','inactive','blacklisted')),
         tax_id text,
-        account_number text,
-        bank_code text,
-        bank_name text,
-        payment_terms text default 'net30',
-        is_active boolean default true,
+        default_currency text not null default 'NGN',
+        default_payment_terms text,
+        default_expense_account text,
+        default_tax_rules jsonb,
+        bank_details jsonb,
+        metadata jsonb,
+        created_by text,
         created_at timestamptz default now(),
         updated_at timestamptz default now()
       )
@@ -473,11 +421,23 @@ async function ensureVendorTables(sql: SqlClient) {
       console.warn('ensureVendorTables: ignoring alter table error:', e.message);
     }
 
+    // Add email/phone/address/city/state/country columns for compatibility
+    try {
+      await db.query(`alter table vendors add column if not exists email text`);
+      await db.query(`alter table vendors add column if not exists phone text`);
+      await db.query(`alter table vendors add column if not exists address text`);
+      await db.query(`alter table vendors add column if not exists city text`);
+      await db.query(`alter table vendors add column if not exists state text`);
+      await db.query(`alter table vendors add column if not exists country text`);
+    } catch (e: any) {
+      console.warn('ensureVendorTables: ignoring alter table error:', e.message);
+    }
+
     // Create indexes individually and tolerate missing-column errors (some DBs
     // may have different schemas in CI/dev). Ignore undefined_column (42703).
     const indexes = [
-      'create index if not exists vendors_name_idx on vendors (name)',
-      'create index if not exists vendors_code_idx on vendors (code)',
+      'create index if not exists vendors_display_name_idx on vendors (display_name)',
+      'create index if not exists vendors_vendor_code_idx on vendors (vendor_code)',
       'create index if not exists vendors_tenant_idx on vendors (tenant_slug)'
     ];
 
@@ -486,7 +446,7 @@ async function ensureVendorTables(sql: SqlClient) {
         await db.query(idxSql);
       } catch (e: any) {
         const msg = (e && e.message) || String(e);
-        if ((e && e.code === '42703') || msg.includes('column "name" does not exist') || msg.includes('column "code" does not exist')) {
+        if ((e && e.code === '42703') || msg.includes('column "display_name" does not exist') || msg.includes('column "vendor_code" does not exist')) {
           // Log and continue — schema mismatch in remote DB, fall back to in-memory store.
           console.warn('ensureVendorTables: ignoring index error:', msg);
           continue;
@@ -573,31 +533,13 @@ export async function getVendorStats(tenantSlug?: string): Promise<{
     const sql = SQL;
     await ensureVendorTables(sql);
     const rows = await SQL<VendorRowDB>`
-      select id, code, name, email, phone, address, city, state, country, tax_id, account_number, bank_code, bank_name, payment_terms, is_active, created_at, updated_at
+      select id, vendor_code, legal_name, display_name, email, phone, address, city, state, country, tax_id, bank_details, default_payment_terms, status, created_at, updated_at
       from vendors
       limit 1000
     `;
-    vendors = rows.map((r) => ({
-      id: r.id,
-      code: r.code,
-      name: r.name,
-      email: r.email,
-      phone: r.phone,
-      address: r.address,
-      city: r.city,
-      state: r.state,
-      country: r.country,
-      taxId: r.tax_id,
-      accountNumber: r.account_number,
-      bankCode: r.bank_code,
-      bankName: r.bank_name,
-      paymentTerms: (r.payment_terms as VendorRecord['paymentTerms']) ?? 'net30',
-      isActive: r.is_active ?? true,
-      createdAt: r.created_at ?? new Date().toISOString(),
-      updatedAt: r.updated_at ?? new Date().toISOString(),
-    }));
-  } catch {
-    vendors = SAMPLE_VENDORS;
+    vendors = rows.map(mapVendorRow);
+  } catch (err) {
+    throw err;
   }
 
   const activeVendors = vendors.filter((v) => v.isActive);

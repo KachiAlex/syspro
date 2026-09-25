@@ -906,7 +906,7 @@ export default function PayrollPage() {
         <div className="overflow-x-auto">
           {pendingAdjustments.length === 0 ? (
             <div className="px-6 py-8 text-center text-sm text-gray-500">
-              No staged adjustments for {selectedMonth}. Click "Stage Adjustment" to add one.
+              No staged adjustments for {selectedMonth}. Click &quot;Stage Adjustment&quot; to add one.
             </div>
           ) : (
             <table className="w-full min-w-[700px]">

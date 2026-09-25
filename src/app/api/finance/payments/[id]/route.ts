@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { updatePayment, deletePayment } from "@/lib/finance/db";
 
+import { requireRecordTenant, requireModuleAccess } from "@/lib/api-auth";
 const paymentUpdateSchema = z.object({
   status: z.enum(["pending", "successful", "failed", "reversed"]).optional(),
   settlementDate: z.string().optional(),
@@ -10,7 +11,12 @@ const paymentUpdateSchema = z.object({
 });
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   const params = await context.params;
+  const _owned = await requireRecordTenant("finance_payments", params.id, _scope.user);
+  if (!_owned.ok) return _owned.response;
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -35,7 +41,12 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 }
 
 export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   const params = await context.params;
+  const _owned = await requireRecordTenant("finance_payments", params.id, _scope.user);
+  if (!_owned.ok) return _owned.response;
 
   try {
     const deleted = await deletePayment(params.id);

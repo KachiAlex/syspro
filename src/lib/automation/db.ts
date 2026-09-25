@@ -1,5 +1,6 @@
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import type { AutomationRule, Action } from "../automation";
+import { ensureOnce } from "@/lib/ensure-once";
 
 export type AutomationSummary = {
   rules: { total: number; enabled: number; simulationOnly: number };
@@ -10,7 +11,11 @@ export type AutomationSummary = {
 /* using imported SQL */
 
 
-export async function ensureAutomationTables(sql: SqlClient = SQL) {
+export function ensureAutomationTables(...args: Parameters<typeof ensureAutomationTablesRun>) {
+  return ensureOnce("automation/db:ensureAutomationTables", () => ensureAutomationTablesRun(...args));
+}
+
+async function ensureAutomationTablesRun(sql: SqlClient = SQL) {
   await sql`create extension if not exists "pgcrypto"`;
   await sql`
     create table if not exists automation_rules (

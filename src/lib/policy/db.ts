@@ -1,8 +1,13 @@
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
+import { ensureOnce } from "@/lib/ensure-once";
 
 /* using imported SQL */
 
-export async function ensurePolicyTables(sql: SqlClient = SQL) {
+export function ensurePolicyTables(...args: Parameters<typeof ensurePolicyTablesRun>) {
+  return ensureOnce("policy/db:ensurePolicyTables", () => ensurePolicyTablesRun(...args));
+}
+
+async function ensurePolicyTablesRun(sql: SqlClient = SQL) {
   await sql`create extension if not exists "pgcrypto"`;
   await sql`
     create table if not exists policies (

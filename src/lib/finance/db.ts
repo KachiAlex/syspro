@@ -108,7 +108,11 @@ export type FinanceTrendPointRecord = {
   created_at: string;
 };
 
-export async function ensureFinanceTables(sql: SqlClient = SQL) {
+export function ensureFinanceTables(...args: Parameters<typeof ensureFinanceTablesRun>) {
+  return ensureOnce("finance/db:ensureFinanceTables", () => ensureFinanceTablesRun(...args));
+}
+
+async function ensureFinanceTablesRun(sql: SqlClient = SQL) {
   await sql`
     create table if not exists finance_accounts (
       id text primary key,
@@ -667,7 +671,17 @@ export async function updateFinanceInvoice(
   const sql = SQL;
   await ensureFinanceTables(sql);
 
-  const [invoiceRow] = (await sql`
+  const [originalInvoice] = (await sql`
+    select * from finance_invoices where id = ${id}
+  `) as FinanceInvoiceRecord[];
+
+  if (!originalInvoice) {
+    return null;
+  }
+
+  const paymentsApplied = Number(originalInvoice.amount) - Number(originalInvoice.balance_due);
+
+  let [invoiceRow] = (await sql`
     update finance_invoices
     set
       customer_name = coalesce(${updates.customerName ?? null}, customer_name),
@@ -725,6 +739,22 @@ export async function updateFinanceInvoice(
         return rows[0];
       })
     );
+
+    const newAmount = lineRows.reduce((sum, line) => sum + Number(line.amount), 0);
+    const newBalanceDue = Math.max(0, newAmount - paymentsApplied);
+
+    const [recalculatedRow] = (await sql`
+      update finance_invoices
+      set amount = ${newAmount},
+          balance_due = ${newBalanceDue},
+          updated_at = now()
+      where id = ${id}
+      returning *
+    `) as FinanceInvoiceRecord[];
+
+    if (recalculatedRow) {
+      invoiceRow = recalculatedRow;
+    }
   }
 
   if (!lineRows) {
@@ -798,8 +828,8 @@ export async function receiveInvoicePayment(data: {
       ${paymentId}, ${data.tenantSlug}, ${data.invoiceId}, ${paymentRef},
       ${data.amount}, 0, ${netAmount}, ${data.method},
       ${data.gateway ?? "manual"}, ${data.gatewayReference ?? null}, ${data.paymentDate},
-      ${data.confirmationDetails ?? null}, "successful",
-      ${JSON.stringify([data.invoiceId])},
+      ${data.confirmationDetails ?? null}, 'successful',
+      ${[data.invoiceId]},
       ${data.metadata ? JSON.stringify(data.metadata) : null}
     )
     returning *
@@ -990,7 +1020,7 @@ export async function createPayment(data: {
       ${data.settlementDate ?? null},
       ${data.confirmationDetails},
       ${data.status ?? "pending"},
-      ${data.linkedInvoices ? JSON.stringify(data.linkedInvoices) : null},
+      ${data.linkedInvoices ? data.linkedInvoices : null},
       ${data.metadata ? JSON.stringify(data.metadata) : null}
     )
     returning *
@@ -1070,7 +1100,7 @@ export async function updatePayment(
     set
       status = coalesce(${updates.status ?? null}, status),
       settlement_date = coalesce(${updates.settlementDate ?? null}, settlement_date),
-      linked_invoices = coalesce(${updates.linkedInvoices ? JSON.stringify(updates.linkedInvoices) : null}, linked_invoices),
+      linked_invoices = coalesce(${updates.linkedInvoices ? updates.linkedInvoices : null}, linked_invoices),
       metadata = coalesce(${updates.metadata ? JSON.stringify(updates.metadata) : null}, metadata),
       updated_at = now()
     where id = ${id}
@@ -1172,7 +1202,7 @@ export async function insertSubscription(data: {
       ${data.status ?? "active"},
       ${data.seats ?? 1},
       ${data.price ?? 0},
-      ${data.features ? JSON.stringify(data.features) : null},
+      ${data.features ? data.features : null},
       ${data.nextBillingDate ?? null}
     )
     returning *
@@ -1202,7 +1232,7 @@ export async function updateSubscription(
       status = coalesce(${updates.status ?? null}, status),
       seats = coalesce(${updates.seats ?? null}, seats),
       price = coalesce(${updates.price ?? null}, price),
-      features = coalesce(${updates.features ? JSON.stringify(updates.features) : null}, features),
+      features = coalesce(${updates.features ? updates.features : null}, features),
       next_billing_date = coalesce(${updates.nextBillingDate ?? null}, next_billing_date),
       updated_at = now()
     where id = ${id}
@@ -1232,6 +1262,7 @@ import type {
   ExpenseApproval,
   ExpenseAuditLog,
 } from "@/lib/finance/types";
+import { ensureOnce } from "@/lib/ensure-once";
 
 export type ExpenseRecord = {
   id: string;
@@ -1293,7 +1324,11 @@ export type ExpenseCategoryRecord = {
   policy_description: string | null;
 };
 
-export async function ensureExpenseTables(sql: SqlClient = SQL) {
+export function ensureExpenseTables(...args: Parameters<typeof ensureExpenseTablesRun>) {
+  return ensureOnce("finance/db:ensureExpenseTables", () => ensureExpenseTablesRun(...args));
+}
+
+async function ensureExpenseTablesRun(sql: SqlClient = SQL) {
   await sql`
     create table if not exists expense_categories (
       id text primary key,

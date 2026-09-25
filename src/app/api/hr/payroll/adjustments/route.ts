@@ -5,6 +5,7 @@ import {
   listPayrollAdjustments,
 } from "@/lib/hr/db";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 const createSchema = z.object({
   tenantSlug: z.string().min(1),
   employeeId: z.string().min(1),
@@ -17,6 +18,9 @@ const createSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "read");
+    if (!_scope.ok) return _scope.response;
+
   const url = new URL(request.url);
   const tenantSlug = url.searchParams.get("tenantSlug");
   const employeeId = url.searchParams.get("employeeId") || undefined;
@@ -48,6 +52,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const parsed = createSchema.safeParse(body);

@@ -2,10 +2,40 @@
 const nextConfig = {
   output: 'standalone',
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
+  },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        dns: false,
+        stream: false,
+        crypto: false,
+        path: false,
+        os: false,
+        url: false,
+        zlib: false,
+        http: false,
+        https: false,
+        querystring: false,
+        assert: false,
+        constants: false,
+        timers: false,
+        child_process: false,
+        worker_threads: false,
+        readline: false,
+        vm: false,
+        async_hooks: false,
+        module: false,
+      };
+    }
+    return config;
   },
   async headers() {
     return [
@@ -28,7 +58,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.neon.tech wss://*.neon.tech",
+              "connect-src 'self'",
               "frame-ancestors 'self'",
               "base-uri 'self'",
               "form-action 'self'",

@@ -1,6 +1,7 @@
 import { db } from "@/lib/sql-client";
 import AttendanceConfidenceCalculator from "@/lib/attendance-calculator";
 import { AttendancePolicy } from "@/lib/attendance-types";
+import { ensureAttendanceVerificationTables } from "@/lib/attendance-verification";
 
 function mapRowKeys(row: any) {
   if (!row || typeof row !== "object") return row;
@@ -90,11 +91,19 @@ export async function handleAttendanceAction(body: any) {
   if (!employeeId) throw new Error("employeeId required");
 
   if (action === "check-in") {
+    await ensureAttendanceVerificationTables();
     const checkInTime = body.checkInTime || new Date().toISOString();
+    // This path carries no QR token or geofence proof — record it as a manual,
+    // flagged check-in so it is distinguishable from verified check-ins.
     await db.query(
-      `INSERT INTO attendance_records (tenant_id, employee_id, work_date, check_in_time, work_mode, created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,NOW(),NOW())
-       ON CONFLICT (tenant_id, employee_id, work_date) DO UPDATE SET check_in_time = EXCLUDED.check_in_time, updated_at = NOW()`,
+      `INSERT INTO attendance_records (tenant_id, employee_id, work_date, check_in_time, work_mode, check_in_method, check_in_flagged, flag_reason, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,'manual',true,'check-in without QR/geofence verification',NOW(),NOW())
+       ON CONFLICT (tenant_id, employee_id, work_date) DO UPDATE SET
+         check_in_time = EXCLUDED.check_in_time,
+         check_in_method = 'manual',
+         check_in_flagged = true,
+         flag_reason = 'check-in without QR/geofence verification',
+         updated_at = NOW()`,
       [tenantId, employeeId, workDate, checkInTime, body.workMode || 'ONSITE']
     );
     return { ok: true, action: 'check-in', employeeId, workDate };

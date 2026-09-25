@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables, resolveOrCreateDepartment } from "@/lib/hr/db";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object" || !body.tenantSlug) {
     return NextResponse.json({ error: "tenantSlug is required" }, { status: 400 });

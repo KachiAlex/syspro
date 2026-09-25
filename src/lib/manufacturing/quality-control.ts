@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { sql as SQL, SqlClient } from "../sql-client";
+import { ensureOnce } from "@/lib/ensure-once";
 
 export interface QualityInspection {
   id: string;
@@ -17,7 +18,11 @@ export interface QualityInspection {
   createdAt: string;
 }
 
-export async function ensureQualityTables(sql: SqlClient = SQL) {
+export function ensureQualityTables(...args: Parameters<typeof ensureQualityTablesRun>) {
+  return ensureOnce("manufacturing/quality-control:ensureQualityTables", () => ensureQualityTablesRun(...args));
+}
+
+async function ensureQualityTablesRun(sql: SqlClient = SQL) {
   await sql`
     create table if not exists quality_inspections (
       id text primary key,

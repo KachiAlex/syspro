@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { db } from "@/lib/sql-client";
+import { getPagination } from "@/lib/pagination";
 import { createJournalEntry } from "@/lib/finance/accounting";
 import { randomUUID } from "crypto";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 async function ensureGoodsReceiptTables() {
   await db.query(`
     create table if not exists procurement_goods_receipts (
@@ -25,26 +27,29 @@ async function ensureGoodsReceiptTables() {
 }
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     await ensureGoodsReceiptTables();
     const context = validateTenantContext(request, "read");
     const tenantSlug = context.tenantSlug;
     const poId = new URL(request.url).searchParams.get("poId");
+    const { limit, offset } = getPagination(request);
 
-    let rows;
+    const params: any[] = [tenantSlug];
+    let where = `where tenant_slug = $1`;
     if (poId) {
-      rows = (await db.query(
-        `select * from procurement_goods_receipts where tenant_slug = $1 and po_id = $2 order by created_at desc`,
-        [tenantSlug, poId]
-      )).rows;
-    } else {
-      rows = (await db.query(
-        `select * from procurement_goods_receipts where tenant_slug = $1 order by created_at desc`,
-        [tenantSlug]
-      )).rows;
+      params.push(poId);
+      where += ` and po_id = $${params.length}`;
     }
 
-    return NextResponse.json({ receipts: rows });
+    const rows = (await db.query(
+      `select * from procurement_goods_receipts ${where} order by created_at desc limit $${params.length + 1} offset $${params.length + 2}`,
+      [...params, limit, offset]
+    )).rows;
+
+    return NextResponse.json({ receipts: rows, limit, offset });
   } catch (error) {
     console.error("Error fetching goods receipts:", error);
     return NextResponse.json(
@@ -55,6 +60,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     await ensureGoodsReceiptTables();
     const context = validateTenantContext(request, "write");
@@ -86,10 +94,15 @@ export async function POST(request: NextRequest) {
       )).rows;
 
       if (existing.length > 0) {
-        const newStock = Number(existing[0].current_stock) + Number(item.quantity);
+        const existingStock = Number(existing[0].current_stock);
+        const existingUnitCost = Number(existing[0].unit_cost);
+        const receivedQty = Number(item.quantity);
+        const receivedUnitCost = Number(item.unitCost);
+        const newStock = existingStock + receivedQty;
+        const newUnitCost = (existingStock * existingUnitCost + receivedQty * receivedUnitCost) / (existingStock + receivedQty);
         await db.query(
           `update inventory_products set current_stock = $1, unit_cost = $2 where id = $3`,
-          [newStock, item.unitCost, existing[0].id]
+          [newStock, newUnitCost, existing[0].id]
         );
       } else {
         await db.query(

@@ -203,7 +203,7 @@ async function scoreEmployee(
       employeeId,
       taskId: task.id,
       projectId: task.projectId,
-      fitScore: Math.round((skillsMatchScore + capacityScore + availabilityScore + performanceHistoryScore) / 4),
+      fitScore: Math.round(fitScore),
       recommendationReason: reasons.join(", "),
       skillsMatchScore,
       capacityScore,

@@ -77,13 +77,6 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
   const [defOpen, setDefOpen] = useState(false);
   const [selectedDefinition, setSelectedDefinition] = useState<any>(null);
 
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    if (scrollHeight - scrollTop <= clientHeight * 1.5 && hasMore && !loading) {
-      awaitLoadMore();
-    }
-  }, [reports.length, hasMore, loading, page]);
-
   const awaitLoadMore = useCallback(() => {
     if (nextCursor) {
       loadReports(nextCursor);
@@ -91,6 +84,13 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
       loadReports(null);
     }
   }, [nextCursor, hasMore]);
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop <= clientHeight * 1.5 && hasMore && !loading) {
+      awaitLoadMore();
+    }
+  }, [reports.length, hasMore, loading, page, awaitLoadMore]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();

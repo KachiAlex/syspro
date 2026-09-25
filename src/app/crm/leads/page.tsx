@@ -93,8 +93,12 @@ export default function LeadsPage() {
       `/api/crm/leads?tenantSlug=${encodeURIComponent(ts ?? '')}&limit=${encodeURIComponent(String(size))}&offset=${encodeURIComponent(String(offset))}`,
       { cache: "no-store" }
     )
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) { setError('Failed to load leads'); return null; }
+        return r.json();
+      })
       .then((data) => {
+        if (!data) return;
         if (data?.leads) setLeads(data.leads);
         else setError("No leads returned");
         if (typeof data?.total === "number") setTotal(data.total);

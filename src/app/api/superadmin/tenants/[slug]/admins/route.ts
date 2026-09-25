@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import bcrypt from 'bcryptjs';
+import { requireSuperAdmin } from "@/lib/api-auth";
 
 const sql = getSql();
 
@@ -8,6 +9,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   const { slug } = await params;
   try {
 
@@ -34,6 +38,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   const { slug } = await params;
   try {
     const body = await request.json();

@@ -50,6 +50,7 @@ export interface EmployeeRecord {
   hireDate: string | null;
   salary: number | null;
   employmentType: string | null;
+  workMode: string | null;
   role: string | null;
   status: string;
   passwordHash: string | null;

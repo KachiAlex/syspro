@@ -31,8 +31,7 @@ export async function GET(request: NextRequest) {
       // Development fallback: when running locally, provide a dev user
       // so the tenant-admin UI can render without a full auth stack.
       if (process.env.NODE_ENV !== "production") {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        (user as any) = { id: "dev-user-1", email: "dev@local", tenantSlug, roleId: "admin" } as any;
+        user = { id: "dev-user-1", email: "dev@local", tenantSlug, roleId: "admin" } as any;
       } else {
         return NextResponse.json({ error: "User not authenticated" }, { status: 401 });
       }

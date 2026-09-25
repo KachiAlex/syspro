@@ -3,7 +3,11 @@ import { extractAuthContext, requirePermission, validateTenant } from "@/lib/aut
 import { PolicyOverrideSchema, UpdatePolicySchema, safeParse } from "@/lib/validation";
 import { addPolicyOverride, addPolicyVersion, getPolicyWithVersions, updatePolicyStatus } from "@/lib/policy/db";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 export async function PATCH(request: NextRequest, context: any) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   const { params } = context;
   try {
     const auth = extractAuthContext(request);
@@ -37,6 +41,9 @@ export async function PATCH(request: NextRequest, context: any) {
 }
 
 export async function POST(request: NextRequest, context: any) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   const { params } = context;
   // POST here handles overrides creation
   try {

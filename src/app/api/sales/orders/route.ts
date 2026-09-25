@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { db } from "@/lib/sql-client";
+import { getPagination } from "@/lib/pagination";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 async function ensureSalesOrdersTable() {
   await db.query(`
     CREATE TABLE IF NOT EXISTS sales_orders (
@@ -61,16 +63,24 @@ function mapOrder(row: any) {
 }
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "sales", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     await ensureSalesOrdersTable();
     const context = validateTenantContext(request, "read");
+    const { limit, offset } = getPagination(request);
     const rows = (await db.query(
-      `SELECT * FROM sales_orders WHERE tenant_slug = $1 ORDER BY created_at DESC`,
-      [context.tenantSlug]
+      `SELECT * FROM sales_orders WHERE tenant_slug = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+      [context.tenantSlug, limit, offset]
     )).rows;
+    // total + revenue cover the full tenant set, not just this page
+    const aggRow = (await db.query(
+      `SELECT COUNT(*)::int AS total, COALESCE(SUM(total), 0) AS revenue FROM sales_orders WHERE tenant_slug = $1`,
+      [context.tenantSlug]
+    )).rows[0];
     const orders = rows.map(mapOrder);
-    const revenue = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
-    return NextResponse.json({ orders, total: orders.length, revenue });
+    return NextResponse.json({ orders, total: Number(aggRow?.total ?? orders.length), revenue: Number(aggRow?.revenue ?? 0), limit, offset });
   } catch (error) {
     console.error("Sales orders fetch failed:", error);
     return NextResponse.json({ error: "Failed to fetch sales orders", details: String((error as any)?.message ?? error) }, { status: 500 });
@@ -78,6 +88,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "sales", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     await ensureSalesOrdersTable();
     const context = validateTenantContext(request, "write");
@@ -114,6 +127,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "sales", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     await ensureSalesOrdersTable();
     const context = validateTenantContext(request, "write");

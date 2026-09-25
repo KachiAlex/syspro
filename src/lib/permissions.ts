@@ -131,9 +131,9 @@ export function filterNavigation(
     .map((section) => ({
       ...section,
       links: section.links.filter((link) => {
-        const module = RBAC_MODULES[link.key as keyof typeof RBAC_MODULES];
-        if (!module) return true; // Allow if not protected
-        return canRead(permissions, module);
+        const mod = RBAC_MODULES[link.key as keyof typeof RBAC_MODULES];
+        if (!mod) return true; // Allow if not protected
+        return canRead(permissions, mod);
       }),
     }))
     .filter((section) => section.links.length > 0);

@@ -3,18 +3,26 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, LogOut, Loader2, AlertCircle, CalendarCheck, Target, UserCircle, Menu, Bell, ClipboardList, Receipt, Plane, Wallet, CheckSquare, Sparkles, ChevronRight, X, CheckCheck, Megaphone, Users } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { DashboardTab } from './tabs/DashboardTab';
-import { AttendanceTab } from './tabs/AttendanceTab';
-import { ReportsTab } from './tabs/ReportsTab';
-import { ProfileTab } from './tabs/ProfileTab';
-import { ApprovalsTab } from './tabs/ApprovalsTab';
-import { TasksTab } from './tabs/TasksTab';
-import { ExpensesTab } from './tabs/ExpensesTab';
-import { LeaveTab } from './tabs/LeaveTab';
-import { PayslipsTab } from './tabs/PayslipsTab';
-import { AppraisalTab } from './tabs/AppraisalTab';
-import { CrmTab } from './tabs/CrmTab';
 import { ClipboardCheck } from 'lucide-react';
+
+const tabLoading = () => (
+  <div className="flex items-center justify-center py-16">
+    <Loader2 className="animate-spin text-blue-600" size={28} />
+  </div>
+);
+
+const AttendanceTab = dynamic(() => import('./tabs/AttendanceTab').then((m) => m.AttendanceTab), { loading: tabLoading });
+const ReportsTab = dynamic(() => import('./tabs/ReportsTab').then((m) => m.ReportsTab), { loading: tabLoading });
+const ProfileTab = dynamic(() => import('./tabs/ProfileTab').then((m) => m.ProfileTab), { loading: tabLoading });
+const ApprovalsTab = dynamic(() => import('./tabs/ApprovalsTab').then((m) => m.ApprovalsTab), { loading: tabLoading });
+const TasksTab = dynamic(() => import('./tabs/TasksTab').then((m) => m.TasksTab), { loading: tabLoading });
+const ExpensesTab = dynamic(() => import('./tabs/ExpensesTab').then((m) => m.ExpensesTab), { loading: tabLoading });
+const LeaveTab = dynamic(() => import('./tabs/LeaveTab').then((m) => m.LeaveTab), { loading: tabLoading });
+const PayslipsTab = dynamic(() => import('./tabs/PayslipsTab').then((m) => m.PayslipsTab), { loading: tabLoading });
+const AppraisalTab = dynamic(() => import('./tabs/AppraisalTab').then((m) => m.AppraisalTab), { loading: tabLoading });
+const CrmTab = dynamic(() => import('./tabs/CrmTab').then((m) => m.CrmTab), { loading: tabLoading });
 
 interface EmployeeProfile {
   id: string; name: string; email: string; jobTitle: string; role: string;
@@ -110,12 +118,14 @@ export default function EmployeeDashboardPage() {
 
   const handleMarkAllRead = async () => {
     try {
-      await fetch('/api/hr/employees/portal/notifications', {
+      const res = await fetch('/api/hr/employees/portal/notifications', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ markAll: true }),
       });
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-      setUnreadCount(0);
+      if (res.ok) {
+        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+        setUnreadCount(0);
+      }
     } catch {}
   };
 

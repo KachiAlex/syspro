@@ -47,7 +47,7 @@ interface DashboardData {
 const periodToTimeframe: Record<string, string> = {
   month: "last_30_days",
   quarter: "quarter_to_date",
-  year: "quarter_to_date",
+  year: "year_to_date",
 };
 
 const categoryColors = [
@@ -275,10 +275,10 @@ export default function FinanceDashboard() {
             )}
             {expenseBreakdown.map((category, idx) => {
               const total = expenseBreakdown.reduce(
-                (sum, c) => sum + Number(c.amount.replace(/[^0-9.]/g, "") || 0),
+                (sum, c) => sum + Number(String(c.amount || 0).replace(/[^0-9.\-]/g, "") || 0),
                 0
               );
-              const value = Number(category.amount.replace(/[^0-9.]/g, "") || 0);
+              const value = Number(String(category.amount || 0).replace(/[^0-9.\-]/g, "") || 0);
               const pct = total > 0 ? Math.round((value / total) * 100) : 0;
               return (
                 <div key={category.label}>

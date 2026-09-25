@@ -15,6 +15,7 @@ import type {
   ScreeningConfigRecord,
   BatchScreeningResult,
 } from "./types";
+import { ensureOnce } from "@/lib/ensure-once";
 
 function serializeTextArray(values?: string[] | null): string {
   if (!values || values.length === 0) return "{}";
@@ -29,7 +30,11 @@ function serializeTextArray(values?: string[] | null): string {
 // TABLE CREATION
 // ============================================================================
 
-export async function ensureRecruitmentTables(sql: SqlClient = SQL) {
+export function ensureRecruitmentTables(...args: Parameters<typeof ensureRecruitmentTablesRun>) {
+  return ensureOnce("hr/db-recruitment:ensureRecruitmentTables", () => ensureRecruitmentTablesRun(...args));
+}
+
+async function ensureRecruitmentTablesRun(sql: SqlClient = SQL) {
   // Job Requisitions
   await sql`
     create table if not exists admin_job_requisitions (
@@ -707,7 +712,7 @@ export async function updateApplication(
     update admin_applications set
       status = coalesce(${updates.status ?? null}, status),
       ai_score = coalesce(${updates.aiScore ?? null}, ai_score),
-      screening_result = coalesce(${updates.screeningResult ?? null}, screening_result),
+      screening_result = coalesce(${updates.screeningResult != null ? JSON.stringify(updates.screeningResult) : null}::jsonb, screening_result),
       reviewed_at = coalesce(${updates.reviewedAt ?? null}, reviewed_at),
       decided_at = coalesce(${updates.decidedAt ?? null}, decided_at),
       updated_at = now()
@@ -1225,7 +1230,7 @@ export async function runApplicationScreening(
   await sql`
     update admin_applications set
       ai_score = ${result.score},
-      screening_result = ${screeningResult as any},
+      screening_result = ${JSON.stringify(screeningResult)}::jsonb,
       status = ${result.autoRejected ? "screened" : (passed ? "screened" : "under_review")},
       reviewed_at = now(),
       updated_at = now()
@@ -1424,7 +1429,7 @@ export async function runBatchAIScreening(
     await sql`
       update admin_applications set
         ai_score = ${s.aiScore},
-        screening_result = ${screeningData as any},
+        screening_result = ${JSON.stringify(screeningData)}::jsonb,
         status = ${status},
         shortlisted_at = ${shortlistedIds.has(s.applicationId) ? new Date().toISOString() : null},
         shortlisted_by = ${shortlistedIds.has(s.applicationId) ? "ai" : null},
@@ -1452,8 +1457,8 @@ export async function runBatchAIScreening(
         ) values (
           ${histId}, ${tenantSlug}, ${requisitionId}, ${s.applicationId}, ${s.candidateId}, ${s.candidateName},
           ${s.aiScore}, ${s.confidence}, ${status}, ${s.autoRejected},
-          ${s.autoRejectReasons}::text[], ${s.breakdown as any}, ${s.keywordMatches as any},
-          ${configSnapshot as any}, ${runId}
+          ${s.autoRejectReasons}::text[], ${JSON.stringify(s.breakdown)}::jsonb, ${JSON.stringify(s.keywordMatches)}::jsonb,
+          ${JSON.stringify(configSnapshot)}::jsonb, ${runId}
         )
       `;
     } catch (e) { console.error('Screening history insert failed:', (e as any)?.message); }

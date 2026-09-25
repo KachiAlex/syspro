@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { sql as SQL, SqlClient } from "../sql-client";
+import { ensureOnce } from "@/lib/ensure-once";
 
 export interface TaxRate {
   id: string;
@@ -47,7 +48,11 @@ export interface TaxTransaction {
   createdAt: string;
 }
 
-export async function ensureTaxTables(sql: SqlClient = SQL) {
+export function ensureTaxTables(...args: Parameters<typeof ensureTaxTablesRun>) {
+  return ensureOnce("finance/tax-management:ensureTaxTables", () => ensureTaxTablesRun(...args));
+}
+
+async function ensureTaxTablesRun(sql: SqlClient = SQL) {
   await sql`
     create table if not exists tax_rates (
       id text primary key,

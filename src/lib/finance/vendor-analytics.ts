@@ -396,43 +396,44 @@ export async function getTaxReport(
 ): Promise<TaxReport[]> {
   const sql = SQL;
 
-  const whereConditions: any[] = [];
-  whereConditions.push(sql`b.tenant_slug = ${tenantSlug}`);
-  
+  const params: any[] = [];
+  let paramIndex = 1;
+  let whereClause = `b.tenant_slug = $${paramIndex}`;
+  params.push(tenantSlug);
+  paramIndex++;
+
   if (filters?.vendorId) {
-    whereConditions.push(sql`b.vendor_id = ${filters.vendorId}`);
+    whereClause += ` and b.vendor_id = $${paramIndex}`;
+    params.push(filters.vendorId);
+    paramIndex++;
   }
-  
+
   if (filters?.period) {
-    whereConditions.push(sql`date_trunc('month', b.bill_date)::text = ${filters.period}`);
+    whereClause += ` and date_trunc('month', b.bill_date)::text = $${paramIndex}`;
+    params.push(filters.period);
+    paramIndex++;
   }
 
-  const whereClause = whereConditions.length > 0 
-    ? SQL`where ${db.join(whereConditions, ' and ')}`
-    : sql``;
-
-  const results = (await sql`
-    select 
+  const queryText = `select
       b.vendor_id,
       v.legal_name as vendor_name,
       v.tax_id,
       sum(b.taxes) as total_tax_withheld,
-      -- Estimate VAT input (assuming 7.5% VAT rate)
       sum(b.taxes) * 0.75 as vat_input,
-      -- Estimate withholding tax (assuming 5% WHT rate)
       sum(b.taxes) * 0.25 as withholding_tax,
       coalesce(date_trunc('month', b.bill_date)::text, date_trunc('month', current_date)::text) as period,
-      case 
+      case
         when v.tax_id is not null then 'compliant'
         when sum(b.total) > 100000 then 'non_compliant'
         else 'pending'
       end as compliance_status
     from bills b
     join vendors v on b.vendor_id = v.id
-    ${whereClause}
+    where ${whereClause}
     group by b.vendor_id, v.legal_name, v.tax_id, date_trunc('month', b.bill_date)
-    order by total_tax_withheld desc
-  `) as any[];
+    order by total_tax_withheld desc`;
+
+  const results = (await db.query<any>(queryText, params)).rows;
 
   return results.map(row => ({
     vendorId: row.vendor_id,

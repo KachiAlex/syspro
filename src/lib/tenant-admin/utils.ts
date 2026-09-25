@@ -201,7 +201,7 @@ export function canPerformAction(
   action: string
 ): boolean {
   return userPermissions.some((perm) =>
-    perm === `${module}:${action}` || perm === `${module}:admin`
+    perm === `${module}.${action}` || perm === `${module}.admin`
   );
 }
 

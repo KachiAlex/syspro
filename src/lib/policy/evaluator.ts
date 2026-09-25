@@ -90,6 +90,6 @@ export async function evaluatePolicyDecision(input: { tenantSlug: string; policy
   const sql = input.sql ?? SQL;
   const policy = await fetchLatestPolicy(input.tenantSlug, input.policyKey, sql);
   if (!policy) return { allowed: true, reason: "no policy found" };
-  if (policy.status !== "published") return { allowed: true, reason: "policy not published" };
+  if (policy.status !== "published") return { allowed: false, reason: "policy not published" };
   return applyPolicyDocument(policy.document, input.context ?? {});
 }

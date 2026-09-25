@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
+import { requireSuperAdmin } from "@/lib/api-auth";
 
 const sql = getSql();
 
@@ -7,6 +8,9 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   try {
     const { id } = params;
     const body = await request.json();
@@ -37,6 +41,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   try {
     const { id } = params;
     const result = await sql`DELETE FROM licenses WHERE id = ${id} RETURNING *`;

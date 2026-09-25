@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/sql-client";
 import { requireDashboardPermission } from "@/lib/tenant-admin/permissions";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "read");
+    if (!_scope.ok) return _scope.response;
+
   const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
   if (!tenantSlug) {
     return NextResponse.json({ error: "tenantSlug is required" }, { status: 400 });

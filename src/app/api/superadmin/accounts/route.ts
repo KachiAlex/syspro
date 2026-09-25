@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import bcrypt from 'bcryptjs';
+import { requireSuperAdmin } from "@/lib/api-auth";
+import { getPagination } from "@/lib/pagination";
 
 const sql = getSql();
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   try {
-    const superadmins = await sql`SELECT id, email, name, created_at FROM superadmins ORDER BY created_at DESC`;
+    const { limit, offset } = getPagination(request);
+    const superadmins = await sql`SELECT id, email, name, created_at FROM superadmins ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`;
     return NextResponse.json(superadmins);
   } catch (error) {
     console.error('Error fetching superadmins:', error);
@@ -15,6 +21,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   try {
     const body = await request.json();
     const { email, password, name } = body;

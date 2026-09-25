@@ -6,8 +6,13 @@ import { listCampaignCosts, recordCampaignCost } from "@/lib/revops-data";
 export async function GET(request: NextRequest, context: any) {
   const { params } = context;
   const ctx = validateTenantContext(request, "read");
-  const costs = listCampaignCosts(ctx.tenantSlug, params.campaignId);
-  return NextResponse.json({ costs });
+  try {
+    const costs = await listCampaignCosts(ctx.tenantSlug, params.campaignId);
+    return NextResponse.json({ costs });
+  } catch (error) {
+    console.error("Failed to list campaign costs", error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to list costs" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest, context: any) {
@@ -30,7 +35,7 @@ export async function POST(request: NextRequest, context: any) {
   }
 
   try {
-    const cost = recordCampaignCost({
+    const cost = await recordCampaignCost({
       tenantSlug: ctx.tenantSlug,
       campaignId: params.campaignId,
       amount: Number(body.amount),
@@ -47,6 +52,7 @@ export async function POST(request: NextRequest, context: any) {
 
     return NextResponse.json({ cost }, { status: 201 });
   } catch (error) {
+    console.error("Failed to record campaign cost", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to record cost" }, { status: 500 });
   }
 }

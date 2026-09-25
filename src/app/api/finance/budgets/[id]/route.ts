@@ -6,9 +6,12 @@ import {
   changeBudgetStatus,
 } from "@/lib/finance/budgets-db";
 import { budgetUpdateSchema } from "@/lib/finance/budgets";
-import { db } from "@/lib/sql-client";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 export async function GET(request: NextRequest, context: any) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const { params } = context;
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
@@ -20,18 +23,7 @@ export async function GET(request: NextRequest, context: any) {
       );
     }
 
-    // Get tenant ID
-    const tenantResult = await db.query(
-      "SELECT id FROM tenants WHERE slug = $1",
-      [tenantSlug]
-    );
-
-    if (tenantResult.rows.length === 0) {
-      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
-    }
-
-    const tenantId = BigInt(tenantResult.rows[0].id);
-    const budget = await getBudget(BigInt(params.id), tenantId);
+    const budget = await getBudget(BigInt(params.id), tenantSlug);
 
     if (!budget) {
       return NextResponse.json({ error: "Budget not found" }, { status: 404 });
@@ -48,6 +40,9 @@ export async function GET(request: NextRequest, context: any) {
 }
 
 export async function PUT(request: NextRequest, context: any) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   const { params } = context;
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
@@ -59,23 +54,12 @@ export async function PUT(request: NextRequest, context: any) {
       );
     }
 
-    // Get tenant ID
-    const tenantResult = await db.query(
-      "SELECT id FROM tenants WHERE slug = $1",
-      [tenantSlug]
-    );
-
-    if (tenantResult.rows.length === 0) {
-      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
-    }
-
-    const tenantId = BigInt(tenantResult.rows[0].id);
     const body = await request.json();
 
     // Validate
     const validated = budgetUpdateSchema.parse(body);
 
-    const updated = await updateBudget(BigInt(params.id), tenantId, validated);
+    const updated = await updateBudget(BigInt(params.id), tenantSlug, validated);
 
     if (!updated) {
       return NextResponse.json({ error: "Budget not found" }, { status: 404 });
@@ -100,6 +84,9 @@ export async function PUT(request: NextRequest, context: any) {
 }
 
 export async function DELETE(request: NextRequest, context: any) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   const { params } = context;
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
@@ -111,18 +98,7 @@ export async function DELETE(request: NextRequest, context: any) {
       );
     }
 
-    // Get tenant ID
-    const tenantResult = await db.query(
-      "SELECT id FROM tenants WHERE slug = $1",
-      [tenantSlug]
-    );
-
-    if (tenantResult.rows.length === 0) {
-      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
-    }
-
-    const tenantId = BigInt(tenantResult.rows[0].id);
-    const deleted = await deleteBudget(BigInt(params.id), tenantId);
+    const deleted = await deleteBudget(BigInt(params.id), tenantSlug);
 
     if (!deleted) {
       return NextResponse.json({ error: "Budget not found" }, { status: 404 });

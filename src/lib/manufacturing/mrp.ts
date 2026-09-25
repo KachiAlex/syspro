@@ -96,7 +96,8 @@ async function getInventoryOnHand(sku: string, tenantSlug: string): Promise<numb
       limit 1
     `) as any[];
     return row ? Number(row.current_stock) : 0;
-  } catch {
+  } catch (error) {
+    console.error('getInventoryOnHand failed:', error);
     return 0;
   }
 }
@@ -110,7 +111,8 @@ async function getComponentUnitCost(sku: string, tenantSlug: string): Promise<nu
       limit 1
     `) as any[];
     return row ? Number(row.unit_cost) : 0;
-  } catch {
+  } catch (error) {
+    console.error('getComponentUnitCost failed:', error);
     return 0;
   }
 }

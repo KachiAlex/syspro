@@ -4,11 +4,15 @@ import {
   getGeneralLedger,
 } from "@/lib/accounting/db";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 /**
  * GET /api/accounting/reports/trial-balance
  * Get trial balance for a specific period
  */
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const url = new URL(request.url);
     const tenantSlug = url.searchParams.get("tenantSlug");

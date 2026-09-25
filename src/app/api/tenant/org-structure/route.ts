@@ -6,6 +6,7 @@ import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import { requireDashboardPermission } from "@/lib/tenant-admin/permissions";
 
 
+import { requireModuleAccess } from "@/lib/api-auth";
 type TenantStructureRow = {
   tree: unknown;
 };
@@ -167,6 +168,9 @@ function moveNode(tree: OrgNode, nodeId: string, targetParentId: string, positio
 }
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "read");
+    if (!_scope.ok) return _scope.response;
+
   const tenantSlug = resolveTenantSlug(request);
   if (!tenantSlug) {
     return NextResponse.json({ error: "tenantSlug is required" }, { status: 400 });
@@ -183,6 +187,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json().catch(() => null);
     const parsed = createSchema.safeParse(body);
@@ -224,6 +231,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json().catch(() => null);
     const parsed = updateSchema.safeParse(body);
@@ -267,6 +277,9 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json().catch(() => null);
     const parsed = deleteSchema.safeParse(body);

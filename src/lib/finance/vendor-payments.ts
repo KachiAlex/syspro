@@ -6,6 +6,7 @@
 import { randomUUID } from "crypto";
 import { db, sql as SQL } from "../sql-client";
 import { createPaymentJournalEntry } from "./accounting";
+import { ensureOnce } from "@/lib/ensure-once";
 
 export interface VendorPayment {
   id: string;
@@ -60,7 +61,11 @@ export interface PaymentApplicationRecord {
 
 /* using imported SQL */
 
-export async function ensurePaymentTables(sql = SQL) {
+export function ensurePaymentTables(...args: Parameters<typeof ensurePaymentTablesRun>) {
+  return ensureOnce("finance/vendor-payments:ensurePaymentTables", () => ensurePaymentTablesRun(...args));
+}
+
+async function ensurePaymentTablesRun(sql = SQL) {
   try {
     await sql`select 1 from vendor_payments limit 1`;
     await sql`select 1 from vendor_payment_applications limit 1`;

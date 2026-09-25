@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { runMrp, generateRequisitionsFromMrp, MrpDemandItem } from "@/lib/manufacturing/mrp";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const demandSchema = z.object({
   productSku: z.string().min(1),
@@ -18,6 +19,9 @@ const runMrpSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const parsed = runMrpSchema.safeParse(body);

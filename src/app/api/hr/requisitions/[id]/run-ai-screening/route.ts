@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { runAgent } from "@/lib/ai/agent";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const runSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -10,6 +11,9 @@ const runSchema = z.object({
 });
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   const { id } = await params;
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {

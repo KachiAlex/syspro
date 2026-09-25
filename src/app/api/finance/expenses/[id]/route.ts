@@ -4,10 +4,14 @@ import { z } from "zod";
 import { expenseApproveSchema } from "@/lib/finance/types";
 import { getExpense, approveExpense } from "@/lib/finance/db";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 export async function GET(
   request: NextRequest,
   context: any
 ) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   const { params } = context;
   const tenantSlug = new URL(request.url).searchParams.get("tenantSlug");
 

@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { db, sql as SQL, SqlClient } from "../sql-client";
+import { ensureOnce } from "@/lib/ensure-once";
 
 export type POItemRecord = {
   id: string;
@@ -48,7 +49,11 @@ export type PurchaseOrder = {
 
 /* using imported SQL */
 
-export async function ensurePurchaseOrderTables(sql = SQL) {
+export function ensurePurchaseOrderTables(...args: Parameters<typeof ensurePurchaseOrderTablesRun>) {
+  return ensureOnce("finance/purchase-orders:ensurePurchaseOrderTables", () => ensurePurchaseOrderTablesRun(...args));
+}
+
+async function ensurePurchaseOrderTablesRun(sql = SQL) {
   await sql`
     create table if not exists purchase_orders (
       id text primary key,
@@ -84,6 +89,45 @@ export async function ensurePurchaseOrderTables(sql = SQL) {
   await sql`create index if not exists purchase_orders_tenant_idx on purchase_orders (tenant_slug)`;
   await sql`create index if not exists purchase_orders_supplier_idx on purchase_orders (supplier_id)`;
   await sql`create index if not exists poi_order_idx on purchase_order_items (purchase_order_id)`;
+
+  await sql`alter table purchase_orders add column if not exists po_number text`;
+  await sql`alter table purchase_orders add column if not exists vendor_id text`;
+  await sql`alter table purchase_orders add column if not exists supplier_id text`;
+  await sql`alter table purchase_orders add column if not exists supplier_name text`;
+  await sql`alter table purchase_orders add column if not exists order_number text`;
+  await sql`alter table purchase_orders add column if not exists order_date text`;
+  await sql`alter table purchase_orders add column if not exists expected_delivery_date text`;
+  await sql`alter table purchase_orders add column if not exists delivery_date text`;
+  await sql`alter table purchase_orders add column if not exists issued_date date`;
+  await sql`alter table purchase_orders add column if not exists due_date date`;
+  await sql`alter table purchase_orders add column if not exists status text not null default 'draft'`;
+  await sql`alter table purchase_orders add column if not exists items text`;
+  await sql`alter table purchase_orders add column if not exists quantity numeric default 0`;
+  await sql`alter table purchase_orders add column if not exists total numeric default 0`;
+  await sql`alter table purchase_orders add column if not exists total_amount numeric not null default 0`;
+  await sql`alter table purchase_orders add column if not exists balance_due numeric not null default 0`;
+  await sql`alter table purchase_orders add column if not exists currency text not null default '₦'`;
+  await sql`alter table purchase_orders add column if not exists notes text`;
+  await sql`alter table purchase_orders add column if not exists branch_id text`;
+  await sql`alter table purchase_orders add column if not exists metadata jsonb`;
+  await sql`alter table purchase_orders add column if not exists created_by text`;
+  await sql`alter table purchase_orders add column if not exists created_at timestamptz default now()`;
+  await sql`alter table purchase_orders add column if not exists updated_at timestamptz default now()`;
+
+  await sql`alter table purchase_order_items add column if not exists po_id text`;
+  await sql`alter table purchase_order_items add column if not exists purchase_order_id text`;
+  await sql`alter table purchase_order_items add column if not exists product_id text`;
+  await sql`alter table purchase_order_items add column if not exists sku text`;
+  await sql`alter table purchase_order_items add column if not exists description text`;
+  await sql`alter table purchase_order_items add column if not exists quantity numeric not null default 0`;
+  await sql`alter table purchase_order_items add column if not exists unit_price numeric not null default 0`;
+  await sql`alter table purchase_order_items add column if not exists amount numeric not null default 0`;
+  await sql`alter table purchase_order_items add column if not exists line_total numeric not null default 0`;
+  await sql`alter table purchase_order_items add column if not exists received_quantity numeric not null default 0`;
+  await sql`alter table purchase_order_items add column if not exists tax_rate numeric`;
+  await sql`alter table purchase_order_items add column if not exists account_code text`;
+  await sql`alter table purchase_order_items add column if not exists created_at timestamptz default now()`;
+  await sql`alter table purchase_order_items add column if not exists updated_at timestamptz default now()`;
 }
 
 function normalizePO(row: PurchaseOrderRecord, items: POItemRecord[]): PurchaseOrder {

@@ -5,6 +5,7 @@
 
 import { randomUUID } from "crypto";
 import { db, sql as SQL } from "../sql-client";
+import { ensureOnce } from "@/lib/ensure-once";
 
 export interface ApprovalRule {
   id: string;
@@ -60,7 +61,11 @@ export interface ApprovalDecision {
 
 /* using imported SQL */
 
-export async function ensureApprovalTables(sql = SQL) {
+export function ensureApprovalTables(...args: Parameters<typeof ensureApprovalTablesRun>) {
+  return ensureOnce("finance/approvals:ensureApprovalTables", () => ensureApprovalTablesRun(...args));
+}
+
+async function ensureApprovalTablesRun(sql = SQL) {
   try {
     // Approval rules table
     await sql`
@@ -145,26 +150,27 @@ export async function getApprovalRules(filters: {
   const sql = SQL;
   await ensureApprovalTables(sql);
 
-  const whereConditions: any[] = [];
-  whereConditions.push(sql`tenant_slug = ${filters.tenantSlug}`);
-  
+  const params: any[] = [];
+  let paramIndex = 1;
+  let whereClause = `tenant_slug = $${paramIndex}`;
+  params.push(filters.tenantSlug);
+  paramIndex++;
+
   if (filters.entityType) {
-    whereConditions.push(sql`entity_type = ${filters.entityType}`);
+    whereClause += ` and entity_type = $${paramIndex}`;
+    params.push(filters.entityType);
+    paramIndex++;
   }
-  
+
   if (filters.isActive !== undefined) {
-    whereConditions.push(sql`is_active = ${filters.isActive}`);
+    whereClause += ` and is_active = $${paramIndex}`;
+    params.push(filters.isActive);
+    paramIndex++;
   }
 
-  const whereClause = whereConditions.length > 0 
-    ? SQL`where ${db.join(whereConditions, ' and ')}`
-    : sql``;
+  const queryText = `select * from approval_rules where ${whereClause} order by priority desc, created_at asc`;
 
-  const records = (await sql`
-    select * from approval_rules 
-    ${whereClause}
-    order by priority desc, created_at asc
-  `) as any[];
+  const records = (await db.query<any>(queryText, params)).rows;
 
   return records.map(record => ({
     id: record.id,
@@ -407,31 +413,34 @@ export async function getApprovals(filters: {
   const limit = Math.min(Math.max(filters.limit ?? 50, 1), 200);
   const offset = Math.max(filters.offset ?? 0, 0);
 
-  const whereConditions: any[] = [];
-  whereConditions.push(sql`tenant_slug = ${filters.tenantSlug}`);
-  
+  const params: any[] = [];
+  let paramIndex = 1;
+  let whereClause = `tenant_slug = $${paramIndex}`;
+  params.push(filters.tenantSlug);
+  paramIndex++;
+
   if (filters.entityType) {
-    whereConditions.push(sql`entity_type = ${filters.entityType}`);
+    whereClause += ` and entity_type = $${paramIndex}`;
+    params.push(filters.entityType);
+    paramIndex++;
   }
-  
+
   if (filters.entityId) {
-    whereConditions.push(sql`entity_id = ${filters.entityId}`);
+    whereClause += ` and entity_id = $${paramIndex}`;
+    params.push(filters.entityId);
+    paramIndex++;
   }
-  
+
   if (filters.status) {
-    whereConditions.push(sql`status = ${filters.status}`);
+    whereClause += ` and status = $${paramIndex}`;
+    params.push(filters.status);
+    paramIndex++;
   }
 
-  const whereClause = whereConditions.length > 0 
-    ? SQL`where ${db.join(whereConditions, ' and ')}`
-    : sql``;
+  const queryText = `select * from approvals where ${whereClause} order by created_at desc limit $${paramIndex} offset $${paramIndex + 1}`;
+  params.push(limit, offset);
 
-  const records = (await sql`
-    select * from approvals 
-    ${whereClause}
-    order by created_at desc
-    limit ${limit} offset ${offset}
-  `) as any[];
+  const records = (await db.query<any>(queryText, params)).rows;
 
   return records.map(record => ({
     id: record.id,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql as SQL } from "@/lib/sql-client";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 async function ensureRestrictionsTable() {
   await SQL`
@@ -13,6 +14,9 @@ async function ensureRestrictionsTable() {
 }
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "read");
+    if (!_scope.ok) return _scope.response;
+
   const { searchParams } = new URL(request.url);
   const tenantSlug = searchParams.get("tenantSlug");
 
@@ -45,6 +49,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   const body = await request.json();
   const { tenantSlug, restrictions } = body;
 

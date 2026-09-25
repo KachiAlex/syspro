@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { saveReceipt } from "@/lib/finance/db";
 
+import { requireRecordTenant, requireModuleAccess } from "@/lib/api-auth";
 const uploadSchema = z.object({
   expenseId: z.string().min(1),
   filename: z.string().min(1),
@@ -12,6 +13,9 @@ const uploadSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
 
@@ -23,6 +27,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const _owned = await requireRecordTenant("expenses", parsed.data.expenseId, _scope.user);
+    if (!_owned.ok) return _owned.response;
 
     const result = await saveReceipt({
       expenseId: parsed.data.expenseId,

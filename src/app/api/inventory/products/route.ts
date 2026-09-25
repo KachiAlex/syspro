@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { db } from "@/lib/sql-client";
+import { getPagination } from "@/lib/pagination";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 async function ensureInventoryTables() {
   await db.query(`
     create table if not exists inventory_products (
@@ -26,24 +28,30 @@ async function ensureInventoryTables() {
 }
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     await ensureInventoryTables();
     const context = validateTenantContext(request, "read");
     const { searchParams } = new URL(request.url);
     const tenantSlug = context.tenantSlug;
     const category = searchParams.get("category");
+    const { limit, offset } = getPagination(request);
 
-    const rows = (await db.query(
-      `select * from inventory_products where tenant_slug = $1`,
-      [tenantSlug]
-    )).rows;
-    let products = rows || [];
-
+    const params: any[] = [tenantSlug];
+    let where = `where tenant_slug = $1`;
     if (category) {
-      products = products.filter((p: any) => p.category === category);
+      params.push(category);
+      where += ` and category = $${params.length}`;
     }
 
-    return NextResponse.json({ products });
+    const products = (await db.query(
+      `select * from inventory_products ${where} order by created_at desc limit $${params.length + 1} offset $${params.length + 2}`,
+      [...params, limit, offset]
+    )).rows;
+
+    return NextResponse.json({ products, limit, offset });
   } catch (error) {
     console.error("Error fetching products:", error);
     return NextResponse.json(
@@ -54,6 +62,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     await ensureInventoryTables();
     const context = validateTenantContext(request, "write");
@@ -100,6 +111,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     await ensureInventoryTables();
     const context = validateTenantContext(request, "write");
@@ -149,6 +163,9 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     await ensureInventoryTables();
     const context = validateTenantContext(request, "write");

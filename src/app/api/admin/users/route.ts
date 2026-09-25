@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { db, sql as SQL } from '@/lib/sql-client';
+import { requireModuleAccess } from '@/lib/api-auth';
+import { getPagination } from '@/lib/pagination';
 
 async function ensureUsersTable() {
   await SQL`
@@ -36,10 +38,18 @@ function mapUser(row: any) {
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const _scope = await requireModuleAccess(request, 'admin', 'read');
+  if (!_scope.ok) return _scope.response;
+  const user = _scope.user;
   try {
     await ensureUsersTable();
-    const rows = (await SQL`select * from admin_users order by created_at desc`) as any[];
+    const { limit, offset } = getPagination(request);
+    // Superadmin sessions have no tenantSlug — they see everything.
+    // Tenant users see their tenant plus legacy 'default' rows.
+    const rows = user.tenantSlug
+      ? ((await SQL`select * from admin_users where tenant_slug in (${user.tenantSlug}, 'default') order by created_at desc limit ${limit} offset ${offset}`) as any[])
+      : ((await SQL`select * from admin_users order by created_at desc limit ${limit} offset ${offset}`) as any[]);
     return NextResponse.json({ data: rows.map(mapUser) });
   } catch (error) {
     console.error('Failed to fetch users:', error);
@@ -48,9 +58,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const _scope = await requireModuleAccess(request, 'admin', 'write');
+  if (!_scope.ok) return _scope.response;
   try {
     await ensureUsersTable();
     const body = await request.json();
+    const tenant = _scope.user.tenantSlug ?? 'default';
 
     // CSV import: { users: [{email, name}] }
     if (Array.isArray(body?.users)) {
@@ -61,7 +74,7 @@ export async function POST(request: Request) {
         const now = new Date().toISOString();
         const [row] = (await SQL`
           insert into admin_users (id, tenant_slug, email, display_name, status, contract_type, created_at, updated_at)
-          values (${id}, 'default', ${user.email}, ${user.name ?? null}, 'invited', ${user.contractType ?? 'full-time'}, ${now}, ${now})
+          values (${id}, ${tenant}, ${user.email}, ${user.name ?? null}, 'invited', ${user.contractType ?? 'full-time'}, ${now}, ${now})
           returning *
         `) as any[];
         if (row) created.push(mapUser(row));
@@ -75,7 +88,7 @@ export async function POST(request: Request) {
     const now = new Date().toISOString();
     const [row] = (await SQL`
       insert into admin_users (id, tenant_slug, email, display_name, status, contract_type, created_at, updated_at)
-      values (${id}, 'default', ${body.email}, ${body.name ?? null}, 'invited', ${body.contractType ?? 'full-time'}, ${now}, ${now})
+      values (${id}, ${tenant}, ${body.email}, ${body.name ?? null}, 'invited', ${body.contractType ?? 'full-time'}, ${now}, ${now})
       returning *
     `) as any[];
     return NextResponse.json({ data: mapUser(row) }, { status: 201 });

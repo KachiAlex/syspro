@@ -11,7 +11,7 @@ export interface EnvCheck {
 }
 
 const ENV_CHECKS: EnvCheck[] = [
-  { name: "DATABASE_URL", required: true, description: "Neon database connection string" },
+  { name: "DATABASE_URL", required: true, description: "Postgres database connection string" },
   { name: "GROQ_API_KEY", required: false, description: "Groq API key for AI capabilities (optional — deterministic fallbacks work without it)" },
   { name: "SYSPRO_AI_API_KEY", required: false, description: "API key for external AI agent access via /api/ai/agent" },
   { name: "CRON_SECRET", required: false, description: "Bearer token for cron job endpoints (auto-appraisal, etc.)" },

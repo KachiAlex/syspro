@@ -113,7 +113,7 @@ export async function getChartOfAccount(
     throw new Error(`Account ${accountId} not found`);
   }
 
-  return result.rows[0];
+  return db.mapRow(result.rows[0]);
 }
 
 export async function updateChartOfAccount(
@@ -164,7 +164,7 @@ export async function updateChartOfAccount(
     params
   );
 
-  return result.rows[0];
+  return db.mapRow(result.rows[0]);
 }
 
 // ============================================================
@@ -193,7 +193,7 @@ export async function createFiscalPeriod(
     ]
   );
 
-  return result.rows[0];
+  return db.mapRow(result.rows[0]);
 }
 
 export async function getFiscalPeriods(
@@ -216,7 +216,7 @@ export async function getFiscalPeriods(
   query += " ORDER BY fiscal_year DESC, period_number ASC";
 
   const result = await db.query<FiscalPeriod>(query, params);
-  return result.rows;
+  return db.mapRows(result.rows);
 }
 
 export async function getFiscalPeriod(periodId: string): Promise<FiscalPeriod> {
@@ -229,7 +229,7 @@ export async function getFiscalPeriod(periodId: string): Promise<FiscalPeriod> {
     throw new Error(`Fiscal period ${periodId} not found`);
   }
 
-  return result.rows[0];
+  return db.mapRow(result.rows[0]);
 }
 
 export async function getPeriodByDate(
@@ -247,7 +247,7 @@ export async function getPeriodByDate(
     throw new Error(`No fiscal period found for ${date}`);
   }
 
-  return result.rows[0];
+  return db.mapRow(result.rows[0]);
 }
 
 export async function lockFiscalPeriod(
@@ -260,7 +260,7 @@ export async function lockFiscalPeriod(
     [userId, periodId]
   );
 
-  return result.rows[0];
+  return db.mapRow(result.rows[0]);
 }
 
 export async function closeAllPeriodsUpto(
@@ -333,14 +333,14 @@ export async function createJournalEntry(
     ]
   );
 
-  const entry = entryResult.rows[0];
+  const entry = db.mapRow(entryResult.rows[0]);
 
   // Create journal lines
   const lines: JournalLine[] = [];
   for (const lineInput of input.lines) {
     const lineResult = await db.query<JournalLine>(
-      `INSERT INTO journal_lines (
-        journal_entry_id, line_number, account_id,
+      `INSERT INTO journal_entry_lines (
+        entry_id, line_number, account_id,
         debit_amount, credit_amount, branch_id, department_id, project_id,
         cost_center_id, description
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -359,7 +359,7 @@ export async function createJournalEntry(
       ]
     );
 
-    lines.push(lineResult.rows[0]);
+    lines.push(db.mapRow(lineResult.rows[0]));
   }
 
   // Log creation
@@ -396,7 +396,7 @@ export async function postJournalEntry(
     [approverEmail, entryId]
   );
 
-  const postedEntry = result.rows[0];
+  const postedEntry = db.mapRow(result.rows[0]);
 
   // Update account balances
   const lines = await getJournalLines(entryId);
@@ -488,18 +488,18 @@ export async function getJournalEntry(entryId: string): Promise<JournalEntry> {
     throw new Error(`Journal entry ${entryId} not found`);
   }
 
-  return result.rows[0];
+  return db.mapRow(result.rows[0]);
 }
 
 export async function getJournalLines(
   entryId: string
 ): Promise<JournalLine[]> {
   const result = await db.query<JournalLine>(
-    "SELECT * FROM journal_lines WHERE journal_entry_id = $1 ORDER BY line_number",
+    "SELECT * FROM journal_entry_lines WHERE entry_id = $1 ORDER BY line_number",
     [entryId]
   );
 
-  return result.rows;
+  return db.mapRows(result.rows);
 }
 
 export async function getJournalEntries(
@@ -543,7 +543,7 @@ export async function getJournalEntries(
   query += " ORDER BY posting_date DESC, journal_number DESC";
 
   const result = await db.query<JournalEntry>(query, params);
-  return result.rows;
+  return db.mapRows(result.rows);
 }
 
 // ============================================================
@@ -582,7 +582,7 @@ export async function getAccountBalance(
     throw new Error(`No balance found for account ${accountId} in period ${periodId}`);
   }
 
-  return result.rows[0];
+  return db.mapRow(result.rows[0]);
 }
 
 // ============================================================
@@ -621,7 +621,7 @@ export async function getTrialBalance(
     [tenantSlug, periodId]
   );
 
-  const entries = result.rows;
+  const entries = db.mapRows(result.rows);
   const totalDebits = entries.reduce((sum, e) => sum + e.debitBalance, 0);
   const totalCredits = entries.reduce((sum, e) => sum + e.creditBalance, 0);
 
@@ -657,7 +657,7 @@ export async function getGeneralLedger(
       je.created_by,
       je.created_at
     FROM journal_entries je
-    JOIN journal_lines jl ON je.id = jl.journal_entry_id
+    JOIN journal_entry_lines jl ON je.id = jl.entry_id
     JOIN chart_of_accounts coa ON jl.account_id = coa.id
     WHERE je.tenant_slug = $1 AND jl.account_id = $2 AND je.approval_status = 'POSTED'
   `;
@@ -677,7 +677,7 @@ export async function getGeneralLedger(
   query += " ORDER BY je.posting_date, je.journal_number";
 
   const result = await db.query<GeneralLedgerEntry>(query, params);
-  return result.rows;
+  return db.mapRows(result.rows);
 }
 
 // ============================================================
@@ -714,7 +714,7 @@ export async function logAuditTrail(
     ]
   );
 
-  return result.rows[0];
+  return db.mapRow(result.rows[0]);
 }
 
 export async function getAuditTrail(
@@ -726,7 +726,7 @@ export async function getAuditTrail(
     [entityType, entityId]
   );
 
-  return result.rows;
+  return db.mapRows(result.rows);
 }
 
 // ============================================================

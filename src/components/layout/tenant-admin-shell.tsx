@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { SidebarNav } from "./sidebar-nav";
 import { useTheme } from "@/components/theme/theme-provider";
 import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
@@ -271,7 +272,7 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
         {/* Sidebar Header - Desktop */}
         <div className="hidden lg:block p-6 border-b border-theme-sidebar-border">
           <div className="flex items-center gap-3">
-            <img src="/pisairtel-erp-badge.svg" alt="Pisairtel ERP" width={40} height={40} style={{ borderRadius: '50%', objectFit: 'cover' }} />
+            <Image src="/pisairtel-erp-badge.svg" alt="Pisairtel ERP" width={40} height={40} style={{ borderRadius: '50%', objectFit: 'cover' }} />
             <div>
               <h2 className="text-lg font-bold text-theme-sidebar-text-active font-jakarta">Pisairtel ERP</h2>
               <p className="text-sm text-theme-sidebar-text">{perms.isAdmin ? "Admin Dashboard" : "Employee Portal"}</p>

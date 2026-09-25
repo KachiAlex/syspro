@@ -1,10 +1,15 @@
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
+import { ensureOnce } from "@/lib/ensure-once";
 
 /* using imported SQL */
 
 type ReportStatus = "queued" | "running" | "succeeded" | "failed";
 
-export async function ensureReportingTables(sql: SqlClient = SQL) {
+export function ensureReportingTables(...args: Parameters<typeof ensureReportingTablesRun>) {
+  return ensureOnce("reporting/db:ensureReportingTables", () => ensureReportingTablesRun(...args));
+}
+
+async function ensureReportingTablesRun(sql: SqlClient = SQL) {
   await sql`create extension if not exists "pgcrypto"`;
   await sql`
     create table if not exists reports (
@@ -42,36 +47,25 @@ export async function ensureReportingTables(sql: SqlClient = SQL) {
 }
 
 export async function listReports(tenantSlug: string, page = 1, limit = 20, sql: SqlClient = SQL) {
-  try {
-    await ensureReportingTables(sql);
-  } catch (e) {
-    console.warn('Unable to ensure reporting tables (dev mode without DB):', e);
-    // In development without a real database, return empty list
-    return [];
-  }
-  
-  try {
-    const offset = (Math.max(1, page) - 1) * limit;
-    const res = await db.query<any>(`select * from reports where tenant_slug = $1 order by created_at desc limit $2 offset $3`, [tenantSlug, limit, offset]);
-    const rows = res.rows;
-    const items = rows.map((r: any) => ({
-      id: r.id,
-      tenantSlug: r.tenant_slug,
-      name: r.name,
-      reportType: r.report_type,
-      definition: r.definition,
-      filters: r.filters,
-      schedule: r.schedule,
-      enabled: r.enabled,
-      createdAt: r.created_at?.toISOString?.() ?? r.created_at,
-      updatedAt: r.updated_at?.toISOString?.() ?? r.updated_at,
-    }));
-    // Return page data; caller may request next pages until less than limit returned
-    return items;
-  } catch (e) {
-    console.warn('Unable to query reports:', e);
-    return [];
-  }
+  await ensureReportingTables(sql);
+
+  const offset = (Math.max(1, page) - 1) * limit;
+  const res = await db.query<any>(`select * from reports where tenant_slug = $1 order by created_at desc limit $2 offset $3`, [tenantSlug, limit, offset]);
+  const rows = res.rows;
+  const items = rows.map((r: any) => ({
+    id: r.id,
+    tenantSlug: r.tenant_slug,
+    name: r.name,
+    reportType: r.report_type,
+    definition: r.definition,
+    filters: r.filters,
+    schedule: r.schedule,
+    enabled: r.enabled,
+    createdAt: r.created_at?.toISOString?.() ?? r.created_at,
+    updatedAt: r.updated_at?.toISOString?.() ?? r.updated_at,
+  }));
+  // Return page data; caller may request next pages until less than limit returned
+  return items;
 }
 
 function encodeCursor(row: any) {
@@ -141,76 +135,26 @@ export async function listReportsCursor(tenantSlug: string, cursor: string | nul
 }
 
 export async function createReport(input: { tenantSlug: string; name: string; reportType: string; definition: any; filters?: any; schedule?: string | null; enabled?: boolean }, sql: SqlClient = SQL) {
-  try {
-    await ensureReportingTables(sql);
-  } catch (e) {
-    console.warn('Unable to ensure reporting tables (dev mode without DB):', e);
-    // In development without a real database, return a mock report object
-    return {
-      id: `mock-${Date.now()}`,
-      tenantSlug: input.tenantSlug,
-      name: input.name,
-      reportType: input.reportType,
-      definition: input.definition,
-      filters: input.filters || null,
-      schedule: input.schedule || null,
-      enabled: input.enabled ?? true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-  }
-  
-  try {
-    const [row] = await sql`
-      insert into reports (tenant_slug, name, report_type, definition, filters, schedule, enabled)
-      values (${input.tenantSlug}, ${input.name}, ${input.reportType}, ${JSON.stringify(input.definition)}, ${input.filters || null}, ${input.schedule || null}, ${input.enabled ?? true})
-      returning *
-    ` as any[];
-    
-    if (!row) {
-      // Mock database scenario
-      return {
-        id: `mock-${Date.now()}`,
-        tenantSlug: input.tenantSlug,
-        name: input.name,
-        reportType: input.reportType,
-        definition: input.definition,
-        filters: input.filters || null,
-        schedule: input.schedule || null,
-        enabled: input.enabled ?? true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-    }
-    
-    return {
-      id: row.id,
-      tenantSlug: row.tenant_slug,
-      name: row.name,
-      reportType: row.report_type,
-      definition: row.definition,
-      filters: row.filters,
-      schedule: row.schedule,
-      enabled: row.enabled,
-      createdAt: row.created_at?.toISOString?.() ?? row.created_at,
-      updatedAt: row.updated_at?.toISOString?.() ?? row.updated_at,
-    };
-  } catch (e) {
-    console.warn('Unable to create report:', e);
-    // Fallback: return mock object
-    return {
-      id: `mock-${Date.now()}`,
-      tenantSlug: input.tenantSlug,
-      name: input.name,
-      reportType: input.reportType,
-      definition: input.definition,
-      filters: input.filters || null,
-      schedule: input.schedule || null,
-      enabled: input.enabled ?? true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-  }
+  await ensureReportingTables(sql);
+
+  const [row] = await sql`
+    insert into reports (tenant_slug, name, report_type, definition, filters, schedule, enabled)
+    values (${input.tenantSlug}, ${input.name}, ${input.reportType}, ${JSON.stringify(input.definition)}, ${input.filters || null}, ${input.schedule || null}, ${input.enabled ?? true})
+    returning *
+  ` as any[];
+
+  return {
+    id: row.id,
+    tenantSlug: row.tenant_slug,
+    name: row.name,
+    reportType: row.report_type,
+    definition: row.definition,
+    filters: row.filters,
+    schedule: row.schedule,
+    enabled: row.enabled,
+    createdAt: row.created_at?.toISOString?.() ?? row.created_at,
+    updatedAt: row.updated_at?.toISOString?.() ?? row.updated_at,
+  };
 }
 
 export async function updateReport(id: string, tenantSlug: string, updates: Partial<{ name: string; reportType: string; definition: any; filters: any; schedule: string | null; enabled: boolean }>, sql: SqlClient = SQL) {
@@ -247,8 +191,7 @@ export async function createReportJob(input: { reportId: string; tenantSlug: str
 
 export async function updateReportJobStatus(id: string, status: ReportStatus, output?: { location?: string; error?: string }, incrementAttempt = false, sql: SqlClient = SQL) {
   await ensureReportingTables(sql);
-  const increment = incrementAttempt ? sql`attempt_count = attempt_count + 1,` : sql``;
-  const query = `update report_jobs set ${increment ? "attempt_count = attempt_count + 1," : ""} status = $1, output_location = $2, error = $3, completed_at = case when $1 in ('succeeded','failed') then now() else completed_at end where id = $4 returning *`;
+  const query = `update report_jobs set ${incrementAttempt ? "attempt_count = attempt_count + 1," : ""} status = $1, output_location = $2, error = $3, completed_at = case when $1 in ('succeeded','failed') then now() else completed_at end where id = $4 returning *`;
   const params = [status, output?.location || null, output?.error || null, id];
   const res = await db.query<any>(query, params);
   return res.rows[0];

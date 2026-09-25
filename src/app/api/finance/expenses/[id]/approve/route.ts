@@ -4,8 +4,12 @@ import { expenseApproveSchema } from "@/lib/finance/types";
 import { approveExpense, getExpense } from "@/lib/finance/db";
 import { notifyExpenseApproved, notifyExpenseRejected } from "@/lib/finance/email";
 import { writeFinanceEvent } from "@/lib/finance/events";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 export async function POST(request: NextRequest, context: any) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   const { params } = context;
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {

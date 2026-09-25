@@ -22,8 +22,9 @@ export interface AuthContext {
  */
 export function extractAuthContext(request: NextRequest): AuthContext {
   const url = new URL(request.url);
+  const isDev = process.env.NODE_ENV !== "production";
 
-  // 1. Attempt to read authenticated session from cookies
+  // 1. Attempt to read authenticated session from signed cookies
   let userId: string | undefined;
   let userRole: string | undefined;
   let sessionTenantSlug: string | undefined;
@@ -38,14 +39,27 @@ export function extractAuthContext(request: NextRequest): AuthContext {
     }
   }
 
-  // 2. Fallback to headers (used by proxy/dev flows)
+  // Employee session cookie (signed) — portal users
   if (!userId) {
+    const empCookie = request.cookies.get("employee_session")?.value;
+    if (empCookie) {
+      const session = verifySession(empCookie);
+      if (session) {
+        userId = session.id;
+        userRole = session.roleId || "staff";
+        sessionTenantSlug = session.tenantSlug;
+      }
+    }
+  }
+
+  // 2. Dev-only fallbacks: unsigned headers/cookies/query params are NEVER
+  //    trusted in production — a client can set them to claim any identity.
+  if (isDev && !userId) {
     userId = request.headers.get("X-User-Id") || undefined;
     userRole = request.headers.get("X-Role-Id") || undefined;
   }
 
-  // 3. Fallback to individual cookies
-  if (!userId) {
+  if (isDev && !userId) {
     userId =
       request.cookies.get("X-User-Id")?.value ||
       request.cookies.get("dev-user-id")?.value ||
@@ -54,21 +68,21 @@ export function extractAuthContext(request: NextRequest): AuthContext {
     userRole = userRole || request.cookies.get("X-Role-Id")?.value || undefined;
   }
 
-  // Tenant slug resolution: prefer session, then cookie, then query param (dev only)
+  // Tenant slug resolution: session is authoritative in production.
+  // Unsigned cookie/header tenant claims are accepted only in dev, and only
+  // when they do not contradict the session's tenant.
   const cookieTenantSlug =
     request.cookies.get("tenantSlug")?.value ||
     request.headers.get("X-Tenant-Slug") ||
     undefined;
 
-  const isDev = process.env.NODE_ENV !== "production";
   const queryTenantSlug = url.searchParams.get("tenantSlug") || undefined;
 
-  // In production: only trust session or cookie, never query params
-  // In dev: allow query params as fallback for convenience
   let tenantSlug: string;
   if (sessionTenantSlug) {
+    // Session is authoritative — cookie/header tenant claims cannot override it
     tenantSlug = sessionTenantSlug;
-  } else if (cookieTenantSlug) {
+  } else if (isDev && cookieTenantSlug) {
     tenantSlug = cookieTenantSlug;
   } else if (isDev && queryTenantSlug) {
     tenantSlug = queryTenantSlug;
@@ -80,11 +94,6 @@ export function extractAuthContext(request: NextRequest): AuthContext {
   if (isDev && !userId) {
     userId = url.searchParams.get("userId") || undefined;
     userRole = url.searchParams.get("userRole") || "admin";
-  }
-
-  // 5. Production safety: never default to admin from untrusted sources
-  if (!isDev && !userId) {
-    userRole = "viewer";
   }
 
   const userPermissions: string[] = [];
@@ -116,10 +125,19 @@ export type Permission = "read" | "write" | "admin" | "delete";
  * In production, this would check against a permission matrix or ACL.
  */
 export function hasPermission(userRole: string | undefined, requiredPermission: Permission): boolean {
-  // Simple role-based permission mapping (scaffold)
+  // Role-based permission mapping — includes the roleIds actually issued in
+  // session cookies: tenant_admins.role (admin/tenant_admin), superadmin, and
+  // employee portal roles (staff/hod/executive).
   const rolePermissions: Record<string, Permission[]> = {
     admin: ["read", "write", "admin", "delete"],
+    tenant_admin: ["read", "write", "admin", "delete"],
+    superadmin: ["read", "write", "admin", "delete"],
     operator: ["read", "write"],
+    manager: ["read", "write"],
+    editor: ["read", "write"],
+    hod: ["read", "write"],
+    executive: ["read", "write"],
+    staff: ["read"],
     viewer: ["read"],
   };
 

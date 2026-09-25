@@ -195,7 +195,9 @@ export default function SuperadminPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setTenants(prev => prev.map(t => data.updated.includes(t.slug) ? { ...t, status: 'active' } : t));
+        if (Array.isArray(data.updated)) {
+          setTenants(prev => prev.map(t => data.updated.includes(t.slug) ? { ...t, status: 'active' } : t));
+        }
         setSelectedTenants([]);
         setSelectAll(false);
       }
@@ -214,7 +216,9 @@ export default function SuperadminPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setTenants(prev => prev.map(t => data.updated.includes(t.slug) ? { ...t, status: 'suspended' } : t));
+        if (Array.isArray(data.updated)) {
+          setTenants(prev => prev.map(t => data.updated.includes(t.slug) ? { ...t, status: 'suspended' } : t));
+        }
         setSelectedTenants([]);
         setSelectAll(false);
       }
@@ -234,7 +238,9 @@ export default function SuperadminPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setTenants(prev => prev.filter(t => !data.deleted.includes(t.slug)));
+        if (Array.isArray(data.deleted)) {
+          setTenants(prev => prev.filter(t => !data.deleted.includes(t.slug)));
+        }
         setSelectedTenants([]);
         setSelectAll(false);
         fetchTenants(currentPage);
@@ -289,7 +295,7 @@ export default function SuperadminPage() {
       const response = await fetch('/api/superadmin/licenses');
       if (response.ok) {
         const data = await response.json();
-        setLicenses(data);
+        if (Array.isArray(data)) setLicenses(data);
       }
     } catch (error) {
       console.error('Failed to fetch licenses:', error);
@@ -301,7 +307,7 @@ export default function SuperadminPage() {
       const response = await fetch('/api/superadmin/license-tiers');
       if (response.ok) {
         const data = await response.json();
-        setLicenseTiers(data);
+        if (Array.isArray(data)) setLicenseTiers(data);
       }
     } catch (error) {
       console.error('Failed to fetch license tiers:', error);
@@ -397,7 +403,7 @@ export default function SuperadminPage() {
       });
       if (response.ok) {
         const admins = await response.json();
-        setTenantAdmins(admins.map((a: any) => ({ ...a })));
+        if (Array.isArray(admins)) setTenantAdmins(admins.map((a: any) => ({ ...a })));
       }
     } catch (error) {
       console.error('Failed to fetch tenant admins:', error);

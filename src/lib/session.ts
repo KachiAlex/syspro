@@ -10,7 +10,7 @@ export interface SessionPayload {
 	exp?: number;
 }
 
-function getSessionSecret(): string {
+export function getSessionSecret(): string {
 	const secret = process.env.SESSION_SECRET;
 	if (secret) return secret;
 
@@ -89,6 +89,10 @@ export function verifySession(value: string): SessionPayload | null {
 	}
 }
 
+/**
+ * Edge-runtime-safe session verification using WebCrypto (crypto.subtle).
+ * Use this in middleware / edge contexts where node:crypto is unavailable.
+ */
 export function cookieOptions() {
 	return {
 		name: "pisairtel_session",

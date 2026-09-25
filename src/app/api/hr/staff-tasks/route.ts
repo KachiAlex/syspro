@@ -5,11 +5,15 @@ import {
   updateStaffTask,
   deleteStaffTask,
 } from '@/lib/hr/db';
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const VALID_FREQUENCIES = ['daily', 'weekly', 'one-time'];
 const VALID_STATUSES = ['pending', 'in_progress', 'completed', 'overdue'];
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const { tenantSlug, employeeId, title, description, expectedOutcome, weight, isKpi, frequency, dueDate, status, assignedBy } = body;
@@ -57,6 +61,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const { searchParams } = new URL(request.url);
     const tenantSlug = searchParams.get('tenantSlug');
@@ -78,6 +85,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const { taskId, tenantSlug, ...updates } = body;
@@ -109,6 +119,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const { searchParams } = new URL(request.url);
     const tenantSlug = searchParams.get('tenantSlug');

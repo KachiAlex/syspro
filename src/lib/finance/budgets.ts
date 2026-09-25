@@ -66,7 +66,7 @@ export type ForecastMethodology = typeof FORECAST_METHODOLOGIES[number];
 export interface BudgetLine {
   id?: bigint;
   budgetId: bigint;
-  tenantId: bigint;
+  tenantSlug: string;
   lineNumber: number;
   accountId?: bigint;
   accountCode?: string;
@@ -88,7 +88,7 @@ export interface BudgetLine {
 export interface BudgetVersion {
   id?: bigint;
   budgetId: bigint;
-  tenantId: bigint;
+  tenantSlug: string;
   versionNumber: number;
   status: BudgetStatus;
   totalBudgetAmount: number;
@@ -105,7 +105,7 @@ export interface BudgetActual {
   id?: bigint;
   budgetId: bigint;
   budgetLineId?: bigint;
-  tenantId: bigint;
+  tenantSlug: string;
   actualType: ActualType;
   transactionId?: bigint;
   transactionCode?: string;
@@ -132,7 +132,7 @@ export interface BudgetForecastLine {
 export interface BudgetForecast {
   id?: bigint;
   budgetId: bigint;
-  tenantId: bigint;
+  tenantSlug: string;
   forecastType: ForecastType;
   forecastPeriodStart?: Date;
   forecastPeriodEnd?: Date;
@@ -155,7 +155,7 @@ export interface BudgetVariance {
   id?: bigint;
   budgetId: bigint;
   budgetLineId?: bigint;
-  tenantId: bigint;
+  tenantSlug: string;
   varianceType: VarianceType;
   budgetedAmount?: number;
   actualAmount?: number;
@@ -176,7 +176,7 @@ export interface BudgetVariance {
 export interface BudgetApproval {
   id?: bigint;
   budgetId: bigint;
-  tenantId: bigint;
+  tenantSlug: string;
   approvalSequence: number;
   approverRole: string;
   approverId?: string;
@@ -191,7 +191,7 @@ export interface BudgetApproval {
  */
 export interface Budget {
   id?: bigint;
-  tenantId: bigint;
+  tenantSlug: string;
   code: string;
   name: string;
   description?: string;
@@ -220,7 +220,7 @@ export interface Budget {
  */
 export interface BudgetSummary {
   id: bigint;
-  tenantId: bigint;
+  tenantSlug: string;
   code: string;
   name: string;
   budgetType: BudgetType;
@@ -242,7 +242,7 @@ export interface BudgetSummary {
 export interface BudgetLineVariance {
   budgetLineId: bigint;
   budgetId: bigint;
-  tenantId: bigint;
+  tenantSlug: string;
   accountCode?: string;
   accountName?: string;
   budgetedAmount: number;
@@ -271,7 +271,7 @@ export const budgetLineSchema = z.object({
 });
 
 export const budgetCreateSchema = z.object({
-  tenantId: z.bigint(),
+  tenantSlug: z.string(),
   code: z.string().min(1).max(50),
   name: z.string().min(1).max(255),
   description: z.string().optional(),
@@ -302,7 +302,7 @@ export const budgetUpdateSchema = z.object({
 });
 
 export const budgetApproveSchema = z.object({
-  tenantId: z.bigint(),
+  tenantSlug: z.string(),
   budgetId: z.bigint(),
   approverRole: z.string().min(1),
   approverId: z.string().min(1),
@@ -314,7 +314,7 @@ export const budgetApproveSchema = z.object({
 export const budgetActualSchema = z.object({
   budgetId: z.bigint(),
   budgetLineId: z.bigint().optional(),
-  tenantId: z.bigint(),
+  tenantSlug: z.string(),
   actualType: z.enum(ACTUAL_TYPES as unknown as [string, ...string[]]),
   transactionId: z.bigint().optional(),
   transactionCode: z.string().optional(),
@@ -336,7 +336,7 @@ export const budgetForecastLineSchema = z.object({
 
 export const budgetForecastCreateSchema = z.object({
   budgetId: z.bigint(),
-  tenantId: z.bigint(),
+  tenantSlug: z.string(),
   forecastType: z.enum(FORECAST_TYPES as unknown as [string, ...string[]]),
   forecastPeriodStart: z.date().optional(),
   forecastPeriodEnd: z.date().optional(),

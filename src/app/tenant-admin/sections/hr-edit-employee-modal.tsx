@@ -15,6 +15,7 @@ interface Employee {
   status: string;
   salary?: string;
   employmentType?: string;
+  workMode?: string;
   isPortalActive?: boolean;
   lastLogin?: string | null;
 }
@@ -62,6 +63,7 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
     startDate: '',
     salary: '',
     employmentType: 'Full-time',
+    workMode: 'ONSITE',
     role: 'Staff',
     status: 'Active',
   });
@@ -86,6 +88,7 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
         startDate: employee.startDate || '',
         salary: employee.salary ? employee.salary.replace(/[^0-9.]/g, '') : '',
         employmentType: employee.employmentType || 'Full-time',
+        workMode: employee.workMode || 'ONSITE',
         role: employee.role || 'Staff',
         status: employee.status || 'Active',
       });
@@ -283,6 +286,20 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
                 </select>
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Work Mode</label>
+                <select
+                  value={formData.workMode}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, workMode: e.target.value }))}
+                  className="bg-white w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  disabled={loading}
+                >
+                  <option value="ONSITE">On-site</option>
+                  <option value="REMOTE">Remote</option>
+                  <option value="HYBRID">Hybrid</option>
+                  <option value="FIELD">Field</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">Role</label>
                 <select
                   value={formData.role}
@@ -347,7 +364,7 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
                   <div className="flex items-start gap-2">
                     <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                     <p className="text-sm text-green-800">
-                      Portal password set for <strong>{portalCredentials.name}</strong>. Share these credentials securely — they won't be shown again.
+                      Portal password set for <strong>{portalCredentials.name}</strong>. Share these credentials securely — they won&apos;t be shown again.
                     </p>
                   </div>
                   <div className="grid grid-cols-1 gap-2 bg-white rounded-lg p-3 border border-green-100">

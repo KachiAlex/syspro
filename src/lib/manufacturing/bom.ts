@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { sql as SQL, SqlClient } from "../sql-client";
+import { ensureOnce } from "@/lib/ensure-once";
 
 export interface BomHeader {
   id: string;
@@ -43,7 +44,11 @@ export interface BomExplosionItem {
   path: string[];
 }
 
-export async function ensureBomTables(sql: SqlClient = SQL) {
+export function ensureBomTables(...args: Parameters<typeof ensureBomTablesRun>) {
+  return ensureOnce("manufacturing/bom:ensureBomTables", () => ensureBomTablesRun(...args));
+}
+
+async function ensureBomTablesRun(sql: SqlClient = SQL) {
   await sql`
     create table if not exists bom_headers (
       id text primary key,
@@ -236,11 +241,11 @@ export async function updateBom(
 
   const [row] = (await sql`
     update bom_headers
-    set product_name = ${updates.productName ?? null}::text,
-        status = ${updates.status ?? null}::text,
-        quantity = ${updates.quantity ?? null}::numeric,
-        unit = ${updates.unit ?? null}::text,
-        description = ${updates.description ?? null}::text,
+    set product_name = COALESCE(${updates.productName ?? null}::text, product_name),
+        status = COALESCE(${updates.status ?? null}::text, status),
+        quantity = COALESCE(${updates.quantity ?? null}::numeric, quantity),
+        unit = COALESCE(${updates.unit ?? null}::text, unit),
+        description = COALESCE(${updates.description ?? null}::text, description),
         updated_at = now()
     where id = ${id} and tenant_slug = ${tenantSlug}
     returning *
@@ -304,13 +309,19 @@ export async function explodeBom(
   tenantSlug: string,
   quantity: number = 1,
   level: number = 0,
-  path: string[] = []
+  path: string[] = [],
+  visited: Set<string> = new Set()
 ): Promise<BomExplosionItem[]> {
   const sql = SQL;
   await ensureBomTables(sql);
 
   const bom = await getBomByProductSku(productSku, tenantSlug);
   if (!bom) return [];
+
+  if (visited.has(bom.id)) {
+    throw new Error(`Cycle detected in BOM explosion at product ${productSku} (BOM ${bom.id})`);
+  }
+  visited.add(bom.id);
 
   const items: BomExplosionItem[] = [];
   const currentPath = [...path, productSku];
@@ -329,7 +340,7 @@ export async function explodeBom(
     });
 
     if (line.componentType === "subassembly") {
-      const childItems = await explodeBom(line.componentSku, tenantSlug, effectiveQty, level + 1, currentPath);
+      const childItems = await explodeBom(line.componentSku, tenantSlug, effectiveQty, level + 1, currentPath, visited);
       items.push(...childItems);
     }
   }

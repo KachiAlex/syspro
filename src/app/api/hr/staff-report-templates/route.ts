@@ -6,10 +6,14 @@ import {
   updateStaffReportTemplate,
   deleteStaffReportTemplate,
 } from '@/lib/hr/db';
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const VALID_REPORT_TYPES = ['daily', 'weekly', 'monthly', 'quarterly'];
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const { searchParams } = new URL(request.url);
     const tenantSlug = searchParams.get('tenantSlug');
@@ -37,6 +41,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const { tenantSlug, reportType, name, isDefault, sections, createdBy } = body;
@@ -72,6 +79,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const { id, tenantSlug, reportType, name, isDefault, sections } = body;
@@ -99,6 +109,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

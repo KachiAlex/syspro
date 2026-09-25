@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { uploadResume } from "@/lib/hr/uploads";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const uploadSchema = z.object({
   filename: z.string().min(1),
@@ -11,6 +12,9 @@ const uploadSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
 

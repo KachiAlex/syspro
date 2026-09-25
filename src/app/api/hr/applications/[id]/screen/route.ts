@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { runApplicationScreening } from "@/lib/hr/db-recruitment";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const screenSchema = z.object({
   tenantSlug: z.string().min(1),
 });
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   const { id } = await params;
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {

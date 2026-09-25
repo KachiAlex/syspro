@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import { CreateLicenseSchema, safeParse, LICENSE_TIERS } from '@/lib/validation';
 import { randomUUID } from 'crypto';
+import { requireSuperAdmin } from "@/lib/api-auth";
 
 const sql = getSql();
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   try {
     const licenses = await sql`
       SELECT l.*, t.name as tenant_name, t.slug as tenant_slug
@@ -21,6 +25,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   try {
     const body = await request.json();
 

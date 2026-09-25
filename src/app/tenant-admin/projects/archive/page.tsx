@@ -268,7 +268,7 @@ export default function ProjectArchivePage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Total Budget Spent</span>
-              <span className="font-semibold text-gray-900">${projects.reduce((sum, p) => sum + (parseFloat(p.budget.replace(/[^0-9.]/g, '')) || 0), 0).toLocaleString()}</span>
+              <span className="font-semibold text-gray-900">${projects.reduce((sum, p) => sum + (parseFloat(String(p.budget || 0).replace(/[^0-9.\-]/g, '')) || 0), 0).toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Avg Team Size</span>

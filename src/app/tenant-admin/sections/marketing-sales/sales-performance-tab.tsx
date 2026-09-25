@@ -32,58 +32,42 @@ export default function SalesPerformanceTab({
           `/api/revops/sales-performance?tenantSlug=${encodeURIComponent(tenantSlug)}`
         );
 
-        if (res.ok) {
-          const responseData = await res.json();
-          const apiData = responseData.data || responseData;
-          
-          setData({
-            summary: {
-              totalDeals: apiData.totalDeals ?? 145,
-              totalRevenue: apiData.totalRevenue ?? 2150000,
-              winRate: apiData.winRate ?? 32,
-              avgDealSize: apiData.avgDealSize ?? 14825,
-            },
-            byRep: [
-              { rep: "Sarah Johnson", deals: 28, revenue: 420000, quota: 400000 },
-              { rep: "Michael Chen", deals: 24, revenue: 385000, quota: 350000 },
-              { rep: "Jessica Lee", deals: 22, revenue: 318000, quota: 320000 },
-            ],
-            bySalesStage: [
-              { stage: "Prospecting", count: 45, value: 225000 },
-              { stage: "Qualification", count: 32, value: 480000 },
-              { stage: "Proposal", count: 28, value: 560000 },
-              { stage: "Negotiation", count: 18, value: 450000 },
-              { stage: "Closed Won", count: 22, value: 435000 },
-            ],
-          });
-          onError("");
-        } else {
+        if (!res.ok) {
           throw new Error("Failed to fetch sales performance");
         }
+        const responseData = await res.json();
+        const snapshot = responseData.snapshot ?? responseData.data ?? null;
+        const targets = Array.isArray(responseData.targets) ? responseData.targets : [];
+
+        const repProductivity = Array.isArray(snapshot?.repProductivity) ? snapshot.repProductivity : [];
+        const funnelLeakage = Array.isArray(snapshot?.funnelLeakage) ? snapshot.funnelLeakage : [];
+
+        const totalDeals = repProductivity.reduce((sum: number, r: any) => sum + Number(r.wins ?? 0), 0) || targets.length;
+
+        setData({
+          summary: {
+            totalDeals,
+            totalRevenue: Number(snapshot?.revenueAchieved ?? 0),
+            winRate: Number(snapshot?.winRate ?? 0),
+            avgDealSize: Number(snapshot?.avgDealSize ?? 0),
+          },
+          byRep: repProductivity.map((r: any) => ({
+            rep: r.repName ?? r.repId ?? "Unknown",
+            deals: Number(r.wins ?? 0),
+            revenue: Number(r.attainment ?? 0),
+            quota: Number(r.attainment ?? 0),
+          })),
+          bySalesStage: funnelLeakage.map((s: any) => ({
+            stage: s.stage ?? "Unknown",
+            count: Number(s.entered ?? 0),
+            value: Number(s.converted ?? 0),
+          })),
+        });
+        onError("");
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to load sales performance";
         onError(message);
-        // Show demo data
-        setData({
-          summary: {
-            totalDeals: 145,
-            totalRevenue: 2150000,
-            winRate: 32,
-            avgDealSize: 14825,
-          },
-          byRep: [
-            { rep: "Sarah Johnson", deals: 28, revenue: 420000, quota: 400000 },
-            { rep: "Michael Chen", deals: 24, revenue: 385000, quota: 350000 },
-            { rep: "Jessica Lee", deals: 22, revenue: 318000, quota: 320000 },
-          ],
-          bySalesStage: [
-            { stage: "Prospecting", count: 45, value: 225000 },
-            { stage: "Qualification", count: 32, value: 480000 },
-            { stage: "Proposal", count: 28, value: 560000 },
-            { stage: "Negotiation", count: 18, value: 450000 },
-            { stage: "Closed Won", count: 22, value: 435000 },
-          ],
-        });
+        setData(null);
       } finally {
         setLoading(false);
       }

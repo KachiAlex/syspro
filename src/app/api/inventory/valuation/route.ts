@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql as SQL } from "@/lib/sql-client";
+import { getPagination } from "@/lib/pagination";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
     if (!tenantSlug) {
@@ -9,6 +14,7 @@ export async function GET(request: NextRequest) {
     }
 
     const method = request.nextUrl.searchParams.get("method") ?? "weighted_average";
+    const { limit, offset } = getPagination(request, { maxLimit: 5000 });
     const sql = SQL;
 
     const rows = (await sql`
@@ -51,7 +57,10 @@ export async function GET(request: NextRequest) {
         totalValue,
         totalItems: items.length,
         totalQuantity: items.reduce((sum, i) => sum + i.quantity, 0),
-        items,
+        // Aggregates span the full set; only the item list is paginated
+        items: items.slice(offset, offset + limit),
+        limit,
+        offset,
         categoryBreakdown: Object.values(categoryTotals).sort((a, b) => b.totalValue - a.totalValue),
       },
     });

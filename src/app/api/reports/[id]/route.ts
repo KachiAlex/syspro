@@ -4,7 +4,11 @@ import { UpdateReportSchema, safeParse } from "@/lib/validation";
 import { updateReport } from "@/lib/reporting/db";
 import { db } from "@/lib/sql-client";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 export async function PATCH(request: NextRequest, context: any) {
+    const _scope = await requireModuleAccess(request, "analytics", "write");
+    if (!_scope.ok) return _scope.response;
+
   const { params } = context;
   try {
     const auth = extractAuthContext(request);
@@ -26,6 +30,9 @@ export async function PATCH(request: NextRequest, context: any) {
 }
 
 export async function DELETE(request: NextRequest, context: any) {
+    const _scope = await requireModuleAccess(request, "analytics", "write");
+    if (!_scope.ok) return _scope.response;
+
   const { params } = context;
   try {
     const auth = extractAuthContext(request);

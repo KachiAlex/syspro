@@ -393,7 +393,7 @@ export const DeleteProjectModal: React.FC<DeleteProjectModalProps> = ({
           </div>
 
           <p className="text-gray-600 mb-6">
-            Are you sure you want to permanently delete "{projectName}"? This action cannot be undone and all project data will be lost.
+            Are you sure you want to permanently delete &quot;{projectName}&quot;? This action cannot be undone and all project data will be lost.
           </p>
 
           <div className="flex gap-3">

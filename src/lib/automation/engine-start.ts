@@ -1,14 +1,18 @@
-// Frontend-local no-op engine starter to satisfy layout imports during build.
+// Server-side bootstrap: start the DB-backed automation rule engine once per
+// process. Imported by the app layout so the engine is live whenever the
+// server is running.
+import { startRuleEngine } from "./rule-engine";
+
 if (typeof window === "undefined") {
   const g = global as any;
   if (!g.__pisairtel_automation_engine_started) {
     g.__pisairtel_automation_engine_started = true;
     try {
-      // Minimal log for server startup in the frontend package
+      startRuleEngine();
       // eslint-disable-next-line no-console
-      console.info("pisairtel-frontend: automation engine stub initialized");
-    } catch (e) {
-      // ignore
+      console.info("pisairtel-frontend: automation rule engine started");
+    } catch {
+      // engine start is best-effort — failures must not break app startup
     }
   }
 }

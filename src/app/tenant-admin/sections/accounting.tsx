@@ -562,9 +562,9 @@ function ChartOfAccountsModal({ tenantSlug, onClose }: {
 
   useEffect(() => {
     fetch(`/api/finance/chart-of-accounts?tenantSlug=${encodeURIComponent(tenantSlug)}`)
-      .then(r => r.json())
+      .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (data.success) setAccounts(data.data || []);
+        if (data?.success) setAccounts(data.data || []);
       })
       .catch(() => {})
       .finally(() => setLoading(false));

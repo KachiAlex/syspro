@@ -41,54 +41,39 @@ export default function ForecastingTab({
           `/api/revops/forecast?tenantSlug=${encodeURIComponent(tenantSlug)}`
         );
 
-        if (res.ok) {
-          const responseData = await res.json();
-          const apiData = responseData.data || responseData;
-          
-          setData({
-            summary: {
-              forecastedRevenue: apiData.forecastedRevenue ?? 2800000,
-              confidence: apiData.confidence ?? 78,
-              period: "Q2 2026",
-              lastUpdated: new Date().toLocaleDateString(),
-            },
-            monthlyForecast: [
-              { month: "Apr 2026", conservative: 750000, expected: 900000, optimistic: 1100000 },
-              { month: "May 2026", conservative: 800000, expected: 1000000, optimistic: 1200000 },
-              { month: "Jun 2026", conservative: 850000, expected: 900000, optimistic: 1050000 },
-            ],
-            scenarios: [
-              { name: "Conservative", revenue: 2400000, probability: 30 },
-              { name: "Expected", revenue: 2800000, probability: 50 },
-              { name: "Optimistic", revenue: 3350000, probability: 20 },
-            ],
-          });
-          onError("");
-        } else {
+        if (!res.ok) {
           throw new Error("Failed to fetch forecast");
         }
+        const responseData = await res.json();
+        const forecast = responseData.forecast ?? responseData.data ?? null;
+
+        const forecastedRevenue = Number(forecast?.forecastLikely ?? 0);
+        const confidence = Number(forecast?.confidence ?? 0);
+        const period = forecast?.periodStart && forecast?.periodEnd
+          ? `${forecast.periodStart} - ${forecast.periodEnd}`
+          : "Current period";
+
+        const scenarios = [
+          { name: "Conservative", revenue: Number(forecast?.forecastLow ?? 0), probability: 30 },
+          { name: "Expected", revenue: forecastedRevenue, probability: 50 },
+          { name: "Optimistic", revenue: Number(forecast?.forecastHigh ?? 0), probability: 20 },
+        ];
+
+        setData({
+          summary: {
+            forecastedRevenue,
+            confidence,
+            period,
+            lastUpdated: forecast?.updatedAt ? new Date(forecast.updatedAt).toLocaleDateString() : new Date().toLocaleDateString(),
+          },
+          monthlyForecast: [],
+          scenarios,
+        });
+        onError("");
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to load forecast";
         onError(message);
-        // Show demo data
-        setData({
-          summary: {
-            forecastedRevenue: 2800000,
-            confidence: 78,
-            period: "Q2 2026",
-            lastUpdated: new Date().toLocaleDateString(),
-          },
-          monthlyForecast: [
-            { month: "Apr 2026", conservative: 750000, expected: 900000, optimistic: 1100000 },
-            { month: "May 2026", conservative: 800000, expected: 1000000, optimistic: 1200000 },
-            { month: "Jun 2026", conservative: 850000, expected: 900000, optimistic: 1050000 },
-          ],
-          scenarios: [
-            { name: "Conservative", revenue: 2400000, probability: 30 },
-            { name: "Expected", revenue: 2800000, probability: 50 },
-            { name: "Optimistic", revenue: 3350000, probability: 20 },
-          ],
-        });
+        setData(null);
       } finally {
         setLoading(false);
       }

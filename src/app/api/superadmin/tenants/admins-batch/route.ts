@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
+import { requireSuperAdmin } from "@/lib/api-auth";
 
 const sql = getSql();
 
 export async function POST(request: NextRequest) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   try {
     const body = await request.json();
     const { slugs } = body;
@@ -13,9 +17,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch admins for tenants (grouped by tenant_id)
-    const tenants = await sql`
-      SELECT id, slug FROM tenants WHERE slug IN (${slugs.join(',')})
-    `;
+    const placeholders = slugs.map((_, i) => `$${i + 1}`).join(',');
+    const tenantResult = await sql.query(
+      `SELECT id, slug FROM tenants WHERE slug IN (${placeholders})`,
+      slugs
+    );
+    const tenants = tenantResult.rows;
 
     const tenantIds = tenants.map((t: any) => t.id);
 

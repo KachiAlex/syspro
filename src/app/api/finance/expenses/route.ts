@@ -18,6 +18,7 @@ import {
   seedExpenseCategories,
 } from "@/lib/finance/db";
 import { calculateMonthlyUsage, requiresEscalatedApproval } from "@/lib/finance/budget";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const expenseListSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -30,6 +31,9 @@ const expenseListSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   const url = new URL(request.url);
   const parsed = expenseListSchema.safeParse({
     tenantSlug: url.searchParams.get("tenantSlug") ?? undefined,
@@ -59,6 +63,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -102,6 +109,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -134,6 +144,9 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
   const tenantSlug = url.searchParams.get("tenantSlug");

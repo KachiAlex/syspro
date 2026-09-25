@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { listExpenses } from "@/lib/finance/db";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 const reportSchema = z.object({
   tenantSlug: z.string().min(1),
   type: z.enum(["summary", "by-category", "aged", "tax-summary"]).default("summary"),
@@ -11,6 +12,9 @@ const reportSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   const url = new URL(request.url);
   const parsed = reportSchema.safeParse({
     tenantSlug: url.searchParams.get("tenantSlug") ?? undefined,

@@ -43,7 +43,7 @@ export const BalanceSheet: React.FC<BalanceSheetProps> = ({
             <span>{liabilities}</span>
           </div>
           <div className="flex justify-between font-semibold text-sm border-t pt-1">
-            <span>Owner's Equity</span>
+            <span>Owner&apos;s Equity</span>
             <span>{equity}</span>
           </div>
         </div>

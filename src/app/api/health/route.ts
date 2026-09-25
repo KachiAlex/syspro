@@ -13,7 +13,7 @@ export async function GET() {
     const result = await sql`SELECT 1 as connected`;
     checks.database = {
       status: "connected",
-      driver: "neon",
+      driver: "pg",
       urlConfigured: !!process.env.DATABASE_URL,
       sample: Array.isArray(result) && result.length > 0 ? result[0] : null,
     };

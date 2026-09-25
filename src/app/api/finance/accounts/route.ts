@@ -4,6 +4,7 @@ import { z } from "zod";
 import { financeAccountCreateSchema } from "@/lib/finance/types";
 import { listFinanceAccounts, insertFinanceAccount } from "@/lib/finance/db";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 const listSchema = z.object({
   tenantSlug: z.string().min(1),
   regionId: z.string().optional(),
@@ -13,6 +14,9 @@ const listSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   const url = new URL(request.url);
   const parsed = listSchema.safeParse({
     tenantSlug: url.searchParams.get("tenantSlug") ?? undefined,
@@ -36,6 +40,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });

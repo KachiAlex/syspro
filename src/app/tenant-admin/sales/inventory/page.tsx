@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Eye, Edit, Trash2, Search } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Search, Upload } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
-import { 
-  AddInventoryItemModal, 
-  ViewInventoryItemModal, 
+import {
+  AddInventoryItemModal,
+  ViewInventoryItemModal,
   EditInventoryItemModal,
-  DeleteConfirmationModal 
+  DeleteConfirmationModal
 } from '@/app/tenant-admin/sections/sales-procurement-modals';
+import ImportInventoryModal from '@/app/tenant-admin/components/ImportInventoryModal';
 
 interface InventoryItem {
   id: string;
@@ -33,6 +34,7 @@ export default function InventoryPage() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,26 +51,40 @@ export default function InventoryPage() {
   });
 
   // Load inventory on mount
-  useEffect(() => {
+  const loadInventory = async () => {
     if (!tenantSlug) return;
-    async function loadInventory() {
-      setIsLoading(true);
-      try {
-        const res = await fetch(`/api/inventory?tenantSlug=${encodeURIComponent(tenantSlug)}`);
-        if (res.ok) {
-          const data = await res.json();
-          setInventoryItems(data.items || []);
-        } else {
-          throw new Error('Failed to fetch inventory');
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load inventory');
-      } finally {
-        setIsLoading(false);
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/inventory?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setInventoryItems(data.items || []);
+      } else {
+        throw new Error('Failed to fetch inventory');
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load inventory');
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadInventory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantSlug]);
+
+  const handleBulkImport = async (items: any[]) => {
+    const res = await fetch(`/api/inventory/bulk?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items }),
+    });
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(payload.error || 'Failed to import items');
+    await loadInventory();
+    return payload;
+  };
 
   // Modal handlers
   const handleAddItem = async (data: any) => {
@@ -185,13 +201,21 @@ export default function InventoryPage() {
               ))}
             </select>
           </div>
-          <div className="flex items-end">
-            <button 
+          <div className="flex items-end gap-2">
+            <button
               onClick={() => setShowCreateModal(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
             >
               <Plus className="w-4 h-4" />
               Add Item
+            </button>
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              title="Bulk import from CSV"
+            >
+              <Upload className="w-4 h-4" />
+              Import
             </button>
           </div>
         </div>
@@ -347,6 +371,12 @@ export default function InventoryPage() {
         isLoading={isLoading}
         itemType="Inventory Item"
         itemName={selectedItem?.name || ''}
+      />
+
+      <ImportInventoryModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleBulkImport}
       />
     </div>
   );

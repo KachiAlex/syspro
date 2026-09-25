@@ -348,15 +348,15 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
               ) : (
                 <div className="space-y-4">
                   {allModules.map((moduleKey) => {
-                    const module = PERMISSION_GROUPS[moduleKey as keyof typeof PERMISSION_GROUPS];
+                    const moduleGroup = PERMISSION_GROUPS[moduleKey as keyof typeof PERMISSION_GROUPS];
                     return (
                       <div key={moduleKey} className="rounded-lg border border-slate-200 p-4">
                         <div className="mb-3">
-                          <p className="font-semibold text-gray-900">{module.label}</p>
-                          <p className="text-xs text-slate-600">{module.description}</p>
+                          <p className="font-semibold text-gray-900">{moduleGroup.label}</p>
+                          <p className="text-xs text-slate-600">{moduleGroup.description}</p>
                         </div>
                         <div className="space-y-2">
-                          {module.permissions.map((perm) => (
+                          {moduleGroup.permissions.map((perm) => (
                             <label key={perm.id} className="flex items-start gap-3">
                               <input
                                 type="checkbox"
@@ -483,12 +483,12 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                         {!editForm.permissions.includes("all") && (
                           <div className="space-y-3">
                             {allModules.map((moduleKey) => {
-                              const module = PERMISSION_GROUPS[moduleKey as keyof typeof PERMISSION_GROUPS];
+                              const moduleGroup = PERMISSION_GROUPS[moduleKey as keyof typeof PERMISSION_GROUPS];
                               return (
                                 <div key={moduleKey} className="rounded-lg border border-slate-200 p-3">
-                                  <p className="mb-2 text-xs font-semibold text-gray-900">{module.label}</p>
+                                  <p className="mb-2 text-xs font-semibold text-gray-900">{moduleGroup.label}</p>
                                   <div className="space-y-1">
-                                    {module.permissions.map((perm) => (
+                                    {moduleGroup.permissions.map((perm) => (
                                       <label key={perm.id} className="flex items-center gap-2">
                                         <input
                                           type="checkbox"
@@ -559,14 +559,14 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
                         ) : (
                           <div className="space-y-1">
                             {allModules.map((moduleKey) => {
-                              const module = PERMISSION_GROUPS[moduleKey as keyof typeof PERMISSION_GROUPS];
-                              const modulePerms = module.permissions.filter((p) =>
+                              const moduleGroup = PERMISSION_GROUPS[moduleKey as keyof typeof PERMISSION_GROUPS];
+                              const modulePerms = moduleGroup.permissions.filter((p) =>
                                 role.permissions.includes(p.id)
                               );
                               if (modulePerms.length === 0) return null;
                               return (
                                 <div key={moduleKey} className="text-xs">
-                                  <span className="font-semibold text-gray-900">{module.label}:</span>{" "}
+                                  <span className="font-semibold text-gray-900">{moduleGroup.label}:</span>{" "}
                                   <span className="text-slate-600">{modulePerms.map((p) => p.label).join(" + ")}</span>
                                 </div>
                               );

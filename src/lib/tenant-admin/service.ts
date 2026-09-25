@@ -68,15 +68,24 @@ export class DepartmentService {
   }
 
   async update(tenantSlug: TenantSlug, id: ResourceId, req: DepartmentUpdateRequest): Promise<Department> {
+    const columnMap: Record<string, string> = {
+      name: "name",
+      description: "description",
+      parentDepartmentId: "parent_department_id",
+      budget: "budget",
+      costCenter: "cost_center",
+      manager: "manager_id",
+    };
     const updates: Record<string, any> = { ...req, updated_at: new Date() };
     
     const setClauses = Object.entries(updates)
-      .map(([k, v]) => `${k} = $${k}`)
+      .map(([k, v], i) => `${columnMap[k] || k} = $${i + 1}`)
       .join(", ");
 
-    await this.sql.query(
-      `update admin_departments set ${setClauses} where id = $id and tenant_slug = $tenantSlug`,
-      { id, tenantSlug, ...updates }
+    const values = Object.values(updates);
+    await db.query(
+      `update admin_departments set ${setClauses} where id = $${values.length + 1} and tenant_slug = $${values.length + 2}`,
+      [...values, id, tenantSlug]
     );
 
     return this.getById(tenantSlug, id) as Promise<Department>;
@@ -113,7 +122,7 @@ export class RoleService {
 
     await this.sql`
       insert into admin_roles (id, tenant_slug, name, scope, permissions, description, created_at, updated_at)
-      values (${id}, ${tenantSlug}, ${req.name}, ${req.scope}, ${JSON.stringify(req.permissions)}, ${req.description || null}, ${now}, ${now})
+      values (${id}, ${tenantSlug}, ${req.name}, ${req.scope}, ${req.permissions}, ${req.description || null}, ${now}, ${now})
     `;
 
     return this.getById(tenantSlug, id as ResourceId) as Promise<Role>;
@@ -129,18 +138,24 @@ export class RoleService {
   }
 
   async update(tenantSlug: TenantSlug, id: ResourceId, req: RoleUpdateRequest): Promise<Role> {
+    const columnMap: Record<string, string> = {
+      name: "name",
+      permissions: "permissions",
+      description: "description",
+    };
     const updates: any = { ...req, updated_at: new Date() };
     if (req.permissions) {
-      updates.permissions = JSON.stringify(req.permissions);
+      updates.permissions = req.permissions;
     }
 
     const setClauses = Object.entries(updates)
-      .map(([k]) => `${k} = $${k}`)
+      .map(([k], i) => `${columnMap[k] || k} = $${i + 1}`)
       .join(", ");
 
-    await this.sql.query(
-      `update admin_roles set ${setClauses} where id = $id and tenant_slug = $tenantSlug`,
-      { id, tenantSlug, ...updates }
+    const values = Object.values(updates);
+    await db.query(
+      `update admin_roles set ${setClauses} where id = $${values.length + 1} and tenant_slug = $${values.length + 2}`,
+      [...values, id, tenantSlug]
     );
 
     return this.getById(tenantSlug, id) as Promise<Role>;
@@ -190,15 +205,23 @@ export class EmployeeService {
   }
 
   async update(tenantSlug: TenantSlug, id: ResourceId, req: EmployeeUpdateRequest): Promise<Employee> {
+    const columnMap: Record<string, string> = {
+      name: "name",
+      departmentId: "department_id",
+      reportingManagerId: "reporting_manager_id",
+      jobTitle: "job_title",
+      status: "status",
+    };
     const updates = { ...req, updated_at: new Date() };
     
     const setClauses = Object.entries(updates)
-      .map(([k]) => `${k} = $${k}`)
+      .map(([k], i) => `${columnMap[k] || k} = $${i + 1}`)
       .join(", ");
 
-    await this.sql.query(
-      `update admin_employees set ${setClauses} where id = $id and tenant_slug = $tenantSlug`,
-      { id, tenantSlug, ...updates }
+    const values = Object.values(updates);
+    await db.query(
+      `update admin_employees set ${setClauses} where id = $${values.length + 1} and tenant_slug = $${values.length + 2}`,
+      [...values, id, tenantSlug]
     );
 
     return this.getById(tenantSlug, id) as Promise<Employee>;
@@ -490,22 +513,33 @@ export class WorkflowService {
     order?: 'asc' | 'desc';
     filters?: Record<string, any>;
   }): Promise<Workflow[]> {
-    const { page = 1, limit = 50, sort = 'created_at', order = 'desc', filters = {} } = options;
-    
-    let query = this.sql`select * from admin_workflows where tenant_slug = ${tenantSlug}`;
-    
-    // Apply filters
+    const { page = 1, limit = 50, order = 'desc', filters = {} } = options;
+    const allowedSorts = ['created_at', 'name', 'type', 'status', 'is_active', 'updated_at'];
+    const sort = allowedSorts.includes(options.sort || '') ? options.sort : 'created_at';
+    const offset = (page - 1) * limit;
+
+    const conditions: string[] = [`tenant_slug = $1`];
+    const params: any[] = [tenantSlug];
+    let paramIdx = 2;
+
     if (filters.type) {
-      query = this.sql`select * from admin_workflows where tenant_slug = ${tenantSlug} and type = ${filters.type}`;
+      conditions.push(`type = $${paramIdx++}`);
+      params.push(filters.type);
     }
     if (filters.status !== undefined) {
-      query = this.sql`select * from admin_workflows where tenant_slug = ${tenantSlug} and is_active = ${filters.status}`;
+      conditions.push(`status = $${paramIdx++}`);
+      params.push(filters.status);
     }
-    
-    // Apply sorting and pagination
-    query = this.sql`select * from admin_workflows where tenant_slug = ${tenantSlug} order by ${this.sql.raw(sort)} ${order} limit ${limit} offset ${(page - 1) * limit}`;
-    
-    return query;
+    if (filters.isActive !== undefined) {
+      conditions.push(`is_active = $${paramIdx++}`);
+      params.push(filters.isActive);
+    }
+
+    params.push(limit, offset);
+    const query = `select * from admin_workflows where ${conditions.join(' and ')} order by ${sort} ${order} limit $${paramIdx++} offset $${paramIdx++}`;
+
+    const result = await db.query<any>(query, params);
+    return result.rows;
   }
 
   async create(tenantSlug: TenantSlug, workflow: Partial<Workflow>): Promise<Workflow> {

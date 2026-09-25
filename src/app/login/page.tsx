@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 /* ── PulseCanvas for left panel ── */
 function PulseCanvas() {
@@ -57,7 +58,7 @@ function PulseCanvas() {
 /* ── Logo ── */
 function PisairtelLogo({ size = 34 }: { size?: number }) {
   return (
-    <img src="/pisairtel-erp-badge.svg" alt="Pisairtel ERP" width={size} height={size} style={{ borderRadius: '50%', objectFit: 'cover' }} />
+    <Image src="/pisairtel-erp-badge.svg" alt="Pisairtel ERP" width={size} height={size} style={{ borderRadius: '50%', objectFit: 'cover' }} />
   );
 }
 
@@ -91,12 +92,14 @@ export default function LoginPage() {
       if (data.role === 'employee') {
         if (data.token) {
           document.cookie = `employee_session=${data.token}; path=/; max-age=${60 * 60 * 12}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
-          document.cookie = `employee_tenant=${data.tenantSlug}; path=/; max-age=${60 * 60 * 12}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
-          document.cookie = `tenantSlug=${data.tenantSlug}; path=/; max-age=${60 * 60 * 12}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
+          if (data.tenantSlug) {
+            document.cookie = `employee_tenant=${data.tenantSlug}; path=/; max-age=${60 * 60 * 12}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
+            document.cookie = `tenantSlug=${data.tenantSlug}; path=/; max-age=${60 * 60 * 12}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
+          }
         }
-        window.location.href = '/tenant-admin?tenantSlug=' + data.tenantSlug;
+        window.location.href = '/employee/dashboard' + (data.tenantSlug ? '?tenantSlug=' + data.tenantSlug : '');
       } else {
-        window.location.href = '/tenant-admin?tenantSlug=' + data.tenantSlug;
+        window.location.href = '/tenant-admin' + (data.tenantSlug ? '?tenantSlug=' + data.tenantSlug : '');
       }
     } catch (err) {
       setError('Login failed. Please check your credentials and try again.');
@@ -199,7 +202,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-[10px] text-center">
-            <span className="text-[12.5px] text-[#64748B]">Don't have an account? </span>
+            <span className="text-[12.5px] text-[#64748B]">Don&apos;t have an account? </span>
             <Link href="/" className="text-[12.5px] text-[#E31E24] hover:text-[#E8286E] font-semibold transition-colors">Create free workspace</Link>
           </div>
         </div>

@@ -21,6 +21,13 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
 
   const employeeRole = (profile?.role || 'staff').toLowerCase();
   const canViewTeam = ['hod', 'head_of_department', 'hr', 'hr_admin', 'hr_manager'].includes(employeeRole);
+  const [workMode, setWorkMode] = useState<string>('ONSITE');
+  const [remoteRequests, setRemoteRequests] = useState<{ work_date: string; status: string }[]>([]);
+  const [qrTokenInput, setQrTokenInput] = useState('');
+  const [showQrInput, setShowQrInput] = useState(false);
+  const [remoteDate, setRemoteDate] = useState('');
+  const [remoteReason, setRemoteReason] = useState('');
+  const [remoteSubmitting, setRemoteSubmitting] = useState(false);
 
   const fetchTeamAttendance = useCallback(async () => {
     setTeamLoading(true);
@@ -44,6 +51,8 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
         const data = await res.json();
         setTodayRecord(prev => data.today || prev);
         setRecords(data.records || []);
+        if (data.workMode) setWorkMode(data.workMode);
+        setRemoteRequests(data.remoteRequests || []);
       }
     } catch { setError('Failed to load attendance'); }
     finally { setLoading(false); }
@@ -53,7 +62,7 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
 
   const [locationStatus, setLocationStatus] = useState<'idle' | 'fetching' | 'granted' | 'denied'>('idle');
 
-  const getLocation = (): Promise<{ latitude: number; longitude: number } | null> => {
+  const getLocation = (): Promise<{ latitude: number; longitude: number; accuracy: number } | null> => {
     return new Promise((resolve) => {
       if (!('geolocation' in navigator)) {
         setLocationStatus('denied');
@@ -64,7 +73,7 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           setLocationStatus('granted');
-          resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+          resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy });
         },
         (err) => {
           console.warn('Geolocation error:', err.message);
@@ -86,22 +95,48 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
           action,
           latitude: location?.latitude,
           longitude: location?.longitude,
+          accuracy: location?.accuracy,
+          qrToken: qrTokenInput.trim() || undefined,
         }),
       });
       const d = await res.json().catch(() => ({}));
       if (res.ok) {
         const locNote = location ? ' (location recorded)' : ' (no location)';
-        setSuccess((action === 'check_in' ? 'Checked in successfully!' : 'Checked out successfully!') + locNote);
+        const flagNote = d.flagReason ? ` ⚠ ${d.flagReason}` : '';
+        setSuccess((action === 'check_in' ? 'Checked in successfully!' : 'Checked out successfully!') + locNote + flagNote);
         if (d.record) setTodayRecord(d.record);
+        setQrTokenInput('');
+        setShowQrInput(false);
         fetchData();
       } else {
         setError(d.error || 'Action failed');
+        if (d.requiresQr) setShowQrInput(true);
         if (res.status === 400 && d.record) {
           setTodayRecord(d.record);
         }
       }
     } catch { setError('Network error'); }
     finally { setActionLoading(false); }
+  };
+
+  const handleRemoteRequest = async () => {
+    if (!remoteDate) return;
+    setRemoteSubmitting(true); setError(null); setSuccess(null);
+    try {
+      const res = await fetch('/api/hr/employees/portal/attendance/remote-days', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workDate: remoteDate, reason: remoteReason }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setSuccess('Remote day request submitted for approval');
+        setRemoteDate(''); setRemoteReason('');
+        fetchData();
+      } else {
+        setError(d.error || 'Request failed');
+      }
+    } catch { setError('Network error'); }
+    finally { setRemoteSubmitting(false); }
   };
 
   const fmtTime = (t: string | null | undefined) => {
@@ -114,6 +149,8 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
   };
   const fmtDate = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : '—';
   const today = new Date().toISOString().split('T')[0];
+  const todayRemote = remoteRequests.find(r => r.work_date === today);
+  const isRemoteCapable = workMode === 'REMOTE' || workMode === 'HYBRID';
   const now = new Date();
   const currentTime = now.toLocaleTimeString('en-US', { hour12: false });
 
@@ -188,6 +225,84 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
             <button onClick={() => handleAction('check_out')} disabled={actionLoading || !hasCheckedIn || hasCheckedOut} className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Square className="w-4 h-4" />}{hasCheckedOut ? 'Checked Out' : 'Check Out'}</button>
           </div>
           <p className="text-xs text-gray-400 mt-3 text-center">Current time: {currentTime}</p>
+
+          {/* Work mode badge */}
+          <div className="mt-3 flex items-center justify-center">
+            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
+              workMode === 'ONSITE' ? 'bg-blue-50 text-blue-700' :
+              workMode === 'REMOTE' ? 'bg-purple-50 text-purple-700' :
+              workMode === 'HYBRID' ? 'bg-teal-50 text-teal-700' :
+              'bg-gray-100 text-gray-600'
+            }`}>
+              <MapPin className="w-3 h-3" />{workMode}
+            </span>
+          </div>
+
+          {/* ONSITE: QR guidance */}
+          {workMode === 'ONSITE' && !hasCheckedIn && (
+            <div className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-800">
+              Scan the QR code displayed at your office to check in. It opens this check-in automatically.
+              <button
+                onClick={() => setShowQrInput(v => !v)}
+                className="block mt-1.5 text-blue-700 font-medium underline"
+              >
+                {showQrInput ? 'Hide manual entry' : 'Or enter the QR code manually'}
+              </button>
+              {showQrInput && (
+                <input
+                  type="text"
+                  value={qrTokenInput}
+                  onChange={(e) => setQrTokenInput(e.target.value)}
+                  placeholder="Paste QR token"
+                  className="mt-2 w-full px-2 py-1.5 border border-blue-200 rounded text-xs text-gray-900"
+                />
+              )}
+            </div>
+          )}
+
+          {/* REMOTE/HYBRID: remote-day status + request */}
+          {isRemoteCapable && !hasCheckedIn && (
+            <div className="mt-3 rounded-lg bg-purple-50 px-3 py-2 text-xs text-purple-800 space-y-2">
+              {todayRemote?.status === 'approved' && (
+                <p className="font-medium text-green-700">✓ Today is an approved remote day — check in normally.</p>
+              )}
+              {todayRemote?.status === 'pending' && (
+                <p className="font-medium text-amber-700">Remote request for today is pending approval.</p>
+              )}
+              {todayRemote?.status === 'rejected' && (
+                <p className="font-medium text-red-700">Remote request for today was rejected — check in at the office.</p>
+              )}
+              {!todayRemote && workMode === 'REMOTE' && (
+                <p className="font-medium">No approved remote day for today.</p>
+              )}
+              <details className="pt-1">
+                <summary className="cursor-pointer font-medium text-purple-700">Request a remote day</summary>
+                <div className="mt-2 space-y-2">
+                  <input
+                    type="date"
+                    value={remoteDate}
+                    min={today}
+                    onChange={(e) => setRemoteDate(e.target.value)}
+                    className="w-full px-2 py-1.5 border border-purple-200 rounded text-xs text-gray-900"
+                  />
+                  <input
+                    type="text"
+                    value={remoteReason}
+                    onChange={(e) => setRemoteReason(e.target.value)}
+                    placeholder="Reason (optional)"
+                    className="w-full px-2 py-1.5 border border-purple-200 rounded text-xs text-gray-900"
+                  />
+                  <button
+                    onClick={handleRemoteRequest}
+                    disabled={!remoteDate || remoteSubmitting}
+                    className="w-full px-2 py-1.5 text-xs font-medium text-white bg-purple-600 rounded hover:bg-purple-700 disabled:opacity-50"
+                  >
+                    {remoteSubmitting ? 'Submitting...' : 'Submit request'}
+                  </button>
+                </div>
+              </details>
+            </div>
+          )}
           {locationStatus === 'denied' && (
             <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
               <MapPin className="w-3.5 h-3.5" />

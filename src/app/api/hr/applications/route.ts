@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { listApplications, insertApplication, countApplications, ensureRecruitmentTables } from "@/lib/hr/db-recruitment";
 import { sql as SQL } from "@/lib/sql-client";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const listSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -20,6 +21,9 @@ const createSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "read");
+    if (!_scope.ok) return _scope.response;
+
   const url = new URL(request.url);
   const parsed = listSchema.safeParse({
     tenantSlug: url.searchParams.get("tenantSlug") ?? undefined,
@@ -48,6 +52,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });

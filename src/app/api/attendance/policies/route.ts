@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AttendancePolicy } from '@/lib/attendance-types';
+import { requireModuleAccess } from "@/lib/api-auth";
 
 // In-memory storage
 let policyRecords: AttendancePolicy[] = [
@@ -28,6 +29,9 @@ let policyRecords: AttendancePolicy[] = [
  * GET /api/attendance/policies
  */
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "read");
+    if (!_scope.ok) return _scope.response;
+
   const searchParams = request.nextUrl.searchParams;
   const tenantSlug = searchParams.get('tenantSlug');
   const policyId = searchParams.get('policyId');
@@ -49,6 +53,9 @@ export async function GET(request: NextRequest) {
  * POST /api/attendance/policies
  */
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   const body = await request.json();
   const {
     tenantSlug,
@@ -99,6 +106,9 @@ export async function POST(request: NextRequest) {
  * PUT /api/attendance/policies
  */
 export async function PUT(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   const body = await request.json();
   const { tenantSlug, policyId, ...updates } = body;
 
@@ -121,6 +131,9 @@ export async function PUT(request: NextRequest) {
  * DELETE /api/attendance/policies
  */
 export async function DELETE(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   const searchParams = request.nextUrl.searchParams;
   const tenantSlug = searchParams.get('tenantSlug');
   const policyId = searchParams.get('policyId');

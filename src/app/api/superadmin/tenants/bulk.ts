@@ -15,25 +15,26 @@ export async function POST(request: NextRequest) {
     const placeholders = slugs.map((_, i) => `$${i + 1}`).join(',');
 
     if (action === 'activate') {
-      await sql.unsafe(`
-        UPDATE tenants SET status = 'active', updated_at = NOW() 
-        WHERE slug IN (${placeholders})
-      `, slugs);
+      await sql.query(
+        `UPDATE tenants SET status = 'active', "updatedAt" = NOW() WHERE slug IN (${placeholders})`,
+        slugs
+      );
       return NextResponse.json({ message: `Activated ${slugs.length} tenants` });
     }
 
     if (action === 'suspend') {
-      await sql.unsafe(`
-        UPDATE tenants SET status = 'suspended', updated_at = NOW() 
-        WHERE slug IN (${placeholders})
-      `, slugs);
+      await sql.query(
+        `UPDATE tenants SET status = 'suspended', "updatedAt" = NOW() WHERE slug IN (${placeholders})`,
+        slugs
+      );
       return NextResponse.json({ message: `Suspended ${slugs.length} tenants` });
     }
 
     if (action === 'delete') {
-      await sql.unsafe(`
-        DELETE FROM tenants WHERE slug IN (${placeholders})
-      `, slugs);
+      await sql.query(
+        `DELETE FROM tenants WHERE slug IN (${placeholders})`,
+        slugs
+      );
       return NextResponse.json({ message: `Deleted ${slugs.length} tenants` });
     }
 

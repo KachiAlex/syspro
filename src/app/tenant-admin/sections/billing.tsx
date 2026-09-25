@@ -280,7 +280,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
         <div className="mb-4">
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Billing</p>
           <h2 className="text-lg font-semibold text-gray-900">Active Subscriptions</h2>
-          <p className="mt-1 text-sm text-slate-600">Manage your organization's subscriptions and plans</p>
+          <p className="mt-1 text-sm text-slate-600">Manage your organization&apos;s subscriptions and plans</p>
         </div>
 
         {loading ? (

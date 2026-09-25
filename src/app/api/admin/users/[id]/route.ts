@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sql as SQL } from '@/lib/sql-client';
+import { requireModuleAccess } from '@/lib/api-auth';
 
 async function ensureUsersTable() {
   await SQL`
@@ -18,10 +19,17 @@ async function ensureUsersTable() {
   `;
 }
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+  const _scope = await requireModuleAccess(req, 'admin', 'write');
+  if (!_scope.ok) return _scope.response;
+  const user = _scope.user;
   try {
     await ensureUsersTable();
-    const result = (await SQL`delete from admin_users where id = ${params.id} returning id`) as any[];
+    // Superadmin sessions have no tenantSlug — unrestricted. Tenant users can
+    // only delete their own tenant's rows or legacy 'default' rows.
+    const result = user.tenantSlug
+      ? ((await SQL`delete from admin_users where id = ${params.id} and tenant_slug in (${user.tenantSlug}, 'default') returning id`) as any[])
+      : ((await SQL`delete from admin_users where id = ${params.id} returning id`) as any[]);
     if (!result.length) return NextResponse.json({ error: 'not found' }, { status: 404 });
     return NextResponse.json({ ok: true });
   } catch (error) {

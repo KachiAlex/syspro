@@ -10,11 +10,15 @@ import {
   reverseJournalEntry,
 } from "@/lib/accounting/db";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 /**
  * GET /api/accounting/journals
  * List journal entries with filters
  */
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const url = new URL(request.url);
     const tenantSlug = url.searchParams.get("tenantSlug");
@@ -50,6 +54,9 @@ export async function GET(request: NextRequest) {
  * Create a new journal entry
  */
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const parsed = journalEntryCreateSchema.safeParse(body);

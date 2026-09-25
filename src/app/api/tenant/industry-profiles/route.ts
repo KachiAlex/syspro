@@ -4,11 +4,15 @@ import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 import { INDUSTRY_PROFILES, getModulesForIndustries, isValidIndustry, IndustryType } from "@/lib/config/industry-profiles";
 import { z } from "zod";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 const updateProfilesSchema = z.object({
   industryProfiles: z.array(z.enum(["services", "trading", "manufacturing", "mixed"])),
 });
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
     if (!tenantSlug) {
@@ -54,6 +58,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
     if (!tenantSlug) {

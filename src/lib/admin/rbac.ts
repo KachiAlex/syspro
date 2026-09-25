@@ -37,9 +37,11 @@ export function buildPermissionsFromRoles(roleNames: string[], extraPermissions:
   return Array.from(perms);
 }
 
-export default {
+const rbac = {
   predefinedRolePermissions,
   permissionMatches,
   hasPermission,
   buildPermissionsFromRoles,
 };
+
+export default rbac;

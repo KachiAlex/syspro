@@ -54,7 +54,10 @@ export default function AccountsPage({ tenantSlug, regionId }: { tenantSlug?: st
     });
 
     fetch(`/api/crm/customers?${params}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load accounts');
+        return res.json();
+      })
       .then((data) => {
         setAccounts(Array.isArray(data.customers) ? data.customers : []);
         setTotal(data.total || 0);

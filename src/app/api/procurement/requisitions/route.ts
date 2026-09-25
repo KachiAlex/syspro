@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql as SQL } from "@/lib/sql-client";
 import { z } from "zod";
 import { randomUUID } from "crypto";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const createRequisitionSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -19,6 +20,9 @@ const createRequisitionSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
     if (!tenantSlug) {
@@ -61,6 +65,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const parsed = createRequisitionSchema.safeParse(body);
@@ -99,6 +106,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
     const id = request.nextUrl.searchParams.get("id");

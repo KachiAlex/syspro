@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { sql as SQL, SqlClient } from "../sql-client";
+import { ensureOnce } from "@/lib/ensure-once";
 
 export interface FiscalPeriod {
   id: string;
@@ -18,7 +19,11 @@ export interface FiscalPeriod {
   updatedAt: string;
 }
 
-export async function ensureFiscalPeriodTables(sql: SqlClient = SQL) {
+export function ensureFiscalPeriodTables(...args: Parameters<typeof ensureFiscalPeriodTablesRun>) {
+  return ensureOnce("finance/fiscal-periods:ensureFiscalPeriodTables", () => ensureFiscalPeriodTablesRun(...args));
+}
+
+async function ensureFiscalPeriodTablesRun(sql: SqlClient = SQL) {
   await sql`
     create table if not exists fiscal_periods (
       id text primary key,

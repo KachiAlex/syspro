@@ -5,6 +5,7 @@ import {
   deletePayrollAdjustment,
 } from "@/lib/hr/db";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 const patchSchema = z.object({
   status: z.enum(["applied", "rejected"]),
   approvedBy: z.string().optional(),
@@ -14,6 +15,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const parsed = patchSchema.safeParse(body);
@@ -47,6 +51,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const tenantSlug = request.headers.get("x-tenant-slug");
     if (!tenantSlug) {

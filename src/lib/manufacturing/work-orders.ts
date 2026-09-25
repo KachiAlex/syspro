@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { sql as SQL, SqlClient } from "../sql-client";
 import { getBomByProductSku, explodeBom } from "./bom";
 import { createJournalEntry } from "../finance/accounting";
+import { ensureOnce } from "@/lib/ensure-once";
 
 export interface WorkOrder {
   id: string;
@@ -60,7 +61,11 @@ export interface WorkOrderMaterial {
   updatedAt: string;
 }
 
-export async function ensureWorkOrderTables(sql: SqlClient = SQL) {
+export function ensureWorkOrderTables(...args: Parameters<typeof ensureWorkOrderTablesRun>) {
+  return ensureOnce("manufacturing/work-orders:ensureWorkOrderTables", () => ensureWorkOrderTablesRun(...args));
+}
+
+async function ensureWorkOrderTablesRun(sql: SqlClient = SQL) {
   await sql`
     create table if not exists work_orders (
       id text primary key,
@@ -325,7 +330,7 @@ export async function completeWorkOrder(id: string, tenantSlug: string): Promise
   await ensureWorkOrderTables(sql);
 
   const wo = await getWorkOrder(id, tenantSlug);
-  if (!wo || (wo.status !== "in_progress" && wo.status !== "released")) return null;
+  if (!wo || wo.status !== "in_progress") return null;
 
   const operations = (await sql`select * from work_order_operations where work_order_id = ${id}`) as any[];
   let laborCost = 0;
@@ -453,6 +458,21 @@ export async function cancelWorkOrder(id: string, tenantSlug: string): Promise<W
   const sql = SQL;
   await ensureWorkOrderTables(sql);
 
+  const wo = await getWorkOrder(id, tenantSlug);
+  if (!wo || (wo.status !== "planned" && wo.status !== "released")) return null;
+
+  if (wo.status === "released") {
+    const materials = (await sql`select * from work_order_materials where work_order_id = ${id}`) as any[];
+    for (const mat of materials) {
+      const requiredQty = Number(mat.required_quantity);
+      await sql`
+        update inventory_products
+        set current_stock = current_stock + ${requiredQty}
+        where tenant_slug = ${tenantSlug} and sku = ${mat.component_sku}
+      `;
+    }
+  }
+
   const [row] = (await sql`
     update work_orders
     set status = 'cancelled', updated_at = now()
@@ -499,10 +519,13 @@ export async function consumeMaterial(
   const sql = SQL;
   await ensureWorkOrderTables(sql);
 
+  const wo = await getWorkOrder(workOrderId, tenantSlug);
+  if (!wo || wo.status !== "in_progress") return null;
+
   const [row] = (await sql`
     update work_order_materials
-    set consumed_quantity = ${consumedQuantity},
-        status = case when ${consumedQuantity} >= required_quantity then 'consumed' else 'pending' end,
+    set consumed_quantity = consumed_quantity + ${consumedQuantity},
+        status = case when consumed_quantity + ${consumedQuantity} >= required_quantity then 'consumed' else 'pending' end,
         updated_at = now()
     where id = ${materialId} and work_order_id = ${workOrderId}
     returning *

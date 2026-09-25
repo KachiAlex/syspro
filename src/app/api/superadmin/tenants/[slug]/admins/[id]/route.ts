@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import bcrypt from 'bcryptjs';
+import { requireSuperAdmin } from "@/lib/api-auth";
 
 const sql = getSql();
 
@@ -8,7 +9,10 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string; id: string }> }
 ) {
-  const { id } = await params;
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
+  const { slug, id } = await params;
   try {
     const body = await request.json();
     const { email, name, role, password } = body;
@@ -25,6 +29,7 @@ export async function PUT(
           role = COALESCE(${role}, role),
           password_hash = COALESCE(${passwordHash}, password_hash)
       WHERE id = ${id}
+        AND tenant_id = (SELECT id FROM tenants WHERE slug = ${slug})
       RETURNING id, email, name, role, tenant_id, created_at
     `;
 
@@ -43,9 +48,12 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string; id: string }> }
 ) {
-  const { id } = await params;
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
+  const { slug, id } = await params;
   try {
-    const result = await sql`DELETE FROM tenant_admins WHERE id = ${id} RETURNING *`;
+    const result = await sql`DELETE FROM tenant_admins WHERE id = ${id} AND tenant_id = (SELECT id FROM tenants WHERE slug = ${slug}) RETURNING *`;
 
     if (result.length === 0) {
       return NextResponse.json({ error: 'Tenant admin not found' }, { status: 404 });

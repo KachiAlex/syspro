@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 import { mapTenantRow, TenantRow } from "../route";
+import { requireSuperAdmin } from "@/lib/api-auth";
 
 const actionSchema = z.object({
   action: z.enum(["suspend", "activate"]),
@@ -11,6 +12,9 @@ const actionSchema = z.object({
 type RouteContext = { params: Promise<{ slug: string }> };
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   const { slug } = await context.params;
 
   if (!slug) {
@@ -54,6 +58,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 }
 
 export async function DELETE(_request: NextRequest, context: RouteContext) {
+    const _auth = await requireSuperAdmin(_request);
+    if (!_auth.ok) return _auth.response;
+
   const { slug } = await context.params;
 
   if (!slug) {

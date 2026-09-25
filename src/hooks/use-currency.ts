@@ -80,7 +80,8 @@ export function getCurrencySymbol(code?: string): string {
 
 export function formatCurrency(amount: number, currencyCode?: string): string {
   const symbol = getCurrencySymbol(currencyCode);
-  return `${symbol}${amount.toLocaleString()}`;
+  const sign = amount < 0 ? '-' : '';
+  return `${sign}${symbol}${Math.abs(amount).toLocaleString()}`;
 }
 
 export function useCurrency() {

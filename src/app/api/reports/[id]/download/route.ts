@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { extractAuthContext, requirePermission, validateTenant } from "@/lib/auth-helper";
 import { db } from "@/lib/sql-client";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 export async function GET(request: NextRequest, context: any) {
+    const _scope = await requireModuleAccess(request, "analytics", "read");
+    if (!_scope.ok) return _scope.response;
+
   const { params } = context;
   try {
     const auth = extractAuthContext(request);

@@ -9,10 +9,14 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { sql as SQL } from "@/lib/sql-client";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "read");
+    if (!_scope.ok) return _scope.response;
+
   const url = new URL(request.url);
   const tenantSlug = url.searchParams.get("tenantSlug");
   if (!tenantSlug) {
@@ -36,6 +40,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   const body = await request.json().catch(() => null);
   if (!body || !body.tenantSlug || !body.name || !body.modules) {
     return NextResponse.json({ error: "tenantSlug, name, and modules are required" }, { status: 400 });
@@ -75,6 +82,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   const url = new URL(request.url);
   const tenantSlug = url.searchParams.get("tenantSlug");
   const presetId = url.searchParams.get("id");

@@ -302,7 +302,7 @@ export default function ActiveProjectsPage() {
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-900">Total Budget</span>
-              <span className="text-lg font-bold text-gray-900">${filteredProjects.reduce((sum, p) => sum + (parseFloat(p.budget.replace(/[^0-9.]/g, '')) || 0), 0).toLocaleString()}</span>
+              <span className="text-lg font-bold text-gray-900">${filteredProjects.reduce((sum, p) => sum + (parseFloat(String(p.budget || 0).replace(/[^0-9.\-]/g, '')) || 0), 0).toLocaleString()}</span>
             </div>
           </div>
         </div>

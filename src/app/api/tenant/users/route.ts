@@ -9,7 +9,11 @@ import { sql } from "@/lib/sql-client";
 import { requireDashboardPermission } from "@/lib/tenant-admin/permissions";
 import { extractAuthContext } from "@/lib/auth-helper";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "read");
+    if (!_scope.ok) return _scope.response;
+
   const auth = extractAuthContext(request);
   const tenantSlug = auth.tenantSlug;
 
@@ -22,21 +26,34 @@ export async function GET(request: NextRequest) {
 
   try {
     await requireDashboardPermission(request, "admin");
+
+    // Real user principals: tenant_admins (ERP admin users) + admin_employees
+    // (portal staff). The legacy users/roles tables are not the live model.
+    // roleId prefers an explicit admin_user_roles assignment, then the
+    // principal's own role column.
     const rows = await sql`
-      SELECT u.id, u.email, u.name, u.status, u.created_at, r.name as role_name
-      FROM users u
-      JOIN tenants t ON u.tenant_id = t.id
-      LEFT JOIN user_roles ur ON ur.user_id = u.id
-      LEFT JOIN roles r ON r.id = ur.role_id
-      WHERE t.slug = ${tenantSlug}
-      ORDER BY u.created_at DESC
+      select p.id, p.email, p.name, p.status, p.base_role, p.created_at,
+             a.role_id as assigned_role_id, r.name as assigned_role_name
+      from (
+        select id, email, name, 'active' as status, coalesce(role, 'admin') as base_role, created_at
+        from tenant_admins where tenant_slug = ${tenantSlug}
+        union all
+        select id, email, name, status, coalesce(role, 'staff') as base_role, created_at
+        from admin_employees where tenant_slug = ${tenantSlug}
+      ) p
+      left join admin_user_roles a
+        on a.user_id = p.id and a.tenant_slug = ${tenantSlug}
+        and (a.expires_at is null or a.expires_at > now())
+      left join admin_roles r on r.id = a.role_id
+      order by p.created_at desc
     `;
 
     const users = Array.isArray(rows) ? rows.map((row: any) => ({
       id: row.id,
       email: row.email,
       name: row.name,
-      roleId: row.role_name || "viewer",
+      roleId: row.assigned_role_name || row.assigned_role_id || row.base_role || "viewer",
+      baseRole: row.base_role,
       isActive: row.status === "active",
       createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
     })) : [];
@@ -52,6 +69,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   const auth = extractAuthContext(request);
   const tenantSlug = auth.tenantSlug;
 
@@ -87,7 +107,8 @@ export async function POST(request: NextRequest) {
         INSERT INTO user_roles (user_id, role_id)
         SELECT ${userId}, r.id
         FROM roles r
-        WHERE r.name = ${role}
+        JOIN tenants t ON r.tenant_id = t.id
+        WHERE r.name = ${role} AND t.slug = ${tenantSlug}
         LIMIT 1
       `;
     }

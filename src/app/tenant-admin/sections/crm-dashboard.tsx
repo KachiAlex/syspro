@@ -602,7 +602,8 @@ async function updateDealRequest(
 }
 
 function formatCurrency(value: number, currencySymbol: string) {
-  const formatted = Math.abs(value) >= 1000 ? `${currencySymbol}${(value / 1000).toFixed(1)}K` : `${currencySymbol}${value.toLocaleString()}`;
+  const sign = value < 0 ? '-' : '';
+  const formatted = Math.abs(value) >= 1000 ? `${sign}${currencySymbol}${(Math.abs(value) / 1000).toFixed(1)}K` : `${sign}${currencySymbol}${Math.abs(value).toLocaleString()}`;
   return formatted.replace(/\.0K$/, "K");
 }
 

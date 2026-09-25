@@ -10,8 +10,13 @@ import {
 export async function GET(request: NextRequest) {
   const context = validateTenantContext(request, "read");
   const tenantSlug = context.tenantSlug;
-  const assets = listEnablementAssets(tenantSlug);
-  return NextResponse.json({ assets });
+  try {
+    const assets = await listEnablementAssets(tenantSlug);
+    return NextResponse.json({ assets });
+  } catch (error) {
+    console.error("Failed to list enablement assets", error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to list assets" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -34,7 +39,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const asset = createEnablementAsset({
+    const asset = await createEnablementAsset({
       tenantSlug: context.tenantSlug,
       title: body.title!,
       assetType: body.assetType!,
@@ -50,6 +55,7 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ asset }, { status: 201 });
   } catch (error) {
+    console.error("Failed to create enablement asset", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to create asset" }, { status: 500 });
   }
 }

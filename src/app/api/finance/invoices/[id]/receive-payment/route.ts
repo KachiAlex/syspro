@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { receiveInvoicePayment, getInvoicePayments } from "@/lib/finance/db";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const receivePaymentSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -16,6 +17,9 @@ const receivePaymentSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const parsed = receivePaymentSchema.safeParse(body);
@@ -47,6 +51,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const tenantSlug = searchParams.get("tenantSlug");

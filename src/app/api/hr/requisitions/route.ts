@@ -4,6 +4,7 @@ import { listRequisitions, insertRequisition, countRequisitions } from "@/lib/hr
 import { extractAuthContext } from "@/lib/auth-helper";
 import { resolveDepartmentHeadContext } from "@/lib/tenant-admin/utils";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 const listSchema = z.object({
   tenantSlug: z.string().min(1),
   status: z.string().optional(),
@@ -33,6 +34,9 @@ const createSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "read");
+    if (!_scope.ok) return _scope.response;
+
   const url = new URL(request.url);
   const parsed = listSchema.safeParse({
     tenantSlug: url.searchParams.get("tenantSlug") ?? undefined,
@@ -71,6 +75,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });

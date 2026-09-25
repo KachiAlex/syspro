@@ -1,10 +1,15 @@
 import { SqlClient } from "@/lib/sql-client";
+import { ensureOnce } from "@/lib/ensure-once";
 
 /**
  * Ensure the core `tenants` table exists with the columns required across the
  * tenant-admin and CRM flows. This helper is safe to call multiple times.
  */
-export async function ensureTenantTable(sql: SqlClient) {
+export function ensureTenantTable(...args: Parameters<typeof ensureTenantTableRun>) {
+  return ensureOnce("tenant/tenant-table:ensureTenantTable", () => ensureTenantTableRun(...args));
+}
+
+async function ensureTenantTableRun(sql: SqlClient) {
   await sql`
     create table if not exists tenants (
       id uuid primary key,

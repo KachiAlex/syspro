@@ -1,5 +1,6 @@
 import { sql as SQL } from "../sql-client";
 import { createJournalEntry } from "../finance/accounting";
+import { ensureOnce } from "@/lib/ensure-once";
 
 export type StockMovementType =
   | "purchase_receipt"
@@ -24,7 +25,11 @@ export interface StockMovement {
   createdAt: string;
 }
 
-export async function ensureStockMovementTables(sql = SQL) {
+export function ensureStockMovementTables(...args: Parameters<typeof ensureStockMovementTablesRun>) {
+  return ensureOnce("inventory/stock-movements:ensureStockMovementTables", () => ensureStockMovementTablesRun(...args));
+}
+
+async function ensureStockMovementTablesRun(sql = SQL) {
   await sql`
     create table if not exists stock_movements (
       id text primary key,
@@ -67,6 +72,29 @@ export async function recordStockMovement(
     )
     returning *
   `) as any[];
+
+  const positiveTypes: StockMovementType[] = ["purchase_receipt", "return", "work_order_receipt"];
+  const negativeTypes: StockMovementType[] = ["sale", "transfer", "work_order_issue"];
+
+  if (positiveTypes.includes(movement.movementType)) {
+    await sql`
+      update inventory_products
+      set current_stock = current_stock + ${movement.quantity}
+      where tenant_slug = ${tenantSlug} and sku = ${movement.productSku}
+    `;
+  } else if (negativeTypes.includes(movement.movementType)) {
+    await sql`
+      update inventory_products
+      set current_stock = current_stock - ${movement.quantity}
+      where tenant_slug = ${tenantSlug} and sku = ${movement.productSku}
+    `;
+  } else if (movement.movementType === "adjustment") {
+    await sql`
+      update inventory_products
+      set current_stock = current_stock + ${movement.quantity}
+      where tenant_slug = ${tenantSlug} and sku = ${movement.productSku}
+    `;
+  }
 
   if (!options?.skipJournalEntry) {
     await postStockMovementJournal(tenantSlug, movement);

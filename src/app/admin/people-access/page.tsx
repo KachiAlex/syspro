@@ -1,6 +1,14 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
 import * as Tabs from '@radix-ui/react-tabs';
+import RoleAssignmentPanel from '@/app/tenant-admin/sections/role-assignment';
+import DelegationPanel from './delegation-panel';
+
+function getTenantSlugFromCookie(): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.split('; ').find((c) => c.startsWith('tenantSlug='));
+  return match ? decodeURIComponent(match.split('=').slice(1).join('=')) : null;
+}
 
 function validateEmail(email: string) {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
@@ -243,10 +251,10 @@ export default function PeopleAccessPage() {
           )}
         </Tabs.Content>
         <Tabs.Content value="roles">
-          <div>Roles management coming soon…</div>
+          <RoleAssignmentPanel tenantSlug={getTenantSlugFromCookie()} />
         </Tabs.Content>
         <Tabs.Content value="delegation">
-          <div>Delegation & acting roles coming soon…</div>
+          <DelegationPanel tenantSlug={getTenantSlugFromCookie()} />
         </Tabs.Content>
       </Tabs.Root>
     </div>

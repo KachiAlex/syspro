@@ -22,8 +22,6 @@ export default function Modal({
   size = "md",
   closeOnBackdropClick = true,
 }: ModalProps) {
-  if (!isOpen) return null;
-
   const sizeClasses = {
     sm: "max-w-sm",
     md: "max-w-md",
@@ -54,6 +52,8 @@ export default function Modal({
       document.body.style.overflow = "unset";
     };
   }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
 
   return (
     <>

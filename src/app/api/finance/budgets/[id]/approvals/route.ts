@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { approveBudget, getBudgetApprovals } from "@/lib/finance/budgets-db";
-import { db } from "@/lib/sql-client";
 import { budgetApproveSchema } from "@/lib/finance/budgets";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 export async function GET(
   request: NextRequest,
   context: any
 ) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   const { params } = context;
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
@@ -18,20 +21,9 @@ export async function GET(
       );
     }
 
-    // Get tenant ID
-    const tenantResult = await db.query(
-      "SELECT id FROM tenants WHERE slug = $1",
-      [tenantSlug]
-    );
-
-    if (tenantResult.rows.length === 0) {
-      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
-    }
-
-    const tenantId = BigInt(tenantResult.rows[0].id);
     const budgetId = BigInt(params.id);
 
-    const approvals = await getBudgetApprovals(budgetId, tenantId);
+    const approvals = await getBudgetApprovals(budgetId, tenantSlug);
 
     return NextResponse.json(approvals);
   } catch (error) {
@@ -47,6 +39,9 @@ export async function POST(
   request: NextRequest,
   context: any
 ) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   const { params } = context;
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
@@ -59,23 +54,11 @@ export async function POST(
       );
     }
 
-    // Get tenant ID
-    const tenantResult = await db.query(
-      "SELECT id FROM tenants WHERE slug = $1",
-      [tenantSlug]
-    );
-
-    if (tenantResult.rows.length === 0) {
-      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
-    }
-
-    const tenantId = BigInt(tenantResult.rows[0].id);
-
     // Validate
     const validated = budgetApproveSchema.parse({
       ...body,
       budgetId: BigInt(params.id),
-      tenantId,
+      tenantSlug,
     });
 
     const approval = await approveBudget(validated);

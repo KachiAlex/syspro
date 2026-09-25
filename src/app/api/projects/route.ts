@@ -42,24 +42,25 @@ export async function GET(request: NextRequest) {
     const search = (url.searchParams.get("search") ?? "").toLowerCase();
     const manager = (url.searchParams.get("manager") ?? "").toLowerCase();
 
-    const projects = await getAllProjectsForTenant(context.tenantSlug);
+    const projects = await getAllProjectsForTenant(context.tenantSlug) as any[];
 
-    const mapped = projects.map(toProjectResponse);
-    const filtered = mapped.filter((p) => {
+    const filtered = projects.filter((p) => {
       if (statusFilter && statusFilter !== "All" && p.status !== statusFilter) return false;
-      if (search && !p.name.toLowerCase().includes(search) && !p.description.toLowerCase().includes(search)) return false;
-      if (manager && !p.manager.toLowerCase().includes(manager)) return false;
+      if (search && !p.name.toLowerCase().includes(search) && !(p.description ?? "").toLowerCase().includes(search)) return false;
+      if (manager && !(p.project_manager_id ?? p.created_by ?? "").toLowerCase().includes(manager)) return false;
       return true;
     });
 
     const totals = {
       count: projects.length,
       active: projects.filter((p) => ["IN_PROGRESS", "INITIATED"].includes(p.status)).length,
-      approvedBudget: projects.reduce((sum, p) => sum + (Number(p.totalBudgetAmount) || 0), 0),
+      approvedBudget: projects.reduce((sum, p) => sum + (Number(p.total_budget_amount) || 0), 0),
       spentBudget: 0,
     };
 
-    return NextResponse.json({ projects: filtered, totals });
+    const mapped = filtered.map(toProjectResponse);
+
+    return NextResponse.json({ projects: mapped, totals });
   } catch (error) {
     console.error("Projects GET failed:", error);
     const message = error instanceof Error ? error.message : "Unable to fetch projects";

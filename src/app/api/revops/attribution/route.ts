@@ -8,6 +8,11 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const tenantSlug = context.tenantSlug;
   const model = (searchParams.get("model") as AttributionModel | null) ?? "linear";
-  const summary = calculateAttributionSummary(tenantSlug, model);
-  return NextResponse.json({ summary });
+  try {
+    const summary = await calculateAttributionSummary(tenantSlug, model);
+    return NextResponse.json({ summary });
+  } catch (error) {
+    console.error("Failed to calculate attribution", error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to calculate attribution" }, { status: 500 });
+  }
 }

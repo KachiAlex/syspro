@@ -11,6 +11,7 @@ import {
   explodeBom,
 } from "@/lib/manufacturing/bom";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 const bomLineSchema = z.object({
   componentSku: z.string().min(1),
   componentName: z.string().min(1),
@@ -44,6 +45,9 @@ const updateBomSchema = z.object({
 const addLineSchema = bomLineSchema;
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const tenantSlug = searchParams.get("tenantSlug");
@@ -82,6 +86,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const parsed = createBomSchema.safeParse(body);
@@ -98,6 +105,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const tenantSlug = searchParams.get("tenantSlug");
@@ -142,6 +152,9 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const tenantSlug = searchParams.get("tenantSlug");

@@ -6,7 +6,11 @@ import {
   generateAgedReceivablesReport,
 } from "@/lib/finance/reports-db";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const url = new URL(request.url);
     const tenantSlug = url.searchParams.get("tenantSlug");

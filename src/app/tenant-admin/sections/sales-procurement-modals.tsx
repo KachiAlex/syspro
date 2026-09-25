@@ -383,7 +383,7 @@ export function DeleteConfirmationModal({
 
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <p className="text-sm text-gray-900">
-              Are you sure you want to delete <span className="font-medium text-gray-900">"{itemName}"</span>?
+              Are you sure you want to delete <span className="font-medium text-gray-900">&quot;{itemName}&quot;</span>?
             </p>
           </div>
 

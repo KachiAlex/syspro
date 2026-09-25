@@ -19,8 +19,13 @@ export async function GET(request: NextRequest) {
   const context = validateTenantContext(request, "read");
   const { searchParams } = new URL(request.url);
   const tenantSlug = context.tenantSlug;
-  const leadSources = listLeadSources(tenantSlug, buildFilters(searchParams));
-  return NextResponse.json({ leadSources });
+  try {
+    const leadSources = await listLeadSources(tenantSlug, buildFilters(searchParams));
+    return NextResponse.json({ leadSources });
+  } catch (error) {
+    console.error("Failed to list lead sources", error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to list lead sources" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -40,7 +45,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const leadSource = createLeadSource({
+    const leadSource = await createLeadSource({
       tenantSlug: context.tenantSlug,
       name: String(body.name),
       channel: body.channel as DemandChannel,
@@ -54,6 +59,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ leadSource }, { status: 201 });
   } catch (error) {
+    console.error("Failed to create lead source", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to create lead source" }, { status: 500 });
   }
 }

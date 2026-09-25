@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractAuthContext, requirePermission, validateTenant } from "@/lib/auth-helper";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 const TEMPLATES: Record<string, any[]> = {
   financial: [
     { id: "fin-1", name: "Revenue Summary", description: "Total revenue and growth across periods", module: "financial", type: "revenue", defaultFormat: "csv", filters: [{ key: "period", label: "Period", type: "select", options: ["monthly", "quarterly", "yearly"] }] },
@@ -23,12 +24,15 @@ const TEMPLATES: Record<string, any[]> = {
 };
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "analytics", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const auth = extractAuthContext(request);
     validateTenant(auth.tenantSlug);
     requirePermission(auth.userRole, "read");
-    const module = new URL(request.url).searchParams.get("module");
-    const templates = module && TEMPLATES[module] ? TEMPLATES[module] : Object.values(TEMPLATES).flat();
+    const moduleKey = new URL(request.url).searchParams.get("module");
+    const templates = moduleKey && TEMPLATES[moduleKey] ? TEMPLATES[moduleKey] : Object.values(TEMPLATES).flat();
     return NextResponse.json({ templates });
   } catch (error) {
     console.error("Templates fetch failed", error);

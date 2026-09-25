@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     }
 
     const service = new ModuleService();
-    const module = await service.create(asTenantSlug(context.tenantSlug), {
+    const createdModule = await service.create(asTenantSlug(context.tenantSlug), {
       ...parsed.data,
       createdBy: context.userId as UserId,
     });
@@ -93,14 +93,14 @@ export async function POST(request: NextRequest) {
       context.userId as UserId,
       "create" as AuditAction,
       "module",
-      module.id as ResourceId,
-      { after: module }
+      createdModule.id as ResourceId,
+      { after: createdModule }
     );
 
     return NextResponse.json(
       {
         success: true,
-        data: module,
+        data: createdModule,
         message: "Module created successfully",
       },
       { status: 201 }
@@ -129,7 +129,7 @@ export async function PATCH(request: NextRequest) {
       return errorResponse(parsed.error, 400, parsed.details);
     }
 
-    const service = new ModuleService(context.tenantSlug);
+    const service = new ModuleService();
     const updated = {
       id,
       ...parsed.data,
@@ -160,7 +160,7 @@ export async function DELETE(request: NextRequest) {
       return errorResponse("Module ID is required", 400);
     }
 
-    const service = new ModuleService(context.tenantSlug);
+    const service = new ModuleService();
 
     return NextResponse.json({
       success: true,

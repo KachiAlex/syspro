@@ -5,12 +5,15 @@ import {
   updateBudgetLine,
   deleteBudgetLine,
 } from "@/lib/finance/budgets-db";
-import { db } from "@/lib/sql-client";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 export async function GET(
   request: NextRequest,
   context: any
 ) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   const { params } = context;
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
@@ -23,20 +26,9 @@ export async function GET(
       );
     }
 
-    // Get tenant ID
-    const tenantResult = await db.query(
-      "SELECT id FROM tenants WHERE slug = $1",
-      [tenantSlug]
-    );
-
-    if (tenantResult.rows.length === 0) {
-      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
-    }
-
-    const tenantId = BigInt(tenantResult.rows[0].id);
     const budgetId = BigInt(params.id);
 
-    const lines = await getBudgetLines(budgetId, tenantId);
+    const lines = await getBudgetLines(budgetId, tenantSlug);
 
     if (withVariance === "true") {
       const variances = await getBudgetLineVariances(budgetId);

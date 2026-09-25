@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listStaffReports } from "@/lib/hr/db";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "read");
+    if (!_scope.ok) return _scope.response;
+
   const tenantSlug = new URL(request.url).searchParams.get("tenantSlug");
   if (!tenantSlug) {
     return NextResponse.json({ error: "tenantSlug required" }, { status: 400 });

@@ -3,8 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { financeAccountUpdateSchema } from "@/lib/finance/types";
 import { updateFinanceAccount } from "@/lib/finance/db";
 
+import { requireRecordTenant, requireModuleAccess } from "@/lib/api-auth";
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   const params = await context.params;
+  const _owned = await requireRecordTenant("finance_accounts", params.id, _scope.user);
+  if (!_owned.ok) return _owned.response;
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });

@@ -563,7 +563,7 @@ export function DeleteConfirmModal({
         {/* Content */}
         <div className="p-6">
           <p className="text-gray-600">
-            Are you sure you want to delete <span className="font-semibold">"{campaignName}"</span>? This action cannot be undone.
+            Are you sure you want to delete <span className="font-semibold">&quot;{campaignName}&quot;</span>? This action cannot be undone.
           </p>
         </div>
 

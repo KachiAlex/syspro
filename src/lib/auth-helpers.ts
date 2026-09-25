@@ -28,6 +28,8 @@ export type PermissionLevel = "none" | "read" | "write" | "admin";
  * In production: Verify JWT token or get from next-auth session
  */
 export function getCurrentUser(request: NextRequest): SessionUser | null {
+  const isDev = process.env.NODE_ENV !== "production";
+
   // Method 0a: Check pisairtel_session cookie (set by tenant admin login)
   try {
     if (typeof (request as any).cookies?.get === "function") {
@@ -72,6 +74,10 @@ export function getCurrentUser(request: NextRequest): SessionUser | null {
     // ignore session parsing errors
   }
 
+  // Unsigned headers/cookies are trusted ONLY outside production — a client
+  // can set them to claim any identity or role.
+  if (!isDev) return null;
+
   // Method 1: Check for development headers
   const userId = typeof request.headers?.get === "function" ? request.headers.get("X-User-Id") : undefined;
   const userEmail = typeof request.headers?.get === "function" ? request.headers.get("X-User-Email") || "user@example.com" : "user@example.com";
@@ -110,21 +116,6 @@ export function getCurrentUser(request: NextRequest): SessionUser | null {
     // ignore cookie read errors and continue to returning null
   }
 
-  // Method 2: Check cookies (would come from your auth provider)
-  // const sessionCookie = request.cookies.get("next-auth.session-token");
-  // if (sessionCookie) {
-  //   const session = await getSession({ req: request });
-  //   if (session?.user) {
-  //     return {
-  //       id: session.user.id || "anonymous",
-  //       email: session.user.email || "unknown@example.com",
-  //       name: session.user.name,
-  //       tenantSlug: request.headers.get("X-Tenant-Slug") ,
-  //       roleId: session.user.roleId || "viewer",
-  //     };
-  //   }
-  // }
-
   // Method 3: For strict tenant isolation we return null unless an explicit
   // authenticated user is present. This prevents accidental cross-tenant
   // data exposure when no tenant header/session is provided.
@@ -143,11 +134,12 @@ export async function validateTenantAccess(user: SessionUser, requestedTenantSlu
   // allow access immediately (fast path).
   if (user.tenantSlug && user.tenantSlug === requestedTenantSlug) return true;
 
-  // Admin fallback: allow admin users without requiring DB-backed membership.
-  // This ensures the initial tenant admin dashboard is reachable even when
-  // tenant_user_roles / tenant_members tables haven't been seeded yet.
-  if ((user.roleId || "").toLowerCase() === "admin") return true;
-  if ((user.id || "").toLowerCase().startsWith("dev-user-")) return true;
+  // Dev-only fallbacks: allow admin/dev-user access without DB membership so
+  // the dashboard stays usable before role tables are seeded. These are never
+  // trusted in production — they would allow cross-tenant access.
+  const isDev = process.env.NODE_ENV !== "production";
+  if (isDev && (user.roleId || "").toLowerCase() === "admin") return true;
+  if (isDev && (user.id || "").toLowerCase().startsWith("dev-user-")) return true;
 
   // Otherwise, check the database for tenant membership/role assignment.
   try {
@@ -348,6 +340,14 @@ function getDefaultRolePermissions(roleId: string): Record<string, "none" | "rea
       workflows: "none",
     },
   };
+
+  // Aliases for roleIds actually issued in sessions
+  defaults.tenant_admin = defaults.admin;
+  defaults.superadmin = defaults.admin;
+  defaults.operator = defaults.manager;
+  defaults.hod = defaults.manager;
+  defaults.executive = defaults.manager;
+  defaults.staff = defaults.viewer;
 
   return defaults[roleId] || defaults.viewer;
 }

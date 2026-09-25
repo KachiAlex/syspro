@@ -419,7 +419,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Data Submission Portal</h2>
-          <p className="text-gray-600">Submit and manage your team's data contributions</p>
+          <p className="text-gray-600">Submit and manage your team&apos;s data contributions</p>
         </div>
         <button
           onClick={() => setShowSubmissionModal(true)}
@@ -477,7 +477,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
               <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Ready to Submit Data?</h3>
               <p className="text-gray-600 mb-4">
-                Share your team's data to contribute to comprehensive reports and analytics
+                Share your team&apos;s data to contribute to comprehensive reports and analytics
               </p>
               <button
                 onClick={() => setShowSubmissionModal(true)}

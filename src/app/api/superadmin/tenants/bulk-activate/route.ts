@@ -3,10 +3,14 @@ import { getSql } from '@/lib/db';
 import { logAuditAction } from '@/lib/audit';
 import { getRateLimitKey, checkRateLimitAsync } from '@/lib/rate-limit';
 import { BulkTenantIdsSchema, safeParse } from '@/lib/validation';
+import { requireSuperAdmin } from "@/lib/api-auth";
 
 const sql = getSql();
 
 export async function POST(request: NextRequest) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   try {
     // Rate limiting
     const key = getRateLimitKey(request);
@@ -30,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     const res = await sql`
       UPDATE tenants
-      SET status = 'active', updated_at = NOW()
+      SET status = 'active', "updatedAt" = NOW()
       WHERE slug = ANY(${slugs})
       RETURNING id, slug
     `;

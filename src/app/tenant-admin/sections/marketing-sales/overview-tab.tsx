@@ -44,38 +44,53 @@ export default function OverviewTab({
         const apiData: any = {};
         if (attributionRes.ok) {
           const attr = await attributionRes.json();
-          apiData.attribution = attr;
+          apiData.attribution = attr.summary ?? attr;
         }
         if (performanceRes.ok) {
           const perf = await performanceRes.json();
-          apiData.performance = perf;
+          apiData.performance = perf.snapshot ?? perf;
         }
         if (campaignsRes.ok) {
           const camps = await campaignsRes.json();
-          apiData.campaigns = camps;
+          apiData.campaigns = Array.isArray(camps.campaigns) ? camps.campaigns : [];
         }
 
-        // Transform data for display
+        const campaignList: any[] = Array.isArray(apiData.campaigns) ? apiData.campaigns : [];
+        const attrSummary = apiData.attribution ?? {};
+        const perfSnapshot = apiData.performance ?? {};
+
+        const totalRevenue = Number(attrSummary?.totals?.revenue ?? 0);
+        const pipelineValue = Number(perfSnapshot?.pipelineCoverage ?? 0) * Number(perfSnapshot?.avgDealSize ?? 0);
+
+        const channels = Array.isArray(attrSummary?.channels)
+          ? attrSummary.channels.map((ch: any) => ({
+              name: ch.channel,
+              revenue: Number(ch.revenue ?? 0),
+              percentage: totalRevenue > 0 ? Math.round((Number(ch.revenue ?? 0) / totalRevenue) * 100) : 0,
+            }))
+          : [];
+
+        const topCampaigns = Array.isArray(attrSummary?.campaigns)
+          ? attrSummary.campaigns
+              .slice()
+              .sort((a: any, b: any) => Number(b.revenue ?? 0) - Number(a.revenue ?? 0))
+              .slice(0, 3)
+              .map((c: any) => ({
+                name: c.name ?? "Unknown",
+                roi: Number(c.roi ?? 0),
+                revenue: Number(c.revenue ?? 0),
+              }))
+          : [];
+
         const overview: OverviewData = {
-          totalRevenue: apiData.attribution?.summary?.totalRevenue ?? 450000,
-          pipelineValue: apiData.performance?.pipelineValue ?? 1200000,
-          campaignsActive: Array.isArray(apiData.campaigns?.data)
-            ? apiData.campaigns.data.filter((c: any) => c.status === "active").length
-            : 5,
-          winRate: apiData.performance?.winRate ?? 32,
-          avgDealSize: apiData.performance?.avgDealSize ?? 45000,
-          dealVelocityDays: apiData.performance?.dealVelocityDays ?? 24,
-          channels: [
-            { name: "Email", revenue: 180000, percentage: 40 },
-            { name: "Paid Search", revenue: 135000, percentage: 30 },
-            { name: "Events", revenue: 90000, percentage: 20 },
-            { name: "Partnerships", revenue: 45000, percentage: 10 },
-          ],
-          topCampaigns: [
-            { name: "Q1 Enterprise Push", roi: 3.2, revenue: 120000 },
-            { name: "Summer Campaign", roi: 2.8, revenue: 95000 },
-            { name: "Partner Co-marketing", roi: 2.1, revenue: 75000 },
-          ],
+          totalRevenue,
+          pipelineValue,
+          campaignsActive: campaignList.filter((c: any) => c.status === "active").length,
+          winRate: Number(perfSnapshot?.winRate ?? 0),
+          avgDealSize: Number(perfSnapshot?.avgDealSize ?? 0),
+          dealVelocityDays: Number(perfSnapshot?.dealVelocityDays ?? 0),
+          channels,
+          topCampaigns,
         };
 
         setData(overview);
@@ -83,26 +98,7 @@ export default function OverviewTab({
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to load overview data";
         onError(message);
-        // Set demo data on error
-        setData({
-          totalRevenue: 450000,
-          pipelineValue: 1200000,
-          campaignsActive: 5,
-          winRate: 32,
-          avgDealSize: 45000,
-          dealVelocityDays: 24,
-          channels: [
-            { name: "Email", revenue: 180000, percentage: 40 },
-            { name: "Paid Search", revenue: 135000, percentage: 30 },
-            { name: "Events", revenue: 90000, percentage: 20 },
-            { name: "Partnerships", revenue: 45000, percentage: 10 },
-          ],
-          topCampaigns: [
-            { name: "Q1 Enterprise Push", roi: 3.2, revenue: 120000 },
-            { name: "Summer Campaign", roi: 2.8, revenue: 95000 },
-            { name: "Partner Co-marketing", roi: 2.1, revenue: 75000 },
-          ],
-        });
+        setData(null);
       } finally {
         setLoading(false);
       }

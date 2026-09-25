@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sql as SQL } from '@/lib/sql-client';
+import { requireModuleAccess } from '@/lib/api-auth';
 
 async function ensureUsersTable() {
   await SQL`
@@ -33,13 +34,21 @@ function mapUser(row: any) {
   };
 }
 
-export async function POST(_req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: { id: string } }) {
+  const _scope = await requireModuleAccess(req, 'admin', 'write');
+  if (!_scope.ok) return _scope.response;
+  const user = _scope.user;
   try {
     await ensureUsersTable();
-    const [row] = (await SQL`
-      update admin_users set status = 'suspended', updated_at = now()
-      where id = ${params.id} returning *
-    `) as any[];
+    const [row] = user.tenantSlug
+      ? ((await SQL`
+          update admin_users set status = 'suspended', updated_at = now()
+          where id = ${params.id} and tenant_slug in (${user.tenantSlug}, 'default') returning *
+        `) as any[])[0]
+      : ((await SQL`
+          update admin_users set status = 'suspended', updated_at = now()
+          where id = ${params.id} returning *
+        `) as any[])[0];
     if (!row) return NextResponse.json({ error: 'not found' }, { status: 404 });
     return NextResponse.json({ data: mapUser(row) });
   } catch (error) {

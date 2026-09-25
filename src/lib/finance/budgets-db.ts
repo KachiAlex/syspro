@@ -28,7 +28,7 @@ export async function createBudget(input: BudgetCreateInput): Promise<Budget | n
     const result = await db.query(
       `
       INSERT INTO budgets (
-        tenant_id, code, name, description, budget_type, scope_entity_id, scope_entity_name,
+        tenant_slug, code, name, description, budget_type, scope_entity_id, scope_entity_name,
         period_type, fiscal_year, quarter_num, month_num, total_budget_amount,
         status, enforcement_mode, allow_overrun, overrun_threshold_percent, version_number,
         created_by, notes
@@ -37,7 +37,7 @@ export async function createBudget(input: BudgetCreateInput): Promise<Budget | n
       RETURNING *
       `,
       [
-        budgetData.tenantId.toString(),
+        budgetData.tenantSlug,
         budgetData.code,
         budgetData.name,
         budgetData.description || null,
@@ -63,14 +63,14 @@ export async function createBudget(input: BudgetCreateInput): Promise<Budget | n
     // Create budget lines
     if (budgetLines && budgetLines.length > 0) {
       for (const line of budgetLines) {
-        await createBudgetLine(BigInt(budget.id), input.tenantId, line);
+        await createBudgetLine(BigInt(budget.id), input.tenantSlug, line);
       }
     }
 
     // Create initial version
     await createBudgetVersion(
       BigInt(budget.id),
-      input.tenantId,
+      input.tenantSlug,
       1,
       "DRAFT",
       budgetData.totalBudgetAmount,
@@ -79,18 +79,18 @@ export async function createBudget(input: BudgetCreateInput): Promise<Budget | n
       budget
     );
 
-    return getBudget(BigInt(budget.id), input.tenantId);
+    return getBudget(BigInt(budget.id), input.tenantSlug);
   } catch (error) {
     console.error("Error creating budget:", error);
     throw error;
   }
 }
 
-export async function getBudget(budgetId: bigint, tenantId: bigint): Promise<Budget | null> {
+export async function getBudget(budgetId: bigint, tenantSlug: string): Promise<Budget | null> {
   try {
     const result = await db.query(
-      `SELECT * FROM budgets WHERE id = $1 AND tenant_id = $2`,
-      [budgetId.toString(), tenantId.toString()]
+      `SELECT * FROM budgets WHERE id = $1 AND tenant_slug = $2`,
+      [budgetId.toString(), tenantSlug]
     );
     return db.mapRow(result.rows[0]) || null;
   } catch (error) {
@@ -99,14 +99,14 @@ export async function getBudget(budgetId: bigint, tenantId: bigint): Promise<Bud
   }
 }
 
-export async function getBudgets(tenantId: bigint, filters?: {
+export async function getBudgets(tenantSlug: string, filters?: {
   status?: BudgetStatus;
   budgetType?: string;
   fiscalYear?: number;
 }): Promise<Budget[]> {
   try {
-    let query = "SELECT * FROM budgets WHERE tenant_id = $1";
-    const params: any[] = [tenantId.toString()];
+    let query = "SELECT * FROM budgets WHERE tenant_slug = $1";
+    const params: any[] = [tenantSlug];
 
     if (filters?.status) {
       query += ` AND status = $${params.length + 1}`;
@@ -131,11 +131,11 @@ export async function getBudgets(tenantId: bigint, filters?: {
   }
 }
 
-export async function getBudgetSummaries(tenantId: bigint): Promise<BudgetSummary[]> {
+export async function getBudgetSummaries(tenantSlug: string): Promise<BudgetSummary[]> {
   try {
     const result = await db.query(
-      `SELECT * FROM budget_summary_view WHERE tenant_id = $1 ORDER BY created_at DESC`,
-      [tenantId.toString()]
+      `SELECT * FROM budget_summary_view WHERE tenant_slug = $1 ORDER BY created_at DESC`,
+      [tenantSlug]
     );
     return db.mapRows(result.rows);
   } catch (error) {
@@ -146,7 +146,7 @@ export async function getBudgetSummaries(tenantId: bigint): Promise<BudgetSummar
 
 export async function updateBudget(
   budgetId: bigint,
-  tenantId: bigint,
+  tenantSlug: string,
   input: BudgetUpdateInput
 ): Promise<Budget | null> {
   try {
@@ -185,13 +185,13 @@ export async function updateBudget(
 
     updates.push(`version_number = version_number + 1`);
 
-    if (updates.length === 1) return getBudget(budgetId, tenantId); // No updates
+    if (updates.length === 1) return getBudget(budgetId, tenantSlug); // No updates
 
     params.push(budgetId.toString());
-    params.push(tenantId.toString());
+    params.push(tenantSlug);
 
     const result = await db.query(
-      `UPDATE budgets SET ${updates.join(", ")} WHERE id = $${paramIndex + 1} AND tenant_id = $${paramIndex + 2} RETURNING *`,
+      `UPDATE budgets SET ${updates.join(", ")} WHERE id = $${paramIndex + 1} AND tenant_slug = $${paramIndex + 2} RETURNING *`,
       params
     );
 
@@ -201,7 +201,7 @@ export async function updateBudget(
     if (input.changeReason) {
       await createBudgetVersion(
         budgetId,
-        tenantId,
+        tenantSlug,
         budget.versionNumber,
         budget.status,
         budget.totalBudgetAmount,
@@ -220,20 +220,20 @@ export async function updateBudget(
 
 export async function changeBudgetStatus(
   budgetId: bigint,
-  tenantId: bigint,
+  tenantSlug: string,
   newStatus: BudgetStatus
 ): Promise<Budget | null> {
   try {
     const result = await db.query(
-      `UPDATE budgets SET status = $1 WHERE id = $2 AND tenant_id = $3 RETURNING *`,
-      [newStatus, budgetId.toString(), tenantId.toString()]
+      `UPDATE budgets SET status = $1 WHERE id = $2 AND tenant_slug = $3 RETURNING *`,
+      [newStatus, budgetId.toString(), tenantSlug]
     );
 
     const budget = db.mapRow(result.rows[0]);
 
     await createBudgetVersion(
       budgetId,
-      tenantId,
+      tenantSlug,
       budget.versionNumber,
       newStatus,
       budget.totalBudgetAmount,
@@ -249,11 +249,11 @@ export async function changeBudgetStatus(
   }
 }
 
-export async function deleteBudget(budgetId: bigint, tenantId: bigint): Promise<boolean> {
+export async function deleteBudget(budgetId: bigint, tenantSlug: string): Promise<boolean> {
   try {
     const result = await db.query(
-      `DELETE FROM budgets WHERE id = $1 AND tenant_id = $2`,
-      [budgetId.toString(), tenantId.toString()]
+      `DELETE FROM budgets WHERE id = $1 AND tenant_slug = $2`,
+      [budgetId.toString(), tenantSlug]
     );
     return result.rowCount > 0;
   } catch (error) {
@@ -268,14 +268,14 @@ export async function deleteBudget(budgetId: bigint, tenantId: bigint): Promise<
 
 export async function createBudgetLine(
   budgetId: bigint,
-  tenantId: bigint,
+  tenantSlug: string,
   line: any
 ): Promise<BudgetLine | null> {
   try {
     const result = await db.query(
       `
       INSERT INTO budget_lines (
-        budget_id, tenant_id, line_number, account_id, account_code, account_name,
+        budget_id, tenant_slug, line_number, account_id, account_code, account_name,
         cost_center_id, cost_center_name, project_id, project_name,
         budgeted_amount, allocation_percent, description
       )
@@ -284,7 +284,7 @@ export async function createBudgetLine(
       `,
       [
         budgetId.toString(),
-        tenantId.toString(),
+        tenantSlug,
         line.lineNumber,
         line.accountId?.toString() || null,
         line.accountCode || null,
@@ -306,11 +306,11 @@ export async function createBudgetLine(
   }
 }
 
-export async function getBudgetLines(budgetId: bigint, tenantId: bigint): Promise<BudgetLine[]> {
+export async function getBudgetLines(budgetId: bigint, tenantSlug: string): Promise<BudgetLine[]> {
   try {
     const result = await db.query(
-      `SELECT * FROM budget_lines WHERE budget_id = $1 AND tenant_id = $2 ORDER BY line_number`,
-      [budgetId.toString(), tenantId.toString()]
+      `SELECT * FROM budget_lines WHERE budget_id = $1 AND tenant_slug = $2 ORDER BY line_number`,
+      [budgetId.toString(), tenantSlug]
     );
     return db.mapRows(result.rows);
   } catch (error) {
@@ -334,7 +334,7 @@ export async function getBudgetLineVariances(budgetId: bigint): Promise<BudgetLi
 
 export async function updateBudgetLine(
   budgetLineId: bigint,
-  tenantId: bigint,
+  tenantSlug: string,
   updates: any
 ): Promise<BudgetLine | null> {
   try {
@@ -359,10 +359,10 @@ export async function updateBudgetLine(
 
     updateClauses.push(`updated_at = CURRENT_TIMESTAMP`);
     params.push(budgetLineId.toString());
-    params.push(tenantId.toString());
+    params.push(tenantSlug);
 
     const result = await db.query(
-      `UPDATE budget_lines SET ${updateClauses.join(", ")} WHERE id = $${paramIndex + 1} AND tenant_id = $${paramIndex + 2} RETURNING *`,
+      `UPDATE budget_lines SET ${updateClauses.join(", ")} WHERE id = $${paramIndex + 1} AND tenant_slug = $${paramIndex + 2} RETURNING *`,
       params
     );
 
@@ -373,11 +373,11 @@ export async function updateBudgetLine(
   }
 }
 
-export async function deleteBudgetLine(budgetLineId: bigint, tenantId: bigint): Promise<boolean> {
+export async function deleteBudgetLine(budgetLineId: bigint, tenantSlug: string): Promise<boolean> {
   try {
     const result = await db.query(
-      `DELETE FROM budget_lines WHERE id = $1 AND tenant_id = $2`,
-      [budgetLineId.toString(), tenantId.toString()]
+      `DELETE FROM budget_lines WHERE id = $1 AND tenant_slug = $2`,
+      [budgetLineId.toString(), tenantSlug]
     );
     return result.rowCount > 0;
   } catch (error) {
@@ -392,7 +392,7 @@ export async function deleteBudgetLine(budgetLineId: bigint, tenantId: bigint): 
 
 export async function createBudgetVersion(
   budgetId: bigint,
-  tenantId: bigint,
+  tenantSlug: string,
   versionNumber: number,
   status: BudgetStatus,
   totalAmount: number,
@@ -404,7 +404,7 @@ export async function createBudgetVersion(
     const result = await db.query(
       `
       INSERT INTO budget_versions (
-        budget_id, tenant_id, version_number, status, total_budget_amount,
+        budget_id, tenant_slug, version_number, status, total_budget_amount,
         change_reason, changed_by, budget_snapshot
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -412,7 +412,7 @@ export async function createBudgetVersion(
       `,
       [
         budgetId.toString(),
-        tenantId.toString(),
+        tenantSlug,
         versionNumber,
         status,
         totalAmount,
@@ -429,11 +429,11 @@ export async function createBudgetVersion(
   }
 }
 
-export async function getBudgetVersions(budgetId: bigint, tenantId: bigint): Promise<BudgetVersion[]> {
+export async function getBudgetVersions(budgetId: bigint, tenantSlug: string): Promise<BudgetVersion[]> {
   try {
     const result = await db.query(
-      `SELECT * FROM budget_versions WHERE budget_id = $1 AND tenant_id = $2 ORDER BY version_number DESC`,
-      [budgetId.toString(), tenantId.toString()]
+      `SELECT * FROM budget_versions WHERE budget_id = $1 AND tenant_slug = $2 ORDER BY version_number DESC`,
+      [budgetId.toString(), tenantSlug]
     );
     return db.mapRows(result.rows);
   } catch (error) {
@@ -448,14 +448,14 @@ export async function getBudgetVersions(budgetId: bigint, tenantId: bigint): Pro
 
 export async function recordBudgetActual(
   budgetId: bigint,
-  tenantId: bigint,
+  tenantSlug: string,
   actual: any
 ): Promise<BudgetActual | null> {
   try {
     const result = await db.query(
       `
       INSERT INTO budget_actuals (
-        budget_id, budget_line_id, tenant_id, actual_type, transaction_id, transaction_code,
+        budget_id, budget_line_id, tenant_slug, actual_type, transaction_id, transaction_code,
         actual_amount, committed_amount, account_id, account_code, cost_center_id, project_id,
         transaction_date, notes
       )
@@ -465,7 +465,7 @@ export async function recordBudgetActual(
       [
         budgetId.toString(),
         actual.budgetLineId?.toString() || null,
-        tenantId.toString(),
+        tenantSlug,
         actual.actualType,
         actual.transactionId?.toString() || null,
         actual.transactionCode || null,
@@ -481,7 +481,7 @@ export async function recordBudgetActual(
     );
 
     // Check for variances
-    await checkAndCreateVariances(budgetId, tenantId);
+    await checkAndCreateVariances(budgetId, tenantSlug);
 
     return db.mapRow(result.rows[0]);
   } catch (error) {
@@ -492,7 +492,7 @@ export async function recordBudgetActual(
 
 export async function getBudgetActuals(
   budgetId: bigint,
-  tenantId: bigint,
+  tenantSlug: string,
   filters?: {
     actualType?: string;
     startDate?: Date;
@@ -500,8 +500,8 @@ export async function getBudgetActuals(
   }
 ): Promise<BudgetActual[]> {
   try {
-    let query = "SELECT * FROM budget_actuals WHERE budget_id = $1 AND tenant_id = $2";
-    const params: any[] = [budgetId.toString(), tenantId.toString()];
+    let query = "SELECT * FROM budget_actuals WHERE budget_id = $1 AND tenant_slug = $2";
+    const params: any[] = [budgetId.toString(), tenantSlug];
 
     if (filters?.actualType) {
       query += ` AND actual_type = $${params.length + 1}`;
@@ -554,13 +554,13 @@ export async function getTotalActualsByBudgetLine(
 
 export async function checkAndCreateVariances(
   budgetId: bigint,
-  tenantId: bigint
+  tenantSlug: string
 ): Promise<BudgetVariance[]> {
   try {
-    const budget = await getBudget(budgetId, tenantId);
+    const budget = await getBudget(budgetId, tenantSlug);
     if (!budget) return [];
 
-    const lines = await getBudgetLines(budgetId, tenantId);
+    const lines = await getBudgetLines(budgetId, tenantSlug);
     const variances: BudgetVariance[] = [];
 
     for (const line of lines) {
@@ -569,14 +569,17 @@ export async function checkAndCreateVariances(
 
       const totalSpent = actuals.actual + actuals.committed;
       const variance = line.budgetedAmount - totalSpent;
-      const variancePercent = (totalSpent / line.budgetedAmount) * 100;
+      const budgetedAmount = Number(line.budgetedAmount) || 0;
+      const variancePercent = budgetedAmount > 0 ? (totalSpent / budgetedAmount) * 100 : (totalSpent > 0 ? 100 : 0);
 
       let varianceType = "UNDER_BUDGET";
       let alertLevel = "INFO";
 
+      const overrunThreshold = Number(budget?.overrunThresholdPercent) || 110;
+
       if (totalSpent > line.budgetedAmount) {
         varianceType = "OVER_BUDGET";
-        alertLevel = variancePercent > 110 ? "CRITICAL" : "WARNING";
+        alertLevel = variancePercent > overrunThreshold ? "CRITICAL" : "WARNING";
       } else if (variancePercent > 80) {
         varianceType = "THRESHOLD_WARNING";
         alertLevel = "WARNING";
@@ -610,7 +613,7 @@ export async function checkAndCreateVariances(
         const result = await db.query(
           `
           INSERT INTO budget_variances (
-            budget_id, budget_line_id, tenant_id, variance_type, budgeted_amount,
+            budget_id, budget_line_id, tenant_slug, variance_type, budgeted_amount,
             actual_amount, committed_amount, variance_amount, variance_percent, alert_level
           )
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -619,7 +622,7 @@ export async function checkAndCreateVariances(
           [
             budgetId.toString(),
             BigInt(String(line.id)).toString(),
-            tenantId.toString(),
+            tenantSlug,
             varianceType,
             line.budgetedAmount,
             actuals.actual,
@@ -643,15 +646,15 @@ export async function checkAndCreateVariances(
 
 export async function getBudgetVariances(
   budgetId: bigint,
-  tenantId: bigint,
+  tenantSlug: string,
   filters?: {
     varianceType?: string;
     alertLevel?: string;
   }
 ): Promise<BudgetVariance[]> {
   try {
-    let query = "SELECT * FROM budget_variances WHERE budget_id = $1 AND tenant_id = $2";
-    const params: any[] = [budgetId.toString(), tenantId.toString()];
+    let query = "SELECT * FROM budget_variances WHERE budget_id = $1 AND tenant_slug = $2";
+    const params: any[] = [budgetId.toString(), tenantSlug];
 
     if (filters?.varianceType) {
       query += ` AND variance_type = $${params.length + 1}`;
@@ -705,7 +708,7 @@ export async function createBudgetForecast(
     const result = await db.query(
       `
       INSERT INTO budget_forecasts (
-        budget_id, tenant_id, forecast_type, forecast_period_start, forecast_period_end,
+        budget_id, tenant_slug, forecast_type, forecast_period_start, forecast_period_end,
         forecast_lines, scenario_name, scenario_description, methodology, base_periods,
         confidence_level, variance_percent, created_by
       )
@@ -714,7 +717,7 @@ export async function createBudgetForecast(
       `,
       [
         input.budgetId.toString(),
-        input.tenantId.toString(),
+        input.tenantSlug,
         input.forecastType,
         input.forecastPeriodStart || null,
         input.forecastPeriodEnd || null,
@@ -737,12 +740,12 @@ export async function createBudgetForecast(
 
 export async function getBudgetForecasts(
   budgetId: bigint,
-  tenantId: bigint,
+  tenantSlug: string,
   forecastType?: string
 ): Promise<BudgetForecast[]> {
   try {
-    let query = "SELECT * FROM budget_forecasts WHERE budget_id = $1 AND tenant_id = $2";
-    const params: any[] = [budgetId.toString(), tenantId.toString()];
+    let query = "SELECT * FROM budget_forecasts WHERE budget_id = $1 AND tenant_slug = $2";
+    const params: any[] = [budgetId.toString(), tenantSlug];
 
     if (forecastType) {
       query += ` AND forecast_type = $${params.length + 1}`;
@@ -761,16 +764,16 @@ export async function getBudgetForecasts(
 
 export async function generateRollingForecast(
   budgetId: bigint,
-  tenantId: bigint,
+  tenantSlug: string,
   basePeriods: number = 3
 ): Promise<BudgetForecast | null> {
   try {
-    const lines = await getBudgetLines(budgetId, tenantId);
+    const lines = await getBudgetLines(budgetId, tenantSlug);
     const forecastLines = [];
 
     for (const line of lines) {
       // Calculate average of last N periods (simplified)
-      const actuals = await getBudgetActuals(budgetId, tenantId, {
+      const actuals = await getBudgetActuals(budgetId, tenantSlug, {
         actualType: "EXPENSE",
       });
 
@@ -789,7 +792,7 @@ export async function generateRollingForecast(
 
     return await createBudgetForecast({
       budgetId,
-      tenantId,
+      tenantSlug,
       forecastType: "ROLLING",
       forecastLines,
       methodology: "avg_of_last_n_periods",
@@ -808,18 +811,18 @@ export async function generateRollingForecast(
 
 export async function createBudgetApproval(
   budgetId: bigint,
-  tenantId: bigint,
+  tenantSlug: string,
   sequence: number,
   approverRole: string
 ): Promise<BudgetApproval | null> {
   try {
     const result = await db.query(
       `
-      INSERT INTO budget_approvals (budget_id, tenant_id, approval_sequence, approver_role, status)
+      INSERT INTO budget_approvals (budget_id, tenant_slug, approval_sequence, approver_role, status)
       VALUES ($1, $2, $3, $4, 'PENDING')
       RETURNING *
       `,
-      [budgetId.toString(), tenantId.toString(), sequence, approverRole]
+      [budgetId.toString(), tenantSlug, sequence, approverRole]
     );
 
     return db.mapRow(result.rows[0]);
@@ -837,7 +840,7 @@ export async function approveBudget(
       `
       UPDATE budget_approvals
       SET status = $1, approver_id = $2, approver_name = $3, comment = $4, approved_at = CURRENT_TIMESTAMP
-      WHERE budget_id = $5 AND tenant_id = $6 AND approval_sequence = 1
+      WHERE budget_id = $5 AND tenant_slug = $6 AND approval_sequence = 1
       RETURNING *
       `,
       [
@@ -846,13 +849,13 @@ export async function approveBudget(
         input.approverName,
         input.comment || null,
         input.budgetId.toString(),
-        input.tenantId.toString(),
+        input.tenantSlug,
       ]
     );
 
     if (result.rows[0] && input.approve) {
       // Change budget status to APPROVED
-      await changeBudgetStatus(input.budgetId, input.tenantId, "APPROVED");
+      await changeBudgetStatus(input.budgetId, input.tenantSlug, "APPROVED");
     }
 
     return db.mapRow(result.rows[0]) || null;
@@ -864,12 +867,12 @@ export async function approveBudget(
 
 export async function getBudgetApprovals(
   budgetId: bigint,
-  tenantId: bigint
+  tenantSlug: string
 ): Promise<BudgetApproval[]> {
   try {
     const result = await db.query(
-      `SELECT * FROM budget_approvals WHERE budget_id = $1 AND tenant_id = $2 ORDER BY approval_sequence`,
-      [budgetId.toString(), tenantId.toString()]
+      `SELECT * FROM budget_approvals WHERE budget_id = $1 AND tenant_slug = $2 ORDER BY approval_sequence`,
+      [budgetId.toString(), tenantSlug]
     );
     return db.mapRows(result.rows);
   } catch (error) {
@@ -884,6 +887,7 @@ export async function getBudgetApprovals(
 
 export async function checkBudgetEnforcement(
   budgetId: bigint,
+  tenantSlug: string,
   budgetLineId: bigint | null,
   proposedAmount: number
 ): Promise<{
@@ -893,7 +897,7 @@ export async function checkBudgetEnforcement(
   message: string;
 } | null> {
   try {
-    const budget = await getBudget(budgetId, BigInt(0)); // Simplified - need tenant context
+    const budget = await getBudget(budgetId, tenantSlug);
     if (!budget) {
       return null;
     }

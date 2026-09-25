@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAttendanceRecords, getTimesheetEntries } from '@/lib/persistent-storage';
 import AttendanceConfidenceCalculator from '@/lib/attendance-calculator';
 
+import { requireModuleAccess } from "@/lib/api-auth";
 interface PeriodSummary {
   period: string; // e.g., "2026-02-05" for daily, "2026-W06" for weekly, "2026-02" for monthly
   periodLabel: string; // Human readable label
@@ -214,6 +215,9 @@ function calculatePeriodSummary(records: any[], timesheetEntries: any[], periodC
  * Returns attendance data organized by different time periods
  */
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "read");
+    if (!_scope.ok) return _scope.response;
+
   const searchParams = request.nextUrl.searchParams;
   const tenantSlug = searchParams.get('tenantSlug');
   const employeeId = searchParams.get('employeeId');

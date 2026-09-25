@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -6,6 +6,7 @@ import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 import fs from "fs";
 import path from "path";
+import { requireSuperAdmin } from "@/lib/api-auth";
 
 export type TenantRow = {
   name: string;
@@ -41,7 +42,10 @@ const payloadSchema = z.object({
   defaultBranchName: z.string().min(1).optional(),
 });
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   try {
     const sql = SQL;
     
@@ -122,6 +126,9 @@ async function generateUniqueTenantCode(sql: SqlClient, slug: string) {
 }
 
 export async function POST(request: Request) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   try {
     const rawBody = await request.text();
     if (!rawBody) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { recordStockMovement, listStockMovements, StockMovementType } from "@/lib/inventory/stock-movements";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const createMovementSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -23,6 +24,9 @@ const createMovementSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
     if (!tenantSlug) {
@@ -42,6 +46,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const parsed = createMovementSchema.safeParse(body);

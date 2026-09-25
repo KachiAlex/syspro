@@ -389,7 +389,7 @@ export default function ApplyPage() {
                       <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
                       <div className="flex-1">
                         <p className="text-sm font-medium text-amber-800 dark:text-amber-300 mb-1">
-                          Some information couldn't be extracted from your resume:
+                          Some information couldn&apos;t be extracted from your resume:
                         </p>
                         <ul className="text-xs text-amber-700 dark:text-amber-400 list-disc list-inside space-y-0.5">
                           {parseWarnings.map((w, i) => (

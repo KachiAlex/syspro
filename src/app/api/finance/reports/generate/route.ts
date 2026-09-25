@@ -7,6 +7,7 @@ import {
   generateAgedReceivablesReport,
 } from "@/lib/finance/reports-db";
 import { AuditService } from "@/lib/tenant-admin/service";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const generateSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -17,6 +18,9 @@ const generateSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json().catch(() => null);
     if (!body || typeof body !== "object") {

@@ -115,7 +115,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       }
 
       // Publish finance event
-      writeFinanceEvent({
+      await writeFinanceEvent({
         tenantSlug: deal.tenantSlug,
         eventType: "deal_won",
         sourceModule: "crm",
@@ -148,7 +148,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         });
 
         // Log the auto-invoice creation
-        logActivity({
+        await logActivity({
           tenantSlug: deal.tenantSlug,
           entityType: "deal",
           entityId: params.id,

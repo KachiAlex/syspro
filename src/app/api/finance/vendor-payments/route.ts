@@ -10,6 +10,7 @@ import {
   getVendorPaymentSummary,
 } from "@/lib/finance/vendor-payments";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const paymentListSchema = z.object({
   tenantSlug: z.string().min(1).optional(),
@@ -46,6 +47,9 @@ const applyPaymentSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   console.log('API: GET /api/finance/vendor-payments called');
 
   try {
@@ -121,6 +125,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   console.log('API: POST /api/finance/vendor-payments called');
 
   try {
@@ -185,6 +192,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   console.log('API: PUT /api/finance/vendor-payments called');
 
   try {
@@ -230,6 +240,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   console.log('API: DELETE /api/finance/vendor-payments called');
 
   try {

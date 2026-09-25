@@ -244,8 +244,7 @@ export class HRService {
   }
 
   static async downloadReport(tenantSlug: string, reportId: string): Promise<string> {
-    const response = await apiClient.get(`/hr/reports/${reportId}/download?tenantSlug=${tenantSlug}`);
-    return response.data.fileUrl;
+    return `/hr/reports?reportId=${reportId}&tenantSlug=${tenantSlug}`;
   }
 
   static async deleteReport(tenantSlug: string, reportId: string): Promise<void> {
@@ -296,6 +295,7 @@ export class HRService {
     status?: string;
     salary?: string;
     role?: string;
+    workMode?: string;
   }): Promise<EmployeeRecord> {
     const payload: Record<string, any> = { tenantSlug };
     if (employeeData.firstName || employeeData.lastName) {
@@ -310,6 +310,7 @@ export class HRService {
     if (employeeData.salary) payload.salary = Number(employeeData.salary.replace(/[^0-9.]/g, ''));
     if (employeeData.startDate) payload.hireDate = new Date(employeeData.startDate).toISOString();
     if (employeeData.role) payload.role = employeeData.role.toLowerCase();
+    if (employeeData.workMode) payload.workMode = employeeData.workMode.toUpperCase();
 
     const response = await apiClient.patch(`/hr/employees/${employeeId}`, payload);
     return response.data.employee;
@@ -382,6 +383,7 @@ export class HRService {
       salary: emp.salary ?? 0,
       startDate: emp.hireDate ? emp.hireDate.split('T')[0] : '',
       employmentType: emp.employmentType ? emp.employmentType.charAt(0).toUpperCase() + emp.employmentType.slice(1).replace('-', ' ') : 'Full-time',
+      workMode: emp.workMode || 'ONSITE',
       isPortalActive: emp.isPortalActive ?? false,
       lastLogin: emp.lastLogin ?? null,
     }));
@@ -442,6 +444,10 @@ export class HRService {
     return response.data.department;
   }
 
+  static async deleteDepartment(tenantSlug: string, departmentId: string): Promise<void> {
+    await apiClient.delete(`/hr/departments/${departmentId}?tenantSlug=${tenantSlug}`);
+  }
+
   static async getTenantUsers(tenantSlug: string): Promise<{ id: string; email: string; name: string }[]> {
     try {
       const response = await apiClient.get(`/hr/employees?tenantSlug=${tenantSlug}&limit=100`);
@@ -457,14 +463,14 @@ export class HRService {
     return response.data.departments || [];
   }
 
-  // Payroll Management (endpoints not yet implemented)
+  // Payroll Management
   static async runPayroll(tenantSlug: string, payrollData: {
     payrollMonth: string;
     payDate: string;
     includeBonuses: boolean;
     processDeductions: boolean;
-  }): Promise<{ id: string; period: string; totalAmount: number; employeeCount: number; status: string }> {
-    const response = await apiClient.post('/hr/payroll/run', { ...payrollData, tenantSlug });
+  }): Promise<{ runId: string; anomalies: any; compliance: any }> {
+    const response = await apiClient.post('/hr/payroll', { ...payrollData, tenantSlug });
     return response.data;
   }
 
@@ -472,10 +478,10 @@ export class HRService {
     id: string; period: string; totalAmount: number; employeeCount: number; status: string; processedDate: string;
   }>> {
     const response = await apiClient.get(`/hr/payroll/history?tenantSlug=${tenantSlug}`);
-    return response.data.history || [];
+    return response.data.payrollHistory || [];
   }
 
-  // Training Management (endpoints not yet implemented)
+  // Training Management
   static async createTrainingSession(tenantSlug: string, trainingData: {
     title: string;
     description: string;

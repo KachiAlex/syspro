@@ -6,11 +6,15 @@ import {
   lockFiscalPeriod,
 } from "@/lib/accounting/db";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 /**
  * GET /api/accounting/periods
  * List fiscal periods for a tenant
  */
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const url = new URL(request.url);
     const tenantSlug = url.searchParams.get("tenantSlug");
@@ -44,6 +48,9 @@ export async function GET(request: NextRequest) {
  * Create a new fiscal period
  */
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const parsed = fiscalPeriodCreateSchema.safeParse(body);

@@ -6,6 +6,7 @@
  */
 
 import { getSql } from "@/lib/db";
+import { ensureOnce } from "@/lib/ensure-once";
 
 // ─── Types ───
 
@@ -56,7 +57,11 @@ const DEFAULT_MONTHLY_LIMIT = 2000;
 
 let tableEnsured = false;
 
-export async function ensureUsageTable(): Promise<void> {
+export function ensureUsageTable(...args: Parameters<typeof ensureUsageTableRun>) {
+  return ensureOnce("ai/usage-log:ensureUsageTable", () => ensureUsageTableRun(...args));
+}
+
+async function ensureUsageTableRun(): Promise<void> {
   if (tableEnsured) return;
   const sql = getSql();
   try {
@@ -114,10 +119,26 @@ export async function checkQuota(tenantSlug: string): Promise<QuotaStatus> {
   await ensureUsageTable();
   const sql = getSql();
 
-  const dailyLimit = DEFAULT_DAILY_LIMIT;
-  const monthlyLimit = DEFAULT_MONTHLY_LIMIT;
+  let dailyLimit = DEFAULT_DAILY_LIMIT;
+  let monthlyLimit = DEFAULT_MONTHLY_LIMIT;
 
   try {
+    try {
+      const limitRows = await sql`
+        SELECT lt.daily_ai_limit, lt.monthly_ai_limit
+        FROM licenses l
+        JOIN license_tiers lt ON lt.id = l.tier_id
+        WHERE l.tenant_slug = ${tenantSlug} AND l.status = 'active'
+        LIMIT 1
+      `;
+      if (limitRows && limitRows.length > 0) {
+        dailyLimit = (limitRows[0] as any).daily_ai_limit ?? DEFAULT_DAILY_LIMIT;
+        monthlyLimit = (limitRows[0] as any).monthly_ai_limit ?? DEFAULT_MONTHLY_LIMIT;
+      }
+    } catch {
+      // fall back to defaults if license_tiers columns don't exist yet
+    }
+
     const dailyRows = await sql`
       select count(*)::int as cnt from ai_usage_log
       where tenant_slug = ${tenantSlug}
@@ -142,7 +163,8 @@ export async function checkQuota(tenantSlug: string): Promise<QuotaStatus> {
       monthlyRemaining: Math.max(0, monthlyLimit - monthlyUsed),
       exceeded: dailyUsed >= dailyLimit || monthlyUsed >= monthlyLimit,
     };
-  } catch {
+  } catch (error) {
+    console.error('Quota check failed:', error);
     return {
       tenantSlug,
       dailyLimit,

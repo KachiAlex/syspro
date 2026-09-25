@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
+import { requireSuperAdmin } from "@/lib/api-auth";
 
 const sql = getSql();
 
@@ -7,6 +8,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   const { slug } = await params;
   try {
     const tenant = await sql`SELECT * FROM tenants WHERE slug = ${slug}`;
@@ -34,6 +38,9 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   const { slug } = await params;
   try {
     const body = await request.json();
@@ -43,7 +50,7 @@ export async function PUT(
       UPDATE tenants
       SET name = COALESCE(${name}, name),
           seats = COALESCE(${seats}, seats),
-          updated_at = NOW()
+          "updatedAt" = NOW()
       WHERE slug = ${slug}
       RETURNING *
     `;
@@ -80,6 +87,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   const { slug } = await params;
   try {
     const result = await sql`DELETE FROM tenants WHERE slug = ${slug} RETURNING *`;

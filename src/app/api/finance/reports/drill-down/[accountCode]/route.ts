@@ -4,10 +4,14 @@ import {
 } from "@/lib/finance/reports-db";
 import { ReportFilters } from "@/lib/finance/assets-reports";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 export async function GET(
   request: NextRequest,
   context: any
 ) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   const { params } = context;
   try {
     const searchParams = request.nextUrl.searchParams;

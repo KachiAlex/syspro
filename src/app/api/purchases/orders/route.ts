@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { db } from "@/lib/sql-client";
+import { getPagination } from "@/lib/pagination";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 async function ensurePurchaseOrdersTable() {
   await db.query(`
     CREATE TABLE IF NOT EXISTS purchase_orders (
@@ -21,6 +23,30 @@ async function ensurePurchaseOrdersTable() {
     )
   `);
   await db.query(`CREATE INDEX IF NOT EXISTS idx_purchase_orders_tenant ON purchase_orders (tenant_slug)`);
+
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS po_number text`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS vendor_id text`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS supplier_id text`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS supplier_name text`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS order_number text`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS order_date text`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS expected_delivery_date text`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS delivery_date text`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS issued_date date`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS due_date date`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS status text default 'Pending'`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS items text`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS quantity numeric default 0`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS total numeric default 0`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS total_amount numeric default 0`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS balance_due numeric default 0`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS currency text default 'NGN'`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS notes text`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS branch_id text`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS metadata jsonb`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS created_by text`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS created_at timestamptz default now()`);
+  await db.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS updated_at timestamptz default now()`);
 }
 
 async function resolveSupplierName(supplierId: string, tenantSlug: string) {
@@ -74,15 +100,23 @@ function mapOrder(row: any) {
 }
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     await ensurePurchaseOrdersTable();
     const context = validateTenantContext(request, "read");
+    const { limit, offset } = getPagination(request);
     const rows = (await db.query(
-      `SELECT * FROM purchase_orders WHERE tenant_slug = $1 ORDER BY created_at DESC`,
-      [context.tenantSlug]
+      `SELECT * FROM purchase_orders WHERE tenant_slug = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+      [context.tenantSlug, limit, offset]
     )).rows;
+    const countRow = (await db.query(
+      `SELECT COUNT(*)::int AS total FROM purchase_orders WHERE tenant_slug = $1`,
+      [context.tenantSlug]
+    )).rows[0];
     const orders = rows.map(mapOrder);
-    return NextResponse.json({ orders, total: orders.length });
+    return NextResponse.json({ orders, total: Number(countRow?.total ?? orders.length), limit, offset });
   } catch (error) {
     console.error("Purchase orders fetch failed:", error);
     return NextResponse.json({ error: "Failed to fetch purchase orders", details: String((error as any)?.message ?? error) }, { status: 500 });
@@ -90,6 +124,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     await ensurePurchaseOrdersTable();
     const context = validateTenantContext(request, "write");
@@ -122,6 +159,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     await ensurePurchaseOrdersTable();
     const context = validateTenantContext(request, "write");

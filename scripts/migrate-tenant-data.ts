@@ -31,7 +31,6 @@ const TENANT_SLUG_TABLES = [
   "admin_access_controls",
   "admin_applications",
   "admin_approval_routes",
-  "admin_attendance",
   "admin_candidates",
   "admin_departments",
   "admin_employees",

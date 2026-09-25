@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { sql as SQL, SqlClient } from "../sql-client";
+import { ensureOnce } from "@/lib/ensure-once";
 
 export interface BankReconciliation {
   id: string;
@@ -31,7 +32,11 @@ export interface ReconciliationItem {
   createdAt: string;
 }
 
-export async function ensureReconciliationTables(sql: SqlClient = SQL) {
+export function ensureReconciliationTables(...args: Parameters<typeof ensureReconciliationTablesRun>) {
+  return ensureOnce("finance/bank-reconciliation:ensureReconciliationTables", () => ensureReconciliationTablesRun(...args));
+}
+
+async function ensureReconciliationTablesRun(sql: SqlClient = SQL) {
   await sql`
     create table if not exists bank_reconciliations (
       id text primary key,

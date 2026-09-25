@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { requireModuleAccess } from "@/lib/api-auth";
 interface ReportDraft {
   objectives: string;
   achievements: string;
@@ -216,6 +217,9 @@ async function generateDraftWithLlama(transcript: string): Promise<ReportDraft |
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const { transcript, reportType } = body;

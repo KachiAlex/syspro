@@ -4,6 +4,7 @@ import { db, sql as SQL } from "../sql-client";
 import { ensureFinanceTables } from "@/lib/finance/db";
 import type { FinanceFilters } from "@/lib/finance/types";
 import { FINANCE_TIMEFRAMES } from "@/lib/finance/types";
+import { ensureOnce } from "@/lib/ensure-once";
 
 /* using imported SQL */
 
@@ -38,7 +39,13 @@ const TREND_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const TREND_REVENUE = [42, 48, 51, 47, 55, 39, 36].map((value) => value * 1_000_000);
 const TREND_EXPENSES = [31, 33, 36, 34, 37, 29, 28].map((value) => value * 1_000_000);
 
-export async function ensureFinanceSeedForTenant(filters: FinanceFilters) {
+export function ensureFinanceSeedForTenant(filters: FinanceFilters) {
+  return ensureOnce(`finance/seed:ensureFinanceSeedForTenant:${filters.tenantSlug}`, () =>
+    ensureFinanceSeedForTenantRun(filters)
+  );
+}
+
+async function ensureFinanceSeedForTenantRun(filters: FinanceFilters) {
   const sql = SQL;
   await ensureFinanceTables(sql);
 

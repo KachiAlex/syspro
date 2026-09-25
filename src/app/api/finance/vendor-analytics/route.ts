@@ -8,6 +8,7 @@ import {
   getDashboardAnalytics,
 } from "@/lib/finance/vendor-analytics";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 const spendReportSchema = z.object({
   tenantSlug: z.string().min(1),
   vendorId: z.string().uuid().optional(),
@@ -38,6 +39,9 @@ const dashboardSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   console.log('API: GET /api/finance/vendor-analytics called');
   
   try {

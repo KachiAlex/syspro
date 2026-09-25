@@ -861,13 +861,15 @@ export async function logTime(
         input.taskAssignmentId,
         input.taskId,
         input.projectId,
+        (input as any).employeeId || createdBy,
         tenantSlug,
         input.logDate,
         input.hoursLogged,
         input.description || null,
         input.activityType || null,
         input.billable || false,
-        createdBy || "SUBMITTED",
+        "SUBMITTED",
+        createdBy,
       ]
     );
 

@@ -74,6 +74,27 @@ export async function setupTenantAdminSchema(sql: SqlClient = SQL) {
   `;
 
   // ============================================================================
+  // ROLE ASSIGNMENT HISTORY TABLE
+  // ============================================================================
+  await sql`
+    create table if not exists admin_role_history (
+      id text primary key,
+      tenant_slug text not null,
+      user_id text not null,
+      user_email text,
+      old_role_id text,
+      new_role_id text not null,
+      justification text,
+      expires_at timestamptz,
+      assigned_by_user_id text,
+      assigned_by_email text,
+      created_at timestamptz default now()
+    );
+    create index if not exists idx_admin_role_history_tenant on admin_role_history(tenant_slug);
+    create index if not exists idx_admin_role_history_user on admin_role_history(user_id);
+  `;
+
+  // ============================================================================
   // EMPLOYEES TABLE
   // ============================================================================
   await sql`
@@ -101,6 +122,11 @@ export async function setupTenantAdminSchema(sql: SqlClient = SQL) {
     create index if not exists idx_admin_employees_tenant on admin_employees(tenant_slug);
     create index if not exists idx_admin_employees_dept on admin_employees(department_id);
     create index if not exists idx_admin_employees_manager on admin_employees(reporting_manager_id);
+  `;
+
+  await sql`
+    alter table admin_employees add column if not exists portal_permissions jsonb;
+    alter table admin_employees add column if not exists is_portal_active boolean default false;
   `;
 
   // ============================================================================

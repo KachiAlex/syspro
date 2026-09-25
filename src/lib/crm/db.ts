@@ -8,6 +8,7 @@ import type {
   CrmContactRecord,
   CrmContact,
 } from "./types";
+import { ensureOnce } from "@/lib/ensure-once";
 
 /* using imported SQL */
 
@@ -22,7 +23,11 @@ function serializeTextArray(values?: string[] | null): string {
   return `{${escaped.join(",")}}`;
 }
 
-export async function ensureCrmTables(sql: SqlClient = SQL) {
+export function ensureCrmTables(...args: Parameters<typeof ensureCrmTablesRun>) {
+  return ensureOnce("crm/db:ensureCrmTables", () => ensureCrmTablesRun(...args));
+}
+
+async function ensureCrmTablesRun(sql: SqlClient = SQL) {
   await sql`
     create table if not exists crm_leads (
       id text primary key,
@@ -457,20 +462,41 @@ export async function updateDeal(id: string, updates: Partial<{
     return row.length ? normalizeDealRow(row[0]) : null;
   }
 
-  const updated = (await sql`
-    update crm_deals
-    set
-      stage = coalesce(${updates.stage ?? null}, stage),
-      probability = coalesce(${updates.probability ?? null}, probability),
-      assigned_officer_id = coalesce(${updates.assignedOfficerId ?? null}, assigned_officer_id),
-      status = coalesce(${updates.status ?? null}, status),
-      value = coalesce(${updates.value ?? null}, value),
-      currency = coalesce(${updates.currency ?? null}, currency),
-      expected_close = ${typeof updates.expectedClose !== "undefined" ? updates.expectedClose : null} ?? expected_close,
-      updated_at = now()
-    where id = ${id}
-    returning *
-  `) as Record<string, unknown>[];
+  const sets: string[] = [];
+  const values: any[] = [];
+  let idx = 1;
+  if (typeof updates.stage !== "undefined") {
+    sets.push(`stage = $${idx++}`);
+    values.push(updates.stage);
+  }
+  if (typeof updates.probability !== "undefined") {
+    sets.push(`probability = $${idx++}`);
+    values.push(updates.probability);
+  }
+  if (typeof updates.assignedOfficerId !== "undefined") {
+    sets.push(`assigned_officer_id = $${idx++}`);
+    values.push(updates.assignedOfficerId);
+  }
+  if (typeof updates.status !== "undefined") {
+    sets.push(`status = $${idx++}`);
+    values.push(updates.status);
+  }
+  if (typeof updates.value !== "undefined") {
+    sets.push(`value = $${idx++}`);
+    values.push(updates.value);
+  }
+  if (typeof updates.currency !== "undefined") {
+    sets.push(`currency = $${idx++}`);
+    values.push(updates.currency);
+  }
+  if (typeof updates.expectedClose !== "undefined") {
+    sets.push(`expected_close = $${idx++}`);
+    values.push(updates.expectedClose);
+  }
+  sets.push(`updated_at = now()`);
+  const query = `update crm_deals set ${sets.join(", ")} where id = $${idx++} returning *`;
+  values.push(id);
+  const updated = (await db.query(query, values)).rows as Record<string, unknown>[];
   return updated.length ? normalizeDealRow(updated[0]) : null;
 }
 
@@ -608,24 +634,57 @@ export async function updateLead(id: string, updates: Partial<{
     return row.length ? normalizeLeadRow(row[0]) : null;
   }
 
-  const updated = (await sql`
-    update crm_leads
-    set
-      company_name = coalesce(${updates.companyName ?? null}, company_name),
-      contact_name = coalesce(${updates.contactName ?? null}, contact_name),
-      contact_email = ${typeof updates.contactEmail !== "undefined" ? updates.contactEmail : null} ?? contact_email,
-      contact_phone = ${typeof updates.contactPhone !== "undefined" ? updates.contactPhone : null} ?? contact_phone,
-      source = coalesce(${updates.source ?? null}, source),
-      stage = coalesce(${updates.stage ?? null}, stage),
-      score = coalesce(${updates.score ?? null}, score),
-      assigned_officer_id = ${typeof updates.assignedOfficerId !== "undefined" ? updates.assignedOfficerId : null} ?? assigned_officer_id,
-      expected_value = ${typeof updates.expectedValue !== "undefined" ? updates.expectedValue : null} ?? expected_value,
-      currency = coalesce(${updates.currency ?? null}, currency),
-      notes = coalesce(${updates.notes ?? null}, notes),
-      updated_at = now()
-    where id = ${id}
-    returning *
-  `) as Record<string, unknown>[];
+  const sets: string[] = [];
+  const values: any[] = [];
+  let idx = 1;
+  if (typeof updates.companyName !== "undefined") {
+    sets.push(`company_name = $${idx++}`);
+    values.push(updates.companyName);
+  }
+  if (typeof updates.contactName !== "undefined") {
+    sets.push(`contact_name = $${idx++}`);
+    values.push(updates.contactName);
+  }
+  if (typeof updates.contactEmail !== "undefined") {
+    sets.push(`contact_email = $${idx++}`);
+    values.push(updates.contactEmail);
+  }
+  if (typeof updates.contactPhone !== "undefined") {
+    sets.push(`contact_phone = $${idx++}`);
+    values.push(updates.contactPhone);
+  }
+  if (typeof updates.source !== "undefined") {
+    sets.push(`source = $${idx++}`);
+    values.push(updates.source);
+  }
+  if (typeof updates.stage !== "undefined") {
+    sets.push(`stage = $${idx++}`);
+    values.push(updates.stage);
+  }
+  if (typeof updates.score !== "undefined") {
+    sets.push(`score = $${idx++}`);
+    values.push(updates.score);
+  }
+  if (typeof updates.assignedOfficerId !== "undefined") {
+    sets.push(`assigned_officer_id = $${idx++}`);
+    values.push(updates.assignedOfficerId);
+  }
+  if (typeof updates.expectedValue !== "undefined") {
+    sets.push(`expected_value = $${idx++}`);
+    values.push(updates.expectedValue);
+  }
+  if (typeof updates.currency !== "undefined") {
+    sets.push(`currency = $${idx++}`);
+    values.push(updates.currency);
+  }
+  if (typeof updates.notes !== "undefined") {
+    sets.push(`notes = $${idx++}`);
+    values.push(updates.notes);
+  }
+  sets.push(`updated_at = now()`);
+  const query = `update crm_leads set ${sets.join(", ")} where id = $${idx++} returning *`;
+  values.push(id);
+  const updated = (await db.query(query, values)).rows as Record<string, unknown>[];
   return updated.length ? normalizeLeadRow(updated[0]) : null;
 }
 
@@ -757,7 +816,7 @@ function normalizeLeadRow(row: any) {
     stage: row.stage as CrmLeadStage,
     score: Number(row.score ?? 0),
     assignedOfficerId: row.assigned_officer_id as string | null,
-    expectedValue: row.expected_value ? Number(row.expected_value) : null,
+    expectedValue: row.expected_value !== null && row.expected_value !== undefined ? Number(row.expected_value) : null,
     currency: row.currency as string,
     notes: row.notes as string | null,
     contactId: (row.contact_id as string | null) ?? null,
@@ -778,7 +837,7 @@ function normalizeDealRow(row: any) {
     stage: row.stage as CrmPipelineStage,
     value: row.value ? Number(row.value) : 0,
     currency: row.currency as string,
-    probability: row.probability ? Number(row.probability) : null,
+    probability: row.probability !== null && row.probability !== undefined ? Number(row.probability) : null,
     expectedClose: row.expected_close as string | null,
     assignedOfficerId: row.assigned_officer_id as string | null,
     status: row.status as string,

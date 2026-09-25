@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { db } from "@/lib/sql-client";
+import { getPagination } from "@/lib/pagination";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 async function ensureInvoiceTables() {
   await db.query(`
     create table if not exists procurement_invoices (
@@ -21,6 +23,9 @@ async function ensureInvoiceTables() {
 }
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     await ensureInvoiceTables();
     const context = validateTenantContext(request, "read");
@@ -28,22 +33,25 @@ export async function GET(request: NextRequest) {
     const tenantSlug = context.tenantSlug;
     const vendorId = searchParams.get("vendorId");
     const status = searchParams.get("status");
+    const { limit, offset } = getPagination(request);
 
-    const rows = (await db.query(
-      `select * from procurement_invoices where tenant_slug = $1`,
-      [tenantSlug]
-    )).rows;
-    let invoices = rows || [];
-
+    const params: any[] = [tenantSlug];
+    let where = `where tenant_slug = $1`;
     if (vendorId) {
-      invoices = invoices.filter((i: any) => i.vendor_id === vendorId);
+      params.push(vendorId);
+      where += ` and vendor_id = $${params.length}`;
     }
-
     if (status) {
-      invoices = invoices.filter((i: any) => i.status === status);
+      params.push(status);
+      where += ` and status = $${params.length}`;
     }
 
-    return NextResponse.json({ invoices });
+    const invoices = (await db.query(
+      `select * from procurement_invoices ${where} order by created_at desc limit $${params.length + 1} offset $${params.length + 2}`,
+      [...params, limit, offset]
+    )).rows;
+
+    return NextResponse.json({ invoices, limit, offset });
   } catch (error) {
     console.error("Error fetching invoices:", error);
     return NextResponse.json(
@@ -54,6 +62,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     await ensureInvoiceTables();
     const context = validateTenantContext(request, "write");

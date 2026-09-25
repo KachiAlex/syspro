@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Loader2, Sparkles, Target, FileText, Calendar, TrendingUp, TrendingDown,
   CheckCircle, AlertCircle, Award, ChevronRight, User, Brain, Settings,
@@ -114,6 +114,7 @@ export function AppraisalTab({ profile }: { profile: EmployeeProfile }) {
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [showShareToast, setShowShareToast] = useState(false);
+  const configLoadingRef = useRef(false);
 
   const employeeRole = (profile.role || 'staff').toLowerCase();
   const isHR = employeeRole === 'hr' || employeeRole === 'hr_admin' || employeeRole === 'hr_manager';
@@ -198,8 +199,13 @@ export function AppraisalTab({ profile }: { profile: EmployeeProfile }) {
     if (tab === 'benchmark' && selectedId) loadBenchmark(selectedId);
     if (tab === 'feedback' && selectedId) loadPeerFeedback(selectedId);
     if (tab === 'goals' && selectedId) loadGoals(selectedId);
-    if (tab === 'config' && !config) {
-      fetch(`/api/hr/employees/portal/appraisal?action=config`).then(r => r.json()).then(d => setConfig(d.config)).catch(() => {});
+    if (tab === 'config' && !config && !configLoadingRef.current) {
+      configLoadingRef.current = true;
+      fetch(`/api/hr/employees/portal/appraisal?action=config`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d?.config) setConfig(d.config); })
+        .catch(() => {})
+        .finally(() => { configLoadingRef.current = false; });
     }
   };
 

@@ -67,7 +67,7 @@ async function main() {
     const placeholders = batch.map((_, idx) => `$${idx + 1}`).join(",");
 
     const attRes = await sql(
-      `select count(*)::int as cnt from admin_attendance where employee_id in (${placeholders})`,
+      `select count(*)::int as cnt from attendance_records where employee_id in (${placeholders})`,
       batch
     );
     attendanceCount += attRes[0]?.cnt || 0;
@@ -110,7 +110,7 @@ async function main() {
     const placeholders = batch.map((_, idx) => `$${idx + 1}`).join(",");
 
     if (attendanceCount > 0) {
-      await sql(`delete from admin_attendance where employee_id in (${placeholders})`, batch);
+      await sql(`delete from attendance_records where employee_id in (${placeholders})`, batch);
     }
     if (leaveCount > 0) {
       await sql(`delete from admin_leave where employee_id in (${placeholders})`, batch);

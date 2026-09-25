@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { listAttendance, insertAttendance, getAttendanceStats } from "@/lib/hr/db";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const listSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -23,6 +24,9 @@ const createSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+  const _scope = await requireModuleAccess(request, "people", "read");
+  if (!_scope.ok) return _scope.response;
+
   const url = new URL(request.url);
   const parsed = listSchema.safeParse({
     tenantSlug: url.searchParams.get("tenantSlug") ?? undefined,
@@ -53,6 +57,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -70,7 +77,7 @@ export async function POST(request: NextRequest) {
       for (const r of records) {
         const parsed = createSchema.safeParse({ ...r, tenantSlug });
         if (parsed.success) {
-          inserted.push(await insertAttendance(parsed.data));
+          inserted.push(await insertAttendance({ ...parsed.data, actorId: _scope.user.id }));
         }
       }
       return NextResponse.json({ records: inserted }, { status: 201 });
@@ -86,7 +93,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const record = await insertAttendance(parsed.data);
+    const record = await insertAttendance({ ...parsed.data, actorId: _scope.user.id });
     return NextResponse.json({ record }, { status: 201 });
   } catch (error) {
     console.error("Attendance create failed", error);

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getTenantSettings, setTenantSettings } from "@/lib/tenant/currency";
 import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 import { db } from "@/lib/sql-client";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const updateSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -10,6 +11,9 @@ const updateSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "read");
+    if (!_scope.ok) return _scope.response;
+
   const url = new URL(request.url);
   const tenantSlug = url.searchParams.get("tenantSlug");
   if (!tenantSlug) {
@@ -26,6 +30,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   const body = await request.json().catch(() => null);
   if (!body) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -45,6 +52,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   const body = await request.json().catch(() => null);
   if (!body) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });

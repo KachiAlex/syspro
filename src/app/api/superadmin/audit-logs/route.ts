@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuditLogs } from '@/lib/audit';
 import { AuditLogsQuerySchema, safeParse } from '@/lib/validation';
+import { requireSuperAdmin } from "@/lib/api-auth";
 
 export async function GET(request: NextRequest) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const queryParams = {

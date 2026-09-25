@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTimesheetEntries, addTimesheetEntry, getTimesheetEntriesForDate } from '@/lib/persistent-storage';
+import { requireModuleAccess } from "@/lib/api-auth";
 
 /**
  * GET /api/attendance/timesheet
  * - Get timesheet entries for a specific date/employee
  */
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "read");
+    if (!_scope.ok) return _scope.response;
+
   const searchParams = request.nextUrl.searchParams;
   const tenantSlug = searchParams.get('tenantSlug');
   const employeeId = searchParams.get('employeeId');
@@ -29,6 +33,9 @@ export async function GET(request: NextRequest) {
  * - Add a new timesheet entry
  */
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const { tenantSlug, employeeId, workDate, entryType, description, taskId, meetingId, location, notes } = body;

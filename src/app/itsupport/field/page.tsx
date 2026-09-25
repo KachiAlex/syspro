@@ -19,6 +19,8 @@ export default function ITSupportFieldEngineerUI() {
   const [loading, setLoading] = useState(true);
   const [log, setLog] = useState('');
   const [signingOff, setSigningOff] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   useEffect(() => {
     setLoading(true);
     fetch('/api/itsupport/fieldjobs')
@@ -38,6 +40,38 @@ export default function ITSupportFieldEngineerUI() {
     setSigningOff(false);
   }
 
+  async function handleImageUpload(jobId: string, e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (file.size > 4 * 1024 * 1024) {
+      setUploadError('Image must be under 4MB');
+      return;
+    }
+    setUploadError(null);
+    setUploading(jobId);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const res = await fetch(`/api/itsupport/fieldjobs/${jobId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: dataUrl }),
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const { data } = await res.json();
+      setJobs(jobs => jobs.map(j => j.id === jobId ? { ...j, images: data.images } : j));
+    } catch {
+      setUploadError('Image upload failed');
+    } finally {
+      setUploading(null);
+    }
+  }
+
   async function handleWorkLog(jobId: string) {
     await fetch(`/api/itsupport/fieldjobs/${jobId}`, {
       method: 'PATCH',
@@ -51,6 +85,7 @@ export default function ITSupportFieldEngineerUI() {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Field Engineer Mobile UI</h1>
+      {uploadError && <div className="mb-3 p-2 bg-red-50 text-red-700 rounded text-sm">{uploadError}</div>}
       {loading ? <div>Loading…</div> : jobs.length === 0 ? <div>No jobs assigned.</div> : (
         <div className="space-y-6">
           {jobs.map(job => (
@@ -72,13 +107,31 @@ export default function ITSupportFieldEngineerUI() {
                 <button className="bg-blue-600 text-white px-3 py-1 rounded" onClick={() => handleWorkLog(job.id)} disabled={!log}>Save Log</button>
               </div>
               <div className="flex gap-2 mb-2">
-                <button className="bg-gray-300 px-3 py-1 rounded" disabled>Upload Image (stub)</button>
+                <label className="bg-blue-600 text-white px-3 py-1 rounded cursor-pointer">
+                  {uploading === job.id ? "Uploading…" : "Upload Image"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    disabled={uploading === job.id}
+                    onChange={(e) => handleImageUpload(job.id, e)}
+                  />
+                </label>
                 <button
                   className="bg-green-600 text-white px-3 py-1 rounded"
                   onClick={() => handleSignOff(job.id)}
                   disabled={job.customerSignoff || signingOff}
                 >Customer Sign-off</button>
               </div>
+              {job.images && job.images.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {job.images.map((src, idx) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={idx} src={src} alt={`Job evidence ${idx + 1}`} className="w-20 h-20 object-cover rounded border" />
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

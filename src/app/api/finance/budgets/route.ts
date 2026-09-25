@@ -6,7 +6,6 @@ import {
   getBudget,
 } from "@/lib/finance/budgets-db";
 import { budgetCreateSchema } from "@/lib/finance/budgets";
-import { db } from "@/lib/sql-client";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 
 export async function GET(request: NextRequest) {
@@ -17,30 +16,18 @@ export async function GET(request: NextRequest) {
     const budgetType = request.nextUrl.searchParams.get("budgetType");
     const fiscalYear = request.nextUrl.searchParams.get("fiscalYear");
 
-    // Get tenant ID from slug
-    const tenantResult = await db.query(
-      "SELECT id FROM tenants WHERE slug = $1",
-      [tenantSlug]
-    );
-
-    if (tenantResult.rows.length === 0) {
-      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
-    }
-
-    const tenantId = BigInt(tenantResult.rows[0].id);
-
     const filters = {
       status: status as any,
       budgetType: budgetType ?? undefined,
       fiscalYear: fiscalYear ? parseInt(fiscalYear) : undefined,
     };
 
-    const budgets = await getBudgets(tenantId, filters);
+    const budgets = await getBudgets(tenantSlug, filters);
 
     // Return with summaries if requested
     const withSummary = request.nextUrl.searchParams.get("withSummary");
     if (withSummary === "true") {
-      const summaries = await getBudgetSummaries(tenantId);
+      const summaries = await getBudgetSummaries(tenantSlug);
       return NextResponse.json({
         budgets,
         summaries,
@@ -62,23 +49,11 @@ export async function POST(request: NextRequest) {
     const context = validateTenantContext(request, "write");
     const body = await request.json();
 
-    // Get tenant ID from slug
-    const tenantResult = await db.query(
-      "SELECT id FROM tenants WHERE slug = $1",
-      [context.tenantSlug]
-    );
-
-    if (tenantResult.rows.length === 0) {
-      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
-    }
-
-    const tenantId = BigInt(tenantResult.rows[0].id);
-
     // Validate input
     const validated = budgetCreateSchema.parse(body);
 
-    // Create budget with tenant context
-    const budget = await createBudget({ ...validated, tenantId });
+    // Create budget with tenant context (tenantSlug is a string)
+    const budget = await createBudget({ ...validated, tenantSlug: context.tenantSlug });
 
     return NextResponse.json(budget, { status: 201 });
   } catch (error: any) {

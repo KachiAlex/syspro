@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createInspection, listInspections } from "@/lib/manufacturing/quality-control";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 const createSchema = z.object({
   tenantSlug: z.string().min(1),
   workOrderId: z.string().min(1),
@@ -15,6 +16,9 @@ const createSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const tenantSlug = searchParams.get("tenantSlug");
@@ -32,6 +36,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const parsed = createSchema.safeParse(body);

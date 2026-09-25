@@ -6,6 +6,8 @@
 import { randomUUID } from "crypto";
 import { db, sql as SQL } from "../sql-client";
 import { createBillJournalEntry } from "./accounting";
+import { ensurePurchaseOrderTables } from "./purchase-orders";
+import { ensureOnce } from "@/lib/ensure-once";
 
 export interface BillItem {
   id: string;
@@ -83,7 +85,11 @@ export interface AgingReport {
 
 /* using imported SQL */
 
-export async function ensureBillTables(sql = SQL) {
+export function ensureBillTables(...args: Parameters<typeof ensureBillTablesRun>) {
+  return ensureOnce("finance/bills:ensureBillTables", () => ensureBillTablesRun(...args));
+}
+
+async function ensureBillTablesRun(sql = SQL) {
   // Tables should already exist from migration, but ensure for development
   try {
     await sql`select 1 from bills limit 1`;
@@ -200,43 +206,45 @@ export async function listBills(filters: {
   const limit = Math.min(Math.max(filters.limit ?? 50, 1), 200);
   const offset = Math.max(filters.offset ?? 0, 0);
 
-  const whereConditions: any[] = [];
-  whereConditions.push(sql`tenant_slug = ${filters.tenantSlug}`);
-  
+  const params: any[] = [];
+  let paramIndex = 1;
+  let whereClause = `tenant_slug = $${paramIndex}`;
+  params.push(filters.tenantSlug);
+  paramIndex++;
+
   if (filters.vendorId) {
-    whereConditions.push(sql`vendor_id = ${filters.vendorId}`);
+    whereClause += ` and vendor_id = $${paramIndex}`;
+    params.push(filters.vendorId);
+    paramIndex++;
   }
-  
+
   if (filters.status) {
-    whereConditions.push(sql`status = ${filters.status}`);
+    whereClause += ` and status = $${paramIndex}`;
+    params.push(filters.status);
+    paramIndex++;
   }
-  
+
   if (filters.branchId) {
-    whereConditions.push(sql`branch_id = ${filters.branchId}`);
+    whereClause += ` and branch_id = $${paramIndex}`;
+    params.push(filters.branchId);
+    paramIndex++;
   }
-  
+
   if (filters.overdueOnly) {
-    whereConditions.push(sql`due_date < current_date and balance_due > 0`);
+    whereClause += ` and due_date < current_date and balance_due > 0`;
   }
 
-  const whereClause = whereConditions.length > 0 
-    ? SQL`where ${db.join(whereConditions, ' and ')}`
-    : sql``;
+  const queryText = `select * from bills where ${whereClause} order by bill_date desc, created_at desc limit $${paramIndex} offset $${paramIndex + 1}`;
+  params.push(limit, offset);
 
-  const records = (await sql`
-    select * from bills 
-    ${whereClause}
-    order by bill_date desc, created_at desc
-    limit ${limit} offset ${offset}
-  `) as BillRecord[];
+  const records = (await db.query<BillRecord>(queryText, params)).rows;
 
   if (!records.length) return [];
 
-  const items = (await sql`
-    select * from bill_items 
-    where bill_id = any(${records.map(r => r.id)})
-    order by id
-  `) as BillItemRecord[];
+  const items = (await db.query<BillItemRecord>(
+    `select * from bill_items where bill_id = any($1) order by id`,
+    [records.map(r => r.id)]
+  )).rows;
 
   const itemsByBill: Record<string, BillItemRecord[]> = {};
   items.forEach(item => {
@@ -385,6 +393,7 @@ export async function convertPOToBill(poId: string, payload: {
 }): Promise<Bill | null> {
   const sql = SQL;
   await ensureBillTables(sql);
+  await ensurePurchaseOrderTables(sql);
 
   // Get PO details
   const poRecords = (await sql`
@@ -397,13 +406,13 @@ export async function convertPOToBill(poId: string, payload: {
   
   // Get PO items
   const poItems = (await sql`
-    select * from purchase_order_items where po_id = ${poId}
+    select * from purchase_order_items where coalesce(purchase_order_id, po_id) = ${poId}
   `) as any[];
 
   // Create bill from PO
   return createBill({
     tenantSlug: po.tenant_slug,
-    vendorId: po.vendor_id,
+    vendorId: po.supplier_id,
     poId: poId,
     branchId: po.branch_id,
     billDate: payload.billDate,

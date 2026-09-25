@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import { z } from 'zod';
+import { requireSuperAdmin } from "@/lib/api-auth";
 
 const sql = getSql();
 
@@ -19,7 +20,10 @@ const tierSchema = z.object({
   sort_order: z.number().int().min(0).default(0),
 });
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   try {
     const tiers = await sql`
       SELECT * FROM license_tiers ORDER BY sort_order ASC, id ASC
@@ -32,6 +36,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   try {
     const body = await request.json();
     const parsed = tierSchema.safeParse(body);

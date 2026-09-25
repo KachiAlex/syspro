@@ -5,12 +5,15 @@ import {
   generateRollingForecast,
 } from "@/lib/finance/budgets-db";
 import { budgetForecastCreateSchema } from "@/lib/finance/budgets";
-import { db } from "@/lib/sql-client";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 export async function GET(
   request: NextRequest,
   context: any
 ) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   const { params } = context;
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
@@ -23,22 +26,11 @@ export async function GET(
       );
     }
 
-    // Get tenant ID
-    const tenantResult = await db.query(
-      "SELECT id FROM tenants WHERE slug = $1",
-      [tenantSlug]
-    );
-
-    if (tenantResult.rows.length === 0) {
-      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
-    }
-
-    const tenantId = BigInt(tenantResult.rows[0].id);
     const budgetId = BigInt(params.id);
 
     const forecasts = await getBudgetForecasts(
       budgetId,
-      tenantId,
+      tenantSlug,
       forecastType || undefined
     );
 
@@ -56,6 +48,9 @@ export async function POST(
   request: NextRequest,
   context: any
 ) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   const { params } = context;
   try {
     const tenantSlug = request.nextUrl.searchParams.get("tenantSlug");
@@ -68,23 +63,11 @@ export async function POST(
       );
     }
 
-    // Get tenant ID
-    const tenantResult = await db.query(
-      "SELECT id FROM tenants WHERE slug = $1",
-      [tenantSlug]
-    );
-
-    if (tenantResult.rows.length === 0) {
-      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
-    }
-
-    const tenantId = BigInt(tenantResult.rows[0].id);
-
     // Handle rolling forecast generation request
     if (body.generateRolling) {
       const forecast = await generateRollingForecast(
         BigInt(params.id),
-        tenantId,
+        tenantSlug,
         body.basePeriods || 3
       );
       return NextResponse.json(forecast, { status: 201 });

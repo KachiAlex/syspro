@@ -3,12 +3,16 @@ import { extractAuthContext, requirePermission, validateTenant } from "@/lib/aut
 import { db } from "@/lib/sql-client";
 import { getCache as getRedisCache, setCache as setRedisCache, isRedisEnabled } from "@/lib/cache/redis";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 // Simple in-memory cache for summary endpoint to reduce DB pressure.
 // Uses a short TTL configurable via REPORTS_SUMMARY_CACHE_TTL (seconds).
 const CACHE_TTL_MS = (Number(process.env.REPORTS_SUMMARY_CACHE_TTL) || 30) * 1000;
 let cachedSummary: { value?: any; expiresAt?: number } = {};
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "analytics", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const auth = extractAuthContext(request);
     const tenantSlug = validateTenant(auth.tenantSlug);

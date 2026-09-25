@@ -221,7 +221,7 @@ export function ExpensesTab({ profile }: { profile: EmployeeProfile }) {
                     </div>
                     <p className="text-sm text-gray-600">{exp.description}</p>
                     {exp.approver_comment && (
-                      <p className="text-xs text-gray-500 mt-1.5 italic">"{exp.approver_comment}"</p>
+                      <p className="text-xs text-gray-500 mt-1.5 italic">&quot;{exp.approver_comment}&quot;</p>
                     )}
                     <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
                       <span className="font-medium text-gray-700">₦{Number(exp.amount).toLocaleString()}</span>

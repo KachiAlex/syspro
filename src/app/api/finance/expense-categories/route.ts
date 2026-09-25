@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
+import { getPagination } from "@/lib/pagination";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 const categoryCreateSchema = z.object({
   code: z.string().min(1),
   name: z.string().min(1),
@@ -11,12 +13,17 @@ const categoryCreateSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const sql = SQL;
+    const { limit, offset } = getPagination(request);
     const categories = await sql`
       SELECT id, code, name, account_id, requires_vendor, requires_receipt
       FROM expense_categories
       ORDER BY name
+      LIMIT ${limit} OFFSET ${offset}
     `;
     
     return NextResponse.json({ categories });
@@ -31,6 +38,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });

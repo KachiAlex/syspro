@@ -29,8 +29,8 @@ export async function createCampaign(input: Partial<Campaign>): Promise<Campaign
 }
 
 export async function listCampaigns(tenantSlug: string): Promise<Campaign[]> {
-  const rows = (await db.query(`select * from revops_campaigns where tenant_slug = $1 order by created_at desc`, [tenantSlug])) as any;
-  return db.mapRows(rows);
+  const result = await db.query(`select * from revops_campaigns where tenant_slug = $1 order by created_at desc`, [tenantSlug]);
+  return db.mapRows(result.rows);
 }
 
 export async function createLeadSource(input: Partial<LeadSource>): Promise<LeadSource> {
@@ -117,12 +117,12 @@ export async function uploadEnablementAsset(input: Partial<EnablementAsset>): Pr
 }
 
 export async function calculateAttributionForTenant(tenantSlug: string, model: AttributionModel): Promise<AttributionSummary> {
-  const rows = (await db.query(
+  const result = await db.query(
     `select * from revops_revenue_attributions where tenant_slug = $1 order by attributed_at asc`,
     [tenantSlug]
-  )) as unknown as any[];
+  );
 
-  const events = rows.map((r) => ({
+  const events = result.rows.map((r) => ({
     id: String(r.id),
     opportunityId: r.opportunity_id ?? null,
     invoiceId: r.invoice_id ?? null,

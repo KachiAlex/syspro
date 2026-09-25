@@ -621,7 +621,7 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
                   )}
                   {showSearchDropdown && searchResults.length === 0 && !searching && colleagueSearch.trim() && (
                     <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-center text-xs text-gray-400">
-                      No colleagues found matching "{colleagueSearch}"
+                      No colleagues found matching &quot;{colleagueSearch}&quot;
                     </div>
                   )}
                 </div>
@@ -629,7 +629,7 @@ export function AIReportGenerator({ kpis, onClose, onSubmit }: {
 
               {/* Section preview */}
               <div className="rounded-xl bg-gray-50 border border-gray-200 p-4">
-                <p className="text-xs font-semibold text-gray-700 mb-2">You'll be guided through {DICTATION_SECTIONS.length} sections:</p>
+                <p className="text-xs font-semibold text-gray-700 mb-2">You&apos;ll be guided through {DICTATION_SECTIONS.length} sections:</p>
                 <div className="grid grid-cols-2 gap-2">
                   {DICTATION_SECTIONS.map((s, i) => (
                     <div key={s.key} className="flex items-center gap-2 text-xs text-gray-600">

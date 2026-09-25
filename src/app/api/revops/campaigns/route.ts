@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 
-import { createCampaign, listCampaigns, type CampaignFilters, type DemandChannel } from "@/lib/revops-data";
+import {
+  createCampaign,
+  deleteCampaign,
+  listCampaigns,
+  updateCampaign,
+  type CampaignFilters,
+  type CampaignStatus,
+  type DemandChannel,
+} from "@/lib/revops-data";
 
 function buildFilters(searchParams: URLSearchParams): CampaignFilters {
   const filters: CampaignFilters = {};
@@ -20,41 +28,45 @@ export async function GET(request: NextRequest) {
   const context = validateTenantContext(request, "read");
   const { searchParams } = new URL(request.url);
   const tenantSlug = context.tenantSlug;
-  const campaigns = listCampaigns(tenantSlug, buildFilters(searchParams));
-  return NextResponse.json({ campaigns });
+  try {
+    const campaigns = await listCampaigns(tenantSlug, buildFilters(searchParams));
+    return NextResponse.json({ campaigns });
+  } catch (error) {
+    console.error("Failed to list campaigns", error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to list campaigns" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
   const context = validateTenantContext(request, "write");
   const body = await request.json().catch(() => ({}));
-  const requiredFields = [
-    "name",
-    "objective",
-    "channel",
-    "region",
-    "subsidiary",
-    "startDate",
-    "budget",
-    "createdBy",
-  ];
 
-  const missing = requiredFields.find((field) => !body[field]);
-  if (missing) {
-    return NextResponse.json({ error: `Missing field: ${missing}` }, { status: 400 });
+  const name = body.name ? String(body.name) : "";
+  const startDate = body.startDate ? String(body.startDate) : "";
+  const budget = body.budget !== undefined ? Number(body.budget) : undefined;
+
+  if (!name) {
+    return NextResponse.json({ error: "Missing field: name" }, { status: 400 });
+  }
+  if (!startDate) {
+    return NextResponse.json({ error: "Missing field: startDate" }, { status: 400 });
+  }
+  if (budget === undefined || Number.isNaN(budget)) {
+    return NextResponse.json({ error: "Missing field: budget" }, { status: 400 });
   }
 
   try {
-    const campaign = createCampaign({
+    const campaign = await createCampaign({
       tenantSlug: context.tenantSlug,
-      name: String(body.name),
-      objective: String(body.objective),
-      channel: body.channel as DemandChannel,
-      region: String(body.region),
+      name,
+      objective: body.objective ? String(body.objective) : body.status ? String(body.status) : "",
+      channel: (body.channel ?? "email") as DemandChannel,
+      region: body.region ? String(body.region) : "Global",
       branch: body.branch ? String(body.branch) : undefined,
-      subsidiary: String(body.subsidiary),
-      startDate: String(body.startDate),
+      subsidiary: body.subsidiary ? String(body.subsidiary) : "Default",
+      startDate,
       endDate: body.endDate ? String(body.endDate) : undefined,
-      budget: Number(body.budget),
+      budget,
       attributionModel: body.attributionModel ?? undefined,
       targetSegments: Array.isArray(body.targetSegments)
         ? body.targetSegments.map(String)
@@ -64,11 +76,58 @@ export async function POST(request: NextRequest) {
             .map((value) => value.trim())
             .filter(Boolean)
         : undefined,
-      createdBy: String(body.createdBy),
+      createdBy: body.createdBy ? String(body.createdBy) : "system",
     });
 
     return NextResponse.json({ campaign }, { status: 201 });
   } catch (error) {
+    console.error("Failed to create campaign", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to create campaign" }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  const context = validateTenantContext(request, "write");
+  const { searchParams } = new URL(request.url);
+  const campaignId = searchParams.get("id");
+  if (!campaignId) {
+    return NextResponse.json({ error: "Missing query parameter: id" }, { status: 400 });
+  }
+  const body = await request.json().catch(() => ({}));
+  try {
+    const campaign = await updateCampaign(context.tenantSlug, campaignId, {
+      name: body.name !== undefined ? String(body.name) : undefined,
+      channel: body.channel !== undefined ? (String(body.channel) as DemandChannel) : undefined,
+      status: body.status !== undefined ? (String(body.status) as CampaignStatus) : undefined,
+      startDate: body.startDate !== undefined ? String(body.startDate) : undefined,
+      endDate: body.endDate !== undefined ? String(body.endDate) : undefined,
+      budget: body.budget !== undefined ? Number(body.budget) : undefined,
+    });
+    if (!campaign) {
+      return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
+    }
+    return NextResponse.json({ campaign });
+  } catch (error) {
+    console.error("Failed to update campaign", error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to update campaign" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  const context = validateTenantContext(request, "write");
+  const { searchParams } = new URL(request.url);
+  const campaignId = searchParams.get("id");
+  if (!campaignId) {
+    return NextResponse.json({ error: "Missing query parameter: id" }, { status: 400 });
+  }
+  try {
+    const deleted = await deleteCampaign(context.tenantSlug, campaignId);
+    if (!deleted) {
+      return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
+    }
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Failed to delete campaign", error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to delete campaign" }, { status: 500 });
   }
 }

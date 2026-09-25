@@ -1,0 +1,4 @@
+name,sku,category,quantity,unitPrice,salePrice,reorderLevel,location,supplier,description
+Wireless Mouse,WM-1001,Electronics,150,8.50,19.99,20,Warehouse A,TechParts Ltd,2.4GHz wireless optical mouse
+USB-C Cable 1m,UC-2001,Accessories,300,2.10,7.50,50,Warehouse B,CableCo,Braided USB-C to USB-C cable
+Office Chair,OC-3001,Furniture,25,65.00,149.00,5,Showroom,ErgoSeats,Ergonomic mesh office chair

@@ -32,52 +32,47 @@ export default function AttributionTab({
           `/api/revops/attribution?model=${model}&tenantSlug=${encodeURIComponent(tenantSlug)}`
         );
 
-        if (res.ok) {
-          const responseData = await res.json();
-          
-          // Handle both wrapped and unwrapped responses
-          const apiData = responseData.data || responseData.summary || responseData;
-          
-          setData({
-            summary: {
-              totalRevenue: apiData.totalRevenue ?? 450000,
-              touchpoints: apiData.touchpoints ?? 1250,
-              avgTouchesPerDeal: apiData.avgTouchesPerDeal ?? 3.8,
-            },
-            byChannel: [
-              { channel: "Email", revenue: 180000, deals: 24, percentage: 40 },
-              { channel: "Paid Search", revenue: 135000, deals: 18, percentage: 30 },
-              { channel: "Content", revenue: 90000, deals: 12, percentage: 20 },
-              { channel: "Events", revenue: 45000, deals: 6, percentage: 10 },
-            ],
-            byModel: [
-              { model: "First Touch", revenue: 450000, percentage: 100 },
-            ],
-          });
-          onError("");
-        } else {
+        if (!res.ok) {
           throw new Error("Failed to fetch attribution data");
         }
+        const responseData = await res.json();
+        const summary = responseData.summary ?? responseData.data ?? responseData ?? {};
+
+        const totalRevenue = Number(summary?.totals?.revenue ?? 0);
+        const opportunities = Number(summary?.totals?.opportunities ?? 0);
+
+        const channels = Array.isArray(summary?.channels)
+          ? summary.channels.map((ch: any) => {
+              const revenue = Number(ch.revenue ?? 0);
+              const cpa = Number(ch.costPerAcquisition ?? 0);
+              const deals = cpa > 0 ? Math.round(Number(ch.spend ?? 0) / cpa) : 0;
+              return {
+                channel: ch.channel ?? "Unknown",
+                revenue,
+                deals,
+                percentage: totalRevenue > 0 ? Math.round((revenue / totalRevenue) * 100) : 0,
+              };
+            })
+          : [];
+
+        const touchpoints = channels.reduce((sum: number, c: any) => sum + Number(c.deals ?? 0), 0) || opportunities;
+
+        setData({
+          summary: {
+            totalRevenue,
+            touchpoints,
+            avgTouchesPerDeal: opportunities > 0 ? Number((touchpoints / opportunities).toFixed(1)) : 0,
+          },
+          byChannel: channels,
+          byModel: [
+            { model: model === "first_touch" ? "First Touch" : model === "last_touch" ? "Last Touch" : "Linear", revenue: totalRevenue, percentage: 100 },
+          ],
+        });
+        onError("");
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to load attribution data";
         onError(message);
-        // Show demo data
-        setData({
-          summary: {
-            totalRevenue: 450000,
-            touchpoints: 1250,
-            avgTouchesPerDeal: 3.8,
-          },
-          byChannel: [
-            { channel: "Email", revenue: 180000, deals: 24, percentage: 40 },
-            { channel: "Paid Search", revenue: 135000, deals: 18, percentage: 30 },
-            { channel: "Content", revenue: 90000, deals: 12, percentage: 20 },
-            { channel: "Events", revenue: 45000, deals: 6, percentage: 10 },
-          ],
-          byModel: [
-            { model: "First Touch", revenue: 450000, percentage: 100 },
-          ],
-        });
+        setData(null);
       } finally {
         setLoading(false);
       }

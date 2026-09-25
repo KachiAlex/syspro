@@ -4,40 +4,51 @@ import bcrypt from 'bcryptjs';
 
 const sql = getSql();
 
+/**
+ * One-time bootstrap: creates the first superadmin account.
+ * Requires the SUPERADMIN_SETUP_SECRET env var to be set and supplied via the
+ * x-setup-secret header. Credentials come from the request body — never
+ * hardcoded. Returns 403 when no setup secret is configured.
+ */
 export async function POST(request: NextRequest) {
   try {
-    // Only allow this in development or with a special header
-    if (process.env.NODE_ENV === 'production' && !request.headers.get('x-setup-superadmin')) {
-      return NextResponse.json({ error: 'Not allowed in production' }, { status: 403 });
+    const setupSecret = process.env.SUPERADMIN_SETUP_SECRET;
+    if (!setupSecret || request.headers.get('x-setup-secret') !== setupSecret) {
+      return NextResponse.json({ error: 'Not allowed' }, { status: 403 });
     }
 
-    const email = 'onyedika.akoma@gmail.com';
-    const password = 'dikaoliver2660';
-    const name = 'Onyedika Akoma';
+    const body = await request.json().catch(() => ({}));
+    const { email, password, name } = body as { email?: string; password?: string; name?: string };
 
-    console.log('Creating superadmin account...');
+    if (!email || !password || !name) {
+      return NextResponse.json(
+        { error: 'email, password, and name are required' },
+        { status: 400 }
+      );
+    }
+    if (password.length < 8) {
+      return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 });
+    }
 
-    // Check if superadmin already exists
-    const existing = await sql`SELECT id FROM superadmins WHERE email = ${email}`;
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const existing = await sql`SELECT id FROM superadmins WHERE email = ${normalizedEmail}`;
     if (existing.length > 0) {
-      return NextResponse.json({ message: 'Superadmin account already exists', account: existing[0] });
+      return NextResponse.json({ message: 'Superadmin account already exists' });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const result = await sql`
       INSERT INTO superadmins (email, name, password_hash)
-      VALUES (${email}, ${name}, ${hashedPassword})
+      VALUES (${normalizedEmail}, ${name}, ${hashedPassword})
       RETURNING id, email, name, created_at
     `;
 
-    console.log('Superadmin account created successfully!');
     return NextResponse.json({
       message: 'Superadmin account created successfully',
       account: result[0]
     });
-
   } catch (error) {
     console.error('Error creating superadmin account:', error);
     return NextResponse.json({ error: 'Failed to create superadmin account' }, { status: 500 });

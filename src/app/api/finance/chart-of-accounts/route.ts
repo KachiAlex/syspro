@@ -1,20 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getChartOfAccounts, ensureAccountingTables } from "@/lib/finance/accounting";
 import { sql as SQL } from "@/lib/sql-client";
+import { requireModuleAccess } from "@/lib/api-auth";
+import { getPagination } from "@/lib/pagination";
 
 export async function GET(request: NextRequest) {
+  const scope = await requireModuleAccess(request, "finance", "read");
+  if (!scope.ok) return scope.response;
+
   try {
     const searchParams = request.nextUrl.searchParams;
-    const tenantSlug = searchParams.get("tenantSlug");
-    if (!tenantSlug) {
-      return NextResponse.json({ success: false, error: "tenantSlug is required" }, { status: 400 });
-    }
+    const tenantSlug = searchParams.get("tenantSlug")!;
 
     await ensureAccountingTables(SQL);
     const accounts = await getChartOfAccounts(tenantSlug);
 
+    // Paginate before the per-account balance loop to cap query count
+    const { limit, offset } = getPagination(request);
+    const page = accounts.slice(offset, offset + limit);
+
     const accountsWithBalance = await Promise.all(
-      accounts.map(async (acc) => {
+      page.map(async (acc) => {
         const balanceRows = (await SQL`
           select
             coalesce(sum(jel.debit_amount), 0) as total_debit,

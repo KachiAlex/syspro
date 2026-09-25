@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
+import { requireSuperAdmin } from "@/lib/api-auth";
 
 const sql = getSql();
 
@@ -7,10 +8,13 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   const { slug } = await params;
   try {
     const result = await sql`
-      UPDATE tenants SET status = 'suspended', "isActive" = false, updated_at = NOW() WHERE slug = ${slug} RETURNING *
+      UPDATE tenants SET status = 'suspended', "isActive" = false, "updatedAt" = NOW() WHERE slug = ${slug} RETURNING *
     `;
     if (result.length === 0) {
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });

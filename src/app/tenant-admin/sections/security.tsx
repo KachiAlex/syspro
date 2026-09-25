@@ -223,7 +223,7 @@ export default function SecuritySection({ tenantSlug }: { tenantSlug?: string | 
           <div className="flex-1">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Security Overview</p>
             <h2 className="text-lg font-semibold text-gray-900">Security Dashboard</h2>
-            <p className="mt-1 text-sm text-slate-600">Monitor your system's security posture and threats</p>
+            <p className="mt-1 text-sm text-slate-600">Monitor your system&apos;s security posture and threats</p>
           </div>
           <div className="flex gap-2">
             <select 

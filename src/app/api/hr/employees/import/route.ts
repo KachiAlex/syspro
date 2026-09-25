@@ -3,6 +3,8 @@ import { insertEmployee, ensureHrTables, resolveOrCreateDepartment } from "@/lib
 import { ensureAdminTables } from "@/lib/admin/db";
 import { sql as SQL } from "@/lib/sql-client";
 import { setEmployeePassword } from "@/lib/hr/auth";
+import { requireModuleAccess } from "@/lib/api-auth";
+import { validateTenantAccess } from "@/lib/auth-helpers";
 
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
@@ -57,6 +59,17 @@ export async function POST(request: NextRequest) {
     if (!tenantSlug) {
       return NextResponse.json({ error: "tenantSlug required" }, { status: 400 });
     }
+
+    // Tenant binding: the session user must belong to the tenant being imported into
+    const _scope = await requireModuleAccess(request, "people", "write");
+    if (!_scope.ok) return _scope.response;
+    const sessionUser = _scope.user;
+    if (sessionUser.tenantSlug && sessionUser.tenantSlug !== tenantSlug) {
+      const allowed = await validateTenantAccess(sessionUser, tenantSlug);
+      if (!allowed) {
+        return NextResponse.json({ error: "Cross-tenant access denied" }, { status: 403 });
+      }
+    }
     if (!file || typeof file === "string") {
       return NextResponse.json({ error: "file required" }, { status: 400 });
     }
@@ -67,6 +80,9 @@ export async function POST(request: NextRequest) {
 
     if (rows.length === 0) {
       return NextResponse.json({ error: "No data found in file" }, { status: 400 });
+    }
+    if (rows.length > 2000) {
+      return NextResponse.json({ error: "Too many rows. Maximum 2000 employees per import." }, { status: 400 });
     }
 
     await ensureAdminTables(SQL);

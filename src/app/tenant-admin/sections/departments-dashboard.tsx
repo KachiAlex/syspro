@@ -85,8 +85,13 @@ export const DepartmentsDashboard: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (!tenantSlug) return;
     if (!confirm('Delete this department?')) return;
-    // Note: delete endpoint not implemented yet; just remove from UI for now
-    setDepartments((prev) => prev.filter((d) => d.id !== id));
+    try {
+      await HRService.deleteDepartment(tenantSlug, id);
+      setDepartments((prev) => prev.filter((d) => d.id !== id));
+    } catch (err: any) {
+      console.error('Delete department failed:', err);
+      alert(err?.response?.data?.error || err?.message || 'Failed to delete department');
+    }
   };
 
   return (

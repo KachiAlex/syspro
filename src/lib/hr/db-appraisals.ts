@@ -39,8 +39,8 @@ export async function saveAppraisal(
       ${id}, ${tenantSlug}, ${result.employeeId}, null, null,
       ${result.period}, ${result.periodStart}, ${result.periodEnd},
       ${result.overallScore}, ${result.rating}, ${JSON.stringify(result.categories)}::jsonb,
-      ${serializeTextArray(result.strengths)}, ${serializeTextArray(result.improvements)}, ${result.recommendation},
-      ${result.sentimentScore}, ${serializeTextArray(result.anomalies)},
+      ${serializeTextArray(result.strengths)}::text[], ${serializeTextArray(result.improvements)}::text[], ${result.recommendation},
+      ${result.sentimentScore}, ${serializeTextArray(result.anomalies)}::text[],
       ${result.trendDelta ?? null}, ${result.previousScore ?? null}, ${result.departmentAverage ?? null}, ${result.percentileRank ?? null},
       ${result.generatedBy}, ${JSON.stringify(result.weightsUsed)}::jsonb, ${JSON.stringify(result.metrics)}::jsonb,
       ${result.peerFeedback ? JSON.stringify(result.peerFeedback) : null}::jsonb,
@@ -298,7 +298,7 @@ export async function insertPeerFeedback(
     ) values (
       ${id}, ${row.tenantSlug}, ${row.employeeId}, ${row.reviewerId}, ${row.reviewerName || null}, ${row.reviewerRole || 'peer'},
       ${row.rating}, ${row.collaborationScore ?? null}, ${row.communicationScore ?? null}, ${row.reliabilityScore ?? null},
-      ${serializeTextArray(row.strengths)}, ${serializeTextArray(row.improvements)}, ${row.comments || null},
+      ${serializeTextArray(row.strengths)}::text[], ${serializeTextArray(row.improvements)}::text[], ${row.comments || null},
       ${row.period || 'monthly'}, ${row.isAnonymous ?? false}
     )
   `;
@@ -380,7 +380,7 @@ export async function insertGoal(
       ${row.targetMetric || null}, ${row.targetValue ?? null}, ${row.actualValue ?? 0},
       ${row.status || 'not_started'}, ${row.priority || 'medium'},
       ${row.startDate || null}, ${row.dueDate || null},
-      ${serializeTextArray(row.linkedTaskIds)}, ${row.createdBy || null}
+      ${serializeTextArray(row.linkedTaskIds)}::text[], ${row.createdBy || null}
     )
   `;
   return id;

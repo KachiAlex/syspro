@@ -47,7 +47,8 @@ export async function POST(request: NextRequest) {
         if (!isValid) {
           return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
         }
-      } else if (process.env.NODE_ENV === "production") {
+      } else {
+        // No password set — reject in all environments for security
         return NextResponse.json(
           { error: "Password not set for this account. Please contact your superadmin." },
           { status: 403 }

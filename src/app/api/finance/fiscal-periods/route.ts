@@ -10,6 +10,7 @@ import {
   getCurrentPeriod,
   generateYearlyPeriods,
 } from "@/lib/finance/fiscal-periods";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const createSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -29,6 +30,9 @@ const generateSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "read");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const tenantSlug = searchParams.get("tenantSlug");
@@ -53,6 +57,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const action = body.action || "create";
@@ -79,6 +86,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "finance", "write");
+    if (!_scope.ok) return _scope.response;
+
   try {
     const body = await request.json();
     const searchParams = request.nextUrl.searchParams;

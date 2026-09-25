@@ -251,7 +251,7 @@ export function LeaveTab({ profile: _profile }: { profile: EmployeeProfile }) {
                     </div>
                     <p className="text-sm text-gray-600">{req.reason}</p>
                     {req.reviewer_comment && (
-                      <p className="text-xs text-gray-500 mt-1.5 italic">"{req.reviewer_comment}"</p>
+                      <p className="text-xs text-gray-500 mt-1.5 italic">&quot;{req.reviewer_comment}&quot;</p>
                     )}
                     <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
                       <span>{req.start_date} → {req.end_date}</span>

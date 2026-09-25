@@ -16,6 +16,7 @@ import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables } from "@/lib/hr/db";
 import { invalidatePrefix } from "@/lib/cache";
 
+import { requireModuleAccess } from "@/lib/api-auth";
 export const dynamic = 'force-dynamic';
 
 const VALID_MODULES = [
@@ -24,6 +25,9 @@ const VALID_MODULES = [
 ];
 
 export async function POST(request: NextRequest) {
+    const _scope = await requireModuleAccess(request, "admin", "write");
+    if (!_scope.ok) return _scope.response;
+
   const body = await request.json().catch(() => null);
   if (!body || !body.tenantSlug || !body.employeeIds || !Array.isArray(body.employeeIds) || !body.modules) {
     return NextResponse.json({ error: "tenantSlug, employeeIds (array), and modules are required" }, { status: 400 });

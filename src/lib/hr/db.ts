@@ -5,12 +5,14 @@
 import { randomUUID } from "crypto";
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import { ensureAdminTables } from "@/lib/admin/db";
+import { ensureAttendanceVerificationTables } from "@/lib/attendance-verification";
 import type {
   EmployeeRecord,
   DepartmentRecord,
   AttendanceRecord,
   LeaveRecord,
 } from "./types";
+import { ensureOnce } from "@/lib/ensure-once";
 
 function serializeTextArray(values?: string[] | null): string {
   if (!values || values.length === 0) return "{}";
@@ -25,10 +27,32 @@ function serializeTextArray(values?: string[] | null): string {
 // TABLE CREATION
 // ============================================================================
 
-export async function ensureHrTables(sql: SqlClient = SQL) {
+export function ensureHrTables(...args: Parameters<typeof ensureHrTablesRun>) {
+  return ensureOnce("hr/db:ensureHrTables", () => ensureHrTablesRun(...args));
+}
+
+async function ensureHrTablesRun(sql: SqlClient = SQL) {
   // Ensure base admin tables (admin_employees, admin_departments, etc.) exist
   // before running ALTER TABLE IF EXISTS on them.
   await ensureAdminTables(sql);
+
+  await sql`alter table if exists admin_roles add column if not exists description text`;
+  await sql`alter table if exists admin_roles add column if not exists is_system boolean default false`;
+
+  await sql`
+    create table if not exists admin_user_roles (
+      id text primary key,
+      tenant_slug text not null,
+      user_id text not null,
+      role_id text not null,
+      scope text not null check (scope in ('tenant','region','branch','department','custom')),
+      is_active boolean default true,
+      created_at timestamptz default now(),
+      updated_at timestamptz default now()
+    )
+  `;
+  await sql`create unique index if not exists idx_admin_user_roles_user_role on admin_user_roles(user_id, role_id)`;
+
   // Ensure admin_employees has all columns needed by insertEmployee
   await sql`alter table if exists admin_employees add column if not exists phone text`;
   await sql`alter table if exists admin_employees add column if not exists job_title text`;
@@ -56,30 +80,95 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
   await sql`alter table if exists admin_employees add column if not exists portal_permissions jsonb`;
 
   await sql`
-    create table if not exists admin_attendance (
+    create table if not exists attendance_records (
       id text primary key,
-      tenant_slug text not null,
+      tenant_id text not null,
       employee_id text not null,
-      employee_name text not null,
-      date date not null,
-      status text not null check (status in ('present','absent','late','half_day')),
-      check_in text,
-      check_out text,
+      work_date date not null,
+      attendance_status text,
+      work_mode text,
+      check_in_time text,
+      check_out_time text,
+      employee_name text,
       notes text,
       check_in_lat numeric(10,7),
       check_in_lng numeric(10,7),
       check_out_lat numeric(10,7),
       check_out_lng numeric(10,7),
-      created_at timestamptz default now()
+      confidence_score numeric,
+      task_activity_count integer default 0,
+      time_logged_hours numeric default 0,
+      meetings_attended integer default 0,
+      lms_activity_score numeric,
+      is_override boolean default false,
+      override_reason text,
+      override_by_user_id text,
+      created_at timestamptz default now(),
+      updated_at timestamptz default now()
     )
   `;
-  await sql`create index if not exists idx_admin_attendance_tenant on admin_attendance(tenant_slug)`;
-  await sql`create index if not exists idx_admin_attendance_emp_date on admin_attendance(employee_id, date)`;
-  // Add location columns to existing tables (safe with if not exists)
-  await sql`alter table if exists admin_attendance add column if not exists check_in_lat numeric(10,7)`;
-  await sql`alter table if exists admin_attendance add column if not exists check_in_lng numeric(10,7)`;
-  await sql`alter table if exists admin_attendance add column if not exists check_out_lat numeric(10,7)`;
-  await sql`alter table if exists admin_attendance add column if not exists check_out_lng numeric(10,7)`;
+  await sql`create unique index if not exists idx_attendance_records_uniq on attendance_records(tenant_id, employee_id, work_date)`;
+  await sql`create index if not exists idx_attendance_records_tenant on attendance_records(tenant_id)`;
+  await sql`create index if not exists idx_attendance_records_emp_date on attendance_records(employee_id, work_date)`;
+  await sql`alter table if exists attendance_records add column if not exists employee_name text`;
+  await sql`alter table if exists attendance_records add column if not exists notes text`;
+  await sql`alter table if exists attendance_records add column if not exists check_in_lat numeric(10,7)`;
+  await sql`alter table if exists attendance_records add column if not exists check_in_lng numeric(10,7)`;
+  await sql`alter table if exists attendance_records add column if not exists check_out_lat numeric(10,7)`;
+  await sql`alter table if exists attendance_records add column if not exists check_out_lng numeric(10,7)`;
+  await sql`alter table if exists attendance_records add column if not exists attendance_status text`;
+  await sql`alter table if exists attendance_records add column if not exists work_mode text`;
+  await sql`alter table if exists attendance_records add column if not exists confidence_score numeric`;
+  await sql`alter table if exists attendance_records add column if not exists task_activity_count integer default 0`;
+  await sql`alter table if exists attendance_records add column if not exists time_logged_hours numeric default 0`;
+  await sql`alter table if exists attendance_records add column if not exists meetings_attended integer default 0`;
+  await sql`alter table if exists attendance_records add column if not exists lms_activity_score numeric`;
+  await sql`alter table if exists attendance_records add column if not exists is_override boolean default false`;
+  await sql`alter table if exists attendance_records add column if not exists override_reason text`;
+  await sql`alter table if exists attendance_records add column if not exists override_by_user_id text`;
+  await sql`alter table if exists attendance_records add column if not exists updated_at timestamptz default now()`;
+  try {
+    const tableCheck = await sql`select 1 from pg_class where relname = 'admin_attendance' and relkind = 'r'`;
+    if ((tableCheck as any[]).length > 0) {
+      await sql`
+        insert into attendance_records (id, tenant_id, employee_id, employee_name, work_date, attendance_status, check_in_time, check_out_time, notes, check_in_lat, check_in_lng, check_out_lat, check_out_lng, created_at, updated_at)
+        select id, tenant_slug, employee_id, employee_name, date, status, check_in, check_out, notes, check_in_lat, check_in_lng, check_out_lat, check_out_lng, created_at, created_at
+        from admin_attendance
+        on conflict do nothing
+      `;
+    }
+  } catch (e) { /* admin_attendance may not exist as a table */ }
+  try {
+    await sql`drop table if exists admin_attendance`;
+  } catch (e) { /* ignore if cannot drop */ }
+  await sql`
+    create or replace view admin_attendance as
+    select
+      id,
+      tenant_id as tenant_slug,
+      employee_id,
+      employee_name,
+      work_date as date,
+      attendance_status as status,
+      check_in_time as check_in,
+      check_out_time as check_out,
+      notes,
+      check_in_lat,
+      check_in_lng,
+      check_out_lat,
+      check_out_lng,
+      created_at,
+      work_mode,
+      check_in_method,
+      check_in_distance_m,
+      check_in_flagged,
+      flag_reason,
+      location_id,
+      is_override,
+      override_reason,
+      override_by_user_id
+    from attendance_records
+  `;
 
   await sql`
     create table if not exists admin_leave (
@@ -241,15 +330,6 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
     await sql`create index if not exists idx_admin_staff_report_templates_tenant on admin_staff_report_templates(tenant_slug)`;
     await sql`create index if not exists idx_admin_staff_report_templates_type on admin_staff_report_templates(tenant_slug, report_type)`;
 
-    await sql`alter table if exists admin_staff_tasks add column if not exists expected_outcome text`;
-    await sql`alter table if exists admin_staff_tasks add column if not exists weight integer default 1`;
-    await sql`alter table if exists admin_staff_tasks add column if not exists is_kpi boolean default false`;
-    await sql`alter table if exists admin_staff_tasks add column if not exists completion_note text`;
-    await sql`alter table if exists admin_staff_tasks add column if not exists completed_at timestamptz`;
-    // Expand frequency constraint to support monthly, quarterly, annual
-    await sql`alter table if exists admin_staff_tasks drop constraint if exists admin_staff_tasks_frequency_check`;
-    await sql`alter table if exists admin_staff_tasks add constraint admin_staff_tasks_frequency_check check (frequency in ('daily','weekly','monthly','quarterly','annual','one-time'))`;
-
   // Staff tasks assigned by HODs
   await sql`
     create table if not exists admin_staff_tasks (
@@ -270,6 +350,15 @@ export async function ensureHrTables(sql: SqlClient = SQL) {
   await sql`create index if not exists idx_admin_staff_tasks_emp on admin_staff_tasks(tenant_slug, employee_id)`;
   await sql`create index if not exists idx_admin_staff_tasks_status on admin_staff_tasks(status)`;
   await sql`create index if not exists idx_admin_staff_tasks_due on admin_staff_tasks(tenant_slug, due_date)`;
+
+    await sql`alter table if exists admin_staff_tasks add column if not exists expected_outcome text`;
+    await sql`alter table if exists admin_staff_tasks add column if not exists weight integer default 1`;
+    await sql`alter table if exists admin_staff_tasks add column if not exists is_kpi boolean default false`;
+    await sql`alter table if exists admin_staff_tasks add column if not exists completion_note text`;
+    await sql`alter table if exists admin_staff_tasks add column if not exists completed_at timestamptz`;
+    // Expand frequency constraint to support monthly, quarterly, annual
+    await sql`alter table if exists admin_staff_tasks drop constraint if exists admin_staff_tasks_frequency_check`;
+    await sql`alter table if exists admin_staff_tasks add constraint admin_staff_tasks_frequency_check check (frequency in ('daily','weekly','monthly','quarterly','annual','one-time'))`;
 
   // Leave requests
   await sql`
@@ -458,6 +547,7 @@ function normalizeEmployeeRow(row: any): EmployeeRecord {
     hireDate: row.hire_date ?? null,
     salary: row.salary ?? null,
     employmentType: row.employment_type ?? null,
+    workMode: row.work_mode ?? null,
     role: row.role ?? null,
     status: row.status ?? "active",
     passwordHash: row.password_hash ?? null,
@@ -551,6 +641,7 @@ export async function updateEmployee(
     hireDate: string | null;
     salary: number | null;
     employmentType: string | null;
+    workMode: string | null;
     role: string | null;
     status: string;
   }>
@@ -600,6 +691,7 @@ export async function updateEmployee(
       hire_date = coalesce(${updates.hireDate ?? null}, hire_date),
       salary = coalesce(${updates.salary ?? null}, salary),
       employment_type = coalesce(${updates.employmentType ?? null}, employment_type),
+      work_mode = coalesce(${updates.workMode ?? null}, work_mode),
       role = coalesce(${updates.role ?? null}, role),
       status = coalesce(${updates.status ?? null}, status),
       updated_at = now()
@@ -790,7 +882,13 @@ export async function getManagedDepartmentForUser(userId: string, tenantSlug: st
   return arr.length ? normalizeDepartmentRow(arr[0]) : null;
 }
 
-export async function ensureDepartmentHeadRole(tenantSlug: string) {
+export function ensureDepartmentHeadRole(tenantSlug: string) {
+  return ensureOnce(`hr/db:ensureDepartmentHeadRole:${tenantSlug}`, () =>
+    ensureDepartmentHeadRoleRun(tenantSlug)
+  );
+}
+
+async function ensureDepartmentHeadRoleRun(tenantSlug: string) {
   const sql = SQL;
   const rows = await sql`select id from admin_roles where tenant_slug = ${tenantSlug} and name = ${'department_head'} limit 1`;
   const arr = rows as any[];
@@ -827,7 +925,8 @@ export async function getTenantUsers(tenantSlug: string) {
       order by name
     `;
     return (rows as any[]).map((r) => ({ id: r.id, email: r.email, name: r.name }));
-  } catch {
+  } catch (error) {
+    console.error('Failed to get tenant users:', error);
     return [];
   }
 }
@@ -838,6 +937,46 @@ export async function getDepartmentEmployeeCount(tenantSlug: string, departmentI
     [tenantSlug, departmentId]
   );
   return res.rows.length ? Number(res.rows[0].cnt) : 0;
+}
+
+/**
+ * Delete a department. Refuses when employees are still assigned to it or it
+ * has child departments — the caller must reassign/move them first.
+ */
+export async function deleteDepartment(id: string, tenantSlug: string): Promise<
+  | { ok: true }
+  | { ok: false; status: number; error: string }
+> {
+  const sql = SQL;
+  await ensureHrTables(sql);
+
+  const dept = await getDepartmentById(id, tenantSlug);
+  if (!dept) return { ok: false, status: 404, error: "Department not found" };
+
+  const employeeCount = await getDepartmentEmployeeCount(tenantSlug, id);
+  if (employeeCount > 0) {
+    return {
+      ok: false,
+      status: 409,
+      error: `Cannot delete: ${employeeCount} employee${employeeCount === 1 ? " is" : "s are"} still assigned to this department. Reassign them first.`,
+    };
+  }
+
+  const childRows = await sql`
+    select count(*)::int as cnt from admin_departments
+    where tenant_slug = ${tenantSlug} and parent_department_id = ${id}
+  `;
+  const childCount = Number((childRows as any[])[0]?.cnt ?? 0);
+  if (childCount > 0) {
+    return {
+      ok: false,
+      status: 409,
+      error: `Cannot delete: ${childCount} sub-department${childCount === 1 ? "" : "s"} still reference${childCount === 1 ? "s" : ""} this department as parent.`,
+    };
+  }
+
+  await sql`delete from admin_departments where id = ${id} and tenant_slug = ${tenantSlug}`;
+  return { ok: true };
 }
 
 export async function listDepartmentsWithHeads(tenantSlug: string) {
@@ -855,7 +994,8 @@ export async function listDepartmentsWithHeads(tenantSlug: string) {
       headName: r.head_name ?? null,
       headEmail: r.head_email ?? null,
     }));
-  } catch {
+  } catch (error) {
+    console.error('Failed to list departments with heads:', error);
     return listDepartments(tenantSlug);
   }
 }
@@ -892,15 +1032,32 @@ export async function insertAttendance(row: {
   checkIn?: string | null;
   checkOut?: string | null;
   notes?: string | null;
+  /** Admin user id performing the manual entry — recorded for audit */
+  actorId?: string | null;
 }) {
   const sql = SQL;
   await ensureHrTables(sql);
+  await ensureAttendanceVerificationTables();
   const id = randomUUID();
+  // Admin-recorded attendance is a manual override — stamp it so it is
+  // distinguishable from QR/geofence-verified check-ins in audit views.
+  const overrideReason = `manual entry${row.notes ? `: ${row.notes}` : ""}`;
   await sql`
-    insert into admin_attendance (id, tenant_slug, employee_id, employee_name, date, status, check_in, check_out, notes)
-    values (${id}, ${row.tenantSlug}, ${row.employeeId}, ${row.employeeName}, ${row.date}, ${row.status}, ${row.checkIn ?? null}, ${row.checkOut ?? null}, ${row.notes ?? null})
+    insert into attendance_records (id, tenant_id, employee_id, employee_name, work_date, attendance_status, check_in_time, check_out_time, notes, check_in_method, is_override, override_reason, override_by_user_id, created_at, updated_at)
+    values (${id}, ${row.tenantSlug}, ${row.employeeId}, ${row.employeeName}, ${row.date}, ${row.status}, ${row.checkIn ?? null}, ${row.checkOut ?? null}, ${row.notes ?? null}, 'manual', true, ${overrideReason}, ${row.actorId ?? null}, now(), now())
+    on conflict (tenant_id, employee_id, work_date) do update set
+      attendance_status = excluded.attendance_status,
+      check_in_time = coalesce(excluded.check_in_time, attendance_records.check_in_time),
+      check_out_time = coalesce(excluded.check_out_time, attendance_records.check_out_time),
+      notes = coalesce(excluded.notes, attendance_records.notes),
+      employee_name = coalesce(excluded.employee_name, attendance_records.employee_name),
+      check_in_method = 'manual',
+      is_override = true,
+      override_reason = excluded.override_reason,
+      override_by_user_id = excluded.override_by_user_id,
+      updated_at = now()
   `;
-  const inserted = await sql`select * from admin_attendance where id = ${id} limit 1`;
+  const inserted = await sql`select * from admin_attendance where tenant_slug = ${row.tenantSlug} and employee_id = ${row.employeeId} and date = ${row.date} limit 1`;
   return normalizeAttendanceRow((inserted as any[])[0]);
 }
 
@@ -1650,7 +1807,7 @@ export async function insertStaffReport(row: {
       ${row.rawTranscript ?? null}, ${row.refinedText ?? null},
       ${row.objectives ?? null}, ${row.achievements ?? null}, ${row.challenges ?? null}, ${row.nextSteps ?? null}, ${row.additionalNotes ?? null},
       ${row.meetings ?? null}, ${row.blockers ?? null}, ${row.activities ?? null},
-      ${row.headOfDepartment}, ${serializeTextArray(row.teamMembers)}, ${row.status ?? 'pending'},
+      ${row.headOfDepartment}, ${serializeTextArray(row.teamMembers)}::text[], ${row.status ?? 'pending'},
       ${appraisalJson},
       ${row.templateId ?? null}, ${templateSnapshotJson}, ${row.departmentId ?? null}, ${row.resubmissionOfId ?? null}, ${row.version ?? 1}
     )

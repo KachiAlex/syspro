@@ -1197,7 +1197,7 @@ export async function buildConversationContext(id: string): Promise<string> {
     const rows = await sql`
       select turns from ai_conversations
       where id = ${id}
-        and updated_at >= now() - interval '${CONVERSATION_TTL_HOURS} hours'
+        and updated_at >= now() - make_interval(hours => ${CONVERSATION_TTL_HOURS})
       limit 1
     `;
     const conv = (rows as any[])?.[0];
@@ -1220,7 +1220,7 @@ export async function getConversationHistory(id: string): Promise<ConversationTu
     const rows = await sql`
       select turns from ai_conversations
       where id = ${id}
-        and updated_at >= now() - interval '${CONVERSATION_TTL_HOURS} hours'
+        and updated_at >= now() - make_interval(hours => ${CONVERSATION_TTL_HOURS})
       limit 1
     `;
     const conv = (rows as any[])?.[0];

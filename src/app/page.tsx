@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 /* ── PulseCanvas component ── */
 function PulseCanvas() {
@@ -79,7 +80,7 @@ function PulseCanvas() {
 /* ── Logo ── */
 function PisairtelLogo({ size = 34 }: { size?: number }) {
   return (
-    <img src="/pisairtel-erp-badge.svg" alt="Pisairtel ERP" width={size} height={size} style={{ borderRadius: '50%', objectFit: 'cover' }} />
+    <Image src="/pisairtel-erp-badge.svg" alt="Pisairtel ERP" width={size} height={size} style={{ borderRadius: '50%', objectFit: 'cover' }} />
   );
 }
 
@@ -225,7 +226,7 @@ export default function HomePage() {
         <div className="max-w-[760px] mx-auto text-center">
           <div className="text-[11.5px] font-semibold tracking-[.1em] text-[#F59E0B] mb-[14px]">THE PRINCIPLE</div>
           <h2 className="font-jakarta text-[clamp(26px,3.5vw,40px)] font-extrabold text-[#F8FAFC] mb-[18px] tracking-[-.02em]">Every action is a trigger,<br />not a dead end.</h2>
-          <p className="text-[15px] text-[#94A3B8] leading-[1.7] mb-12">Most SME software forces you to be your own accountant, approver, and analyst. Pisairtel ERP's automation layer removes that burden. The system runs the routine. You only touch the exceptions.</p>
+          <p className="text-[15px] text-[#94A3B8] leading-[1.7] mb-12">Most SME software forces you to be your own accountant, approver, and analyst. Pisairtel ERP&apos;s automation layer removes that burden. The system runs the routine. You only touch the exceptions.</p>
           {[
             { num: '01', title: 'Deal won in CRM', desc: 'Invoice drafts, project creates, inventory reserves — simultaneously, without anyone clicking anything.' },
             { num: '02', title: 'Expense submitted', desc: 'RBAC routes it to the right approver. Amount threshold determines the escalation path automatically.' },

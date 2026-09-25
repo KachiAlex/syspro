@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import { z } from 'zod';
+import { requireSuperAdmin } from "@/lib/api-auth";
 
 const sql = getSql();
 
@@ -22,6 +23,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   const { id } = await params;
   try {
     const tier = await sql`SELECT * FROM license_tiers WHERE id = ${parseInt(id, 10)}`;
@@ -39,6 +43,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   const { id } = await params;
   try {
     const body = await request.json();
@@ -60,7 +67,7 @@ export async function PATCH(
         price_per_seat = COALESCE(${d.price_per_seat}, price_per_seat),
         currency = COALESCE(${d.currency}, currency),
         billing_cycle = COALESCE(${d.billing_cycle}, billing_cycle),
-        features = COALESCE(${featuresJson ? sql`${featuresJson}::jsonb` : sql`NULL`}, features),
+        features = COALESCE(${featuresJson ?? null}::jsonb, features),
         is_active = COALESCE(${d.is_active}, is_active),
         sort_order = COALESCE(${d.sort_order}, sort_order),
         updated_at = NOW()
@@ -82,6 +89,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+    const _auth = await requireSuperAdmin(request);
+    if (!_auth.ok) return _auth.response;
+
   const { id } = await params;
   try {
     const result = await sql`DELETE FROM license_tiers WHERE id = ${parseInt(id, 10)} RETURNING id`;
