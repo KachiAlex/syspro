@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { Plus, Download, Filter, Calendar, Search, X, Edit2, AlertCircle, Clock, MapPin, User } from "lucide-react";
 import NewActivityModal from "./NewActivityModal";
 
@@ -60,7 +61,7 @@ export default function ActivitiesPage({ tenantSlug }: { tenantSlug?: string | n
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const loadActivities = () => {
+  const loadActivities = useCallback(() => {
     setLoading(true);
     setError(null);
     const params = new URLSearchParams({
@@ -84,11 +85,11 @@ export default function ActivitiesPage({ tenantSlug }: { tenantSlug?: string | n
         setError("Failed to load activities");
       })
       .finally(() => setLoading(false));
-  };
+  }, [filterRelatedTo, filterStatus, filterType, searchTerm, ts]);
 
   useEffect(() => {
     loadActivities();
-  }, [ts, filterType, filterStatus, filterRelatedTo, searchTerm]);
+  }, [loadActivities]);
 
   const handleCreateActivity = async (activityData: any) => {
     try {

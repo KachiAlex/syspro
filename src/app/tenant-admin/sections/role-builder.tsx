@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { z } from "zod";
 import { useForm } from "@/lib/use-form";
 import { TextInput, FormButton, FormAlert } from "@/components/form";
@@ -124,7 +124,7 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
     permissions: [],
   });
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setServerError(null);
     try {
@@ -138,11 +138,11 @@ export default function RoleBuilder({ tenantSlug }: { tenantSlug?: string | null
     } finally {
       setLoading(false);
     }
-  }
+  }, [ts]);
 
   useEffect(() => {
     load();
-  }, [ts]);
+  }, [load]);
 
   function togglePerm(perm: string) {
     (form as any).setFieldValues({

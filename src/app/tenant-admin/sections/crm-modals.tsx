@@ -59,7 +59,7 @@ export function CreateLeadModal({
   onSubmit: (data: LeadFormData) => Promise<void>;
   isLoading: boolean;
 }) {
-  const initialState: LeadFormData = {
+  const initialState: LeadFormData = useMemo(() => ({
     name: "",
     email: "",
     company: "",
@@ -68,7 +68,7 @@ export function CreateLeadModal({
     source: "website",
     score: 50,
     assignedTo: "",
-  };
+  }), []);
   const [formData, setFormData] = useState<LeadFormData>(initialState);
   const [error, setError] = useState<string | null>(null);
 
@@ -134,7 +134,7 @@ export function CreateLeadModal({
         assignedTo: initialData.assignedTo ?? "",
       });
     }
-  }, [isOpen, mode, initialData]);
+  }, [isOpen, mode, initialData, initialState]);
 
   if (!isOpen) return null;
 
@@ -584,17 +584,17 @@ export function CreateDealModal({
   leads?: Array<{ id: string; companyName: string; contactName: string }>;
   customers?: Array<{ id: string; name: string }>;
 }) {
-  const initialState: DealFormData = {
+  const initialState: DealFormData = useMemo(() => ({
     name: "",
     company: "",
     amount: 25000,
     stage: "prospecting",
     assignedTo: "",
-    closingDate: new Date().toISOString().split("T")[0],
+    closingDate: "",
     probability: 50,
     leadId: "",
     customerId: "",
-  };
+  }), []);
   const [formData, setFormData] = useState<DealFormData>(initialState);
   const [error, setError] = useState<string | null>(null);
 
@@ -669,7 +669,7 @@ export function CreateDealModal({
         customerId: initialData.customerId ?? "",
       });
     }
-  }, [isOpen, mode, initialData]);
+  }, [isOpen, mode, initialData, initialState]);
 
   if (!isOpen) return null;
 

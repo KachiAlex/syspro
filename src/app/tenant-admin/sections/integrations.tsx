@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { FormAlert } from "@/components/form";
 
 type Connector = { id: string; name: string; description?: string; enabled: boolean };
@@ -25,7 +25,7 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
   const [newKeyName, setNewKeyName] = useState("");
   const ts = tenantSlug ;
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -41,11 +41,11 @@ export default function IntegrationsSection({ tenantSlug }: { tenantSlug?: strin
     } finally {
       setLoading(false);
     }
-  }
+  }, [ts]);
 
   useEffect(() => {
     load();
-  }, [ts]);
+  }, [load]);
 
   async function toggleConnector(id: string, currentState: boolean) {
     try {

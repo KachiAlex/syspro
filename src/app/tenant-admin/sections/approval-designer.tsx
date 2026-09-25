@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { usePermissions, useCanAction } from "@/hooks/use-permissions";
 
 type Approval = {
@@ -23,7 +23,7 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
   const permissions = usePermissions();
   const { canCreate, canDelete } = useCanAction(permissions, "automation");
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -41,11 +41,11 @@ export default function ApprovalDesigner({ tenantSlug }: { tenantSlug?: string |
     } finally {
       setLoading(false);
     }
-  }
+  }, [ts]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   function updateStep(idx: number, field: string, value: string | number) {
     setSteps((prev) => prev.map((s, i) => (i === idx ? { ...s, [field]: value } : s)));

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useCallback } from "react";
 import {
   Plus,
   Edit2,
@@ -80,47 +81,10 @@ export default function BudgetPlanningWorkspace({
   });
 
   // Fetch budgets on mount
-  useEffect(() => {
-    fetchBudgets();
-  }, [tenantSlug]);
+
 
   // Fetch data when budget is selected
-  useEffect(() => {
-    if (selectedBudget) {
-      fetchBudgetDetails();
-    }
-  }, [selectedBudget]);
-
-  // API Calls
-  async function fetchBudgets() {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch(
-        `/api/finance/budgets?tenantSlug=${tenantSlug}&withSummary=true`
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch budgets");
-      }
-
-      const data = await response.json();
-      setBudgets(data.budgets || []);
-      setSummaries(data.summaries || []);
-
-      if (data.summaries?.length > 0) {
-        setSelectedBudget(data.summaries[0]);
-      }
-    } catch (err) {
-      console.error("Error fetching budgets:", err);
-      setError("Failed to load budgets");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function fetchBudgetDetails() {
+  const fetchBudgetDetails = useCallback(async () => {
     if (!selectedBudget) return;
 
     try {
@@ -148,7 +112,48 @@ export default function BudgetPlanningWorkspace({
       console.error("Error fetching budget details:", err);
       setError("Failed to load budget details");
     }
-  }
+  }, [selectedBudget, tenantSlug]);
+
+  useEffect(() => {
+    if (selectedBudget) {
+      fetchBudgetDetails();
+    }
+  }, [fetchBudgetDetails, selectedBudget]);
+
+  // API Calls
+  const fetchBudgets = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(
+        `/api/finance/budgets?tenantSlug=${tenantSlug}&withSummary=true`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch budgets");
+      }
+
+      const data = await response.json();
+      setBudgets(data.budgets || []);
+      setSummaries(data.summaries || []);
+
+      if (data.summaries?.length > 0) {
+        setSelectedBudget(data.summaries[0]);
+      }
+    } catch (err) {
+      console.error("Error fetching budgets:", err);
+      setError("Failed to load budgets");
+    } finally {
+      setLoading(false);
+    }
+  }, [tenantSlug]);
+
+  useEffect(() => {
+    fetchBudgets();
+  }, [fetchBudgets]);
+
+
 
   async function createBudget() {
     try {

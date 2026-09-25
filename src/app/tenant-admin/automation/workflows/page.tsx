@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useCallback } from "react";
 import Link from 'next/link';
 import { PlayCircle, Play, Pause, Square, Edit, Trash2, Plus, Search, Filter, Clock, CheckCircle, AlertCircle, Settings, Zap, X } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
@@ -32,7 +33,7 @@ export default function AutomationWorkflowsPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '', type: 'custom', status: 'active' });
 
-  async function load() {
+  const load = useCallback(async () => {
     if (!tenantSlug) return;
     setLoading(true);
     try {
@@ -54,11 +55,11 @@ export default function AutomationWorkflowsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [tenantSlug]);
 
   useEffect(() => {
     load();
-  }, [tenantSlug]);
+  }, [load]);
 
   const filteredWorkflows = workflows.filter(workflow => {
     const matchesSearch = workflow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

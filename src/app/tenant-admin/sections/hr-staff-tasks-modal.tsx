@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useCallback } from "react";
 import { X, Plus, Loader2, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
 import { HRService } from './hr-service';
 
@@ -60,7 +61,7 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
 
   const staff = useMemo(() => employees.filter((e) => e.role?.toLowerCase() !== 'hod'), [employees]);
 
-  const loadTasks = async () => {
+  const loadTasks = useCallback(async () => {
     setLoading(true);
     try {
       const fetched = await HRService.getStaffTasks(tenantSlug);
@@ -70,7 +71,7 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenantSlug]);
 
   useEffect(() => {
     if (isOpen) {
@@ -78,7 +79,7 @@ export const StaffTasksModal: React.FC<StaffTasksModalProps> = ({
       setError(null);
       setSuccess(null);
     }
-  }, [isOpen, tenantSlug]);
+  }, [isOpen, loadTasks]);
 
   const handleCreate = async () => {
     if (!newEmployeeId || !newTitle.trim() || !newDueDate) {

@@ -159,11 +159,6 @@ export default function OrgStructureManager({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Load tree on mount
-  useEffect(() => {
-    loadOrganizationTree();
-  }, []);
-
   const loadOrganizationTree = useCallback(async () => {
     try {
       const response = await fetch(`/api/tenant/org-structure?${tenantQuery}`, {
@@ -187,6 +182,11 @@ export default function OrgStructureManager({
       console.error("Error loading organization tree:", err);
     }
   }, [tenantQuery]);
+
+  // Load tree on mount
+  useEffect(() => {
+    loadOrganizationTree();
+  }, [loadOrganizationTree]);
 
   // Create Tier 1-3
   const handleCreateTier = useCallback(async () => {

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useCallback } from "react";
 import { format } from "date-fns";
 import { FormAlert } from "@/components/form";
 import { useTenantContext } from "@/components/tenant-admin/tenant-context";
@@ -58,11 +59,9 @@ export default function VendorPaymentsWorkspace() {
     vendorId: ""
   });
 
-  useEffect(() => {
-    if (tenantSlug) loadPayments();
-  }, [filters, tenantSlug]);
 
-  const loadPayments = async () => {
+
+  const loadPayments = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -82,7 +81,11 @@ export default function VendorPaymentsWorkspace() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, tenantSlug]);
+
+  useEffect(() => {
+    if (tenantSlug) loadPayments();
+  }, [loadPayments, tenantSlug]);
 
   const getStatusColor = (status: string) => {
     return STATUS_COLORS[status] || STATUS_COLORS.draft;

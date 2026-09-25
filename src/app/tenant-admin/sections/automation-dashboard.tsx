@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Activity, AlertTriangle, Bot, CheckCircle2, Loader2, Play, RefreshCcw } from "lucide-react";
 import { AutomationService } from "@/app/tenant-admin/services/automation-service";
 
@@ -15,7 +15,7 @@ export default function AutomationDashboard({ tenantSlug }: { tenantSlug?: strin
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     if (!tenantSlug) return;
     setLoading(true);
     setError(null);
@@ -27,11 +27,11 @@ export default function AutomationDashboard({ tenantSlug }: { tenantSlug?: strin
     } finally {
       setLoading(false);
     }
-  }
+  }, [tenantSlug]);
 
   useEffect(() => {
     load();
-  }, [tenantSlug]);
+  }, [load]);
 
   const healthBadge = useMemo(() => {
     if (!summary) return { tone: "slate", label: "No data" } as const;

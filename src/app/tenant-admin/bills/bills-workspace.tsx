@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useCallback } from "react";
 import { format } from "date-fns";
 import { FormAlert } from "@/components/form";
 import { useTenantContext } from "@/components/tenant-admin/tenant-context";
@@ -57,11 +58,9 @@ export default function BillsWorkspace() {
     overdueOnly: false
   });
 
-  useEffect(() => {
-    if (tenantSlug) loadBills();
-  }, [filters, tenantSlug]);
 
-  const loadBills = async () => {
+
+  const loadBills = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -91,7 +90,11 @@ export default function BillsWorkspace() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, tenantSlug]);
+
+  useEffect(() => {
+    if (tenantSlug) loadBills();
+  }, [loadBills, tenantSlug]);
 
   const getStatusColor = (status: string) => {
     return STATUS_COLORS[status] || STATUS_COLORS.cancelled;

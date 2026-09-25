@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { Plus, Download, Filter, Grid3X3, List, Search, X, Edit2, AlertCircle } from "lucide-react";
 import NewAccountModal from "./NewAccountModal";
 
@@ -43,7 +44,7 @@ export default function AccountsPage({ tenantSlug, regionId }: { tenantSlug?: st
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const loadAccounts = (p = page, size = pageSize) => {
+  const loadAccounts = useCallback((p = page, size = pageSize) => {
     setLoading(true);
     setError(null);
     const offset = p * size;
@@ -67,11 +68,11 @@ export default function AccountsPage({ tenantSlug, regionId }: { tenantSlug?: st
         setError("Failed to load accounts");
       })
       .finally(() => setLoading(false));
-  };
+  }, [page, pageSize, rid, ts]);
 
   useEffect(() => {
     loadAccounts(0, pageSize);
-  }, [ts, rid]);
+  }, [loadAccounts, pageSize]);
 
   const handleUpdate = async (id: string, updates: Partial<Account>) => {
     try {

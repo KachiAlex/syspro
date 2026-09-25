@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useCallback } from "react";
 import {
   DollarSign,
   TrendingUp,
@@ -68,7 +69,7 @@ export default function FinanceDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     if (!tenantSlug) return;
     setLoading(true);
     setError(null);
@@ -87,11 +88,11 @@ export default function FinanceDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [period, tenantSlug]);
 
   useEffect(() => {
     if (tenantSlug) loadDashboard();
-  }, [tenantSlug, period]);
+  }, [loadDashboard, tenantSlug]);
 
   const metrics = Array.isArray(data?.metrics) ? data.metrics : [];
 

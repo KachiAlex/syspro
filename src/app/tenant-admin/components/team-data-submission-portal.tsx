@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useCallback } from "react";
 import { Upload, FileText, Calendar, Filter, Send, AlertCircle, CheckCircle, X, Plus, Trash2, Download, Eye, Edit } from 'lucide-react';
 import { TeamDataSubmission } from '../types/team-data';
 import { TeamDataService } from '../services/team-data-service';
@@ -40,11 +41,9 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
     source: 'manual' as TeamDataSubmission['source']
   });
 
-  useEffect(() => {
-    loadSubmissions();
-  }, [tenantSlug, currentUserId]);
 
-  const loadSubmissions = async () => {
+
+  const loadSubmissions = useCallback(async () => {
     setLoading(true);
     try {
       const submissions = await TeamDataService.getTeamSubmissions(tenantSlug, {
@@ -57,7 +56,11 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUserId, tenantSlug]);
+
+  useEffect(() => {
+    loadSubmissions();
+  }, [loadSubmissions]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from "react";
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit, Trash2, LogOut, X, Eye, CheckSquare, Square, ChevronLeft, ChevronRight, Settings, Tag, Power } from 'lucide-react';
@@ -155,6 +156,29 @@ export default function SuperadminPage() {
   const tenantsPerPage = 20;
   const router = useRouter();
 
+  const fetchTenants = useCallback(async (page?: number, query?: string) => {
+    const usePage = page || currentPage;
+    const useQuery = query || searchQuery;
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: usePage.toString(),
+        limit: tenantsPerPage.toString(),
+        ...(useQuery && { q: useQuery }),
+      });
+      const response = await fetch(`/api/superadmin/tenants?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        setTenants(data.items || []);
+        setTotalTenants(data.total || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch tenants:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, searchQuery, tenantsPerPage]);
+
   // Debounce search
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
@@ -165,7 +189,7 @@ export default function SuperadminPage() {
     }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery, activeTab]);
+  }, [activeTab, fetchTenants, searchQuery]);
 
   // Helper functions for bulk operations and pagination
   const handleSelectAll = () => {
@@ -265,30 +289,7 @@ export default function SuperadminPage() {
     fetchLicenses();
     fetchLicenseTiers();
     // tenant admins will be fetched after tenants load (see tenants effect)
-  }, [currentPage]);
-
-  const fetchTenants = async (page?: number, query?: string) => {
-    const usePage = page || currentPage;
-    const useQuery = query || searchQuery;
-    try {
-      setLoading(true);
-      const params = new URLSearchParams({
-        page: usePage.toString(),
-        limit: tenantsPerPage.toString(),
-        ...(useQuery && { q: useQuery }),
-      });
-      const response = await fetch(`/api/superadmin/tenants?${params}`);
-      if (response.ok) {
-        const data = await response.json();
-        setTenants(data.items || []);
-        setTotalTenants(data.total || 0);
-      }
-    } catch (error) {
-      console.error('Failed to fetch tenants:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [currentPage, fetchTenants]);
 
   const fetchLicenses = async () => {
     try {
@@ -392,7 +393,7 @@ export default function SuperadminPage() {
     }
   };
 
-  const fetchTenantAdmins = async () => {
+  const fetchTenantAdmins = useCallback(async () => {
     try {
       // Fetch admins for the visible tenants in one call to avoid N+1
       const slugs = tenants.map(t => t.slug);
@@ -408,13 +409,13 @@ export default function SuperadminPage() {
     } catch (error) {
       console.error('Failed to fetch tenant admins:', error);
     }
-  };
+  }, [tenants]);
 
   useEffect(() => {
     if (tenants.length > 0) {
       fetchTenantAdmins();
     }
-  }, [tenants]);
+  }, [fetchTenantAdmins, tenants]);
 
   const handleViewDetails = async (tenant: Tenant | string) => {
     const slug = typeof tenant === 'string' ? tenant : tenant.slug;
@@ -672,7 +673,7 @@ export default function SuperadminPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
-              <img src="/pisairtel-erp-badge.svg" alt="Pisairtel ERP" width={32} height={32} style={{ borderRadius: '50%', objectFit: 'cover' }} />
+              <Image src="/pisairtel-erp-badge.svg" alt="Pisairtel ERP" width={32} height={32} style={{ borderRadius: '50%', objectFit: 'cover' }} />
               <h1 className="text-2xl font-bold text-gray-900">Superadmin Portal</h1>
             </div>
             {activeTab === 'tenants' && (

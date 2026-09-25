@@ -241,7 +241,7 @@ function ReportFormModal({ kpis, carryForward, onClose, onSuccess }: { kpis: Kpi
     if (kpis.length > 0 && kpiMetrics.length === 0) {
       setKpiMetrics(kpis.map(k => ({ name: k.title, target: k.expected_outcome || '', actual: '', unit: '', status: 'not_started' })));
     }
-  }, [kpis]);
+  }, [kpis, kpiMetrics.length]);
 
   // Draft auto-save
   useEffect(() => {
@@ -279,7 +279,7 @@ function ReportFormModal({ kpis, carryForward, onClose, onSuccess }: { kpis: Kpi
         } catch {}
       }
     }
-  }, []);
+  }, [carryForward, draftKey]);
 
   const addKpiMetric = () => setKpiMetrics([...kpiMetrics, { name: '', target: '', actual: '', unit: '', status: 'not_started' }]);
   const removeKpiMetric = (idx: number) => setKpiMetrics(kpiMetrics.filter((_, i) => i !== idx));

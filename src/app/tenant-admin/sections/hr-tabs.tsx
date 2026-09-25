@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useCallback } from "react";
 import { 
   BarChart3, Users, Briefcase, Calendar, TrendingUp, Plus, Eye, Edit, Trash2, 
   Download, Filter, RefreshCw, CheckCircle, Clock, AlertCircle, Award, Target 
@@ -103,12 +104,9 @@ export default function HRTabs({ tenantSlug }: HRTabsProps) {
   }, [success]);
 
   // Initialize on mount
-  useEffect(() => {
-    setLastRefreshed(new Date());
-    fetchTabData();
-  }, [tenantSlug]);
 
-  const fetchTabData = async () => {
+
+  const fetchTabData = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch all tab data in parallel
@@ -132,7 +130,12 @@ export default function HRTabs({ tenantSlug }: HRTabsProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenantSlug]);
+
+  useEffect(() => {
+    setLastRefreshed(new Date());
+    fetchTabData();
+  }, [fetchTabData]);
 
   const handleRefresh = async () => {
     await fetchTabData();

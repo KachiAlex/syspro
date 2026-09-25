@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Download, Eye, TrendingUp, RefreshCw, CreditCard } from "lucide-react";
 import { FormAlert } from "@/components/form";
 import CreateInvoiceModal from "../components/CreateInvoiceModal";
@@ -89,7 +89,7 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
     }
   }, [success]);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -108,11 +108,11 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
     } finally {
       setLoading(false);
     }
-  }
+  }, [ts]);
 
   useEffect(() => {
     load();
-  }, [ts]);
+  }, [load]);
 
   async function handlePay(invoice: Invoice) {
     try {

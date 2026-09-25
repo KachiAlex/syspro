@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useCallback } from "react";
 import { X, Plus, Loader2, Trash2, CheckCircle, AlertCircle, GripVertical } from 'lucide-react';
 import { HRService } from './hr-service';
 
@@ -64,7 +65,7 @@ export const StaffReportTemplateModal: React.FC<StaffReportTemplateModalProps> =
   const [isDefault, setIsDefault] = useState(false);
   const [sections, setSections] = useState<ReportTemplateSection[]>(DEFAULT_SECTIONS.map((s) => ({ ...s })));
 
-  const loadTemplates = async () => {
+  const loadTemplates = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -75,7 +76,7 @@ export const StaffReportTemplateModal: React.FC<StaffReportTemplateModalProps> =
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenantSlug]);
 
   useEffect(() => {
     if (isOpen) {
@@ -84,7 +85,7 @@ export const StaffReportTemplateModal: React.FC<StaffReportTemplateModalProps> =
       setError(null);
       setSuccess(null);
     }
-  }, [isOpen, tenantSlug]);
+  }, [isOpen, loadTemplates]);
 
   const resetForm = () => {
     setEditingId(null);

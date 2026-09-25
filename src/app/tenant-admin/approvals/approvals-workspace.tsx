@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useCallback } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { format } from "date-fns";
 import { FormAlert } from "@/components/form";
@@ -43,11 +44,9 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
     entityType: ""
   });
 
-  useEffect(() => {
-    if (tenantSlug) loadApprovals();
-  }, [filters, tenantSlug]);
 
-  const loadApprovals = async () => {
+
+  const loadApprovals = useCallback(async () => {
     if (!tenantSlug) return;
     setLoading(true);
     setError(null);
@@ -67,7 +66,11 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, tenantSlug]);
+
+  useEffect(() => {
+    if (tenantSlug) loadApprovals();
+  }, [loadApprovals, tenantSlug]);
 
   const getStatusColor = (status: string) => {
     const colors = {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { FormAlert } from "@/components/form";
 
 type ModuleItem = {
@@ -53,7 +53,7 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
   const [region, setRegion] = useState<string>("Global HQ");
   const ts = tenantSlug ;
 
-  async function loadIndustryProfiles() {
+  const loadIndustryProfiles = useCallback(async () => {
     setProfilesLoading(true);
     try {
       const res = await fetch(`/api/tenant/industry-profiles?tenantSlug=${encodeURIComponent(ts ?? '')}`, { cache: "no-store" });
@@ -67,7 +67,23 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
     } finally {
       setProfilesLoading(false);
     }
-  }
+  }, [ts]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/tenant/modules?tenantSlug=${encodeURIComponent(ts ?? '')}`, { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to load modules");
+      const payload = await res.json();
+      setModules(Array.isArray(payload.data) ? payload.data : []);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  }, [ts]);
 
   async function toggleIndustryProfile(key: string) {
     const newProfiles = industryProfiles.includes(key)
@@ -90,26 +106,12 @@ export default function ModuleRegistry({ tenantSlug }: { tenantSlug?: string | n
     }
   }
 
-  async function load() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/tenant/modules?tenantSlug=${encodeURIComponent(ts ?? '')}`, { cache: "no-store" });
-      if (!res.ok) throw new Error("Failed to load modules");
-      const payload = await res.json();
-      setModules(Array.isArray(payload.data) ? payload.data : []);
-    } catch (err) {
-      console.error(err);
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setLoading(false);
-    }
-  }
+
 
   useEffect(() => {
     load();
     loadIndustryProfiles();
-  }, [ts]);
+  }, [load, loadIndustryProfiles]);
 
   async function toggleModule(m: ModuleItem) {
     try {

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useCallback } from "react";
 import { RotateCcw, Trash2, Eye, RefreshCw, Archive } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 
@@ -29,9 +30,7 @@ export default function ProjectsArchive({ tenantSlug, onRefresh }: ProjectsArchi
   const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    fetchArchivedProjects();
-  }, []);
+
 
   useEffect(() => {
     if (error) {
@@ -47,7 +46,7 @@ export default function ProjectsArchive({ tenantSlug, onRefresh }: ProjectsArchi
     }
   }, [success]);
 
-  const fetchArchivedProjects = async () => {
+  const fetchArchivedProjects = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiClient.get(`/api/projects/archive?tenantSlug=${tenantSlug}`);
@@ -59,7 +58,11 @@ export default function ProjectsArchive({ tenantSlug, onRefresh }: ProjectsArchi
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenantSlug]);
+
+  useEffect(() => {
+    fetchArchivedProjects();
+  }, [fetchArchivedProjects]);
 
   const handleSelectProject = (projectId: string) => {
     const newSelected = new Set(selectedProjects);

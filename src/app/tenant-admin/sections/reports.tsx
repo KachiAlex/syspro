@@ -34,7 +34,7 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
   const [form, setForm] = useState({ name: "", reportType: "operational", definition: '{"source":"projects"}', schedule: "" });
   const [summary, setSummary] = useState<{ totalReports: number; queuedJobs: number; runsLast7: number; avgRunSecs?: number } | null>(null);
 
-  async function loadReports(cursorToLoad: string | null = null) {
+  const loadReports = useCallback(async (cursorToLoad: string | null = null) => {
     setLoading(true);
     setError(null);
     try {
@@ -52,9 +52,9 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [tenantSlug]);
 
-  async function fetchSummary() {
+  const fetchSummary = useCallback(async () => {
     try {
       const res = await fetch(`/api/reports/summary?tenantSlug=${encodeURIComponent(tenantSlug ?? '')}`);
       if (!res.ok) return;
@@ -63,13 +63,13 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
     } catch (e) {
       // ignore summary failures
     }
-  }
+  }, [tenantSlug]);
 
   useEffect(() => {
     fetchSummary();
     const t = setTimeout(() => loadReports(), 600);
     return () => clearTimeout(t);
-  }, [tenantSlug]);
+  }, [fetchSummary, loadReports]);
 
   const listRef = useRef<HTMLDivElement | null>(null);
   const ITEM_SIZE = 140; // reduced height since definition moved to modal
@@ -83,14 +83,14 @@ export default function ReportsSection({ tenantSlug }: { tenantSlug: string }) {
     } else if (hasMore) {
       loadReports(null);
     }
-  }, [nextCursor, hasMore]);
+  }, [nextCursor, hasMore, loadReports]);
 
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
     if (scrollHeight - scrollTop <= clientHeight * 1.5 && hasMore && !loading) {
       awaitLoadMore();
     }
-  }, [reports.length, hasMore, loading, page, awaitLoadMore]);
+  }, [hasMore, loading, awaitLoadMore]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();

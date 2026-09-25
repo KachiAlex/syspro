@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Check, AlertCircle, Loader, ChevronDown, History } from "lucide-react";
 import { FormAlert, FormButton } from "@/components/form";
 
@@ -88,13 +88,7 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
   const [showHistory, setShowHistory] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  // Fetch users on mount
-  useEffect(() => {
-    fetchUsers();
-    fetchRoles();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       setServerError(null);
@@ -113,9 +107,9 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [ts]);
 
-  const fetchRoles = async () => {
+  const fetchRoles = useCallback(async () => {
     try {
       setRolesLoading(true);
       const response = await fetch(`/api/tenant/roles?tenantSlug=${ts}`);
@@ -157,7 +151,17 @@ export default function RoleAssignmentPanel({ tenantSlug }: Props) {
     } finally {
       setRolesLoading(false);
     }
-  };
+  }, [ts]);
+
+  // Fetch users on mount
+  useEffect(() => {
+    fetchUsers();
+    fetchRoles();
+  }, [fetchRoles, fetchUsers]);
+
+
+
+
 
   const fetchHistory = async () => {
     try {

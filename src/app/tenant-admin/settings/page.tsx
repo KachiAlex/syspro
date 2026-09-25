@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useCallback } from "react";
 import { Save, RotateCcw, Download, Bell, Shield, Database, Building, Users, CheckCircle, AlertCircle } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 
@@ -208,7 +209,7 @@ export default function SettingsPage() {
     setSaveSuccess(false);
   };
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     if (!tenantSlug) return;
     setLoading(true);
     try {
@@ -229,11 +230,11 @@ export default function SettingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenantSlug]);
 
   useEffect(() => {
     loadSettings();
-  }, [tenantSlug]);
+  }, [loadSettings]);
 
   const saveSettings = async () => {
     if (!tenantSlug) return;

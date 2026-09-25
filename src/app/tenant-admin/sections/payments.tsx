@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { FormAlert } from "@/components/form";
 import { Plus, Eye, Trash2, Download, RotateCcw, Zap, RefreshCw, CreditCard } from "lucide-react";
 import {
@@ -83,7 +83,7 @@ export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | 
     currency: api.currency || 'NGN',
   });
 
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async () => {
     if (!ts) return;
     setLoading(true);
     try {
@@ -98,12 +98,12 @@ export default function PaymentsSection({ tenantSlug }: { tenantSlug?: string | 
     } finally {
       setLoading(false);
     }
-  };
+  }, [ts]);
 
   // Fetch on mount
   useEffect(() => {
     fetchPayments();
-  }, [ts]);
+  }, [fetchPayments]);
 
   // Auto-dismiss alerts after 3.5 seconds
   useEffect(() => {

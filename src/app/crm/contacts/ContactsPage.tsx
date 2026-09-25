@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { Plus, Download, Filter, Grid3X3, List, Search, X, Edit2, AlertCircle } from "lucide-react";
 import NewContactModal from "./NewContactModal";
 
@@ -47,7 +48,7 @@ export default function ContactsPage({ tenantSlug }: { tenantSlug?: string | nul
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const loadContacts = (p = page, size = pageSize) => {
+  const loadContacts = useCallback((p = page, size = pageSize) => {
     setLoading(true);
     setError(null);
     const offset = p * size;
@@ -79,11 +80,11 @@ export default function ContactsPage({ tenantSlug }: { tenantSlug?: string | nul
         setError("Failed to load contacts");
       })
       .finally(() => setLoading(false));
-  };
+  }, [filterTag, page, pageSize, ts]);
 
   useEffect(() => {
     loadContacts(0, pageSize);
-  }, [ts, filterTag]);
+  }, [loadContacts, pageSize]);
 
   const handleUpdate = async (id: string, updates: Partial<Contact>) => {
     try {

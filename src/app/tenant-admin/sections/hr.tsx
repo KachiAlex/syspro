@@ -349,7 +349,7 @@ const HRComponent: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [tenantSlug]);
+  }, [currency, tenantSlug]);
 
   useEffect(() => {
     loadData();

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useCallback } from "react";
 import {
   DollarSign,
   Users,
@@ -85,13 +86,9 @@ export default function TenantAdminDashboard() {
   const hasModuleRestrictions = Object.keys(perms.employeeModules || {}).length > 0;
   const showEmployeeDashboard = !perms.isAdmin && hasModuleRestrictions;
 
-  useEffect(() => {
-    if (!tenantSlug || perms.loading) return;
-    if (showEmployeeDashboard) return;
-    loadDashboard();
-  }, [tenantSlug, perms.loading, showEmployeeDashboard]);
 
-  const loadDashboard = async () => {
+
+  const loadDashboard = useCallback(async () => {
     setLoading(true);
     setError(null);
     const slug = encodeURIComponent(tenantSlug!);
@@ -292,7 +289,13 @@ export default function TenantAdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [perms, tenantSlug]);
+
+  useEffect(() => {
+    if (!tenantSlug || perms.loading) return;
+    if (showEmployeeDashboard) return;
+    loadDashboard();
+  }, [loadDashboard, perms.loading, showEmployeeDashboard, tenantSlug]);
 
   const quickActions: QuickAction[] = [
     ...(perms.isAdmin || perms.finance !== 'none' || perms.employeeModules.finance === true ? [

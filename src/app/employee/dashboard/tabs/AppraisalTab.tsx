@@ -899,7 +899,7 @@ function ConfigContent({ config, onSave }: any) {
 
   useEffect(() => {
     if (config) {
-      if (config.weights) setWeights({ ...weights, ...config.weights });
+      if (config.weights) setWeights((w) => ({ ...w, ...config.weights }));
       setUseAI(config.useAI ?? true);
       setAutoGenerate(config.autoGenerate ?? false);
       setAutoGenerateFrequency(config.autoGenerateFrequency || 'monthly');

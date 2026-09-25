@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useCallback } from "react";
 import { Eye, Trash2, Copy, DollarSign, Calendar, AlertCircle, Zap, RefreshCw } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 
@@ -31,9 +32,7 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
   const [success, setSuccess] = useState<string | null>(null);
   const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    fetchActiveProjects();
-  }, []);
+
 
   useEffect(() => {
     if (error) {
@@ -49,7 +48,7 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
     }
   }, [success]);
 
-  const fetchActiveProjects = async () => {
+  const fetchActiveProjects = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiClient.get(`/api/projects/active?tenantSlug=${tenantSlug}`);
@@ -61,7 +60,11 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenantSlug, projects]);
+
+  useEffect(() => {
+    fetchActiveProjects();
+  }, [fetchActiveProjects]);
 
   const handleSelectProject = (projectId: string) => {
     const newSelected = new Set(selectedProjects);

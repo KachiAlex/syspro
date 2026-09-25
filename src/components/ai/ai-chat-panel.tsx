@@ -117,7 +117,7 @@ export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => v
     } finally {
       setLoading(false);
     }
-  }, [input, loading, selectedCapability, conversationId]);
+  }, [input, loading, selectedCapability, conversationId, fetchQuota]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {

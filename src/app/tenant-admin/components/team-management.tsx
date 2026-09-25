@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useCallback } from "react";
 import { Users, Plus, Search, Filter, MoreVertical, Mail, Phone, MapPin, Calendar, Shield, Settings, Activity, Award, AlertTriangle, CheckCircle, X, Edit, Trash2 } from 'lucide-react';
 import { TeamMember, TeamPermissions } from '../types/team-data';
 import { TeamDataService } from '../services/team-data-service';
@@ -41,11 +42,9 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
     } as TeamPermissions
   });
 
-  useEffect(() => {
-    loadTeamMembers();
-  }, [tenantSlug]);
 
-  const loadTeamMembers = async () => {
+
+  const loadTeamMembers = useCallback(async () => {
     setLoading(true);
     try {
       const members = await TeamDataService.getTeamMembers(tenantSlug);
@@ -56,7 +55,11 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({ tenantSlug, curr
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenantSlug]);
+
+  useEffect(() => {
+    loadTeamMembers();
+  }, [loadTeamMembers]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};

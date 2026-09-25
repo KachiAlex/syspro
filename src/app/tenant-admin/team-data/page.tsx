@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useCallback } from "react";
 import Link from 'next/link';
 import { Users, BarChart3, Settings, Plus, Search, Filter, MoreVertical, Eye, Edit, Trash2, Shield, Activity, Award, AlertTriangle } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
@@ -18,13 +19,9 @@ export default function TeamDataPage() {
   const [loading, setLoading] = useState(false);
   const currentUser = useCurrentUser();
 
-  useEffect(() => {
-    if (tenantSlug) {
-      loadTeamData();
-    }
-  }, [tenantSlug]);
 
-  const loadTeamData = async () => {
+
+  const loadTeamData = useCallback(async () => {
     setLoading(true);
     try {
       const [members, analytics] = await Promise.all([
@@ -39,7 +36,13 @@ export default function TeamDataPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenantSlug]);
+
+  useEffect(() => {
+    if (tenantSlug) {
+      loadTeamData();
+    }
+  }, [loadTeamData, tenantSlug]);
 
   const getOverallStats = () => {
     const totalMembers = teamMembers.length;

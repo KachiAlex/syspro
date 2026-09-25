@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { FormAlert } from "@/components/form";
 import { 
   TrendingUp, 
@@ -45,6 +45,8 @@ const EXPORT_FREQUENCIES: Record<string, string> = {
   monthly: "Monthly",
 };
 
+const PERIOD_TO_DAYS: Record<string, number> = { "7d": 7, "30d": 30, "90d": 90, "1y": 365 };
+
 export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string | null }) {
   const [reports, setReports] = useState<Report[]>([]);
   const [exports, setExports] = useState<Export[]>([]);
@@ -75,13 +77,11 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
   const [runningExport, setRunningExport] = useState(false);
   const ts = tenantSlug ;
 
-  const periodToDays: Record<string, number> = { "7d": 7, "30d": 30, "90d": 90, "1y": 365 };
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const days = periodToDays[selectedPeriod] ?? 30;
+      const days = PERIOD_TO_DAYS[selectedPeriod] ?? 30;
       const res = await fetch(`/api/tenant/analytics?tenantSlug=${encodeURIComponent(ts ?? '')}&days=${days}`);
       const payload = await res.json().catch(() => null);
       if (res.ok && payload) {
@@ -103,11 +103,11 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
     } finally {
       setLoading(false);
     }
-  }
+  }, [selectedPeriod, ts]);
 
   useEffect(() => {
     load();
-  }, [ts]);
+  }, [load]);
 
   async function createReport() {
     if (!reportForm.name.trim() || !reportForm.type) {

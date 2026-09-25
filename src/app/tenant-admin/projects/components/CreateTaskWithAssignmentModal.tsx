@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useCallback } from "react";
 import { X, Search, UserPlus, AlertCircle, Loader2 } from 'lucide-react';
 import { TaskService, Employee } from '../services/taskService';
 import { ProjectService } from '../services/projectService';
@@ -41,22 +42,9 @@ export const CreateTaskWithAssignmentModal: React.FC<CreateTaskWithAssignmentMod
   const [nameSearch, setNameSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (!isOpen) return;
-    setProjectId('');
-    setTitle('');
-    setDescription('');
-    setPriority('medium');
-    setDueDate('');
-    setEstimatedHours('');
-    setDepartmentFilter('');
-    setNameSearch('');
-    setSelectedIds(new Set());
-    setError('');
-    loadOptions();
-  }, [isOpen]);
 
-  const loadOptions = async () => {
+
+  const loadOptions = useCallback(async () => {
     setLoading(true);
     try {
       const [projs, depts, emps] = await Promise.all([
@@ -73,7 +61,22 @@ export const CreateTaskWithAssignmentModal: React.FC<CreateTaskWithAssignmentMod
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenantSlug]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setProjectId('');
+    setTitle('');
+    setDescription('');
+    setPriority('medium');
+    setDueDate('');
+    setEstimatedHours('');
+    setDepartmentFilter('');
+    setNameSearch('');
+    setSelectedIds(new Set());
+    setError('');
+    loadOptions();
+  }, [isOpen, loadOptions]);
 
   const departmentNameById = useMemo(() => {
     const map = new Map<string, string>();

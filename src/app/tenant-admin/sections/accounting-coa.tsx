@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useCallback } from "react";
 import {
   Plus,
   Edit2,
@@ -36,11 +37,9 @@ export default function ChartOfAccountsWorkspace({
   });
 
   // Load accounts
-  useEffect(() => {
-    loadAccounts();
-  }, [tenantSlug, filterType]);
 
-  async function loadAccounts() {
+
+  const loadAccounts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -59,7 +58,11 @@ export default function ChartOfAccountsWorkspace({
     } finally {
       setLoading(false);
     }
-  }
+  }, [filterType, tenantSlug]);
+
+  useEffect(() => {
+    loadAccounts();
+  }, [loadAccounts]);
 
   async function handleSaveAccount() {
     try {

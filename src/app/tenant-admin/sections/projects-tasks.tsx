@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useCallback } from "react";
 import { Plus, Trash2, CheckCircle, Circle, AlertCircle } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 
@@ -33,13 +34,9 @@ export default function ProjectsTasks({ projects, tenantSlug }: ProjectsTasksPro
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (selectedProjectId) {
-      fetchTasks();
-    }
-  }, [selectedProjectId]);
 
-  const fetchTasks = async () => {
+
+  const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiClient.get(`/api/projects/${selectedProjectId}/tasks`);
@@ -50,7 +47,13 @@ export default function ProjectsTasks({ projects, tenantSlug }: ProjectsTasksPro
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedProjectId]);
+
+  useEffect(() => {
+    if (selectedProjectId) {
+      fetchTasks();
+    }
+  }, [fetchTasks, selectedProjectId]);
 
   const handleAddTask = async () => {
     if (!newTaskTitle.trim()) return;

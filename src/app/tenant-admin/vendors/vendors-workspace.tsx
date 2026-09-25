@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useCallback } from "react";
 import { format } from "date-fns";
 import VendorDrawer from "./vendor-drawer";
 import { useTenantContext } from "@/components/tenant-admin/tenant-context";
@@ -75,31 +76,9 @@ export default function VendorsWorkspace() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Vendor>>({});
 
-  useEffect(() => {
-    if (tenantSlug) loadVendors();
-  }, [tenantSlug]);
 
-  useEffect(() => {
-    if (selected) {
-      loadVendorProfile(selected.id);
-    } else {
-      setVendorProfile(null);
-    }
-  }, [selected]);
 
-  const loadVendors = async () => {
-    try {
-      const response = await fetch(`/api/finance/vendors?tenantSlug=${encodeURIComponent(tenantSlug)}`);
-      const data = await response.json();
-      setVendors(data.vendors || []);
-    } catch (error) {
-      console.error("Failed to load vendors:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadVendorProfile = async (vendorId: string) => {
+  const loadVendorProfile = useCallback(async (vendorId: string) => {
     try {
       // Load vendor details
       const vendorResponse = await fetch(`/api/finance/vendors/${encodeURIComponent(vendorId)}`);
@@ -173,7 +152,33 @@ export default function VendorsWorkspace() {
     } catch (error) {
       console.error("Failed to load vendor profile:", error);
     }
-  };
+  }, [tenantSlug]);
+
+  useEffect(() => {
+    if (selected) {
+      loadVendorProfile(selected.id);
+    } else {
+      setVendorProfile(null);
+    }
+  }, [loadVendorProfile, selected]);
+
+  const loadVendors = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/finance/vendors?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+      const data = await response.json();
+      setVendors(data.vendors || []);
+    } catch (error) {
+      console.error("Failed to load vendors:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [tenantSlug]);
+
+  useEffect(() => {
+    if (tenantSlug) loadVendors();
+  }, [loadVendors, tenantSlug]);
+
+
 
   if (loading) {
     return <div className="p-6">Loading vendors...</div>;

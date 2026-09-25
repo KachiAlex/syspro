@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useCallback } from "react";
 import { Plus, Trash2, Users } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 
@@ -32,13 +33,9 @@ export default function ProjectsTeam({ projects, tenantSlug }: ProjectsTeamProps
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (selectedProjectId) {
-      fetchTeamMembers();
-    }
-  }, [selectedProjectId]);
 
-  const fetchTeamMembers = async () => {
+
+  const fetchTeamMembers = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiClient.get(`/api/projects/${selectedProjectId}/team`);
@@ -49,7 +46,13 @@ export default function ProjectsTeam({ projects, tenantSlug }: ProjectsTeamProps
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedProjectId]);
+
+  useEffect(() => {
+    if (selectedProjectId) {
+      fetchTeamMembers();
+    }
+  }, [fetchTeamMembers, selectedProjectId]);
 
   const handleAddMember = async () => {
     if (!newMemberEmail.trim()) return;

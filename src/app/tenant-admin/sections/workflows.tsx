@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { z } from "zod";
 import { useForm } from "@/lib/use-form";
 import { TextInput, SelectInput, FormButton, FormAlert } from "@/components/form";
@@ -90,7 +90,7 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
     schema: workflowSchema,
   });
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setServerError(null);
     try {
@@ -104,11 +104,11 @@ export default function LifecycleWorkflows({ tenantSlug }: { tenantSlug?: string
     } finally {
       setLoading(false);
     }
-  }
+  }, [ts]);
 
   useEffect(() => {
     load();
-  }, [ts]);
+  }, [load]);
 
   function updateStep(idx: number, field: string, value: string | number) {
     setSteps((prev) => prev.map((s, i) => (i === idx ? { ...s, [field]: value } : s)));

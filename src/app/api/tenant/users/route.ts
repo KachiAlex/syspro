@@ -32,13 +32,15 @@ export async function GET(request: NextRequest) {
     // roleId prefers an explicit admin_user_roles assignment, then the
     // principal's own role column.
     const rows = await sql`
-      select p.id, p.email, p.name, p.status, p.base_role, p.created_at,
+      select p.id, p.email, p.name, p.status, p.base_role, p.contract_type, p.source, p.created_at,
              a.role_id as assigned_role_id, r.name as assigned_role_name
       from (
-        select id, email, name, 'active' as status, coalesce(role, 'admin') as base_role, created_at
+        select id, email, name, 'active' as status, coalesce(role, 'admin') as base_role,
+               'admin' as contract_type, 'admin' as source, created_at
         from tenant_admins where tenant_slug = ${tenantSlug}
         union all
-        select id, email, name, status, coalesce(role, 'staff') as base_role, created_at
+        select id, email, name, status, coalesce(role, 'staff') as base_role,
+               coalesce(employment_type, 'full-time') as contract_type, 'employee' as source, created_at
         from admin_employees where tenant_slug = ${tenantSlug}
       ) p
       left join admin_user_roles a
@@ -54,6 +56,9 @@ export async function GET(request: NextRequest) {
       name: row.name,
       roleId: row.assigned_role_name || row.assigned_role_id || row.base_role || "viewer",
       baseRole: row.base_role,
+      status: row.status,
+      contractType: row.contract_type,
+      source: row.source,
       isActive: row.status === "active",
       createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
     })) : [];
@@ -85,38 +90,41 @@ export async function POST(request: NextRequest) {
   try {
     await requireDashboardPermission(request, "admin");
     const body = await request.json();
-    const { email, name, status = "active", role } = body;
 
-    if (!email || !name) {
+    // CSV import: { users: [{ email, name?, contractType? }] }
+    const entries: any[] = Array.isArray(body?.users)
+      ? body.users
+      : [body];
+
+    const created: any[] = [];
+    for (const entry of entries) {
+      const email = typeof entry?.email === "string" ? entry.email.trim() : "";
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) continue;
+      const name = entry?.name || email.split("@")[0];
+      const userId = randomUUID();
+      const [row] = await sql`
+        INSERT INTO admin_employees
+          (id, tenant_slug, name, email, status, role, employment_type, is_portal_active, created_at, updated_at)
+        VALUES
+          (${userId}, ${tenantSlug}, ${name}, ${email}, 'invited', 'staff',
+           ${entry?.contractType || "full-time"}, false, now(), now())
+        ON CONFLICT (id) DO NOTHING
+        RETURNING id, email, name, status
+      `;
+      if (row) created.push(row);
+    }
+
+    if (created.length === 0) {
       return NextResponse.json(
-        { error: "Email and name are required" },
+        { error: "No valid email addresses supplied" },
         { status: 400 }
       );
     }
 
-    const userId = randomUUID();
-    await sql`
-      INSERT INTO users (id, tenant_id, email, name, status, created_at)
-      SELECT ${userId}, t.id, ${email}, ${name}, ${status}, now()
-      FROM tenants t
-      WHERE t.slug = ${tenantSlug}
-    `;
-
-    if (role) {
-      await sql`
-        INSERT INTO user_roles (user_id, role_id)
-        SELECT ${userId}, r.id
-        FROM roles r
-        JOIN tenants t ON r.tenant_id = t.id
-        WHERE r.name = ${role} AND t.slug = ${tenantSlug}
-        LIMIT 1
-      `;
-    }
-
-    return NextResponse.json({
-      success: true,
-      user: { id: userId, email, name, status },
-    });
+    return NextResponse.json(
+      { success: true, users: created, user: created[0] },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Failed to create user:", error);
     return NextResponse.json(

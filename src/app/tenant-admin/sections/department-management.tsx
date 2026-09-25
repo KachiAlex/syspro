@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { z } from "zod";
 import { useForm } from "@/lib/use-form";
 
@@ -32,7 +32,7 @@ export default function DepartmentManagement({ tenantSlug }: { tenantSlug?: stri
     schema: departmentSchema,
   });
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setServerError(null);
     try {
@@ -46,11 +46,11 @@ export default function DepartmentManagement({ tenantSlug }: { tenantSlug?: stri
     } finally {
       setLoading(false);
     }
-  }
+  }, [ts]);
 
   useEffect(() => {
     load();
-  }, [ts]);
+  }, [load]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();

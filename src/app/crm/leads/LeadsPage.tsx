@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { Plus, Download, Filter, Grid3X3, List, Kanban, Search, X, Eye, Edit2, Trash2, AlertCircle } from "lucide-react";
 import NewLeadModal from "./NewLeadModal";
 
@@ -48,7 +49,7 @@ export default function LeadsPage({ tenantSlug }: { tenantSlug?: string | null }
   const [showEditModal, setShowEditModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  const loadLeads = (p = page, size = pageSize) => {
+  const loadLeads = useCallback((p = page, size = pageSize) => {
     setLoading(true);
     setError(null);
     const offset = p * size;
@@ -72,11 +73,11 @@ export default function LeadsPage({ tenantSlug }: { tenantSlug?: string | null }
         setError("Failed to load leads");
       })
       .finally(() => setLoading(false));
-  };
+  }, [filterSource, filterStage, searchTerm, page, pageSize, ts]);
 
   useEffect(() => {
     loadLeads(0, pageSize);
-  }, [ts, filterStage, filterSource]);
+  }, [loadLeads, pageSize]);
 
   const handleDelete = async (id: string) => {
     try {

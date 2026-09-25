@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Eye, EyeOff, Lock, Unlock, AlertTriangle } from "lucide-react";
 import { FormAlert } from "@/components/form";
 import { AdminService } from "@/app/tenant-admin/services/admin-service";
@@ -33,11 +33,9 @@ export default function AdminRestrictions({ tenantSlug }: { tenantSlug?: string 
 
   const ts = tenantSlug ;
 
-  useEffect(() => {
-    loadRestrictions();
-  }, [ts]);
 
-  async function loadRestrictions() {
+
+  const loadRestrictions = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -56,7 +54,11 @@ export default function AdminRestrictions({ tenantSlug }: { tenantSlug?: string 
     } finally {
       setLoading(false);
     }
-  }
+  }, [ts]);
+
+  useEffect(() => {
+    loadRestrictions();
+  }, [loadRestrictions]);
 
   function toggleModule(moduleId: string) {
     const updated = restrictions.includes(moduleId)

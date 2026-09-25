@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Loader2, Play, RefreshCcw, ToggleLeft, ToggleRight } from "lucide-react";
 
 type Rule = {
@@ -28,6 +28,33 @@ const TEMPLATES: RuleTemplate[] = [
   { label: "Create task for new support ticket", name: "Support ticket task", description: "Create a task when a new support ticket is created", eventType: "support.ticket-created", condition: { op: "exists", field: "payload.ticketId", value: "" }, actions: [{ type: "task", params: { title: "Handle support ticket", assignee: "@admin" } }] },
   { label: "Alert when project goes over budget", name: "Over budget alert", description: "Notify project lead when budget threshold is crossed", eventType: "projects.over-budget", condition: { op: "gt", field: "payload.spent", value: "1000" }, actions: [{ type: "email", params: { to: "pm@example.com", subject: "Project over budget" } }] },
 ];
+
+function getPayloadValue(payload: any, path?: string) {
+  if (!path) return undefined;
+  return path.split(".").reduce((acc: any, key: string) => acc?.[key], payload);
+}
+
+function compareDraft(op: string, left: any, right: any) {
+  switch (op) {
+    case "eq": return left === right;
+    case "neq": return left !== right;
+    case "gt": return Number(left) > Number(right);
+    case "gte": return Number(left) >= Number(right);
+    case "lt": return Number(left) < Number(right);
+    case "lte": return Number(left) <= Number(right);
+    case "includes": return Array.isArray(left) ? left.includes(right) : typeof left === "string" ? left.includes(String(right)) : false;
+    case "excludes": return Array.isArray(left) ? !left.includes(right) : typeof left === "string" ? !left.includes(String(right)) : false;
+    case "exists": return left !== undefined && left !== null;
+    case "missing": return left === undefined || left === null;
+    default: return false;
+  }
+}
+
+function evaluateDraft(condition: any, payload: any): boolean {
+  if (condition.all && condition.all.length > 0) return condition.all.every((c: any) => evaluateDraft(c, payload));
+  if (condition.any && condition.any.length > 0) return condition.any.some((c: any) => evaluateDraft(c, payload));
+  return compareDraft(condition.op, getPayloadValue(payload, condition.field), condition.value);
+}
 
 export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) {
   const [rules, setRules] = useState<Rule[]>([]);
@@ -94,33 +121,6 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
     });
   }
 
-  function getPayloadValue(payload: any, path?: string) {
-    if (!path) return undefined;
-    return path.split(".").reduce((acc: any, key: string) => acc?.[key], payload);
-  }
-
-  function compareDraft(op: string, left: any, right: any) {
-    switch (op) {
-      case "eq": return left === right;
-      case "neq": return left !== right;
-      case "gt": return Number(left) > Number(right);
-      case "gte": return Number(left) >= Number(right);
-      case "lt": return Number(left) < Number(right);
-      case "lte": return Number(left) <= Number(right);
-      case "includes": return Array.isArray(left) ? left.includes(right) : typeof left === "string" ? left.includes(String(right)) : false;
-      case "excludes": return Array.isArray(left) ? !left.includes(right) : typeof left === "string" ? !left.includes(String(right)) : false;
-      case "exists": return left !== undefined && left !== null;
-      case "missing": return left === undefined || left === null;
-      default: return false;
-    }
-  }
-
-  function evaluateDraft(condition: any, payload: any): boolean {
-    if (condition.all && condition.all.length > 0) return condition.all.every((c: any) => evaluateDraft(c, payload));
-    if (condition.any && condition.any.length > 0) return condition.any.some((c: any) => evaluateDraft(c, payload));
-    return compareDraft(condition.op, getPayloadValue(payload, condition.field), condition.value);
-  }
-
   const previewResult = useMemo(() => {
     try {
       const payload = JSON.parse(previewPayload);
@@ -131,7 +131,7 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
     }
   }, [form.condition, form.actions, previewPayload]);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -151,11 +151,11 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
     } finally {
       setLoading(false);
     }
-  }
+  }, [tenantSlug]);
 
   useEffect(() => {
     load();
-  }, [tenantSlug]);
+  }, [load]);
 
   async function loadAudits() {
     setAuditLoading(true);

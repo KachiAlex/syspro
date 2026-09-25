@@ -5,6 +5,9 @@
     "out/**",
     "build/**",
     "next-env.d.ts",
-    "node_modules/**"
+    "node_modules/**",
+    "from figma design/**",
+    "sidebar-nav-backup.tsx",
+    "scripts/**"
   ]
 }

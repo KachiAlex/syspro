@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useCallback } from "react";
 import { X, Calendar, Download, Filter, FileText, BarChart3, Settings, Clock, Users, DollarSign, TrendingUp, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { ReportService, Report, ReportTemplate, ReportGenerationParams } from '../services/report-service';
 
@@ -36,14 +37,9 @@ export const UnifiedReportModal: React.FC<UnifiedReportModalProps> = ({
   });
 
   // Load templates and reports on mount
-  useEffect(() => {
-    if (isOpen) {
-      loadTemplates();
-      loadReports();
-    }
-  }, [isOpen, module]);
 
-  const loadTemplates = async () => {
+
+  const loadTemplates = useCallback(async () => {
     try {
       const templates = await ReportService.getReportTemplates(module);
       setTemplates(templates);
@@ -53,16 +49,23 @@ export const UnifiedReportModal: React.FC<UnifiedReportModalProps> = ({
     } catch (error) {
       console.error('Failed to load templates:', error);
     }
-  };
+  }, [formData, module]);
 
-  const loadReports = async () => {
+  const loadReports = useCallback(async () => {
     try {
       const reports = await ReportService.getReports(tenantSlug, module);
       setReports(reports);
     } catch (error) {
       console.error('Failed to load reports:', error);
     }
-  };
+  }, [module, tenantSlug]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadTemplates();
+      loadReports();
+    }
+  }, [isOpen, loadReports, loadTemplates]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};

@@ -31,6 +31,7 @@ type User = {
   name?: string;
   status: string;
   contractType?: string;
+  source?: string;
   createdAt?: string;
 };
 
@@ -48,9 +49,9 @@ export default function PeopleAccessPage() {
   useEffect(() => {
     if (tab === 'users') {
       setLoading(true);
-      fetch('/api/admin/users')
+      fetch('/api/tenant/users')
         .then((r) => r.json())
-        .then((d) => setUsers(d.data || []))
+        .then((d) => setUsers(d.users || []))
         .finally(() => setLoading(false));
     }
   }, [tab]);
@@ -123,21 +124,21 @@ export default function PeopleAccessPage() {
                       )}
                       {u.status !== 'inactive' && (
                         <button className="text-yellow-600 hover:underline" onClick={async () => {
-                          await fetch(`/api/admin/users/${u.id}/deactivate`, { method: 'POST' });
+                          await fetch(`/api/tenant/users/${u.id}?source=${u.source || 'employee'}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'inactive' }) });
                           setLoading(true);
-                          fetch('/api/admin/users')
+                          fetch('/api/tenant/users')
                             .then((r) => r.json())
-                            .then((d) => setUsers(d.data || []))
+                            .then((d) => setUsers(d.users || []))
                             .finally(() => setLoading(false));
                           notify(`Deactivated ${u.email}`);
                         }}>Deactivate</button>
                       )}
                       <button className="text-red-600 hover:underline" onClick={async () => {
-                        await fetch(`/api/admin/users/${u.id}`, { method: 'DELETE' });
+                        await fetch(`/api/tenant/users/${u.id}?source=${u.source || 'employee'}`, { method: 'DELETE' });
                         setLoading(true);
-                        fetch('/api/admin/users')
+                        fetch('/api/tenant/users')
                           .then((r) => r.json())
-                          .then((d) => setUsers(d.data || []))
+                          .then((d) => setUsers(d.users || []))
                           .finally(() => setLoading(false));
                         notify(`Deleted ${u.email}`);
                       }}>Delete</button>
@@ -174,7 +175,7 @@ export default function PeopleAccessPage() {
                       setInviteLoading(true);
                       setInviteError('');
                       try {
-                        const res = await fetch('/api/admin/users', {
+                        const res = await fetch('/api/tenant/users', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ email: inviteEmail })
@@ -183,9 +184,9 @@ export default function PeopleAccessPage() {
                         setInviteOpen(false);
                         setInviteEmail('');
                         setLoading(true);
-                        fetch('/api/admin/users')
+                        fetch('/api/tenant/users')
                           .then((r) => r.json())
-                          .then((d) => setUsers(d.data || []))
+                          .then((d) => setUsers(d.users || []))
                           .finally(() => setLoading(false));
                         notify('Invitation sent (simulated email)');
                       } catch (e: any) {
@@ -220,7 +221,7 @@ export default function PeopleAccessPage() {
                       const text = await file.text();
                       const users = parseCSV(text).filter(u => validateEmail(u.email));
                       if (users.length === 0) throw new Error('No valid emails in CSV');
-                      const res = await fetch('/api/admin/users', {
+                      const res = await fetch('/api/tenant/users', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ users })
@@ -228,9 +229,9 @@ export default function PeopleAccessPage() {
                       if (!res.ok) throw new Error('Failed to import users');
                       setCsvOpen(false);
                       setLoading(true);
-                      fetch('/api/admin/users')
+                      fetch('/api/tenant/users')
                         .then((r) => r.json())
-                        .then((d) => setUsers(d.data || []))
+                        .then((d) => setUsers(d.users || []))
                         .finally(() => setLoading(false));
                       notify('CSV import complete (simulated email sent)');
                       {/* User management actions: deactivate, resend, delete handled in Actions column above */}

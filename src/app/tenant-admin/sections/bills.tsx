@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useCallback } from "react";
 import { Plus, Eye, Edit, CreditCard, Download, Filter, FileText, Calculator, AlertCircle, Calendar } from 'lucide-react';
 import { AddBillModal, MakePaymentModal, SchedulePaymentModal } from './bills-modals';
 
@@ -62,13 +63,9 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
     return `${symbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
-  useEffect(() => {
-    if (!tenantSlug) return;
-    loadBills();
-    loadAging();
-  }, [tenantSlug]);
 
-  const loadBills = async () => {
+
+  const loadBills = useCallback(async () => {
     setLoading(true);
     try {
       const [billsRes, vendorsRes] = await Promise.all([
@@ -96,9 +93,9 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenantSlug]);
 
-  const loadAging = async () => {
+  const loadAging = useCallback(async () => {
     try {
       const res = await fetch(`/api/finance/bills?tenantSlug=${encodeURIComponent(tenantSlug)}&aging=true`);
       const data = await res.json();
@@ -119,7 +116,13 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
     } catch (err) {
       console.error('Failed to load aging:', err);
     }
-  };
+  }, [tenantSlug]);
+
+  useEffect(() => {
+    if (!tenantSlug) return;
+    loadBills();
+    loadAging();
+  }, [loadAging, loadBills, tenantSlug]);
 
   const handleAddBill = async (data: any) => {
     if (data?.id) {

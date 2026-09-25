@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useCallback } from "react";
 import { X, Search, UserPlus, UserMinus, Loader2 } from 'lucide-react';
 import { TaskService, Employee, TaskResponse } from '../services/taskService';
 
@@ -35,16 +36,9 @@ export const TaskAssignmentModal: React.FC<TaskAssignmentModalProps> = ({
   const [assigning, setAssigning] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (!isOpen || !task) return;
-    setSelectedIds(new Set());
-    setNameSearch('');
-    setDepartmentFilter('');
-    setError('');
-    loadData();
-  }, [isOpen, task?.id]);
 
-  const loadData = async () => {
+
+  const loadData = useCallback(async () => {
     if (!task) return;
     setLoading(true);
     try {
@@ -62,7 +56,16 @@ export const TaskAssignmentModal: React.FC<TaskAssignmentModalProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId, task, tenantSlug]);
+
+  useEffect(() => {
+    if (!isOpen || !task) return;
+    setSelectedIds(new Set());
+    setNameSearch('');
+    setDepartmentFilter('');
+    setError('');
+    loadData();
+  }, [isOpen, loadData, task]);
 
   const departmentNameById = useMemo(() => {
     const map = new Map<string, string>();

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useCallback } from "react";
 import { 
   Users, Clock, FileText, DollarSign, Plus, Eye, Edit, Trash2, 
   Download, Filter, RefreshCw, CheckCircle, AlertCircle, TrendingUp,
@@ -92,12 +93,9 @@ export default function HRMainTabs({
   }, [success]);
 
   // Initialize on mount
-  useEffect(() => {
-    setLastRefreshed(new Date());
-    fetchTabData();
-  }, [tenantSlug]);
 
-  const fetchTabData = async () => {
+
+  const fetchTabData = useCallback(async () => {
     setLoading(true);
     try {
       const [attendanceRes, payrollRes] = await Promise.all([
@@ -114,7 +112,12 @@ export default function HRMainTabs({
     } finally {
       setLoading(false);
     }
-  };
+  }, [attendanceDate, payrollPeriod, tenantSlug]);
+
+  useEffect(() => {
+    setLastRefreshed(new Date());
+    fetchTabData();
+  }, [fetchTabData]);
 
   const handleRefresh = async () => {
     await fetchTabData();

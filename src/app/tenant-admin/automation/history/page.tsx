@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useCallback } from "react";
 import Link from 'next/link';
 import { Search, Clock, CheckCircle, XCircle, AlertCircle, PlayCircle, Settings, Download, Eye, TrendingDown } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
@@ -30,7 +31,7 @@ export default function HistoryPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [publishing, setPublishing] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
       const data = await AutomationService.getAudits(tenantSlug || '', 50);
@@ -50,8 +51,8 @@ export default function HistoryPage() {
     } finally {
       setLoading(false);
     }
-  }
-  useEffect(() => { if (tenantSlug) load(); }, [tenantSlug]);
+  }, [tenantSlug]);
+  useEffect(() => { if (tenantSlug) load(); }, [load, tenantSlug]);
 
   const filteredExecutions = executions.filter(execution => {
     const matchesSearch = execution.name.toLowerCase().includes(searchTerm.toLowerCase());

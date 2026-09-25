@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useCallback } from "react";
 import { Plus, Search, Users, Loader2, AlertCircle, Filter, ChevronDown } from 'lucide-react';
 import { TaskService, TaskResponse } from '../services/taskService';
 import { ProjectService } from '../services/projectService';
@@ -39,12 +40,9 @@ export default function TaskManagerPage() {
     setTenantSlug(decodeURIComponent(slug));
   }, []);
 
-  useEffect(() => {
-    if (!tenantSlug) return;
-    loadData();
-  }, [tenantSlug]);
 
-  const loadData = async () => {
+
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -73,7 +71,12 @@ export default function TaskManagerPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tenantSlug]);
+
+  useEffect(() => {
+    if (!tenantSlug) return;
+    loadData();
+  }, [loadData, tenantSlug]);
 
   const filteredTasks = useMemo(() => {
     return tasks

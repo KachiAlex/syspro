@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useCallback } from "react";
 import { X, Plus, Users, Trash2, Loader2 } from 'lucide-react';
 import { TaskService, TaskResponse, TaskFormData } from '../services/taskService';
 import { TaskAssignmentModal } from './TaskAssignmentModal';
@@ -36,13 +37,9 @@ export const ProjectTasksModal: React.FC<ProjectTasksModalProps> = ({
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (isOpen) {
-      loadTasks();
-    }
-  }, [isOpen, projectId]);
 
-  const loadTasks = async () => {
+
+  const loadTasks = useCallback(async () => {
     setLoading(true);
     try {
       const data = await TaskService.getTasks(projectId);
@@ -53,7 +50,13 @@ export const ProjectTasksModal: React.FC<ProjectTasksModalProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadTasks();
+    }
+  }, [isOpen, loadTasks]);
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();

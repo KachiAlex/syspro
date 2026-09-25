@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { Plus, Download, Search, X, Edit2, Trash2, AlertCircle } from "lucide-react";
 import NewDealModal from "./NewDealModal";
 
@@ -59,7 +60,7 @@ export default function DealsPage({ tenantSlug }: { tenantSlug?: string | null }
   const [showEditModal, setShowEditModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  const loadDeals = () => {
+  const loadDeals = useCallback(() => {
     setLoading(true);
     setError(null);
     const params = new URLSearchParams({
@@ -78,11 +79,11 @@ export default function DealsPage({ tenantSlug }: { tenantSlug?: string | null }
         setError("Failed to load deals");
       })
       .finally(() => setLoading(false));
-  };
+  }, [ts]);
 
   useEffect(() => {
     loadDeals();
-  }, [ts]);
+  }, [loadDeals]);
 
   const handleDelete = async (id: string) => {
     try {

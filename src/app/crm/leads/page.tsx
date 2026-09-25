@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState, useMemo } from "react";
+import { useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { MoreVertical, Trash2, Edit2, Eye, Grid3x3, Table2, Kanban, Filter, ChevronDown, X, Plus } from "lucide-react";
 import NewLeadModal from "./NewLeadModal";
@@ -85,7 +86,7 @@ export default function LeadsPage() {
   const [sortBy, setSortBy] = useState<"name" | "value" | "stage" | "created">("name");
   const totalPages = total !== null ? Math.max(1, Math.ceil(total / pageSize)) : null;
 
-  const loadLeads = (p = page, size = pageSize) => {
+  const loadLeads = useCallback((p = page, size = pageSize) => {
     setLoading(true);
     setError(null);
     const offset = p * size;
@@ -105,12 +106,12 @@ export default function LeadsPage() {
       })
       .catch((err) => setError(String(err?.message ?? err)))
       .finally(() => setLoading(false));
-  };
+  }, [page, pageSize, ts]);
 
   useEffect(() => {
     setPage(0);
     loadLeads(0, pageSize);
-  }, [ts]);
+  }, [loadLeads, pageSize]);
 
   const filteredLeads = useMemo(() => {
     let result = leads.filter((lead) => {

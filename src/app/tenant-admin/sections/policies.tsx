@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Loader2, RefreshCcw, UploadCloud } from "lucide-react";
 
 type Policy = {
@@ -19,7 +19,7 @@ export default function PoliciesSection({ tenantSlug }: { tenantSlug: string }) 
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ key: "", name: "", category: "", document: '{"rules": []}' });
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -32,11 +32,11 @@ export default function PoliciesSection({ tenantSlug }: { tenantSlug: string }) 
     } finally {
       setLoading(false);
     }
-  }
+  }, [tenantSlug]);
 
   useEffect(() => {
     load();
-  }, [tenantSlug]);
+  }, [load]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
