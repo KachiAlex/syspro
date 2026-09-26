@@ -5,6 +5,7 @@ import { insertCandidate, insertApplication, getRequisitionById } from "@/lib/hr
 const applySchema = z.object({
   tenantSlug: z.string().min(1),
   requisitionId: z.string().min(1),
+  website: z.string().optional(), // honeypot — bots fill it, humans never see it
   fullName: z.string().min(1),
   email: z.string().email(),
   phone: z.string().optional(),
@@ -24,6 +25,11 @@ export async function POST(request: NextRequest) {
   const parsed = applySchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  // Honeypot: silently accept bot submissions without storing them.
+  if (parsed.data.website) {
+    return NextResponse.json({ success: true });
   }
 
   const { tenantSlug, requisitionId, fullName, email, phone, resumeUrl, coverLetter, experienceYears, education, skills } = parsed.data;

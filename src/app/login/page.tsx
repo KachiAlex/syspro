@@ -62,6 +62,12 @@ function PisairtelLogo({ size = 34 }: { size?: number }) {
   );
 }
 
+function safeRedirectPath(value: string | null): string | null {
+  // Only allow internal absolute paths — block //host, /\, and empty values.
+  if (!value || !value.startsWith('/') || value.startsWith('//') || value.startsWith('/\\')) return null;
+  return value;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
@@ -89,17 +95,13 @@ export default function LoginPage() {
         setError(data.error || 'Invalid credentials. Please check your email and password.');
         return;
       }
+      // Server sets all session cookies httpOnly — never write session tokens
+      // via document.cookie (that would make them JS-readable/XSS-stealable).
+      const redirectTo = safeRedirectPath(new URLSearchParams(window.location.search).get('redirect'));
       if (data.role === 'employee') {
-        if (data.token) {
-          document.cookie = `employee_session=${data.token}; path=/; max-age=${60 * 60 * 12}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
-          if (data.tenantSlug) {
-            document.cookie = `employee_tenant=${data.tenantSlug}; path=/; max-age=${60 * 60 * 12}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
-            document.cookie = `tenantSlug=${data.tenantSlug}; path=/; max-age=${60 * 60 * 12}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`;
-          }
-        }
-        window.location.href = '/employee/dashboard' + (data.tenantSlug ? '?tenantSlug=' + data.tenantSlug : '');
+        window.location.href = redirectTo || ('/employee/dashboard' + (data.tenantSlug ? '?tenantSlug=' + data.tenantSlug : ''));
       } else {
-        window.location.href = '/tenant-admin' + (data.tenantSlug ? '?tenantSlug=' + data.tenantSlug : '');
+        window.location.href = redirectTo || ('/tenant-admin' + (data.tenantSlug ? '?tenantSlug=' + data.tenantSlug : ''));
       }
     } catch (err) {
       setError('Login failed. Please check your credentials and try again.');

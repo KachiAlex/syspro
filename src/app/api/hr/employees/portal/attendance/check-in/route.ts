@@ -17,6 +17,20 @@ export async function POST(request: NextRequest) {
     await ensureHrTables(sql);
     await ensureAttendanceVerificationTables();
 
+    // Attendance is employee-scoped: a tenant-admin session (accepted by
+    // resolveEmployeeSession as fallback) must map to a real admin_employees
+    // row, otherwise the record would be keyed to a non-employee id.
+    const empRows = await sql`
+      select id from admin_employees
+      where id = ${session.id} and tenant_slug = ${session.tenantSlug} limit 1
+    `;
+    if (empRows.length === 0) {
+      return NextResponse.json(
+        { error: "An employee account is required for attendance check-in" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json().catch(() => ({}));
     const action = body.action as "check_in" | "check_out" | undefined;
     const latitude = typeof body.latitude === 'number' ? body.latitude : null;

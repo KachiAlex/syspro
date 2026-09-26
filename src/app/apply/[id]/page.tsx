@@ -39,6 +39,7 @@ export default function ApplyPage() {
   const [education, setEducation] = useState("");
   const [skillsInput, setSkillsInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [website, setWebsite] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [parsingResume, setParsingResume] = useState(false);
   const [parseWarnings, setParseWarnings] = useState<string[]>([]);
@@ -51,7 +52,7 @@ export default function ApplyPage() {
       return;
     }
 
-    fetch(`/api/hr/requisitions/${id}?tenantSlug=${encodeURIComponent(tenantSlug)}`)
+    fetch(`/api/apply/requisition/${id}?tenantSlug=${encodeURIComponent(tenantSlug)}`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load job details");
         return res.json();
@@ -87,7 +88,7 @@ export default function ApplyPage() {
           reader.readAsDataURL(file);
         });
 
-        const parseRes = await fetch("/api/hr/resumes/parse", {
+        const parseRes = await fetch("/api/apply/resume-parse", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -147,7 +148,7 @@ export default function ApplyPage() {
           reader.readAsDataURL(resumeFile);
         });
 
-        const uploadRes = await fetch("/api/hr/resumes/upload", {
+        const uploadRes = await fetch("/api/apply/resume-upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -172,6 +173,7 @@ export default function ApplyPage() {
         body: JSON.stringify({
           tenantSlug,
           requisitionId: id,
+          website,
           fullName,
           email,
           phone: phone || undefined,
@@ -301,6 +303,17 @@ export default function ApplyPage() {
             </div>
           )}
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Honeypot — hidden from humans, bots fill it */}
+            <input
+              type="text"
+              name="website"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, width: 0 }}
+            />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name *</label>

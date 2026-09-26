@@ -32,7 +32,6 @@ function getClientIp(request: NextRequest): string {
 const PUBLIC_API_PREFIXES = [
   '/api/auth/',
   '/api/hr/employees/auth/',
-  '/api/tenant/signin',
   '/api/apply',
   '/api/employee-lookup',
   '/api/health',
@@ -62,6 +61,14 @@ interface ResolvedIdentity {
 }
 
 async function resolveIdentity(request: NextRequest, isProduction: boolean): Promise<ResolvedIdentity | null> {
+  const superadminCookie = request.cookies.get('superadmin_auth')?.value;
+  if (superadminCookie) {
+    const session = await verifySessionEdge(superadminCookie);
+    if (session?.id && session.roleId === 'superadmin') {
+      return { userId: session.id, roleId: 'superadmin', isEmployee: false, isSuperadmin: true };
+    }
+  }
+
   const sessionCookie = request.cookies.get('pisairtel_session')?.value;
   if (sessionCookie) {
     const session = await verifySessionEdge(sessionCookie);
@@ -87,14 +94,6 @@ async function resolveIdentity(request: NextRequest, isProduction: boolean): Pro
         isEmployee: true,
         isSuperadmin: false,
       };
-    }
-  }
-
-  const superadminCookie = request.cookies.get('superadmin_auth')?.value;
-  if (superadminCookie) {
-    const session = await verifySessionEdge(superadminCookie);
-    if (session?.id && session.roleId === 'superadmin') {
-      return { userId: session.id, roleId: 'superadmin', isEmployee: false, isSuperadmin: true };
     }
   }
 
@@ -135,9 +134,12 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isProduction = process.env.NODE_ENV === 'production';
 
-  // CSRF protection: validate Origin/Referer for state-changing requests
+  // CSRF protection: validate Origin/Referer for state-changing requests.
+  // Requests carrying explicit bearer/API-key credentials are exempt — CSRF
+  // requires ambient cookie auth, which non-browser clients don't use.
   const method = request.method.toUpperCase();
-  if (pathname.startsWith('/api/') && (method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE')) {
+  const hasExplicitAuth = !!(request.headers.get('authorization') || request.headers.get('x-api-key'));
+  if (!hasExplicitAuth && pathname.startsWith('/api/') && (method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE')) {
     const origin = request.headers.get('origin');
     const referer = request.headers.get('referer');
     const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
@@ -206,10 +208,7 @@ export async function middleware(request: NextRequest) {
 
   // Protect tenant-admin routes (first-line defense in production).
   // Unsigned identity cookies no longer count — only signed sessions.
-  if (
-    pathname.startsWith('/tenant-admin') &&
-    pathname !== '/tenant-admin/tenant-signin'
-  ) {
+  if (pathname.startsWith('/tenant-admin')) {
     const hasSession = request.cookies.has('pisairtel_session');
     const hasSuperadmin = request.cookies.has('superadmin_auth');
 
@@ -217,6 +216,22 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(
         new URL('/login?error=auth_required', request.url)
       );
+    }
+  }
+
+  // Admin/CRM/IT-support portal pages: any signed session required in
+  // production (module-level APIs still enforce their own permissions).
+  if (
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/crm') ||
+    pathname.startsWith('/itsupport')
+  ) {
+    const anySession =
+      request.cookies.has('pisairtel_session') ||
+      request.cookies.has('employee_session') ||
+      request.cookies.has('superadmin_auth');
+    if (isProduction && !anySession) {
+      return NextResponse.redirect(new URL('/login?error=auth_required', request.url));
     }
   }
 
@@ -270,5 +285,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/superadmin/:path*', '/tenant-admin/:path*', '/employee/:path*', '/api/:path*'],
+  matcher: ['/superadmin/:path*', '/tenant-admin/:path*', '/employee/:path*', '/admin/:path*', '/crm/:path*', '/itsupport/:path*', '/api/:path*'],
 };

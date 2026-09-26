@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql as SQL } from "@/lib/sql-client";
+import { checkRateLimitAsync, getRateLimitKey } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  // Tight limit: this endpoint is an account-existence oracle by design
+  // (routes employees to their tenant) — keep enumeration expensive.
+  const { allowed, retryAfter } = await checkRateLimitAsync(`emp-lookup:${getRateLimitKey(request)}`, 10, 60_000);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded" },
+      { status: 429, headers: { "Retry-After": retryAfter.toString() } }
+    );
+  }
+
   try {
     const { email } = await request.json();
 

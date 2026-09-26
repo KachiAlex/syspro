@@ -36,7 +36,9 @@ function forbidden(message = "Forbidden"): AuthResult {
  */
 export function getSessionUser(request: Req): SessionUser | null {
   const req = asNext(request);
-  for (const cookieName of ["pisairtel_session", "employee_session", "superadmin_auth"]) {
+  // superadmin_auth first: a superadmin who also holds a tenant session must
+  // still reach /api/superadmin/* — otherwise the admin cookie shadows them.
+  for (const cookieName of ["superadmin_auth", "pisairtel_session", "employee_session"]) {
     const value = req.cookies.get(cookieName)?.value;
     if (!value) continue;
     const session = verifySession(value);
