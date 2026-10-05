@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { sql as SQL } from "@/lib/sql-client";
+import { db, sql as SQL } from "@/lib/sql-client";
 import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 import { signSession } from "@/lib/session";
 import { checkRateLimitAsync, getRateLimitKey } from "@/lib/rate-limit";
@@ -18,6 +18,36 @@ const signupSchema = z.object({
   adminEmail: z.string().email(),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
+
+type ColumnInfo = { name: string; dataType: string };
+
+// The tenants schema differs across environments (uuid PK + code/domain/
+// schemaName columns in dev, serial integer PK without them in production).
+// Inspecting information_schema keeps this route working against either.
+async function getTableColumns(table: string): Promise<Map<string, ColumnInfo>> {
+  const res = await db.query<{ column_name: string; data_type: string }>(
+    "select column_name, data_type from information_schema.columns where table_schema = 'public' and table_name = $1",
+    [table]
+  );
+  const map = new Map<string, ColumnInfo>();
+  for (const r of res.rows) map.set(r.column_name, { name: r.column_name, dataType: r.data_type });
+  return map;
+}
+
+// Columns are always drawn from this fixed whitelist, so quoting them is safe.
+async function insertRow(table: string, values: Record<string, unknown>, returning = "id") {
+  const cols = await getTableColumns(table);
+  const entries = Object.entries(values).filter(([c]) => cols.has(c));
+  if (entries.length === 0) throw new Error(`No writable columns found on ${table}`);
+  const colList = entries.map(([c]) => `"${c}"`).join(", ");
+  const placeholders = entries.map((_, i) => `$${i + 1}`).join(", ");
+  const params = entries.map(([, v]) => v);
+  const res = await db.query<any>(
+    `insert into ${table} (${colList}) values (${placeholders}) returning "${returning}"`,
+    params
+  );
+  return { row: res.rows[0], idType: cols.get(returning)?.dataType };
+}
 
 async function generateUniqueTenantCode(slug: string) {
   const base = slug.toUpperCase();
@@ -86,51 +116,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const tenantId = randomUUID();
     const passwordHash = await bcrypt.hash(password, 12);
-    const computedCode = await generateUniqueTenantCode(slug);
-    const computedDomain = `${slug}.pisairtel.local`;
-    const computedSchema = `${slug.replace(/-/g, "_")}_schema`;
-    const defaultRegionId = `${slug}-region-default`;
-    const defaultBranchId = `${slug}-branch-hq`;
+    const tenantCols = await getTableColumns("tenants");
+    const tenantIdIsUuid = tenantCols.get("id")?.dataType === "uuid";
 
-    await SQL`
-      insert into tenants (
-        id, name, slug, code, domain, "isActive", status, settings,
-        "schemaName", seats,
-        admin_name, admin_email, admin_password_hash,
-        default_region_id, default_region_name,
-        default_branch_id, default_branch_name,
-        industry_profiles
-      )
-      values (
-        ${tenantId},
-        ${companyName},
-        ${slug},
-        ${computedCode},
-        ${computedDomain},
-        ${true},
-        ${"Active"},
-        ${JSON.stringify({})},
-        ${computedSchema},
-        ${5},
-        ${adminName},
-        ${lowerEmail},
-        ${passwordHash},
-        ${defaultRegionId},
-        ${"Primary Region"},
-        ${defaultBranchId},
-        ${"Headquarters"},
-        ${JSON.stringify([])}
-      )
-    `;
+    const tenantValues: Record<string, unknown> = {
+      name: companyName,
+      slug,
+      "isActive": true,
+      status: "Active",
+      settings: JSON.stringify({}),
+      seats: 5,
+      admin_name: adminName,
+      admin_email: lowerEmail,
+      admin_password_hash: passwordHash,
+      default_region_id: `${slug}-region-default`,
+      default_region_name: "Primary Region",
+      default_branch_id: `${slug}-branch-hq`,
+      default_branch_name: "Headquarters",
+      industry_profiles: JSON.stringify([]),
+    };
+    if (tenantIdIsUuid) tenantValues.id = randomUUID();
+    if (tenantCols.has("code")) tenantValues.code = await generateUniqueTenantCode(slug);
+    if (tenantCols.has("domain")) tenantValues.domain = `${slug}.pisairtel.local`;
+    if (tenantCols.has("schemaName")) tenantValues.schemaName = `${slug.replace(/-/g, "_")}_schema`;
 
-    const adminRows = await SQL`
-      insert into tenant_admins (tenant_id, tenant_slug, email, name, role, password_hash)
-      values (${tenantId}, ${slug}, ${lowerEmail}, ${adminName}, 'admin', ${passwordHash})
-      returning id
-    `;
-    const adminId = String(adminRows[0]?.id ?? tenantId);
+    const { row: tenantRow } = await insertRow("tenants", tenantValues);
+    const tenantId = tenantRow.id;
+
+    const adminCols = await getTableColumns("tenant_admins");
+    const adminValues: Record<string, unknown> = {
+      tenant_id: tenantId,
+      email: lowerEmail,
+      name: adminName,
+      role: "admin",
+      password_hash: passwordHash,
+    };
+    if (adminCols.has("tenant_slug")) adminValues.tenant_slug = slug;
+
+    const { row: adminRow } = await insertRow("tenant_admins", adminValues);
+    const adminId = String(adminRow?.id ?? tenantId);
 
     // Auto-login: same session shape and cookie set as /api/auth/login.
     const now = Date.now();
