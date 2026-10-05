@@ -194,57 +194,36 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Protect superadmin pages — requires a signed-token cookie
-  if (pathname.startsWith('/superadmin') && pathname !== '/superadmin/login') {
-    const authCookie = request.cookies.get('superadmin_auth');
-    if (!authCookie || !authCookie.value || authCookie.value === 'true') {
-      return NextResponse.redirect(new URL('/superadmin/login', request.url));
-    }
-    // Verify signed token structure: must contain a dot separator
-    if (!authCookie.value.includes('.') || authCookie.value.split('.').length < 2) {
-      return NextResponse.redirect(new URL('/superadmin/login', request.url));
-    }
-  }
-
-  // Protect tenant-admin routes (first-line defense in production).
-  // Unsigned identity cookies no longer count — only signed sessions.
-  if (pathname.startsWith('/tenant-admin')) {
-    const hasSession = request.cookies.has('pisairtel_session');
-    const hasSuperadmin = request.cookies.has('superadmin_auth');
-
-    if (isProduction && !hasSession && !hasSuperadmin) {
-      return NextResponse.redirect(
-        new URL('/login?error=auth_required', request.url)
-      );
-    }
-  }
-
-  // Admin/CRM/IT-support portal pages: any signed session required in
-  // production (module-level APIs still enforce their own permissions).
-  if (
+  // Verify signed sessions for page-level protection (forged or expired
+  // cookies must not render portal shells). resolveIdentity validates the
+  // HMAC signature; in dev it also accepts unsigned identity fallbacks.
+  const needsPageAuth =
+    pathname.startsWith('/tenant-admin') ||
     pathname.startsWith('/admin') ||
     pathname.startsWith('/crm') ||
     pathname.startsWith('/hr') ||
-    pathname.startsWith('/itsupport')
-  ) {
-    const anySession =
-      request.cookies.has('pisairtel_session') ||
-      request.cookies.has('employee_session') ||
-      request.cookies.has('superadmin_auth');
-    if (isProduction && !anySession) {
-      return NextResponse.redirect(new URL('/login?error=auth_required', request.url));
-    }
-  }
+    pathname.startsWith('/itsupport') ||
+    (pathname.startsWith('/employee') &&
+      pathname !== '/employee/login' &&
+      pathname !== '/employee/forgot-password' &&
+      pathname !== '/employee/reset-password');
+  const needsSuperadminPageAuth =
+    pathname.startsWith('/superadmin') && pathname !== '/superadmin/login';
 
-  // Protect employee portal pages — public auth pages stay reachable.
-  if (
-    pathname.startsWith('/employee') &&
-    pathname !== '/employee/login' &&
-    pathname !== '/employee/forgot-password' &&
-    pathname !== '/employee/reset-password'
-  ) {
-    if (isProduction && !request.cookies.has('employee_session')) {
-      return NextResponse.redirect(new URL('/employee/login', request.url));
+  if (isProduction && (needsPageAuth || needsSuperadminPageAuth)) {
+    const pageIdentity = await resolveIdentity(request, isProduction);
+    if (needsSuperadminPageAuth) {
+      if (!pageIdentity?.isSuperadmin) {
+        return NextResponse.redirect(new URL('/superadmin/login', request.url));
+      }
+    } else if (pathname.startsWith('/employee')) {
+      if (!pageIdentity?.isEmployee) {
+        return NextResponse.redirect(new URL('/employee/login', request.url));
+      }
+    } else if (pathname.startsWith('/tenant-admin') && pageIdentity?.isEmployee) {
+      return NextResponse.redirect(new URL('/login?error=auth_required', request.url));
+    } else if (!pageIdentity) {
+      return NextResponse.redirect(new URL('/login?error=auth_required', request.url));
     }
   }
 

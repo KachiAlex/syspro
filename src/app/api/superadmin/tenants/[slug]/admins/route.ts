@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { requireSuperAdmin } from "@/lib/api-auth";
+import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 
 const sql = getSql();
 
@@ -21,6 +22,7 @@ export async function GET(
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
+    await ensureTenantTable(sql);
     const admins = await sql`
       SELECT * FROM tenant_admins
       WHERE tenant_id = ${tenant[0].id}
@@ -43,6 +45,7 @@ export async function POST(
 
   const { slug } = await params;
   try {
+    await ensureTenantTable(sql);
     const body = await request.json();
     const { email, name, role, password } = body;
 
@@ -68,8 +71,8 @@ export async function POST(
     }
 
     const result = await sql`
-      INSERT INTO tenant_admins (tenant_id, email, name, role, password_hash)
-      VALUES (${tenant[0].id}, ${email.toLowerCase()}, ${name}, ${role || 'admin'}, ${passwordHash})
+      INSERT INTO tenant_admins (tenant_id, email, name, role, password_hash, tenant_slug)
+      VALUES (${tenant[0].id}, ${email.toLowerCase()}, ${name}, ${role || 'admin'}, ${passwordHash}, ${slug})
       RETURNING *
     `;
 

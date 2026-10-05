@@ -45,6 +45,7 @@ export function signSession(payload: SessionPayload): string {
 		const signature = hmacSign(encoded);
 		return `${encoded}.${signature}`;
 	} catch (e) {
+		console.error("signSession failed:", e);
 		return "";
 	}
 }

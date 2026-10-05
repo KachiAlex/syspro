@@ -49,3 +49,9 @@ next-env.d.ts
 
 
 .vercel
+
+# Local deploy staging artifacts
+deploy-pkg/
+deploy-stage/
+pisairtel-deploy.tar.gz
+vps-exec.js

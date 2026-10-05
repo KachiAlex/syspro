@@ -64,7 +64,13 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ tenants: rows.map(mapTenantRow) });
     } catch (dbError) {
-      // If database fails, use file-backed fallback for dev
+      // In production the DB is the source of truth — fail loudly instead of
+      // serving an empty/dev fallback that masks the outage.
+      if (process.env.DATABASE_URL) {
+        console.error("Tenant list query failed:", dbError);
+        return NextResponse.json({ error: "Unable to fetch tenants" }, { status: 500 });
+      }
+      // Dev-only file-backed fallback for local development without a DB.
       console.warn("Database query failed, using file-backed fallback:", dbError);
       const devPath = path.join(process.cwd(), "dev-data");
       const file = path.join(devPath, "tenants.json");
