@@ -205,7 +205,7 @@ export default function LoginPage() {
 
           <div className="mt-[10px] text-center">
             <span className="text-[12.5px] text-[#64748B]">Don&apos;t have an account? </span>
-            <Link href="/" className="text-[12.5px] text-[#E31E24] hover:text-[#E8286E] font-semibold transition-colors">Create free workspace</Link>
+            <Link href="/signup" className="text-[12.5px] text-[#E31E24] hover:text-[#E8286E] font-semibold transition-colors">Create free workspace</Link>
           </div>
         </div>
       </div>

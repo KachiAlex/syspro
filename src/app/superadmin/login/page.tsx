@@ -127,7 +127,7 @@ export default function SuperadminLoginPage() {
                   <input type="checkbox" className="w-4 h-4 text-red-600 border-gray-600 rounded focus:ring-red-500 bg-gray-700" />
                   <span className="ml-2 text-sm text-gray-400">Remember this session</span>
                 </label>
-                <a href="#" className="text-sm text-red-400 hover:text-red-300">
+                <a href="mailto:support@pisairtel.io" className="text-sm text-red-400 hover:text-red-300">
                   Reset credentials
                 </a>
               </div>

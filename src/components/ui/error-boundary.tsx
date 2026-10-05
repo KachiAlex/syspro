@@ -136,11 +136,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   If this problem persists, please contact our support team.
                 </p>
                 <div className="mt-2 flex justify-center gap-4 text-sm">
-                  <a href="mailto:support@example.com" className="text-blue-600 hover:text-blue-800">
+                  <a href="mailto:support@pisairtel.io" className="text-blue-600 hover:text-blue-800">
                     Email Support
                   </a>
                   <span className="text-slate-300">•</span>
-                  <a href="/help" className="text-blue-600 hover:text-blue-800">
+                  <a href="/support" className="text-blue-600 hover:text-blue-800">
                     Help Center
                   </a>
                 </div>
