@@ -22,6 +22,25 @@ interface LicenseTier {
   sort_order: number;
 }
 
+interface PricingPlan {
+  id: number;
+  key: string;
+  name: string;
+  tagline: string;
+  price_label: string | null;
+  price_monthly: number | null;
+  price_annual: number | null;
+  currency: string;
+  period_label: string;
+  max_users: number | null;
+  features: string[];
+  cta_label: string;
+  cta_href: string;
+  is_featured: boolean;
+  is_active: boolean;
+  sort_order: number;
+}
+
 interface Tenant {
   id: number;
   name: string;
@@ -125,7 +144,7 @@ export default function SuperadminPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'tenants' | 'licenses' | 'admins'>('tenants');
+  const [activeTab, setActiveTab] = useState<'tenants' | 'licenses' | 'admins' | 'pricing'>('tenants');
   const [licenseSubTab, setLicenseSubTab] = useState<'assignments' | 'tiers'>('assignments');
   const [licenseTiers, setLicenseTiers] = useState<LicenseTier[]>([]);
   const [showTierModal, setShowTierModal] = useState(false);
@@ -147,6 +166,16 @@ export default function SuperadminPage() {
   const [tenantFormData, setTenantFormData] = useState({ name: '', slug: '', seats: 1, licenseType: '' });
   const [licenseFormData, setLicenseFormData] = useState({ tenantSlug: '', type: 'starter', seats: 10, expiry: '' });
   const [adminFormData, setAdminFormData] = useState({ tenantSlug: '', email: '', name: '', role: 'admin', password: '' });
+  const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([]);
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<PricingPlan | null>(null);
+  const [planFormData, setPlanFormData] = useState({
+    key: '', name: '', tagline: '', price_label: '', price_monthly: 0,
+    price_annual: 0, currency: 'NGN', period_label: '/month', max_users: 10,
+    features: [] as string[], cta_label: 'Get started', cta_href: '/signup',
+    is_featured: false, is_active: true, sort_order: 0,
+  });
+  const [planFeatureInput, setPlanFeatureInput] = useState('');
   
   // Pagination and bulk selection state
   const [currentPage, setCurrentPage] = useState(1);
@@ -288,6 +317,7 @@ export default function SuperadminPage() {
     fetchTenants(currentPage);
     fetchLicenses();
     fetchLicenseTiers();
+    fetchPricingPlans();
     // tenant admins will be fetched after tenants load (see tenants effect)
   }, [currentPage, fetchTenants]);
 
@@ -390,6 +420,103 @@ export default function SuperadminPage() {
       }
     } catch (error) {
       console.error('Failed to delete license tier:', error);
+    }
+  };
+
+  const fetchPricingPlans = async () => {
+    try {
+      const response = await fetch('/api/superadmin/pricing');
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data)) setPricingPlans(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch pricing plans:', error);
+    }
+  };
+
+  const handleEditPlan = (plan: PricingPlan) => {
+    setEditingPlan(plan);
+    setPlanFormData({
+      key: plan.key, name: plan.name, tagline: plan.tagline || '',
+      price_label: plan.price_label || '', price_monthly: plan.price_monthly ?? 0,
+      price_annual: plan.price_annual ?? 0, currency: plan.currency,
+      period_label: plan.period_label || '/month', max_users: plan.max_users ?? 10,
+      features: plan.features || [], cta_label: plan.cta_label || 'Get started',
+      cta_href: plan.cta_href || '/signup', is_featured: plan.is_featured,
+      is_active: plan.is_active, sort_order: plan.sort_order,
+    });
+    setShowPlanModal(true);
+  };
+
+  const handleAddPlan = () => {
+    setEditingPlan(null);
+    setPlanFormData({
+      key: '', name: '', tagline: '', price_label: '', price_monthly: 0,
+      price_annual: 0, currency: 'NGN', period_label: '/month', max_users: 10,
+      features: [], cta_label: 'Get started', cta_href: '/signup',
+      is_featured: false, is_active: true, sort_order: pricingPlans.length + 1,
+    });
+    setShowPlanModal(true);
+  };
+
+  const handleAddPlanFeature = () => {
+    if (planFeatureInput.trim()) {
+      setPlanFormData({ ...planFormData, features: [...planFormData.features, planFeatureInput.trim()] });
+      setPlanFeatureInput('');
+    }
+  };
+
+  const handleRemovePlanFeature = (idx: number) => {
+    setPlanFormData({ ...planFormData, features: planFormData.features.filter((_, i) => i !== idx) });
+  };
+
+  const handleSavePlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const body: any = {
+        ...planFormData,
+        price_label: planFormData.price_label || null,
+        price_monthly: planFormData.price_label ? null : planFormData.price_monthly,
+        price_annual: planFormData.price_label ? null : planFormData.price_annual,
+        max_users: planFormData.max_users || null,
+      };
+      if (editingPlan) delete body.key;
+
+      const url = editingPlan
+        ? `/api/superadmin/pricing/${editingPlan.id}`
+        : '/api/superadmin/pricing';
+      const response = await fetch(url, {
+        method: editingPlan ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (response.ok) {
+        setShowPlanModal(false);
+        setEditingPlan(null);
+        fetchPricingPlans();
+        setSuccess(editingPlan ? 'Pricing plan updated — live on the pricing page' : 'Pricing plan created');
+      } else {
+        const data = await response.json().catch(() => ({}));
+        setError(data.error || 'Failed to save pricing plan');
+      }
+    } catch (error) {
+      console.error('Failed to save pricing plan:', error);
+      setError('Failed to save pricing plan');
+    }
+  };
+
+  const handleDeletePlan = async (id: number, name: string) => {
+    if (!confirm(`Delete the "${name}" pricing plan? It will disappear from the public pricing page.`)) return;
+    try {
+      const response = await fetch(`/api/superadmin/pricing/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        fetchPricingPlans();
+        setSuccess(`Pricing plan "${name}" deleted`);
+      }
+    } catch (error) {
+      console.error('Failed to delete pricing plan:', error);
     }
   };
 
@@ -766,6 +893,16 @@ export default function SuperadminPage() {
               }`}
             >
               Admins
+            </button>
+            <button
+              onClick={() => setActiveTab('pricing')}
+              className={`px-4 py-2 rounded-md font-medium transition ${
+                activeTab === 'pricing' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Pricing
             </button>
           </div>
         </div>
@@ -1173,6 +1310,104 @@ export default function SuperadminPage() {
         )}
       </div>
     )}
+
+      {activeTab === 'pricing' && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-gray-500">
+              These plans power the public <a href="/pricing" target="_blank" className="text-blue-600 underline">/pricing</a> page. Changes go live immediately.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {pricingPlans.map((plan) => (
+              <div
+                key={plan.id}
+                className={`bg-white rounded-lg shadow border-2 ${
+                  plan.is_featured ? 'border-pink-300' : 'border-gray-200'
+                } ${!plan.is_active ? 'opacity-60' : ''}`}
+              >
+                <div className="p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
+                      <p className="text-xs text-gray-500 font-mono">{plan.key}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        plan.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {plan.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                      {plan.is_featured && (
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-pink-100 text-pink-700">
+                          Featured
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4 min-h-[40px]">{plan.tagline}</p>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Price:</span>
+                      <span className="font-medium text-gray-900">
+                        {plan.price_label
+                          ? plan.price_label
+                          : `${plan.currency} ${Number(plan.price_monthly ?? 0).toLocaleString()}${plan.period_label || ''}`}
+                      </span>
+                    </div>
+                    {!plan.price_label && (plan.price_annual ?? 0) > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Annual:</span>
+                        <span className="font-medium text-gray-900">
+                          {plan.currency} {Number(plan.price_annual).toLocaleString()}/yr
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Users:</span>
+                      <span className="font-medium text-gray-900">{plan.max_users ?? 'Unlimited'}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">CTA:</span>
+                      <span className="font-medium text-gray-900">{plan.cta_label} → {plan.cta_href}</span>
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <p className="text-xs font-medium text-gray-500 uppercase mb-1">Features ({plan.features?.length || 0})</p>
+                    <div className="flex flex-wrap gap-1">
+                      {(plan.features || []).slice(0, 4).map((f, i) => (
+                        <span key={i} className="inline-block px-2 py-0.5 text-xs bg-gray-100 text-gray-700 rounded">{f}</span>
+                      ))}
+                      {(plan.features || []).length > 4 && (
+                        <span className="inline-block px-2 py-0.5 text-xs bg-gray-100 text-gray-500 rounded">
+                          +{(plan.features || []).length - 4} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-3 border-t border-gray-100">
+                    <Button variant="outline" size="sm" onClick={() => handleEditPlan(plan)} className="flex-1">
+                      <Edit className="w-3 h-3 mr-1" /> Edit
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDeletePlan(plan.id, plan.name)}>
+                      <Trash2 className="w-3 h-3 text-red-600" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Add new plan card */}
+            <button
+              onClick={handleAddPlan}
+              className="bg-gray-50 rounded-lg shadow border-2 border-dashed border-gray-300 p-5 flex flex-col items-center justify-center min-h-[280px] hover:border-blue-400 hover:bg-blue-50 transition"
+            >
+              <Plus className="w-8 h-8 text-gray-400 mb-2" />
+              <span className="text-sm font-medium text-gray-500">Add New Plan</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {activeTab === 'admins' && (
         <div className="bg-white rounded-lg shadow">
@@ -1663,6 +1898,223 @@ export default function SuperadminPage() {
                   Cancel
                 </Button>
                 <Button type="submit">{editingTier ? 'Save Changes' : 'Create Tier'}</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showPlanModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-[560px] max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">{editingPlan ? 'Edit Pricing Plan' : 'Add Pricing Plan'}</h2>
+              <Button variant="ghost" onClick={() => { setShowPlanModal(false); setEditingPlan(null); }}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <form onSubmit={handleSavePlan}>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-black">Plan Key</label>
+                  <input
+                    type="text"
+                    value={planFormData.key}
+                    onChange={(e) => setPlanFormData({ ...planFormData, key: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    placeholder="e.g. free, starter, growth"
+                    pattern="[a-z0-9-]+"
+                    disabled={!!editingPlan}
+                    required
+                  />
+                  {editingPlan && <p className="text-xs text-gray-400 mt-1">Key cannot be changed after creation</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black">Display Name</label>
+                  <input
+                    type="text"
+                    value={planFormData.name}
+                    onChange={(e) => setPlanFormData({ ...planFormData, name: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    placeholder="e.g. Growth"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-black">Tagline</label>
+                <input
+                  type="text"
+                  value={planFormData.tagline}
+                  onChange={(e) => setPlanFormData({ ...planFormData, tagline: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                  placeholder="One-line pitch shown under the price"
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-black">Price Label</label>
+                  <input
+                    type="text"
+                    value={planFormData.price_label}
+                    onChange={(e) => setPlanFormData({ ...planFormData, price_label: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    placeholder="e.g. Free or Custom"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">If set, overrides the numeric price</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black">Price / Month</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={planFormData.price_monthly}
+                    onChange={(e) => setPlanFormData({ ...planFormData, price_monthly: parseFloat(e.target.value) || 0 })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    min="0"
+                    disabled={!!planFormData.price_label}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black">Price / Year</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={planFormData.price_annual}
+                    onChange={(e) => setPlanFormData({ ...planFormData, price_annual: parseFloat(e.target.value) || 0 })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    min="0"
+                    disabled={!!planFormData.price_label}
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Convention: 10× monthly = 2 months free</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-black">Currency</label>
+                  <select
+                    value={planFormData.currency}
+                    onChange={(e) => setPlanFormData({ ...planFormData, currency: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                  >
+                    <option value="NGN">NGN (₦)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="KES">KES (KSh)</option>
+                    <option value="GHS">GHS (₵)</option>
+                    <option value="ZAR">ZAR (R)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black">Period Label</label>
+                  <input
+                    type="text"
+                    value={planFormData.period_label}
+                    onChange={(e) => setPlanFormData({ ...planFormData, period_label: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    placeholder="e.g. /month, forever"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black">Max Users</label>
+                  <input
+                    type="number"
+                    value={planFormData.max_users}
+                    onChange={(e) => setPlanFormData({ ...planFormData, max_users: parseInt(e.target.value) || 0 })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    min="0"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">0 = unlimited</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-black">CTA Label</label>
+                  <input
+                    type="text"
+                    value={planFormData.cta_label}
+                    onChange={(e) => setPlanFormData({ ...planFormData, cta_label: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black">CTA Link</label>
+                  <input
+                    type="text"
+                    value={planFormData.cta_href}
+                    onChange={(e) => setPlanFormData({ ...planFormData, cta_href: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    placeholder="/signup or /support"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4 mb-4 items-end">
+                <div>
+                  <label className="block text-sm font-medium text-black">Sort Order</label>
+                  <input
+                    type="number"
+                    value={planFormData.sort_order}
+                    onChange={(e) => setPlanFormData({ ...planFormData, sort_order: parseInt(e.target.value) || 0 })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    min="0"
+                  />
+                </div>
+                <label className="flex items-center gap-2 text-sm font-medium text-black pb-2">
+                  <input
+                    type="checkbox"
+                    checked={planFormData.is_featured}
+                    onChange={(e) => setPlanFormData({ ...planFormData, is_featured: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  Featured (highlighted card)
+                </label>
+                <label className="flex items-center gap-2 text-sm font-medium text-black pb-2">
+                  <input
+                    type="checkbox"
+                    checked={planFormData.is_active}
+                    onChange={(e) => setPlanFormData({ ...planFormData, is_active: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  Visible on pricing page
+                </label>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-black mb-2">Features</label>
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={planFeatureInput}
+                    onChange={(e) => setPlanFeatureInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddPlanFeature(); } }}
+                    className="flex-1 border border-gray-300 rounded-md shadow-sm p-2 text-black"
+                    placeholder="Add a feature line..."
+                  />
+                  <Button type="button" onClick={handleAddPlanFeature} size="sm">
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {planFormData.features.map((f, i) => (
+                    <span key={i} className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded">
+                      {f}
+                      <button type="button" onClick={() => handleRemovePlanFeature(i)} className="text-blue-400 hover:text-blue-600">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                  {planFormData.features.length === 0 && (
+                    <span className="text-xs text-gray-400">No features added yet</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button type="button" variant="outline" onClick={() => { setShowPlanModal(false); setEditingPlan(null); }} className="mr-2">
+                  Cancel
+                </Button>
+                <Button type="submit">{editingPlan ? 'Save Changes' : 'Create Plan'}</Button>
               </div>
             </form>
           </div>
