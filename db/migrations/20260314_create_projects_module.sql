@@ -44,13 +44,7 @@ CREATE TABLE IF NOT EXISTS projects (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
-  UNIQUE (tenant_slug, code),
-  INDEXES (
-    (tenant_slug),
-    (status),
-    (project_manager_id),
-    (department_id)
-  )
+  UNIQUE (tenant_slug, code)
 );
 
 -- ============================================================
@@ -88,13 +82,7 @@ CREATE TABLE IF NOT EXISTS workstreams (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
-  UNIQUE (project_id, code),
-  INDEXES (
-    (project_id),
-    (tenant_slug),
-    (status),
-    (workstream_lead_id)
-  )
+  UNIQUE (project_id, code)
 );
 
 -- ============================================================
@@ -144,14 +132,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
-  UNIQUE (workstream_id, code),
-  INDEXES (
-    (project_id),
-    (workstream_id),
-    (tenant_slug),
-    (status),
-    (is_assigned)
-  )
+  UNIQUE (workstream_id, code)
 );
 
 -- ============================================================
@@ -187,16 +168,7 @@ CREATE TABLE IF NOT EXISTS task_assignments (
   -- Metadata
   created_by VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  
-  INDEXES (
-    (task_id),
-    (project_id),
-    (employee_id),
-    (tenant_slug),
-    (status),
-    (assignment_start_date)
-  )
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================
@@ -229,17 +201,7 @@ CREATE TABLE IF NOT EXISTS time_logs (
   -- Metadata
   created_by VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  
-  INDEXES (
-    (task_assignment_id),
-    (task_id),
-    (project_id),
-    (employee_id),
-    (tenant_slug),
-    (log_date),
-    (approval_status)
-  )
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================
@@ -270,13 +232,7 @@ CREATE TABLE IF NOT EXISTS capacity_snapshots (
   skill_gap_risk BOOLEAN,
   
   -- Metadata
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  
-  INDEXES (
-    (tenant_slug),
-    (employee_id),
-    (snapshot_date)
-  )
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================
@@ -305,13 +261,7 @@ CREATE TABLE IF NOT EXISTS employee_skills (
   -- Metadata
   created_by VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  
-  INDEXES (
-    (tenant_slug),
-    (employee_id),
-    (skill_code)
-  )
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================
@@ -343,25 +293,17 @@ CREATE TABLE IF NOT EXISTS assignment_recommendations (
   -- Metadata
   created_by VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  expires_at TIMESTAMP,
-  
-  INDEXES (
-    (task_id),
-    (project_id),
-    (recommended_employee_id),
-    (tenant_slug),
-    (fit_score)
-  )
+  expires_at TIMESTAMP
 );
 
 -- ============================================================
 -- INDEXES FOR COMMON QUERIES
 -- ============================================================
 
-CREATE INDEX idx_projects_tenant_status ON projects(tenant_slug, status);
-CREATE INDEX idx_projects_dates ON projects(start_date, planned_end_date);
-CREATE INDEX idx_workstreams_project_status ON workstreams(project_id, status);
-CREATE INDEX idx_tasks_workstream_status ON tasks(workstream_id, status);
-CREATE INDEX idx_task_assignments_employee ON task_assignments(employee_id, tenant_slug);
-CREATE INDEX idx_time_logs_employee_date ON time_logs(employee_id, log_date);
-CREATE INDEX idx_capacity_snapshots_recent ON capacity_snapshots(employee_id, snapshot_date DESC);
+CREATE INDEX IF NOT EXISTS idx_projects_tenant_status ON projects(tenant_slug, status);
+CREATE INDEX IF NOT EXISTS idx_projects_dates ON projects(start_date, planned_end_date);
+CREATE INDEX IF NOT EXISTS idx_workstreams_project_status ON workstreams(project_id, status);
+CREATE INDEX IF NOT EXISTS idx_tasks_workstream_status ON tasks(workstream_id, status);
+CREATE INDEX IF NOT EXISTS idx_task_assignments_employee ON task_assignments(employee_id, tenant_slug);
+CREATE INDEX IF NOT EXISTS idx_time_logs_employee_date ON time_logs(employee_id, log_date);
+CREATE INDEX IF NOT EXISTS idx_capacity_snapshots_recent ON capacity_snapshots(employee_id, snapshot_date DESC);

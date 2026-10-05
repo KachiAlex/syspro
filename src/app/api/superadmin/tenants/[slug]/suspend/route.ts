@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import { requireSuperAdmin } from "@/lib/api-auth";
+import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 
 const sql = getSql();
 
@@ -13,6 +14,7 @@ export async function POST(
 
   const { slug } = await params;
   try {
+    await ensureTenantTable(sql);
     const result = await sql`
       UPDATE tenants SET status = 'suspended', "isActive" = false, "updatedAt" = NOW() WHERE slug = ${slug} RETURNING *
     `;

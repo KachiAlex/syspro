@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import { requireSuperAdmin } from "@/lib/api-auth";
+import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 
 const sql = getSql();
 
@@ -13,6 +14,7 @@ export async function GET(
 
   const { slug } = await params;
   try {
+    await ensureTenantTable(sql);
     const tenant = await sql`SELECT * FROM tenants WHERE slug = ${slug}`;
 
     if (tenant.length === 0) {
@@ -43,6 +45,7 @@ export async function PUT(
 
   const { slug } = await params;
   try {
+    await ensureTenantTable(sql);
     const body = await request.json();
     const { name, seats, licenseType } = body;
 
@@ -92,6 +95,7 @@ export async function DELETE(
 
   const { slug } = await params;
   try {
+    await ensureTenantTable(sql);
     const result = await sql`DELETE FROM tenants WHERE slug = ${slug} RETURNING *`;
 
     if (result.length === 0) {

@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/sql-client";
 import { setupTenantAdminSchema } from "@/lib/tenant-admin/schema";
+import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 import { requireModuleAccess } from "@/lib/api-auth";
 import { invalidateTenantPermissions } from "@/lib/tenant-admin/permissions";
 
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
 
   try {
     await setupTenantAdminSchema(sql);
+    await ensureTenantTable(sql);
     const rows = await sql`
       select a.id, a.user_id, a.role_id, a.scope, a.expires_at, a.justification,
              a.created_at, r.name as role_name,
@@ -78,6 +80,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     await setupTenantAdminSchema(sql);
+    await ensureTenantTable(sql);
     const rows = await sql`
       delete from admin_user_roles
       where tenant_slug = ${tenantSlug} and user_id = ${userId} and role_id = ${roleId}

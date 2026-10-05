@@ -8,6 +8,7 @@ import { randomUUID } from "crypto";
 import { sql } from "@/lib/sql-client";
 import { requireDashboardPermission } from "@/lib/tenant-admin/permissions";
 import { extractAuthContext } from "@/lib/auth-helper";
+import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 
 import { requireModuleAccess } from "@/lib/api-auth";
 export async function GET(request: NextRequest) {
@@ -26,6 +27,7 @@ export async function GET(request: NextRequest) {
 
   try {
     await requireDashboardPermission(request, "admin");
+    await ensureTenantTable(sql);
 
     // Real user principals: tenant_admins (ERP admin users) + admin_employees
     // (portal staff). The legacy users/roles tables are not the live model.
@@ -89,12 +91,34 @@ export async function POST(request: NextRequest) {
 
   try {
     await requireDashboardPermission(request, "admin");
+    await ensureTenantTable(sql);
     const body = await request.json();
 
     // CSV import: { users: [{ email, name?, contractType? }] }
     const entries: any[] = Array.isArray(body?.users)
       ? body.users
       : [body];
+
+    // Enforce the tenant's seat limit before creating users.
+    const validEntries = entries.filter(
+      (entry) => typeof entry?.email === "string" && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(entry.email.trim())
+    );
+    const [seatRow] = await sql`
+      select t.seats,
+             (select count(*) from tenant_admins where tenant_slug = ${tenantSlug}) +
+             (select count(*) from admin_employees where tenant_slug = ${tenantSlug}) as current_users
+      from tenants t
+      where t.slug = ${tenantSlug} and t."deletedAt" is null
+      limit 1
+    `;
+    const seats = Number(seatRow?.seats ?? 0);
+    const currentUsers = Number(seatRow?.current_users ?? 0);
+    if (seats > 0 && currentUsers + validEntries.length > seats) {
+      return NextResponse.json(
+        { error: `Seat limit reached. This workspace allows ${seats} user${seats === 1 ? "" : "s"}.` },
+        { status: 403 }
+      );
+    }
 
     const created: any[] = [];
     for (const entry of entries) {

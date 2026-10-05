@@ -7,6 +7,7 @@ import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 import fs from "fs";
 import path from "path";
 import { requireSuperAdmin } from "@/lib/api-auth";
+import { getTableColumns } from "@/lib/schema-inspect";
 
 export type TenantRow = {
   name: string;
@@ -137,11 +138,9 @@ export async function POST(request: Request) {
 
     let body: unknown;
     try {
-      console.log("Tenant payload content-type", request.headers.get("content-type"));
-      console.log("Tenant payload raw body", rawBody);
       body = JSON.parse(rawBody);
     } catch (parseError) {
-      console.error("Tenant payload JSON parse failed", parseError, rawBody);
+      console.error("Tenant payload JSON parse failed", parseError);
       return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
     }
 
@@ -202,87 +201,82 @@ export async function POST(request: Request) {
     await ensureTenantTable(sql);
     const computedCode = await generateUniqueTenantCode(sql, payload.companySlug);
 
-    const tenantId = randomUUID();
     const passwordHash = await bcrypt.hash(payload.adminPassword, 12);
 
-    const returnedRows = await SQL<any>`
-      insert into tenants (
-        id,
-        name,
-        slug,
-        code,
-        domain,
-        "isActive",
-        settings,
-        "schemaName",
-        region,
-        industry,
-        seats,
-        admin_name,
-        admin_email,
-        admin_password_hash,
-        admin_notes,
-        default_region_id,
-        default_region_name,
-        default_branch_id,
-        default_branch_name,
-        industry_profiles
-      )
-      values (
-        ${tenantId},
-        ${payload.companyName},
-        ${payload.companySlug},
-        ${computedCode},
-        ${computedDomain},
-        ${false},
-        ${JSON.stringify({ industryProfiles: payload.industryProfiles ?? [] })},
-        ${computedSchema},
-        ${payload.region},
-        ${payload.industry},
-        ${payload.seats ?? null},
-        ${payload.adminName},
-        ${payload.adminEmail.toLowerCase()},
-        ${passwordHash},
-        ${payload.adminNotes ?? ""},
-        ${defaultRegionId},
-        ${defaultRegionName},
-        ${defaultBranchId},
-        ${defaultBranchName},
-        ${JSON.stringify(payload.industryProfiles ?? [])}
-      )
-      on conflict (slug) do update set
-        name = excluded.name,
-        code = excluded.code,
-        domain = excluded.domain,
-        "isActive" = excluded."isActive",
-        settings = excluded.settings,
-        "schemaName" = excluded."schemaName",
-        region = excluded.region,
-        industry = excluded.industry,
-        seats = excluded.seats,
-        admin_name = excluded.admin_name,
-        admin_email = excluded.admin_email,
-        admin_notes = excluded.admin_notes,
-        default_region_id = excluded.default_region_id,
-        default_region_name = excluded.default_region_name,
-        default_branch_id = excluded.default_branch_id,
-        default_branch_name = excluded.default_branch_name,
-        industry_profiles = excluded.industry_profiles
-      returning name, slug, region, status, ledger_delta, seats, admin_email,
-                  default_region_id, default_region_name, default_branch_id, default_branch_name,
-                  "isActive" as is_active, "schemaName" as schema_name
-    `;
+    const tenantCols = await getTableColumns("tenants");
+    const tenantValues: Record<string, unknown> = {
+      name: payload.companyName,
+      slug: payload.companySlug,
+      code: computedCode,
+      domain: computedDomain,
+      "isActive": false,
+      settings: JSON.stringify({ industryProfiles: payload.industryProfiles ?? [] }),
+      "schemaName": computedSchema,
+      region: payload.region,
+      industry: payload.industry,
+      seats: payload.seats ?? null,
+      admin_name: payload.adminName,
+      admin_email: payload.adminEmail.toLowerCase(),
+      admin_password_hash: passwordHash,
+      admin_notes: payload.adminNotes ?? "",
+      default_region_id: defaultRegionId,
+      default_region_name: defaultRegionName,
+      default_branch_id: defaultBranchId,
+      default_branch_name: defaultBranchName,
+      industry_profiles: JSON.stringify(payload.industryProfiles ?? []),
+    };
+    if (tenantCols.get("id")?.dataType === "uuid") tenantValues.id = randomUUID();
 
-      const tenantSummary = mapTenantRow(returnedRows[0]);
+    const existing = await SQL`select id from tenants where slug = ${payload.companySlug} limit 1`;
+
+    let tenantId: unknown;
+    let returnedRows: any[];
+    if (existing.length > 0) {
+      tenantId = existing[0].id;
+      const entries = Object.entries(tenantValues).filter(([c]) => c !== "id" && tenantCols.has(c));
+      const setList = entries.map(([c], i) => `"${c}" = $${i + 2}`).join(", ");
+      const params = [payload.companySlug, ...entries.map(([, v]) => v)];
+      const res = await db.query<any>(
+        `update tenants set ${setList}, "updatedAt" = now() where slug = $1 returning *`,
+        params
+      );
+      returnedRows = res.rows;
+    } else {
+      const entries = Object.entries(tenantValues).filter(([c]) => tenantCols.has(c));
+      const colList = entries.map(([c]) => `"${c}"`).join(", ");
+      const placeholders = entries.map((_, i) => `$${i + 1}`).join(", ");
+      const res = await db.query<any>(
+        `insert into tenants (${colList}) values (${placeholders}) returning *`,
+        entries.map(([, v]) => v)
+      );
+      returnedRows = res.rows;
+      tenantId = returnedRows[0]?.id;
+    }
+
+    const tenantSummary = mapTenantRow(returnedRows[0]);
 
     // Also upsert a tenant_admins row so the admin can log in immediately
-    await SQL`
-      INSERT INTO tenant_admins (tenant_id, email, name, role, password_hash)
-      SELECT ${tenantId}, ${payload.adminEmail.toLowerCase()}, ${payload.adminName}, 'admin', ${passwordHash}
-      WHERE NOT EXISTS (
-        SELECT 1 FROM tenant_admins WHERE tenant_id = ${tenantId} AND email = ${payload.adminEmail.toLowerCase()}
-      )
+    const adminCols = await getTableColumns("tenant_admins");
+    const adminValues: Record<string, unknown> = {
+      tenant_id: tenantId,
+      email: payload.adminEmail.toLowerCase(),
+      name: payload.adminName,
+      role: "admin",
+      password_hash: passwordHash,
+      tenant_slug: payload.companySlug,
+    };
+    const existingAdmin = await SQL`
+      select 1 from tenant_admins where tenant_id = ${tenantId as string} and email = ${payload.adminEmail.toLowerCase()} limit 1
     `;
+    if (existingAdmin.length === 0) {
+      const entries = Object.entries(adminValues).filter(([c]) => adminCols.has(c));
+      const colList = entries.map(([c]) => `"${c}"`).join(", ");
+      const placeholders = entries.map((_, i) => `$${i + 1}`).join(", ");
+      await db.query(
+        `insert into tenant_admins (${colList}) values (${placeholders})`,
+        entries.map(([, v]) => v)
+      );
+    }
 
     return NextResponse.json(
       {
@@ -293,9 +287,6 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("Tenant creation failed", error);
-    const message = error instanceof Error ? error.message : String(error);
-    const stack = error instanceof Error ? error.stack : undefined;
-    // Return the error message and stack to the client to aid debugging (dev only).
-    return NextResponse.json({ error: message, stack }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create tenant" }, { status: 500 });
   }
 }

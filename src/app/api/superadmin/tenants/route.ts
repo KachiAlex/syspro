@@ -3,6 +3,9 @@ import { randomUUID } from 'crypto';
 import { getSql } from '@/lib/db';
 import { TenantPaginationSchema, CreateTenantSchema, safeParse } from '@/lib/validation';
 import { requireSuperAdmin } from "@/lib/api-auth";
+import { ensureTenantTable } from "@/lib/tenant/tenant-table";
+import { getTableColumns } from "@/lib/schema-inspect";
+import { db } from "@/lib/sql-client";
 
 const sql = getSql();
 
@@ -11,6 +14,7 @@ export async function GET(request: NextRequest) {
     if (!_auth.ok) return _auth.response;
 
   try {
+    await ensureTenantTable(sql);
     const url = new URL(request.url);
     const queryParams = {
       page: url.searchParams.get('page') || '1',
@@ -87,13 +91,21 @@ export async function POST(request: NextRequest) {
 
     const { name, slug, seats } = validation.data;
 
-    const result = await sql`
-      INSERT INTO tenants (id, name, slug, seats)
-      VALUES (${randomUUID()}, ${name}, ${slug}, ${seats})
-      RETURNING *
-    `;
+    await ensureTenantTable(sql);
 
-    return NextResponse.json(result[0], { status: 201 });
+    const tenantCols = await getTableColumns("tenants");
+    const tenantValues: Record<string, unknown> = { name, slug, seats };
+    if (tenantCols.get("id")?.dataType === "uuid") tenantValues.id = randomUUID();
+
+    const entries = Object.entries(tenantValues).filter(([c]) => tenantCols.has(c));
+    const colList = entries.map(([c]) => `"${c}"`).join(", ");
+    const placeholders = entries.map((_, i) => `$${i + 1}`).join(", ");
+    const res = await db.query<any>(
+      `insert into tenants (${colList}) values (${placeholders}) returning *`,
+      entries.map(([, v]) => v)
+    );
+
+    return NextResponse.json(res.rows[0], { status: 201 });
   } catch (error) {
     console.error('Error creating tenant:', error);
     return NextResponse.json({ error: 'Failed to create tenant' }, { status: 500 });

@@ -357,7 +357,7 @@ export async function setupTenantAdminSchema(sql: SqlClient = SQL) {
       id text primary key,
       tenant_slug text not null,
       user_id text not null,
-      action text not null check (action in ('create', 'read', 'update', 'delete', 'export', 'permission_change')),
+      action text not null,
       resource text not null,
       resource_id text not null,
       changes jsonb,
@@ -370,6 +370,10 @@ export async function setupTenantAdminSchema(sql: SqlClient = SQL) {
     create index if not exists idx_admin_audit_logs_resource on admin_audit_logs(resource, resource_id);
     create index if not exists idx_admin_audit_logs_created on admin_audit_logs(created_at desc);
   `;
+
+  // Older deployments created the table with a restrictive action check
+  // constraint that only allowed a small set of values.
+  await sql`alter table admin_audit_logs drop constraint if exists admin_audit_logs_action_check`;
 
   console.log("✓ Tenant Admin schema initialized successfully");
 }

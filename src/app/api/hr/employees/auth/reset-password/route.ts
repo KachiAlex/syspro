@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql as SQL } from "@/lib/sql-client";
 import { hashPassword } from "@/lib/hr/auth";
 import { checkRateLimitAsync, getRateLimitKey } from "@/lib/rate-limit";
+import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 
 /**
  * POST /api/hr/employees/auth/reset-password
@@ -35,6 +36,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    await ensureTenantTable(SQL);
 
     // Find a valid, unused, non-expired token
     const tokens = await SQL`

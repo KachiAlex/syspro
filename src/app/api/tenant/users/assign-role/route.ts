@@ -15,6 +15,7 @@ import { sql } from "@/lib/sql-client";
 import { setupTenantAdminSchema } from "@/lib/tenant-admin/schema";
 import { requireModuleAccess } from "@/lib/api-auth";
 import { invalidateTenantPermissions } from "@/lib/tenant-admin/permissions";
+import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 
 interface AssignRoleRequest {
   userId: string;
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     await setupTenantAdminSchema(sql);
+    await ensureTenantTable(sql);
 
     const role = await resolveRole(newRoleId, tenantSlug);
     if (!role) {

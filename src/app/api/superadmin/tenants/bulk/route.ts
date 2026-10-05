@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import { requireSuperAdmin } from "@/lib/api-auth";
+import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 
 const sql = getSql();
 
@@ -9,6 +10,7 @@ export async function POST(request: NextRequest) {
     if (!_auth.ok) return _auth.response;
 
   try {
+    await ensureTenantTable(sql);
     const body = await request.json();
     const { action, slugs } = body;
 

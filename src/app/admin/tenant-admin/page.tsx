@@ -4,15 +4,6 @@ export const dynamic = "force-dynamic";
 import ServerSidebar from "@/components/layout/server-sidebar";
 import TenantAdminClientWrapper from "@/components/tenant-admin-client-wrapper";
 
-try {
-	// Log when this server page is executed to help diagnose server vs client rendering
-	// This will appear in the Next.js server logs when the server branch runs.
-	// eslint-disable-next-line no-console
-	console.log("ADMIN_PAGE_SERVER_RENDER: admin/tenant-admin executed on server");
-} catch (e) {
-	// noop
-}
-
 export default function AdminTenantAdminPage() {
 	return (
 		<div className="min-h-screen bg-gray-50">

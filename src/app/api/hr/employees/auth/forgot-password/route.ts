@@ -3,6 +3,7 @@ import { sql as SQL } from "@/lib/sql-client";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "@/lib/email";
 import { checkRateLimitAsync, getRateLimitKey } from "@/lib/rate-limit";
+import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 
 /**
  * POST /api/hr/employees/auth/forgot-password
@@ -29,6 +30,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    await ensureTenantTable(SQL);
 
     // Find the employee
     const employees = await SQL`

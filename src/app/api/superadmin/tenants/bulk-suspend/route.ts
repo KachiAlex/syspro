@@ -4,6 +4,7 @@ import { logAuditAction } from '@/lib/audit';
 import { getRateLimitKey, checkRateLimitAsync } from '@/lib/rate-limit';
 import { BulkTenantIdsSchema, safeParse } from '@/lib/validation';
 import { requireSuperAdmin } from "@/lib/api-auth";
+import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 
 const sql = getSql();
 
@@ -12,6 +13,7 @@ export async function POST(request: NextRequest) {
     if (!_auth.ok) return _auth.response;
 
   try {
+    await ensureTenantTable(sql);
     // Rate limiting
     const key = getRateLimitKey(request);
     const { allowed } = await checkRateLimitAsync(key, 50, 60000);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/sql-client";
 import { requireModuleAccess } from "@/lib/api-auth";
+import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -22,6 +23,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const source = resolveSource(request, body);
 
   try {
+    await ensureTenantTable(sql);
     let updated: any[] = [];
     if (source !== "admin") {
       updated = await sql`
@@ -55,6 +57,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   const source = resolveSource(request);
 
   try {
+    await ensureTenantTable(sql);
     let deleted: any[] = [];
     if (source !== "admin") {
       deleted = await sql`

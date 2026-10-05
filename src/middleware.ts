@@ -224,6 +224,7 @@ export async function middleware(request: NextRequest) {
   if (
     pathname.startsWith('/admin') ||
     pathname.startsWith('/crm') ||
+    pathname.startsWith('/hr') ||
     pathname.startsWith('/itsupport')
   ) {
     const anySession =
@@ -285,5 +286,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/superadmin/:path*', '/tenant-admin/:path*', '/employee/:path*', '/admin/:path*', '/crm/:path*', '/itsupport/:path*', '/api/:path*'],
+  matcher: ['/superadmin/:path*', '/tenant-admin/:path*', '/employee/:path*', '/admin/:path*', '/crm/:path*', '/hr/:path*', '/itsupport/:path*', '/api/:path*'],
 };

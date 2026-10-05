@@ -9,6 +9,7 @@ import { getTenantUserPermissions } from "@/lib/tenant-admin/permissions";
 import { verifySession } from "@/lib/session";
 import { sql } from "@/lib/sql-client";
 import { cached } from "@/lib/cache";
+import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 
 export const dynamic = 'force-dynamic';
 
@@ -67,6 +68,8 @@ export async function GET(request: NextRequest) {
   if (!effectiveUserId) {
     return NextResponse.json({ error: "userId is required" }, { status: 400 });
   }
+
+  await ensureTenantTable(sql);
 
   // For tenant admin users, verify the actual role from the database.
   // The session defaults NULL roles to "admin", but the user might be a
