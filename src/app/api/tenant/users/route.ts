@@ -37,11 +37,11 @@ export async function GET(request: NextRequest) {
       select p.id, p.email, p.name, p.status, p.base_role, p.contract_type, p.source, p.created_at,
              a.role_id as assigned_role_id, r.name as assigned_role_name
       from (
-        select id, email, name, 'active' as status, coalesce(role, 'admin') as base_role,
+        select id::text as id, email, name, 'active' as status, coalesce(role, 'admin') as base_role,
                'admin' as contract_type, 'admin' as source, created_at
         from tenant_admins where tenant_slug = ${tenantSlug}
         union all
-        select id, email, name, status, coalesce(role, 'staff') as base_role,
+        select id::text as id, email, name, status, coalesce(role, 'staff') as base_role,
                coalesce(employment_type, 'full-time') as contract_type, 'employee' as source, created_at
         from admin_employees where tenant_slug = ${tenantSlug}
       ) p

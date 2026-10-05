@@ -67,7 +67,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     }
     if (!deleted.length && source !== "employee") {
       deleted = await sql`
-        DELETE FROM tenant_admins WHERE id = ${id} AND tenant_slug = ${tenantSlug}
+        DELETE FROM tenant_admins WHERE id::text = ${id} AND tenant_slug = ${tenantSlug}
         RETURNING id
       `;
     }

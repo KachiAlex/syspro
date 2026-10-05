@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       from admin_user_roles a
       join admin_roles r on r.id = a.role_id
       left join admin_employees e on e.id = a.user_id and e.tenant_slug = a.tenant_slug
-      left join tenant_admins ta on ta.id = a.user_id and ta.tenant_slug = a.tenant_slug
+      left join tenant_admins ta on ta.id::text = a.user_id and ta.tenant_slug = a.tenant_slug
       where a.tenant_slug = ${tenantSlug}
       order by a.created_at desc
     `;

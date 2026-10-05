@@ -235,6 +235,12 @@ export async function setupTenantAdminSchema(sql: SqlClient = SQL) {
       updated_by text
     );
     create index if not exists idx_admin_workflows_tenant on admin_workflows(tenant_slug);
+    alter table admin_workflows add column if not exists trigger text default 'manual';
+    alter table admin_workflows add column if not exists status text default 'draft';
+    alter table admin_workflows add column if not exists is_active boolean default false;
+    alter table admin_workflows add column if not exists description text;
+    alter table admin_workflows add column if not exists created_by text;
+    alter table admin_workflows add column if not exists updated_by text;
     create index if not exists idx_admin_workflows_active on admin_workflows(is_active);
   `;
 

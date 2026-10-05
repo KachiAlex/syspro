@@ -145,5 +145,49 @@ create table if not exists admin_workflow_executions (
 create index if not exists idx_admin_workflow_executions_tenant
   on admin_workflow_executions(tenant_slug);
 
+-- admin_workflows existed in older DBs without the newer columns.
+alter table if exists admin_workflows add column if not exists trigger text default 'manual';
+alter table if exists admin_workflows add column if not exists status text default 'draft';
+alter table if exists admin_workflows add column if not exists is_active boolean default false;
+alter table if exists admin_workflows add column if not exists description text;
+alter table if exists admin_workflows add column if not exists created_by text;
+alter table if exists admin_workflows add column if not exists updated_by text;
+create index if not exists idx_admin_workflows_active on admin_workflows(is_active);
+
+create table if not exists admin_integrations (
+  id text primary key,
+  tenant_slug text not null,
+  name text not null,
+  type text not null check (type in ('webhook', 'oauth', 'api_key', 'custom')),
+  status text default 'inactive' check (status in ('active', 'inactive', 'error', 'pending')),
+  provider text,
+  config jsonb not null,
+  webhook_url text,
+  events text[] default array[]::text[],
+  last_sync_at timestamptz,
+  error_message text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  created_by text,
+  updated_by text
+);
+create index if not exists idx_admin_integrations_tenant
+  on admin_integrations(tenant_slug);
+
+create table if not exists admin_api_keys (
+  id text primary key,
+  tenant_slug text not null,
+  name text not null,
+  key text not null unique,
+  secret text not null,
+  permissions jsonb not null,
+  rate_limit integer,
+  expires_at timestamptz,
+  last_used_at timestamptz,
+  created_at timestamptz default now(),
+  created_by text,
+  constraint unique_key_per_tenant unique (tenant_slug, key)
+);
+
 -- ─── audit log action constraint was too restrictive ──────────────────────
 alter table if exists admin_audit_logs drop constraint if exists admin_audit_logs_action_check;

@@ -66,11 +66,11 @@ export async function POST(request: NextRequest) {
     // Resolve the target user's email for the audit trail (employees first,
     // then tenant_admins — both are assignable principals).
     const userRows = await sql`
-      select id, email from admin_employees
+      select id::text as id, email from admin_employees
       where tenant_slug = ${tenantSlug} and id = ${userId}
       union all
-      select id, email from tenant_admins
-      where tenant_slug = ${tenantSlug} and id = ${userId}
+      select id::text as id, email from tenant_admins
+      where tenant_slug = ${tenantSlug} and id::text = ${userId}
       limit 1
     `;
     const target = (Array.isArray(userRows) ? userRows : [])[0] as any;
