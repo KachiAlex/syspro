@@ -189,6 +189,9 @@ async function ensureHrTablesRun(sql: SqlClient = SQL) {
   await sql`create index if not exists idx_admin_leave_tenant on admin_leave(tenant_slug)`;
   await sql`create index if not exists idx_admin_leave_emp on admin_leave(employee_id)`;
   await sql`create index if not exists idx_admin_leave_status on admin_leave(status)`;
+  await sql`alter table admin_leave add column if not exists reviewer_id text`;
+  await sql`alter table admin_leave add column if not exists reviewer_comment text`;
+  await sql`alter table admin_leave add column if not exists reviewed_at timestamptz`;
 
   // Payroll runs
   await sql`
@@ -264,6 +267,13 @@ async function ensureHrTablesRun(sql: SqlClient = SQL) {
   await sql`alter table admin_payroll_runs add column if not exists approved_by text`;
   await sql`alter table admin_payroll_runs add column if not exists approved_at timestamptz`;
   await sql`alter table admin_payroll_runs add column if not exists journal_entry_id text`;
+  await sql`alter table admin_payroll_runs add column if not exists paid_at timestamptz`;
+  await sql`alter table admin_payroll_runs add column if not exists payment_journal_entry_id text`;
+
+  // Employee bank details for payroll payout files
+  await sql`alter table admin_employees add column if not exists bank_name text`;
+  await sql`alter table admin_employees add column if not exists bank_account_number text`;
+  await sql`alter table admin_employees add column if not exists bank_account_name text`;
 
   // Recurring per-employee salary components (allowances, deductions, loans)
   await sql`
@@ -694,6 +704,9 @@ export async function updateEmployee(
     workMode: string | null;
     role: string | null;
     status: string;
+    bankName: string | null;
+    bankAccountNumber: string | null;
+    bankAccountName: string | null;
   }>
 ) {
   const sql = SQL;
@@ -744,6 +757,9 @@ export async function updateEmployee(
       work_mode = coalesce(${updates.workMode ?? null}, work_mode),
       role = coalesce(${updates.role ?? null}, role),
       status = coalesce(${updates.status ?? null}, status),
+      bank_name = coalesce(${updates.bankName ?? null}, bank_name),
+      bank_account_number = coalesce(${updates.bankAccountNumber ?? null}, bank_account_number),
+      bank_account_name = coalesce(${updates.bankAccountName ?? null}, bank_account_name),
       updated_at = now()
     where id = ${id}
     returning *

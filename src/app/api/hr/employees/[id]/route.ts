@@ -22,6 +22,9 @@ const updateSchema = z.object({
   workMode: z.enum(["ONSITE", "REMOTE", "HYBRID", "FIELD"]).optional(),
   status: z.enum(["active", "inactive", "on-leave", "terminated"]).optional(),
   role: z.enum(["staff", "hod", "admin", "executive"]).optional(),
+  bankName: z.string().optional(),
+  bankAccountNumber: z.string().optional(),
+  bankAccountName: z.string().optional(),
 });
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

@@ -26,16 +26,28 @@ function mapRun(r: any) {
     totalDeductions: Number(r.total_deductions) || 0,
     totalNet: Number(r.total_net) || 0,
     journalEntryId: r.journal_entry_id,
+    paymentJournalEntryId: r.payment_journal_entry_id,
     approvedBy: r.approved_by,
     approvedAt: r.approved_at,
+    paidAt: r.paid_at,
   };
+}
+
+async function resolveActorName(ctx: { tenantSlug: string; userId: string }) {
+  const [actor] = await sql`
+    select coalesce(a.name, e.name) as name
+    from (select ${ctx.tenantSlug}::text as ts) t
+    left join tenant_admins a on a.tenant_slug = t.ts and a.id::text = ${ctx.userId}
+    left join admin_employees e on e.tenant_slug = t.ts and e.id::text = ${ctx.userId}
+    limit 1
+  `;
+  return (actor as any)?.name ?? ctx.userId;
 }
 
 /**
  * PATCH /api/tenant/payroll/runs/[id]
- * action: "approve" — posts the GL journal (Dr 6300 Salaries, Cr 2300 Payroll
- *   Payable net, Cr 2310 Deductions Payable) and marks the run completed.
- * action: "cancel" — cancels a draft run.
+ * Workflow: draft → approve → processing (accrual JE posted) → pay → completed
+ *   (payment JE posted). cancel allowed on draft only.
  */
 export async function PATCH(request: NextRequest, context: any) {
   try {
@@ -44,8 +56,8 @@ export async function PATCH(request: NextRequest, context: any) {
     const body = await request.json().catch(() => ({}));
     const action = typeof body?.action === "string" ? body.action.toLowerCase() : null;
 
-    if (!action || !["approve", "cancel"].includes(action)) {
-      return errorResponse("action must be 'approve' or 'cancel'", 400);
+    if (!action || !["approve", "pay", "cancel"].includes(action)) {
+      return errorResponse("action must be 'approve', 'pay', or 'cancel'", 400);
     }
 
     await ensureHrTables(sql);
@@ -72,65 +84,107 @@ export async function PATCH(request: NextRequest, context: any) {
       return NextResponse.json({ success: true, data: mapRun(updated) });
     }
 
-    // approve
-    if (r.status !== "draft") {
-      return errorResponse(`Run is already ${r.status}`, 409);
-    }
-    if (r.compliance_passed === false && body?.force !== true) {
-      return errorResponse("Run failed compliance checks; pass force=true to override", 409, {
-        anomalies: r.anomalies,
+    if (action === "approve") {
+      if (r.status !== "draft") {
+        return errorResponse(`Run is already ${r.status}`, 409);
+      }
+      if (r.compliance_passed === false && body?.force !== true) {
+        return errorResponse("Run failed compliance checks; pass force=true to override", 409, {
+          anomalies: r.anomalies,
+        });
+      }
+
+      const totalGross = Number(r.total_gross) || 0;
+      const totalDeductions = Number(r.total_deductions) || 0;
+      const totalNet = Number(r.total_net) || 0;
+      const entryDate = `${r.period}-28`;
+
+      // Accrual: Dr Salaries & Wages / Cr Payroll Payable + Deductions Payable
+      const journal = await createJournalEntry({
+        tenantSlug: ctx.tenantSlug,
+        entryDate,
+        referenceType: "payroll",
+        referenceId: id,
+        description: `Payroll accrual ${r.period}`,
+        lines: [
+          {
+            accountCode: "6300",
+            debitAmount: totalGross,
+            creditAmount: 0,
+            description: `Salaries & wages — payroll ${r.period}`,
+          },
+          {
+            accountCode: "2300",
+            debitAmount: 0,
+            creditAmount: totalNet,
+            description: `Net payroll payable — ${r.period}`,
+          },
+          {
+            accountCode: "2310",
+            debitAmount: 0,
+            creditAmount: totalDeductions,
+            description: `Payroll deductions payable — ${r.period}`,
+          },
+        ],
+        metadata: { runId: id, period: r.period, kind: "accrual" },
+      });
+
+      const approvedBy = await resolveActorName(ctx);
+      const [updated] = await sql`
+        update admin_payroll_runs set
+          status = 'processing',
+          approved_by = ${approvedBy},
+          approved_at = now(),
+          processed_at = coalesce(processed_at, now()),
+          journal_entry_id = ${journal.id}
+        where id = ${id}
+        returning *
+      `;
+
+      return NextResponse.json({
+        success: true,
+        data: mapRun(updated),
+        journalEntryId: journal.id,
       });
     }
 
-    const totalGross = Number(r.total_gross) || 0;
-    const totalDeductions = Number(r.total_deductions) || 0;
-    const totalNet = Number(r.total_net) || 0;
-    const entryDate = `${r.period}-28`;
+    // action === "pay"
+    if (r.status !== "processing") {
+      return errorResponse(
+        r.status === "draft" ? "Run must be approved before payment" : `Run is already ${r.status}`,
+        409
+      );
+    }
 
-    const journal = await createJournalEntry({
+    const totalNet = Number(r.total_net) || 0;
+    const paymentJournal = await createJournalEntry({
       tenantSlug: ctx.tenantSlug,
-      entryDate,
+      entryDate: new Date().toISOString().split("T")[0],
       referenceType: "payroll",
       referenceId: id,
-      description: `Payroll run ${r.period}`,
+      description: `Payroll disbursement ${r.period}`,
       lines: [
         {
-          accountCode: "6300",
-          debitAmount: totalGross,
+          accountCode: "2300",
+          debitAmount: totalNet,
           creditAmount: 0,
-          description: `Salaries & wages — payroll ${r.period}`,
+          description: `Net payroll settled — ${r.period}`,
         },
         {
-          accountCode: "2300",
+          accountCode: "1100",
           debitAmount: 0,
           creditAmount: totalNet,
-          description: `Net payroll payable — ${r.period}`,
-        },
-        {
-          accountCode: "2310",
-          debitAmount: 0,
-          creditAmount: totalDeductions,
-          description: `Payroll deductions payable — ${r.period}`,
+          description: `Bank disbursement — payroll ${r.period}`,
         },
       ],
-      metadata: { runId: id, period: r.period },
+      metadata: { runId: id, period: r.period, kind: "disbursement" },
     });
-
-    const [approver] = await sql`
-      select coalesce(a.name, e.name) as name
-      from (select ${ctx.tenantSlug}::text as ts) t
-      left join tenant_admins a on a.tenant_slug = t.ts and a.id::text = ${ctx.userId}
-      left join admin_employees e on e.tenant_slug = t.ts and e.id::text = ${ctx.userId}
-      limit 1
-    `;
 
     const [updated] = await sql`
       update admin_payroll_runs set
         status = 'completed',
-        approved_by = ${(approver as any)?.name ?? ctx.userId},
-        approved_at = now(),
-        processed_at = coalesce(processed_at, now()),
-        journal_entry_id = ${journal.id}
+        paid_at = now(),
+        payment_journal_entry_id = ${paymentJournal.id}
       where id = ${id}
       returning *
     `;
@@ -138,10 +192,41 @@ export async function PATCH(request: NextRequest, context: any) {
     return NextResponse.json({
       success: true,
       data: mapRun(updated),
-      journalEntryId: journal.id,
+      paymentJournalEntryId: paymentJournal.id,
     });
   } catch (error) {
     console.error("Payroll run PATCH error:", error);
+    return handleTenantAdminError(error);
+  }
+}
+
+/**
+ * GET /api/tenant/payroll/runs/[id]
+ * Run detail with its entries.
+ */
+export async function GET(request: NextRequest, context: any) {
+  try {
+    const ctx = validateTenantContext(request, "read");
+    const { id } = await context.params;
+
+    await ensureHrTables(sql);
+
+    const [run] = await sql`
+      select * from admin_payroll_runs
+      where id = ${id} and tenant_slug = ${ctx.tenantSlug}
+      limit 1
+    `;
+    if (!run) {
+      return errorResponse("Payroll run not found", 404);
+    }
+
+    const entries = await sql`
+      select * from admin_payroll_entries where run_id = ${id} order by employee_name
+    `;
+
+    return NextResponse.json({ success: true, data: mapRun(run), entries });
+  } catch (error) {
+    console.error("Payroll run GET error:", error);
     return handleTenantAdminError(error);
   }
 }
