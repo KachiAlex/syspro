@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from 'next/server';
 import { getTimesheetEntries, addTimesheetEntry, getTimesheetEntriesForDate } from '@/lib/persistent-storage';
 import { requireModuleAccess } from "@/lib/api-auth";

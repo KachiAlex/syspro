@@ -116,9 +116,10 @@ export async function getVendorSpendReport(
         v.legal_name as vendor_name,
         sum(b.total) as total_spend,
         count(b.id) as bill_count,
+        avg(b.total) as avg_bill_amount,
         max(b.bill_date) as last_bill_date
       from bills b
-      join vendors v on b.vendor_id = v.id
+      join vendors v on b.vendor_id::text = v.id::text
       where ${billWhere}
       group by b.vendor_id, v.legal_name
     ),
@@ -160,7 +161,7 @@ export async function getVendorSpendReport(
         where mt.vendor_id = vs.vendor_id
       ) as spend_trend
     from vendor_spend vs
-    left join payment_stats ps on vs.vendor_id = ps.vendor_id
+    left join payment_stats ps on vs.vendor_id::text = ps.vendor_id::text
     order by vs.total_spend desc
     ${limitClause}`;
 
@@ -223,7 +224,7 @@ export async function getVendorAgingReport(
         b.due_date,
         b.bill_date
       from bills b
-      join vendors v on b.vendor_id = v.id
+      join vendors v on b.vendor_id::text = v.id::text
       where ${whereText}
     ),
     aging_summary as (
@@ -274,7 +275,7 @@ export async function getVendorRiskScores(
   const sql = SQL;
 
   const whereClause = filters?.vendorId 
-    ? sql`where v.id = ${filters.vendorId}`
+    ? sql`where v.id::text = ${filters.vendorId}`
     : sql``;
 
   const results = (await sql`
@@ -321,8 +322,8 @@ export async function getVendorRiskScores(
           else 40
         end as compliance_score
       from vendors v
-      left join vendor_payments vp on v.id = vp.vendor_id and vp.tenant_slug = ${tenantSlug}
-      left join bills b on v.id = b.vendor_id and b.tenant_slug = ${tenantSlug}
+      left join vendor_payments vp on v.id::text = vp.vendor_id and vp.tenant_slug = ${tenantSlug}
+      left join bills b on v.id::text = b.vendor_id::text and b.tenant_slug = ${tenantSlug}
       where v.tenant_slug = ${tenantSlug}
       ${whereClause}
       group by v.id, v.legal_name, v.created_at, v.tax_id, v.bank_details
@@ -428,7 +429,7 @@ export async function getTaxReport(
         else 'pending'
       end as compliance_status
     from bills b
-    join vendors v on b.vendor_id = v.id
+    join vendors v on b.vendor_id::text = v.id::text
     where ${whereClause}
     group by b.vendor_id, v.legal_name, v.tax_id, date_trunc('month', b.bill_date)
     order by total_tax_withheld desc`;
@@ -492,10 +493,10 @@ export async function getDashboardAnalytics(tenantSlug: string): Promise<{
     monthly_data as (
       select 
         date_trunc('month', created_at)::text as month,
-        sum(case when entity_type = 'bill' then 
+        sum(case when reference_type = 'bill' then 
           (metadata->>'total')::numeric else 0 end
         ) as spend,
-        sum(case when entity_type = 'payment' then 
+        sum(case when reference_type = 'payment' then 
           (metadata->>'amount')::numeric else 0 end
         ) as payments
       from journal_entries 

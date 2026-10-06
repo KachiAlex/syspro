@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * API endpoint for getting user permissions
  * GET /api/tenant/user-permissions?tenantSlug=...

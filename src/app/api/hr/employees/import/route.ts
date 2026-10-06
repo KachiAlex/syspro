@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { insertEmployee, ensureHrTables, resolveOrCreateDepartment } from "@/lib/hr/db";
 import { ensureAdminTables } from "@/lib/admin/db";

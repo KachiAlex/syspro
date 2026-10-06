@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 
 import { addTicketActivity, getTicketById, listTicketActivities } from "@/lib/support-db";

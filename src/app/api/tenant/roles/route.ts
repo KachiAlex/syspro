@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * Roles API — real persistence on admin_roles.
  *

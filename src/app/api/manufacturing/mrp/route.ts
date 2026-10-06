@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { runMrp, generateRequisitionsFromMrp, MrpDemandItem } from "@/lib/manufacturing/mrp";

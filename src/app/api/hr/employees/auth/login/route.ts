@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateEmployee, createEmployeeToken } from "@/lib/hr/auth";
 import { checkRateLimitAsync, getRateLimitKey } from "@/lib/rate-limit";

@@ -143,6 +143,21 @@ async function ensureAccountingTablesRun(sql = SQL) {
       )
     `;
 
+    // Legacy tables carry tenant_id uuid NOT NULL — relax it so tenant_slug rows can be written
+    try {
+      await sql`alter table if exists journal_entries alter column tenant_id drop not null`;
+    } catch (e: any) {
+      console.warn("journal_entries tenant_id relax skipped:", e?.message || e);
+    }
+
+    await sql`alter table if exists journal_entries add column if not exists tenant_slug text`;
+    await sql`alter table if exists journal_entries add column if not exists entry_number text`;
+    await sql`alter table if exists journal_entries add column if not exists entry_date date`;
+    await sql`alter table if exists journal_entries add column if not exists reference_type text`;
+    await sql`alter table if exists journal_entries add column if not exists reference_id uuid`;
+    await sql`alter table if exists journal_entries add column if not exists description text`;
+    await sql`alter table if exists journal_entries add column if not exists metadata jsonb`;
+    await sql`alter table if exists journal_entries add column if not exists created_at timestamptz default now()`;
     await sql`alter table if exists journal_entries add column if not exists journal_number text`;
     await sql`alter table if exists journal_entries add column if not exists journal_type text`;
     await sql`alter table if exists journal_entries add column if not exists fiscal_period_id uuid`;
@@ -202,7 +217,17 @@ async function ensureAccountingTablesRun(sql = SQL) {
       )
     `;
 
+    try {
+      await sql`alter table if exists chart_of_accounts alter column tenant_id drop not null`;
+    } catch (e: any) {
+      console.warn("chart_of_accounts tenant_id relax skipped:", e?.message || e);
+    }
     await sql`alter table if exists chart_of_accounts add column if not exists id uuid default gen_random_uuid()`;
+    await sql`alter table if exists chart_of_accounts add column if not exists tenant_slug text`;
+    await sql`alter table if exists chart_of_accounts add column if not exists is_active boolean default true`;
+    await sql`alter table if exists chart_of_accounts add column if not exists code text`;
+    await sql`alter table if exists chart_of_accounts add column if not exists name text`;
+    await sql`alter table if exists chart_of_accounts add column if not exists type text`;
     await sql`alter table if exists chart_of_accounts add column if not exists tenant_id text`;
     await sql`alter table if exists chart_of_accounts add column if not exists account_code text`;
     await sql`alter table if exists chart_of_accounts add column if not exists account_name text`;
@@ -233,6 +258,13 @@ async function ensureAccountingTablesRun(sql = SQL) {
     await sql`create index if not exists journal_entry_lines_je_idx on journal_entry_lines (journal_entry_id)`;
     await sql`create index if not exists journal_entry_lines_account_id_idx on journal_entry_lines (account_id)`;
 
+    // Unique code per account — required for seed upserts and lookups
+    try {
+      await sql`create unique index if not exists chart_of_accounts_code_uq on chart_of_accounts (code)`;
+    } catch (e: any) {
+      console.warn("chart_of_accounts code unique index skipped:", e?.message || e);
+    }
+
     // Seed default accounts if they don't exist
     await seedDefaultAccounts(sql);
 
@@ -245,8 +277,8 @@ async function seedDefaultAccounts(sql: SqlClient) {
   for (const [key, account] of Object.entries(DEFAULT_ACCOUNTS)) {
     await sql`
       insert into chart_of_accounts (code, name, type, is_active)
-      values (${account.code}, ${account.name}, ${account.type}, ${account.isActive})
-      on conflict (code) do nothing
+      select ${account.code}, ${account.name}, ${account.type}, ${account.isActive}
+      where not exists (select 1 from chart_of_accounts where code = ${account.code})
     `;
   }
 }

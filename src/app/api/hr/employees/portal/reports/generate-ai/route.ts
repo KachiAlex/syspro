@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { resolveEmployeeSession } from "@/lib/hr/auth";
 import { runAgent } from "@/lib/ai/agent";

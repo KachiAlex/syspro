@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { deleteDepartment } from "@/lib/hr/db";
 import { requireModuleAccess } from "@/lib/api-auth";

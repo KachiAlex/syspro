@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { POST as parseResume } from "@/app/api/hr/resumes/parse/route";
 import { checkRateLimitAsync, getRateLimitKey } from "@/lib/rate-limit";

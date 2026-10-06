@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
@@ -17,7 +18,7 @@ const approvalRuleCreateSchema = z.object({
   conditions: z.record(z.any()),
   approvers: z.array(z.object({
     step: z.number().positive(),
-    userId: z.string().uuid(),
+    userId: z.string().min(1),
     role: z.string().optional(),
     required: z.boolean(),
     order: z.number().nonnegative(),
@@ -30,12 +31,12 @@ const approvalInitiateSchema = z.object({
   tenantSlug: z.string().min(1),
   entityType: z.enum(["purchase_order", "bill", "payment"]),
   entityId: z.string().uuid(),
-  requestedBy: z.string().uuid(),
+  requestedBy: z.string().min(1),
   entityData: z.record(z.any()),
 });
 
 const approvalDecisionSchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.string().min(1).optional(),
   decision: z.enum(["approved", "rejected", "escalated"]),
   comments: z.string().optional(),
 });
@@ -45,7 +46,7 @@ const approvalListSchema = z.object({
   entityType: z.string().optional(),
   entityId: z.string().uuid().optional(),
   status: z.string().optional(),
-  userId: z.string().uuid().optional(),
+  userId: z.string().min(1).optional(),
   limit: z.coerce.number().min(1).max(200).optional(),
   offset: z.coerce.number().min(0).optional(),
 });
@@ -83,7 +84,7 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const approvals = await getPendingApprovalsForUser(tenantSlug, userId);
+      const approvals = await getPendingApprovalsForUser(tenantSlug, userId, ctx.userRole);
       return NextResponse.json({ approvals });
     }
 
@@ -108,12 +109,12 @@ export async function GET(request: NextRequest) {
     // List approvals with filters
     const parsed = approvalListSchema.safeParse({
       tenantSlug,
-      entityType: url.searchParams.get("entityType"),
-      entityId: url.searchParams.get("entityId"),
-      status: url.searchParams.get("status"),
-      userId: url.searchParams.get("userId"),
-      limit: url.searchParams.get("limit"),
-      offset: url.searchParams.get("offset"),
+      entityType: url.searchParams.get("entityType") ?? undefined,
+      entityId: url.searchParams.get("entityId") ?? undefined,
+      status: url.searchParams.get("status") ?? undefined,
+      userId: url.searchParams.get("userId") ?? undefined,
+      limit: url.searchParams.get("limit") ?? undefined,
+      offset: url.searchParams.get("offset") ?? undefined,
     });
 
     if (!parsed.success) {
@@ -139,7 +140,7 @@ export async function POST(request: NextRequest) {
   console.log('API: POST /api/finance/approvals called');
 
   try {
-    validateTenantContext(request, "write");
+    const ctx = validateTenantContext(request, "write");
     const body = await request.json();
     
     // Create approval rule
@@ -177,7 +178,8 @@ export async function POST(request: NextRequest) {
       try {
         const approval = await processApprovalDecision({
           approvalId,
-          userId: parsed.data.userId,
+          userId: ctx.userId !== "unknown" ? ctx.userId : (parsed.data.userId ?? ctx.userId),
+          userRole: ctx.userRole,
           decision: parsed.data.decision,
           comments: parsed.data.comments,
         });

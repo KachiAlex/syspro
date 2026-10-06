@@ -253,15 +253,24 @@ export async function createVendorPayment(payload: {
       where id = ${id}
     `;
 
-    // Update bill balances
+    // Update bill balances and mark paid/partially_paid accordingly
     await Promise.all(payload.applications.map(async (app) => {
       await sql`
         update bills 
         set balance_due = balance_due - ${app.appliedAmount},
+            status = case
+              when balance_due - ${app.appliedAmount} <= 0.005 then 'paid'
+              when balance_due - ${app.appliedAmount} < total then 'partially_paid'
+              else status
+            end,
             updated_at = now()
         where id = ${app.billId}
       `;
     }));
+
+    // Keep the in-memory record consistent for the journal posting below
+    record.applied_amount = totalApplied;
+    record.unapplied_amount = payload.amount - totalApplied;
   }
 
   const payment = normalizePayment(record, applications);

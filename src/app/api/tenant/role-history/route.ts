@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * GET /api/tenant/role-history?tenantSlug=...&userId=...&limit=...
  * Role assignment audit log — reads admin_role_history.

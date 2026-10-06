@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuditLogs } from '@/lib/audit';
 import { AuditLogsQuerySchema, safeParse } from '@/lib/validation';

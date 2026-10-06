@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getUsageStats, getRecentLogs, checkQuota } from "@/lib/ai/usage-log";
 import { resolveEmployeeSession } from "@/lib/hr/auth";

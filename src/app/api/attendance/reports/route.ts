@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from 'next/server';
 import { getAttendanceRecords, getTimesheetEntries } from '@/lib/persistent-storage';
 import AttendanceConfidenceCalculator from '@/lib/attendance-calculator';

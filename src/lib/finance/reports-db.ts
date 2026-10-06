@@ -407,7 +407,7 @@ export async function generateAgedPayablesReport(
           ELSE 'Over 120 days'
         END as aging_bucket
       FROM bills b
-      LEFT JOIN vendors v ON b.vendor_id = v.id
+      LEFT JOIN vendors v ON b.vendor_id::text = v.id::text
       WHERE b.tenant_slug = $1
         AND b.balance_due > 0
         AND b.status NOT IN ('cancelled', 'paid')

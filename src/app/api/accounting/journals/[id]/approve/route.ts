@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { journalEntryApproveSchema } from "@/lib/accounting/types";
 import { postJournalEntry, reverseJournalEntry, getJournalEntry } from "@/lib/accounting/db";

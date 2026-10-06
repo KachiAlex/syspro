@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getJournalEntries, createJournalEntry } from "@/lib/finance/accounting";
 import { requireModuleAccess } from "@/lib/api-auth";

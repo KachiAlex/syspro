@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from 'next/server';
 
 // Compatibility proxy: forward /api/itsupport/* -> /api/support/* on same origin

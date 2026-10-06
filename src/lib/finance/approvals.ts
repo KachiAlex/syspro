@@ -310,6 +310,7 @@ export async function initiateApproval(payload: {
 export async function processApprovalDecision(payload: {
   approvalId: string;
   userId: string;
+  userRole?: string;
   decision: "approved" | "rejected" | "escalated";
   comments?: string;
 }): Promise<Approval | null> {
@@ -327,9 +328,15 @@ export async function processApprovalDecision(payload: {
   const decisions = current.decisions || [];
   const currentStep = current.current_step;
 
-  // Check if user is authorized to make decision at current step
+  // Check if user is authorized to make decision at current step.
+  // Approvers are either concrete userIds or role placeholders ("role:dept_manager");
+  // tenant admins may act on any step so workflows cannot stall.
   const currentStepApprovers = approverChain.filter((step: ApproverStep) => step.step === currentStep);
-  const isAuthorized = currentStepApprovers.some((step: ApproverStep) => step.userId === payload.userId);
+  const callerRoleKey = payload.userRole ? `role:${payload.userRole}` : null;
+  const isAdmin = ["admin", "tenant_admin", "superadmin"].includes(payload.userRole || "");
+  const isAuthorized = isAdmin || currentStepApprovers.some(
+    (step: ApproverStep) => step.userId === payload.userId || step.userId === callerRoleKey
+  );
 
   if (!isAuthorized) {
     throw new Error("User not authorized to approve at current step");
@@ -461,16 +468,28 @@ export async function getApprovals(filters: {
 
 export async function getPendingApprovalsForUser(
   tenantSlug: string,
-  userId: string
+  userId: string,
+  role?: string
 ): Promise<Approval[]> {
   const sql = SQL;
   await ensureApprovalTables(sql);
+
+  // Chains mix concrete userIds with role placeholders ("role:dept_manager").
+  // Match the step currently awaiting action against the caller's id or role;
+  // tenant admins see every pending item so nothing gets stuck.
+  const roleKey = role ? `role:${role}` : null;
+  const seesAll = ["admin", "tenant_admin", "superadmin"].includes(role || "");
 
   const records = (await sql`
     select * from approvals 
     where tenant_slug = ${tenantSlug}
     and status = 'pending'
-    and approver_chain @> '[{"userId": ' || ${userId} || '}]'
+    and (
+      ${seesAll}
+      or approver_chain -> current_step ->> 'userId' = ${userId}
+      or (${roleKey}::text is not null and approver_chain -> current_step ->> 'userId' = ${roleKey})
+      or approver_chain @> ${JSON.stringify([{ userId }])}::jsonb
+    )
     order by created_at asc
   `) as any[];
 

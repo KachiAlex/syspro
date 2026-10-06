@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getChartOfAccounts, ensureAccountingTables } from "@/lib/finance/accounting";
 import { sql as SQL } from "@/lib/sql-client";

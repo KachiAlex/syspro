@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getLead, updateLead, insertCustomer, insertDeal, recordConversion, logActivity } from "@/lib/crm/db";

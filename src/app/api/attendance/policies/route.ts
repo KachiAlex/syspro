@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from 'next/server';
 import { AttendancePolicy } from '@/lib/attendance-types';
 import { requireModuleAccess } from "@/lib/api-auth";

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { signSession } from "@/lib/session";
 import { checkRateLimitAsync, getRateLimitKey } from "@/lib/rate-limit";

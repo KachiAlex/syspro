@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { DepartmentService } from "@/lib/tenant-admin/service";
 import { CreateDepartmentSchema, UpdateDepartmentSchema } from "@/lib/tenant-admin/validation";

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
@@ -67,10 +68,10 @@ export async function GET(request: NextRequest) {
       case "spend":
         const spendParsed = spendReportSchema.safeParse({
           tenantSlug,
-          vendorId: url.searchParams.get("vendorId"),
-          dateFrom: url.searchParams.get("dateFrom"),
-          dateTo: url.searchParams.get("dateTo"),
-          limit: url.searchParams.get("limit"),
+          vendorId: url.searchParams.get("vendorId") || undefined,
+          dateFrom: url.searchParams.get("dateFrom") || undefined,
+          dateTo: url.searchParams.get("dateTo") || undefined,
+          limit: url.searchParams.get("limit") || undefined,
         });
 
         if (!spendParsed.success) {
@@ -91,8 +92,8 @@ export async function GET(request: NextRequest) {
       case "aging":
         const agingParsed = agingReportSchema.safeParse({
           tenantSlug,
-          vendorId: url.searchParams.get("vendorId"),
-          includePaid: url.searchParams.get("includePaid"),
+          vendorId: url.searchParams.get("vendorId") || undefined,
+          includePaid: url.searchParams.has("includePaid") ? url.searchParams.get("includePaid") : undefined,
         });
 
         if (!agingParsed.success) {
@@ -111,7 +112,7 @@ export async function GET(request: NextRequest) {
       case "risk":
         const riskParsed = riskScoreSchema.safeParse({
           tenantSlug,
-          vendorId: url.searchParams.get("vendorId"),
+          vendorId: url.searchParams.get("vendorId") || undefined,
         });
 
         if (!riskParsed.success) {
@@ -129,8 +130,8 @@ export async function GET(request: NextRequest) {
       case "tax":
         const taxParsed = taxReportSchema.safeParse({
           tenantSlug,
-          vendorId: url.searchParams.get("vendorId"),
-          period: url.searchParams.get("period"),
+          vendorId: url.searchParams.get("vendorId") || undefined,
+          period: url.searchParams.get("period") || undefined,
         });
 
         if (!taxParsed.success) {

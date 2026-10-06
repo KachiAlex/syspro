@@ -460,7 +460,7 @@ export async function getAgingReport(tenantSlug: string): Promise<AgingReport[]>
         end as days90,
         b.balance_due
       from bills b
-      join vendors v on b.vendor_id = v.id
+      join vendors v on b.vendor_id::text = v.id::text
       where b.tenant_slug = ${tenantSlug}
       and b.status in ('open', 'partially_paid')
       and b.balance_due > 0

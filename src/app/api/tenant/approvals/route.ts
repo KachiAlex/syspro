@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { ApprovalFlowService } from "@/lib/tenant-admin/service";
 import {

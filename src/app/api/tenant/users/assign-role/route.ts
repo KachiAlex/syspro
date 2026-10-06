@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * Assign a role to a user — real persistence.
  * POST /api/tenant/users/assign-role

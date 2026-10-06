@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import { createTicket, getTenantSupportData } from '@/lib/support-db';
 import { validateTenantContext } from "@/lib/tenant-admin/utils";

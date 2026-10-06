@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { approveBudget, getBudgetApprovals } from "@/lib/finance/budgets-db";
 import { budgetApproveSchema } from "@/lib/finance/budgets";

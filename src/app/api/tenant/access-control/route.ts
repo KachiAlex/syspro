@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { AccessControlService } from "@/lib/tenant-admin/service";
 import { UpdateAccessControlSchema, GrantTemporaryAccessSchema } from "@/lib/tenant-admin/validation";

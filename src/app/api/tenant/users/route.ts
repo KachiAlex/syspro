@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * API route to fetch all users in a tenant
  * GET /api/tenant/users?tenantSlug=...

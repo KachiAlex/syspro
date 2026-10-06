@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getSql } from "@/lib/db";
 import { getEnvStatus } from "@/lib/env-check";

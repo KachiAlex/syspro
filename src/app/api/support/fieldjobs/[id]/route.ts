@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/sql-client";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";

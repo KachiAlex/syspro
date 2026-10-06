@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { listActivities } from "@/lib/crm/db";
 import { resolveCrmAuth } from "@/lib/crm/auth";

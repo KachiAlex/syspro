@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from 'next/server';
 import { extractAuthContext, validateTenant, requirePermission } from '@/lib/auth-helper';
 import { executeRulesForEvent } from '@/lib/automation/engine';

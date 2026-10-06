@@ -234,27 +234,33 @@ export async function listVendors(
     const sql = SQL;
     await ensureVendorTables(sql);
 
-    const whereClauses: Array<any> = [];
+    const conditions: string[] = [];
+    const params: any[] = [];
     if (filters?.tenantSlug) {
-      whereClauses.push(sql`tenant_slug = ${filters.tenantSlug}`);
+      params.push(filters.tenantSlug);
+      conditions.push(`tenant_slug = $${params.length}`);
     }
     if (filters?.isActive !== undefined) {
-      whereClauses.push(sql`status = ${filters.isActive ? 'active' : 'inactive'}`);
+      params.push(filters.isActive ? 'active' : 'inactive');
+      conditions.push(`status = $${params.length}`);
     }
     if (filters?.paymentTerms) {
-      whereClauses.push(sql`default_payment_terms = ${filters.paymentTerms}`);
+      params.push(filters.paymentTerms);
+      conditions.push(`default_payment_terms = $${params.length}`);
     }
     if (filters?.country) {
-      whereClauses.push(sql`country = ${filters.country}`);
+      params.push(filters.country);
+      conditions.push(`country = $${params.length}`);
     }
 
-    const rows = await SQL<VendorRowDB>`
-      select id, tenant_slug, vendor_code, legal_name, display_name, email, phone, address, city, state, country, tax_id, bank_details, default_payment_terms, status, created_at, updated_at
-      from vendors
-      ${whereClauses.length ? sql`where ${(sql as any).join(whereClauses, sql` and `)}` : sql``}
-      order by display_name asc
-      limit 200
-    `;
+    const whereText = conditions.length ? `where ${conditions.join(' and ')}` : '';
+    const { rows } = await db.query<VendorRowDB>(
+      `select id, tenant_slug, vendor_code, legal_name, display_name, email, phone, address, city, state, country, tax_id, bank_details, default_payment_terms, status, created_at, updated_at
+       from vendors ${whereText}
+       order by display_name asc
+       limit 200`,
+      params
+    );
 
     return rows.map(mapVendorRow);
   } catch (err) {
@@ -414,23 +420,61 @@ async function ensureVendorTables(sql: SqlClient) {
 
     await db.query(createTableSql);
 
-    // Add tenant_slug if missing on existing tables
-    try {
-      await db.query(`alter table vendors add column if not exists tenant_slug text`);
-    } catch (e: any) {
-      console.warn('ensureVendorTables: ignoring alter table error:', e.message);
+    // Reconcile legacy vendor schemas: older deployments created vendors with
+    // code/name/payment_terms/is_active columns instead of the vendor_code/
+    // legal_name/status model the code queries. Add any missing columns, then
+    // backfill them from the legacy ones.
+    const compatAlters = [
+      `alter table vendors add column if not exists tenant_slug text`,
+      `alter table vendors add column if not exists vendor_code text`,
+      `alter table vendors add column if not exists legal_name text`,
+      `alter table vendors add column if not exists display_name text`,
+      `alter table vendors add column if not exists vendor_type text default 'goods'`,
+      `alter table vendors add column if not exists status text default 'active'`,
+      `alter table vendors add column if not exists default_currency text default 'NGN'`,
+      `alter table vendors add column if not exists default_payment_terms text`,
+      `alter table vendors add column if not exists default_expense_account text`,
+      `alter table vendors add column if not exists default_tax_rules jsonb`,
+      `alter table vendors add column if not exists bank_details jsonb`,
+      `alter table vendors add column if not exists metadata jsonb`,
+      `alter table vendors add column if not exists created_by text`,
+      `alter table vendors add column if not exists email text`,
+      `alter table vendors add column if not exists phone text`,
+      `alter table vendors add column if not exists address text`,
+      `alter table vendors add column if not exists city text`,
+      `alter table vendors add column if not exists state text`,
+      `alter table vendors add column if not exists country text`,
+      // Legacy schemas mark name/code NOT NULL — the new model writes
+      // legal_name/vendor_code instead, so relax the legacy constraints.
+      `alter table vendors alter column name drop not null`,
+      `alter table vendors alter column code drop not null`,
+      `alter table vendors alter column payment_terms drop not null`,
+      `alter table vendors alter column is_active drop not null`,
+    ];
+    for (const alterSql of compatAlters) {
+      try {
+        await db.query(alterSql);
+      } catch (e: any) {
+        console.warn('ensureVendorTables: ignoring alter table error:', e.message);
+      }
     }
 
-    // Add email/phone/address/city/state/country columns for compatibility
-    try {
-      await db.query(`alter table vendors add column if not exists email text`);
-      await db.query(`alter table vendors add column if not exists phone text`);
-      await db.query(`alter table vendors add column if not exists address text`);
-      await db.query(`alter table vendors add column if not exists city text`);
-      await db.query(`alter table vendors add column if not exists state text`);
-      await db.query(`alter table vendors add column if not exists country text`);
-    } catch (e: any) {
-      console.warn('ensureVendorTables: ignoring alter table error:', e.message);
+    // Backfill new-model columns from legacy columns where both exist
+    const backfills = [
+      `update vendors set vendor_code = code where vendor_code is null and code is not null`,
+      `update vendors set legal_name = name where legal_name is null and name is not null`,
+      `update vendors set display_name = coalesce(display_name, name)`,
+      `update vendors set default_payment_terms = payment_terms where default_payment_terms is null and payment_terms is not null`,
+      `update vendors set status = case when is_active then 'active' else 'inactive' end where status is null`,
+      `update vendors set bank_details = jsonb_build_object('accountNumber', account_number, 'bankCode', bank_code, 'bankName', bank_name) where bank_details is null and (account_number is not null or bank_code is not null or bank_name is not null)`,
+    ];
+    for (const bf of backfills) {
+      try {
+        await db.query(bf);
+      } catch (e: any) {
+        // Legacy column may not exist on this schema — that's fine
+        console.warn('ensureVendorTables: ignoring backfill error:', e.message);
+      }
     }
 
     // Create indexes individually and tolerate missing-column errors (some DBs

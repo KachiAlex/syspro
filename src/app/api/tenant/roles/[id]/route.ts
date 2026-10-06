@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 /**
  * DELETE /api/tenant/roles/[id]?tenantSlug=... — delete a custom role.
  * System roles (is_system) cannot be deleted. Assignments cascade-delete.
