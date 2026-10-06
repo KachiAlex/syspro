@@ -270,6 +270,9 @@ async function ensureHrTablesRun(sql: SqlClient = SQL) {
   await sql`alter table admin_payroll_runs add column if not exists paid_at timestamptz`;
   await sql`alter table admin_payroll_runs add column if not exists payment_journal_entry_id text`;
 
+  // Employee termination date (set when offboarding completes)
+  await sql`alter table admin_employees add column if not exists termination_date date`;
+
   // Employee bank details for payroll payout files
   await sql`alter table admin_employees add column if not exists bank_name text`;
   await sql`alter table admin_employees add column if not exists bank_account_number text`;
@@ -319,6 +322,58 @@ async function ensureHrTablesRun(sql: SqlClient = SQL) {
   `;
   await sql`create index if not exists idx_admin_leave_bal_tenant on admin_leave_balances(tenant_slug)`;
   await sql`create index if not exists idx_admin_leave_bal_emp on admin_leave_balances(tenant_slug, employee_id)`;
+
+  // Statutory deduction profile per tenant (tax bands, pension, other statutory lines)
+  await sql`
+    create table if not exists admin_statutory_profiles (
+      id text primary key,
+      tenant_slug text not null unique,
+      country_code text,
+      tax_bands jsonb not null default '[]',
+      pension_employee_rate numeric(6,3) not null default 8,
+      pension_employer_rate numeric(6,3) not null default 0,
+      other_deductions jsonb not null default '[]',
+      updated_by text,
+      created_at timestamptz default now(),
+      updated_at timestamptz default now()
+    )
+  `;
+
+  // Employee offboarding workflow
+  await sql`
+    create table if not exists admin_offboarding (
+      id text primary key,
+      tenant_slug text not null,
+      employee_id text not null,
+      employee_name text,
+      reason text,
+      last_working_day date,
+      status text not null default 'initiated' check (status in ('initiated','in_progress','completed','cancelled')),
+      checklist jsonb not null default '[]',
+      notes text,
+      initiated_by text,
+      completed_at timestamptz,
+      created_at timestamptz default now(),
+      updated_at timestamptz default now()
+    )
+  `;
+  await sql`create index if not exists idx_admin_offboarding_tenant on admin_offboarding(tenant_slug)`;
+
+  // Performance review cycles
+  await sql`
+    create table if not exists admin_review_cycles (
+      id text primary key,
+      tenant_slug text not null,
+      name text not null,
+      period_start date not null,
+      period_end date not null,
+      status text not null default 'open' check (status in ('open','closed')),
+      created_by text,
+      created_at timestamptz default now(),
+      updated_at timestamptz default now()
+    )
+  `;
+  await sql`create index if not exists idx_admin_review_cycles_tenant on admin_review_cycles(tenant_slug)`;
 
   // Staff reports
   await sql`
@@ -1307,6 +1362,11 @@ export async function getLeaveBalance(tenantSlug: string, employeeId: string) {
 // PAYROLL
 // ============================================================================
 
+export interface PayrollTaxBand {
+  upTo: number | null;
+  rate: number;
+}
+
 export interface PayrollConfig {
   taxRate: number;
   pensionRate: number;
@@ -1314,6 +1374,22 @@ export interface PayrollConfig {
   transportAllowance: number;
   housingAllowance: number;
   mealAllowance: number;
+  taxBands?: PayrollTaxBand[];
+}
+
+/** Progressive tax on a period amount. Bands are cumulative brackets on
+ * the amount itself; a null upTo is the top (unbounded) bracket. */
+export function computeProgressiveTax(amount: number, bands: PayrollTaxBand[]): number {
+  let tax = 0;
+  let lower = 0;
+  for (const band of bands) {
+    const upper = band.upTo ?? Number.POSITIVE_INFINITY;
+    if (amount <= lower) break;
+    const taxable = Math.min(amount, upper) - lower;
+    tax += (taxable * band.rate) / 100;
+    lower = upper;
+  }
+  return Math.round(tax * 100) / 100;
 }
 
 export interface PayrollAnomaly {
@@ -1490,14 +1566,15 @@ export function checkCompliance(
   for (const entry of entries) {
     if (entry.grossPay <= 0) continue;
 
-    // Tax sanity check: tax should be roughly config.taxRate % of gross
+    // Tax sanity check: progressive bands when configured, else flat rate.
     // (an explicit rate of 0 means "no tax expected" — don't fall back to defaults)
-    const taxRate = config.taxRate ?? 7.5;
-    const expectedTax = (entry.grossPay * taxRate) / 100;
+    const expectedTax = config.taxBands?.length
+      ? computeProgressiveTax(entry.grossPay, config.taxBands)
+      : (entry.grossPay * (config.taxRate ?? 7.5)) / 100;
     const taxDiff = Math.abs(entry.tax - expectedTax);
     if (taxDiff > 1) {
       issues.push(
-        `${entry.employeeName}: Tax (${entry.tax}) deviates from expected ${expectedTax.toFixed(2)} based on ${taxRate}% rate`
+        `${entry.employeeName}: Tax (${entry.tax}) deviates from expected ${expectedTax.toFixed(2)}`
       );
     }
 

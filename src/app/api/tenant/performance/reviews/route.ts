@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { sql } from "@/lib/sql-client";
 import { ensureReviewTables } from "@/lib/tenant/performance-reviews";
+import { ensureHrTables } from "@/lib/hr/db";
 import {
   validateTenantContext,
   getPaginationParams,
@@ -23,6 +24,7 @@ const CreateReviewSchema = z.object({
   feedback: z.string().optional(),
   reviewDate: z.string().optional(),
   reviewPeriod: z.string().optional(),
+  cycleId: z.string().optional(),
 });
 
 
@@ -38,6 +40,7 @@ function mapReview(r: any) {
     feedback: r.comments,
     reviewDate: r.review_date ? new Date(r.review_date).toISOString().split("T")[0] : null,
     reviewPeriod: r.review_period,
+    cycleId: r.cycle_id ?? null,
     status: r.status === "completed" ? "Completed" : "In Progress",
     createdDate: r.created_at ? new Date(r.created_at).toISOString().split("T")[0] : null,
   };
@@ -107,17 +110,30 @@ export async function POST(request: NextRequest) {
     const reviewerName = parsed.data.reviewer ?? (rev as any)?.name ?? null;
     const status = (parsed.data.status ?? "").toLowerCase() === "completed" ? "completed" : "in_progress";
 
+    // If a cycle is specified, it must exist, belong to this tenant, and be open
+    let cycleId: string | null = null;
+    if (parsed.data.cycleId) {
+      await ensureHrTables(sql);
+      const [cycle] = await sql`
+        select status from admin_review_cycles
+        where id = ${parsed.data.cycleId} and tenant_slug = ${context.tenantSlug}
+      ` as any[];
+      if (!cycle) return errorResponse("Review cycle not found", 404);
+      if (cycle.status !== "open") return errorResponse("Cannot attach reviews to a closed cycle", 400);
+      cycleId = parsed.data.cycleId;
+    }
+
     const id = randomUUID();
     const [row] = await sql`
       insert into tenant_performance_reviews (
         id, tenant_slug, employee_id, employee_name, reviewer_id, reviewer_name,
-        rating, comments, review_date, review_period, status, created_at, updated_at
+        rating, comments, review_date, review_period, cycle_id, status, created_at, updated_at
       ) values (
         ${id}, ${context.tenantSlug}, ${parsed.data.employeeId}, ${(emp as any)?.name ?? null},
         ${reviewerId}, ${reviewerName},
         ${parsed.data.rating}, ${parsed.data.comments ?? parsed.data.feedback ?? null},
         ${parsed.data.reviewDate ?? null}, ${parsed.data.reviewPeriod ?? null},
-        ${status}, now(), now()
+        ${cycleId}, ${status}, now(), now()
       )
       returning *
     `;

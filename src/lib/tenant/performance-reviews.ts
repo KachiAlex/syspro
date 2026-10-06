@@ -19,4 +19,5 @@ export async function ensureReviewTables(sql: SqlClient = SQL) {
     )
   `;
   await sql`create index if not exists idx_tenant_reviews on tenant_performance_reviews(tenant_slug)`;
+  await sql`alter table tenant_performance_reviews add column if not exists cycle_id text`;
 }

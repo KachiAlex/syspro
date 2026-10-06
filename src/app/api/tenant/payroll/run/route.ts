@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/sql-client";
-import { createPayrollRun, ensureHrTables } from "@/lib/hr/db";
+import { createPayrollRun, ensureHrTables, computeProgressiveTax } from "@/lib/hr/db";
 import {
   validateTenantContext,
   errorResponse,
@@ -62,6 +62,22 @@ export async function POST(request: NextRequest) {
       .split("T")[0];
 
     await ensureHrTables(sql);
+
+    // Statutory profile (tax bands, pension, other statutory deductions)
+    const [statutory] = await sql`
+      select * from admin_statutory_profiles where tenant_slug = ${context.tenantSlug}
+    ` as any[];
+    const taxBands: { upTo: number | null; rate: number }[] =
+      Array.isArray(statutory?.tax_bands) ? statutory.tax_bands : [];
+    const pensionEmployeeRate =
+      statutory != null ? Number(statutory.pension_employee_rate) : DEFAULT_CONFIG.pensionRate;
+    const otherStatutory: { name: string; type: string; amount: number }[] =
+      Array.isArray(statutory?.other_deductions) ? statutory.other_deductions : [];
+    const runConfig = {
+      ...DEFAULT_CONFIG,
+      pensionRate: pensionEmployeeRate,
+      taxBands,
+    };
 
     const employees = await sql`
       select id, name, coalesce(salary, 0)::float as salary,
@@ -173,9 +189,19 @@ export async function POST(request: NextRequest) {
       (emp as any)._appliedAdjustments = appliedAdjustmentIds;
 
       const grossPay = Math.round((baseSalary + componentEarnings + adjBonus) * 100) / 100;
-      const pension = Math.round(grossPay * (DEFAULT_CONFIG.pensionRate / 100) * 100) / 100;
+      const tax = computeProgressiveTax(grossPay, taxBands);
+      const pension = Math.round(grossPay * (pensionEmployeeRate / 100) * 100) / 100;
+      let healthInsurance = 0;
+      let statutoryOther = 0;
+      for (const d of otherStatutory) {
+        const amt = d.type === "percent_of_gross"
+          ? Math.round(grossPay * (d.amount / 100) * 100) / 100
+          : d.amount;
+        if (/health|nhis|hmo/i.test(d.name)) healthInsurance += amt;
+        else statutoryOther += amt;
+      }
       const totalDeductions = Math.round(
-        (pension + unpaidDeduction + componentDeductions + adjDeduction) * 100
+        (tax + pension + healthInsurance + statutoryOther + unpaidDeduction + componentDeductions + adjDeduction) * 100
       ) / 100;
       const netPay = Math.round((grossPay - totalDeductions) * 100) / 100;
 
@@ -189,10 +215,10 @@ export async function POST(request: NextRequest) {
         housingAllowance: DEFAULT_CONFIG.housingAllowance,
         mealAllowance: DEFAULT_CONFIG.mealAllowance,
         bonus: adjBonus,
-        tax: 0,
+        tax,
         pension,
-        healthInsurance: 0,
-        otherDeductions: unpaidDeduction + componentDeductions + adjDeduction,
+        healthInsurance,
+        otherDeductions: statutoryOther + unpaidDeduction + componentDeductions + adjDeduction,
         totalDeductions,
         grossPay,
         netPay,
@@ -202,7 +228,7 @@ export async function POST(request: NextRequest) {
     const result = await createPayrollRun({
       tenantSlug: context.tenantSlug,
       period,
-      config: DEFAULT_CONFIG,
+      config: runConfig,
       entries,
       processedBy: context.userId,
       status: "draft",
