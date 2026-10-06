@@ -1,9 +1,11 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
+import { sql } from "@/lib/sql-client";
+import { ensureRecruitmentTables } from "@/lib/hr/db-recruitment";
 import {
   validateTenantContext,
   getPaginationParams,
-  getSortParams,
   errorResponse,
   handleTenantAdminError,
   checkRateLimit,
@@ -12,17 +14,59 @@ import {
 import { z } from "zod";
 
 const CreateCandidateSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().optional(),
+  fullName: z.string().optional(),
   email: z.string().email(),
   phone: z.string().optional(),
-  jobId: z.string(),
+  jobId: z.string().optional(),
   resume: z.string().optional(),
-  status: z.enum(["applied", "screening", "interview", "offer", "rejected"]).optional(),
+  resumeUrl: z.string().optional(),
+  source: z.string().optional(),
+  status: z.string().optional(),
+  currentStage: z.string().optional(),
 });
+
+const STAGE_TO_DB: Record<string, string> = {
+  applied: "new",
+  new: "new",
+  screening: "screening",
+  shortlist: "shortlist",
+  interview: "interview",
+  offer: "offer",
+  hired: "hired",
+  rejected: "rejected",
+  talent_pool: "talent_pool",
+  "talent-pool": "talent_pool",
+};
+
+const STAGE_TO_UI: Record<string, string> = {
+  new: "Applied",
+  applied: "Applied",
+  screening: "Screening",
+  shortlist: "Screening",
+  interview: "Interview",
+  offer: "Offer",
+  hired: "Hired",
+  rejected: "Rejected",
+  talent_pool: "Applied",
+};
+
+function mapCandidate(r: any) {
+  return {
+    id: r.id,
+    name: r.full_name,
+    email: r.email,
+    phone: r.phone,
+    jobId: r.requisition_id ?? null,
+    jobTitle: r.job_title ?? null,
+    stage: STAGE_TO_UI[r.current_stage] ?? r.current_stage,
+    rating: r.overall_score != null ? Number(r.overall_score) : null,
+    appliedDate: r.created_at ? new Date(r.created_at).toISOString().split("T")[0] : null,
+  };
+}
 
 /**
  * GET /api/tenant/recruitment/candidates
- * Retrieve candidates for a tenant
  */
 export async function GET(request: NextRequest) {
   try {
@@ -33,68 +77,35 @@ export async function GET(request: NextRequest) {
     }
 
     const pagination = getPaginationParams(request);
-    const sort = getSortParams(request);
+    await ensureRecruitmentTables(sql);
 
-    // Mock candidate data
-    const candidatesData = {
-      candidates: [
-        {
-          id: "cand-1",
-          name: "Alice Johnson",
-          email: "alice@example.com",
-          phone: "+1-555-0101",
-          jobId: "job-1",
-          jobTitle: "Senior Software Engineer",
-          status: "interview",
-          appliedDate: "2026-03-25",
-          rating: 4.5,
-          notes: "Strong technical background",
-        },
-        {
-          id: "cand-2",
-          name: "Bob Martinez",
-          email: "bob@example.com",
-          phone: "+1-555-0102",
-          jobId: "job-1",
-          jobTitle: "Senior Software Engineer",
-          status: "screening",
-          appliedDate: "2026-03-28",
-          rating: 4.0,
-          notes: "Good fit for the role",
-        },
-        {
-          id: "cand-3",
-          name: "Carol Davis",
-          email: "carol@example.com",
-          phone: "+1-555-0103",
-          jobId: "job-2",
-          jobTitle: "Product Manager",
-          status: "applied",
-          appliedDate: "2026-03-30",
-          rating: 3.5,
-          notes: "Relevant experience",
-        },
-      ],
-    };
+    const rows = await sql`
+      select c.*, a.requisition_id, r.title as job_title
+      from admin_candidates c
+      left join admin_applications a
+        on a.tenant_slug = c.tenant_slug and a.candidate_id = c.id
+      left join admin_job_requisitions r
+        on r.id = a.requisition_id
+      where c.tenant_slug = ${context.tenantSlug}
+      order by c.created_at desc
+      limit ${pagination.limit} offset ${(pagination.page - 1) * pagination.limit}
+    `;
+
+    const candidates = (rows as any[]).map(mapCandidate);
 
     return NextResponse.json({
       success: true,
-      data: candidatesData,
-      pagination: {
-        page: pagination.page,
-        limit: pagination.limit,
-        total: candidatesData.candidates.length,
-      },
+      data: candidates,
+      pagination: { page: pagination.page, limit: pagination.limit, total: candidates.length },
     });
   } catch (error) {
-    console.error("Candidates GET error:", error);
+    console.error("Recruitment candidates GET error:", error);
     return handleTenantAdminError(error);
   }
 }
 
 /**
  * POST /api/tenant/recruitment/candidates
- * Create a candidate record
  */
 export async function POST(request: NextRequest) {
   try {
@@ -105,27 +116,46 @@ export async function POST(request: NextRequest) {
       return errorResponse(parsed.error, 400, parsed.details);
     }
 
-    const candidate = {
-      id: `cand-${Date.now()}`,
-      ...parsed.data,
-      tenantSlug: context.tenantSlug,
-      status: parsed.data.status || "applied",
-      appliedDate: new Date().toISOString().split('T')[0],
-      rating: 0,
-      createdAt: new Date().toISOString(),
-      createdBy: context.userId,
-    };
+    await ensureRecruitmentTables(sql);
+
+    const name = parsed.data.name ?? parsed.data.fullName;
+    if (!name) {
+      return errorResponse("name is required", 400);
+    }
+    const stageInput = (parsed.data.status ?? parsed.data.currentStage ?? "applied").toLowerCase();
+    const stage = STAGE_TO_DB[stageInput] ?? "new";
+
+    const id = randomUUID();
+    const [row] = await sql`
+      insert into admin_candidates (
+        id, tenant_slug, full_name, email, phone, resume_url,
+        source, current_stage, created_at, updated_at
+      ) values (
+        ${id}, ${context.tenantSlug}, ${name}, ${parsed.data.email},
+        ${parsed.data.phone ?? null}, ${parsed.data.resume ?? parsed.data.resumeUrl ?? null},
+        ${parsed.data.source ?? "manual"}, ${stage}, now(), now()
+      )
+      returning *
+    `;
+
+    // Link to the job via an application record when a jobId was supplied.
+    if (parsed.data.jobId) {
+      await sql`
+        insert into admin_applications (
+          id, tenant_slug, requisition_id, candidate_id, status, created_at, updated_at
+        ) values (
+          ${randomUUID()}, ${context.tenantSlug}, ${parsed.data.jobId}, ${id}, 'applied', now(), now()
+        )
+        on conflict do nothing
+      `;
+    }
 
     return NextResponse.json(
-      {
-        success: true,
-        data: candidate,
-        message: "Candidate created successfully",
-      },
+      { success: true, data: mapCandidate(row), message: "Candidate created successfully" },
       { status: 201 }
     );
   } catch (error) {
-    console.error("Candidates POST error:", error);
+    console.error("Recruitment candidates POST error:", error);
     return handleTenantAdminError(error);
   }
 }

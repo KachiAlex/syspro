@@ -1,9 +1,11 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
+import { sql } from "@/lib/sql-client";
+import { ensureHrTables } from "@/lib/hr/db";
 import {
   validateTenantContext,
   getPaginationParams,
-  getSortParams,
   errorResponse,
   handleTenantAdminError,
   checkRateLimit,
@@ -13,16 +15,27 @@ import { z } from "zod";
 
 const CreateLeaveRequestSchema = z.object({
   employeeId: z.string(),
-  leaveType: z.enum(["annual", "sick", "maternity", "unpaid", "other"]),
+  employeeName: z.string().optional(),
+  leaveType: z.enum(["annual", "sick", "personal", "maternity", "paternity", "unpaid", "other"]),
   startDate: z.string(),
   endDate: z.string(),
   reason: z.string().optional(),
   approverComments: z.string().optional(),
 });
 
+function daysBetween(start: string, end: string): number {
+  const ms = new Date(end).getTime() - new Date(start).getTime();
+  return Math.max(1, Math.round(ms / 86400000) + 1);
+}
+
+function statusLabel(s: string | null | undefined): string {
+  const v = (s || "pending").toLowerCase();
+  return v.charAt(0).toUpperCase() + v.slice(1);
+}
+
 /**
  * GET /api/tenant/leave/requests
- * Retrieve leave requests for a tenant
+ * Real leave requests for the tenant.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -32,49 +45,43 @@ export async function GET(request: NextRequest) {
       return errorResponse("Rate limit exceeded", 429);
     }
 
+    const url = new URL(request.url);
+    const status = url.searchParams.get("status");
     const pagination = getPaginationParams(request);
-    const sort = getSortParams(request);
+    await ensureHrTables(sql);
 
-    // Mock leave request data
-    const leaveData = {
-      requests: [
-        {
-          id: "leave-1",
-          employeeId: "emp-1",
-          employeeName: "John Doe",
-          leaveType: "annual",
-          startDate: "2026-04-10",
-          endDate: "2026-04-15",
-          days: 5,
-          reason: "Vacation",
-          status: "approved",
-          approvedBy: "Manager",
-          approvedDate: "2026-04-01",
-        },
-        {
-          id: "leave-2",
-          employeeId: "emp-2",
-          employeeName: "Jane Smith",
-          leaveType: "sick",
-          startDate: "2026-04-02",
-          endDate: "2026-04-03",
-          days: 2,
-          reason: "Medical appointment",
-          status: "pending",
-          approvedBy: null,
-          approvedDate: null,
-        },
-      ],
-    };
+    const rows = status
+      ? await sql`
+          select * from admin_leave
+          where tenant_slug = ${context.tenantSlug} and status = ${status.toLowerCase()}
+          order by created_at desc
+          limit ${pagination.limit} offset ${(pagination.page - 1) * pagination.limit}
+        `
+      : await sql`
+          select * from admin_leave
+          where tenant_slug = ${context.tenantSlug}
+          order by created_at desc
+          limit ${pagination.limit} offset ${(pagination.page - 1) * pagination.limit}
+        `;
+
+    const requests = (rows as any[]).map((r) => ({
+      id: r.id,
+      employeeId: r.employee_id,
+      employeeName: r.employee_name,
+      leaveType: r.leave_type,
+      startDate: r.start_date instanceof Date ? r.start_date.toISOString().split("T")[0] : r.start_date,
+      endDate: r.end_date instanceof Date ? r.end_date.toISOString().split("T")[0] : r.end_date,
+      days: daysBetween(String(r.start_date), String(r.end_date)),
+      reason: r.reason,
+      status: statusLabel(r.status),
+      approvedBy: r.approved_by,
+      createdAt: r.created_at,
+    }));
 
     return NextResponse.json({
       success: true,
-      data: leaveData,
-      pagination: {
-        page: pagination.page,
-        limit: pagination.limit,
-        total: leaveData.requests.length,
-      },
+      data: requests,
+      pagination: { page: pagination.page, limit: pagination.limit, total: requests.length },
     });
   } catch (error) {
     console.error("Leave request GET error:", error);
@@ -84,7 +91,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/tenant/leave/requests
- * Create a leave request
+ * Create a leave request (persisted to admin_leave).
  */
 export async function POST(request: NextRequest) {
   try {
@@ -95,19 +102,45 @@ export async function POST(request: NextRequest) {
       return errorResponse(parsed.error, 400, parsed.details);
     }
 
-    const leaveRequest = {
-      id: `leave-${Date.now()}`,
-      ...parsed.data,
-      tenantSlug: context.tenantSlug,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      createdBy: context.userId,
-    };
+    await ensureHrTables(sql);
+    const leaveType = parsed.data.leaveType === "other" ? "personal" : parsed.data.leaveType;
+    const id = randomUUID();
+
+    // Resolve employee name when not supplied
+    let employeeName = parsed.data.employeeName;
+    if (!employeeName) {
+      const [emp] = await sql`
+        select name from admin_employees
+        where tenant_slug = ${context.tenantSlug} and id = ${parsed.data.employeeId}
+        limit 1
+      `;
+      employeeName = (emp as any)?.name ?? parsed.data.employeeId;
+    }
+
+    const [row] = await sql`
+      insert into admin_leave (
+        id, tenant_slug, employee_id, employee_name, leave_type,
+        start_date, end_date, reason, status, created_at, updated_at
+      ) values (
+        ${id}, ${context.tenantSlug}, ${parsed.data.employeeId}, ${employeeName},
+        ${leaveType}, ${parsed.data.startDate}, ${parsed.data.endDate},
+        ${parsed.data.reason ?? ""}, 'pending', now(), now()
+      )
+      returning *
+    `;
 
     return NextResponse.json(
       {
         success: true,
-        data: leaveRequest,
+        data: {
+          id: (row as any).id,
+          employeeId: (row as any).employee_id,
+          employeeName: (row as any).employee_name,
+          leaveType: (row as any).leave_type,
+          startDate: (row as any).start_date,
+          endDate: (row as any).end_date,
+          status: "Pending",
+        },
         message: "Leave request created successfully",
       },
       { status: 201 }

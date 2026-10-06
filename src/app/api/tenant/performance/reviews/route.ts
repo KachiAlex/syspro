@@ -1,9 +1,11 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
+import { sql } from "@/lib/sql-client";
+import { ensureReviewTables } from "@/lib/tenant/performance-reviews";
 import {
   validateTenantContext,
   getPaginationParams,
-  getSortParams,
   errorResponse,
   handleTenantAdminError,
   checkRateLimit,
@@ -13,15 +15,36 @@ import { z } from "zod";
 
 const CreateReviewSchema = z.object({
   employeeId: z.string(),
-  reviewerId: z.string(),
+  reviewerId: z.string().optional(),
+  reviewer: z.string().optional(),
+  status: z.string().optional(),
   rating: z.number().min(1).max(5),
   comments: z.string().optional(),
+  feedback: z.string().optional(),
   reviewDate: z.string().optional(),
+  reviewPeriod: z.string().optional(),
 });
+
+
+function mapReview(r: any) {
+  return {
+    id: r.id,
+    employeeId: r.employee_id,
+    employeeName: r.employee_name ?? r.employee_id,
+    reviewerId: r.reviewer_id,
+    reviewer: r.reviewer_name ?? r.reviewer_id,
+    rating: Number(r.rating) || 0,
+    comments: r.comments,
+    feedback: r.comments,
+    reviewDate: r.review_date ? new Date(r.review_date).toISOString().split("T")[0] : null,
+    reviewPeriod: r.review_period,
+    status: r.status === "completed" ? "Completed" : "In Progress",
+    createdDate: r.created_at ? new Date(r.created_at).toISOString().split("T")[0] : null,
+  };
+}
 
 /**
  * GET /api/tenant/performance/reviews
- * Retrieve performance reviews for a tenant
  */
 export async function GET(request: NextRequest) {
   try {
@@ -32,55 +55,21 @@ export async function GET(request: NextRequest) {
     }
 
     const pagination = getPaginationParams(request);
-    const sort = getSortParams(request);
+    await ensureReviewTables(sql);
 
-    // Mock performance review data
-    const reviewsData = {
-      reviews: [
-        {
-          id: "review-1",
-          employeeId: "emp-1",
-          employeeName: "John Doe",
-          reviewerId: "emp-10",
-          reviewerName: "Manager",
-          rating: 4.5,
-          comments: "Excellent performance and leadership skills",
-          reviewDate: "2026-03-15",
-          status: "completed",
-        },
-        {
-          id: "review-2",
-          employeeId: "emp-2",
-          employeeName: "Jane Smith",
-          reviewerId: "emp-10",
-          reviewerName: "Manager",
-          rating: 4.0,
-          comments: "Strong technical skills and teamwork",
-          reviewDate: "2026-03-18",
-          status: "completed",
-        },
-        {
-          id: "review-3",
-          employeeId: "emp-3",
-          employeeName: "Bob Wilson",
-          reviewerId: "emp-10",
-          reviewerName: "Manager",
-          rating: null,
-          comments: null,
-          reviewDate: null,
-          status: "pending",
-        },
-      ],
-    };
+    const rows = await sql`
+      select * from tenant_performance_reviews
+      where tenant_slug = ${context.tenantSlug}
+      order by created_at desc
+      limit ${pagination.limit} offset ${(pagination.page - 1) * pagination.limit}
+    `;
+
+    const reviews = (rows as any[]).map(mapReview);
 
     return NextResponse.json({
       success: true,
-      data: reviewsData,
-      pagination: {
-        page: pagination.page,
-        limit: pagination.limit,
-        total: reviewsData.reviews.length,
-      },
+      data: reviews,
+      pagination: { page: pagination.page, limit: pagination.limit, total: reviews.length },
     });
   } catch (error) {
     console.error("Performance reviews GET error:", error);
@@ -90,7 +79,6 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/tenant/performance/reviews
- * Create a performance review
  */
 export async function POST(request: NextRequest) {
   try {
@@ -101,22 +89,41 @@ export async function POST(request: NextRequest) {
       return errorResponse(parsed.error, 400, parsed.details);
     }
 
-    const review = {
-      id: `review-${Date.now()}`,
-      ...parsed.data,
-      tenantSlug: context.tenantSlug,
-      reviewDate: parsed.data.reviewDate || new Date().toISOString().split('T')[0],
-      status: "completed",
-      createdAt: new Date().toISOString(),
-      createdBy: context.userId,
-    };
+    await ensureReviewTables(sql);
+
+    const [emp] = await sql`
+      select name from admin_employees
+      where tenant_slug = ${context.tenantSlug} and id = ${parsed.data.employeeId}
+      limit 1
+    `;
+    const reviewerId = parsed.data.reviewerId ?? context.userId;
+    const [rev] = await sql`
+      select coalesce(e.name, a.name) as name
+      from (select ${context.tenantSlug}::text as ts) t
+      left join admin_employees e on e.tenant_slug = t.ts and e.id::text = ${reviewerId}
+      left join tenant_admins a on a.tenant_slug = t.ts and a.id::text = ${reviewerId}
+      limit 1
+    `;
+    const reviewerName = parsed.data.reviewer ?? (rev as any)?.name ?? null;
+    const status = (parsed.data.status ?? "").toLowerCase() === "completed" ? "completed" : "in_progress";
+
+    const id = randomUUID();
+    const [row] = await sql`
+      insert into tenant_performance_reviews (
+        id, tenant_slug, employee_id, employee_name, reviewer_id, reviewer_name,
+        rating, comments, review_date, review_period, status, created_at, updated_at
+      ) values (
+        ${id}, ${context.tenantSlug}, ${parsed.data.employeeId}, ${(emp as any)?.name ?? null},
+        ${reviewerId}, ${reviewerName},
+        ${parsed.data.rating}, ${parsed.data.comments ?? parsed.data.feedback ?? null},
+        ${parsed.data.reviewDate ?? null}, ${parsed.data.reviewPeriod ?? null},
+        ${status}, now(), now()
+      )
+      returning *
+    `;
 
     return NextResponse.json(
-      {
-        success: true,
-        data: review,
-        message: "Performance review created successfully",
-      },
+      { success: true, data: mapReview(row), message: "Performance review created successfully" },
       { status: 201 }
     );
   } catch (error) {

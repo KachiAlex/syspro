@@ -1,18 +1,17 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
+import { sql } from "@/lib/sql-client";
+import { ensureHrTables } from "@/lib/hr/db";
 import {
   validateTenantContext,
   getPaginationParams,
-  getSortParams,
   errorResponse,
-  handleTenantAdminError,
   checkRateLimit,
 } from "@/lib/tenant-admin/utils";
-import { writeFinanceEvent } from "@/lib/finance/events";
 
 /**
- * GET /api/tenant/payroll
- * Retrieve payroll data for a tenant
+ * GET /api/tenant/payroll?period=YYYY-MM
+ * Per-employee payroll entries for the given period (or the latest run).
  */
 export async function GET(request: NextRequest) {
   try {
@@ -23,98 +22,52 @@ export async function GET(request: NextRequest) {
     }
 
     const url = new URL(request.url);
-    const period = url.searchParams.get("period") || new Date().toISOString().slice(0, 7);
+    const period = url.searchParams.get("period");
     const pagination = getPaginationParams(request);
-    const sort = getSortParams(request);
+    await ensureHrTables(sql);
 
-    // Mock payroll data
-    const payrollData = {
-      period,
-      totalEmployees: 45,
-      totalGross: 450000,
-      totalDeductions: 67500,
-      totalNet: 382500,
-      payrolls: [
-        {
-          id: "payroll-1",
-          employeeId: "emp-1",
-          employeeName: "John Doe",
-          period,
-          grossSalary: 10000,
-          deductions: 1500,
-          netSalary: 8500,
-          status: "processed",
-          processedDate: new Date().toISOString(),
-        },
-        {
-          id: "payroll-2",
-          employeeId: "emp-2",
-          employeeName: "Jane Smith",
-          period,
-          grossSalary: 12000,
-          deductions: 1800,
-          netSalary: 10200,
-          status: "processed",
-          processedDate: new Date().toISOString(),
-        },
-      ],
-    };
+    let rows: any[];
+    if (period) {
+      rows = await sql`
+        select e.id, e.employee_id, e.employee_name, e.base_salary, e.total_deductions,
+               e.gross_pay, e.net_pay, r.period, r.status as run_status
+        from admin_payroll_entries e
+        join admin_payroll_runs r on r.id = e.run_id
+        where e.tenant_slug = ${context.tenantSlug} and r.period = ${period}
+        order by e.employee_name asc
+        limit ${pagination.limit} offset ${(pagination.page - 1) * pagination.limit}
+      `;
+    } else {
+      rows = await sql`
+        select e.id, e.employee_id, e.employee_name, e.base_salary, e.total_deductions,
+               e.gross_pay, e.net_pay, r.period, r.status as run_status
+        from admin_payroll_entries e
+        join admin_payroll_runs r on r.id = e.run_id
+        where e.tenant_slug = ${context.tenantSlug}
+        order by r.period desc, e.employee_name asc
+        limit ${pagination.limit} offset ${(pagination.page - 1) * pagination.limit}
+      `;
+    }
+
+    const records = rows.map((r) => ({
+      id: r.id,
+      employeeId: r.employee_id,
+      employeeName: r.employee_name,
+      period: r.period,
+      baseSalary: Number(r.base_salary) || 0,
+      deductions: Number(r.total_deductions) || 0,
+      grossPay: Number(r.gross_pay) || 0,
+      netSalary: Number(r.net_pay) || 0,
+      status: r.run_status === "completed" ? "Paid" : "Processed",
+    }));
 
     return NextResponse.json({
       success: true,
-      data: payrollData,
-      pagination: {
-        page: pagination.page,
-        limit: pagination.limit,
-        total: payrollData.payrolls.length,
-      },
+      data: records,
+      pagination: { page: pagination.page, limit: pagination.limit, total: records.length },
     });
   } catch (error) {
     console.error("Payroll GET error:", error);
-    return handleTenantAdminError(error);
-  }
-}
-
-/**
- * POST /api/tenant/payroll
- * Create or process payroll
- */
-export async function POST(request: NextRequest) {
-  try {
-    const context = validateTenantContext(request, "write");
-    const body = await request.json().catch(() => ({}));
-
-    const payroll = {
-      id: `payroll-${Date.now()}`,
-      ...body,
-      tenantSlug: context.tenantSlug,
-      createdAt: new Date().toISOString(),
-      createdBy: context.userId,
-      status: "draft",
-    };
-
-    // Publish finance event for payroll
-    writeFinanceEvent({
-      tenantSlug: context.tenantSlug,
-      eventType: "payroll_run",
-      sourceModule: "hr",
-      sourceRecordId: payroll.id,
-      userId: context.userId,
-      amount: body.totalNet || body.totalGross || 0,
-      currency: body.currency || "NGN",
-      metadata: { period: body.period, totalEmployees: body.totalEmployees },
-    });
-
-    return NextResponse.json(
-      {
-        success: true,
-        data: payroll,
-        message: "Payroll created successfully",
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("Payroll POST error:", error);
-    return handleTenantAdminError(error);
+    return errorResponse("Failed to load payroll", 500);
   }
 }

@@ -4,6 +4,7 @@ import { sql } from "@/lib/sql-client";
 import { requireDashboardPermission } from "@/lib/tenant-admin/permissions";
 
 import { requireModuleAccess } from "@/lib/api-auth";
+
 export async function GET(request: NextRequest) {
     const _scope = await requireModuleAccess(request, "admin", "read");
     if (!_scope.ok) return _scope.response;
@@ -20,58 +21,47 @@ export async function GET(request: NextRequest) {
   }
 
   const now = new Date().toISOString();
+  const metrics: any[] = [];
 
+  // API is healthy by virtue of this response being served; report real latency.
+  const apiStart = Date.now();
+  metrics.push({
+    service: "API",
+    status: "healthy",
+    uptime: "n/a",
+    lastChecked: now,
+    latency: Date.now() - apiStart,
+  });
+
+  // Database: real connectivity + latency check
   try {
     const dbStart = Date.now();
-    await sql`select now()`;
-    const dbLatency = Date.now() - dbStart;
-
-    const metrics = [
-      {
-        service: "API",
-        status: "healthy",
-        uptime: "99.9%",
-        lastChecked: now,
-        latency: 12,
-      },
-      {
-        service: "Database",
-        status: "healthy",
-        uptime: "99.9%",
-        lastChecked: now,
-        latency: dbLatency,
-      },
-      {
-        service: "Authentication",
-        status: "healthy",
-        uptime: "99.9%",
-        lastChecked: now,
-        latency: 5,
-      },
-    ];
-
-    return NextResponse.json({ metrics });
-  } catch (error) {
-    console.error("Health check failed:", error);
-    return NextResponse.json(
-      {
-        metrics: [
-          {
-            service: "API",
-            status: "healthy",
-            uptime: "99.9%",
-            lastChecked: now,
-            latency: 12,
-          },
-          {
-            service: "Database",
-            status: "down",
-            uptime: "0%",
-            lastChecked: now,
-          },
-        ],
-      },
-      { status: 200 }
-    );
+    await sql`select 1`;
+    metrics.push({
+      service: "Database",
+      status: "healthy",
+      uptime: "n/a",
+      lastChecked: now,
+      latency: Date.now() - dbStart,
+    });
+  } catch {
+    metrics.push({
+      service: "Database",
+      status: "down",
+      uptime: "n/a",
+      lastChecked: now,
+      latency: null,
+    });
   }
+
+  // Authentication: healthy if this request carried a verified session
+  metrics.push({
+    service: "Authentication",
+    status: "healthy",
+    uptime: "n/a",
+    lastChecked: now,
+    latency: null,
+  });
+
+  return NextResponse.json({ metrics });
 }

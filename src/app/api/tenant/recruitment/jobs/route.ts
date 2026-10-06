@@ -1,9 +1,11 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
+import { sql } from "@/lib/sql-client";
+import { ensureRecruitmentTables } from "@/lib/hr/db-recruitment";
 import {
   validateTenantContext,
   getPaginationParams,
-  getSortParams,
   errorResponse,
   handleTenantAdminError,
   checkRateLimit,
@@ -18,12 +20,52 @@ const CreateJobSchema = z.object({
   requirements: z.array(z.string()).optional(),
   salary: z.number().optional(),
   location: z.string().optional(),
-  status: z.enum(["open", "closed", "on-hold"]).optional(),
+  status: z
+    .string()
+    .optional()
+    .transform((s) => (s ?? "open").toLowerCase().replace(/\s+/g, "-"))
+    .pipe(z.enum(["open", "closed", "on-hold"])),
+  employmentType: z.string().optional(),
 });
+
+const STATUS_TO_DB: Record<string, string> = {
+  open: "open",
+  closed: "closed",
+  "on-hold": "paused",
+};
+
+const STATUS_TO_UI: Record<string, string> = {
+  open: "Open",
+  approved: "Open",
+  paused: "On Hold",
+  closed: "Closed",
+  cancelled: "Closed",
+  draft: "Draft",
+  pending_approval: "Pending Approval",
+};
+
+function mapJob(r: any) {
+  return {
+    id: r.id,
+    title: r.title,
+    department: r.department_name ?? r.department_id,
+    departmentId: r.department_id,
+    description: r.description,
+    location: r.location,
+    salaryRange: r.salary_range,
+    status: STATUS_TO_UI[r.status] ?? r.status,
+    applicants: Number(r.applicant_count) || 0,
+    headcount: r.headcount,
+    postedDate: (r.posted_at ?? r.created_at)
+      ? new Date(r.posted_at ?? r.created_at).toISOString().split("T")[0]
+      : null,
+    createdDate: r.created_at ? new Date(r.created_at).toISOString().split("T")[0] : null,
+  };
+}
 
 /**
  * GET /api/tenant/recruitment/jobs
- * Retrieve job postings for a tenant
+ * Job requisitions with live applicant counts.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -34,56 +76,35 @@ export async function GET(request: NextRequest) {
     }
 
     const pagination = getPaginationParams(request);
-    const sort = getSortParams(request);
+    await ensureRecruitmentTables(sql);
 
-    // Mock job data
-    const jobsData = {
-      jobs: [
-        {
-          id: "job-1",
-          title: "Senior Software Engineer",
-          department: "Engineering",
-          description: "We are looking for a senior software engineer",
-          requirements: ["5+ years experience", "Node.js", "React"],
-          salary: 120000,
-          location: "San Francisco, CA",
-          status: "open",
-          postedDate: "2026-03-15",
-          applicants: 12,
-        },
-        {
-          id: "job-2",
-          title: "Product Manager",
-          department: "Product",
-          description: "Lead product strategy and development",
-          requirements: ["3+ years PM experience", "Data analysis"],
-          salary: 110000,
-          location: "New York, NY",
-          status: "open",
-          postedDate: "2026-03-20",
-          applicants: 8,
-        },
-      ],
-    };
+    const rows = await sql`
+      select r.*, d.name as department_name,
+        (select count(*)::int from admin_applications a
+          where a.requisition_id = r.id) as applicant_count
+      from admin_job_requisitions r
+      left join admin_departments d
+        on d.tenant_slug = r.tenant_slug and d.id = r.department_id
+      where r.tenant_slug = ${context.tenantSlug}
+      order by r.created_at desc
+      limit ${pagination.limit} offset ${(pagination.page - 1) * pagination.limit}
+    `;
+
+    const jobs = (rows as any[]).map(mapJob);
 
     return NextResponse.json({
       success: true,
-      data: jobsData,
-      pagination: {
-        page: pagination.page,
-        limit: pagination.limit,
-        total: jobsData.jobs.length,
-      },
+      data: jobs,
+      pagination: { page: pagination.page, limit: pagination.limit, total: jobs.length },
     });
   } catch (error) {
-    console.error("Jobs GET error:", error);
+    console.error("Recruitment jobs GET error:", error);
     return handleTenantAdminError(error);
   }
 }
 
 /**
  * POST /api/tenant/recruitment/jobs
- * Create a job posting
  */
 export async function POST(request: NextRequest) {
   try {
@@ -94,27 +115,43 @@ export async function POST(request: NextRequest) {
       return errorResponse(parsed.error, 400, parsed.details);
     }
 
-    const job = {
-      id: `job-${Date.now()}`,
-      ...parsed.data,
-      tenantSlug: context.tenantSlug,
-      status: parsed.data.status || "open",
-      postedDate: new Date().toISOString().split('T')[0],
-      applicants: 0,
-      createdAt: new Date().toISOString(),
-      createdBy: context.userId,
-    };
+    await ensureRecruitmentTables(sql);
+
+    // Resolve the department name to an id when possible — admin_job_requisitions
+    // keys off department_id.
+    const [dept] = await sql`
+      select id from admin_departments
+      where tenant_slug = ${context.tenantSlug}
+        and (id = ${parsed.data.department} or name ilike ${parsed.data.department})
+      limit 1
+    `;
+    const departmentId = (dept as any)?.id ?? parsed.data.department;
+
+    const id = randomUUID();
+    const [row] = await sql`
+      insert into admin_job_requisitions (
+        id, tenant_slug, title, department_id, description, requirements,
+        location, salary_range, employment_type, status, headcount,
+        requested_by, posted_at, created_at, updated_at
+      ) values (
+        ${id}, ${context.tenantSlug}, ${parsed.data.title}, ${departmentId},
+        ${parsed.data.description ?? ""},
+        ${parsed.data.requirements ? parsed.data.requirements.join("\n") : null},
+        ${parsed.data.location ?? null},
+        ${parsed.data.salary != null ? String(parsed.data.salary) : null},
+        ${parsed.data.employmentType ?? "full-time"},
+        ${STATUS_TO_DB[parsed.data.status ?? "open"]}, 1,
+        ${context.userId}, now(), now(), now()
+      )
+      returning *
+    `;
 
     return NextResponse.json(
-      {
-        success: true,
-        data: job,
-        message: "Job posting created successfully",
-      },
+      { success: true, data: mapJob({ ...(row as any), applicant_count: 0, department_name: parsed.data.department }), message: "Job opening created successfully" },
       { status: 201 }
     );
   } catch (error) {
-    console.error("Jobs POST error:", error);
+    console.error("Recruitment jobs POST error:", error);
     return handleTenantAdminError(error);
   }
 }
