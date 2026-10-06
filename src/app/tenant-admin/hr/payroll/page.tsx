@@ -21,6 +21,7 @@ import {
   Plus,
   Trash2,
   X,
+  Download,
 } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { getCurrencySymbol } from '@/lib/tenant/currency';
@@ -112,6 +113,30 @@ export default function PayrollPage() {
   const pageSize = 25;
   const [adjustments, setAdjustments] = useState<PayrollAdjustment[]>([]);
   const [showAdjustmentForm, setShowAdjustmentForm] = useState(false);
+  const [runActionLoading, setRunActionLoading] = useState<string | null>(null);
+
+  const handleRunAction = useCallback(async (runId: string, action: 'approve' | 'pay' | 'cancel') => {
+    if (!tenantSlug) return;
+    setRunActionLoading(runId);
+    try {
+      const res = await fetch(`/api/tenant/payroll/runs/${runId}?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, tenantSlug }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data?.error || `Failed to ${action} payroll run`);
+      }
+      const runs = await HRService.listPayrollRuns(tenantSlug).catch(() => []);
+      setPayrollRuns(runs);
+    } catch (err) {
+      console.error(`Payroll ${action} failed:`, err);
+      alert(`Failed to ${action} payroll run`);
+    } finally {
+      setRunActionLoading(null);
+    }
+  }, [tenantSlug]);
 
   const loadEmployees = useCallback(async () => {
     if (!tenantSlug) return;
@@ -1142,10 +1167,45 @@ export default function PayrollPage() {
                         {new Date(run.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                          <Eye className="w-4 h-4 inline mr-1" />
-                          View
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                          {run.status === 'draft' && (
+                            <button
+                              onClick={() => handleRunAction(run.id, 'approve')}
+                              disabled={runActionLoading === run.id}
+                              className="text-emerald-600 hover:text-emerald-800 text-sm font-medium disabled:opacity-50"
+                            >
+                              Approve
+                            </button>
+                          )}
+                          {run.status === 'processing' && (
+                            <button
+                              onClick={() => handleRunAction(run.id, 'pay')}
+                              disabled={runActionLoading === run.id}
+                              className="text-blue-600 hover:text-blue-800 text-sm font-medium disabled:opacity-50"
+                            >
+                              Pay
+                            </button>
+                          )}
+                          {run.status === 'draft' && (
+                            <button
+                              onClick={() => handleRunAction(run.id, 'cancel')}
+                              disabled={runActionLoading === run.id}
+                              className="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                          )}
+                          {run.status !== 'draft' && run.status !== 'cancelled' && (
+                            <a
+                              href={`/api/tenant/payroll/runs/${run.id}/payout?tenantSlug=${encodeURIComponent(tenantSlug)}`}
+                              className="text-gray-600 hover:text-gray-800 text-sm font-medium"
+                              title="Download bank payout file"
+                            >
+                              <Download className="w-4 h-4 inline mr-1" />
+                              Payout
+                            </a>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))

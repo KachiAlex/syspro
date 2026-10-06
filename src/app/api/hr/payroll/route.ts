@@ -69,7 +69,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const result = await createPayrollRun(parsed.data);
+    // Runs land as drafts — they must be approved (GL accrual) then paid
+    // (disbursement) via /api/tenant/payroll/runs/[id].
+    const result = await createPayrollRun({ ...parsed.data, status: "draft" });
     return NextResponse.json({
       runId: result.runId,
       anomalies: result.anomalies,

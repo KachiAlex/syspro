@@ -116,6 +116,7 @@ const HRComponent: React.FC = () => {
   const [showStaffTasksModal, setShowStaffTasksModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [departments, setDepartments] = useState<string[]>([]);
+  const [hrAnalytics, setHrAnalytics] = useState<any>(null);
   const [statuses, setStatuses] = useState<string[]>(['Active', 'On Leave', 'Terminated']);
   const [reports, setReports] = useState<any[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
@@ -284,6 +285,11 @@ const HRComponent: React.FC = () => {
         HRService.getPayrollHistory(tenantSlug).catch(() => []),
       ]);
 
+      fetch(`/api/tenant/hr/analytics?tenantSlug=${encodeURIComponent(tenantSlug)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => setHrAnalytics(d?.data ?? null))
+        .catch(() => {});
+
       setEmployees(
         fetchedEmployees.map(emp => ({
           id: emp.id,
@@ -417,6 +423,60 @@ const HRComponent: React.FC = () => {
           <p className="text-xs text-theme-text-tertiary mt-4">Organizational units</p>
         </div>
       </div>
+
+      {hrAnalytics && (
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Workforce Metrics</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div>
+              <p className="text-xs text-theme-text-tertiary mb-1">Absenteeism (this month)</p>
+              <p className="text-2xl font-bold text-theme-text-primary">{hrAnalytics.absenteeism?.rateThisMonth ?? 0}%</p>
+              <p className="text-xs text-theme-text-tertiary">{hrAnalytics.absenteeism?.absentDaysThisMonth ?? 0} absent days</p>
+            </div>
+            <div>
+              <p className="text-xs text-theme-text-tertiary mb-1">Attrition (YTD)</p>
+              <p className="text-2xl font-bold text-theme-text-primary">{hrAnalytics.attrition?.rate ?? 0}%</p>
+              <p className="text-xs text-theme-text-tertiary">{hrAnalytics.attrition?.terminatedThisYear ?? 0} exits</p>
+            </div>
+            <div>
+              <p className="text-xs text-theme-text-tertiary mb-1">Leave Days Taken (YTD)</p>
+              <p className="text-2xl font-bold text-theme-text-primary">{hrAnalytics.leave?.daysTakenThisYear ?? 0}</p>
+              <p className="text-xs text-theme-text-tertiary">{hrAnalytics.leave?.pendingRequests ?? 0} pending</p>
+            </div>
+            <div>
+              <p className="text-xs text-theme-text-tertiary mb-1">Open Roles</p>
+              <p className="text-2xl font-bold text-theme-text-primary">{hrAnalytics.openRoles ?? 0}</p>
+              <p className="text-xs text-theme-text-tertiary">Active requisitions</p>
+            </div>
+          </div>
+          {Array.isArray(hrAnalytics.payrollTrend) && hrAnalytics.payrollTrend.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-theme-text-tertiary border-b border-theme-border">
+                    <th className="pb-2 pr-4 font-medium">Period</th>
+                    <th className="pb-2 pr-4 font-medium">Status</th>
+                    <th className="pb-2 pr-4 font-medium text-right">Headcount</th>
+                    <th className="pb-2 pr-4 font-medium text-right">Gross</th>
+                    <th className="pb-2 font-medium text-right">Net</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {hrAnalytics.payrollTrend.map((r: any) => (
+                    <tr key={r.period} className="border-b border-theme-border last:border-0">
+                      <td className="py-2 pr-4 text-theme-text-primary">{r.period}</td>
+                      <td className="py-2 pr-4 text-theme-text-secondary capitalize">{r.status}</td>
+                      <td className="py-2 pr-4 text-right text-theme-text-primary">{r.headcount}</td>
+                      <td className="py-2 pr-4 text-right text-theme-text-primary">{Number(r.gross || 0).toLocaleString()}</td>
+                      <td className="py-2 text-right font-medium text-theme-text-primary">{Number(r.net || 0).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
