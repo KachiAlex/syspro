@@ -495,23 +495,24 @@ interface DeleteEmployeeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
+  onOffboard?: () => Promise<void>;
   employeeName?: string;
 }
 
-export const DeleteEmployeeModal: React.FC<DeleteEmployeeModalProps> = ({ isOpen, onClose, onConfirm, employeeName }) => {
+export const DeleteEmployeeModal: React.FC<DeleteEmployeeModalProps> = ({ isOpen, onClose, onConfirm, onOffboard, employeeName }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleConfirm = async () => {
+  const run = async (fn: () => Promise<void>, fallback: string) => {
     setLoading(true);
     setError(null);
     try {
-      await onConfirm();
+      await fn();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove employee');
+      setError(err instanceof Error ? err.message : fallback);
     } finally {
       setLoading(false);
     }
@@ -522,10 +523,15 @@ export const DeleteEmployeeModal: React.FC<DeleteEmployeeModalProps> = ({ isOpen
       <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
         <h3 className="text-lg font-semibold text-gray-900 mb-3">Remove Employee</h3>
         <p className="text-sm text-gray-600 mb-4">
-          Are you sure you want to remove{' '}
-          <span className="font-semibold text-gray-900">{employeeName}</span>{' '}
-          from your organization? This action cannot be undone.
+          How should <span className="font-semibold text-gray-900">{employeeName}</span> be removed?
         </p>
+        {onOffboard && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-800 text-xs rounded-lg px-4 py-3 mb-4">
+            Recommended: start an offboarding record — keeps history, runs the exit
+            checklist, and terminates access when complete. Permanent deletion erases
+            payroll and attendance history.
+          </div>
+        )}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-4">
             {error}
@@ -535,12 +541,21 @@ export const DeleteEmployeeModal: React.FC<DeleteEmployeeModalProps> = ({ isOpen
           <button onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50">
             Cancel
           </button>
+          {onOffboard && (
+            <button
+              onClick={() => run(onOffboard, 'Failed to start offboarding')}
+              disabled={loading}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? 'Working...' : 'Start Offboarding'}
+            </button>
+          )}
           <button
-            onClick={handleConfirm}
+            onClick={() => run(onConfirm, 'Failed to remove employee')}
             disabled={loading}
-            className="flex-1 px-4 py-2 bg-red-600 text-black rounded-lg hover:bg-red-700 disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
           >
-            {loading ? 'Removing...' : 'Delete' }
+            {loading ? 'Removing...' : 'Delete'}
           </button>
         </div>
       </div>

@@ -108,19 +108,42 @@ export async function POST(request: NextRequest) {
       limit 1
     `;
 
+    // Roster-based late detection: if the employee has an active shift for this
+    // date and checked in past start_time + grace, mark 'late'.
+    let effectiveStatus = status;
+    if (status === "present" && typeof body?.checkInTime === "string" && /^\d{2}:\d{2}/.test(body.checkInTime)) {
+      const dow = new Date(`${date}T00:00:00Z`).getUTCDay();
+      const [shift] = await sql`
+        select s.start_time, s.grace_minutes
+        from admin_shift_assignments a
+        join admin_shifts s on s.tenant_slug = a.tenant_slug and s.id = a.shift_id
+        where a.tenant_slug = ${context.tenantSlug} and a.employee_id = ${employeeId}
+          and a.effective_from <= ${date} and (a.effective_to is null or a.effective_to >= ${date})
+          and ${dow} = any(s.days_of_week) and s.is_active
+        order by a.effective_from desc limit 1
+      ` as any[];
+      if (shift) {
+        const [h, m] = body.checkInTime.split(":").map(Number);
+        const checkInMins = h * 60 + m;
+        const [sh, sm] = String(shift.start_time).split(":").map(Number);
+        const cutoff = sh * 60 + sm + (shift.grace_minutes ?? 0);
+        if (checkInMins > cutoff) effectiveStatus = "late";
+      }
+    }
+
     await sql`
       insert into attendance_records (
         id, tenant_id, employee_id, work_date, attendance_status, employee_name,
         check_in_time, check_out_time, notes, work_mode, created_at, updated_at
       ) values (
-        ${randomUUID()}, ${context.tenantSlug}, ${employeeId}, ${date}, ${status},
+        ${randomUUID()}, ${context.tenantSlug}, ${employeeId}, ${date}, ${effectiveStatus},
         ${(emp as any)?.name ?? null}, ${body.checkInTime ?? null},
         ${body.checkOutTime ?? null}, ${body.notes ?? null}, ${body.workMode ?? null},
         now(), now()
       )
       on conflict (tenant_id, employee_id, work_date)
       do update set
-        attendance_status = ${status},
+        attendance_status = ${effectiveStatus},
         employee_name = coalesce(excluded.employee_name, attendance_records.employee_name),
         check_in_time = coalesce(excluded.check_in_time, attendance_records.check_in_time),
         check_out_time = coalesce(excluded.check_out_time, attendance_records.check_out_time),

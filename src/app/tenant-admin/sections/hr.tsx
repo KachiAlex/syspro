@@ -117,6 +117,7 @@ const HRComponent: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [departments, setDepartments] = useState<string[]>([]);
   const [hrAnalytics, setHrAnalytics] = useState<any>(null);
+  const [offboardings, setOffboardings] = useState<any[]>([]);
   const [statuses, setStatuses] = useState<string[]>(['Active', 'On Leave', 'Terminated']);
   const [reports, setReports] = useState<any[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
@@ -249,6 +250,49 @@ const HRComponent: React.FC = () => {
     }
   };
 
+  const refreshOffboardings = useCallback(async () => {
+    if (!tenantSlug) return;
+    const res = await fetch(`/api/tenant/offboarding?tenantSlug=${encodeURIComponent(tenantSlug)}`).catch(() => null);
+    const d = res?.ok ? await res.json().catch(() => null) : null;
+    setOffboardings(Array.isArray(d?.data) ? d.data : []);
+  }, [tenantSlug]);
+
+  const handleToggleChecklist = async (id: string, key: string, done: boolean) => {
+    await fetch(`/api/tenant/offboarding/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ checklistKey: key, done }),
+    }).catch(() => {});
+    await refreshOffboardings();
+  };
+
+  const handleCompleteOffboarding = async (id: string) => {
+    const res = await fetch(`/api/tenant/offboarding/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'complete' }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      alert(data?.error || 'Failed to complete offboarding');
+    }
+    await refreshOffboardings();
+    await loadData();
+  };
+
+  const handleOffboardEmployee = async () => {
+    if (!tenantSlug || !selectedEmployee) return;
+    const res = await fetch('/api/tenant/offboarding', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ employeeId: selectedEmployee.id, tenantSlug }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error || 'Failed to start offboarding');
+    setSelectedEmployee(null);
+    await refreshOffboardings();
+  };
+
   const handleConfirmDeleteEmployee = async () => {
     if (!tenantSlug || !selectedEmployee) return;
 
@@ -288,6 +332,11 @@ const HRComponent: React.FC = () => {
       fetch(`/api/tenant/hr/analytics?tenantSlug=${encodeURIComponent(tenantSlug)}`)
         .then(r => r.ok ? r.json() : null)
         .then(d => setHrAnalytics(d?.data ?? null))
+        .catch(() => {});
+
+      fetch(`/api/tenant/offboarding?tenantSlug=${encodeURIComponent(tenantSlug)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => setOffboardings(Array.isArray(d?.data) ? d.data : []))
         .catch(() => {});
 
       setEmployees(
@@ -478,6 +527,47 @@ const HRComponent: React.FC = () => {
         </div>
       )}
 
+      {offboardings.filter(o => o.status === 'initiated' || o.status === 'in_progress').length > 0 && (
+        <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
+          <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Active Offboardings</h3>
+          <div className="space-y-4">
+            {offboardings.filter(o => o.status === 'initiated' || o.status === 'in_progress').map(o => (
+              <div key={o.id} className="border border-theme-border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="font-semibold text-theme-text-primary">{o.employeeName}</p>
+                    <p className="text-xs text-theme-text-secondary">
+                      {o.reason || 'Offboarding'}{o.lastWorkingDay ? ` · last day ${o.lastWorkingDay}` : ''}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleCompleteOffboarding(o.id)}
+                    className="px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700"
+                  >
+                    Complete &amp; Terminate
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(o.checklist || []).map((c: any) => (
+                    <button
+                      key={c.key}
+                      onClick={() => handleToggleChecklist(o.id, c.key, !c.done)}
+                      className={`px-2.5 py-1 text-xs rounded-full border ${
+                        c.done
+                          ? 'bg-emerald-100 border-emerald-300 text-emerald-800'
+                          : 'bg-transparent border-theme-border text-theme-text-secondary hover:bg-theme-sidebar-hover'
+                      }`}
+                    >
+                      {c.done ? '✓ ' : ''}{c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-theme-muted rounded-xl border border-theme-border p-6">
           <h3 className="text-lg font-semibold text-theme-text-primary mb-4">Department Distribution</h3>
@@ -616,6 +706,7 @@ const HRComponent: React.FC = () => {
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleConfirmDeleteEmployee}
+        onOffboard={handleOffboardEmployee}
         employeeName={selectedEmployee?.name}
       />
 

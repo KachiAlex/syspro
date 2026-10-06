@@ -375,6 +375,39 @@ async function ensureHrTablesRun(sql: SqlClient = SQL) {
   `;
   await sql`create index if not exists idx_admin_review_cycles_tenant on admin_review_cycles(tenant_slug)`;
 
+  // Shift definitions and employee shift assignments (roster)
+  await sql`
+    create table if not exists admin_shifts (
+      id text primary key,
+      tenant_slug text not null,
+      name text not null,
+      start_time time not null,
+      end_time time not null,
+      days_of_week int[] not null default '{1,2,3,4,5}',
+      grace_minutes int not null default 0,
+      is_active boolean not null default true,
+      created_at timestamptz default now(),
+      updated_at timestamptz default now()
+    )
+  `;
+  await sql`create index if not exists idx_admin_shifts_tenant on admin_shifts(tenant_slug)`;
+
+  await sql`
+    create table if not exists admin_shift_assignments (
+      id text primary key,
+      tenant_slug text not null,
+      employee_id text not null,
+      shift_id text not null,
+      effective_from date not null,
+      effective_to date,
+      created_by text,
+      created_at timestamptz default now(),
+      updated_at timestamptz default now()
+    )
+  `;
+  await sql`create index if not exists idx_admin_shift_assign_tenant on admin_shift_assignments(tenant_slug)`;
+  await sql`create index if not exists idx_admin_shift_assign_emp on admin_shift_assignments(tenant_slug, employee_id)`;
+
   // Staff reports
   await sql`
     create table if not exists admin_staff_reports (

@@ -636,6 +636,8 @@ export default function PayrollPage() {
               Reset Defaults
             </button>
           </div>
+
+          <StatutorySettings tenantSlug={tenantSlug} sym={sym} />
         </div>
       )}
 
@@ -1426,5 +1428,232 @@ function AdjustmentForm({
         </div>
       </div>
     </form>
+  );
+}
+
+interface TaxBand {
+  upTo: number | null;
+  rate: number;
+}
+
+interface StatutoryLine {
+  name: string;
+  type: 'percent_of_gross' | 'fixed';
+  amount: number;
+}
+
+function StatutorySettings({ tenantSlug, sym }: { tenantSlug: string; sym: string }) {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [presetKeys, setPresetKeys] = useState<Record<string, any>>({});
+  const [preset, setPreset] = useState('');
+  const [countryCode, setCountryCode] = useState('');
+  const [pensionEmployee, setPensionEmployee] = useState(8);
+  const [pensionEmployer, setPensionEmployer] = useState(0);
+  const [bands, setBands] = useState<TaxBand[]>([]);
+  const [lines, setLines] = useState<StatutoryLine[]>([]);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!tenantSlug) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/tenant/payroll/statutory?tenantSlug=${encodeURIComponent(tenantSlug)}`);
+      const json = await res.json();
+      const d = json?.data;
+      setPresetKeys(json?.presets ?? {});
+      if (d) {
+        setCountryCode(d.countryCode ?? '');
+        setPensionEmployee(d.pensionEmployeeRate ?? 8);
+        setPensionEmployer(d.pensionEmployerRate ?? 0);
+        setBands(Array.isArray(d.taxBands) ? d.taxBands : []);
+        setLines(Array.isArray(d.otherDeductions) ? d.otherDeductions : []);
+      }
+    } catch {
+      // leave defaults
+    } finally {
+      setLoading(false);
+    }
+  }, [tenantSlug]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const applyPreset = (key: string) => {
+    setPreset(key);
+    const p = presetKeys[key];
+    if (!p) return;
+    setPensionEmployee(p.pensionEmployeeRate ?? 0);
+    setPensionEmployer(p.pensionEmployerRate ?? 0);
+    setBands(p.taxBands ?? []);
+    setLines(p.otherDeductions ?? []);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/tenant/payroll/statutory?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          countryCode: countryCode || null,
+          taxBands: bands,
+          pensionEmployeeRate: pensionEmployee,
+          pensionEmployerRate: pensionEmployer,
+          otherDeductions: lines,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || 'Save failed');
+      setMessage('Statutory settings saved — applied to the next payroll run.');
+    } catch (e: any) {
+      setMessage(e?.message || 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <div className="mt-6 text-sm text-gray-500">Loading statutory settings…</div>;
+
+  return (
+    <div className="mt-6 border-t border-gray-200 pt-6">
+      <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+        <ShieldCheck className="w-4 h-4 text-emerald-600" />
+        Statutory Deductions (per-tenant)
+      </h4>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Preset</label>
+          <select
+            value={preset}
+            onChange={(e) => applyPreset(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          >
+            <option value="">Custom…</option>
+            {Object.entries(presetKeys).map(([k, p]) => (
+              <option key={k} value={k}>{p.label || k}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Country Code</label>
+          <input
+            type="text"
+            value={countryCode}
+            onChange={(e) => setCountryCode(e.target.value.toUpperCase().slice(0, 2))}
+            placeholder="NG"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Pension — Employee %</label>
+          <input
+            type="number"
+            value={pensionEmployee}
+            onChange={(e) => setPensionEmployee(parseFloat(e.target.value) || 0)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Pension — Employer %</label>
+          <input
+            type="number"
+            value={pensionEmployer}
+            onChange={(e) => setPensionEmployer(parseFloat(e.target.value) || 0)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-medium text-gray-700">Tax Bands (monthly gross)</label>
+            <button
+              type="button"
+              onClick={() => setBands((b) => [...b, { upTo: null, rate: 0 }])}
+              className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+            >
+              + Add band
+            </button>
+          </div>
+          {bands.length === 0 && <p className="text-xs text-gray-500">No tax bands — no income tax applied.</p>}
+          {bands.map((band, i) => (
+            <div key={i} className="flex items-center gap-2 mb-2">
+              <input
+                type="number"
+                placeholder="Up to (∞ if empty)"
+                value={band.upTo ?? ''}
+                onChange={(e) => setBands((b) => b.map((x, j) => j === i ? { ...x, upTo: e.target.value === '' ? null : parseFloat(e.target.value) } : x))}
+                className="w-40 px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+              />
+              <span className="text-xs text-gray-500">@</span>
+              <input
+                type="number"
+                value={band.rate}
+                onChange={(e) => setBands((b) => b.map((x, j) => j === i ? { ...x, rate: parseFloat(e.target.value) || 0 } : x))}
+                className="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+              />
+              <span className="text-xs text-gray-500">%</span>
+              <button type="button" onClick={() => setBands((b) => b.filter((_, j) => j !== i))} className="text-red-500">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-medium text-gray-700">Other Statutory Deductions</label>
+            <button
+              type="button"
+              onClick={() => setLines((l) => [...l, { name: '', type: 'percent_of_gross', amount: 0 }])}
+              className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+            >
+              + Add deduction
+            </button>
+          </div>
+          {lines.length === 0 && <p className="text-xs text-gray-500">None configured.</p>}
+          {lines.map((line, i) => (
+            <div key={i} className="flex items-center gap-2 mb-2">
+              <input
+                type="text"
+                placeholder="Name (e.g. NHIS)"
+                value={line.name}
+                onChange={(e) => setLines((l) => l.map((x, j) => j === i ? { ...x, name: e.target.value } : x))}
+                className="w-36 px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+              />
+              <select
+                value={line.type}
+                onChange={(e) => setLines((l) => l.map((x, j) => j === i ? { ...x, type: e.target.value as StatutoryLine['type'] } : x))}
+                className="px-2 py-1.5 border border-gray-300 rounded-lg text-sm"
+              >                <option value="percent_of_gross">% gross</option>
+                <option value="fixed">{sym} fixed</option>
+              </select>
+              <input
+                type="number"
+                value={line.amount}
+                onChange={(e) => setLines((l) => l.map((x, j) => j === i ? { ...x, amount: parseFloat(e.target.value) || 0 } : x))}
+                className="w-24 px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+              />
+              <button type="button" onClick={() => setLines((l) => l.filter((_, j) => j !== i))} className="text-red-500">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 mt-4">
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving}
+          className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+        >
+          {saving ? 'Saving…' : 'Save Statutory Settings'}
+        </button>
+        {message && <p className="text-xs text-gray-600">{message}</p>}
+      </div>
+    </div>
   );
 }
