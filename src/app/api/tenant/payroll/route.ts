@@ -58,7 +58,14 @@ export async function GET(request: NextRequest) {
       deductions: Number(r.total_deductions) || 0,
       grossPay: Number(r.gross_pay) || 0,
       netSalary: Number(r.net_pay) || 0,
-      status: r.run_status === "completed" ? "Paid" : "Processed",
+      status:
+        r.run_status === "completed"
+          ? "Paid"
+          : r.run_status === "draft"
+            ? "Draft"
+            : r.run_status === "cancelled"
+              ? "Cancelled"
+              : "Processed",
     }));
 
     return NextResponse.json({

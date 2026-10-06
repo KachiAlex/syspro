@@ -129,6 +129,20 @@ export async function POST(request: NextRequest) {
       returning *
     `;
 
+    // Track the request against the employee's leave balance
+    const days = daysBetween(parsed.data.startDate, parsed.data.endDate);
+    const year = new Date(parsed.data.startDate).getUTCFullYear();
+    await sql`
+      insert into admin_leave_balances (
+        id, tenant_slug, employee_id, employee_name, leave_type, year, entitled, pending
+      ) values (
+        ${randomUUID()}, ${context.tenantSlug}, ${parsed.data.employeeId},
+        ${employeeName}, ${leaveType}, ${year}, 0, ${days}
+      )
+      on conflict (tenant_slug, employee_id, leave_type, year)
+      do update set pending = admin_leave_balances.pending + ${days}, updated_at = now()
+    `;
+
     return NextResponse.json(
       {
         success: true,

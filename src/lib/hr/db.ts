@@ -260,6 +260,56 @@ async function ensureHrTablesRun(sql: SqlClient = SQL) {
   await sql`create index if not exists idx_admin_payroll_adjustments_emp_period on admin_payroll_adjustments(tenant_slug, employee_id, effective_period)`;
   await sql`create index if not exists idx_admin_payroll_adjustments_status on admin_payroll_adjustments(status)`;
 
+  // Payroll run approval workflow columns
+  await sql`alter table admin_payroll_runs add column if not exists approved_by text`;
+  await sql`alter table admin_payroll_runs add column if not exists approved_at timestamptz`;
+  await sql`alter table admin_payroll_runs add column if not exists journal_entry_id text`;
+
+  // Recurring per-employee salary components (allowances, deductions, loans)
+  await sql`
+    create table if not exists admin_employee_components (
+      id text primary key,
+      tenant_slug text not null,
+      employee_id text not null,
+      employee_name text,
+      name text not null,
+      component_type text not null check (component_type in ('earning','deduction')),
+      amount_type text not null default 'fixed' check (amount_type in ('fixed','percent_of_base')),
+      amount numeric(15,2) not null,
+      is_recurring boolean default true,
+      is_active boolean default true,
+      start_period text,
+      end_period text,
+      notes text,
+      created_by text,
+      created_at timestamptz default now(),
+      updated_at timestamptz default now()
+    )
+  `;
+  await sql`create index if not exists idx_admin_emp_components_tenant on admin_employee_components(tenant_slug)`;
+  await sql`create index if not exists idx_admin_emp_components_emp on admin_employee_components(tenant_slug, employee_id)`;
+
+  // Leave balances / entitlements per employee per leave type per year
+  await sql`
+    create table if not exists admin_leave_balances (
+      id text primary key,
+      tenant_slug text not null,
+      employee_id text not null,
+      employee_name text,
+      leave_type text not null,
+      year int not null,
+      entitled numeric(6,2) not null default 0,
+      used numeric(6,2) not null default 0,
+      pending numeric(6,2) not null default 0,
+      carried_over numeric(6,2) not null default 0,
+      created_at timestamptz default now(),
+      updated_at timestamptz default now(),
+      unique (tenant_slug, employee_id, leave_type, year)
+    )
+  `;
+  await sql`create index if not exists idx_admin_leave_bal_tenant on admin_leave_balances(tenant_slug)`;
+  await sql`create index if not exists idx_admin_leave_bal_emp on admin_leave_balances(tenant_slug, employee_id)`;
+
   // Staff reports
   await sql`
     create table if not exists admin_staff_reports (
@@ -1425,20 +1475,23 @@ export function checkCompliance(
     if (entry.grossPay <= 0) continue;
 
     // Tax sanity check: tax should be roughly config.taxRate % of gross
-    const expectedTax = (entry.grossPay * (config.taxRate || 7.5)) / 100;
+    // (an explicit rate of 0 means "no tax expected" — don't fall back to defaults)
+    const taxRate = config.taxRate ?? 7.5;
+    const expectedTax = (entry.grossPay * taxRate) / 100;
     const taxDiff = Math.abs(entry.tax - expectedTax);
     if (taxDiff > 1) {
       issues.push(
-        `${entry.employeeName}: Tax (${entry.tax}) deviates from expected ${expectedTax.toFixed(2)} based on ${config.taxRate}% rate`
+        `${entry.employeeName}: Tax (${entry.tax}) deviates from expected ${expectedTax.toFixed(2)} based on ${taxRate}% rate`
       );
     }
 
     // Pension check
-    const expectedPension = (entry.grossPay * (config.pensionRate || 8)) / 100;
+    const pensionRate = config.pensionRate ?? 8;
+    const expectedPension = (entry.grossPay * pensionRate) / 100;
     const pensionDiff = Math.abs(entry.pension - expectedPension);
     if (pensionDiff > 1) {
       issues.push(
-        `${entry.employeeName}: Pension (${entry.pension}) deviates from expected ${expectedPension.toFixed(2)} based on ${config.pensionRate}% rate`
+        `${entry.employeeName}: Pension (${entry.pension}) deviates from expected ${expectedPension.toFixed(2)} based on ${pensionRate}% rate`
       );
     }
 
@@ -1464,6 +1517,7 @@ export async function createPayrollRun(params: {
   config: PayrollConfig;
   entries: Omit<PayrollEntryRecord, "id" | "tenantSlug" | "runId" | "createdAt">[];
   processedBy?: string | null;
+  status?: "draft" | "processing" | "completed";
 }) {
   const sql = SQL;
   await ensureHrTables(sql);
@@ -1501,7 +1555,7 @@ export async function createPayrollRun(params: {
       id, tenant_slug, period, status, total_gross, total_deductions, total_net,
       config, anomalies, compliance_passed, processed_by
     ) values (
-      ${runId}, ${params.tenantSlug}, ${params.period}, 'completed',
+      ${runId}, ${params.tenantSlug}, ${params.period}, ${params.status ?? "completed"},
       ${totalGross}, ${totalDeductions}, ${totalNet},
       ${JSON.stringify(params.config)}::jsonb, ${JSON.stringify(anomalies)}::jsonb,
       ${compliance.passed}, ${params.processedBy ?? null}

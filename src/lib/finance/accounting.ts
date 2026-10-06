@@ -12,7 +12,7 @@ export interface JournalEntry {
   tenantSlug: string;
   entryNumber: string;
   entryDate: string;
-  referenceType: "bill" | "payment" | "manual";
+  referenceType: "bill" | "payment" | "manual" | "payroll";
   referenceId?: string;
   description: string;
   lines: JournalEntryLine[];
@@ -118,6 +118,24 @@ const DEFAULT_ACCOUNTS: Record<string, ChartOfAccount> = {
     code: "6200",
     name: "Material Variance",
     type: "expense",
+    isActive: true
+  },
+  SALARIES_WAGES: {
+    code: "6300",
+    name: "Salaries & Wages",
+    type: "expense",
+    isActive: true
+  },
+  PAYROLL_PAYABLE: {
+    code: "2300",
+    name: "Payroll Payable",
+    type: "liability",
+    isActive: true
+  },
+  PAYROLL_DEDUCTIONS_PAYABLE: {
+    code: "2310",
+    name: "Payroll Deductions Payable",
+    type: "liability",
     isActive: true
   }
 };
@@ -286,7 +304,7 @@ async function seedDefaultAccounts(sql: SqlClient) {
 export async function createJournalEntry(payload: {
   tenantSlug: string;
   entryDate: string;
-  referenceType: "bill" | "payment" | "manual";
+  referenceType: "bill" | "payment" | "manual" | "payroll";
   referenceId?: string;
   description: string;
   lines: Array<{
