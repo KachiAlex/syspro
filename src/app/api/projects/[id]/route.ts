@@ -34,12 +34,17 @@ function parseNumber(value: any): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const context = validateTenantContext(request, "read");
+    if (!UUID_RE.test(params.id)) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
     const project = await getProject(params.id, context.tenantSlug);
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
@@ -58,6 +63,9 @@ export async function PATCH(
 ) {
   try {
     const context = validateTenantContext(request, "write");
+    if (!UUID_RE.test(params.id)) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
     const body = await request.json();
 
     const input: any = {};
@@ -93,6 +101,9 @@ export async function DELETE(
 ) {
   try {
     const context = validateTenantContext(request, "delete");
+    if (!UUID_RE.test(params.id)) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
     const deleted = await deleteProject(params.id, context.tenantSlug);
     if (!deleted) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });

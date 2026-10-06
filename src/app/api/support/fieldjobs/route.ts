@@ -78,10 +78,23 @@ export async function POST(request: NextRequest) {
   const { ticketId, engineerId, engineerName, title, siteAddress } = body || {};
 
   await ensureFieldJobs();
+  const effectiveEngineerId = engineerId || context.userId || null;
+  let effectiveEngineerName = engineerName || null;
+  if (effectiveEngineerId && !effectiveEngineerName) {
+    const [person] = await SQL`
+      select coalesce(e.name, a.name) as name
+      from (select ${context.tenantSlug}::text as ts) t
+      left join admin_employees e on e.tenant_slug = t.ts and e.id::text = ${effectiveEngineerId}
+      left join tenant_admins a on a.tenant_slug = t.ts and a.id::text = ${effectiveEngineerId}
+      limit 1
+    ` as any[];
+    effectiveEngineerName = person?.name ?? null;
+  }
+
   const id = randomUUID();
   const [row] = await SQL`
     insert into it_field_jobs (id, tenant_slug, ticket_id, engineer_id, engineer_name, title, site_address)
-    values (${id}, ${context.tenantSlug}, ${ticketId || null}, ${engineerId || context.userId || null}, ${engineerName || null}, ${title || null}, ${siteAddress || null})
+    values (${id}, ${context.tenantSlug}, ${ticketId || null}, ${effectiveEngineerId}, ${effectiveEngineerName}, ${title || null}, ${siteAddress || null})
     returning *
   ` as any[];
   return NextResponse.json({ data: mapJob(row) }, { status: 201 });

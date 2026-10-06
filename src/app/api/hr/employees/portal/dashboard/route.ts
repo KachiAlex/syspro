@@ -185,13 +185,13 @@ export async function GET(request: NextRequest) {
             let leaveRows: any[];
             if (isHR) {
               leaveRows = await sql`
-                SELECT count(*)::int as cnt FROM admin_leave_requests
+                SELECT count(*)::int as cnt FROM admin_leave
                 WHERE tenant_slug = ${session.tenantSlug} AND status = 'pending'
                   AND employee_id != ${session.id}
               `;
             } else {
               leaveRows = await sql`
-                SELECT count(*)::int as cnt FROM admin_leave_requests lr
+                SELECT count(*)::int as cnt FROM admin_leave lr
                 JOIN admin_employees e ON lr.employee_id = e.id
                 WHERE lr.tenant_slug = ${session.tenantSlug}
                   AND lr.status = 'pending'

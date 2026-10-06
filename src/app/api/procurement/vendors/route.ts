@@ -3,9 +3,28 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { db } from "@/lib/sql-client";
 
+async function ensureVendorTable() {
+  await db.query(`
+    create table if not exists procurement_vendors (
+      id text primary key,
+      tenant_slug text not null,
+      name text not null,
+      code text not null,
+      category text,
+      payment_terms text,
+      status text not null default 'active',
+      created_at timestamptz default now(),
+      updated_at timestamptz default now(),
+      unique (tenant_slug, code)
+    )
+  `);
+  await db.query(`create index if not exists idx_proc_vendors_tenant on procurement_vendors(tenant_slug)`);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "read");
+    await ensureVendorTable();
     const { searchParams } = new URL(request.url);
     const tenantSlug = context.tenantSlug;
     const status = searchParams.get("status");
@@ -38,6 +57,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
+    await ensureVendorTable();
     const body = await request.json();
     const { name, code, category, paymentTerms } = body;
     const tenantSlug = context.tenantSlug;
