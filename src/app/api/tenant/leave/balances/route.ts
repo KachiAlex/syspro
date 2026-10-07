@@ -31,7 +31,11 @@ const UpsertBalanceSchema = z.object({
 });
 
 function mapBalance(r: any) {
-  const entitled = Number(r.entitled) || 0;
+  // Implicit tracking rows (entitlement_set=false) show the default
+  // entitlement; explicit overrides show the configured value.
+  const entitled = r.entitlement_set
+    ? Number(r.entitled) || 0
+    : (DEFAULT_ENTITLEMENTS[r.leave_type] ?? 0);
   const carried = Number(r.carried_over) || 0;
   const used = Number(r.used) || 0;
   const pending = Number(r.pending) || 0;
@@ -144,16 +148,17 @@ export async function POST(request: NextRequest) {
     const [row] = await sql`
       insert into admin_leave_balances (
         id, tenant_slug, employee_id, employee_name, leave_type, year,
-        entitled, carried_over, created_at, updated_at
+        entitled, carried_over, entitlement_set, created_at, updated_at
       ) values (
         ${randomUUID()}, ${context.tenantSlug}, ${parsed.data.employeeId},
         ${(emp as any).name}, ${parsed.data.leaveType}, ${year},
-        ${parsed.data.entitled}, ${parsed.data.carriedOver ?? 0}, now(), now()
+        ${parsed.data.entitled}, ${parsed.data.carriedOver ?? 0}, true, now(), now()
       )
       on conflict (tenant_slug, employee_id, leave_type, year)
       do update set
         entitled = excluded.entitled,
         carried_over = excluded.carried_over,
+        entitlement_set = true,
         employee_name = excluded.employee_name,
         updated_at = now()
       returning *

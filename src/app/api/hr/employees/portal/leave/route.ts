@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
-import { ensureHrTables, insertNotification } from "@/lib/hr/db";
+import { ensureHrTables, insertNotification, DEFAULT_LEAVE_ENTITLEMENTS } from "@/lib/hr/db";
 import { z } from "zod";
 
 function daysBetween(start: string, end: string): number {
@@ -108,20 +108,23 @@ export async function POST(request: NextRequest) {
     // Reject requests that exceed the remaining balance (unpaid is untracked)
     if (leaveType !== "unpaid") {
       const [bal] = await SQL`
-        select entitled, used, pending, carried_over from admin_leave_balances
+        select entitled, used, pending, carried_over, entitlement_set from admin_leave_balances
         where tenant_slug = ${session.tenantSlug} and employee_id = ${session.id}
           and leave_type = ${leaveType} and year = ${year}
         limit 1
       `;
-      if (bal) {
-        const remaining =
-          Number(bal.entitled) + Number(bal.carried_over) - Number(bal.used) - Number(bal.pending);
-        if (days > remaining) {
-          return NextResponse.json(
-            { error: `Insufficient ${leaveType} leave balance: ${days} day(s) requested, ${remaining} remaining` },
-            { status: 400 }
-          );
-        }
+      // Implicit tracking rows (entitlement_set=false) use the default
+      // entitlement as the cap; explicit overrides use the configured value.
+      const entitled = bal
+        ? (bal.entitlement_set ? Number(bal.entitled) : (DEFAULT_LEAVE_ENTITLEMENTS[leaveType] ?? 0))
+        : (DEFAULT_LEAVE_ENTITLEMENTS[leaveType] ?? 0);
+      const remaining =
+        entitled + Number(bal?.carried_over ?? 0) - Number(bal?.used ?? 0) - Number(bal?.pending ?? 0);
+      if (days > remaining) {
+        return NextResponse.json(
+          { error: `Insufficient ${leaveType} leave balance: ${days} day(s) requested, ${remaining} remaining` },
+          { status: 400 }
+        );
       }
     }
 
@@ -137,10 +140,10 @@ export async function POST(request: NextRequest) {
     // Track pending days against the balance
     await SQL`
       insert into admin_leave_balances (
-        id, tenant_slug, employee_id, employee_name, leave_type, year, entitled, pending
+        id, tenant_slug, employee_id, employee_name, leave_type, year, entitled, pending, entitlement_set
       ) values (
         ${randomUUID()}, ${session.tenantSlug}, ${session.id}, ${session.name},
-        ${leaveType}, ${year}, 0, ${days}
+        ${leaveType}, ${year}, ${DEFAULT_LEAVE_ENTITLEMENTS[leaveType] ?? 0}, ${days}, false
       )
       on conflict (tenant_slug, employee_id, leave_type, year)
       do update set pending = admin_leave_balances.pending + ${days}, updated_at = now()

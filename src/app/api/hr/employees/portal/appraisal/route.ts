@@ -105,11 +105,12 @@ async function fetchEmployeeData(tenantSlug: string, employeeId: string, periodS
   let attendance: any[] = [];
   try {
     attendance = await SQL`
-      SELECT status, check_in, check_out, date
-      FROM admin_attendance
-      WHERE tenant_slug = ${tenantSlug} AND employee_id = ${employeeId}
-        AND date >= ${periodStart.split('T')[0]}
-      ORDER BY date DESC
+      SELECT attendance_status as status, check_in_time as check_in,
+             check_out_time as check_out, work_date as date
+      FROM attendance_records
+      WHERE tenant_id = ${tenantSlug} AND employee_id = ${employeeId}
+        AND work_date >= ${periodStart.split('T')[0]}
+      ORDER BY work_date DESC
       LIMIT 90
     `;
   } catch {}

@@ -1,8 +1,8 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { updateEmployee, deleteEmployee, getEmployeeById, resolveOrCreateDepartment } from "@/lib/hr/db";
-import { extractAuthContext } from "@/lib/auth-helper";
+import { updateEmployee, deleteEmployee, getEmployeeById, resolveOrCreateDepartment, employeeDependencies } from "@/lib/hr/db";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const updateSchema = z.object({
   tenantSlug: z.string().optional(),
@@ -28,14 +28,16 @@ const updateSchema = z.object({
 });
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireModuleAccess(request, "people", "read");
+  if (!auth.ok) return auth.response;
   const { id } = await params;
-  const auth = extractAuthContext(request);
-  if (!auth.tenantSlug) {
-    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  const tenantSlug = auth.user.tenantSlug ?? new URL(request.url).searchParams.get("tenantSlug");
+  if (!tenantSlug) {
+    return NextResponse.json({ error: "tenantSlug is required" }, { status: 400 });
   }
 
   try {
-    const employee = await getEmployeeById(id, auth.tenantSlug);
+    const employee = await getEmployeeById(id, tenantSlug);
     if (!employee) {
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
     }
@@ -47,11 +49,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireModuleAccess(request, "people", "write");
+  if (!auth.ok) return auth.response;
   const { id } = await params;
-  const auth = extractAuthContext(request);
-  if (!auth.tenantSlug) {
-    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
-  }
 
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
@@ -59,7 +59,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 
   // Override tenantSlug with the authenticated session's tenant
-  const parsed = updateSchema.safeParse({ ...body, tenantSlug: auth.tenantSlug });
+  const parsed = updateSchema.safeParse({ ...body, tenantSlug: auth.user.tenantSlug ?? body.tenantSlug });
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
@@ -74,7 +74,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     delete (updateData as any).departmentName;
     delete (updateData as any).tenantSlug;
 
-    const employee = await updateEmployee(id, updateData);
+    const employee = await updateEmployee(id, updateData, parsed.data.tenantSlug);
     if (!employee) {
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
     }
@@ -90,14 +90,28 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireModuleAccess(request, "people", "write");
+  if (!auth.ok) return auth.response;
   const { id } = await params;
-  const auth = extractAuthContext(request);
-  if (!auth.tenantSlug) {
-    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  const tenantSlug = auth.user.tenantSlug ?? new URL(request.url).searchParams.get("tenantSlug");
+  if (!tenantSlug) {
+    return NextResponse.json({ error: "tenantSlug is required" }, { status: 400 });
   }
 
   try {
-    await deleteEmployee(id, auth.tenantSlug);
+    const deps = await employeeDependencies(id, tenantSlug);
+    const total = Object.values(deps).reduce((a, b) => a + b, 0);
+    const force = new URL(request.url).searchParams.get("force") === "true";
+    if (total > 0 && !force) {
+      return NextResponse.json(
+        {
+          error: "Employee has historical records — deleting would erase payroll/leave/attendance history. Start offboarding instead, or pass force=true to delete anyway.",
+          dependencies: deps,
+        },
+        { status: 409 }
+      );
+    }
+    await deleteEmployee(id, tenantSlug);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Employee delete failed", error);

@@ -1,8 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { sql } from "@/lib/sql-client";
-import { ensureHrTables } from "@/lib/hr/db";
+import { ensureHrTables, adjustLeaveBalance } from "@/lib/hr/db";
 import {
   validateTenantContext,
   errorResponse,
@@ -64,40 +63,27 @@ export async function PATCH(request: NextRequest, context: any) {
       return errorResponse("Leave request not found", 404);
     }
 
-    // Maintain the leave balance when the decision changes
+    // Maintain the leave balance when the decision changes — shared helper so
+    // every leave write path (admin, tenant, portal) stays consistent.
     if (prev.status !== status) {
       const ms = new Date(prev.end_date).getTime() - new Date(prev.start_date).getTime();
       const days = Math.max(1, Math.round(ms / 86400000) + 1);
       const year = new Date(prev.start_date).getUTCFullYear();
-
+      const base = {
+        tenantSlug: ctx.tenantSlug,
+        employeeId: prev.employee_id,
+        employeeName: prev.employee_name ?? prev.employee_id,
+        leaveType: prev.leave_type,
+        year,
+      };
       if (prev.status === "pending" && status === "approved") {
-        await sql`
-          insert into admin_leave_balances (
-            id, tenant_slug, employee_id, employee_name, leave_type, year, entitled, used, pending
-          ) values (
-            ${randomUUID()}, ${ctx.tenantSlug}, ${prev.employee_id},
-            ${prev.employee_name}, ${prev.leave_type}, ${year}, 0, ${days}, 0
-          )
-          on conflict (tenant_slug, employee_id, leave_type, year)
-          do update set
-            pending = greatest(0, admin_leave_balances.pending - ${days}),
-            used = admin_leave_balances.used + ${days},
-            updated_at = now()
-        `;
+        await adjustLeaveBalance({ ...base, pendingDelta: -days, usedDelta: days });
       } else if (prev.status === "pending" && ["rejected", "cancelled"].includes(status)) {
-        await sql`
-          update admin_leave_balances
-          set pending = greatest(0, pending - ${days}), updated_at = now()
-          where tenant_slug = ${ctx.tenantSlug} and employee_id = ${prev.employee_id}
-            and leave_type = ${prev.leave_type} and year = ${year}
-        `;
+        await adjustLeaveBalance({ ...base, pendingDelta: -days });
       } else if (prev.status === "approved" && ["rejected", "cancelled"].includes(status)) {
-        await sql`
-          update admin_leave_balances
-          set used = greatest(0, used - ${days}), updated_at = now()
-          where tenant_slug = ${ctx.tenantSlug} and employee_id = ${prev.employee_id}
-            and leave_type = ${prev.leave_type} and year = ${year}
-        `;
+        await adjustLeaveBalance({ ...base, usedDelta: -days });
+      } else if (prev.status === "approved" && status === "pending") {
+        await adjustLeaveBalance({ ...base, pendingDelta: days, usedDelta: -days });
       }
     }
 

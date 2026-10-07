@@ -21,8 +21,10 @@ export async function GET(request: NextRequest) {
     let todayAtt: any[] = [];
     try {
       todayAtt = await sql`
-        SELECT id, date, status, check_in, check_out FROM admin_attendance
-        WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id} AND date = ${today}
+        SELECT id, work_date as date, attendance_status as status,
+               check_in_time as check_in, check_out_time as check_out
+        FROM attendance_records
+        WHERE tenant_id = ${session.tenantSlug} AND employee_id = ${session.id} AND work_date = ${today}
         LIMIT 1
       `;
       console.log('[dashboard] todayAtt query:', { tenantSlug: session.tenantSlug, employeeId: session.id, date: today, resultCount: todayAtt.length, firstRow: todayAtt[0] });
@@ -32,10 +34,10 @@ export async function GET(request: NextRequest) {
     let monthAtt: any[] = [];
     try {
       monthAtt = await sql`
-        SELECT status, count(*)::int as cnt FROM admin_attendance
-        WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id}
-          AND date >= ${monthStart} AND date <= ${monthEnd}
-        GROUP BY status
+        SELECT attendance_status as status, count(*)::int as cnt FROM attendance_records
+        WHERE tenant_id = ${session.tenantSlug} AND employee_id = ${session.id}
+          AND work_date >= ${monthStart} AND work_date <= ${monthEnd}
+        GROUP BY attendance_status
       `;
     } catch (e) { console.error("dashboard: monthAtt failed:", (e as any)?.message); }
 
@@ -43,10 +45,12 @@ export async function GET(request: NextRequest) {
     let monthRecords: any[] = [];
     try {
       monthRecords = await sql`
-        SELECT date, status, check_in, check_out FROM admin_attendance
-        WHERE tenant_slug = ${session.tenantSlug} AND employee_id = ${session.id}
-          AND date >= ${monthStart} AND date <= ${monthEnd}
-        ORDER BY date ASC
+        SELECT work_date as date, attendance_status as status,
+               check_in_time as check_in, check_out_time as check_out
+        FROM attendance_records
+        WHERE tenant_id = ${session.tenantSlug} AND employee_id = ${session.id}
+          AND work_date >= ${monthStart} AND work_date <= ${monthEnd}
+        ORDER BY work_date ASC
       `;
     } catch (e) { console.error("dashboard: monthRecords failed:", (e as any)?.message); }
 

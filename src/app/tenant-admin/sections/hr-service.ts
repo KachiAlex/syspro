@@ -317,7 +317,12 @@ export class HRService {
   }
 
   static async deleteEmployee(tenantSlug: string, employeeId: string): Promise<void> {
-    await apiClient.delete(`/hr/employees/${employeeId}?tenantSlug=${tenantSlug}`);
+    try {
+      await apiClient.delete(`/hr/employees/${employeeId}?tenantSlug=${tenantSlug}`);
+    } catch (err: any) {
+      const msg = err?.response?.data?.error;
+      throw new Error(typeof msg === "string" ? msg : "Failed to delete employee");
+    }
   }
 
   static async importEmployeesFromExcel(tenantSlug: string, file: File, defaultPassword?: string): Promise<{

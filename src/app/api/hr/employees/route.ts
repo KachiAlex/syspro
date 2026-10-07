@@ -4,6 +4,7 @@ import { z } from "zod";
 import { listEmployees, insertEmployee, countEmployees, ensureHrTables, resolveOrCreateDepartment } from "@/lib/hr/db";
 import { ensureAdminTables } from "@/lib/admin/db";
 import { extractAuthContext } from "@/lib/auth-helper";
+import { requireModuleAccess } from "@/lib/api-auth";
 import { resolveDepartmentHeadContext } from "@/lib/tenant-admin/utils";
 import { sql as SQL } from "@/lib/sql-client";
 import { setEmployeePassword, generatePassword } from "@/lib/hr/auth";
@@ -40,6 +41,8 @@ const createSchema = z.object({
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
 
+  const scope = await requireModuleAccess(request, "people", "read");
+  if (!scope.ok) return scope.response;
   // Get tenantSlug from authenticated session, not from query params
   const auth = extractAuthContext(request);
   if (!auth.tenantSlug) {
@@ -93,6 +96,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const scope = await requireModuleAccess(request, "people", "write");
+  if (!scope.ok) return scope.response;
   const auth = extractAuthContext(request);
   if (!auth.tenantSlug) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });

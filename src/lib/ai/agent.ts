@@ -488,11 +488,12 @@ async function handleAppraisePerformance(
   let attendance: any[] = [];
   try {
     attendance = await SQL`
-      SELECT status, check_in, check_out, date
-      FROM admin_attendance
-      WHERE tenant_slug = ${tenantSlug} AND employee_id = ${employeeId}
-        AND date >= ${periodStart.toISOString().split("T")[0]}
-      ORDER BY date DESC LIMIT 90
+      SELECT attendance_status as status, check_in_time as check_in,
+             check_out_time as check_out, work_date as date
+      FROM attendance_records
+      WHERE tenant_id = ${tenantSlug} AND employee_id = ${employeeId}
+        AND work_date >= ${periodStart.toISOString().split("T")[0]}
+      ORDER BY work_date DESC LIMIT 90
     `;
   } catch {}
 
@@ -1075,12 +1076,12 @@ async function handleProactiveInsights(
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
       const attendanceStats = await SQL`
         select employee_id,
-               count(*) filter (where status = 'absent') as absent_days,
-               count(*) filter (where status = 'late') as late_days,
+               count(*) filter (where attendance_status = 'absent') as absent_days,
+               count(*) filter (where attendance_status = 'late') as late_days,
                count(*) as total_days
-        from admin_attendance
-        where tenant_slug = ${tenantSlug}
-          and date >= ${thirtyDaysAgo}
+        from attendance_records
+        where tenant_id = ${tenantSlug}
+          and work_date >= ${thirtyDaysAgo}
         group by employee_id
         having count(*) filter (where status = 'absent') >= 3
         order by absent_days desc

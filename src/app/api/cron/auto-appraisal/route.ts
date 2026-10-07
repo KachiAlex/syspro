@@ -74,11 +74,12 @@ export async function POST(request: NextRequest) {
           let attendance: any[] = [];
           try {
             attendance = await SQL`
-              select status, check_in, check_out, date
-              from admin_attendance
-              where tenant_slug = ${tenantSlug} and employee_id = ${emp.id}
-                and date >= ${periodStart.toISOString().split("T")[0]}
-              order by date desc limit 90
+              select attendance_status as status, check_in_time as check_in,
+                     check_out_time as check_out, work_date as date
+              from attendance_records
+              where tenant_id = ${tenantSlug} and employee_id = ${emp.id}
+                and work_date >= ${periodStart.toISOString().split("T")[0]}
+              order by work_date desc limit 90
             `;
           } catch {}
 

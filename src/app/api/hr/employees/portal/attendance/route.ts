@@ -16,11 +16,12 @@ export async function GET(request: NextRequest) {
     const offset = Number(url.searchParams.get("offset") || "0");
 
     const rows = await SQL`
-      select id, date, status, check_in, check_out, notes, created_at
-      from admin_attendance
-      where tenant_slug = ${session.tenantSlug}
+      select id, work_date as date, attendance_status as status,
+             check_in_time as check_in, check_out_time as check_out, notes, created_at
+      from attendance_records
+      where tenant_id = ${session.tenantSlug}
         and employee_id = ${session.id}
-      order by date desc
+      order by work_date desc
       limit ${limit} offset ${offset}
     `;
 

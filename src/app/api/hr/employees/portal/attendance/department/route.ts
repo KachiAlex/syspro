@@ -45,10 +45,11 @@ export async function GET(request: NextRequest) {
       try {
         rows = await sql`
           SELECT e.id, e.name, e.job_title, e.role,
-                 a.status, a.check_in, a.check_out, a.date
+                 a.attendance_status as status, a.check_in_time as check_in,
+                 a.check_out_time as check_out, a.work_date as date
           FROM admin_employees e
-          LEFT JOIN admin_attendance a
-            ON a.employee_id = e.id AND a.tenant_slug = e.tenant_slug AND a.date = ${today}
+          LEFT JOIN attendance_records a
+            ON a.employee_id = e.id AND a.tenant_id = e.tenant_slug AND a.work_date = ${today}
           WHERE e.tenant_slug = ${session.tenantSlug}
             AND e.department_id = ${deptId}
             AND e.status = 'active'
@@ -73,10 +74,11 @@ export async function GET(request: NextRequest) {
       try {
         rows = await sql`
           SELECT e.id, e.name, e.job_title, e.role,
-                 a.status, a.check_in, a.check_out, a.date
+                 a.attendance_status as status, a.check_in_time as check_in,
+                 a.check_out_time as check_out, a.work_date as date
           FROM admin_employees e
-          LEFT JOIN admin_attendance a
-            ON a.employee_id = e.id AND a.tenant_slug = e.tenant_slug AND a.date = ${today}
+          LEFT JOIN attendance_records a
+            ON a.employee_id = e.id AND a.tenant_id = e.tenant_slug AND a.work_date = ${today}
           WHERE e.tenant_slug = ${session.tenantSlug}
             AND e.status = 'active'
           ORDER BY

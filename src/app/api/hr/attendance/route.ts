@@ -75,13 +75,32 @@ export async function POST(request: NextRequest) {
     }
     try {
       const inserted = [];
-      for (const r of records) {
+      const failed: { index: number; employeeId: string | null; error: unknown }[] = [];
+      for (let i = 0; i < records.length; i++) {
+        const r = records[i];
         const parsed = createSchema.safeParse({ ...r, tenantSlug });
         if (parsed.success) {
-          inserted.push(await insertAttendance({ ...parsed.data, actorId: _scope.user.id }));
+          try {
+            inserted.push(await insertAttendance({ ...parsed.data, actorId: _scope.user.id }));
+          } catch (err: any) {
+            failed.push({
+              index: i,
+              employeeId: parsed.data.employeeId,
+              error: err?.message ?? "insert failed",
+            });
+          }
+        } else {
+          failed.push({
+            index: i,
+            employeeId: typeof r?.employeeId === "string" ? r.employeeId : null,
+            error: parsed.error.flatten(),
+          });
         }
       }
-      return NextResponse.json({ records: inserted }, { status: 201 });
+      return NextResponse.json(
+        { records: inserted, failed },
+        { status: inserted.length === 0 && failed.length > 0 ? 400 : 201 }
+      );
     } catch (error) {
       console.error("Attendance batch create failed", error);
       return NextResponse.json({ error: "Failed to record attendance batch" }, { status: 500 });
@@ -96,7 +115,10 @@ export async function POST(request: NextRequest) {
   try {
     const record = await insertAttendance({ ...parsed.data, actorId: _scope.user.id });
     return NextResponse.json({ record }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === "EMPLOYEE_NOT_FOUND") {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     console.error("Attendance create failed", error);
     return NextResponse.json({ error: "Failed to record attendance" }, { status: 500 });
   }

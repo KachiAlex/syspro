@@ -141,7 +141,8 @@ async function ensureHrTablesRun(sql: SqlClient = SQL) {
   try {
     await sql`drop table if exists admin_attendance`;
   } catch (e) { /* ignore if cannot drop */ }
-  await sql`
+  try {
+    await sql`
     create or replace view admin_attendance as
     select
       id,
@@ -169,6 +170,11 @@ async function ensureHrTablesRun(sql: SqlClient = SQL) {
       override_by_user_id
     from attendance_records
   `;
+  } catch (e) {
+    // Verification columns may not exist yet on a fresh DB until
+    // ensureAttendanceVerificationTables() runs; all in-repo readers use
+    // attendance_records directly so a missing compat view is non-fatal.
+  }
 
   await sql`
     create table if not exists admin_leave (
@@ -322,6 +328,10 @@ async function ensureHrTablesRun(sql: SqlClient = SQL) {
   `;
   await sql`create index if not exists idx_admin_leave_bal_tenant on admin_leave_balances(tenant_slug)`;
   await sql`create index if not exists idx_admin_leave_bal_emp on admin_leave_balances(tenant_slug, employee_id)`;
+  // Rows created implicitly by leave-request tracking carry entitled=0 with no
+  // deliberate configuration — flag distinguishes them from explicit overrides.
+  await sql`alter table admin_leave_balances add column if not exists entitlement_set boolean not null default false`;
+  await sql`update admin_leave_balances set entitlement_set = true where entitled > 0 and entitlement_set = false`;
 
   // Statutory deduction profile per tenant (tax bands, pension, other statutory lines)
   await sql`
@@ -795,14 +805,17 @@ export async function updateEmployee(
     bankName: string | null;
     bankAccountNumber: string | null;
     bankAccountName: string | null;
-  }>
+  }>,
+  tenantSlug?: string
 ) {
   const sql = SQL;
   await ensureHrTables(sql);
 
   // Enforce unique HOD per department
   if (updates.role === "hod") {
-    const currentRows = await sql`select tenant_slug, department_id, role from admin_employees where id = ${id} limit 1`;
+    const currentRows = tenantSlug
+      ? await sql`select tenant_slug, department_id, role from admin_employees where id = ${id} and tenant_slug = ${tenantSlug} limit 1`
+      : await sql`select tenant_slug, department_id, role from admin_employees where id = ${id} limit 1`;
     const current = (currentRows as any[])[0];
     if (current) {
       // Only check for conflicts if the employee is being PROMOTED to HOD
@@ -850,10 +863,32 @@ export async function updateEmployee(
       bank_account_name = coalesce(${updates.bankAccountName ?? null}, bank_account_name),
       updated_at = now()
     where id = ${id}
+    ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
     returning *
   `;
   const rows = updated as any[];
   return rows.length ? normalizeEmployeeRow(rows[0]) : null;
+}
+
+/** Historical-record counts that make hard deletion destructive. */
+export async function employeeDependencies(id: string, tenantSlug: string) {
+  const sql = SQL;
+  const count = async (q: Promise<any>) => {
+    try {
+      const rows = (await q) as any[];
+      return Number(rows[0]?.cnt ?? 0);
+    } catch {
+      return 0;
+    }
+  };
+  const [leave, attendance, payroll, reviews, offboarding] = await Promise.all([
+    count(sql`select count(*)::int as cnt from admin_leave where employee_id = ${id} and tenant_slug = ${tenantSlug}`),
+    count(sql`select count(*)::int as cnt from attendance_records where employee_id = ${id} and tenant_id = ${tenantSlug}`),
+    count(sql`select count(*)::int as cnt from admin_payroll_entries where employee_id = ${id} and tenant_slug = ${tenantSlug}`),
+    count(sql`select count(*)::int as cnt from tenant_performance_reviews where employee_id = ${id} and tenant_slug = ${tenantSlug}`),
+    count(sql`select count(*)::int as cnt from admin_offboarding where employee_id = ${id} and tenant_slug = ${tenantSlug}`),
+  ]);
+  return { leave, attendance, payroll, reviews, offboarding };
 }
 
 export async function deleteEmployee(id: string, tenantSlug: string) {
@@ -1192,13 +1227,26 @@ export async function insertAttendance(row: {
   const sql = SQL;
   await ensureHrTables(sql);
   await ensureAttendanceVerificationTables();
+  // Reject attendance for ids that are not employees of this tenant — the id
+  // must resolve in admin_employees or the record pollutes reports and can
+  // never be seen by a portal user.
+  const empRows = await sql`
+    select name from admin_employees
+    where id = ${row.employeeId} and tenant_slug = ${row.tenantSlug} limit 1
+  `;
+  const empName = (empRows as any[])[0]?.name;
+  if (!empName) {
+    const err = new Error("Employee not found in this tenant");
+    (err as any).code = "EMPLOYEE_NOT_FOUND";
+    throw err;
+  }
   const id = randomUUID();
   // Admin-recorded attendance is a manual override — stamp it so it is
   // distinguishable from QR/geofence-verified check-ins in audit views.
   const overrideReason = `manual entry${row.notes ? `: ${row.notes}` : ""}`;
   await sql`
     insert into attendance_records (id, tenant_id, employee_id, employee_name, work_date, attendance_status, check_in_time, check_out_time, notes, check_in_method, is_override, override_reason, override_by_user_id, created_at, updated_at)
-    values (${id}, ${row.tenantSlug}, ${row.employeeId}, ${row.employeeName}, ${row.date}, ${row.status}, ${row.checkIn ?? null}, ${row.checkOut ?? null}, ${row.notes ?? null}, 'manual', true, ${overrideReason}, ${row.actorId ?? null}, now(), now())
+    values (${id}, ${row.tenantSlug}, ${row.employeeId}, ${empName}, ${row.date}, ${row.status}, ${row.checkIn ?? null}, ${row.checkOut ?? null}, ${row.notes ?? null}, 'manual', true, ${overrideReason}, ${row.actorId ?? null}, now(), now())
     on conflict (tenant_id, employee_id, work_date) do update set
       attendance_status = excluded.attendance_status,
       check_in_time = coalesce(excluded.check_in_time, attendance_records.check_in_time),
@@ -1211,7 +1259,11 @@ export async function insertAttendance(row: {
       override_by_user_id = excluded.override_by_user_id,
       updated_at = now()
   `;
-  const inserted = await sql`select * from admin_attendance where tenant_slug = ${row.tenantSlug} and employee_id = ${row.employeeId} and date = ${row.date} limit 1`;
+  const inserted = await sql`select id, tenant_id as tenant_slug, employee_id, employee_name,
+      work_date as date, attendance_status as status, check_in_time as check_in,
+      check_out_time as check_out, notes, check_in_lat, check_in_lng,
+      check_out_lat, check_out_lng, work_mode, created_at
+    from attendance_records where tenant_id = ${row.tenantSlug} and employee_id = ${row.employeeId} and work_date = ${row.date} limit 1`;
   return normalizeAttendanceRow((inserted as any[])[0]);
 }
 
@@ -1228,12 +1280,17 @@ export async function listAttendance(filters: {
   const limit = filters.limit ? Math.min(Math.max(filters.limit, 1), 100) : 50;
   const offset = filters.offset ?? 0;
 
-  let query = `select * from admin_attendance where tenant_slug = $1`;
+  let query = `select id, tenant_id as tenant_slug, employee_id, employee_name,
+      work_date as date, attendance_status as status, check_in_time as check_in,
+      check_out_time as check_out, notes, check_in_lat, check_in_lng,
+      check_out_lat, check_out_lng, work_mode, check_in_method, is_override,
+      flag_reason, created_at
+    from attendance_records where tenant_id = $1`;
   const params: any[] = [filters.tenantSlug];
 
   if (filters.date) {
     params.push(filters.date);
-    query += ` and date = $${params.length}`;
+    query += ` and work_date = $${params.length}`;
   }
   if (filters.employeeId) {
     params.push(filters.employeeId);
@@ -1241,10 +1298,10 @@ export async function listAttendance(filters: {
   }
   if (filters.status) {
     params.push(filters.status);
-    query += ` and status = $${params.length}`;
+    query += ` and attendance_status = $${params.length}`;
   }
 
-  query += ` order by date desc, created_at desc limit $${params.length + 1} offset $${params.length + 2}`;
+  query += ` order by work_date desc, created_at desc limit $${params.length + 1} offset $${params.length + 2}`;
   params.push(limit, offset);
 
   const res = await db.query(query, params);
@@ -1255,9 +1312,9 @@ export async function getAttendanceStats(tenantSlug: string, date: string) {
   const sql = SQL;
   await ensureHrTables(sql);
   const rows = await sql`
-    select status, count(*)::int as cnt from admin_attendance
-    where tenant_slug = ${tenantSlug} and date = ${date}
-    group by status
+    select attendance_status as status, count(*)::int as cnt from attendance_records
+    where tenant_id = ${tenantSlug} and work_date = ${date}
+    group by attendance_status
   `;
   const counts: Record<string, number> = {};
   (rows as any[]).forEach((r) => { counts[r.status] = r.cnt; });
@@ -1307,8 +1364,64 @@ export async function insertLeave(row: {
     insert into admin_leave (id, tenant_slug, employee_id, employee_name, leave_type, start_date, end_date, reason)
     values (${id}, ${row.tenantSlug}, ${row.employeeId}, ${row.employeeName}, ${row.leaveType}, ${row.startDate}, ${row.endDate}, ${row.reason})
   `;
+  // New requests consume pending balance immediately (mirrors the
+  // /api/tenant/leave/requests path).
+  await adjustLeaveBalance({
+    tenantSlug: row.tenantSlug,
+    employeeId: row.employeeId,
+    employeeName: row.employeeName,
+    leaveType: row.leaveType,
+    year: new Date(`${row.startDate}T00:00:00Z`).getUTCFullYear(),
+    pendingDelta: leaveDaysInclusive(row.startDate, row.endDate),
+  });
   const inserted = await sql`select * from admin_leave where id = ${id} limit 1`;
   return normalizeLeaveRow((inserted as any[])[0]);
+}
+
+/** Inclusive day count for a leave range — matches daysBetween in the tenant routes. */
+function leaveDaysInclusive(startDate: string, endDate: string): number {
+  const s = new Date(`${startDate}T00:00:00Z`).getTime();
+  const e = new Date(`${endDate}T00:00:00Z`).getTime();
+  if (!Number.isFinite(s) || !Number.isFinite(e) || e < s) return 0;
+  return Math.round((e - s) / 86400000) + 1;
+}
+
+/**
+ * Move days between pending/used buckets on admin_leave_balances.
+ * Creates the row if absent (entitled 0 — real entitlement is set via
+ * /api/tenant/leave/balances). Single place all leave write paths share.
+ */
+export async function adjustLeaveBalance(opts: {
+  tenantSlug: string;
+  employeeId: string;
+  employeeName: string;
+  leaveType: string;
+  year: number;
+  pendingDelta?: number;
+  usedDelta?: number;
+}) {
+  const sql = SQL;
+  const pendingDelta = opts.pendingDelta ?? 0;
+  const usedDelta = opts.usedDelta ?? 0;
+  if (pendingDelta === 0 && usedDelta === 0) return;
+  // Implicit rows get the default entitlement (entitlement_set=false) so the
+  // request isn't instantly over-balance; explicit overrides come via POST
+  // /api/tenant/leave/balances which sets entitlement_set=true.
+  const entitled = DEFAULT_LEAVE_ENTITLEMENTS[opts.leaveType] ?? 0;
+  await sql`
+    insert into admin_leave_balances (
+      id, tenant_slug, employee_id, employee_name, leave_type, year, entitled, pending, used, entitlement_set
+    ) values (
+      ${randomUUID()}, ${opts.tenantSlug}, ${opts.employeeId}, ${opts.employeeName},
+      ${opts.leaveType}, ${opts.year}, ${entitled}, greatest(0, ${pendingDelta}::numeric), greatest(0, ${usedDelta}::numeric), false
+    )
+    on conflict (tenant_slug, employee_id, leave_type, year)
+    do update set
+      pending = greatest(0, admin_leave_balances.pending + ${pendingDelta}::numeric),
+      used = greatest(0, admin_leave_balances.used + ${usedDelta}::numeric),
+      employee_name = coalesce(admin_leave_balances.employee_name, excluded.employee_name),
+      updated_at = now()
+  `;
 }
 
 export async function updateLeaveStatus(
@@ -1319,16 +1432,48 @@ export async function updateLeaveStatus(
 ) {
   const sql = SQL;
   await ensureHrTables(sql);
+  const prev = await sql`
+    select status, leave_type, start_date, end_date, employee_id, employee_name
+    from admin_leave where id = ${id} and tenant_slug = ${tenantSlug} limit 1
+  `;
+  const prevRow = (prev as any[])[0];
+  if (!prevRow) return null;
   const updated = await sql`
     update admin_leave set
       status = ${status},
       approved_by = coalesce(${approvedBy ?? null}, approved_by),
+      reviewed_at = now(),
       updated_at = now()
     where id = ${id} and tenant_slug = ${tenantSlug}
     returning *
   `;
   const rows = updated as any[];
-  return rows.length ? normalizeLeaveRow(rows[0]) : null;
+  if (!rows.length) return null;
+
+  // Keep admin_leave_balances in step with the transition.
+  const toDateStr = (d: any) => (d instanceof Date ? d.toISOString().split("T")[0] : String(d).split("T")[0]);
+  const startDate = toDateStr(prevRow.start_date);
+  const endDate = toDateStr(prevRow.end_date);
+  const days = leaveDaysInclusive(startDate, endDate);
+  const year = new Date(`${startDate}T00:00:00Z`).getUTCFullYear();
+  const base = {
+    tenantSlug,
+    employeeId: prevRow.employee_id,
+    employeeName: prevRow.employee_name ?? prevRow.employee_id,
+    leaveType: prevRow.leave_type,
+    year,
+  };
+  if (prevRow.status === "pending" && status === "approved") {
+    await adjustLeaveBalance({ ...base, pendingDelta: -days, usedDelta: days });
+  } else if (prevRow.status === "pending" && (status === "rejected" || status === "cancelled")) {
+    await adjustLeaveBalance({ ...base, pendingDelta: -days });
+  } else if (prevRow.status === "approved" && (status === "rejected" || status === "cancelled")) {
+    await adjustLeaveBalance({ ...base, usedDelta: -days });
+  } else if (prevRow.status === "approved" && status === "pending") {
+    await adjustLeaveBalance({ ...base, pendingDelta: days, usedDelta: -days });
+  }
+
+  return normalizeLeaveRow(rows[0]);
 }
 
 export async function listLeave(filters: {
@@ -1367,28 +1512,63 @@ export async function listLeave(filters: {
   return (res.rows as any[]).map(normalizeLeaveRow);
 }
 
+/** Default entitlements — kept in sync with /api/tenant/leave/balances. */
+export const DEFAULT_LEAVE_ENTITLEMENTS: Record<string, number> = {
+  annual: 21,
+  sick: 12,
+  personal: 5,
+  maternity: 90,
+  paternity: 14,
+  unpaid: 0,
+};
+
 export async function getLeaveBalance(tenantSlug: string, employeeId: string) {
   const sql = SQL;
   await ensureHrTables(sql);
+  const year = new Date().getUTCFullYear();
 
-  const rows = await sql`
-    select leave_type, sum(end_date - start_date + 1)::int as days
-    from admin_leave
-    where tenant_slug = ${tenantSlug} and employee_id = ${employeeId} and status = 'approved'
-    group by leave_type
-  `;
+  // Entitlement/carried-over come from the balances table (tenant-overridable);
+  // used/pending are computed from admin_leave so the answer is correct even
+  // for requests recorded before balance tracking existed.
+  const [usageRows, balanceRows] = await Promise.all([
+    sql`
+      select leave_type, status, sum(end_date - start_date + 1)::int as days
+      from admin_leave
+      where tenant_slug = ${tenantSlug} and employee_id = ${employeeId}
+        and status in ('approved', 'pending')
+        and extract(year from start_date) = ${year}
+      group by leave_type, status
+    `,
+    sql`
+      select leave_type, entitled, carried_over, entitlement_set from admin_leave_balances
+      where tenant_slug = ${tenantSlug} and employee_id = ${employeeId} and year = ${year}
+    `,
+  ]);
 
   const used: Record<string, number> = {};
-  (rows as any[]).forEach((r) => { used[r.leave_type] = r.days ?? 0; });
+  const pending: Record<string, number> = {};
+  (usageRows as any[]).forEach((r) => {
+    if (r.status === "approved") used[r.leave_type] = r.days ?? 0;
+    if (r.status === "pending") pending[r.leave_type] = r.days ?? 0;
+  });
+  const entitled: Record<string, number> = { ...DEFAULT_LEAVE_ENTITLEMENTS };
+  const carried: Record<string, number> = {};
+  (balanceRows as any[]).forEach((r) => {
+    // Only deliberately configured entitlements override the defaults —
+    // implicitly created tracking rows carry entitlement_set=false.
+    if (r.entitlement_set) entitled[r.leave_type] = Number(r.entitled) || 0;
+    carried[r.leave_type] = Number(r.carried_over) || 0;
+  });
 
-  return {
-    annual: { used: used["annual"] ?? 0, total: 20 },
-    sick: { used: used["sick"] ?? 0, total: 10 },
-    personal: { used: used["personal"] ?? 0, total: 5 },
-    maternity: { used: used["maternity"] ?? 0, total: 90 },
-    paternity: { used: used["paternity"] ?? 0, total: 14 },
-    unpaid: { used: used["unpaid"] ?? 0, total: 0 },
-  };
+  const out: Record<string, { used: number; pending: number; total: number }> = {};
+  for (const type of Object.keys(DEFAULT_LEAVE_ENTITLEMENTS)) {
+    out[type] = {
+      used: used[type] ?? 0,
+      pending: pending[type] ?? 0,
+      total: (entitled[type] ?? 0) + (carried[type] ?? 0),
+    };
+  }
+  return out;
 }
 
 // ============================================================================

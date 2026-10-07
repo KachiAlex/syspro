@@ -52,10 +52,14 @@ export async function POST(request: NextRequest) {
 
     // Check if there's already an attendance record for today
     const existing = await sql`
-      SELECT * FROM admin_attendance
-      WHERE tenant_slug = ${session.tenantSlug}
+      SELECT id, tenant_id as tenant_slug, employee_id, employee_name,
+             work_date as date, attendance_status as status,
+             check_in_time as check_in, check_out_time as check_out,
+             notes, work_mode, created_at
+      FROM attendance_records
+      WHERE tenant_id = ${session.tenantSlug}
         AND employee_id = ${session.id}
-        AND date = ${today}
+        AND work_date = ${today}
       LIMIT 1
     `;
 
@@ -113,7 +117,7 @@ export async function POST(request: NextRequest) {
           WHERE id = ${existing[0].id}
           RETURNING *
         `;
-        const viewRow = await sql`select * from admin_attendance where id = ${existing[0].id} limit 1`;
+        const viewRow = await sql`select id, tenant_id as tenant_slug, employee_id, employee_name, work_date as date, attendance_status as status, check_in_time as check_in, check_out_time as check_out, notes, work_mode, created_at from attendance_records where id = ${existing[0].id} limit 1`;
         return NextResponse.json({ success: true, record: (viewRow as any[])[0] || updated[0], flagged: verdict.flagged, flagReason: verdict.flagReason });
       }
 
@@ -135,7 +139,7 @@ export async function POST(request: NextRequest) {
           location_id = excluded.location_id,
           updated_at = now()
       `;
-      const inserted = await sql`select * from admin_attendance where id = ${id} limit 1`;
+      const inserted = await sql`select id, tenant_id as tenant_slug, employee_id, employee_name, work_date as date, attendance_status as status, check_in_time as check_in, check_out_time as check_out, notes, work_mode, created_at from attendance_records where id = ${id} limit 1`;
       return NextResponse.json({ success: true, record: (inserted as any[])[0], flagged: verdict.flagged, flagReason: verdict.flagReason });
     }
 
@@ -159,7 +163,7 @@ export async function POST(request: NextRequest) {
         WHERE id = ${existing[0].id}
         RETURNING *
       `;
-      const viewRow = await sql`select * from admin_attendance where id = ${existing[0].id} limit 1`;
+      const viewRow = await sql`select id, tenant_id as tenant_slug, employee_id, employee_name, work_date as date, attendance_status as status, check_in_time as check_in, check_out_time as check_out, notes, work_mode, created_at from attendance_records where id = ${existing[0].id} limit 1`;
       return NextResponse.json({ success: true, record: (viewRow as any[])[0] || updated[0] });
     }
 
@@ -181,20 +185,25 @@ export async function GET(request: NextRequest) {
 
     // Get today's record
     const todayRecord = await sql`
-      SELECT * FROM admin_attendance
-      WHERE tenant_slug = ${session.tenantSlug}
+      SELECT id, tenant_id as tenant_slug, employee_id, employee_name,
+             work_date as date, attendance_status as status,
+             check_in_time as check_in, check_out_time as check_out,
+             notes, work_mode, created_at
+      FROM attendance_records
+      WHERE tenant_id = ${session.tenantSlug}
         AND employee_id = ${session.id}
-        AND date = ${today}
+        AND work_date = ${today}
       LIMIT 1
     `;
 
     // Get recent records
     const recent = await sql`
-      SELECT id, date, status, check_in, check_out, notes, created_at
-      FROM admin_attendance
-      WHERE tenant_slug = ${session.tenantSlug}
+      SELECT id, work_date as date, attendance_status as status,
+             check_in_time as check_in, check_out_time as check_out, notes, created_at
+      FROM attendance_records
+      WHERE tenant_id = ${session.tenantSlug}
         AND employee_id = ${session.id}
-      ORDER BY date DESC
+      ORDER BY work_date DESC
       LIMIT 30
     `;
 
