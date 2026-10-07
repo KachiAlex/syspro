@@ -11,7 +11,7 @@ async function ensureInventoryTable() {
       id text primary key,
       tenant_slug text not null,
       name text not null,
-      sku text not null unique,
+      sku text not null,
       category text not null,
       current_stock integer not null default 0,
       min_stock integer not null default 0,
@@ -20,7 +20,8 @@ async function ensureInventoryTable() {
       supplier text,
       description text,
       location text,
-      created_at timestamptz default now()
+      created_at timestamptz default now(),
+      unique (tenant_slug, sku)
     )
   `);
   await db.query(`CREATE INDEX IF NOT EXISTS idx_inventory_products_tenant ON inventory_products (tenant_slug)`);
@@ -116,7 +117,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields: name, sku, category" }, { status: 400 });
     }
 
-    const id = `prod_${Date.now()}`;
+    const id = `prod_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const createdAt = new Date().toISOString();
 
     await db.query(
@@ -127,6 +128,9 @@ export async function POST(request: NextRequest) {
     const product = { id, tenant_slug: context.tenantSlug, name: finalName, sku, category, current_stock: finalQuantity, min_stock: finalReorder, sale_price: finalSalePrice, supplier: supplier ?? "", description: description ?? "", location: location ?? "", created_at: createdAt };
     return NextResponse.json({ item: mapProductToItem(product), message: "Item added" }, { status: 201 });
   } catch (error) {
+    if ((error as any)?.code === "23505") {
+      return NextResponse.json({ error: "An item with this SKU already exists" }, { status: 409 });
+    }
     console.error("Inventory create failed:", error);
     return NextResponse.json({ error: "Failed to create inventory item", details: String((error as any)?.message ?? error) }, { status: 500 });
   }

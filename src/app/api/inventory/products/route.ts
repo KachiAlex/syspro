@@ -11,7 +11,7 @@ async function ensureInventoryTables() {
       id text primary key,
       tenant_slug text not null,
       name text not null,
-      sku text not null unique,
+      sku text not null,
       category text not null,
       current_stock integer not null default 0,
       min_stock integer not null default 0,
@@ -20,7 +20,8 @@ async function ensureInventoryTables() {
       supplier text,
       description text,
       location text,
-      created_at timestamptz default now()
+      created_at timestamptz default now(),
+      unique (tenant_slug, sku)
     )
   `);
   await db.query(`create index if not exists idx_inventory_products_tenant on inventory_products (tenant_slug)`);
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
     }
 
     const product = {
-      id: `prod_${Date.now()}`,
+      id: `prod_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       tenantSlug,
       name,
       sku,
@@ -103,6 +104,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ product }, { status: 201 });
   } catch (error) {
+    if ((error as any)?.code === "23505") {
+      return NextResponse.json({ error: "A product with this SKU already exists" }, { status: 409 });
+    }
     console.error("Error creating product:", error);
     return NextResponse.json(
       { error: "Failed to create product", details: error instanceof Error ? error.message : String(error) },

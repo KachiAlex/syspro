@@ -12,7 +12,7 @@ async function ensureInventoryTable() {
       id text primary key,
       tenant_slug text not null,
       name text not null,
-      sku text not null unique,
+      sku text not null,
       category text not null,
       current_stock integer not null default 0,
       min_stock integer not null default 0,
@@ -21,7 +21,8 @@ async function ensureInventoryTable() {
       supplier text,
       description text,
       location text,
-      created_at timestamptz default now()
+      created_at timestamptz default now(),
+      unique (tenant_slug, sku)
     )
   `);
 }
@@ -72,15 +73,10 @@ export async function POST(request: NextRequest) {
 
       try {
         const existing = await db.query(
-          `SELECT id, tenant_slug FROM inventory_products WHERE sku = $1`,
-          [sku]
+          `SELECT id FROM inventory_products WHERE sku = $1 AND tenant_slug = $2`,
+          [sku, context.tenantSlug]
         );
         const found = existing.rows[0];
-
-        if (found && found.tenant_slug !== context.tenantSlug) {
-          errors.push({ row: rowNum, sku, error: "SKU already in use" });
-          continue;
-        }
 
         if (found) {
           await db.query(

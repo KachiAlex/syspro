@@ -74,7 +74,9 @@ export async function recordStockMovement(
   `) as any[];
 
   const positiveTypes: StockMovementType[] = ["purchase_receipt", "return", "work_order_receipt"];
-  const negativeTypes: StockMovementType[] = ["sale", "transfer", "work_order_issue"];
+  // "transfer" is intentionally absent: moving stock between locations is
+  // net-zero on quantity and is handled by the stock-transfers endpoint.
+  const negativeTypes: StockMovementType[] = ["sale", "work_order_issue"];
 
   if (positiveTypes.includes(movement.movementType)) {
     await sql`
