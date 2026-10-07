@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { sql } from "@/lib/sql-client";
-import { ensureHrTables, adjustLeaveBalance } from "@/lib/hr/db";
+import { ensureHrTables, adjustLeaveBalance, checkLeaveBalanceAvailable } from "@/lib/hr/db";
 import {
   validateTenantContext,
   getPaginationParams,
@@ -117,6 +117,24 @@ export async function POST(request: NextRequest) {
       employeeName = (emp as any)?.name ?? parsed.data.employeeId;
     }
 
+    // Enforce the same entitlement cap as the other leave-creation paths —
+    // before the row is inserted, not after.
+    const days = daysBetween(parsed.data.startDate, parsed.data.endDate);
+    const year = new Date(parsed.data.startDate).getUTCFullYear();
+    const cap = await checkLeaveBalanceAvailable({
+      tenantSlug: context.tenantSlug,
+      employeeId: parsed.data.employeeId,
+      leaveType,
+      year,
+      days,
+    });
+    if (!cap.ok) {
+      return errorResponse(
+        `Insufficient ${leaveType} leave balance: ${days} day(s) requested, ${cap.remaining} remaining`,
+        400
+      );
+    }
+
     const [row] = await sql`
       insert into admin_leave (
         id, tenant_slug, employee_id, employee_name, leave_type,
@@ -130,8 +148,6 @@ export async function POST(request: NextRequest) {
     `;
 
     // Track the request against the employee's leave balance
-    const days = daysBetween(parsed.data.startDate, parsed.data.endDate);
-    const year = new Date(parsed.data.startDate).getUTCFullYear();
     await adjustLeaveBalance({
       tenantSlug: context.tenantSlug,
       employeeId: parsed.data.employeeId,

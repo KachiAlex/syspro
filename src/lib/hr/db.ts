@@ -1221,6 +1221,7 @@ export async function insertAttendance(row: {
   checkIn?: string | null;
   checkOut?: string | null;
   notes?: string | null;
+  workMode?: string | null;
   /** Admin user id performing the manual entry — recorded for audit */
   actorId?: string | null;
 }) {
@@ -1244,9 +1245,36 @@ export async function insertAttendance(row: {
   // Admin-recorded attendance is a manual override — stamp it so it is
   // distinguishable from QR/geofence-verified check-ins in audit views.
   const overrideReason = `manual entry${row.notes ? `: ${row.notes}` : ""}`;
+  // Roster-based late detection: a 'present' mark with a check-in past the
+  // employee's assigned shift start + grace is downgraded to 'late'.
+  let effectiveStatus = row.status;
+  if (row.status === "present" && row.checkIn && /^\d{1,2}:\d{2}/.test(row.checkIn)) {
+    const dow = new Date(`${row.date}T00:00:00Z`).getUTCDay();
+    try {
+      const shiftRows = await sql`
+        select s.start_time, s.grace_minutes
+        from admin_shift_assignments a
+        join admin_shifts s on s.tenant_slug = a.tenant_slug and s.id = a.shift_id
+        where a.tenant_slug = ${row.tenantSlug} and a.employee_id = ${row.employeeId}
+          and a.effective_from <= ${row.date} and (a.effective_to is null or a.effective_to >= ${row.date})
+          and ${dow} = any(s.days_of_week) and s.is_active
+        order by a.effective_from desc limit 1
+      `;
+      const shift = (shiftRows as any[])[0];
+      if (shift) {
+        const [h, m] = row.checkIn.split(":").map(Number);
+        const [sh, sm] = String(shift.start_time).split(":").map(Number);
+        if (h * 60 + m > sh * 60 + sm + (shift.grace_minutes ?? 0)) {
+          effectiveStatus = "late";
+        }
+      }
+    } catch {
+      // shifts tables may not exist yet — keep caller's status
+    }
+  }
   await sql`
-    insert into attendance_records (id, tenant_id, employee_id, employee_name, work_date, attendance_status, check_in_time, check_out_time, notes, check_in_method, is_override, override_reason, override_by_user_id, created_at, updated_at)
-    values (${id}, ${row.tenantSlug}, ${row.employeeId}, ${empName}, ${row.date}, ${row.status}, ${row.checkIn ?? null}, ${row.checkOut ?? null}, ${row.notes ?? null}, 'manual', true, ${overrideReason}, ${row.actorId ?? null}, now(), now())
+    insert into attendance_records (id, tenant_id, employee_id, employee_name, work_date, attendance_status, check_in_time, check_out_time, notes, work_mode, check_in_method, is_override, override_reason, override_by_user_id, created_at, updated_at)
+    values (${id}, ${row.tenantSlug}, ${row.employeeId}, ${empName}, ${row.date}, ${effectiveStatus}, ${row.checkIn ?? null}, ${row.checkOut ?? null}, ${row.notes ?? null}, ${row.workMode ?? null}, 'manual', true, ${overrideReason}, ${row.actorId ?? null}, now(), now())
     on conflict (tenant_id, employee_id, work_date) do update set
       attendance_status = excluded.attendance_status,
       check_in_time = coalesce(excluded.check_in_time, attendance_records.check_in_time),
@@ -1422,6 +1450,36 @@ export async function adjustLeaveBalance(opts: {
       employee_name = coalesce(admin_leave_balances.employee_name, excluded.employee_name),
       updated_at = now()
   `;
+}
+
+/**
+ * Remaining leave balance for an employee/type/year.
+ * Explicit overrides (entitlement_set=true) win; implicit tracking rows and
+ * absent rows fall back to the default entitlement. Unpaid is untracked.
+ * Shared by all leave-creation paths so the cap is enforced identically.
+ */
+export async function checkLeaveBalanceAvailable(opts: {
+  tenantSlug: string;
+  employeeId: string;
+  leaveType: string;
+  year: number;
+  days: number;
+}): Promise<{ ok: boolean; remaining: number }> {
+  const sql = SQL;
+  if (opts.leaveType === "unpaid") return { ok: true, remaining: Number.POSITIVE_INFINITY };
+  const rows = await sql`
+    select entitled, used, pending, carried_over, entitlement_set from admin_leave_balances
+    where tenant_slug = ${opts.tenantSlug} and employee_id = ${opts.employeeId}
+      and leave_type = ${opts.leaveType} and year = ${opts.year}
+    limit 1
+  `;
+  const bal = (rows as any[])[0];
+  const entitled = bal?.entitlement_set
+    ? Number(bal.entitled)
+    : (DEFAULT_LEAVE_ENTITLEMENTS[opts.leaveType] ?? 0);
+  const remaining =
+    entitled + Number(bal?.carried_over ?? 0) - Number(bal?.used ?? 0) - Number(bal?.pending ?? 0);
+  return { ok: opts.days <= remaining, remaining };
 }
 
 export async function updateLeaveStatus(
@@ -1828,6 +1886,71 @@ export async function createPayrollRun(params: {
   const sql = SQL;
   await ensureHrTables(sql);
 
+  // Recompute statutory amounts server-side — callers (e.g. the payroll UI)
+  // submit client-computed tax/pension/net which must not be trusted. Inputs
+  // (base salary, allowances, bonus, other deductions) stay as provided;
+  // tax/pension/statutory and the derived totals are recomputed from the
+  // tenant's statutory profile (falling back to the run config's flat rates).
+  let taxBands: PayrollTaxBand[] | null = params.config.taxBands?.length ? params.config.taxBands : null;
+  let pensionRate = params.config.pensionRate;
+  let otherStatutory: { name: string; type: string; amount: number }[] = [];
+  try {
+    const [profile] = await sql`
+      select tax_bands, pension_employee_rate, other_deductions
+      from admin_statutory_profiles where tenant_slug = ${params.tenantSlug}
+    ` as any[];
+    if (profile) {
+      if (Array.isArray(profile.tax_bands) && profile.tax_bands.length) taxBands = profile.tax_bands;
+      if (profile.pension_employee_rate != null) pensionRate = Number(profile.pension_employee_rate);
+      if (Array.isArray(profile.other_deductions)) otherStatutory = profile.other_deductions;
+    }
+  } catch {
+    // profile table may not exist yet — fall back to run config
+  }
+
+  const recomputeAnomalies: string[] = [];
+  const entries = params.entries.map((e) => {
+    const grossPay = Math.round(
+      (e.baseSalary + e.transportAllowance + e.housingAllowance + e.mealAllowance + e.bonus) * 100
+    ) / 100;
+    const tax = taxBands
+      ? computeProgressiveTax(grossPay, taxBands)
+      : Math.round((grossPay * params.config.taxRate) / 100 * 100) / 100;
+    const pension = Math.round((grossPay * pensionRate) / 100 * 100) / 100;
+    let healthInsurance = Math.round((grossPay * params.config.healthInsuranceRate) / 100 * 100) / 100;
+    let statutoryOther = 0;
+    for (const d of otherStatutory) {
+      const amt = d.type === "percent_of_gross"
+        ? Math.round((grossPay * d.amount) / 100 * 100) / 100
+        : d.amount;
+      if (/health|nhis|hmo/i.test(d.name)) healthInsurance += amt;
+      else statutoryOther += amt;
+    }
+    const totalDeductions = Math.round(
+      (tax + pension + healthInsurance + statutoryOther + e.otherDeductions) * 100
+    ) / 100;
+    const netPay = Math.round((grossPay - totalDeductions) * 100) / 100;
+    if (
+      Math.abs(tax - e.tax) > 0.5 ||
+      Math.abs(pension - e.pension) > 0.5 ||
+      Math.abs(netPay - e.netPay) > 0.5
+    ) {
+      recomputeAnomalies.push(
+        `${e.employeeName}: submitted figures adjusted server-side (tax ${e.tax}→${tax}, net ${e.netPay}→${netPay})`
+      );
+    }
+    return {
+      ...e,
+      grossPay,
+      tax,
+      pension,
+      healthInsurance,
+      otherDeductions: e.otherDeductions + statutoryOther,
+      totalDeductions,
+      netPay,
+    };
+  });
+
   // Fetch previous period entries for anomaly detection
   const prevPeriod = (await sql`
     select id from admin_payroll_runs
@@ -1843,17 +1966,24 @@ export async function createPayrollRun(params: {
   }
 
   const runId = randomUUID();
-  const totalGross = params.entries.reduce((s, e) => s + e.grossPay, 0);
-  const totalDeductions = params.entries.reduce((s, e) => s + e.totalDeductions, 0);
-  const totalNet = params.entries.reduce((s, e) => s + e.netPay, 0);
+  const totalGross = entries.reduce((s, e) => s + e.grossPay, 0);
+  const totalDeductions = entries.reduce((s, e) => s + e.totalDeductions, 0);
+  const totalNet = entries.reduce((s, e) => s + e.netPay, 0);
 
-  const anomalies = detectAnomalies(
-    params.entries.map((e) => ({ ...e, id: "", tenantSlug: params.tenantSlug, runId, createdAt: "" })),
-    prevEntries
-  );
+  const anomalies = [
+    ...recomputeAnomalies,
+    ...detectAnomalies(
+      entries.map((e) => ({ ...e, id: "", tenantSlug: params.tenantSlug, runId, createdAt: "" })),
+      prevEntries
+    ),
+  ];
   const compliance = checkCompliance(
-    params.entries.map((e) => ({ ...e, id: "", tenantSlug: params.tenantSlug, runId, createdAt: "" })),
-    params.config
+    entries.map((e) => ({ ...e, id: "", tenantSlug: params.tenantSlug, runId, createdAt: "" })),
+    {
+      ...params.config,
+      pensionRate,
+      taxBands: taxBands ?? params.config.taxBands,
+    }
   );
 
   await sql`
@@ -1868,7 +1998,7 @@ export async function createPayrollRun(params: {
     )
   `;
 
-  for (const entry of params.entries) {
+  for (const entry of entries) {
     const entryId = randomUUID();
     await sql`
       insert into admin_payroll_entries (

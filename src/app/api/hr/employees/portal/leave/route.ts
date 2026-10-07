@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
-import { ensureHrTables, insertNotification, DEFAULT_LEAVE_ENTITLEMENTS } from "@/lib/hr/db";
+import { ensureHrTables, insertNotification, DEFAULT_LEAVE_ENTITLEMENTS, checkLeaveBalanceAvailable } from "@/lib/hr/db";
 import { z } from "zod";
 
 function daysBetween(start: string, end: string): number {
@@ -105,24 +105,19 @@ export async function POST(request: NextRequest) {
     const days = daysBetween(startDate, endDate);
     const year = new Date(startDate).getUTCFullYear();
 
-    // Reject requests that exceed the remaining balance (unpaid is untracked)
+    // Reject requests that exceed the remaining balance — shared helper keeps
+    // the cap identical across portal, admin, and tenant paths.
     if (leaveType !== "unpaid") {
-      const [bal] = await SQL`
-        select entitled, used, pending, carried_over, entitlement_set from admin_leave_balances
-        where tenant_slug = ${session.tenantSlug} and employee_id = ${session.id}
-          and leave_type = ${leaveType} and year = ${year}
-        limit 1
-      `;
-      // Implicit tracking rows (entitlement_set=false) use the default
-      // entitlement as the cap; explicit overrides use the configured value.
-      const entitled = bal
-        ? (bal.entitlement_set ? Number(bal.entitled) : (DEFAULT_LEAVE_ENTITLEMENTS[leaveType] ?? 0))
-        : (DEFAULT_LEAVE_ENTITLEMENTS[leaveType] ?? 0);
-      const remaining =
-        entitled + Number(bal?.carried_over ?? 0) - Number(bal?.used ?? 0) - Number(bal?.pending ?? 0);
-      if (days > remaining) {
+      const cap = await checkLeaveBalanceAvailable({
+        tenantSlug: session.tenantSlug,
+        employeeId: session.id,
+        leaveType,
+        year,
+        days,
+      });
+      if (!cap.ok) {
         return NextResponse.json(
-          { error: `Insufficient ${leaveType} leave balance: ${days} day(s) requested, ${remaining} remaining` },
+          { error: `Insufficient ${leaveType} leave balance: ${days} day(s) requested, ${cap.remaining} remaining` },
           { status: 400 }
         );
       }
