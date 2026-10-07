@@ -49,7 +49,7 @@ export async function PATCH(request: NextRequest, context: any) {
     priority: body.priority,
     impactLevel: body.impactLevel,
     tags: body.tags,
-    updatedBy: body.updatedBy,
+    updatedBy: ctx.userId !== "unknown" ? ctx.userId : body.updatedBy,
   });
 
   if (!ticket) {

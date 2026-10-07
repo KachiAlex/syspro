@@ -43,6 +43,8 @@ export async function GET(request: NextRequest) {
 
   const payload = {
     tickets,
+    // `data` alias — the /itsupport/* role dashboards consume this field
+    data: tickets,
     totals: {
       count: tickets.length,
       critical: tickets.filter((ticket) => ticket.priority === "critical").length,
@@ -86,7 +88,7 @@ export async function POST(request: NextRequest) {
     customerId: body.customerId,
     projectId: body.projectId,
     tags: body.tags,
-    createdBy: body.createdBy,
+    createdBy: context.userId !== "unknown" ? context.userId : body.createdBy,
   });
 
   // Auto-triage: classify and assign ticket

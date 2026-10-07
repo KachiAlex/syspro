@@ -50,7 +50,20 @@ export async function GET(request: NextRequest) {
       [...params, limit, offset]
     )).rows;
 
-    return NextResponse.json({ receipts: rows, limit, offset });
+    const receipts = (rows || []).map((r: any) => ({
+      id: r.id,
+      receiptNumber: r.receipt_number,
+      poId: r.po_id,
+      vendorId: r.vendor_id,
+      items: r.items,
+      totalAmount: Number(r.total_amount ?? 0),
+      status: r.status,
+      notes: r.notes,
+      receivedDate: r.received_date,
+      createdAt: r.created_at,
+    }));
+
+    return NextResponse.json({ receipts, limit, offset });
   } catch (error) {
     console.error("Error fetching goods receipts:", error);
     return NextResponse.json(
@@ -78,6 +91,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate the referenced PO belongs to this tenant (canonical PO table)
+    if (poId) {
+      const poRows = (await db.query(
+        `select id from purchase_orders where id = $1 and tenant_slug = $2 limit 1`,
+        [poId, tenantSlug]
+      )).rows;
+      if (!poRows.length) {
+        return NextResponse.json({ error: "Purchase order not found" }, { status: 404 });
+      }
+    }
+
     const id = `gr_${randomUUID()}`;
     const receiptNumber = `GR-${Date.now().toString().slice(-8)}`;
     const totalAmount = items.reduce((sum: number, item: any) => sum + item.quantity * item.unitCost, 0);
@@ -102,8 +126,8 @@ export async function POST(request: NextRequest) {
         const newStock = existingStock + receivedQty;
         const newUnitCost = (existingStock * existingUnitCost + receivedQty * receivedUnitCost) / (existingStock + receivedQty);
         await db.query(
-          `update inventory_products set current_stock = $1, unit_cost = $2 where id = $3`,
-          [newStock, newUnitCost, existing[0].id]
+          `update inventory_products set current_stock = $1, unit_cost = $2 where id = $3 and tenant_slug = $4`,
+          [newStock, newUnitCost, existing[0].id, tenantSlug]
         );
       } else {
         await db.query(

@@ -49,9 +49,22 @@ export async function GET(request: NextRequest) {
       ? (await sql`select * from procurement_requisitions where tenant_slug = ${tenantSlug} and status = ${status} order by created_at desc limit ${pageSize} offset ${offset}`)
       : (await sql`select * from procurement_requisitions where tenant_slug = ${tenantSlug} order by created_at desc limit ${pageSize} offset ${offset}`);
 
+    const data = (Array.isArray(rows) ? rows : []).map((r: any) => ({
+      id: r.id,
+      requisitionNumber: r.requisition_number,
+      items: typeof r.items === "string" ? (() => { try { return JSON.parse(r.items); } catch { return []; } })() : (r.items ?? []),
+      totalAmount: Number(r.total_amount ?? 0),
+      status: r.status,
+      source: r.source,
+      notes: r.notes,
+      requestedBy: r.requested_by,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    }));
+
     return NextResponse.json({
       success: true,
-      data: rows,
+      data,
       pagination: {
         page,
         pageSize,

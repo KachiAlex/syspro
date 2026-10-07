@@ -1,27 +1,47 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
-import { db } from "@/lib/sql-client";
 import { getPagination } from "@/lib/pagination";
 import { writeFinanceEvent } from "@/lib/finance/events";
+import {
+  listPurchaseOrders,
+  createPurchaseOrder,
+  type PurchaseOrder,
+} from "@/lib/finance/purchase-orders";
 
 import { requireModuleAccess } from "@/lib/api-auth";
-async function ensurePurchaseOrderTables() {
-  await db.query(`
-    create table if not exists procurement_purchase_orders (
-      id text primary key,
-      tenant_slug text not null,
-      po_number text not null,
-      vendor_id text,
-      items jsonb,
-      quantity integer default 0,
-      amount numeric default 0,
-      delivery_date date,
-      status text not null default 'sent' check (status in ('draft', 'sent', 'received', 'closed', 'cancelled')),
-      created_at timestamptz default now()
-    )
-  `);
-  await db.query(`create index if not exists procurement_po_tenant_idx on procurement_purchase_orders (tenant_slug)`);
+
+// Map the canonical finance-layer PO into the shape the procurement
+// workspace renders (camelCase, poNumber/vendorId/deliveryDate).
+function toProcurementShape(po: PurchaseOrder) {
+  const quantity = po.items.reduce((sum, it) => sum + Number(it.quantity ?? 0), 0);
+  return {
+    id: po.id,
+    poNumber: po.orderNumber,
+    vendorId: po.supplierId ?? null,
+    items: po.items,
+    quantity,
+    amount: po.totalAmount,
+    deliveryDate: po.dueDate,
+    status: po.status,
+    createdAt: po.createdAt,
+  };
+}
+
+function parseItems(raw: any): Array<{ description: string; quantity: number; unitPrice: number; sku?: string }> {
+  const arr = Array.isArray(raw)
+    ? raw
+    : typeof raw === "string"
+      ? (() => { try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; } catch { return []; } })()
+      : [];
+  return arr
+    .map((it: any) => ({
+      description: String(it.description ?? it.name ?? it.componentName ?? it.sku ?? "Item"),
+      quantity: Number(it.quantity ?? it.qty ?? 0),
+      unitPrice: Number(it.unitPrice ?? it.unit_price ?? it.unitCost ?? it.unit_cost ?? it.price ?? 0),
+      sku: it.sku ? String(it.sku) : undefined,
+    }))
+    .filter((it) => it.quantity > 0);
 }
 
 export async function GET(request: NextRequest) {
@@ -29,7 +49,6 @@ export async function GET(request: NextRequest) {
     if (!_scope.ok) return _scope.response;
 
   try {
-    await ensurePurchaseOrderTables();
     const context = validateTenantContext(request, "read");
     const { searchParams } = new URL(request.url);
     const tenantSlug = context.tenantSlug;
@@ -37,23 +56,15 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const { limit, offset } = getPagination(request);
 
-    const params: any[] = [tenantSlug];
-    let where = `where tenant_slug = $1`;
-    if (vendorId) {
-      params.push(vendorId);
-      where += ` and vendor_id = $${params.length}`;
-    }
-    if (status) {
-      params.push(status);
-      where += ` and status = $${params.length}`;
-    }
+    const orders = await listPurchaseOrders({
+      tenantSlug,
+      supplierId: vendorId || undefined,
+      status: status || undefined,
+      limit,
+      offset,
+    });
 
-    const orders = (await db.query(
-      `select * from procurement_purchase_orders ${where} order by created_at desc limit $${params.length + 1} offset $${params.length + 2}`,
-      [...params, limit, offset]
-    )).rows;
-
-    return NextResponse.json({ orders, limit, offset });
+    return NextResponse.json({ orders: orders.map(toProcurementShape), limit, offset });
   } catch (error) {
     console.error("Error fetching purchase orders:", error);
     return NextResponse.json(
@@ -68,52 +79,59 @@ export async function POST(request: NextRequest) {
     if (!_scope.ok) return _scope.response;
 
   try {
-    await ensurePurchaseOrderTables();
     const context = validateTenantContext(request, "write");
     const body = await request.json();
-    const { vendorId, items, quantity, amount, deliveryDate } = body;
+    const { vendorId, quantity, amount, deliveryDate } = body;
     const tenantSlug = context.tenantSlug;
 
-    if (!vendorId || !items || !quantity || !amount || !deliveryDate) {
+    if (!vendorId || !quantity || !amount) {
       return NextResponse.json(
-        { error: "Missing required fields: vendorId, items, quantity, amount, deliveryDate" },
+        { error: "Missing required fields: vendorId, quantity, amount" },
         { status: 400 }
       );
     }
 
+    let items = parseItems(body.items);
+    // Fall back to a single aggregate line when the caller didn't supply
+    // per-line detail (the procurement form's JSON field is optional).
+    if (items.length === 0) {
+      const qty = Number(quantity);
+      const amt = Number(amount);
+      if (!Number.isFinite(qty) || qty <= 0 || !Number.isFinite(amt) || amt <= 0) {
+        return NextResponse.json(
+          { error: "quantity and amount must be positive numbers" },
+          { status: 400 }
+        );
+      }
+      items = [{ description: "Purchase order items", quantity: qty, unitPrice: amt / qty }];
+    }
+
     const poNumber = `PO-${Date.now().toString().slice(-6)}`;
+    const today = new Date().toISOString().split("T")[0];
 
-    const purchaseOrder = {
-      id: `po_${Date.now()}`,
+    const po = await createPurchaseOrder({
       tenantSlug,
-      poNumber,
-      vendorId,
+      supplierId: vendorId,
+      orderNumber: poNumber,
+      issuedDate: today,
+      dueDate: deliveryDate || today,
+      currency: body.currency || "NGN",
       items,
-      quantity: parseInt(quantity),
-      amount: parseFloat(amount),
-      deliveryDate,
-      status: "sent" as const,
-      createdAt: new Date().toISOString(),
-    };
-
-    await db.query(
-      `insert into procurement_purchase_orders (id, tenant_slug, po_number, vendor_id, items, quantity, amount, delivery_date, status, created_at) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-      [purchaseOrder.id, purchaseOrder.tenantSlug, purchaseOrder.poNumber, purchaseOrder.vendorId, purchaseOrder.items, purchaseOrder.quantity, purchaseOrder.amount, purchaseOrder.deliveryDate, purchaseOrder.status, purchaseOrder.createdAt]
-    );
+    });
 
     // Publish finance event for procurement
     writeFinanceEvent({
-      tenantSlug: purchaseOrder.tenantSlug,
+      tenantSlug,
       eventType: "po_approved",
       sourceModule: "procurement",
-      sourceRecordId: purchaseOrder.id,
+      sourceRecordId: po.id,
       userId: context.userId,
-      amount: purchaseOrder.amount,
-      currency: "NGN",
-      metadata: { poNumber: purchaseOrder.poNumber, vendorId: purchaseOrder.vendorId, items: purchaseOrder.items },
+      amount: po.totalAmount,
+      currency: body.currency || "NGN",
+      metadata: { poNumber, vendorId, items: body.items },
     });
 
-    return NextResponse.json({ purchaseOrder }, { status: 201 });
+    return NextResponse.json({ purchaseOrder: toProcurementShape(po) }, { status: 201 });
   } catch (error) {
     console.error("Error creating purchase order:", error);
     return NextResponse.json(

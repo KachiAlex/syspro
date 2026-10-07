@@ -35,7 +35,7 @@ export async function POST(request: NextRequest, context: any) {
     tenantSlug,
     ticketId: context.params.ticketId,
     body: body.body,
-    authorId: body.authorId,
+    authorId: ctx.userId !== "unknown" ? ctx.userId : body.authorId,
     commentType: body.commentType,
     visibility: body.visibility,
   });

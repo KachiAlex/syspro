@@ -638,7 +638,7 @@ async function handleSummarize(
           order by created_at desc limit 50
         `;
         const purchaseOrders = await SQL`
-          select * from procurement_purchase_orders
+          select * from purchase_orders
           where tenant_slug = ${tenantSlug}
           order by created_at desc limit 50
         `.catch(() => [] as any[]);
