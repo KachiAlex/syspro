@@ -608,6 +608,23 @@ export class HRService {
     await apiClient.delete(`/hr/candidates/${id}?tenantSlug=${tenantSlug}`);
   }
 
+  static async hireCandidate(
+    tenantSlug: string,
+    id: string,
+    data?: {
+      departmentId?: string;
+      jobTitle?: string;
+      salary?: number;
+      startDate?: string;
+      reportingManagerId?: string;
+      employmentType?: string;
+      activatePortal?: boolean;
+    }
+  ): Promise<{ employee: EmployeeRecord; onboardingTasksSeeded: number; portalCredentials: { email: string; password: string } | null }> {
+    const response = await apiClient.post(`/hr/candidates/${id}/hire`, { ...data, tenantSlug });
+    return response.data;
+  }
+
   static async getApplications(tenantSlug: string, filters?: { candidateId?: string; requisitionId?: string; status?: string }): Promise<{ applications: ApplicationRecord[]; total: number }> {
     const params = new URLSearchParams({ tenantSlug });
     if (filters?.candidateId) params.append('candidateId', filters.candidateId);

@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { decodeEmployeeToken, resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
-import { ensureHrTables } from "@/lib/hr/db";
+import { ensureHrTables, isLateForShift } from "@/lib/hr/db";
 import {
   ensureAttendanceVerificationTables,
   verifyCheckIn,
@@ -94,8 +94,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: verdict.error, requiresQr: verdict.method === "qr_geo" }, { status: 403 });
       }
 
-      const hour = new Date().getHours();
-      const status = hour >= 9 ? "late" : "present";
+      // Shift-aware status: employees with a roster assignment are evaluated
+      // against shift start + grace; the legacy 09:00 rule is the fallback.
+      const hhmm = `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`;
+      const shiftLate = await isLateForShift(session.tenantSlug, session.id, today, hhmm);
+      const status = shiftLate != null ? (shiftLate ? "late" : "present") : (new Date().getHours() >= 9 ? "late" : "present");
 
       const verificationCols = {
         method: verdict.method,

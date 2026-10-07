@@ -169,6 +169,32 @@ export const RecruitmentDashboard: React.FC = () => {
     }
   };
 
+  const [hiringId, setHiringId] = useState<string | null>(null);
+  const handleHire = async (candidateId: string) => {
+    if (!tenantSlug || hiringId) return;
+    const activatePortal = confirm(
+      'Convert this candidate to an employee?\n\nOK = also activate employee portal access (credentials will be shown)\nCancel = abort'
+    );
+    if (!activatePortal) return;
+    setHiringId(candidateId);
+    try {
+      const result = await HRService.hireCandidate(tenantSlug, candidateId, { activatePortal: true });
+      if (result.portalCredentials) {
+        alert(
+          `Hired! Employee created with an onboarding checklist.\n\nPortal credentials:\nEmail: ${result.portalCredentials.email}\nPassword: ${result.portalCredentials.password}\n\nShare these securely with the new hire.`
+        );
+      } else {
+        alert('Hired! Employee created with an onboarding checklist.');
+      }
+      await loadData();
+    } catch (err: any) {
+      console.error('Failed to hire candidate:', err);
+      alert(err?.response?.data?.error || 'Failed to hire candidate.');
+    } finally {
+      setHiringId(null);
+    }
+  };
+
   const handleDeleteOnboardingTask = async (id: string) => {
     if (!tenantSlug) return;
     if (!confirm('Delete this task?')) return;
@@ -673,6 +699,16 @@ export const RecruitmentDashboard: React.FC = () => {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
+                      {o.status === 'accepted' && app && candidates.find((c) => c.id === app.candidateId)?.currentStage !== 'hired' && (
+                        <button
+                          onClick={() => handleHire(app.candidateId)}
+                          disabled={hiringId === app.candidateId}
+                          className="px-2.5 py-1 rounded-md bg-green-600 text-white text-xs font-medium hover:bg-green-700 disabled:opacity-50"
+                          title="Convert candidate to employee"
+                        >
+                          {hiringId === app.candidateId ? 'Hiring…' : 'Hire'}
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDeleteOffer(o.id)}
                         className="p-1.5 rounded-md hover:bg-red-500/10 text-theme-text-tertiary hover:text-red-400"

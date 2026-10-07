@@ -1212,6 +1212,40 @@ function normalizeAttendanceRow(row: any): AttendanceRecord {
   };
 }
 
+/**
+ * Roster-based late check: returns true when checkInTime ("HH:MM") is past
+ * the employee's active shift start + grace for that weekday.
+ * Returns null when the employee has no applicable shift.
+ */
+export async function isLateForShift(
+  tenantSlug: string,
+  employeeId: string,
+  workDate: string,
+  checkInTime: string
+): Promise<boolean | null> {
+  const sql = SQL;
+  if (!/^\d{1,2}:\d{2}/.test(checkInTime)) return null;
+  const dow = new Date(`${workDate}T00:00:00Z`).getUTCDay();
+  try {
+    const rows = await sql`
+      select s.start_time, s.grace_minutes
+      from admin_shift_assignments a
+      join admin_shifts s on s.tenant_slug = a.tenant_slug and s.id = a.shift_id
+      where a.tenant_slug = ${tenantSlug} and a.employee_id = ${employeeId}
+        and a.effective_from <= ${workDate} and (a.effective_to is null or a.effective_to >= ${workDate})
+        and ${dow} = any(s.days_of_week) and s.is_active
+      order by a.effective_from desc limit 1
+    `;
+    const shift = (rows as any[])[0];
+    if (!shift) return null;
+    const [h, m] = checkInTime.split(":").map(Number);
+    const [sh, sm] = String(shift.start_time).split(":").map(Number);
+    return h * 60 + m > sh * 60 + sm + (shift.grace_minutes ?? 0);
+  } catch {
+    return null;
+  }
+}
+
 export async function insertAttendance(row: {
   tenantSlug: string;
   employeeId: string;
@@ -1248,29 +1282,9 @@ export async function insertAttendance(row: {
   // Roster-based late detection: a 'present' mark with a check-in past the
   // employee's assigned shift start + grace is downgraded to 'late'.
   let effectiveStatus = row.status;
-  if (row.status === "present" && row.checkIn && /^\d{1,2}:\d{2}/.test(row.checkIn)) {
-    const dow = new Date(`${row.date}T00:00:00Z`).getUTCDay();
-    try {
-      const shiftRows = await sql`
-        select s.start_time, s.grace_minutes
-        from admin_shift_assignments a
-        join admin_shifts s on s.tenant_slug = a.tenant_slug and s.id = a.shift_id
-        where a.tenant_slug = ${row.tenantSlug} and a.employee_id = ${row.employeeId}
-          and a.effective_from <= ${row.date} and (a.effective_to is null or a.effective_to >= ${row.date})
-          and ${dow} = any(s.days_of_week) and s.is_active
-        order by a.effective_from desc limit 1
-      `;
-      const shift = (shiftRows as any[])[0];
-      if (shift) {
-        const [h, m] = row.checkIn.split(":").map(Number);
-        const [sh, sm] = String(shift.start_time).split(":").map(Number);
-        if (h * 60 + m > sh * 60 + sm + (shift.grace_minutes ?? 0)) {
-          effectiveStatus = "late";
-        }
-      }
-    } catch {
-      // shifts tables may not exist yet — keep caller's status
-    }
+  if (row.status === "present" && row.checkIn) {
+    const late = await isLateForShift(row.tenantSlug, row.employeeId, row.date, row.checkIn);
+    if (late) effectiveStatus = "late";
   }
   await sql`
     insert into attendance_records (id, tenant_id, employee_id, employee_name, work_date, attendance_status, check_in_time, check_out_time, notes, work_mode, check_in_method, is_override, override_reason, override_by_user_id, created_at, updated_at)
