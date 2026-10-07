@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { sql as SQL } from "@/lib/sql-client";
-import { insertEmployee, ensureHrTables } from "@/lib/hr/db";
+import { insertEmployee, ensureHrTables, logHrAudit } from "@/lib/hr/db";
 import {
   ensureRecruitmentTables,
   getCandidateById,
@@ -177,6 +177,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       await setEmployeePassword(tenantSlug, employee.id, password);
       portalCredentials = { email: employee.email, password };
     }
+
+    await logHrAudit({
+      tenantSlug,
+      userId: scope.user.id,
+      action: "candidate.hired",
+      resource: "candidate",
+      resourceId: id,
+      changes: {
+        employeeId: employee.id,
+        applicationId: application?.id ?? null,
+        offerId: acceptedOffer?.id ?? null,
+        portalActivated: !!portalCredentials,
+      },
+    });
 
     return NextResponse.json(
       { success: true, employee, onboardingTasksSeeded: DEFAULT_ONBOARDING.length, portalCredentials },

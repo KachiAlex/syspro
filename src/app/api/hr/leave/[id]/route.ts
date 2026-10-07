@@ -26,7 +26,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 
   try {
-    const leave = await updateLeaveStatus(id, parsed.data.tenantSlug, parsed.data.status, parsed.data.approvedBy ?? null);
+    const leave = await updateLeaveStatus(id, parsed.data.tenantSlug, parsed.data.status, _scope.user.id);
     if (!leave) {
       return NextResponse.json({ error: "Leave request not found" }, { status: 404 });
     }

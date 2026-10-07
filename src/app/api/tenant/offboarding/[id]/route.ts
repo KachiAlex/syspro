@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/sql-client";
-import { ensureHrTables } from "@/lib/hr/db";
+import { ensureHrTables, logHrAudit } from "@/lib/hr/db";
 import {
   validateTenantContext,
   errorResponse,
@@ -98,6 +98,14 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           where tenant_slug = ${context.tenantSlug} and id = ${row.employee_id}
         `;
       }
+      await logHrAudit({
+        tenantSlug: context.tenantSlug,
+        userId: context.userId,
+        action: "employee.terminated",
+        resource: "employee",
+        resourceId: row.employee_id,
+        changes: { offboardingId: params.id, lastWorkingDay: row.last_working_day ?? null },
+      });
 
       return NextResponse.json({ success: true, data: normalize(updated) });
     }

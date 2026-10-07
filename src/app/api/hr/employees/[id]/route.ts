@@ -74,7 +74,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     delete (updateData as any).departmentName;
     delete (updateData as any).tenantSlug;
 
-    const employee = await updateEmployee(id, updateData, parsed.data.tenantSlug);
+    const employee = await updateEmployee(id, updateData, parsed.data.tenantSlug, auth.user.id);
     if (!employee) {
       return NextResponse.json({ error: "Employee not found" }, { status: 404 });
     }
@@ -83,6 +83,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     console.error("Employee update failed", error);
     const msg = error?.message || "";
     if (msg.includes("HOD role in this department")) {
+      return NextResponse.json({ error: msg }, { status: 409 });
+    }
+    if (msg.includes("Invalid status transition") || msg.includes("Invalid employee status")) {
       return NextResponse.json({ error: msg }, { status: 409 });
     }
     return NextResponse.json({ error: "Failed to update employee" }, { status: 500 });
@@ -111,7 +114,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         { status: 409 }
       );
     }
-    await deleteEmployee(id, tenantSlug);
+    await deleteEmployee(id, tenantSlug, auth.user.id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Employee delete failed", error);

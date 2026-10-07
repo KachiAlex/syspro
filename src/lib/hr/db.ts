@@ -24,6 +24,73 @@ function serializeTextArray(values?: string[] | null): string {
 }
 
 // ============================================================================
+// EMPLOYEE LIFECYCLE STATE MACHINE
+// ============================================================================
+
+/**
+ * Valid employee statuses and their allowed transitions. `terminated` is
+ * terminal — rehiring is a new employee record (or a fresh hire flow), not a
+ * status flip on a terminated row.
+ */
+export const EMPLOYEE_STATUS_TRANSITIONS: Record<string, string[]> = {
+  invited: ["active", "terminated"],
+  active: ["on-leave", "suspended", "inactive", "terminated"],
+  "on-leave": ["active", "terminated"],
+  suspended: ["active", "terminated"],
+  inactive: ["active", "terminated"],
+  terminated: [],
+};
+
+export const EMPLOYEE_STATUSES = Object.keys(EMPLOYEE_STATUS_TRANSITIONS);
+
+/** Throws when `to` is not a valid status or not reachable from `from`. */
+export function validateStatusTransition(from: string | null | undefined, to: string) {
+  if (!EMPLOYEE_STATUSES.includes(to)) {
+    throw new Error(
+      `Invalid employee status "${to}". Valid statuses: ${EMPLOYEE_STATUSES.join(", ")}.`
+    );
+  }
+  const current = from ?? "invited";
+  if (current === to) return;
+  const allowed = EMPLOYEE_STATUS_TRANSITIONS[current];
+  if (!allowed) return; // unknown legacy status — allow recovery to any valid state
+  if (!allowed.includes(to)) {
+    throw new Error(
+      `Invalid status transition: ${current} → ${to}. Allowed: ${allowed.join(", ") || "none (terminal)"}.`
+    );
+  }
+}
+
+// ============================================================================
+// HR AUDIT EVENT STREAM
+// ============================================================================
+
+/**
+ * Writes an HR mutation to the tenant-scoped admin_audit_logs stream (the same
+ * table surfaced by /api/tenant/audit). Never throws — audit failure must not
+ * block the underlying operation.
+ */
+export async function logHrAudit(params: {
+  tenantSlug: string;
+  userId?: string | null;
+  action: string;
+  resource: string;
+  resourceId: string;
+  changes?: Record<string, any>;
+  ipAddress?: string | null;
+}): Promise<void> {
+  try {
+    const id = randomUUID();
+    await SQL`
+      insert into admin_audit_logs (id, tenant_slug, user_id, action, resource, resource_id, changes, ip_address, created_at)
+      values (${id}, ${params.tenantSlug}, ${params.userId ?? "system"}, ${params.action}, ${params.resource}, ${params.resourceId}, ${params.changes ? JSON.stringify(params.changes) : null}, ${params.ipAddress ?? null}, now())
+    `;
+  } catch (e) {
+    console.error("HR audit log failed:", (e as any)?.message);
+  }
+}
+
+// ============================================================================
 // TABLE CREATION
 // ============================================================================
 
@@ -35,6 +102,26 @@ async function ensureHrTablesRun(sql: SqlClient = SQL) {
   // Ensure base admin tables (admin_employees, admin_departments, etc.) exist
   // before running ALTER TABLE IF EXISTS on them.
   await ensureAdminTables(sql);
+
+  // Tenant-scoped audit stream — mirrors the DDL in tenant-admin/schema.ts so
+  // HR writes land even if the tenant-admin initializer hasn't run yet.
+  await sql`
+    create table if not exists admin_audit_logs (
+      id text primary key,
+      tenant_slug text not null,
+      user_id text not null,
+      action text not null,
+      resource text not null,
+      resource_id text not null,
+      changes jsonb,
+      ip_address text,
+      user_agent text,
+      created_at timestamptz default now()
+    )
+  `;
+  await sql`alter table admin_audit_logs drop constraint if exists admin_audit_logs_action_check`;
+  await sql`create index if not exists idx_admin_audit_logs_tenant on admin_audit_logs(tenant_slug)`;
+  await sql`create index if not exists idx_admin_audit_logs_resource on admin_audit_logs(resource, resource_id)`;
 
   await sql`alter table if exists admin_roles add column if not exists description text`;
   await sql`alter table if exists admin_roles add column if not exists is_system boolean default false`;
@@ -332,6 +419,24 @@ async function ensureHrTablesRun(sql: SqlClient = SQL) {
   // deliberate configuration — flag distinguishes them from explicit overrides.
   await sql`alter table admin_leave_balances add column if not exists entitlement_set boolean not null default false`;
   await sql`update admin_leave_balances set entitlement_set = true where entitled > 0 and entitlement_set = false`;
+
+  // Versioned tenant leave policies — effective-dated entitlements per type.
+  await sql`
+    create table if not exists admin_leave_policies (
+      id text primary key,
+      tenant_slug text not null,
+      leave_type text not null,
+      entitled_days numeric(6,2) not null,
+      carryover_cap numeric(6,2) not null default 0,
+      accrual text not null default 'annual' check (accrual in ('annual','monthly','immediate')),
+      effective_from date not null,
+      is_active boolean not null default true,
+      country_code text,
+      created_at timestamptz default now(),
+      updated_at timestamptz default now()
+    )
+  `;
+  await sql`create index if not exists idx_admin_leave_pol_tenant on admin_leave_policies(tenant_slug, leave_type, is_active)`;
 
   // Statutory deduction profile per tenant (tax bands, pension, other statutory lines)
   await sql`
@@ -750,6 +855,8 @@ export async function insertEmployee(row: {
     throw new Error(`An employee with email ${row.email} already exists: ${existing.name}.`);
   }
 
+  if (row.status) validateStatusTransition(null, row.status);
+
   // Enforce unique HOD per department
   if ((row.role ?? "staff") === "hod") {
     const dupRows = await sql`
@@ -781,7 +888,23 @@ export async function insertEmployee(row: {
     )
   `;
   const inserted = await sql`select * from admin_employees where id = ${id} limit 1`;
-  return normalizeEmployeeRow((inserted as any[])[0]);
+  const employee = normalizeEmployeeRow((inserted as any[])[0]);
+  await logHrAudit({
+    tenantSlug: row.tenantSlug,
+    userId: row.createdBy,
+    action: "employee.created",
+    resource: "employee",
+    resourceId: id,
+    changes: {
+      name: row.name,
+      email: row.email.toLowerCase(),
+      jobTitle: row.jobTitle,
+      departmentId: row.departmentId,
+      salary: row.salary ?? null,
+      role: row.role ?? "staff",
+    },
+  });
+  return employee;
 }
 
 export async function updateEmployee(
@@ -806,10 +929,28 @@ export async function updateEmployee(
     bankAccountNumber: string | null;
     bankAccountName: string | null;
   }>,
-  tenantSlug?: string
+  tenantSlug?: string,
+  actorId?: string | null
 ) {
   const sql = SQL;
   await ensureHrTables(sql);
+
+  // Pre-fetch for audit old→new on sensitive fields
+  const sensitive = ["salary", "role", "status", "departmentId", "jobTitle", "workMode", "employmentType"];
+  const changedSensitive = sensitive.filter((k) => (updates as any)[k] !== undefined);
+  let before: any = null;
+  if (changedSensitive.length && tenantSlug) {
+    const prev = await sql`
+      select salary, role, status, department_id, job_title, work_mode, employment_type
+      from admin_employees where id = ${id} and tenant_slug = ${tenantSlug} limit 1
+    `;
+    before = (prev as any[])[0] ?? null;
+  }
+
+  // Lifecycle state machine — enforced when the tenant context is available
+  if (updates.status && before) {
+    validateStatusTransition(String(before.status ?? "").toLowerCase(), updates.status);
+  }
 
   // Enforce unique HOD per department
   if (updates.role === "hod") {
@@ -867,7 +1008,45 @@ export async function updateEmployee(
     returning *
   `;
   const rows = updated as any[];
-  return rows.length ? normalizeEmployeeRow(rows[0]) : null;
+  if (!rows.length) return null;
+  const employee = normalizeEmployeeRow(rows[0]);
+
+  if (tenantSlug) {
+    const fieldNames: Record<string, string> = {
+      salary: "salary",
+      role: "role",
+      status: "status",
+      departmentId: "department_id",
+      jobTitle: "job_title",
+      workMode: "work_mode",
+      employmentType: "employment_type",
+    };
+    const changes: Record<string, any> = { fields: Object.keys(updates).filter((k) => (updates as any)[k] !== undefined) };
+    for (const k of changedSensitive) {
+      const col = fieldNames[k];
+      if (col && before) changes[k] = { from: before[col] ?? null, to: (rows[0] as any)[col] ?? null };
+    }
+    if (updates.status === "terminated" && before?.status !== "terminated") {
+      await logHrAudit({
+        tenantSlug,
+        userId: actorId,
+        action: "employee.terminated",
+        resource: "employee",
+        resourceId: id,
+        changes: { from: before?.status ?? null, to: "terminated", fields: changes.fields },
+      });
+    } else {
+      await logHrAudit({
+        tenantSlug,
+        userId: actorId,
+        action: "employee.updated",
+        resource: "employee",
+        resourceId: id,
+        changes,
+      });
+    }
+  }
+  return employee;
 }
 
 /** Historical-record counts that make hard deletion destructive. */
@@ -891,9 +1070,16 @@ export async function employeeDependencies(id: string, tenantSlug: string) {
   return { leave, attendance, payroll, reviews, offboarding };
 }
 
-export async function deleteEmployee(id: string, tenantSlug: string) {
+export async function deleteEmployee(id: string, tenantSlug: string, actorId?: string | null) {
   const sql = SQL;
   await sql`delete from admin_employees where id = ${id} and tenant_slug = ${tenantSlug}`;
+  await logHrAudit({
+    tenantSlug,
+    userId: actorId,
+    action: "employee.deleted",
+    resource: "employee",
+    resourceId: id,
+  });
 }
 
 export async function listEmployees(filters: {
@@ -1306,6 +1492,20 @@ export async function insertAttendance(row: {
       check_out_time as check_out, notes, check_in_lat, check_in_lng,
       check_out_lat, check_out_lng, work_mode, created_at
     from attendance_records where tenant_id = ${row.tenantSlug} and employee_id = ${row.employeeId} and work_date = ${row.date} limit 1`;
+  await logHrAudit({
+    tenantSlug: row.tenantSlug,
+    userId: row.actorId,
+    action: "attendance.override",
+    resource: "attendance",
+    resourceId: id,
+    changes: {
+      employeeId: row.employeeId,
+      date: row.date,
+      status: effectiveStatus,
+      requestedStatus: row.status !== effectiveStatus ? row.status : undefined,
+      reason: overrideReason,
+    },
+  });
   return normalizeAttendanceRow((inserted as any[])[0]);
 }
 
@@ -1417,6 +1617,19 @@ export async function insertLeave(row: {
     pendingDelta: leaveDaysInclusive(row.startDate, row.endDate),
   });
   const inserted = await sql`select * from admin_leave where id = ${id} limit 1`;
+  await logHrAudit({
+    tenantSlug: row.tenantSlug,
+    action: "leave.requested",
+    resource: "leave",
+    resourceId: id,
+    changes: {
+      employeeId: row.employeeId,
+      leaveType: row.leaveType,
+      startDate: row.startDate,
+      endDate: row.endDate,
+      days: leaveDaysInclusive(row.startDate, row.endDate),
+    },
+  });
   return normalizeLeaveRow((inserted as any[])[0]);
 }
 
@@ -1446,10 +1659,14 @@ export async function adjustLeaveBalance(opts: {
   const pendingDelta = opts.pendingDelta ?? 0;
   const usedDelta = opts.usedDelta ?? 0;
   if (pendingDelta === 0 && usedDelta === 0) return;
-  // Implicit rows get the default entitlement (entitlement_set=false) so the
-  // request isn't instantly over-balance; explicit overrides come via POST
-  // /api/tenant/leave/balances which sets entitlement_set=true.
-  const entitled = DEFAULT_LEAVE_ENTITLEMENTS[opts.leaveType] ?? 0;
+  // Implicit rows get the policy/default entitlement (entitlement_set=false)
+  // so the request isn't instantly over-balance; explicit overrides come via
+  // POST /api/tenant/leave/balances which sets entitlement_set=true.
+  const entitled = await resolveLeaveEntitlement({
+    tenantSlug: opts.tenantSlug,
+    leaveType: opts.leaveType,
+    year: opts.year,
+  });
   await sql`
     insert into admin_leave_balances (
       id, tenant_slug, employee_id, employee_name, leave_type, year, entitled, pending, used, entitlement_set
@@ -1490,7 +1707,11 @@ export async function checkLeaveBalanceAvailable(opts: {
   const bal = (rows as any[])[0];
   const entitled = bal?.entitlement_set
     ? Number(bal.entitled)
-    : (DEFAULT_LEAVE_ENTITLEMENTS[opts.leaveType] ?? 0);
+    : await resolveLeaveEntitlement({
+        tenantSlug: opts.tenantSlug,
+        leaveType: opts.leaveType,
+        year: opts.year,
+      });
   const remaining =
     entitled + Number(bal?.carried_over ?? 0) - Number(bal?.used ?? 0) - Number(bal?.pending ?? 0);
   return { ok: opts.days <= remaining, remaining };
@@ -1545,6 +1766,21 @@ export async function updateLeaveStatus(
     await adjustLeaveBalance({ ...base, pendingDelta: days, usedDelta: -days });
   }
 
+  await logHrAudit({
+    tenantSlug,
+    userId: approvedBy,
+    action: `leave.${status}`,
+    resource: "leave",
+    resourceId: id,
+    changes: {
+      employeeId: prevRow.employee_id,
+      leaveType: prevRow.leave_type,
+      from: prevRow.status,
+      to: status,
+      days,
+    },
+  });
+
   return normalizeLeaveRow(rows[0]);
 }
 
@@ -1594,6 +1830,102 @@ export const DEFAULT_LEAVE_ENTITLEMENTS: Record<string, number> = {
   unpaid: 0,
 };
 
+// ============================================================================
+// LEAVE POLICIES (versioned, per-tenant)
+// ============================================================================
+
+export interface LeavePolicy {
+  leaveType: string;
+  entitledDays: number;
+  carryoverCap: number;
+  accrual: "annual" | "monthly" | "immediate";
+  effectiveFrom: string;
+  countryCode: string | null;
+}
+
+function normalizePolicyRow(row: any): LeavePolicy {
+  return {
+    leaveType: row.leave_type,
+    entitledDays: Number(row.entitled_days) || 0,
+    carryoverCap: Number(row.carryover_cap) || 0,
+    accrual: row.accrual,
+    effectiveFrom: row.effective_from instanceof Date
+      ? row.effective_from.toISOString().split("T")[0]
+      : String(row.effective_from).split("T")[0],
+    countryCode: row.country_code ?? null,
+  };
+}
+
+/** Latest active policy per leave_type applicable in `year` (effective-dated). */
+export async function getLeavePolicies(tenantSlug: string, year: number): Promise<Record<string, LeavePolicy>> {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const rows = await sql`
+    select distinct on (leave_type) * from admin_leave_policies
+    where tenant_slug = ${tenantSlug} and is_active
+      and effective_from <= ${year + "-12-31"}::date
+    order by leave_type, effective_from desc
+  `;
+  const out: Record<string, LeavePolicy> = {};
+  (rows as any[]).forEach((r) => { out[r.leave_type] = normalizePolicyRow(r); });
+  return out;
+}
+
+/** Entitlement days a policy yields in `year` — monthly accrual is pro-rated. */
+export function policyEntitlement(policy: LeavePolicy, year: number): number {
+  if (policy.accrual === "monthly") {
+    const now = new Date();
+    const months =
+      year < now.getUTCFullYear() ? 12
+      : year === now.getUTCFullYear() ? now.getUTCMonth() + 1
+      : 12;
+    return Math.round((policy.entitledDays * months) / 12 * 10) / 10;
+  }
+  return policy.entitledDays;
+}
+
+/**
+ * Effective entitlement for a leave type in `year`:
+ *   explicit per-employee override (entitlement_set) > tenant policy > default.
+ */
+export async function resolveLeaveEntitlement(opts: {
+  tenantSlug: string;
+  leaveType: string;
+  year: number;
+  entitlementOverride?: number | null;
+}): Promise<number> {
+  if (opts.entitlementOverride != null) return opts.entitlementOverride;
+  const policies = await getLeavePolicies(opts.tenantSlug, opts.year);
+  const policy = policies[opts.leaveType];
+  if (policy) return policyEntitlement(policy, opts.year);
+  return DEFAULT_LEAVE_ENTITLEMENTS[opts.leaveType] ?? 0;
+}
+
+/** Insert or version a tenant leave policy (deactivates older versions). */
+export async function upsertLeavePolicy(opts: {
+  tenantSlug: string;
+  leaveType: string;
+  entitledDays: number;
+  carryoverCap?: number;
+  accrual?: "annual" | "monthly" | "immediate";
+  effectiveFrom: string;
+  countryCode?: string | null;
+}): Promise<LeavePolicy> {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  await sql`
+    update admin_leave_policies set is_active = false, updated_at = now()
+    where tenant_slug = ${opts.tenantSlug} and leave_type = ${opts.leaveType} and is_active
+  `;
+  const id = randomUUID();
+  const rows = await sql`
+    insert into admin_leave_policies (id, tenant_slug, leave_type, entitled_days, carryover_cap, accrual, effective_from, country_code)
+    values (${id}, ${opts.tenantSlug}, ${opts.leaveType}, ${opts.entitledDays}, ${opts.carryoverCap ?? 0}, ${opts.accrual ?? "annual"}, ${opts.effectiveFrom}, ${opts.countryCode ?? null})
+    returning *
+  `;
+  return normalizePolicyRow((rows as any[])[0]);
+}
+
 export async function getLeaveBalance(tenantSlug: string, employeeId: string) {
   const sql = SQL;
   await ensureHrTables(sql);
@@ -1602,7 +1934,7 @@ export async function getLeaveBalance(tenantSlug: string, employeeId: string) {
   // Entitlement/carried-over come from the balances table (tenant-overridable);
   // used/pending are computed from admin_leave so the answer is correct even
   // for requests recorded before balance tracking existed.
-  const [usageRows, balanceRows] = await Promise.all([
+  const [usageRows, balanceRows, policies] = await Promise.all([
     sql`
       select leave_type, status, sum(end_date - start_date + 1)::int as days
       from admin_leave
@@ -1615,6 +1947,7 @@ export async function getLeaveBalance(tenantSlug: string, employeeId: string) {
       select leave_type, entitled, carried_over, entitlement_set from admin_leave_balances
       where tenant_slug = ${tenantSlug} and employee_id = ${employeeId} and year = ${year}
     `,
+    getLeavePolicies(tenantSlug, year),
   ]);
 
   const used: Record<string, number> = {};
@@ -1623,7 +1956,12 @@ export async function getLeaveBalance(tenantSlug: string, employeeId: string) {
     if (r.status === "approved") used[r.leave_type] = r.days ?? 0;
     if (r.status === "pending") pending[r.leave_type] = r.days ?? 0;
   });
+  // Resolution order: global default < tenant policy < explicit per-employee
+  // override (entitlement_set).
   const entitled: Record<string, number> = { ...DEFAULT_LEAVE_ENTITLEMENTS };
+  for (const [type, p] of Object.entries(policies)) {
+    entitled[type] = policyEntitlement(p, year);
+  }
   const carried: Record<string, number> = {};
   (balanceRows as any[]).forEach((r) => {
     // Only deliberately configured entitlements override the defaults —
@@ -1633,7 +1971,7 @@ export async function getLeaveBalance(tenantSlug: string, employeeId: string) {
   });
 
   const out: Record<string, { used: number; pending: number; total: number }> = {};
-  for (const type of Object.keys(DEFAULT_LEAVE_ENTITLEMENTS)) {
+  for (const type of Object.keys(entitled)) {
     out[type] = {
       used: used[type] ?? 0,
       pending: pending[type] ?? 0,

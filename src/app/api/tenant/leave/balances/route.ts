@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { sql } from "@/lib/sql-client";
-import { ensureHrTables } from "@/lib/hr/db";
+import { ensureHrTables, getLeavePolicies, policyEntitlement } from "@/lib/hr/db";
 import {
   validateTenantContext,
   errorResponse,
@@ -30,12 +30,19 @@ const UpsertBalanceSchema = z.object({
   carriedOver: z.number().min(0).optional(),
 });
 
-function mapBalance(r: any) {
-  // Implicit tracking rows (entitlement_set=false) show the default
+function mapBalance(
+  r: any,
+  policies: Record<string, { entitledDays: number; accrual: string }> = {},
+  year: number = new Date().getUTCFullYear()
+) {
+  // Implicit tracking rows (entitlement_set=false) show the policy/default
   // entitlement; explicit overrides show the configured value.
+  const policy = policies[r.leave_type];
   const entitled = r.entitlement_set
     ? Number(r.entitled) || 0
-    : (DEFAULT_ENTITLEMENTS[r.leave_type] ?? 0);
+    : policy
+      ? policyEntitlement(policy as any, year)
+      : (DEFAULT_ENTITLEMENTS[r.leave_type] ?? 0);
   const carried = Number(r.carried_over) || 0;
   const used = Number(r.used) || 0;
   const pending = Number(r.pending) || 0;
@@ -89,13 +96,21 @@ export async function GET(request: NextRequest) {
       order by name asc
     `;
 
+    const policies = await getLeavePolicies(context.tenantSlug, year);
+    // Effective per-type entitlement for employees without explicit rows:
+    // tenant policy where configured, else the global default.
+    const effectiveEntitlements: Record<string, number> = { ...DEFAULT_ENTITLEMENTS };
+    for (const [type, p] of Object.entries(policies)) {
+      effectiveEntitlements[type] = policyEntitlement(p, year);
+    }
+
     const existing = new Set((rows as any[]).map((r) => `${r.employee_id}:${r.leave_type}`));
     const balances = (rows as any[]).map((r) =>
-      mapBalance({ ...r, employee_name: r.employee_name ?? r.emp_name })
+      mapBalance({ ...r, employee_name: r.employee_name ?? r.emp_name }, policies, year)
     );
 
     for (const emp of employees as any[]) {
-      for (const [leaveType, entitled] of Object.entries(DEFAULT_ENTITLEMENTS)) {
+      for (const [leaveType, entitled] of Object.entries(effectiveEntitlements)) {
         if (entitled > 0 && !existing.has(`${emp.id}:${leaveType}`)) {
           balances.push({
             id: null,

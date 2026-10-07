@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/sql-client";
-import { ensureHrTables } from "@/lib/hr/db";
+import { ensureHrTables, logHrAudit } from "@/lib/hr/db";
 import { createJournalEntry } from "@/lib/finance/accounting";
 import {
   validateTenantContext,
@@ -81,6 +81,14 @@ export async function PATCH(request: NextRequest, context: any) {
         where id = ${id}
         returning *
       `;
+      await logHrAudit({
+        tenantSlug: ctx.tenantSlug,
+        userId: ctx.userId,
+        action: "payroll.cancelled",
+        resource: "payroll_run",
+        resourceId: id,
+        changes: { period: r.period },
+      });
       return NextResponse.json({ success: true, data: mapRun(updated) });
     }
 
@@ -141,6 +149,19 @@ export async function PATCH(request: NextRequest, context: any) {
         returning *
       `;
 
+      await logHrAudit({
+        tenantSlug: ctx.tenantSlug,
+        userId: ctx.userId,
+        action: "payroll.approved",
+        resource: "payroll_run",
+        resourceId: id,
+        changes: {
+          period: r.period,
+          journalEntryId: journal.id,
+          totalGross: Number(r.total_gross) || 0,
+          totalNet: Number(r.total_net) || 0,
+        },
+      });
       return NextResponse.json({
         success: true,
         data: mapRun(updated),
@@ -188,6 +209,19 @@ export async function PATCH(request: NextRequest, context: any) {
       where id = ${id}
       returning *
     `;
+
+    await logHrAudit({
+      tenantSlug: ctx.tenantSlug,
+      userId: ctx.userId,
+      action: "payroll.paid",
+      resource: "payroll_run",
+      resourceId: id,
+      changes: {
+        period: r.period,
+        paymentJournalEntryId: paymentJournal.id,
+        totalNet: Number(r.total_net) || 0,
+      },
+    });
 
     return NextResponse.json({
       success: true,
