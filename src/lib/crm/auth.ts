@@ -14,7 +14,7 @@ export interface CrmAuthResult {
 }
 
 const HOD_ROLES = ["hod", "head_of_department"];
-const ADMIN_ROLES = ["admin", "administrator", "hr", "hr_admin", "hr_manager"];
+const ADMIN_ROLES = ["admin", "tenant_admin", "administrator", "superadmin", "hr", "hr_admin", "hr_manager"];
 
 export async function resolveCrmAuth(request: NextRequest): Promise<CrmAuthResult | null> {
   const session = resolveEmployeeSession(request);
@@ -82,6 +82,23 @@ export async function requireCrmAuth(
     };
   }
   return { ok: true, auth };
+}
+
+/**
+ * Clamp a client-requested viewMode to what the session's scope permits.
+ * Staff (mine) can never list team/all records; HODs (team) cap at team.
+ */
+export function effectiveViewMode(
+  requested: string | undefined,
+  scope: CrmVisibilityScope
+): CrmVisibilityScope {
+  if (scope === "all") {
+    return requested === "mine" || requested === "team" ? requested : "all";
+  }
+  if (scope === "team") {
+    return requested === "mine" ? "mine" : "team";
+  }
+  return "mine";
 }
 
 export async function getTeamMemberIds(tenantSlug: string, departmentId: string): Promise<string[]> {

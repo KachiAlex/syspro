@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { insertContact, insertContacts, listContacts, countContacts } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
-import { requireCrmAuth, getTeamMemberIds } from "@/lib/crm/auth";
+import { requireCrmAuth, getTeamMemberIds, effectiveViewMode } from "@/lib/crm/auth";
 import { db } from "@/lib/sql-client";
 
 const contactPayloadSchema = z.object({
@@ -61,9 +61,10 @@ export async function GET(request: NextRequest) {
     let filterCreatedBy: string | undefined;
 
     if (true) {
-      if (viewMode === "mine" || (!viewMode && auth.scope === "mine")) {
+      const mode = effectiveViewMode(viewMode, auth.scope);
+      if (mode === "mine") {
         filterCreatedBy = auth.employeeId;
-      } else if (viewMode === "team" || (!viewMode && auth.scope === "team")) {
+      } else if (mode === "team") {
         const teamIds = await getTeamMemberIds(auth.session.tenantSlug, auth.departmentId);
         if (teamIds.length > 0) {
           const placeholders = teamIds.map((_, i) => `$${i + 2}`).join(",");

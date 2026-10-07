@@ -4,7 +4,7 @@ import { z } from "zod";
 import { CRM_LEAD_STAGES, CRM_LEAD_SOURCES } from "@/lib/crm/types";
 import { insertLead, listLeads, countLeads } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
-import { requireCrmAuth, getTeamMemberIds } from "@/lib/crm/auth";
+import { requireCrmAuth, getTeamMemberIds, effectiveViewMode } from "@/lib/crm/auth";
 import { db } from "@/lib/sql-client";
 
 const leadSchema = z.object({
@@ -88,7 +88,8 @@ export async function GET(request: NextRequest) {
     let filterSalesOfficerId = salesOfficerId;
 
     if (true) {
-      if (viewMode === "mine" || (!viewMode && auth.scope === "mine")) {
+      const mode = effectiveViewMode(viewMode, auth.scope);
+      if (mode === "mine") {
         // Show leads assigned to me OR created by me
         const rows = (await db.query(
           `select * from crm_leads where tenant_slug = $1 and (assigned_officer_id = $2 or created_by = $2) order by created_at desc`,
@@ -103,7 +104,7 @@ export async function GET(request: NextRequest) {
           createdAt: r.created_at, updatedAt: r.updated_at,
         }));
         return NextResponse.json({ leads, total: leads.length });
-      } else if (viewMode === "team" || (!viewMode && auth.scope === "team")) {
+      } else if (mode === "team") {
         const teamIds = await getTeamMemberIds(auth.session.tenantSlug, auth.departmentId);
         if (teamIds.length > 0) {
           const placeholders = teamIds.map((_, i) => `$${i + 2}`).join(",");

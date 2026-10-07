@@ -5,63 +5,17 @@ import { db } from "@/lib/sql-client";
 import { getPagination } from "@/lib/pagination";
 
 import { requireModuleAccess } from "@/lib/api-auth";
-async function ensureSalesOrdersTable() {
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS sales_orders (
-      id text primary key,
-      tenant_slug text not null,
-      order_number text not null,
-      customer_id text,
-      customer_name text,
-      order_date text,
-      due_date text,
-      items text,
-      quantity numeric default 0,
-      total numeric default 0,
-      status text default 'Pending',
-      notes text,
-      created_at timestamptz default now()
-    )
-  `);
-  await db.query(`CREATE INDEX IF NOT EXISTS idx_sales_orders_tenant ON sales_orders (tenant_slug)`);
-}
+import {
+  computeQuantity,
+  computeTotal,
+  ensureSalesOrdersTable,
+  findOrder,
+  fulfillOrder,
+  mapOrder,
+  validateDeal,
+} from "@/lib/sales/orders";
 
-function parseItems(itemsRaw: any) {
-  if (Array.isArray(itemsRaw)) return itemsRaw;
-  if (!itemsRaw) return [];
-  try {
-    const parsed = JSON.parse(itemsRaw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function computeTotal(items: any[]) {
-  return items.reduce((sum: number, item: any) => sum + (Number(item.quantity ?? 0) * Number(item.unitPrice ?? 0)), 0);
-}
-
-function computeQuantity(items: any[]) {
-  return items.reduce((sum: number, item: any) => sum + Number(item.quantity ?? 0), 0);
-}
-
-function mapOrder(row: any) {
-  const items = parseItems(row.items);
-  return {
-    id: row.id,
-    orderNumber: row.order_number,
-    customerId: row.customer_id,
-    customer: row.customer_name ?? row.customer_id ?? "",
-    amount: Number(row.total ?? computeTotal(items)),
-    total: Number(row.total ?? computeTotal(items)),
-    quantity: Number(row.quantity ?? computeQuantity(items)),
-    status: row.status ?? "Pending",
-    orderDate: row.order_date ?? "",
-    dueDate: row.due_date ?? "",
-    items: items.length,
-    notes: row.notes ?? "",
-  };
-}
+const FULFILLING_STATUSES = new Set(["Completed", "Delivered", "Fulfilled"]);
 
 export async function GET(request: NextRequest) {
     const _scope = await requireModuleAccess(request, "sales", "read");
@@ -96,10 +50,19 @@ export async function POST(request: NextRequest) {
     await ensureSalesOrdersTable();
     const context = validateTenantContext(request, "write");
     const body = await request.json();
-    const { customerId, orderDate, expectedDeliveryDate, items: rawItems, notes } = body;
+    const { customerId, orderDate, expectedDeliveryDate, items: rawItems, notes, dealId } = body;
 
     if (!customerId || !orderDate) {
       return NextResponse.json({ error: "Missing required fields: customerId, orderDate" }, { status: 400 });
+    }
+
+    let dealIdValue: string | null = null;
+    if (dealId) {
+      const deal = await validateDeal(String(dealId), context.tenantSlug).catch(() => null);
+      if (!deal) {
+        return NextResponse.json({ error: "Deal not found" }, { status: 404 });
+      }
+      dealIdValue = deal.id;
     }
 
     const items = Array.isArray(rawItems) ? rawItems : [];
@@ -115,12 +78,12 @@ export async function POST(request: NextRequest) {
     const createdAt = new Date().toISOString();
 
     await db.query(
-      `INSERT INTO sales_orders (id, tenant_slug, order_number, customer_id, customer_name, order_date, due_date, items, quantity, total, status, notes, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-      [id, context.tenantSlug, orderNumber, String(customerId), customerName, orderDate, expectedDeliveryDate ?? "", JSON.stringify(items), quantity, total, "Pending", notes ?? "", createdAt]
+      `INSERT INTO sales_orders (id, tenant_slug, order_number, customer_id, customer_name, order_date, due_date, items, quantity, total, status, notes, deal_id, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+      [id, context.tenantSlug, orderNumber, String(customerId), customerName, orderDate, expectedDeliveryDate ?? "", JSON.stringify(items), quantity, total, "Pending", notes ?? "", dealIdValue, createdAt]
     );
 
-    const result = await db.query(`SELECT * FROM sales_orders WHERE id = $1`, [id]);
-    return NextResponse.json({ order: mapOrder(result.rows[0]), message: "Sales order created" }, { status: 201 });
+    const row = await findOrder(id, context.tenantSlug);
+    return NextResponse.json({ order: mapOrder(row), message: "Sales order created" }, { status: 201 });
   } catch (error) {
     console.error("Sales order create failed:", error);
     return NextResponse.json({ error: "Failed to create sales order", details: String((error as any)?.message ?? error) }, { status: 500 });
@@ -138,6 +101,11 @@ export async function PATCH(request: NextRequest) {
     const { id, status, dueDate, notes } = body;
     if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
 
+    const allowedStatuses = new Set(["Pending", "In Transit", "Completed", "Cancelled"]);
+    if (status !== undefined && !allowedStatuses.has(status)) {
+      return NextResponse.json({ error: `Invalid status. Allowed: ${[...allowedStatuses].join(", ")}` }, { status: 400 });
+    }
+
     const fields = [] as { col: string; val: any }[];
     if (status !== undefined) fields.push({ col: "status", val: status });
     if (dueDate !== undefined) fields.push({ col: "due_date", val: dueDate });
@@ -154,7 +122,19 @@ export async function PATCH(request: NextRequest) {
     );
     const row = result.rows[0];
     if (!row) return NextResponse.json({ error: "Sales order not found" }, { status: 404 });
-    return NextResponse.json({ order: mapOrder(row) });
+
+    // Fulfillment chain: completing an order drafts a finance invoice once.
+    let invoice: any = null;
+    if (FULFILLING_STATUSES.has(row.status) && !row.invoice_id) {
+      try {
+        invoice = await fulfillOrder(row, context.tenantSlug, context.userId);
+      } catch (fulfillErr) {
+        console.error("[SalesOrder] Auto-invoice draft failed:", fulfillErr);
+      }
+    }
+
+    const refreshed = invoice ? { ...row, invoice_id: invoice.id } : row;
+    return NextResponse.json({ order: mapOrder(refreshed), invoice });
   } catch (error) {
     console.error("Sales order update failed:", error);
     return NextResponse.json({ error: "Failed to update sales order", details: String((error as any)?.message ?? error) }, { status: 500 });

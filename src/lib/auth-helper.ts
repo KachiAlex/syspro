@@ -29,13 +29,31 @@ export function extractAuthContext(request: NextRequest): AuthContext {
   let userRole: string | undefined;
   let sessionTenantSlug: string | undefined;
 
-  const sessionCookie = request.cookies.get("pisairtel_session")?.value;
-  if (sessionCookie) {
-    const session = verifySession(sessionCookie);
-    if (session) {
+  // Superadmin session cookie (signed) — checked first so a caller holding
+  // both a tenant session and a superadmin token resolves as superadmin,
+  // matching getSessionUser in api-auth.ts. Superadmin tokens carry no
+  // tenantSlug; the tenant is resolved from the request's tenantSlug param
+  // below, matching requireTenantScope semantics.
+  let isSuperadmin = false;
+  const saCookie = request.cookies.get("superadmin_auth")?.value;
+  if (saCookie) {
+    const session = verifySession(saCookie);
+    if (session?.id && session.roleId === "superadmin") {
       userId = session.id;
-      userRole = session.roleId;
-      sessionTenantSlug = session.tenantSlug;
+      userRole = "superadmin";
+      isSuperadmin = true;
+    }
+  }
+
+  if (!userId) {
+    const sessionCookie = request.cookies.get("pisairtel_session")?.value;
+    if (sessionCookie) {
+      const session = verifySession(sessionCookie);
+      if (session) {
+        userId = session.id;
+        userRole = session.roleId;
+        sessionTenantSlug = session.tenantSlug;
+      }
     }
   }
 
@@ -82,6 +100,10 @@ export function extractAuthContext(request: NextRequest): AuthContext {
   if (sessionTenantSlug) {
     // Session is authoritative — cookie/header tenant claims cannot override it
     tenantSlug = sessionTenantSlug;
+  } else if (isSuperadmin) {
+    // Superadmin sessions carry no tenant; they may act on the tenant named
+    // by the request (middleware already exempts them from tenant binding).
+    tenantSlug = queryTenantSlug || cookieTenantSlug || "";
   } else if (isDev && cookieTenantSlug) {
     tenantSlug = cookieTenantSlug;
   } else if (isDev && queryTenantSlug) {

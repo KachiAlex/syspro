@@ -101,7 +101,17 @@ export function validateTenantContext(request: NextRequest, requiredPermission?:
   const context = extractTenantContext(request);
 
   if (!context.tenantSlug) {
-    throw new Error("Missing tenant context");
+    // Superadmin sessions carry no tenant — they must name one via
+    // ?tenantSlug=. Any other request reaching here has a session without a
+    // tenant, which is an authorization failure. The message keeps the
+    // "Unauthorized" convention so catch blocks that map
+    // `message.includes("Unauthorized")` return 403 rather than 500.
+    const status = context.userRole === "superadmin" ? 400 : 401;
+    const message =
+      context.userRole === "superadmin"
+        ? "tenantSlug is required for superadmin requests"
+        : "Unauthorized: missing tenant context";
+    throw new TenantAdminError("missing_tenant", message, status);
   }
 
   if (requiredPermission) {

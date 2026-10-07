@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { crmFiltersSchema } from "@/lib/crm/types";
 import { countLeads, listLeads, countContacts, listContacts, countDeals, listDeals, countCustomers, getConversionStats } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
-import { requireCrmAuth, getTeamMemberIds } from "@/lib/crm/auth";
+import { requireCrmAuth, getTeamMemberIds, effectiveViewMode } from "@/lib/crm/auth";
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
@@ -24,9 +24,10 @@ export async function GET(request: NextRequest) {
   let teamIds: string[] = [];
 
   if (true) {
-    if (viewMode === "mine" || (!viewMode && auth.scope === "mine")) {
+    const mode = effectiveViewMode(viewMode, auth.scope);
+    if (mode === "mine") {
       filterCreatedBy = auth.employeeId;
-    } else if (viewMode === "team" || (!viewMode && auth.scope === "team")) {
+    } else if (mode === "team") {
       teamIds = await getTeamMemberIds(auth.session.tenantSlug, auth.departmentId);
       if (teamIds.length === 0) {
         filterCreatedBy = auth.employeeId;
