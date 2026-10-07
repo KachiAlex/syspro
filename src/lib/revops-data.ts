@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { db } from "@/lib/sql-client";
 import { ensureOnce } from "@/lib/ensure-once";
+import { emitAutomationEvent } from "@/lib/automation/emit";
 
 export type DemandChannel =
   | "email"
@@ -835,6 +836,22 @@ export async function recordCampaignCost(input: CampaignCostInput): Promise<Camp
      ), updated_at = $2 where id = $1`,
     [input.campaignId, now]
   );
+  const campaign = await db.query(
+    `select name, budget, committed_spend, revenue_attributed, roi from revops_campaigns where id = $1 and tenant_slug = $2`,
+    [input.campaignId, input.tenantSlug]
+  );
+  const camp = db.mapRow(campaign.rows[0] ?? {});
+  emitAutomationEvent(input.tenantSlug, "revops.campaign-performance", {
+    campaignId: input.campaignId,
+    campaignName: camp.name ?? null,
+    costId: id,
+    costAmount: input.amount ?? 0,
+    currency: input.currency ?? "USD",
+    committedSpend: toNum(camp.committedSpend),
+    budget: toNum(camp.budget),
+    revenueAttributed: toNum(camp.revenueAttributed),
+    roi: toNum(camp.roi),
+  });
   const result = await db.query(
     `select * from revops_campaign_costs where id = $1`,
     [id]

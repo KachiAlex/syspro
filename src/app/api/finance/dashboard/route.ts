@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { financeFiltersSchema } from "@/lib/finance/types";
 import { getFinanceDashboardSnapshot } from "@/lib/finance/service";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { sql as SQL } from "@/lib/sql-client";
 
 export async function GET(request: NextRequest) {
   let context: { tenantSlug: string } | undefined;
@@ -26,9 +27,24 @@ export async function GET(request: NextRequest) {
 
     const snapshot = await getFinanceDashboardSnapshot(parseResult.data);
 
+    // Event-bus aggregates: finance_events → finance_cached_summary via the
+    // trg_finance_events_process trigger + cron refresh; surfaced through the
+    // finance_dashboard_metrics view. Additive field — missing view never
+    // breaks the snapshot.
+    let eventMetrics: Record<string, unknown> | null = null;
+    try {
+      const rows = (await SQL`
+        select * from finance_dashboard_metrics where tenant_slug = ${context.tenantSlug}
+      `) as any[];
+      eventMetrics = rows[0] ?? null;
+    } catch (metricsError) {
+      console.warn("finance_dashboard_metrics unavailable:", metricsError);
+    }
+
     return NextResponse.json({
       filters: parseResult.data,
       snapshot,
+      eventMetrics,
       generatedAt: new Date().toISOString(),
     });
   } catch (error) {
