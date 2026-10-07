@@ -7,7 +7,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   try {
     const context = validateTenantContext(request, "delete");
     const result = await db.query(
-      `DELETE FROM suppliers WHERE id = $1 AND tenant_slug = $2 RETURNING id`,
+      `DELETE FROM vendors WHERE id = $1 AND tenant_slug = $2 RETURNING id`,
       [params.id, context.tenantSlug]
     );
     if ((result.rowCount ?? 0) === 0) {

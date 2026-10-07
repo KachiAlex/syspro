@@ -53,8 +53,15 @@ async function ensurePurchaseOrdersTable() {
 async function resolveSupplierName(supplierId: string, tenantSlug: string) {
   if (!supplierId) return "";
   try {
-    const result = await db.query(`SELECT name FROM suppliers WHERE id = $1 AND tenant_slug = $2`, [supplierId, tenantSlug]);
-    return result.rows[0]?.name ?? supplierId;
+    // Canonical vendor master is `vendors` (suppliers were unified onto it);
+    // fall back to legacy `suppliers` rows for pre-migration IDs.
+    const vendor = await db.query(
+      `SELECT coalesce(display_name, legal_name, name) AS name FROM vendors WHERE id = $1 AND tenant_slug = $2`,
+      [supplierId, tenantSlug]
+    );
+    if (vendor.rows[0]?.name) return vendor.rows[0].name;
+    const legacy = await db.query(`SELECT name FROM suppliers WHERE id = $1 AND tenant_slug = $2`, [supplierId, tenantSlug]);
+    return legacy.rows[0]?.name ?? supplierId;
   } catch (e) {
     return supplierId;
   }
