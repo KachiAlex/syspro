@@ -93,17 +93,68 @@ async function logNotification(action: AutomationAction) {
 }
 
 async function createTask(action: AutomationAction) {
-  // Placeholder for real task system; pretend to enqueue.
   const payload = action.action_payload || {};
   const params = payload.params || {};
-  console.log("[automation task:create]", params.title || params);
+  const tenantSlug = action.tenant_slug;
+  const title = String(params.title || "Automation task");
+  const employeeId = params.employeeId
+    ? String(params.employeeId)
+    : payload.event?.payload?.employeeId
+      ? String(payload.event.payload.employeeId)
+      : null;
+  if (!employeeId) {
+    return { status: "failed", error: "task:create requires params.employeeId or event payload employeeId" } as ActionHandlerResult;
+  }
+  const { sql: SQL } = await import("@/lib/sql-client");
+  const { randomUUID } = await import("crypto");
+  await SQL`
+    insert into admin_staff_tasks
+      (id, tenant_slug, employee_id, title, description, frequency, due_date, status, assigned_by, expected_outcome, created_at, updated_at)
+    values (
+      ${randomUUID()}, ${tenantSlug}, ${employeeId}, ${title},
+      ${params.description ? String(params.description) : null},
+      ${["daily","weekly","monthly","quarterly","annual","one-time"].includes(String(params.frequency)) ? String(params.frequency) : "one-time"},
+      ${params.dueDate ? String(params.dueDate) : null},
+      'pending',
+      ${payload.event?.actor ? String(payload.event.actor) : "automation"},
+      ${params.expectedOutcome ? String(params.expectedOutcome) : null},
+      now(), now()
+    )
+  `;
   return { status: "completed" } as ActionHandlerResult;
 }
 
 async function attendanceFlag(action: AutomationAction) {
   const payload = action.action_payload || {};
   const params = payload.params || {};
-  console.log("[automation attendance.flag]", params.employeeId, params.reason || "no reason provided");
+  const tenantSlug = action.tenant_slug;
+  const employeeId = params.employeeId ?? payload.event?.payload?.employeeId;
+  if (!employeeId) {
+    return { status: "failed", error: "attendance:flag requires employeeId" } as ActionHandlerResult;
+  }
+  const reason = String(params.reason || "flagged by automation rule");
+  const workDate = params.workDate ?? payload.event?.payload?.workDate ?? null;
+  const { sql: SQL } = await import("@/lib/sql-client");
+  const result = workDate
+    ? ((await SQL`
+        update attendance_records
+        set check_in_flagged = true, flag_reason = ${reason}, updated_at = now()
+        where tenant_id = ${tenantSlug} and employee_id = ${String(employeeId)} and work_date = ${String(workDate)}::date
+        returning id
+      `) as any[])
+    : ((await SQL`
+        update attendance_records
+        set check_in_flagged = true, flag_reason = ${reason}, updated_at = now()
+        where id = (
+          select id from attendance_records
+          where tenant_id = ${tenantSlug} and employee_id = ${String(employeeId)}
+          order by work_date desc limit 1
+        )
+        returning id
+      `) as any[]);
+  if (result.length === 0) {
+    return { status: "failed", error: "no attendance record found to flag" } as ActionHandlerResult;
+  }
   return { status: "completed" } as ActionHandlerResult;
 }
 
@@ -114,6 +165,8 @@ const handlers: Record<string, ActionHandler> = {
   "task:create": createTask,
   "attendance:flag": attendanceFlag,
 };
+
+export const KNOWN_ACTION_TYPES = new Set(Object.keys(handlers));
 
 export async function handleAutomationAction(action: AutomationAction): Promise<ActionHandlerResult> {
   const payload = action.action_payload || {};

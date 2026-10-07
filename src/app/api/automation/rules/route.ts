@@ -4,6 +4,7 @@ import { extractAuthContext, requirePermission, validateTenant } from "@/lib/aut
 import { requireModuleAccess } from "@/lib/api-auth";
 import { CreateRuleSchema, safeParse } from "@/lib/validation";
 import { createAutomationRule, listAutomationRules } from "@/lib/automation/db";
+import { KNOWN_ACTION_TYPES } from "@/lib/automation/connectors";
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,6 +30,13 @@ export async function POST(request: NextRequest) {
     const validation = safeParse(CreateRuleSchema, body);
     if (!validation.success) {
       return NextResponse.json({ error: "Invalid rule", details: validation.error.flatten() }, { status: 400 });
+    }
+    const badAction = validation.data.actions.find((a: any) => !KNOWN_ACTION_TYPES.has(a.type));
+    if (badAction) {
+      return NextResponse.json(
+        { error: `Unknown action type: ${badAction.type}`, allowed: [...KNOWN_ACTION_TYPES] },
+        { status: 400 }
+      );
     }
 
     const rule = await createAutomationRule({

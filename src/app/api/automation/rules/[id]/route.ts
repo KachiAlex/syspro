@@ -4,6 +4,7 @@ import { extractAuthContext, requirePermission, validateTenant } from "@/lib/aut
 import { requireModuleAccess } from "@/lib/api-auth";
 import { UpdateRuleSchema, safeParse } from "@/lib/validation";
 import { deleteAutomationRule, getAutomationRule, updateAutomationRule } from "@/lib/automation/db";
+import { KNOWN_ACTION_TYPES } from "@/lib/automation/connectors";
 
 export async function PATCH(request: NextRequest, context: any) {
   const scope = await requireModuleAccess(request, "automation", "write");
@@ -16,6 +17,15 @@ export async function PATCH(request: NextRequest, context: any) {
     const validation = safeParse(UpdateRuleSchema, body);
     if (!validation.success) {
       return NextResponse.json({ error: "Invalid rule update", details: validation.error.flatten() }, { status: 400 });
+    }
+    if (validation.data.actions) {
+      const badAction = validation.data.actions.find((a: any) => !KNOWN_ACTION_TYPES.has(a.type));
+      if (badAction) {
+        return NextResponse.json(
+          { error: `Unknown action type: ${badAction.type}`, allowed: [...KNOWN_ACTION_TYPES] },
+          { status: 400 }
+        );
+      }
     }
 
     const updated = await updateAutomationRule(params.id, tenantSlug, validation.data);

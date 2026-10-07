@@ -14,7 +14,7 @@ const patchSchema = z.object({
   stage: z.enum(CRM_PIPELINE_STAGES).optional(),
   probability: z.number().min(0).max(100).optional(),
   assignedOfficerId: z.string().optional(),
-  status: z.string().optional(),
+  status: z.enum(["open", "won", "lost"]).optional(),
   value: z.number().min(0).optional(),
   currency: z.string().min(1).max(8).optional(),
   expectedClose: z.string().optional().or(z.literal("")),
@@ -49,11 +49,20 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       return NextResponse.json({ error: "You can only edit your own deals" }, { status: 403 });
     }
 
+    // Stage ↔ status sync: closed_won/closed_lost imply status won/lost
+    // unless the caller explicitly set status. Reopening clears it to open.
+    let status = parsed.data.status;
+    if (status === undefined && parsed.data.stage) {
+      if (parsed.data.stage === "closed_won") status = "won";
+      else if (parsed.data.stage === "closed_lost") status = "lost";
+      else status = "open";
+    }
+
     const deal = await updateDeal(params.id, {
       stage: parsed.data.stage,
       probability: parsed.data.probability,
       assignedOfficerId: parsed.data.assignedOfficerId,
-      status: parsed.data.status,
+      status,
       value: parsed.data.value,
       currency: parsed.data.currency,
       expectedClose: parsed.data.expectedClose === "" ? null : parsed.data.expectedClose,
