@@ -1,12 +1,15 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleAccess } from "@/lib/api-auth";
 import { db } from "@/lib/sql-client";
 import { ensureAttendanceVerificationTables } from "@/lib/attendance-verification";
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate = await requireModuleAccess(request, "people", "write");
+    if (!_gate.ok) return _gate.response;
     await ensureAttendanceVerificationTables();
     const body = await request.json();
 
@@ -37,6 +40,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const context = validateTenantContext(request, "delete");
+    const _gate = await requireModuleAccess(request, "people", "write");
+    if (!_gate.ok) return _gate.response;
     await ensureAttendanceVerificationTables();
     const res = await db.query(
       `DELETE FROM attendance_locations WHERE id = $1 AND tenant_slug = $2`,

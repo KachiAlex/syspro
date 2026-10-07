@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { requireCrmAuth } from "@/lib/crm/auth";
+import { getTeamMemberIds, requireCrmAuth } from "@/lib/crm/auth";
 import {
   ACTIVITY_RELATED_TYPES,
   ACTIVITY_STATUSES,
@@ -17,8 +17,8 @@ async function gateRequest(request: NextRequest, id: string) {
   // tenant is authoritative — fall back to it rather than requiring a param.
   const url = new URL(request.url);
   const claimed = url.searchParams.get("tenantSlug");
-  const auth = extractAuthContext(request);
-  const tenantSlug = auth.tenantSlug || claimed || "";
+  const authCtx = extractAuthContext(request);
+  const tenantSlug = authCtx.tenantSlug || claimed || "";
   if (!tenantSlug) {
     return { ok: false as const, response: NextResponse.json({ error: "tenantSlug is required" }, { status: 400 }) };
   }
@@ -28,6 +28,21 @@ async function gateRequest(request: NextRequest, id: string) {
   const record = await getCrmActivity(id, gate.auth.session.tenantSlug);
   if (!record) {
     return { ok: false as const, response: NextResponse.json({ error: "Activity not found" }, { status: 404 }) };
+  }
+
+  // Record scope mirrors the list endpoint: staff touch only their own
+  // activities; HODs are limited to their team's. Applies to every method.
+  const auth = gate.auth;
+  if (auth.scope === "mine") {
+    if (record.assignedTo !== auth.employeeId && record.createdBy !== auth.employeeId) {
+      return { ok: false as const, response: NextResponse.json({ error: "Activity not found" }, { status: 404 }) };
+    }
+  } else if (auth.scope === "team" && auth.departmentId) {
+    const teamIds = await getTeamMemberIds(auth.session.tenantSlug, auth.departmentId);
+    if (!teamIds.includes(auth.employeeId)) teamIds.push(auth.employeeId);
+    if (!teamIds.includes(record.assignedTo ?? "") && !teamIds.includes(record.createdBy ?? "")) {
+      return { ok: false as const, response: NextResponse.json({ error: "Activity not found" }, { status: 404 }) };
+    }
   }
   return { ok: true as const, auth: gate.auth, record };
 }
@@ -80,16 +95,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  // The UI sends tenantSlug in the body; the session tenant is authoritative.
-  const body = await request.json().catch(() => ({}));
-  const url = new URL(request.url);
-  const auth = extractAuthContext(request);
-  const tenantSlug = auth.tenantSlug || body.tenantSlug || url.searchParams.get("tenantSlug") || "";
-  if (!tenantSlug) {
-    return NextResponse.json({ error: "tenantSlug is required" }, { status: 400 });
-  }
-
-  const gate = await requireCrmAuth(request, tenantSlug);
+  const gate = await gateRequest(request, params.id);
   if (!gate.ok) return gate.response;
 
   const deleted = await deleteCrmActivity(params.id, gate.auth.session.tenantSlug);

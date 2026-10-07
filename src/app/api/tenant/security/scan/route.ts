@@ -6,6 +6,7 @@ import {
   handleTenantAdminError,
   checkRateLimit,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 import { setupTenantAdminSchema } from "@/lib/tenant-admin/schema";
@@ -22,6 +23,8 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate1 = await requireModuleGate(request, "admin", "write");
+    if (_gate1) return _gate1;
 
     if (!checkRateLimit(`sec-scan-${context.tenantSlug}`, 5, 60000)) {
       return errorResponse("Rate limit exceeded", 429);

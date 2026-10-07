@@ -5,6 +5,7 @@ import {
   validateTenantContext,
   resolveDepartmentHeadContext,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleAccess } from "@/lib/api-auth";
 import {
   getDepartmentById,
   updateDepartmentHead,
@@ -20,6 +21,8 @@ const patchSchema = z.object({
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   const context = validateTenantContext(request, "write");
+  const _gate = await requireModuleAccess(request, "people", "write");
+  if (!_gate.ok) return _gate.response;
   await resolveDepartmentHeadContext(context);
 
   const id = params.id;

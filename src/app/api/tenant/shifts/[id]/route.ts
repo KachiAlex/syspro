@@ -8,6 +8,7 @@ import {
   checkRateLimit,
   handleTenantAdminError,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -31,6 +32,8 @@ function normalize(row: any) {
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate1 = await requireModuleGate(request, "people", "write");
+    if (_gate1) return _gate1;
     if (!checkRateLimit(`shifts-patch-${context.tenantSlug}`, 30, 60000)) {
       return errorResponse("Rate limit exceeded", 429);
     }
@@ -77,6 +80,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate2 = await requireModuleGate(request, "people", "write");
+    if (_gate2) return _gate2;
     if (!checkRateLimit(`shifts-del-${context.tenantSlug}`, 20, 60000)) {
       return errorResponse("Rate limit exceeded", 429);
     }

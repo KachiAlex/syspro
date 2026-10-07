@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { updateTask, deleteTask } from "@/lib/projects/db";
 import { emitAutomationEvent } from "@/lib/automation/emit";
 
@@ -27,6 +28,8 @@ export async function PATCH(
 ) {
   try {
     const context = validateTenantContext(request as any, "write");
+    const _gate1 = await requireModuleGate(request, "projects", "write");
+    if (_gate1) return _gate1;
     const body = await request.json();
 
     const updates: any = {};
@@ -83,6 +86,8 @@ export async function DELETE(
 ) {
   try {
     const context = validateTenantContext(request as any, "delete");
+    const _gate2 = await requireModuleGate(request, "projects", "write");
+    if (_gate2) return _gate2;
     const deleted = await deleteTask(params.taskId, context.tenantSlug);
     if (!deleted) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });

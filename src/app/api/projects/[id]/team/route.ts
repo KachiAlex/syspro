@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { getProjectTeam, addProjectTeamMember } from "@/lib/projects/db";
 
 export async function GET(
@@ -9,6 +10,8 @@ export async function GET(
 ) {
   try {
     const context = validateTenantContext(request as any, "read");
+    const _gate1 = await requireModuleGate(request, "projects", "read");
+    if (_gate1) return _gate1;
     const members = await getProjectTeam(params.id, context.tenantSlug);
     return NextResponse.json({ members });
   } catch (error) {
@@ -24,6 +27,8 @@ export async function POST(
 ) {
   try {
     const context = validateTenantContext(request as any, "write");
+    const _gate2 = await requireModuleGate(request, "projects", "write");
+    if (_gate2) return _gate2;
     const body = await request.json();
     const { email, role } = body;
 

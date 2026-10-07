@@ -9,6 +9,7 @@ import {
   checkRateLimit,
   handleTenantAdminError,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -39,6 +40,8 @@ function normalize(row: any) {
 export async function GET(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "read");
+    const _gate1 = await requireModuleGate(request, "people", "read");
+    if (_gate1) return _gate1;
     if (!checkRateLimit(`shift-assign-get-${context.tenantSlug}`, 100, 60000)) {
       return errorResponse("Rate limit exceeded", 429);
     }
@@ -74,6 +77,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate2 = await requireModuleGate(request, "people", "write");
+    if (_gate2) return _gate2;
     if (!checkRateLimit(`shift-assign-post-${context.tenantSlug}`, 30, 60000)) {
       return errorResponse("Rate limit exceeded", 429);
     }

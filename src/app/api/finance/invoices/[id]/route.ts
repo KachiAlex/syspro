@@ -23,7 +23,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   }
 
   try {
-    const invoice = await updateFinanceInvoice(params.id, parsed.data);
+    const invoice = await updateFinanceInvoice(params.id, parsed.data, _scope.user.tenantSlug);
     if (!invoice) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
@@ -44,7 +44,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
   if (!_owned.ok) return _owned.response;
 
   try {
-    const deleted = await deleteFinanceInvoice(params.id);
+    const deleted = await deleteFinanceInvoice(params.id, _scope.user.tenantSlug);
     if (!deleted) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }

@@ -7,6 +7,7 @@ import {
   errorResponse,
   handleTenantAdminError,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 function csvCell(v: unknown): string {
   const s = v == null ? "" : String(v);
@@ -20,6 +21,8 @@ function csvCell(v: unknown): string {
 export async function GET(request: NextRequest, context: any) {
   try {
     const ctx = validateTenantContext(request, "read");
+    const _gate1 = await requireModuleGate(request, "people", "read");
+    if (_gate1) return _gate1;
     const { id } = await context.params;
 
     await ensureHrTables(sql);

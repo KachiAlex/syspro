@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { createProjectReport } from "@/lib/projects/db";
 
 function toClientReport(row: any) {
@@ -24,6 +25,8 @@ function toClientReport(row: any) {
 export async function POST(request: Request) {
   try {
     const context = validateTenantContext(request as any, "write");
+    const _gate1 = await requireModuleGate(request, "projects", "write");
+    if (_gate1) return _gate1;
     const body = await request.json();
     const { reportTitle, reportType, projectIds, dateRange, metrics, recipients, submittedBy } = body as any;
 

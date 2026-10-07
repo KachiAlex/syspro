@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureOnce } from "@/lib/ensure-once";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 async function ensureFieldJobsRun() {
   await SQL`
@@ -53,6 +54,8 @@ function mapJob(row: any) {
 
 export async function GET(request: NextRequest) {
   const context = validateTenantContext(request, "read");
+  const _gate1 = await requireModuleGate(request, "itsupport", "read");
+  if (_gate1) return _gate1;
   await ensureFieldJobs();
 
   // Engineers see their own jobs; admins see everything for the tenant.
@@ -74,6 +77,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const context = validateTenantContext(request, "write");
+  const _gate2 = await requireModuleGate(request, "itsupport", "write");
+  if (_gate2) return _gate2;
   const body = await request.json();
   const { ticketId, engineerId, engineerName, title, siteAddress } = body || {};
 

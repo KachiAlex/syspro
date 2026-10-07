@@ -1,12 +1,15 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 import { listCampaignCosts, recordCampaignCost } from "@/lib/revops-data";
 
 export async function GET(request: NextRequest, context: any) {
   const { params } = context;
   const ctx = validateTenantContext(request, "read");
+  const _gate1 = await requireModuleGate(request, "revops", "read");
+  if (_gate1) return _gate1;
   try {
     const costs = await listCampaignCosts(ctx.tenantSlug, params.campaignId);
     return NextResponse.json({ costs });
@@ -19,6 +22,8 @@ export async function GET(request: NextRequest, context: any) {
 export async function POST(request: NextRequest, context: any) {
   const { params } = context;
   const ctx = validateTenantContext(request, "write");
+  const _gate2 = await requireModuleGate(request, "revops", "write");
+  if (_gate2) return _gate2;
   const body = await request.json().catch(() => ({}));
   const requiredFields = [
     "amount",

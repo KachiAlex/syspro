@@ -12,6 +12,7 @@ import {
   deleteVendor,
 } from "@/lib/finance/vendors";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const vendorSearchSchema = z.object({
   query: z.string().min(1),
@@ -29,6 +30,8 @@ export async function GET(request: NextRequest) {
   try {
   // Enforce tenant context for vendor listing
   const context = validateTenantContext(request, "read");
+  const _gate = await requireModuleAccess(request, "finance", "read");
+  if (!_gate.ok) return _gate.response;
   const url = new URL(request.url);
 
   // Search endpoint: /api/finance/vendors?search=true&query=...
@@ -89,6 +92,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   // Require write permission for creating or fetching vendor details
   const context = validateTenantContext(request, "write");
+  const _gate = await requireModuleAccess(request, "finance", "write");
+  if (!_gate.ok) return _gate.response;
   const body = await request.json().catch(() => null);
 
   if (!body) {
@@ -149,6 +154,8 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   validateTenantContext(request, "write");
+  const _gate = await requireModuleAccess(request, "finance", "write");
+  if (!_gate.ok) return _gate.response;
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
 
@@ -194,6 +201,8 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   validateTenantContext(request, "delete");
+  const _gate = await requireModuleAccess(request, "finance", "write");
+  if (!_gate.ok) return _gate.response;
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
 

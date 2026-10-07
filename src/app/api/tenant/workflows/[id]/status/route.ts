@@ -11,6 +11,7 @@ import {
   asTenantSlug,
   asResourceId,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { TenantSlug, UserId, ResourceId, AuditAction } from "@/lib/tenant-admin/types";
 import { z } from "zod";
 
@@ -31,6 +32,8 @@ export async function PATCH(request: NextRequest, context: any) {
     }
 
     const tenantContext = validateTenantContext(request, "write");
+    const _gate1 = await requireModuleGate(request, "automation", "write");
+    if (_gate1) return _gate1;
 
     if (!checkRateLimit(`workflow-status-${tenantContext.tenantSlug}`, 100, 60000)) {
       return errorResponse("Rate limit exceeded", 429);

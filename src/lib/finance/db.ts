@@ -666,7 +666,8 @@ export async function insertFinanceInvoice(payload: FinanceInvoiceCreateInput): 
 
 export async function updateFinanceInvoice(
   id: string,
-  updates: FinanceInvoiceUpdateInput
+  updates: FinanceInvoiceUpdateInput,
+  tenantSlug?: string
 ): Promise<FinanceInvoice | null> {
   const sql = SQL;
   await ensureFinanceTables(sql);
@@ -702,6 +703,7 @@ export async function updateFinanceInvoice(
       branch_id = coalesce(${updates.branchId ?? null}, branch_id),
       updated_at = now()
     where id = ${id}
+    ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
     returning *
   `) as FinanceInvoiceRecord[];
 
@@ -766,11 +768,13 @@ export async function updateFinanceInvoice(
   return normalizeFinanceInvoiceRow(invoiceRow, lineRows);
 }
 
-export async function deleteFinanceInvoice(id: string): Promise<boolean> {
+export async function deleteFinanceInvoice(id: string, tenantSlug?: string): Promise<boolean> {
   const sql = SQL;
   await ensureFinanceTables(sql);
 
-  const result = await db.query<{ count: number }>(`delete from finance_invoices where id = $1`, [id]);
+  const result = tenantSlug
+    ? await db.query<{ count: number }>(`delete from finance_invoices where id = $1 and tenant_slug = $2`, [id, tenantSlug])
+    : await db.query<{ count: number }>(`delete from finance_invoices where id = $1`, [id]);
   return result.count > 0;
 }
 

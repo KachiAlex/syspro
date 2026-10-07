@@ -8,6 +8,7 @@ import {
   errorResponse,
   handleTenantAdminError,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 const STATUS_TO_UI: Record<string, string> = {
   draft: "Draft",
@@ -52,6 +53,8 @@ async function resolveActorName(ctx: { tenantSlug: string; userId: string }) {
 export async function PATCH(request: NextRequest, context: any) {
   try {
     const ctx = validateTenantContext(request, "write");
+    const _gate1 = await requireModuleGate(request, "people", "write");
+    if (_gate1) return _gate1;
     const { id } = await context.params;
     const body = await request.json().catch(() => ({}));
     const action = typeof body?.action === "string" ? body.action.toLowerCase() : null;
@@ -241,6 +244,8 @@ export async function PATCH(request: NextRequest, context: any) {
 export async function GET(request: NextRequest, context: any) {
   try {
     const ctx = validateTenantContext(request, "read");
+    const _gate2 = await requireModuleGate(request, "people", "read");
+    if (_gate2) return _gate2;
     const { id } = await context.params;
 
     await ensureHrTables(sql);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveEmployeeSession, type EmployeeSession } from "@/lib/hr/auth";
+import { loadPortalPermissions } from "@/lib/api-auth";
 import { sql as SQL } from "@/lib/sql-client";
 
 export type CrmVisibilityScope = "all" | "team" | "mine";
@@ -81,7 +82,44 @@ export async function requireCrmAuth(
       response: NextResponse.json({ error: "Unauthorized" }, { status: 403 }),
     };
   }
+
+  // Module grant: portal_permissions is the per-user kill-switch. Once any
+  // permissions are set, every module not explicitly enabled is denied —
+  // same semantics as requireModuleAccess.
+  const modulePerms = await loadPortalPermissions(tenantSlug, {
+    id: auth.employeeId,
+    email: auth.session.email,
+  } as any);
+  if (Object.keys(modulePerms).length > 0 && modulePerms.crm !== true) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Insufficient permissions for crm access" }, { status: 403 }),
+    };
+  }
+
   return { ok: true, auth };
+}
+
+/**
+ * Record-level scope check — mirrors list scoping so direct-ID reads and
+ * writes cannot widen visibility. all → any record; team → records owned
+ * by a department member (fallback: own); mine → records the session owns
+ * (created by or assigned to them).
+ */
+export async function canAccessCrmRecord(
+  auth: CrmAuthResult,
+  record: { createdBy?: string | null; assignedOfficerId?: string | null; assignedTo?: string | null }
+): Promise<boolean> {
+  if (auth.scope === "all") return true;
+  const owners = [record.createdBy, record.assignedOfficerId, record.assignedTo].filter(
+    (v): v is string => Boolean(v)
+  );
+  if (auth.scope === "team" && auth.departmentId) {
+    const teamIds = await getTeamMemberIds(auth.session.tenantSlug, auth.departmentId);
+    if (!teamIds.includes(auth.employeeId)) teamIds.push(auth.employeeId);
+    return owners.some((o) => teamIds.includes(o));
+  }
+  return owners.includes(auth.employeeId);
 }
 
 /**

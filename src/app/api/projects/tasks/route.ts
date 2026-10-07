@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import {
   createTask,
   getTasksForProject,
@@ -63,6 +64,8 @@ const priorityToPlanner = (n: number) => {
 
 export async function GET(request: NextRequest) {
   const context = validateTenantContext(request, "read");
+  const _gate1 = await requireModuleGate(request, "projects", "read");
+  if (_gate1) return _gate1;
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get("projectId") || undefined;
   const workstreamId = searchParams.get("workstreamId") || undefined;
@@ -114,6 +117,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const context = validateTenantContext(request, "write");
+  const _gate2 = await requireModuleGate(request, "projects", "write");
+  if (_gate2) return _gate2;
   const body = await request.json();
   const {
     projectId,
@@ -230,6 +235,8 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   const context = validateTenantContext(request, "write");
+  const _gate3 = await requireModuleGate(request, "projects", "write");
+  if (_gate3) return _gate3;
   const body = await request.json();
   const { taskId, status } = body as { taskId?: string; status?: FrontendStatus };
 

@@ -8,6 +8,7 @@ import {
   errorResponse,
   checkRateLimit,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 /**
  * GET /api/tenant/payroll?period=YYYY-MM
@@ -16,6 +17,8 @@ import {
 export async function GET(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "read");
+    const _gate1 = await requireModuleGate(request, "people", "read");
+    if (_gate1) return _gate1;
 
     if (!checkRateLimit(`payroll-get-${context.tenantSlug}`, 100, 60000)) {
       return errorResponse("Rate limit exceeded", 429);

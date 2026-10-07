@@ -7,6 +7,7 @@ import {
   errorResponse,
   handleTenantAdminError,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 function statusLabel(s: string | null | undefined): string {
   const v = (s || "pending").toLowerCase();
@@ -20,6 +21,8 @@ function statusLabel(s: string | null | undefined): string {
 export async function PATCH(request: NextRequest, context: any) {
   try {
     const ctx = validateTenantContext(request, "write");
+    const _gate1 = await requireModuleGate(request, "people", "write");
+    if (_gate1) return _gate1;
     const { id } = await context.params;
     const body = await request.json().catch(() => ({}));
 

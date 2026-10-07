@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 import {
   createCampaign,
@@ -27,6 +28,8 @@ function buildFilters(searchParams: URLSearchParams): CampaignFilters {
 
 export async function GET(request: NextRequest) {
   const context = validateTenantContext(request, "read");
+  const _gate1 = await requireModuleGate(request, "revops", "read");
+  if (_gate1) return _gate1;
   const { searchParams } = new URL(request.url);
   const tenantSlug = context.tenantSlug;
   try {
@@ -40,6 +43,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const context = validateTenantContext(request, "write");
+  const _gate2 = await requireModuleGate(request, "revops", "write");
+  if (_gate2) return _gate2;
   const body = await request.json().catch(() => ({}));
 
   const name = body.name ? String(body.name) : "";
@@ -89,6 +94,8 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   const context = validateTenantContext(request, "write");
+  const _gate3 = await requireModuleGate(request, "revops", "write");
+  if (_gate3) return _gate3;
   const { searchParams } = new URL(request.url);
   const campaignId = searchParams.get("id");
   if (!campaignId) {
@@ -116,6 +123,8 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const context = validateTenantContext(request, "write");
+  const _gate4 = await requireModuleGate(request, "revops", "write");
+  if (_gate4) return _gate4;
   const { searchParams } = new URL(request.url);
   const campaignId = searchParams.get("id");
   if (!campaignId) {

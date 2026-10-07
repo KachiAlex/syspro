@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
           const placeholders = teamIds.map((_, i) => `$${i + 2}`).join(",");
           const rows = (await db.query(
             `select * from crm_leads where tenant_slug = $1 and (created_by in (${placeholders}) or assigned_officer_id in (${placeholders})) order by created_at desc`,
-            [tenantSlug, ...teamIds, ...teamIds]
+            [tenantSlug, ...teamIds]
           )).rows as any[];
           const leads = rows.map((r) => ({
             id: r.id, tenantSlug: r.tenant_slug, regionId: r.region_id, branchId: r.branch_id,

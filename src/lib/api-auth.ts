@@ -163,7 +163,7 @@ export type ModuleAccessLevel = "read" | "write";
  * admin_employees — by employee id, falling back to email for tenant_admins
  * whose employee record has a different id. Mirrors /api/tenant/user/modules.
  */
-async function loadPortalPermissions(
+export async function loadPortalPermissions(
   tenant: string,
   user: SessionUser
 ): Promise<Record<string, boolean>> {
@@ -204,6 +204,50 @@ async function loadPortalPermissions(
  *   const auth = await requireModuleAccess(request, "finance", "write");
  *   if (!auth.ok) return auth.response;
  */
+/**
+ * Compact module gate for handlers that authenticate via
+ * validateTenantContext (which returns a context, not a response).
+ *
+ *   const _gate = await requireModuleGate(request, "itsupport");
+ *   if (_gate) return _gate;
+ *
+ * Governed modules delegate to requireModuleAccess. For ungoverned modules
+ * (itsupport, revops, procurement, …) portal_permissions is applied as an
+ * allowlist once restrictions exist — the same semantics requireModuleAccess
+ * gives governed modules — while unrestricted sessions keep their existing
+ * role-level gate. Returns a denial response or null when access is allowed.
+ */
+export async function requireModuleGate(
+  request: Req,
+  module: string,
+  level: ModuleAccessLevel = "read"
+): Promise<NextResponse | null> {
+  const governed: GovernedModule[] = [
+    "crm", "finance", "people", "projects", "sales",
+    "analytics", "automation", "admin", "billing", "integrations",
+  ];
+  if ((governed as string[]).includes(module)) {
+    const res = await requireModuleAccess(request, module as GovernedModule, level);
+    return res.ok ? null : res.response;
+  }
+  const scope = await requireTenantScope(request);
+  if (!scope.ok) return scope.response;
+  const user = scope.user;
+  if (user.roleId === "superadmin") return null;
+  const tenant = (await resolveRequestedTenant(request)) || user.tenantSlug;
+  if (!tenant) {
+    return NextResponse.json({ error: "tenantSlug is required" }, { status: 400 });
+  }
+  const modulePerms = await loadPortalPermissions(tenant, user);
+  if (Object.keys(modulePerms).length > 0 && modulePerms[module] !== true) {
+    return NextResponse.json(
+      { error: `Insufficient permissions for ${module} access` },
+      { status: 403 }
+    );
+  }
+  return null;
+}
+
 export async function requireModuleAccess(
   request: Req,
   module: GovernedModule,

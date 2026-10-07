@@ -14,6 +14,7 @@ import {
 import { writeFinanceEvent } from "@/lib/finance/events";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const billListSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -63,6 +64,8 @@ export async function GET(request: NextRequest) {
   try {
     // enforce tenant context for bill read operations
     validateTenantContext(request, "read");
+    const _gate = await requireModuleAccess(request, "finance", "read");
+    if (!_gate.ok) return _gate.response;
     const url = new URL(request.url);
     
     // Get single bill by ID
@@ -143,6 +146,8 @@ export async function POST(request: NextRequest) {
   try {
     // enforce tenant context for bill create/maintenance
     validateTenantContext(request, "write");
+    const _gate = await requireModuleAccess(request, "finance", "write");
+    if (!_gate.ok) return _gate.response;
     const body = await request.json();
     
     // Convert PO to Bill
@@ -229,6 +234,8 @@ export async function PUT(request: NextRequest) {
   try {
     // enforce tenant context for updates
     validateTenantContext(request, "write");
+    const _gate = await requireModuleAccess(request, "finance", "write");
+    if (!_gate.ok) return _gate.response;
     const url = new URL(request.url);
     const billId = url.searchParams.get("id");
     
@@ -275,6 +282,8 @@ export async function DELETE(request: NextRequest) {
   try {
     // enforce tenant context for deletes
     validateTenantContext(request, "delete");
+    const _gate = await requireModuleAccess(request, "finance", "write");
+    if (!_gate.ok) return _gate.response;
     const url = new URL(request.url);
     const billId = url.searchParams.get("id");
     

@@ -16,6 +16,7 @@ import {
   asTenantSlug,
   asResourceId,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { AuditService } from "@/lib/tenant-admin/service";
 import { TenantSlug, UserId, ResourceId, AuditAction } from "@/lib/tenant-admin/types";
 
@@ -26,6 +27,8 @@ import { TenantSlug, UserId, ResourceId, AuditAction } from "@/lib/tenant-admin/
 export async function GET(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "read");
+    const _gate1 = await requireModuleGate(request, "people", "read");
+    if (_gate1) return _gate1;
     
     // Rate limiting check
     if (!checkRateLimit(`dept-get-${context.tenantSlug}`, 100, 60000)) {
@@ -61,6 +64,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate2 = await requireModuleGate(request, "people", "write");
+    if (_gate2) return _gate2;
 
     const parsed = await parseJsonRequest(request, CreateDepartmentSchema);
     if (!parsed.success) {
@@ -111,6 +116,8 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate3 = await requireModuleGate(request, "people", "write");
+    if (_gate3) return _gate3;
     const id = new URL(request.url).searchParams.get("id");
 
     if (!id) {
@@ -164,6 +171,8 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "delete");
+    const _gate4 = await requireModuleGate(request, "people", "write");
+    if (_gate4) return _gate4;
     const id = new URL(request.url).searchParams.get("id");
 
     if (!id) {

@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { listEmployees } from "@/lib/hr/db";
 
 function toReportingLevel(role: string | null | undefined): 'staff' | 'admin' | 'superadmin' {
@@ -14,6 +15,8 @@ function toReportingLevel(role: string | null | undefined): 'staff' | 'admin' | 
 export async function GET(request: Request) {
   try {
     const context = validateTenantContext(request as any, "read");
+    const _gate1 = await requireModuleGate(request, "projects", "read");
+    if (_gate1) return _gate1;
     const employees = await listEmployees({ tenantSlug: context.tenantSlug, status: "active", limit: 500 });
 
     const recipients = employees.map((e) => ({

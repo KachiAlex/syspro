@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleAccess } from "@/lib/api-auth";
 import { db } from "@/lib/sql-client";
 import { ensureAttendanceVerificationTables } from "@/lib/attendance-verification";
 import { randomUUID } from "crypto";
@@ -8,6 +9,8 @@ import { randomUUID } from "crypto";
 export async function GET(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "read");
+    const _gate = await requireModuleAccess(request, "people", "read");
+    if (!_gate.ok) return _gate.response;
     await ensureAttendanceVerificationTables();
     const res = await db.query(
       `SELECT * FROM attendance_locations WHERE tenant_slug = $1 ORDER BY created_at`,
@@ -23,6 +26,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate = await requireModuleAccess(request, "people", "write");
+    if (!_gate.ok) return _gate.response;
     await ensureAttendanceVerificationTables();
     const body = await request.json();
     const { name, latitude, longitude, radiusM, branchId } = body;

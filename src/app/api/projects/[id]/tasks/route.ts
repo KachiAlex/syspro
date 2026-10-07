@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import {
   getTasksForProject,
   createTask,
@@ -60,6 +61,8 @@ export async function GET(
 ) {
   try {
     const context = validateTenantContext(request as any, "read");
+    const _gate1 = await requireModuleGate(request, "projects", "read");
+    if (_gate1) return _gate1;
     const tasks = await getTasksForProject(params.id, context.tenantSlug);
     const assignmentRows = await getAssignmentsForTasks(tasks.map((t) => t.id), context.tenantSlug);
     const assignmentsByTask = new Map<string, any[]>();
@@ -84,6 +87,8 @@ export async function POST(
 ) {
   try {
     const context = validateTenantContext(request as any, "write");
+    const _gate2 = await requireModuleGate(request, "projects", "write");
+    if (_gate2) return _gate2;
     const body = await request.json();
     const title = typeof body.title === "string" ? body.title.trim() : "";
     if (!title) {

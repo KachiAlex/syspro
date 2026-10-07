@@ -8,6 +8,7 @@ import {
   errorResponse,
   checkRateLimit,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 // Reference presets tenants can apply. Bands apply to MONTHLY gross pay.
 const PRESETS: Record<string, any> = {
@@ -69,6 +70,8 @@ async function getProfile(tenantSlug: string) {
 export async function GET(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "read");
+    const _gate1 = await requireModuleGate(request, "people", "read");
+    if (_gate1) return _gate1;
     if (!checkRateLimit(`statutory-get-${context.tenantSlug}`, 100, 60000)) {
       return errorResponse("Rate limit exceeded", 429);
     }
@@ -90,6 +93,8 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate2 = await requireModuleGate(request, "people", "write");
+    if (_gate2) return _gate2;
     if (!checkRateLimit(`statutory-put-${context.tenantSlug}`, 20, 60000)) {
       return errorResponse("Rate limit exceeded", 429);
     }

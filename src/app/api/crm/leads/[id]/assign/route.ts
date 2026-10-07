@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getLead, updateLead, logActivity } from "@/lib/crm/db";
-import { resolveCrmAuth } from "@/lib/crm/auth";
+import { canAccessCrmRecord, resolveCrmAuth } from "@/lib/crm/auth";
 import { handleDatabaseError } from "@/lib/api-errors";
 
 const assignSchema = z.object({
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
     // Only admin, HOD, or the lead owner can assign
-    if (!auth.isAdmin && !auth.isHOD && existing.createdBy !== auth.employeeId && existing.assignedOfficerId !== auth.employeeId) {
+    if (!(await canAccessCrmRecord(auth, existing))) {
       return NextResponse.json({ error: "You can only assign leads you own or are assigned to" }, { status: 403 });
     }
 

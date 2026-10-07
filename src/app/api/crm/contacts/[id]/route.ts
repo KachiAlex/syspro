@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { updateContact, getContact, deleteContact } from "@/lib/crm/db";
-import { resolveCrmAuth } from "@/lib/crm/auth";
+import { canAccessCrmRecord, resolveCrmAuth } from "@/lib/crm/auth";
 import { handleDatabaseError } from "@/lib/api-errors";
 
 const patchSchema = z.object({
@@ -44,7 +44,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     if (auth.session.tenantSlug !== parsed.data.tenantSlug) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
-    if (!auth.isAdmin && !auth.isHOD && existing.createdBy !== auth.employeeId) {
+    if (!(await canAccessCrmRecord(auth, existing))) {
       return NextResponse.json({ error: "You can only edit your own contacts" }, { status: 403 });
     }
 
@@ -91,7 +91,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     if (auth.session.tenantSlug !== tenantSlug) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
-    if (!auth.isAdmin && !auth.isHOD && existing.createdBy !== auth.employeeId) {
+    if (!(await canAccessCrmRecord(auth, existing))) {
       return NextResponse.json({ error: "You can only delete your own contacts" }, { status: 403 });
     }
 

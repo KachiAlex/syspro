@@ -1,11 +1,14 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { deleteProject } from "@/lib/projects/db";
 
 export async function POST(request: Request) {
   try {
     const context = validateTenantContext(request as any, "delete");
+    const _gate1 = await requireModuleGate(request, "projects", "write");
+    if (_gate1) return _gate1;
     const body = await request.json();
     const { projectIds } = body;
 

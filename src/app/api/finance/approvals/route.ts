@@ -10,6 +10,7 @@ import {
   getPendingApprovalsForUser,
 } from "@/lib/finance/approvals";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 const approvalRuleCreateSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -56,6 +57,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const ctx = validateTenantContext(request, "read");
+    const _gate = await requireModuleAccess(request, "finance", "read");
+    if (!_gate.ok) return _gate.response;
     const url = new URL(request.url);
     const tenantSlug = ctx.tenantSlug;
 
@@ -141,6 +144,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const ctx = validateTenantContext(request, "write");
+    const _gate = await requireModuleAccess(request, "finance", "write");
+    if (!_gate.ok) return _gate.response;
     const body = await request.json();
     
     // Create approval rule

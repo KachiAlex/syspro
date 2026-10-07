@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { db } from "@/lib/sql-client";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 async function ensureTables() {
   await db.query(`
@@ -33,6 +34,8 @@ async function ensureTables() {
 export async function GET(request: Request) {
   try {
     const context = validateTenantContext(request as any, "read");
+    const _gate1 = await requireModuleGate(request, "finance", "read");
+    if (_gate1) return _gate1;
     await ensureTables();
     const tenantSlug = context.tenantSlug;
     const costCenters = (await db.query(
@@ -52,6 +55,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const context = validateTenantContext(request as any, "write");
+    const _gate2 = await requireModuleGate(request, "finance", "write");
+    if (_gate2) return _gate2;
     await ensureTables();
     const tenantSlug = context.tenantSlug;
     const body = await request.json().catch(() => ({}));
@@ -97,6 +102,8 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const context = validateTenantContext(request as any, "write");
+    const _gate3 = await requireModuleGate(request, "finance", "write");
+    if (_gate3) return _gate3;
     await ensureTables();
     const tenantSlug = context.tenantSlug;
     const body = await request.json().catch(() => ({}));
@@ -123,6 +130,8 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const context = validateTenantContext(request as any, "delete");
+    const _gate4 = await requireModuleGate(request, "finance", "write");
+    if (_gate4) return _gate4;
     await ensureTables();
     const tenantSlug = context.tenantSlug;
     const url = new URL(request.url);

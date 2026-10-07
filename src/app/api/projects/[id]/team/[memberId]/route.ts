@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { updateProjectTeamMember, removeProjectTeamMember } from "@/lib/projects/db";
 
 export async function PATCH(
@@ -9,6 +10,8 @@ export async function PATCH(
 ) {
   try {
     const context = validateTenantContext(request as any, "write");
+    const _gate1 = await requireModuleGate(request, "projects", "write");
+    if (_gate1) return _gate1;
     const body = await request.json();
     const { role, email } = body;
 
@@ -30,6 +33,8 @@ export async function DELETE(
 ) {
   try {
     const context = validateTenantContext(request as any, "delete");
+    const _gate2 = await requireModuleGate(request, "projects", "write");
+    if (_gate2) return _gate2;
     const removed = await removeProjectTeamMember(params.memberId, context.tenantSlug);
     if (!removed) {
       return NextResponse.json({ error: 'Team member not found' }, { status: 404 });

@@ -16,6 +16,7 @@ import {
 import { autoTriageTicket } from '@/lib/itsupport/automation';
 import { emitAutomationEvent } from "@/lib/automation/emit";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 function buildFilters(searchParams: URLSearchParams): TicketFilters {
   const filters: TicketFilters = {};
@@ -38,6 +39,8 @@ function buildFilters(searchParams: URLSearchParams): TicketFilters {
 
 export async function GET(request: NextRequest) {
   const context = validateTenantContext(request, "read");
+  const _gate1 = await requireModuleGate(request, "itsupport", "read");
+  if (_gate1) return _gate1;
   const { searchParams } = new URL(request.url);
   const tenantSlug = context.tenantSlug;
   const tickets = await listTickets(tenantSlug, buildFilters(searchParams));
@@ -59,6 +62,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const context = validateTenantContext(request, "write");
+  const _gate2 = await requireModuleGate(request, "itsupport", "write");
+  if (_gate2) return _gate2;
   const body = (await request.json()) as Partial<CreateTicketInput>;
   const tenantSlug = context.tenantSlug;
 

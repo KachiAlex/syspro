@@ -7,6 +7,7 @@ import {
   errorResponse,
   handleTenantAdminError,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 function mapComponent(r: any) {
   return {
@@ -31,6 +32,8 @@ function mapComponent(r: any) {
 export async function PATCH(request: NextRequest, context: any) {
   try {
     const ctx = validateTenantContext(request, "write");
+    const _gate1 = await requireModuleGate(request, "people", "write");
+    if (_gate1) return _gate1;
     const { id } = await context.params;
     const body = await request.json().catch(() => ({}));
 
@@ -70,6 +73,8 @@ export async function PATCH(request: NextRequest, context: any) {
 export async function DELETE(request: NextRequest, context: any) {
   try {
     const ctx = validateTenantContext(request, "write");
+    const _gate2 = await requireModuleGate(request, "people", "write");
+    if (_gate2) return _gate2;
     const { id } = await context.params;
 
     await ensureHrTables(sql);

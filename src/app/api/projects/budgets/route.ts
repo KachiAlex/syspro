@@ -1,10 +1,13 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { getAllProjectsForTenant, updateProject } from "@/lib/projects/db";
 
 export async function GET(request: NextRequest) {
   const context = validateTenantContext(request, "read");
+  const _gate1 = await requireModuleGate(request, "projects", "read");
+  if (_gate1) return _gate1;
   const projects = await getAllProjectsForTenant(context.tenantSlug, 1000);
   const budgets = projects.map((p: any) => ({
     id: `budget-${p.id}`,
@@ -19,6 +22,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const context = validateTenantContext(request, "write");
+  const _gate2 = await requireModuleGate(request, "projects", "write");
+  if (_gate2) return _gate2;
   const body = await request.json();
   const { projectId, totalBudget } = body;
 

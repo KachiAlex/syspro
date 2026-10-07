@@ -12,6 +12,7 @@ import {
   updateChartOfAccount,
 } from "@/lib/accounting/db";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 /**
  * GET /api/accounting/accounts
@@ -20,6 +21,8 @@ import { validateTenantContext } from "@/lib/tenant-admin/utils";
 export async function GET(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "read");
+    const _gate = await requireModuleAccess(request, "finance", "read");
+    if (!_gate.ok) return _gate.response;
     const url = new URL(request.url);
     const accountType = url.searchParams.get("accountType");
     const branchId = url.searchParams.get("branchId");
@@ -49,6 +52,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate = await requireModuleAccess(request, "finance", "write");
+    if (!_gate.ok) return _gate.response;
     const body = await request.json().catch(() => null);
     if (!body || typeof body !== "object") {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });

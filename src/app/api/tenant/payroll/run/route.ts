@@ -7,6 +7,7 @@ import {
   errorResponse,
   checkRateLimit,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 // Default payroll configuration: statutory 8% employee pension, no tax modelled.
 // Rates are PERCENT (8 = 8%) to match checkCompliance conventions.
@@ -43,6 +44,8 @@ function overlapDays(aStart: string, aEnd: string, bStart: string, bEnd: string)
 export async function POST(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate1 = await requireModuleGate(request, "people", "write");
+    if (_gate1) return _gate1;
 
     if (!checkRateLimit(`payroll-run-${context.tenantSlug}`, 20, 60000)) {
       return errorResponse("Rate limit exceeded", 429);

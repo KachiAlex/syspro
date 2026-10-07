@@ -1,11 +1,14 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { createTaskAssignment, getTaskById } from "@/lib/projects/db";
 import { suggestAssignments } from "@/lib/project-fit";
 
 export async function POST(request: NextRequest) {
   const context = validateTenantContext(request, "write");
+  const _gate1 = await requireModuleGate(request, "projects", "write");
+  if (_gate1) return _gate1;
   const body = await request.json();
   const {
     taskId,

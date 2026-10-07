@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { getAllProjectsForTenant, createProject, toProjectResponse } from "@/lib/projects/db";
 
 const VALID_STATUSES = new Set(["PLANNING", "INITIATED", "IN_PROGRESS", "ON_HOLD", "COMPLETED", "ARCHIVED", "CANCELLED"]);
@@ -48,6 +49,8 @@ function parseNumber(value: any): number | undefined {
 export async function GET(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "read");
+    const _gate1 = await requireModuleGate(request, "projects", "read");
+    if (_gate1) return _gate1;
     const url = new URL(request.url);
     const statusFilter = url.searchParams.get("status");
     const search = (url.searchParams.get("search") ?? "").toLowerCase();
@@ -82,6 +85,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate2 = await requireModuleGate(request, "projects", "write");
+    if (_gate2) return _gate2;
     const body = await request.json();
 
     const name = body.name?.trim();

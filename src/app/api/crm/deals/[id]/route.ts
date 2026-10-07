@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { CRM_PIPELINE_STAGES } from "@/lib/crm/types";
 import { updateDeal, deleteDeal, updateLead, logActivity, getDeal, getLead, insertCustomer, updateCustomer, recordConversion } from "@/lib/crm/db";
-import { resolveCrmAuth } from "@/lib/crm/auth";
+import { canAccessCrmRecord, resolveCrmAuth } from "@/lib/crm/auth";
 import { insertFinanceInvoice } from "@/lib/finance/db";
 import { writeFinanceEvent } from "@/lib/finance/events";
 import { emitAutomationEvent } from "@/lib/automation/emit";
@@ -45,7 +45,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     if (auth.session.tenantSlug !== existing.tenantSlug) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
-    if (!auth.isAdmin && !auth.isHOD && existing.createdBy !== auth.employeeId) {
+    if (!(await canAccessCrmRecord(auth, existing))) {
       return NextResponse.json({ error: "You can only edit your own deals" }, { status: 403 });
     }
 
@@ -228,7 +228,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     if (auth.session.tenantSlug !== existing.tenantSlug) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
-    if (!auth.isAdmin && !auth.isHOD && existing.createdBy !== auth.employeeId) {
+    if (!(await canAccessCrmRecord(auth, existing))) {
       return NextResponse.json({ error: "You can only delete your own deals" }, { status: 403 });
     }
 

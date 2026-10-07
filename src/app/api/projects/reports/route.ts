@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { getAllProjectsForTenant, getProjectReports } from "@/lib/projects/db";
 
 function toClientReport(row: any) {
@@ -35,6 +36,8 @@ function computeMetrics(projects: any[]) {
 export async function GET(request: Request) {
   try {
     const context = validateTenantContext(request as any, "read");
+    const _gate1 = await requireModuleGate(request, "projects", "read");
+    if (_gate1) return _gate1;
     const { searchParams } = new URL(request.url);
     const reportType = searchParams.get('type') || 'summary';
     const projects = await getAllProjectsForTenant(context.tenantSlug, 1000);

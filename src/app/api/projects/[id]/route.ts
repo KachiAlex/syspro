@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { getProject, updateProject, deleteProject, toProjectResponse } from "@/lib/projects/db";
 
 const VALID_STATUSES = new Set(["PLANNING", "INITIATED", "IN_PROGRESS", "ON_HOLD", "COMPLETED", "ARCHIVED", "CANCELLED"]);
@@ -51,6 +52,8 @@ export async function GET(
 ) {
   try {
     const context = validateTenantContext(request, "read");
+    const _gate1 = await requireModuleGate(request, "projects", "read");
+    if (_gate1) return _gate1;
     if (!UUID_RE.test(params.id)) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
@@ -72,6 +75,8 @@ export async function PATCH(
 ) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate2 = await requireModuleGate(request, "projects", "write");
+    if (_gate2) return _gate2;
     if (!UUID_RE.test(params.id)) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
@@ -117,6 +122,8 @@ export async function DELETE(
 ) {
   try {
     const context = validateTenantContext(request, "delete");
+    const _gate3 = await requireModuleGate(request, "projects", "write");
+    if (_gate3) return _gate3;
     if (!UUID_RE.test(params.id)) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }

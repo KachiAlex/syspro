@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import {
   getTaskById,
   createTaskAssignment,
@@ -34,6 +35,8 @@ export async function GET(
 ) {
   try {
     const context = validateTenantContext(request as any, "read");
+    const _gate1 = await requireModuleGate(request, "projects", "read");
+    if (_gate1) return _gate1;
     const rows = await getAssignmentsForTask(params.taskId, context.tenantSlug);
     return NextResponse.json({ assignments: rows.map(toClientAssignment) });
   } catch (error) {
@@ -52,6 +55,8 @@ export async function POST(
 ) {
   try {
     const context = validateTenantContext(request as any, "write");
+    const _gate2 = await requireModuleGate(request, "projects", "write");
+    if (_gate2) return _gate2;
     const body = await request.json();
     const employeeIds: string[] = Array.isArray(body.employeeIds)
       ? body.employeeIds.filter((v: any) => typeof v === "string" && v.length > 0)
@@ -139,6 +144,8 @@ export async function DELETE(
 ) {
   try {
     const context = validateTenantContext(request as any, "write");
+    const _gate3 = await requireModuleGate(request, "projects", "write");
+    if (_gate3) return _gate3;
     const { searchParams } = new URL(request.url);
     const assignmentId = searchParams.get("assignmentId");
 

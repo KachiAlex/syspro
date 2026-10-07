@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { db } from "@/lib/sql-client";
 
 interface NormalizedLine {
@@ -60,6 +61,8 @@ const TOLERANCE = 0.01;
 export async function GET(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "read");
+    const _gate1 = await requireModuleGate(request, "finance", "read");
+    if (_gate1) return _gate1;
     const tenantSlug = context.tenantSlug;
     const poId = new URL(request.url).searchParams.get("poId");
 

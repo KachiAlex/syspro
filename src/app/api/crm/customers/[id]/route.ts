@@ -38,6 +38,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   if (auth.session.tenantSlug !== parsed.data.tenantSlug) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
+  // Customer records are shared master data — staff (scope mine) must not
+  // modify them; restrict to admins and HODs.
+  if (!auth.isAdmin && !auth.isHOD) {
+    return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+  }
 
   try {
     const customer = await updateCustomer(id, {
@@ -69,9 +74,12 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
   if (auth.session.tenantSlug !== tenantSlug) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
+  if (!auth.isAdmin && !auth.isHOD) {
+    return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+  }
 
   try {
-    await db.query(`delete from crm_customers where id = $1`, [id]);
+    await db.query(`delete from crm_customers where id = $1 and tenant_slug = $2`, [id, tenantSlug]);
     return NextResponse.json({ success: true });
   } catch (error) {
     return handleDatabaseError(error, "Customer deletion");

@@ -8,6 +8,7 @@ import {
   errorResponse,
   checkRateLimit,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 function statusLabel(s: string | null | undefined): string {
   const v = (s || "present").toLowerCase();
@@ -31,6 +32,8 @@ function computeDuration(checkIn: string | null, checkOut: string | null): strin
 export async function GET(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "read");
+    const _gate1 = await requireModuleGate(request, "people", "read");
+    if (_gate1) return _gate1;
 
     if (!checkRateLimit(`attendance-get-${context.tenantSlug}`, 100, 60000)) {
       return errorResponse("Rate limit exceeded", 429);
@@ -85,6 +88,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate2 = await requireModuleGate(request, "people", "write");
+    if (_gate2) return _gate2;
 
     if (!checkRateLimit(`attendance-post-${context.tenantSlug}`, 60, 60000)) {
       return errorResponse("Rate limit exceeded", 429);

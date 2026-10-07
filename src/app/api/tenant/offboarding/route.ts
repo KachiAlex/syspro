@@ -8,6 +8,7 @@ import {
   errorResponse,
   checkRateLimit,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 const DEFAULT_CHECKLIST = [
   { key: "exit_interview", label: "Exit interview conducted" },
@@ -39,6 +40,8 @@ function normalize(row: any) {
 export async function GET(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "read");
+    const _gate1 = await requireModuleGate(request, "people", "read");
+    if (_gate1) return _gate1;
     if (!checkRateLimit(`offb-get-${context.tenantSlug}`, 100, 60000)) {
       return errorResponse("Rate limit exceeded", 429);
     }
@@ -68,6 +71,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate2 = await requireModuleGate(request, "people", "write");
+    if (_gate2) return _gate2;
     if (!checkRateLimit(`offb-post-${context.tenantSlug}`, 20, 60000)) {
       return errorResponse("Rate limit exceeded", 429);
     }

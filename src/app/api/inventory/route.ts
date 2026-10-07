@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { db } from "@/lib/sql-client";
 import { getPagination } from "@/lib/pagination";
 
@@ -50,6 +51,8 @@ export async function GET(request: NextRequest) {
   try {
     await ensureInventoryTable();
     const context = validateTenantContext(request, "read");
+    const _gate1 = await requireModuleGate(request, "admin", "read");
+    if (_gate1) return _gate1;
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
     const { limit, offset } = getPagination(request);
@@ -84,6 +87,8 @@ export async function POST(request: NextRequest) {
   try {
     await ensureInventoryTable();
     const context = validateTenantContext(request, "write");
+    const _gate2 = await requireModuleGate(request, "admin", "write");
+    if (_gate2) return _gate2;
     const body = await request.json();
     const {
       name,
@@ -131,6 +136,8 @@ export async function PATCH(request: NextRequest) {
   try {
     await ensureInventoryTable();
     const context = validateTenantContext(request, "write");
+    const _gate3 = await requireModuleGate(request, "admin", "write");
+    if (_gate3) return _gate3;
     const body = await request.json();
     const { id } = body;
     if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });

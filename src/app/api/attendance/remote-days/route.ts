@@ -1,12 +1,15 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleAccess } from "@/lib/api-auth";
 import { db } from "@/lib/sql-client";
 import { ensureAttendanceVerificationTables } from "@/lib/attendance-verification";
 
 export async function GET(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "read");
+    const _gate = await requireModuleAccess(request, "people", "read");
+    if (!_gate.ok) return _gate.response;
     await ensureAttendanceVerificationTables();
     const status = new URL(request.url).searchParams.get("status");
 

@@ -14,6 +14,7 @@ import {
   asResourceId,
   asUserId,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { UserId } from "@/lib/tenant-admin/types";
 import { AuditService } from "@/lib/tenant-admin/service";
 
@@ -24,6 +25,8 @@ import { AuditService } from "@/lib/tenant-admin/service";
 export async function GET(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "read");
+    const _gate1 = await requireModuleGate(request, "admin", "read");
+    if (_gate1) return _gate1;
 
     if (!checkRateLimit(`acl-get-${context.tenantSlug}`, 100, 60000)) {
       return errorResponse("Rate limit exceeded", 429);
@@ -63,6 +66,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate2 = await requireModuleGate(request, "admin", "write");
+    if (_gate2) return _gate2;
     const action = new URL(request.url).searchParams.get("action") || "grant-temporary";
 
     if (action === "grant-temporary") {
@@ -115,6 +120,8 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate3 = await requireModuleGate(request, "admin", "write");
+    if (_gate3) return _gate3;
     const id = new URL(request.url).searchParams.get("id");
     const action = new URL(request.url).searchParams.get("action");
 
@@ -189,6 +196,8 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "delete");
+    const _gate4 = await requireModuleGate(request, "admin", "write");
+    if (_gate4) return _gate4;
     const id = new URL(request.url).searchParams.get("id");
 
     if (!id) {

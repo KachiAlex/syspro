@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { db } from "@/lib/sql-client";
 import { randomUUID } from "crypto";
 
@@ -40,6 +41,8 @@ function mapVendorRowToSupplier(row: any) {
 export async function GET(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "read");
+    const _gate1 = await requireModuleGate(request, "finance", "read");
+    if (_gate1) return _gate1;
     const rows = (await db.query(
       `SELECT * FROM vendors WHERE tenant_slug = $1 ORDER BY created_at DESC`,
       [context.tenantSlug]
@@ -55,6 +58,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate2 = await requireModuleGate(request, "finance", "write");
+    if (_gate2) return _gate2;
     const body = await request.json();
     const { name, contact, email, phone, address, category, paymentTerms, rating } = body;
     if (!name) {
@@ -92,6 +97,8 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate3 = await requireModuleGate(request, "finance", "write");
+    if (_gate3) return _gate3;
     const body = await request.json();
     const { id, name, contact, email, phone, address, category, paymentTerms, rating, status } = body;
     if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });

@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { getProject, updateProject, toProjectResponse } from "@/lib/projects/db";
 
 async function archive(
@@ -9,6 +10,8 @@ async function archive(
 ) {
   try {
     const context = validateTenantContext(request as any, "write");
+    const _gate1 = await requireModuleGate(request, "projects", "write");
+    if (_gate1) return _gate1;
     const updated = await updateProject(params.id, context.tenantSlug, { status: "ARCHIVED" } as any);
     if (!updated) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });

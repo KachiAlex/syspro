@@ -8,6 +8,7 @@ import {
   checkRateLimit,
   handleTenantAdminError,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 function normalize(row: any) {
   return {
@@ -39,6 +40,8 @@ function normalize(row: any) {
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate1 = await requireModuleGate(request, "people", "write");
+    if (_gate1) return _gate1;
     if (!checkRateLimit(`offb-patch-${context.tenantSlug}`, 30, 60000)) {
       return errorResponse("Rate limit exceeded", 429);
     }

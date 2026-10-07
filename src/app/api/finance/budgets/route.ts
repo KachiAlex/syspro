@@ -8,10 +8,13 @@ import {
 } from "@/lib/finance/budgets-db";
 import { budgetCreateSchema } from "@/lib/finance/budgets";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleAccess } from "@/lib/api-auth";
 
 export async function GET(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "read");
+    const _gate = await requireModuleAccess(request, "finance", "read");
+    if (!_gate.ok) return _gate.response;
     const tenantSlug = context.tenantSlug;
     const status = request.nextUrl.searchParams.get("status");
     const budgetType = request.nextUrl.searchParams.get("budgetType");
@@ -48,6 +51,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate = await requireModuleAccess(request, "finance", "write");
+    if (!_gate.ok) return _gate.response;
     const body = await request.json();
 
     // Validate input

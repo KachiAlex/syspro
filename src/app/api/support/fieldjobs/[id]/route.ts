@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/sql-client";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 function mapJob(row: any) {
   return {
@@ -26,6 +27,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const context = validateTenantContext(request, "write");
+  const _gate1 = await requireModuleGate(request, "itsupport", "write");
+  if (_gate1) return _gate1;
   const { id } = await params;
   const body = await request.json();
 

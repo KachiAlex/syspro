@@ -2,10 +2,13 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import { createTicket, getTenantSupportData } from '@/lib/support-db';
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 export async function POST(request: Request) {
   try {
     const context = validateTenantContext(request as any, "write");
+    const _gate1 = await requireModuleGate(request, "itsupport", "write");
+    if (_gate1) return _gate1;
     const body = await request.json().catch(() => ({}));
     const tenantSlug = context.tenantSlug;
 

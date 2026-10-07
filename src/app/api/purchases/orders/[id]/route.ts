@@ -1,11 +1,14 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { db } from "@/lib/sql-client";
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const context = validateTenantContext(request, "delete");
+    const _gate1 = await requireModuleGate(request, "finance", "write");
+    if (_gate1) return _gate1;
     const result = await db.query(
       `DELETE FROM purchase_orders WHERE id = $1 AND tenant_slug = $2 RETURNING id`,
       [params.id, context.tenantSlug]

@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleAccess } from "@/lib/api-auth";
 import { db } from "@/lib/sql-client";
 import { ensureAttendanceVerificationTables, issueQrToken } from "@/lib/attendance-verification";
 import QRCode from "qrcode";
@@ -8,6 +9,8 @@ import QRCode from "qrcode";
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const context = validateTenantContext(request, "read");
+    const _gate = await requireModuleAccess(request, "people", "read");
+    if (!_gate.ok) return _gate.response;
     await ensureAttendanceVerificationTables();
 
     const loc = await db.query(

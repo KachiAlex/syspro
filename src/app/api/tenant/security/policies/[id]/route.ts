@@ -6,6 +6,7 @@ import {
   errorResponse,
   handleTenantAdminError,
 } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureTenantTable } from "@/lib/tenant/tenant-table";
 import { setupTenantAdminSchema } from "@/lib/tenant-admin/schema";
@@ -31,6 +32,8 @@ function mapPolicy(row: any) {
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
     const context = validateTenantContext(request, "write");
+    const _gate1 = await requireModuleGate(request, "admin", "write");
+    if (_gate1) return _gate1;
     const { id } = await params;
 
     const body = await request.json().catch(() => ({}));

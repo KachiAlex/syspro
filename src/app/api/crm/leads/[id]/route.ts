@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { CRM_LEAD_STAGES, CRM_LEAD_SOURCES } from "@/lib/crm/types";
 import { updateLead, getLead, deleteLead } from "@/lib/crm/db";
-import { resolveCrmAuth, requireCrmAuth } from "@/lib/crm/auth";
+import { canAccessCrmRecord, getTeamMemberIds, resolveCrmAuth, requireCrmAuth } from "@/lib/crm/auth";
 import { handleDatabaseError } from "@/lib/api-errors";
 
 const patchSchema = z.object({
@@ -50,7 +50,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     if (auth.session.tenantSlug !== parsed.data.tenantSlug) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
-    if (!auth.isAdmin && !auth.isHOD && existing.createdBy !== auth.employeeId) {
+    if (!(await canAccessCrmRecord(auth, existing))) {
       return NextResponse.json({ error: "You can only edit your own leads" }, { status: 403 });
     }
 
@@ -84,6 +84,23 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
     const guard = await requireCrmAuth(request, (lead as any).tenantSlug);
     if (!guard.ok) return guard.response;
+
+    // Record scope: the list endpoints clamp to assigned/created records —
+    // direct-ID reads must not bypass that. mine → own only; team → records
+    // owned by a department member.
+    const auth = guard.auth;
+    const leadAny = lead as any;
+    if (auth.scope === "mine") {
+      if (leadAny.createdBy !== auth.employeeId && leadAny.assignedOfficerId !== auth.employeeId) {
+        return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+      }
+    } else if (auth.scope === "team") {
+      const teamIds = await getTeamMemberIds(auth.session.tenantSlug, auth.departmentId);
+      if (!teamIds.includes(auth.employeeId)) teamIds.push(auth.employeeId);
+      if (!teamIds.includes(leadAny.createdBy) && !teamIds.includes(leadAny.assignedOfficerId)) {
+        return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+      }
+    }
     return NextResponse.json({ lead });
   } catch (error) {
     return handleDatabaseError(error, "Get lead");
@@ -116,7 +133,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     if (auth.session.tenantSlug !== tenantSlug) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
-    if (!auth.isAdmin && !auth.isHOD && existing.createdBy !== auth.employeeId) {
+    if (!(await canAccessCrmRecord(auth, existing))) {
       return NextResponse.json({ error: "You can only delete your own leads" }, { status: 403 });
     }
 

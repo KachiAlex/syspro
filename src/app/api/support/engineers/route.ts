@@ -2,9 +2,12 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { listEngineers } from "@/lib/support-db";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleGate } from "@/lib/api-auth";
 
 export async function GET(request: NextRequest) {
   const context = validateTenantContext(request, "read");
+  const _gate1 = await requireModuleGate(request, "itsupport", "read");
+  if (_gate1) return _gate1;
   const engineers = await listEngineers(context.tenantSlug);
 
   // Shape consumed by /itsupport/manager + /itsupport/agent dashboards
