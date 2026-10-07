@@ -4,29 +4,39 @@ import { randomUUID } from "crypto";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { getAllProjectsForTenant, createProject, toProjectResponse } from "@/lib/projects/db";
 
+const VALID_STATUSES = new Set(["PLANNING", "INITIATED", "IN_PROGRESS", "ON_HOLD", "COMPLETED", "ARCHIVED", "CANCELLED"]);
+const VALID_PRIORITIES = new Set(["LOW", "MEDIUM", "HIGH", "CRITICAL"]);
+
 function parseStatus(input?: string): string {
-  const s = (input ?? "").toLowerCase().replace(/\s+/g, "_");
+  if (input === undefined || input === null || input === "") return "PLANNING";
+  const s = input.toLowerCase().replace(/[\s-]+/g, "_");
   const map: Record<string, string> = {
     planning: "PLANNING",
     initiated: "INITIATED",
     in_progress: "IN_PROGRESS",
+    inprogress: "IN_PROGRESS",
     on_hold: "ON_HOLD",
+    onhold: "ON_HOLD",
     completed: "COMPLETED",
+    complete: "COMPLETED",
     archived: "ARCHIVED",
     cancelled: "CANCELLED",
+    canceled: "CANCELLED",
   };
-  return map[s] || s.toUpperCase() || "PLANNING";
+  const normalized = map[s] ?? s.toUpperCase();
+  if (!VALID_STATUSES.has(normalized)) {
+    throw new Error(`Invalid status "${input}"`);
+  }
+  return normalized;
 }
 
 function parsePriority(input?: string): string {
-  const p = (input ?? "").toLowerCase();
-  const map: Record<string, string> = {
-    low: "LOW",
-    medium: "MEDIUM",
-    high: "HIGH",
-    critical: "CRITICAL",
-  };
-  return map[p] || p.toUpperCase() || "MEDIUM";
+  if (input === undefined || input === null || input === "") return "MEDIUM";
+  const normalized = input.toUpperCase();
+  if (!VALID_PRIORITIES.has(normalized)) {
+    throw new Error(`Invalid priority "${input}"`);
+  }
+  return normalized;
 }
 
 function parseNumber(value: any): number | undefined {
@@ -80,12 +90,23 @@ export async function POST(request: NextRequest) {
     }
 
     const code = body.code?.trim() || `PROJ-${randomUUID().slice(0, 8).toUpperCase()}`;
+    let status: string;
+    let priority: string;
+    try {
+      status = parseStatus(body.status);
+      priority = parsePriority(body.priority);
+    } catch (e) {
+      return NextResponse.json(
+        { error: e instanceof Error ? e.message : "Invalid value" },
+        { status: 400 }
+      );
+    }
     const input = {
       code,
       name,
       description: body.description,
-      status: parseStatus(body.status),
-      priority: parsePriority(body.priority),
+      status,
+      priority,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
       plannedEndDate: body.dueDate || body.endDate || body.plannedEndDate ? new Date(body.dueDate || body.endDate || body.plannedEndDate) : undefined,
       totalBudgetAmount: parseNumber(body.budgetApproved ?? body.budget ?? body.totalBudgetAmount),

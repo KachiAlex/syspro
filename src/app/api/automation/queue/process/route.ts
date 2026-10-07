@@ -1,14 +1,17 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { extractAuthContext, requirePermission, validateTenant } from "@/lib/auth-helper";
+import { requireModuleAccess } from "@/lib/api-auth";
 import { fetchPendingActions, markActionStatus } from "@/lib/automation/db";
 import { handleAutomationAction } from "@/lib/automation/connectors";
 import { fetchQueuedReportJobs, updateReportJobStatus } from "@/lib/reporting/db";
 
 export async function POST(request: NextRequest) {
+  const scope = await requireModuleAccess(request, "automation", "write");
+  if (!scope.ok) return scope.response;
+
   const auth = extractAuthContext(request);
   const tenantSlug = validateTenant(auth.tenantSlug);
-  requirePermission(auth.userRole, "write");
 
   const limitParam = request.nextUrl.searchParams.get("limit");
   const limit = limitParam ? Math.min(Math.max(parseInt(limitParam, 10) || 1, 1), 50) : 25;

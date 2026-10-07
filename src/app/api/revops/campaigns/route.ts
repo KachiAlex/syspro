@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
             .map((value) => value.trim())
             .filter(Boolean)
         : undefined,
-      createdBy: body.createdBy ? String(body.createdBy) : "system",
+      createdBy: context.userId && context.userId !== "unknown" ? context.userId : "system",
     });
 
     return NextResponse.json({ campaign }, { status: 201 });

@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from 'next/server';
 import { extractAuthContext, validateTenant, requirePermission } from '@/lib/auth-helper';
+import { requireModuleAccess } from '@/lib/api-auth';
 import { executeRulesForEvent } from '@/lib/automation/engine';
 
 export async function GET() {
@@ -8,10 +9,11 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const scope = await requireModuleAccess(request, 'automation', 'write');
+  if (!scope.ok) return scope.response;
   try {
     const auth = extractAuthContext(request);
     const tenantSlug = validateTenant(auth.tenantSlug);
-    requirePermission(auth.userRole, 'write');
 
     let body: any;
     try {

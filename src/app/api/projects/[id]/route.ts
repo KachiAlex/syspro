@@ -3,29 +3,38 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { getProject, updateProject, deleteProject, toProjectResponse } from "@/lib/projects/db";
 
-function parseStatus(input?: string): string {
-  const s = (input ?? "").toLowerCase().replace(/\s+/g, "_");
+const VALID_STATUSES = new Set(["PLANNING", "INITIATED", "IN_PROGRESS", "ON_HOLD", "COMPLETED", "ARCHIVED", "CANCELLED"]);
+const VALID_PRIORITIES = new Set(["LOW", "MEDIUM", "HIGH", "CRITICAL"]);
+
+// Throws on unrecognized input so arbitrary status strings can't be stored.
+function parseStatus(input: string): string {
+  const s = input.toLowerCase().replace(/[\s-]+/g, "_");
   const map: Record<string, string> = {
     planning: "PLANNING",
     initiated: "INITIATED",
     in_progress: "IN_PROGRESS",
+    inprogress: "IN_PROGRESS",
     on_hold: "ON_HOLD",
+    onhold: "ON_HOLD",
     completed: "COMPLETED",
+    complete: "COMPLETED",
     archived: "ARCHIVED",
     cancelled: "CANCELLED",
+    canceled: "CANCELLED",
   };
-  return map[s] || s.toUpperCase() || "PLANNING";
+  const normalized = map[s] ?? s.toUpperCase();
+  if (!VALID_STATUSES.has(normalized)) {
+    throw new Error(`Invalid status "${input}"`);
+  }
+  return normalized;
 }
 
-function parsePriority(input?: string): string {
-  const p = (input ?? "").toLowerCase();
-  const map: Record<string, string> = {
-    low: "LOW",
-    medium: "MEDIUM",
-    high: "HIGH",
-    critical: "CRITICAL",
-  };
-  return map[p] || p.toUpperCase() || "MEDIUM";
+function parsePriority(input: string): string {
+  const normalized = input.toUpperCase();
+  if (!VALID_PRIORITIES.has(normalized)) {
+    throw new Error(`Invalid priority "${input}"`);
+  }
+  return normalized;
 }
 
 function parseNumber(value: any): number | undefined {
@@ -71,8 +80,15 @@ export async function PATCH(
     const input: any = {};
     if (body.name !== undefined) input.name = body.name?.trim();
     if (body.description !== undefined) input.description = body.description;
-    if (body.status !== undefined) input.status = parseStatus(body.status);
-    if (body.priority !== undefined) input.priority = parsePriority(body.priority);
+    try {
+      if (body.status !== undefined) input.status = parseStatus(body.status);
+      if (body.priority !== undefined) input.priority = parsePriority(body.priority);
+    } catch (e) {
+      return NextResponse.json(
+        { error: e instanceof Error ? e.message : "Invalid value" },
+        { status: 400 }
+      );
+    }
     if (body.startDate !== undefined) input.startDate = new Date(body.startDate);
     if (body.dueDate !== undefined || body.endDate !== undefined || body.plannedEndDate !== undefined) {
       const raw = body.dueDate || body.endDate || body.plannedEndDate;

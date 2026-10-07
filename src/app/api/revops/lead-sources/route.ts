@@ -38,7 +38,6 @@ export async function POST(request: NextRequest) {
     "region",
     "subsidiary",
     "costCenter",
-    "createdBy",
   ];
   const missing = requiredFields.find((field) => !body[field]);
   if (missing) {
@@ -55,7 +54,7 @@ export async function POST(request: NextRequest) {
       subsidiary: String(body.subsidiary),
       costCenter: String(body.costCenter),
       campaignId: body.campaignId ? String(body.campaignId) : undefined,
-      createdBy: String(body.createdBy),
+      createdBy: context.userId && context.userId !== "unknown" ? context.userId : String(body.createdBy ?? "system"),
     });
 
     return NextResponse.json({ leadSource }, { status: 201 });

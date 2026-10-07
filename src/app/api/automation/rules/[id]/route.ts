@@ -1,15 +1,17 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { extractAuthContext, requirePermission, validateTenant } from "@/lib/auth-helper";
+import { requireModuleAccess } from "@/lib/api-auth";
 import { UpdateRuleSchema, safeParse } from "@/lib/validation";
 import { deleteAutomationRule, getAutomationRule, updateAutomationRule } from "@/lib/automation/db";
 
 export async function PATCH(request: NextRequest, context: any) {
+  const scope = await requireModuleAccess(request, "automation", "write");
+  if (!scope.ok) return scope.response;
   const { params } = context;
   try {
     const auth = extractAuthContext(request);
     const tenantSlug = validateTenant(auth.tenantSlug);
-    requirePermission(auth.userRole, "write");
     const body = await request.json().catch(() => ({}));
     const validation = safeParse(UpdateRuleSchema, body);
     if (!validation.success) {
@@ -27,11 +29,12 @@ export async function PATCH(request: NextRequest, context: any) {
 }
 
 export async function DELETE(request: NextRequest, context: any) {
+  const scope = await requireModuleAccess(request, "automation", "write");
+  if (!scope.ok) return scope.response;
   const { params } = context;
   try {
     const auth = extractAuthContext(request);
     const tenantSlug = validateTenant(auth.tenantSlug);
-    requirePermission(auth.userRole, "delete");
     const existing = await getAutomationRule(params.id, tenantSlug);
     if (!existing) return NextResponse.json({ error: "Rule not found" }, { status: 404 });
     await deleteAutomationRule(params.id, tenantSlug);

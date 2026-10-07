@@ -31,7 +31,6 @@ export async function POST(request: NextRequest) {
     "storageUrl",
     "owner",
     "subsidiary",
-    "createdBy",
   ];
 
   const missing = requiredFields.find((field) => !body[field]);
@@ -52,7 +51,7 @@ export async function POST(request: NextRequest) {
       owner: body.owner!,
       subsidiary: body.subsidiary!,
       region: body.region,
-      createdBy: body.createdBy!,
+      createdBy: context.userId && context.userId !== "unknown" ? context.userId : body.createdBy!,
     });
     return NextResponse.json({ asset }, { status: 201 });
   } catch (error) {
