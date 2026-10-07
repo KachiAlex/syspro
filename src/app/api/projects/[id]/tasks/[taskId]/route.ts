@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { updateTask, deleteTask } from "@/lib/projects/db";
+import { emitAutomationEvent } from "@/lib/automation/emit";
 
 const statusToDb: Record<string, string> = {
   todo: "NOT_STARTED",
@@ -59,6 +60,14 @@ export async function PATCH(
     const task = await updateTask(params.taskId, context.tenantSlug, updates);
     if (!task) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+    }
+    if (updates.status) {
+      emitAutomationEvent(context.tenantSlug, "projects.task-status", {
+        taskId: params.taskId,
+        projectId: params.id,
+        toStatus: updates.status,
+        title: (task as any).title,
+      }, context.userId);
     }
     return NextResponse.json({ task, message: 'Task updated successfully' });
   } catch (error) {

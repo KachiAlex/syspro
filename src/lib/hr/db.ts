@@ -6,6 +6,7 @@ import { randomUUID } from "crypto";
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
 import { ensureAdminTables } from "@/lib/admin/db";
 import { ensureAttendanceVerificationTables } from "@/lib/attendance-verification";
+import { emitAutomationEvent } from "@/lib/automation/emit";
 import type {
   EmployeeRecord,
   DepartmentRecord,
@@ -1506,6 +1507,14 @@ export async function insertAttendance(row: {
       reason: overrideReason,
     },
   });
+  emitAutomationEvent(row.tenantSlug, "attendance.check-in", {
+    employeeId: row.employeeId,
+    employeeName: empName,
+    status: effectiveStatus,
+    workMode: row.workMode ?? null,
+    checkInTime: row.checkIn ?? null,
+    source: "manual",
+  }, row.actorId ?? undefined);
   return normalizeAttendanceRow((inserted as any[])[0]);
 }
 

@@ -6,6 +6,7 @@ import { updateDeal, deleteDeal, updateLead, logActivity, getDeal, getLead, inse
 import { resolveCrmAuth } from "@/lib/crm/auth";
 import { insertFinanceInvoice } from "@/lib/finance/db";
 import { writeFinanceEvent } from "@/lib/finance/events";
+import { emitAutomationEvent } from "@/lib/automation/emit";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { handleDatabaseError } from "@/lib/api-errors";
 
@@ -59,6 +60,18 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     }, existing.tenantSlug);
     if (!deal) {
       return NextResponse.json({ error: "Deal not found" }, { status: 404 });
+    }
+
+    // Automation trigger: deal stage transitions feed crm.deal-stage rules
+    if (parsed.data.stage && parsed.data.stage !== existing.stage) {
+      emitAutomationEvent(existing.tenantSlug, "crm.deal-stage", {
+        dealId: deal.id,
+        dealName: deal.name,
+        fromStage: existing.stage,
+        toStage: parsed.data.stage,
+        value: deal.value,
+        currency: deal.currency,
+      }, auth.employeeId);
     }
 
     // Chain 1: CRM → Finance auto-invoice on deal won

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { decodeEmployeeToken, resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables, isLateForShift } from "@/lib/hr/db";
+import { emitAutomationEvent } from "@/lib/automation/emit";
 import {
   ensureAttendanceVerificationTables,
   verifyCheckIn,
@@ -143,6 +144,14 @@ export async function POST(request: NextRequest) {
           updated_at = now()
       `;
       const inserted = await sql`select id, tenant_id as tenant_slug, employee_id, employee_name, work_date as date, attendance_status as status, check_in_time as check_in, check_out_time as check_out, notes, work_mode, created_at from attendance_records where id = ${id} limit 1`;
+      emitAutomationEvent(session.tenantSlug, "attendance.check-in", {
+        employeeId: session.id,
+        employeeName: session.name,
+        status,
+        workMode,
+        checkInTime: nowFull,
+        flagged: verdict.flagged,
+      }, session.id);
       return NextResponse.json({ success: true, record: (inserted as any[])[0], flagged: verdict.flagged, flagReason: verdict.flagReason });
     }
 

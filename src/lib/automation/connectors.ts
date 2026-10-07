@@ -40,7 +40,55 @@ async function postWebhook(action: AutomationAction): Promise<ActionHandlerResul
 async function logNotification(action: AutomationAction) {
   const payload = action.action_payload || {};
   const params = payload.params || {};
-  console.log("[automation notify]", action.tenant_slug, action.action_type, params.message || params);
+  const tenantSlug = action.tenant_slug;
+  const title = String(params.title || "Automation notification");
+  const message = String(params.message || params.body || title);
+  const category = ["hr", "finance", "crm", "projects", "system", "general"].includes(params.category)
+    ? params.category
+    : "system";
+  const type = ["info", "success", "warning", "error"].includes(params.type) ? params.type : "info";
+
+  // Resolve recipients: explicit employee(s), a role, a broadcast, or the
+  // actor who triggered the event.
+  const { sql: SQL } = await import("@/lib/sql-client");
+  const { insertNotification } = await import("@/lib/hr/db");
+  let employeeIds: string[] = [];
+  if (Array.isArray(params.employeeIds)) {
+    employeeIds = params.employeeIds.map(String);
+  } else if (params.employeeId) {
+    employeeIds = [String(params.employeeId)];
+  } else if (params.role) {
+    const rows = (await SQL`
+      select id from admin_employees
+      where tenant_slug = ${tenantSlug} and role = ${String(params.role)} and status = 'active'
+    `) as any[];
+    employeeIds = rows.map((r) => r.id);
+  } else if (params.broadcast === true) {
+    const rows = (await SQL`
+      select id from admin_employees
+      where tenant_slug = ${tenantSlug} and status = 'active'
+    `) as any[];
+    employeeIds = rows.map((r) => r.id);
+  } else if (params.recipient === "actor" && payload.event?.actor) {
+    employeeIds = [String(payload.event.actor)];
+  }
+
+  if (employeeIds.length === 0) {
+    return { status: "failed", error: "notify requires employeeId, employeeIds, role, broadcast, or recipient:'actor'" } as ActionHandlerResult;
+  }
+
+  for (const employeeId of employeeIds.slice(0, 200)) {
+    await insertNotification({
+      tenantSlug,
+      employeeId,
+      type,
+      category,
+      title,
+      message,
+      actionUrl: params.actionUrl ?? null,
+    });
+  }
+  console.log("[automation notify]", tenantSlug, action.action_type, `-> ${employeeIds.length} recipient(s)`);
   return { status: "completed" } as ActionHandlerResult;
 }
 

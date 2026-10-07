@@ -14,6 +14,7 @@ import {
   type TicketFilters,
 } from "@/lib/support-db";
 import { autoTriageTicket } from '@/lib/itsupport/automation';
+import { emitAutomationEvent } from "@/lib/automation/emit";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 
 function buildFilters(searchParams: URLSearchParams): TicketFilters {
@@ -73,6 +74,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `Missing field: ${missingField}` }, { status: 400 });
   }
 
+  const enums: Array<[keyof CreateTicketInput, readonly string[]]> = [
+    ["ticketType", ["internal", "customer"]],
+    ["source", ["erp", "crm", "email", "api", "mobile", "monitoring"]],
+    ["impactLevel", ["critical", "high", "medium", "low"]],
+    ["priority", ["critical", "high", "medium", "low"]],
+  ];
+  for (const [field, allowed] of enums) {
+    if (!allowed.includes(String(body[field]))) {
+      return NextResponse.json({ error: `Invalid ${field}. Allowed: ${allowed.join(", ")}` }, { status: 400 });
+    }
+  }
+
   let ticket = await createTicket({
     tenantSlug,
     title: body.title!,
@@ -94,6 +107,15 @@ export async function POST(request: NextRequest) {
   // Auto-triage: classify and assign ticket
   const engineers = (await getTenantSupportData(tenantSlug)).engineers;
   ticket = await autoTriageTicket(ticket, engineers);
+
+  emitAutomationEvent(tenantSlug, "support.ticket-created", {
+    ticketId: ticket.id,
+    title: ticket.title,
+    priority: ticket.priority,
+    status: ticket.status,
+    ticketType: ticket.ticketType,
+    assignedEngineerId: (ticket as any).assignedEngineerId ?? null,
+  }, context.userId);
 
   return NextResponse.json({ ticket, message: "Ticket created" }, { status: 201 });
 }

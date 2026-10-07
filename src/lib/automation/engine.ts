@@ -46,6 +46,13 @@ function evaluateCondition(condition: Condition, payload: any, results: Array<{ 
     results.push({ condition, result: ok });
     return ok;
   }
+  // An empty condition (no all/any/field) means "always match" — without
+  // this guard it falls through to comparing an undefined field and never
+  // fires.
+  if (!condition.field && !condition.op) {
+    results.push({ condition, result: true });
+    return true;
+  }
   const value = getValue(payload, condition.field);
   const ok = compare(condition.op, value, condition.value);
   results.push({ condition, result: ok });
@@ -55,7 +62,7 @@ function evaluateCondition(condition: Condition, payload: any, results: Array<{ 
 export function simulateRule(rule: AutomationRule, event: { type: string; payload: any; actor?: string }): RuleSimulationResult {
   const details: Array<{ condition: Condition; result: boolean }> = [];
   if (!rule.enabled) return { matched: false, actions: [], details };
-  if (rule.eventType && rule.eventType !== event.type) return { matched: false, actions: [], details };
+  if (rule.eventType && rule.eventType !== "*" && rule.eventType !== event.type) return { matched: false, actions: [], details };
 
   const matched = evaluateCondition(rule.condition, event.payload, details);
   const actions = matched ? rule.actions : [];
@@ -96,7 +103,7 @@ export async function executeRulesForEvent(
 ): Promise<Array<{ ruleId: string; ruleName: string; matched: boolean; actions: Action[] }>> {
   const rules = await listAutomationRules(tenantSlug);
   const activeRules = rules.filter(
-    (rule) => rule.enabled && rule.eventType === event.type
+    (rule) => rule.enabled && (rule.eventType === event.type || rule.eventType === "*")
   );
 
   const results = await Promise.all(

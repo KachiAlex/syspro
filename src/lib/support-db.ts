@@ -105,6 +105,12 @@ export interface CreateTicketInput {
   branchId?: string; customerId?: string; projectId?: string; tags?: string[]; createdBy?: string;
 }
 
+// uuid-typed columns reject non-UUID ids (e.g. numeric session ids like "51")
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function asUuidOrNull(v: string | null | undefined): string | null {
+  return v && UUID_RE.test(v) ? v : null;
+}
+
 export async function createTicket(input: CreateTicketInput): Promise<SupportTicket> {
   const { tenantSlug, title, description, ticketType, source, impactLevel, priority, departmentId, serviceArea, region, branchId, customerId, projectId, tags = [], createdBy } = input;
   const { rows: slaRows } = await db.query(`select * from sla_policies where tenant_slug = $1 and priority = $2 and active = true order by created_at desc limit 1`, [tenantSlug, priority]);
@@ -113,9 +119,10 @@ export async function createTicket(input: CreateTicketInput): Promise<SupportTic
   const num = `IT-${now.getFullYear()}-${Math.floor(Math.random()*9000+1000)}`;
   const rDue = sla ? new Date(now.getTime() + sla.response_minutes*60000).toISOString() : null;
   const resDue = sla ? new Date(now.getTime() + sla.resolution_minutes*60000).toISOString() : null;
+  const actorUuid = asUuidOrNull(createdBy);
   await db.query(
     `insert into support_tickets (id,tenant_slug,ticket_number,title,description,ticket_type,source,impact_level,priority,status,department_id,service_area,region,branch_id,customer_id,project_id,sla_policy_id,escalation_level,tags,response_due_at,resolution_due_at,created_by,updated_by,created_at,updated_at) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$24)`,
-    [id, tenantSlug, num, title, description||null, ticketType, source, impactLevel, priority, "new", departmentId||null, serviceArea||null, region||null, branchId||null, customerId||null, projectId||null, sla?.id||null, 0, tags, rDue, resDue, createdBy||null, createdBy||null, now.toISOString()]
+    [id, tenantSlug, num, title, description||null, ticketType, source, impactLevel, priority, "new", asUuidOrNull(departmentId), serviceArea||null, region||null, asUuidOrNull(branchId), asUuidOrNull(customerId), asUuidOrNull(projectId), asUuidOrNull(sla?.id), 0, tags, rDue, resDue, actorUuid, actorUuid, now.toISOString()]
   );
   await addTicketActivity(tenantSlug, id, { activityType: "ticket_created", actorId: createdBy, details: { source } });
   return (await getTicketById(tenantSlug, id))!;
@@ -129,12 +136,12 @@ export async function updateTicket(tenantSlug: string, ticketId: string, updates
   const map: Record<string, string> = { acknowledged: "acknowledged_at", diagnosing: "diagnosing_at", in_progress: "in_progress_at", awaiting_customer: "awaiting_customer_at", awaiting_dependency: "awaiting_dependency_at", resolved: "resolved_at", closed: "closed_at", reopened: "reopened_at" };
   const sets: string[] = []; const vals: any[] = []; let i = 1;
   if (updates.status) { sets.push(`status=$${i++}`); vals.push(updates.status); const col = map[updates.status]; if (col) { sets.push(`${col}=$${i++}`); vals.push(now); } if (updates.status === "acknowledged" && !existing.firstResponseAt) { sets.push(`first_response_at=$${i++}`); vals.push(now); } }
-  if (updates.assignedEngineerId !== undefined) { sets.push(`assigned_engineer_id=$${i++}`); vals.push(updates.assignedEngineerId); }
-  if (updates.backupEngineerId !== undefined) { sets.push(`backup_engineer_id=$${i++}`); vals.push(updates.backupEngineerId); }
+  if (updates.assignedEngineerId !== undefined) { sets.push(`assigned_engineer_id=$${i++}`); vals.push(asUuidOrNull(updates.assignedEngineerId)); }
+  if (updates.backupEngineerId !== undefined) { sets.push(`backup_engineer_id=$${i++}`); vals.push(asUuidOrNull(updates.backupEngineerId)); }
   if (updates.priority) { sets.push(`priority=$${i++}`); vals.push(updates.priority); }
   if (updates.impactLevel) { sets.push(`impact_level=$${i++}`); vals.push(updates.impactLevel); }
   if (updates.tags) { sets.push(`tags=$${i++}`); vals.push(updates.tags); }
-  sets.push(`updated_by=$${i++}`); vals.push(updates.updatedBy||null);
+  sets.push(`updated_by=$${i++}`); vals.push(asUuidOrNull(updates.updatedBy));
   sets.push(`updated_at=$${i++}`); vals.push(now);
   vals.push(ticketId, tenantSlug);
   const { rows } = await db.query(`update support_tickets set ${sets.join(", ")} where id=$${i++} and tenant_slug=$${i++} returning *`, vals);
@@ -151,7 +158,7 @@ export async function addTicketComment(input: CommentInput): Promise<TicketComme
   const ticket = await getTicketById(input.tenantSlug, input.ticketId); if (!ticket) return null;
   const id = randomUUID(); const now = new Date().toISOString();
   await db.query(`insert into ticket_comments (id,tenant_slug,ticket_id,comment_type,body,author_id,visibility,created_at) values ($1,$2,$3,$4,$5,$6,$7,$8)`,
-    [id, input.tenantSlug, input.ticketId, input.commentType||"internal", input.body, input.authorId||null, input.visibility||"internal", now]);
+    [id, input.tenantSlug, input.ticketId, input.commentType||"internal", input.body, asUuidOrNull(input.authorId), input.visibility||"internal", now]);
   await addTicketActivity(input.tenantSlug, input.ticketId, { activityType: "comment_added", actorId: input.authorId, details: { commentType: input.commentType||"internal" } });
   return { id, tenantSlug: input.tenantSlug, ticketId: input.ticketId, commentType: input.commentType||"internal", body: input.body, authorId: input.authorId, visibility: input.visibility||"internal", createdAt: now };
 }
@@ -168,7 +175,7 @@ export interface ActivityInput { activityType: string; actorId?: string; details
 export async function addTicketActivity(tenantSlug: string, ticketId: string, activity: ActivityInput): Promise<TicketActivityLog> {
   const id = randomUUID(); const now = new Date().toISOString();
   await db.query(`insert into ticket_activity_logs (id,tenant_slug,ticket_id,activity_type,actor_id,details,created_at) values ($1,$2,$3,$4,$5,$6,$7)`,
-    [id, tenantSlug, ticketId, activity.activityType, activity.actorId||null, JSON.stringify(activity.details||{}), now]);
+    [id, tenantSlug, ticketId, activity.activityType, asUuidOrNull(activity.actorId), JSON.stringify(activity.details||{}), now]);
   return { id, tenantSlug, ticketId, activityType: activity.activityType, actorId: activity.actorId, details: activity.details, createdAt: now };
 }
 
@@ -185,7 +192,7 @@ export async function addFieldJob(input: FieldJobInput): Promise<FieldJob | null
   const ticket = await getTicketById(input.tenantSlug, input.ticketId); if (!ticket) return null;
   const id = randomUUID(); const now = new Date().toISOString();
   await db.query(`insert into field_jobs (id,tenant_slug,ticket_id,engineer_id,status,location,scheduled_at,created_at,updated_at) values ($1,$2,$3,$4,$5,$6,$7,$8,$8)`,
-    [id, input.tenantSlug, input.ticketId, input.engineerId||null, "scheduled", JSON.stringify(input.location||{}), input.scheduledAt||now, now]);
+    [id, input.tenantSlug, input.ticketId, asUuidOrNull(input.engineerId), "scheduled", JSON.stringify(input.location||{}), input.scheduledAt||now, now]);
   await addTicketActivity(input.tenantSlug, input.ticketId, { activityType: "field_job_created", actorId: input.createdBy, details: { engineerId: input.engineerId } });
   return { id, tenantSlug: input.tenantSlug, ticketId: input.ticketId, engineerId: input.engineerId, status: "scheduled", location: input.location, scheduledAt: input.scheduledAt||now, createdAt: now, updatedAt: now };
 }
