@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { insertContact, insertContacts, listContacts, countContacts } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
-import { resolveCrmAuth, getTeamMemberIds } from "@/lib/crm/auth";
+import { requireCrmAuth, getTeamMemberIds } from "@/lib/crm/auth";
 import { db } from "@/lib/sql-client";
 
 const contactPayloadSchema = z.object({
@@ -53,12 +53,14 @@ export async function GET(request: NextRequest) {
   }
 
   const viewMode = url.searchParams.get("viewMode") || undefined;
-  const auth = await resolveCrmAuth(request);
+  const guard = await requireCrmAuth(request, parsed.data.tenantSlug);
+  if (!guard.ok) return guard.response;
+  const auth = guard.auth;
 
   try {
     let filterCreatedBy: string | undefined;
 
-    if (auth && auth.session.tenantSlug === parsed.data.tenantSlug) {
+    if (true) {
       if (viewMode === "mine" || (!viewMode && auth.scope === "mine")) {
         filterCreatedBy = auth.employeeId;
       } else if (viewMode === "team" || (!viewMode && auth.scope === "team")) {
@@ -96,8 +98,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const auth = await resolveCrmAuth(request);
-  const createdBy = auth?.employeeId;
+  // tenantSlug is validated by either schema below before the guard runs, so
+  // pre-validate just enough to claim the tenant for the auth check.
+  const claimedTenant = typeof (body as any).tenantSlug === "string" ? (body as any).tenantSlug : null;
+  if (!claimedTenant) {
+    return NextResponse.json({ error: "tenantSlug is required" }, { status: 400 });
+  }
+  const guard = await requireCrmAuth(request, claimedTenant);
+  if (!guard.ok) return guard.response;
+  const createdBy = guard.auth.employeeId;
 
   const hasContactsArray = Array.isArray((body as any).contacts);
 

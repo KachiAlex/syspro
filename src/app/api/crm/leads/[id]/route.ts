@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { CRM_LEAD_STAGES, CRM_LEAD_SOURCES } from "@/lib/crm/types";
 import { updateLead, getLead, deleteLead } from "@/lib/crm/db";
-import { resolveCrmAuth } from "@/lib/crm/auth";
+import { resolveCrmAuth, requireCrmAuth } from "@/lib/crm/auth";
 import { handleDatabaseError } from "@/lib/api-errors";
 
 const patchSchema = z.object({
@@ -66,7 +66,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       score: parsed.data.score as any,
       assignedOfficerId: parsed.data.assignedOfficerId,
       notes: parsed.data.notes,
-    });
+    }, parsed.data.tenantSlug);
 
     if (!lead) {
       return NextResponse.json({ error: "Lead not found" }, { status: 404 });
@@ -82,6 +82,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   try {
     const lead = await getLead(params.id);
     if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+    const guard = await requireCrmAuth(request, (lead as any).tenantSlug);
+    if (!guard.ok) return guard.response;
     return NextResponse.json({ lead });
   } catch (error) {
     return handleDatabaseError(error, "Get lead");
@@ -118,7 +120,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
       return NextResponse.json({ error: "You can only delete your own leads" }, { status: 403 });
     }
 
-    const success = await deleteLead(params.id);
+    const success = await deleteLead(params.id, tenantSlug);
     if (!success) {
       return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
     }

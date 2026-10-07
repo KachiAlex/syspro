@@ -58,7 +58,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       contactPhone: parsed.data.contactPhone === "" ? null : parsed.data.contactPhone ?? undefined,
     } as const;
 
-    const contact = await updateContact(params.id, payload);
+    const contact = await updateContact(params.id, payload, parsed.data.tenantSlug);
 
     return NextResponse.json({ contact });
   } catch (error) {
@@ -95,7 +95,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
       return NextResponse.json({ error: "You can only delete your own contacts" }, { status: 403 });
     }
 
-    await deleteContact(params.id);
+    await deleteContact(params.id, tenantSlug);
     return NextResponse.json({ success: true });
   } catch (error) {
     return handleDatabaseError(error, "Contact deletion");

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { CRM_PIPELINE_STAGES } from "@/lib/crm/types";
 import { insertDeal, listDeals, countDeals, logActivity } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
-import { resolveCrmAuth, getTeamMemberIds } from "@/lib/crm/auth";
+import { requireCrmAuth, getTeamMemberIds } from "@/lib/crm/auth";
 import { db } from "@/lib/sql-client";
 
 const dealSchema = z.object({
@@ -33,8 +33,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const auth = await resolveCrmAuth(request);
-  const createdBy = auth?.employeeId;
+  const guard = await requireCrmAuth(request, parsed.data.tenantSlug);
+  if (!guard.ok) return guard.response;
+  const createdBy = guard.auth.employeeId;
 
   try {
     const deal = await insertDeal({
@@ -81,12 +82,14 @@ export async function GET(request: NextRequest) {
   const offset = url.searchParams.get("offset") ? Number(url.searchParams.get("offset")) : undefined;
   const viewMode = url.searchParams.get("viewMode") || undefined;
 
-  const auth = await resolveCrmAuth(request);
+  const guard = await requireCrmAuth(request, tenantSlug);
+  if (!guard.ok) return guard.response;
+  const auth = guard.auth;
 
   try {
     let filterCreatedBy: string | undefined;
 
-    if (auth && auth.session.tenantSlug === tenantSlug) {
+    if (true) {
       if (viewMode === "mine" || (!viewMode && auth.scope === "mine")) {
         filterCreatedBy = auth.employeeId;
       } else if (viewMode === "team" || (!viewMode && auth.scope === "team")) {

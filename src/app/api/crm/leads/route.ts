@@ -4,7 +4,7 @@ import { z } from "zod";
 import { CRM_LEAD_STAGES, CRM_LEAD_SOURCES } from "@/lib/crm/types";
 import { insertLead, listLeads, countLeads } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
-import { resolveCrmAuth, getTeamMemberIds } from "@/lib/crm/auth";
+import { requireCrmAuth, getTeamMemberIds } from "@/lib/crm/auth";
 import { db } from "@/lib/sql-client";
 
 const leadSchema = z.object({
@@ -34,8 +34,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const auth = await resolveCrmAuth(request);
-  const createdBy = auth?.employeeId;
+  const guard = await requireCrmAuth(request, parsed.data.tenantSlug);
+  if (!guard.ok) return guard.response;
+  const createdBy = guard.auth.employeeId;
 
   try {
     const lead = await insertLead({
@@ -78,13 +79,15 @@ export async function GET(request: NextRequest) {
   const offset = searchParams.get("offset") ? Number(searchParams.get("offset")) : undefined;
   const viewMode = searchParams.get("viewMode") || undefined;
 
-  const auth = await resolveCrmAuth(request);
+  const guard = await requireCrmAuth(request, tenantSlug);
+  if (!guard.ok) return guard.response;
+  const auth = guard.auth;
 
   try {
     let filterCreatedBy: string | undefined;
     let filterSalesOfficerId = salesOfficerId;
 
-    if (auth && auth.session.tenantSlug === tenantSlug) {
+    if (true) {
       if (viewMode === "mine" || (!viewMode && auth.scope === "mine")) {
         // Show leads assigned to me OR created by me
         const rows = (await db.query(

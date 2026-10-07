@@ -1,4 +1,4 @@
-import type { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { resolveEmployeeSession, type EmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
 
@@ -52,6 +52,36 @@ export async function resolveCrmAuth(request: NextRequest): Promise<CrmAuthResul
     isAdmin,
     departmentId,
   };
+}
+
+/**
+ * Enforce an authenticated session bound to the claimed tenant.
+ * Resolves employee_session or pisairtel_session (tenant admins get scope
+ * "all" via their roleId). Use this at the top of every CRM route instead of
+ * treating auth as optional — routes must never fall through to unscoped
+ * queries on a claimed tenantSlug.
+ */
+export async function requireCrmAuth(
+  request: NextRequest,
+  tenantSlug: string
+): Promise<
+  | { ok: true; auth: CrmAuthResult }
+  | { ok: false; response: NextResponse }
+> {
+  const auth = await resolveCrmAuth(request);
+  if (!auth) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Not authenticated" }, { status: 401 }),
+    };
+  }
+  if (auth.session.tenantSlug !== tenantSlug) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Unauthorized" }, { status: 403 }),
+    };
+  }
+  return { ok: true, auth };
 }
 
 export async function getTeamMemberIds(tenantSlug: string, departmentId: string): Promise<string[]> {

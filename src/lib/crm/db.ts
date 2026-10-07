@@ -155,7 +155,7 @@ export async function insertCustomer(row: {
   return normalizeCustomerRow(inserted[0]);
 }
 
-export async function updateCustomer(id: string, updates: Partial<{ name: string; status: string; primaryContact: Record<string, unknown> }>) {
+export async function updateCustomer(id: string, updates: Partial<{ name: string; status: string; primaryContact: Record<string, unknown> }>, tenantSlug?: string) {
   const sql = SQL;
   await ensureCrmTables(sql);
   if (!updates.name && updates.status === undefined && updates.primaryContact === undefined) {
@@ -171,6 +171,7 @@ export async function updateCustomer(id: string, updates: Partial<{ name: string
       primary_contact = coalesce(${updates.primaryContact ?? null}, primary_contact),
       updated_at = now()
     where id = ${id}
+    ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
     returning *
   `) as CrmCustomerRecord[];
   return updated.length ? normalizeCustomerRow(updated[0]) : null;
@@ -364,7 +365,8 @@ export async function updateContact(
     contactEmail: string | null;
     contactPhone: string | null;
     source: string | null;
-  }>
+  }>,
+  tenantSlug?: string
 ) {
   const sql = SQL;
   await ensureCrmTables(sql);
@@ -394,6 +396,7 @@ export async function updateContact(
       source = coalesce(${updates.source ?? null}, source),
       updated_at = now()
     where id = ${id}
+    ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
     returning *
   `) as CrmContactRecord[];
   return updated.length ? normalizeContactRow(updated[0]) : null;
@@ -406,10 +409,10 @@ export async function getContact(id: string) {
   return rows.length ? normalizeContactRow(rows[0]) : null;
 }
 
-export async function deleteContact(id: string) {
+export async function deleteContact(id: string, tenantSlug?: string) {
   const sql = SQL;
   await ensureCrmTables(sql);
-  const deleted = (await sql`delete from crm_contacts where id = ${id} returning id`) as any[];
+  const deleted = (await sql`delete from crm_contacts where id = ${id} ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``} returning id`) as any[];
   return deleted.length > 0;
 }
 
@@ -453,7 +456,7 @@ export async function updateDeal(id: string, updates: Partial<{
   value: number;
   currency: string;
   expectedClose: string | null;
-}>) {
+}>, tenantSlug?: string) {
   const sql = SQL;
   await ensureCrmTables(sql);
   const hasUpdates = Object.values(updates).some((v) => v !== undefined);
@@ -494,8 +497,13 @@ export async function updateDeal(id: string, updates: Partial<{
     values.push(updates.expectedClose);
   }
   sets.push(`updated_at = now()`);
-  const query = `update crm_deals set ${sets.join(", ")} where id = $${idx++} returning *`;
+  let query = `update crm_deals set ${sets.join(", ")} where id = $${idx++}`;
   values.push(id);
+  if (tenantSlug) {
+    query += ` and tenant_slug = $${idx++}`;
+    values.push(tenantSlug);
+  }
+  query += ` returning *`;
   const updated = (await db.query(query, values)).rows as Record<string, unknown>[];
   return updated.length ? normalizeDealRow(updated[0]) : null;
 }
@@ -564,10 +572,10 @@ export async function countDeals(filters: Partial<{ tenantSlug: string; customer
   return rows.length ? Number(rows[0].cnt) : 0;
 }
 
-export async function deleteDeal(id: string) {
+export async function deleteDeal(id: string, tenantSlug?: string) {
   const sql = SQL;
   await ensureCrmTables(sql);
-  const deleted = (await sql`delete from crm_deals where id = ${id} returning id`) as any[];
+  const deleted = (await sql`delete from crm_deals where id = ${id} ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``} returning id`) as any[];
   return deleted.length > 0;
 }
 
@@ -625,7 +633,7 @@ export async function updateLead(id: string, updates: Partial<{
   expectedValue: number | null;
   currency: string;
   notes: string;
-}>) {
+}>, tenantSlug?: string) {
   const sql = SQL;
   await ensureCrmTables(sql);
   const hasUpdates = Object.values(updates).some((v) => v !== undefined);
@@ -682,16 +690,21 @@ export async function updateLead(id: string, updates: Partial<{
     values.push(updates.notes);
   }
   sets.push(`updated_at = now()`);
-  const query = `update crm_leads set ${sets.join(", ")} where id = $${idx++} returning *`;
+  let query = `update crm_leads set ${sets.join(", ")} where id = $${idx++}`;
   values.push(id);
+  if (tenantSlug) {
+    query += ` and tenant_slug = $${idx++}`;
+    values.push(tenantSlug);
+  }
+  query += ` returning *`;
   const updated = (await db.query(query, values)).rows as Record<string, unknown>[];
   return updated.length ? normalizeLeadRow(updated[0]) : null;
 }
 
-export async function deleteLead(id: string) {
+export async function deleteLead(id: string, tenantSlug?: string) {
   const sql = SQL;
   await ensureCrmTables(sql);
-  const deleted = (await sql`delete from crm_leads where id = ${id} returning id`) as any[];
+  const deleted = (await sql`delete from crm_leads where id = ${id} ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``} returning id`) as any[];
   return deleted.length > 0;
 }
 

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getContact, insertLead, updateContact, logActivity } from "@/lib/crm/db";
 import { CRM_LEAD_STAGES, CRM_LEAD_SOURCES } from "@/lib/crm/types";
-import { resolveCrmAuth } from "@/lib/crm/auth";
+import { requireCrmAuth } from "@/lib/crm/auth";
 import { handleDatabaseError } from "@/lib/api-errors";
 
 const convertSchema = z.object({
@@ -36,8 +36,13 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     if (contact.tenantSlug !== parsed.data.tenantSlug) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
+    if (contact.status === "Converted to Lead") {
+      return NextResponse.json({ error: "Contact has already been converted to a lead" }, { status: 409 });
+    }
 
-    const auth = await resolveCrmAuth(request);
+    const guard = await requireCrmAuth(request, parsed.data.tenantSlug);
+    if (!guard.ok) return guard.response;
+    const auth = guard.auth;
 
     const lead = await insertLead({
       tenantSlug: parsed.data.tenantSlug,
@@ -56,7 +61,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     });
 
     // Mark contact as converted
-    await updateContact(params.id, { status: "Converted to Lead" }).catch(() => {});
+    await updateContact(params.id, { status: "Converted to Lead" }, parsed.data.tenantSlug).catch(() => {});
 
     // Log activity
     await logActivity({

@@ -46,7 +46,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     const previousAssignee = existing.assignedOfficerId;
     const lead = await updateLead(params.id, {
       assignedOfficerId: parsed.data.assignedOfficerId,
-    });
+    }, parsed.data.tenantSlug);
 
     if (!lead) {
       return NextResponse.json({ error: "Lead not found after update" }, { status: 404 });

@@ -2,8 +2,8 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { CRM_PIPELINE_STAGES } from "@/lib/crm/types";
-import { getLead, updateLead, insertDeal, insertCustomer, logActivity } from "@/lib/crm/db";
-import { resolveCrmAuth } from "@/lib/crm/auth";
+import { getLead, updateLead, insertDeal, insertCustomer, logActivity, recordConversion } from "@/lib/crm/db";
+import { requireCrmAuth } from "@/lib/crm/auth";
 import { handleDatabaseError } from "@/lib/api-errors";
 
 const convertSchema = z.object({
@@ -37,8 +37,13 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     if ((lead as any).tenantSlug !== parsed.data.tenantSlug) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
+    if ((lead as any).stage === "converted") {
+      return NextResponse.json({ error: "Lead has already been converted" }, { status: 409 });
+    }
 
-    const auth = await resolveCrmAuth(request);
+    const guard = await requireCrmAuth(request, parsed.data.tenantSlug);
+    if (!guard.ok) return guard.response;
+    const auth = guard.auth;
 
     // Create a prospect customer from the lead if one doesn't exist yet
     const customer = await insertCustomer({
@@ -72,8 +77,18 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       createdBy: auth?.employeeId,
     });
 
-    // Update lead stage to reflect progression
-    await updateLead(params.id, { stage: "qualified" }).catch(() => {});
+    // Update lead stage to reflect conversion — consistent with
+    // convert-to-customer and prevents repeat conversions.
+    await updateLead(params.id, { stage: "converted" }, parsed.data.tenantSlug).catch(() => {});
+
+    // Record the conversion so pipeline stats stay consistent with
+    // convert-to-customer and deal_won paths.
+    await recordConversion({
+      tenantSlug: parsed.data.tenantSlug,
+      leadId: params.id,
+      customerId: customer ? (customer as any).id : undefined,
+      sourceStage: (lead as any).stage,
+    }).catch(() => {});
 
     // Log activity
     await logActivity({

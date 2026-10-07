@@ -44,7 +44,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       name: parsed.data.name,
       status: parsed.data.status,
       primaryContact: parsed.data.primaryContact,
-    });
+    }, parsed.data.tenantSlug);
     return NextResponse.json({ customer });
   } catch (error) {
     return handleDatabaseError(error, "Customer update");

@@ -56,7 +56,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       value: parsed.data.value,
       currency: parsed.data.currency,
       expectedClose: parsed.data.expectedClose === "" ? null : parsed.data.expectedClose,
-    });
+    }, existing.tenantSlug);
     if (!deal) {
       return NextResponse.json({ error: "Deal not found" }, { status: 404 });
     }
@@ -112,7 +112,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         }
       } else if (deal.customerId) {
         // Update existing customer to active status
-        await updateCustomer(deal.customerId, { status: "active" }).catch(() => {});
+        await updateCustomer(deal.customerId, { status: "active" }, deal.tenantSlug).catch(() => {});
       }
 
       // Publish finance event
@@ -166,9 +166,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     // Status cascading: sync linked lead stage when deal closes
     if (parsed.data.stage && deal.leadId) {
       if (parsed.data.stage === "closed_won") {
-        await updateLead(deal.leadId, { stage: "converted" }).catch(() => {});
+        await updateLead(deal.leadId, { stage: "converted" }, deal.tenantSlug).catch(() => {});
       } else if (parsed.data.stage === "closed_lost") {
-        await updateLead(deal.leadId, { stage: "lost" }).catch(() => {});
+        await updateLead(deal.leadId, { stage: "lost" }, deal.tenantSlug).catch(() => {});
       }
     }
 
@@ -210,7 +210,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
       return NextResponse.json({ error: "You can only delete your own deals" }, { status: 403 });
     }
 
-    const deleted = await deleteDeal(params.id);
+    const deleted = await deleteDeal(params.id, existing.tenantSlug);
     if (!deleted) {
       return NextResponse.json({ error: "Deal not found" }, { status: 404 });
     }

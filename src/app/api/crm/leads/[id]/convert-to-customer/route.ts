@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getLead, updateLead, insertCustomer, insertDeal, recordConversion, logActivity } from "@/lib/crm/db";
-import { resolveCrmAuth } from "@/lib/crm/auth";
+import { requireCrmAuth } from "@/lib/crm/auth";
 import { handleDatabaseError } from "@/lib/api-errors";
 
 const convertSchema = z.object({
@@ -34,8 +34,13 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     if ((lead as any).tenant_slug !== parsed.data.tenantSlug && (lead as any).tenantSlug !== parsed.data.tenantSlug) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
+    if ((lead as any).stage === "converted") {
+      return NextResponse.json({ error: "Lead has already been converted" }, { status: 409 });
+    }
 
-    const auth = await resolveCrmAuth(request);
+    const guard = await requireCrmAuth(request, parsed.data.tenantSlug);
+    if (!guard.ok) return guard.response;
+    const auth = guard.auth;
 
     const customerName = parsed.data.customerName || (lead as any).companyName || (lead as any).company_name;
     const customer = await insertCustomer({
@@ -52,7 +57,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       convertedFromLeadId: params.id,
     });
 
-    await updateLead(params.id, { stage: "converted" });
+    await updateLead(params.id, { stage: "converted" }, parsed.data.tenantSlug);
 
     await recordConversion({
       tenantSlug: parsed.data.tenantSlug,
