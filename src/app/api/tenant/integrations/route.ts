@@ -37,6 +37,30 @@ const CreateAPIKeySchema = z.object({
   expiresAt: z.string().datetime().optional(),
 });
 
+// Secret material inside integration config is masked on read; clients send
+// the mask back unchanged to mean "keep the stored value".
+const SENSITIVE_KEY = /secret|token|key|password|credential|private/i;
+const MASK = "********";
+function maskConfig(config: any): any {
+  if (!config || typeof config !== "object" || Array.isArray(config)) return config;
+  const out: Record<string, any> = {};
+  for (const [k, v] of Object.entries(config)) {
+    out[k] = SENSITIVE_KEY.test(k) && typeof v === "string" && v ? MASK : v;
+  }
+  return out;
+}
+function unmaskConfig(incoming: any, existing: any): any {
+  if (!incoming || typeof incoming !== "object" || Array.isArray(incoming)) return incoming;
+  const out: Record<string, any> = { ...incoming };
+  for (const [k, v] of Object.entries(out)) {
+    if (v === MASK && existing && typeof existing === "object" && k in (existing as any)) {
+      out[k] = (existing as any)[k];
+    }
+  }
+  return out;
+}
+const maskIntegration = (i: any) => (i ? { ...i, config: maskConfig(i.config) } : i);
+
 /**
  * GET /api/tenant/integrations
  * Retrieve integrations for a tenant
@@ -61,7 +85,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: true,
         data: {
-          integrations,
+          integrations: (integrations as any[]).map(maskIntegration),
           pagination: {
             page: pagination.page,
             limit: pagination.limit,
@@ -131,7 +155,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: true,
-          data: integration,
+          data: maskIntegration(integration),
           message: "Integration created successfully",
         },
         { status: 201 }
@@ -207,8 +231,8 @@ export async function PATCH(request: NextRequest) {
 
       const updated = await service.update(asTenantSlug(context.tenantSlug), id as ResourceId, {
         name: parsed.data.name,
-        status: parsed.data.enabled ? "active" : "inactive",
-        config: parsed.data.config,
+        status: parsed.data.enabled === undefined ? undefined : parsed.data.enabled ? "active" : "inactive",
+        config: parsed.data.config ? unmaskConfig(parsed.data.config, (existing as any).config) : undefined,
         webhookUrl: parsed.data.webhookUrl,
       });
 
@@ -224,7 +248,7 @@ export async function PATCH(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        data: updated,
+        data: maskIntegration(updated),
         message: "Integration updated successfully",
       });
     } else if (type === "api-key" && action === "revoke") {
@@ -295,7 +319,7 @@ export async function DELETE(request: NextRequest) {
       const service = new APIKeyService();
       const existing = await service.getById(asTenantSlug(context.tenantSlug), id as ResourceId);
       if (existing) {
-        await service.revoke(asTenantSlug(context.tenantSlug), id as ResourceId);
+        await service.delete(asTenantSlug(context.tenantSlug), id as ResourceId);
         await auditService.log(
           asTenantSlug(context.tenantSlug),
           context.userId as UserId,

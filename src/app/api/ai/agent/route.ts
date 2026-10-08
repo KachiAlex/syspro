@@ -4,6 +4,8 @@ import { z } from "zod";
 import { runAgent, CAPABILITY_DEFINITIONS, getConversationHistory, type AgentCapability } from "@/lib/ai/agent";
 import { resolveEmployeeSession } from "@/lib/hr/auth";
 import { isTenantSuspended } from "@/lib/api-auth";
+import { APIKeyService } from "@/lib/tenant-admin/service";
+import { asTenantSlug } from "@/lib/tenant-admin/utils";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -11,15 +13,18 @@ export const maxDuration = 60;
 // ─── Auth ───
 
 async function authenticate(request: NextRequest): Promise<{ tenantSlug: string; authMethod: "api_key" | "session" } | NextResponse | null> {
-  // 1. Try API key (for external integrations)
+  // 1. Try API key — platform key (env) or a tenant-issued key from
+  // admin_api_keys bound to the x-tenant-slug header tenant.
   const apiKey = request.headers.get("x-api-key") || request.headers.get("authorization")?.replace("Bearer ", "");
-  if (apiKey && apiKey === process.env.SYSPRO_AI_API_KEY) {
-    const tenantSlug = request.headers.get("x-tenant-slug");
-    if (tenantSlug) {
-      if (await isTenantSuspended(tenantSlug)) {
+  const headerTenant = request.headers.get("x-tenant-slug");
+  if (apiKey && headerTenant) {
+    const isPlatform = apiKey === process.env.SYSPRO_AI_API_KEY;
+    const tenantKey = isPlatform ? null : await new APIKeyService().authenticate(asTenantSlug(headerTenant), apiKey).catch(() => null);
+    if (isPlatform || tenantKey) {
+      if (await isTenantSuspended(headerTenant)) {
         return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
       }
-      return { tenantSlug, authMethod: "api_key" };
+      return { tenantSlug: headerTenant, authMethod: "api_key" };
     }
   }
 

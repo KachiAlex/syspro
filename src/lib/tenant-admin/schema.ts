@@ -322,18 +322,33 @@ export async function setupTenantAdminSchema(sql: SqlClient = SQL) {
       id text primary key,
       tenant_slug text not null,
       name text not null,
-      key text not null unique,
-      secret text not null,
+      key text,
+      secret text,
+      key_hash text,
+      key_prefix text,
+      secret_hash text,
       permissions jsonb not null,
       rate_limit integer,
       expires_at timestamptz,
       last_used_at timestamptz,
+      revoked_at timestamptz,
       created_at timestamptz default now(),
-      created_by text,
-      constraint unique_key_per_tenant unique (tenant_slug, key)
+      created_by text
     );
     create index if not exists idx_admin_api_keys_tenant on admin_api_keys(tenant_slug);
     create index if not exists idx_admin_api_keys_key on admin_api_keys(key);
+    create index if not exists idx_admin_api_keys_key_hash on admin_api_keys(key_hash);
+  `;
+  // Drift repair: tables created before hash-at-rest lack these columns.
+  await sql`
+    alter table admin_api_keys add column if not exists key_hash text;
+    alter table admin_api_keys add column if not exists key_prefix text;
+    alter table admin_api_keys add column if not exists secret_hash text;
+    alter table admin_api_keys add column if not exists revoked_at timestamptz;
+    alter table admin_api_keys alter column key drop not null;
+    alter table admin_api_keys alter column secret drop not null;
+    alter table admin_api_keys drop constraint if exists unique_key_per_tenant;
+    create index if not exists idx_admin_api_keys_key_hash on admin_api_keys(key_hash);
   `;
 
   // ============================================================================

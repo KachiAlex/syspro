@@ -4,7 +4,7 @@
  */
 
 import { db, sql as SQL, SqlClient } from "@/lib/sql-client";
-import { randomUUID } from "crypto";
+import { randomUUID, createHash } from "crypto";
 import type {
   Department,
   DepartmentCreateRequest,
@@ -770,53 +770,94 @@ export class IntegrationService {
 export class APIKeyService {
   constructor(private sql: SqlClient = SQL) {}
 
-  async getAll(tenantSlug: TenantSlug): Promise<APIKey[]> {
-    return this.sql`
+  private sha256(value: string): string {
+    return createHash("sha256").update(value).digest("hex");
+  }
+
+  /** Public shape — never includes raw or hashed key material. */
+  private toPublic(row: any): any {
+    const { key, secret, key_hash, secret_hash, ...rest } = row;
+    return { ...rest, keyPrefix: row.key_prefix ?? (typeof key === "string" ? key.slice(0, 12) : null) };
+  }
+
+  async getAll(tenantSlug: TenantSlug): Promise<any[]> {
+    const rows = (await this.sql`
       select * from admin_api_keys
       where tenant_slug = ${tenantSlug}
       order by created_at desc
-    `;
+    `) as any[];
+    return rows.map((r) => this.toPublic(r));
   }
 
-  async getById(tenantSlug: TenantSlug, id: ResourceId): Promise<APIKey | null> {
-    const results = await this.sql`
+  async getById(tenantSlug: TenantSlug, id: ResourceId): Promise<any | null> {
+    const results = (await this.sql`
       select * from admin_api_keys
       where id = ${id} and tenant_slug = ${tenantSlug}
-    `;
-    return results[0] || null;
+    `) as any[];
+    return results[0] ? this.toPublic(results[0]) : null;
   }
 
+  /**
+   * Creates a key and returns it with the raw `key`/`secret` populated —
+   * this is the ONLY time raw material leaves the server. At rest only
+   * sha256 hashes and a 12-char display prefix are stored.
+   */
   async create(tenantSlug: TenantSlug, data: Partial<APIKey>, createdBy?: UserId): Promise<APIKey> {
     const id = randomUUID() as ResourceId;
     const now = new Date();
+    const rawKey = data.key || `sk_${randomUUID().replace(/-/g, "")}${randomUUID().replace(/-/g, "").slice(0, 8)}`;
+    const rawSecret = data.secret || `wh_${randomUUID().replace(/-/g, "")}`;
 
-    const apiKey: APIKey = {
+    await this.sql`
+      insert into admin_api_keys (id, tenant_slug, name, key, secret, key_hash, key_prefix, secret_hash, permissions, rate_limit, expires_at, created_at, created_by)
+      values (${id}, ${tenantSlug}, ${data.name!}, ${null}, ${null}, ${this.sha256(rawKey)}, ${rawKey.slice(0, 12)}, ${this.sha256(rawSecret)}, ${JSON.stringify(data.permissions || [])}, ${data.rateLimit || null}, ${data.expiresAt || null}, ${now}, ${createdBy || null})
+    `;
+
+    return {
       id,
       tenantSlug,
       name: data.name!,
-      key: data.key || `sk_${randomUUID().replace(/-/g, "").slice(0, 24)}`,
-      secret: data.secret || randomUUID(),
+      key: rawKey,
+      secret: rawSecret,
+      keyPrefix: rawKey.slice(0, 12),
       permissions: data.permissions || [],
       rateLimit: data.rateLimit,
       expiresAt: data.expiresAt,
       createdAt: now,
       updatedAt: now,
       createdBy,
-    };
-
-    await this.sql`
-      insert into admin_api_keys (id, tenant_slug, name, key, secret, permissions, rate_limit, expires_at, created_at, created_by)
-      values (${id}, ${tenantSlug}, ${apiKey.name}, ${apiKey.key}, ${apiKey.secret}, ${JSON.stringify(apiKey.permissions)}, ${apiKey.rateLimit || null}, ${apiKey.expiresAt || null}, ${now}, ${createdBy || null})
-    `;
-
-    return apiKey;
+    } as APIKey;
   }
 
   async revoke(tenantSlug: TenantSlug, id: ResourceId): Promise<void> {
     await this.sql`
+      update admin_api_keys set revoked_at = now()
+      where id = ${id} and tenant_slug = ${tenantSlug} and revoked_at is null
+    `;
+  }
+
+  async delete(tenantSlug: TenantSlug, id: ResourceId): Promise<void> {
+    await this.sql`
       delete from admin_api_keys
       where id = ${id} and tenant_slug = ${tenantSlug}
     `;
+  }
+
+  /**
+   * Authenticate a raw API key against a tenant. Returns the key row on
+   * success (updates last_used_at), null otherwise.
+   */
+  async authenticate(tenantSlug: TenantSlug, rawKey: string): Promise<{ id: string; permissions: any[] } | null> {
+    const rows = (await this.sql`
+      select id, permissions, expires_at, revoked_at from admin_api_keys
+      where tenant_slug = ${tenantSlug} and key_hash = ${this.sha256(rawKey)}
+      limit 1
+    `) as any[];
+    const row = rows[0];
+    if (!row || row.revoked_at) return null;
+    if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) return null;
+    await this.sql`update admin_api_keys set last_used_at = now() where id = ${row.id}`.catch(() => {});
+    return { id: row.id, permissions: row.permissions || [] };
   }
 }
 
