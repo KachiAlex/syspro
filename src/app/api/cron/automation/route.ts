@@ -8,6 +8,7 @@ import {
 import { handleAutomationAction } from "@/lib/automation/connectors";
 import { emitAutomationEvent, emitAutomationEventOnce } from "@/lib/automation/emit";
 import { refreshFinanceSummary } from "@/lib/finance/events";
+import { processQueuedReportJobs, queueDueScheduledReports } from "@/lib/reporting/jobs";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -26,6 +27,8 @@ const BATCH_LIMIT = 100;
  *     for the same source record within its cooldown window.
  *  3. refreshFinanceSummary per active tenant — the consumer half of the
  *     finance_events bus that backs finance_dashboard_metrics.
+ *  4. Queue reports whose schedule interval has elapsed (daily/weekly/
+ *     monthly), then drain the report job queue so they actually execute.
  *
  * Invoke with Authorization: Bearer $CRON_SECRET (e.g. hourly/daily).
  */
@@ -159,6 +162,10 @@ export async function POST(request: NextRequest) {
       await refreshFinanceSummary(t.tenant_slug);
     }
 
+    // 4. Queue due scheduled reports, then drain the report job queue
+    const scheduledReports = await queueDueScheduledReports(BATCH_LIMIT);
+    const reportResults = await processQueuedReportJobs(BATCH_LIMIT);
+
     return NextResponse.json({
       actions: actionResults,
       processed: actionResults.length,
@@ -166,6 +173,9 @@ export async function POST(request: NextRequest) {
       attendanceMissedEmitted: attendanceEmitted,
       overBudgetEmitted: overBudget.length,
       summariesRefreshed: tenants.length,
+      scheduledReportsQueued: scheduledReports.length,
+      reportJobsProcessed: reportResults.length,
+      reportJobs: reportResults,
     });
   } catch (error) {
     console.error("Cron automation runner failed:", error);

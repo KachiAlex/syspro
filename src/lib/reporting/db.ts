@@ -61,6 +61,38 @@ export async function updateReportJobOutput(id: string, outputData: any, sql: Sq
   await db.query(`update report_jobs set output_data = $1 where id = $2`, [JSON.stringify(outputData), id]);
 }
 
+/**
+ * Enabled reports whose schedule interval has elapsed since their last job
+ * (or that have never run). Schedules: daily | weekly | monthly.
+ */
+export async function fetchDueScheduledReports(limit = 50, sql: SqlClient = SQL) {
+  await ensureReportingTables(sql);
+  const rows = (await db.query<any>(
+    `select r.* from reports r
+     where r.enabled = true
+       and r.schedule in ('daily','weekly','monthly')
+       and coalesce((
+         select max(j.created_at) from report_jobs j where j.report_id = r.id
+       ), 'epoch'::timestamptz) < now() - case r.schedule
+         when 'daily' then interval '1 day'
+         when 'weekly' then interval '7 days'
+         else interval '30 days'
+       end
+     order by r.created_at asc
+     limit $1`,
+    [limit]
+  )).rows;
+  return rows.map((r: any) => ({
+    id: r.id,
+    tenantSlug: r.tenant_slug,
+    name: r.name,
+    reportType: r.report_type,
+    definition: r.definition,
+    filters: r.filters,
+    schedule: r.schedule,
+  }));
+}
+
 export async function listReports(tenantSlug: string, page = 1, limit = 20, sql: SqlClient = SQL) {
   await ensureReportingTables(sql);
 
