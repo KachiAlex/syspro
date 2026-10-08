@@ -70,11 +70,14 @@ export async function POST(request: NextRequest) {
     const quantity = computeQuantity(items);
     const id = `so_${Date.now()}`;
     const orderNumber = `SO-${Date.now().toString().slice(-6)}`;
-    let customerName = String(customerId);
-    try {
-      const custResult = await db.query(`SELECT name FROM crm_customers WHERE id = $1 AND tenant_slug = $2`, [String(customerId), context.tenantSlug]);
-      customerName = custResult.rows[0]?.name ?? String(customerId);
-    } catch { /* use raw ID as fallback */ }
+    const custResult = await db.query(
+      `SELECT name FROM crm_customers WHERE id = $1 AND tenant_slug = $2`,
+      [String(customerId), context.tenantSlug]
+    );
+    if (!custResult.rows[0]) {
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    }
+    const customerName = custResult.rows[0].name;
     const createdAt = new Date().toISOString();
 
     await db.query(

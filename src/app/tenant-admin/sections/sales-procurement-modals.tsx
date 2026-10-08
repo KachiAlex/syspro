@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { X, AlertTriangle, Package, Users, ShoppingCart, Plus, Search, Filter, Download, Edit, Trash2, Eye, Mail, Phone, MapPin, Calendar, DollarSign, Star } from "lucide-react";
+import { useTenantContextSafe } from "@/components/tenant-admin/tenant-context";
 
 // Sales Order Modal
 export interface SalesOrderFormData {
@@ -36,6 +37,20 @@ export function CreateSalesOrderModal({
   });
   const [error, setError] = useState<string | null>(null);
   const [showItemModal, setShowItemModal] = useState(false);
+  const [customers, setCustomers] = useState<Array<{ id: string; name: string }>>([]);
+  const { tenantSlug } = useTenantContextSafe();
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const query = tenantSlug ? `?tenantSlug=${encodeURIComponent(tenantSlug)}` : "";
+    fetch(`/api/crm/customers${query}`, { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        const list = Array.isArray(data?.customers) ? data.customers : [];
+        setCustomers(list.map((c: any) => ({ id: String(c.id), name: c.name ?? String(c.id) })));
+      })
+      .catch(() => setCustomers([]));
+  }, [isOpen]);
 
   const handleAddItem = () => {
     setShowItemModal(true);
@@ -108,10 +123,13 @@ export function CreateSalesOrderModal({
                 required
               >
                 <option value="">Select Customer</option>
-                <option value="1">Acme Corp</option>
-                <option value="2">Tech Solutions</option>
-                <option value="3">Global Industries</option>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
               </select>
+              {customers.length === 0 && (
+                <p className="mt-1 text-xs text-gray-500">No customers found — convert a CRM lead to a customer first.</p>
+              )}
             </div>
 
             <div>
@@ -1469,7 +1487,7 @@ export function AddItemModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (itemData: { productId: string; quantity: number; unitPrice: number }) => void;
+  onSubmit: (itemData: { productId: string; quantity: number; unitPrice: number; description?: string }) => void;
 }) {
   const [itemData, setItemData] = useState({
     productId: "",
@@ -1477,6 +1495,25 @@ export function AddItemModal({
     unitPrice: 0,
   });
   const [error, setError] = useState<string | null>(null);
+  const [products, setProducts] = useState<Array<{ id: string; sku: string; name: string; salePrice: number }>>([]);
+  const { tenantSlug } = useTenantContextSafe();
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const query = tenantSlug ? `?tenantSlug=${encodeURIComponent(tenantSlug)}` : "";
+    fetch(`/api/inventory/products${query}`, { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        const list = Array.isArray(data?.products) ? data.products : [];
+        setProducts(list.map((p: any) => ({
+          id: String(p.id),
+          sku: p.sku ?? String(p.id),
+          name: p.name ?? p.sku ?? String(p.id),
+          salePrice: Number(p.salePrice ?? p.unitCost ?? 0),
+        })));
+      })
+      .catch(() => setProducts([]));
+  }, [isOpen, tenantSlug]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1497,7 +1534,8 @@ export function AddItemModal({
       return;
     }
 
-    onSubmit(itemData);
+    const product = products.find((p) => p.sku === itemData.productId || p.id === itemData.productId);
+    onSubmit({ ...itemData, description: product?.name ?? itemData.productId });
     setItemData({ productId: "", quantity: 1, unitPrice: 0 });
   };
 
@@ -1525,18 +1563,22 @@ export function AddItemModal({
             <label className="block text-sm font-medium text-gray-900 mb-1">Product</label>
             <select
               value={itemData.productId}
-              onChange={(e) => setItemData({ ...itemData, productId: e.target.value })}
+              onChange={(e) => {
+                const sku = e.target.value;
+                const product = products.find((p) => p.sku === sku || p.id === sku);
+                setItemData({ ...itemData, productId: sku, unitPrice: product?.salePrice ?? itemData.unitPrice });
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black bg-white"
               required
             >
               <option value="">Select Product</option>
-              <option value="PROD-001">Laptop Computer</option>
-              <option value="PROD-002">Office Chair</option>
-              <option value="PROD-003">Printer Paper</option>
-              <option value="PROD-004">Desk Lamp</option>
-              <option value="PROD-005">Wireless Mouse</option>
-              <option value="PROD-006">Keyboard</option>
+              {products.map((p) => (
+                <option key={p.id} value={p.sku}>{p.name} ({p.sku})</option>
+              ))}
             </select>
+            {products.length === 0 && (
+              <p className="mt-1 text-xs text-gray-500">No inventory products found — add products in Inventory first.</p>
+            )}
           </div>
 
           <div>
