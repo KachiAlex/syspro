@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
         union all
         select employee_id::text as uid from engineer_profiles where tenant_slug = ${context.tenantSlug}
         union all
-        select id::text as uid from tenant_admins ta join tenants t on t.id = ta.tenant_id where t.slug = ${context.tenantSlug}
+        select ta.id::text as uid from tenant_admins ta join tenants t on t.id = ta.tenant_id where t.slug = ${context.tenantSlug}
       ) u where u.uid = ${effectiveEngineerId} limit 1
     ` as any[];
     if (!owned) {
