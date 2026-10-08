@@ -8,9 +8,11 @@ import {
   getEmployeeGoals,
   updateGoalStatus,
 } from "@/lib/hr/db-appraisals";
+import { isTenantSuspended } from "@/lib/api-auth";
 
 export async function GET(request: NextRequest) {
   const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const url = new URL(request.url);
@@ -31,6 +33,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
@@ -82,6 +85,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {

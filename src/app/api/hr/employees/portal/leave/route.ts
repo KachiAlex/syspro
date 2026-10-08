@@ -5,6 +5,7 @@ import { resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables, insertNotification, DEFAULT_LEAVE_ENTITLEMENTS, checkLeaveBalanceAvailable } from "@/lib/hr/db";
 import { z } from "zod";
+import { isTenantSuspended } from "@/lib/api-auth";
 
 function daysBetween(start: string, end: string): number {
   const ms = new Date(end).getTime() - new Date(start).getTime();
@@ -17,7 +18,8 @@ function daysBetween(start: string, end: string): number {
  * table the tenant-admin leave tab reads).
  */
 export async function GET(request: NextRequest) {
-  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 }); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
     try { await ensureHrTables(SQL); } catch (e) { console.error("ensureHrTables failed (non-fatal):", (e as any)?.message); }
@@ -91,7 +93,8 @@ const createSchema = z.object({
  * Submit a new leave request (admin_leave + balance tracking).
  */
 export async function POST(request: NextRequest) {
-  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 }); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
     try { await ensureHrTables(SQL); } catch (e) { console.error("ensureHrTables failed (non-fatal):", (e as any)?.message); }
@@ -188,7 +191,8 @@ const approveSchema = z.object({
  * HOD or HR approves/rejects a leave request (updates balances).
  */
 export async function PATCH(request: NextRequest) {
-  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 }); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const employeeRole = (session.role || "staff").toLowerCase();
   const isHOD = employeeRole === "hod" || employeeRole === "head_of_department";

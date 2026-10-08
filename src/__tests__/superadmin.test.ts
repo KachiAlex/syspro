@@ -451,6 +451,45 @@ describeIfDb("Superadmin Portal - Database Integration", () => {
       testAdmin = null; // Don't clean up since it's already deleted
     });
   });
+
+  describe("Tenant lifecycle suspension enforcement", () => {
+    let lifecycleTenant: any;
+
+    afterEach(async () => {
+      if (lifecycleTenant) {
+        await sql`DELETE FROM tenants WHERE id = ${lifecycleTenant.id}`;
+        lifecycleTenant = null;
+      }
+    });
+
+    it("blocks suspended and deleted tenants but not pending or active", async () => {
+      const { isTenantSuspended } = await import("@/lib/api-auth");
+      const slug = uniqueTenantSlug("lifecycle");
+      const created = await sql`
+        INSERT INTO tenants (name, slug, status)
+        VALUES ('Lifecycle Co', ${slug}, 'Pending')
+        RETURNING *
+      `;
+      lifecycleTenant = created[0];
+
+      // Pending tenants (the common provisioning state) must remain usable
+      expect(await isTenantSuspended(slug)).toBe(false);
+
+      await sql`UPDATE tenants SET status = 'active' WHERE id = ${lifecycleTenant.id}`;
+      expect(await isTenantSuspended(slug)).toBe(false);
+
+      await sql`UPDATE tenants SET status = 'suspended' WHERE id = ${lifecycleTenant.id}`;
+      expect(await isTenantSuspended(slug)).toBe(true);
+
+      await sql`UPDATE tenants SET status = 'active' WHERE id = ${lifecycleTenant.id}`;
+      expect(await isTenantSuspended(slug)).toBe(false);
+
+      // Deleted tenant → no row → fail closed so orphaned sessions die
+      await sql`DELETE FROM tenants WHERE id = ${lifecycleTenant.id}`;
+      lifecycleTenant = null;
+      expect(await isTenantSuspended(slug)).toBe(true);
+    });
+  });
 });
 
 // Tests that work in both mock and real database environments

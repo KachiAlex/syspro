@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveEmployeeSession, type EmployeeSession } from "@/lib/hr/auth";
-import { loadPortalPermissions } from "@/lib/api-auth";
+import { loadPortalPermissions, isTenantSuspended } from "@/lib/api-auth";
 import { sql as SQL } from "@/lib/sql-client";
 
 export type CrmVisibilityScope = "all" | "team" | "mine";
@@ -20,6 +20,7 @@ const ADMIN_ROLES = ["admin", "tenant_admin", "administrator", "superadmin", "hr
 export async function resolveCrmAuth(request: NextRequest): Promise<CrmAuthResult | null> {
   const session = resolveEmployeeSession(request);
   if (!session) return null;
+  if (session.tenantSlug && (await isTenantSuspended(session.tenantSlug))) return null;
 
   const role = (session.role || "staff").toLowerCase();
   const isHOD = HOD_ROLES.includes(role);

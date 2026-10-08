@@ -2,9 +2,11 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { resolveEmployeeSession } from "@/lib/hr/auth";
 import { runAgent } from "@/lib/ai/agent";
+import { isTenantSuspended } from "@/lib/api-auth";
 
 export async function POST(request: NextRequest) {
   const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const groqKey = process.env.GROQ_API_KEY;

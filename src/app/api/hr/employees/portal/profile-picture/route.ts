@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { decodeEmployeeToken, resolveEmployeeSession } from "@/lib/hr/auth";
+import { isTenantSuspended } from "@/lib/api-auth";
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -17,7 +18,8 @@ function getR2Env() {
 }
 
 export async function POST(request: NextRequest) {
-  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 }); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
     const body = await request.json();

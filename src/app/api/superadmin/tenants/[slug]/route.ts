@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import { requireSuperAdmin } from "@/lib/api-auth";
 import { ensureTenantTable } from "@/lib/tenant/tenant-table";
+import { logAuditAction } from '@/lib/audit';
 
 const sql = getSql();
 
@@ -80,6 +81,7 @@ export async function PUT(
       }
     }
 
+    await logAuditAction('update', 'tenant', result[0].id.toString(), { slug, fields: Object.keys(body) }, slug, undefined, _auth.user?.id);
     return NextResponse.json(result[0]);
   } catch (error) {
     console.error('Error updating tenant:', error);
@@ -103,7 +105,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ message: 'Tenant deleted' }, { status: 204 });
+    await logAuditAction('delete', 'tenant', result[0].id.toString(), { slug, name: result[0].name }, slug, undefined, _auth.user?.id);
+    return NextResponse.json({ message: 'Tenant deleted' });
   } catch (error) {
     console.error('Error deleting tenant:', error);
     return NextResponse.json({ error: 'Failed to delete tenant' }, { status: 500 });

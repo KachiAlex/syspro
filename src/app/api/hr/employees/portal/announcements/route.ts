@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { resolveEmployeeSession } from "@/lib/hr/auth";
 import { listAnnouncements, insertAnnouncement, deleteAnnouncement } from "@/lib/hr/db";
+import { isTenantSuspended } from "@/lib/api-auth";
 
 /**
  * GET /api/hr/employees/portal/announcements
@@ -9,6 +10,7 @@ import { listAnnouncements, insertAnnouncement, deleteAnnouncement } from "@/lib
  */
 export async function GET(request: NextRequest) {
   const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
@@ -26,6 +28,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const role = (session.role || "staff").toLowerCase();
@@ -66,6 +69,7 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const role = (session.role || "staff").toLowerCase();

@@ -23,6 +23,7 @@ import {
   getEmployeeGoals,
   type AppraisalConfigRecord,
 } from "@/lib/hr/db-appraisals";
+import { isTenantSuspended } from "@/lib/api-auth";
 
 // ─── Period helpers ───
 
@@ -132,6 +133,7 @@ async function fetchEmployeeData(tenantSlug: string, employeeId: string, periodS
 
 export async function GET(request: NextRequest) {
   const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const employeeRole = (session.role || "staff").toLowerCase();
@@ -250,6 +252,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const employeeRole = (session.role || "staff").toLowerCase();
@@ -322,6 +325,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const employeeRole = (session.role || "staff").toLowerCase();

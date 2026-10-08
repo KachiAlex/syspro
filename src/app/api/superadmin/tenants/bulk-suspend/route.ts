@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     const res = await sql`
       UPDATE tenants
-      SET status = 'suspended', "updatedAt" = NOW()
+      SET status = 'suspended', "isActive" = false, "updatedAt" = NOW()
       WHERE slug = ANY(${slugs})
       RETURNING id, slug
     `;

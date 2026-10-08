@@ -3,9 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { decodeEmployeeToken, resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables } from "@/lib/hr/db";
+import { isTenantSuspended } from "@/lib/api-auth";
 
 export async function GET(request: NextRequest) {
-  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 }); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
     const sql = SQL;

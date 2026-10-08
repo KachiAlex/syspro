@@ -4,6 +4,7 @@ import { signSession } from "@/lib/session";
 import { checkRateLimitAsync, getRateLimitKey } from "@/lib/rate-limit";
 import { sql as SQL } from "@/lib/sql-client";
 import { authenticateEmployee, createEmployeeToken } from "@/lib/hr/auth";
+import { isTenantSuspended } from "@/lib/api-auth";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
@@ -57,6 +58,9 @@ export async function POST(request: NextRequest) {
       }
 
       const tenantSlug = admin.tenant_slug;
+      if (await isTenantSuspended(tenantSlug)) {
+        return NextResponse.json({ error: "Tenant is suspended. Contact your administrator." }, { status: 403 });
+      }
       const now = Date.now();
       const maxAge = 7 * 24 * 60 * 60;
 
@@ -100,6 +104,9 @@ export async function POST(request: NextRequest) {
 
     if (empRows.length > 0) {
       const empTenantSlug = (empRows[0] as any).tenant_slug;
+      if (await isTenantSuspended(empTenantSlug)) {
+        return NextResponse.json({ error: "Tenant is suspended. Contact your administrator." }, { status: 403 });
+      }
       const session = await authenticateEmployee(empTenantSlug, lowerEmail, password);
 
       if (session) {

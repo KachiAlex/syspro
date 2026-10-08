@@ -3,22 +3,31 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { runAgent, CAPABILITY_DEFINITIONS, getConversationHistory, type AgentCapability } from "@/lib/ai/agent";
 import { resolveEmployeeSession } from "@/lib/hr/auth";
+import { isTenantSuspended } from "@/lib/api-auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 // ─── Auth ───
 
-function authenticate(request: NextRequest): { tenantSlug: string; authMethod: "api_key" | "session" } | null {
+async function authenticate(request: NextRequest): Promise<{ tenantSlug: string; authMethod: "api_key" | "session" } | NextResponse | null> {
   // 1. Try API key (for external integrations)
   const apiKey = request.headers.get("x-api-key") || request.headers.get("authorization")?.replace("Bearer ", "");
   if (apiKey && apiKey === process.env.SYSPRO_AI_API_KEY) {
     const tenantSlug = request.headers.get("x-tenant-slug");
-    if (tenantSlug) return { tenantSlug, authMethod: "api_key" };
+    if (tenantSlug) {
+      if (await isTenantSuspended(tenantSlug)) {
+        return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
+      }
+      return { tenantSlug, authMethod: "api_key" };
+    }
   }
 
   // 2. Try employee session (for internal calls)
   const session = resolveEmployeeSession(request);
+  if (session && (await isTenantSuspended(session.tenantSlug))) {
+    return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
+  }
   if (session) {
     return { tenantSlug: session.tenantSlug, authMethod: "session" };
   }
@@ -50,7 +59,8 @@ const agentSchema = z.object({
 // ─── POST: Execute Agent ───
 
 export async function POST(request: NextRequest) {
-  const auth = authenticate(request);
+  const auth = await authenticate(request);
+  if (auth instanceof NextResponse) return auth;
   if (!auth) {
     return NextResponse.json(
       {
@@ -90,7 +100,8 @@ export async function POST(request: NextRequest) {
 // ─── GET: List Capabilities ───
 
 export async function GET(request: NextRequest) {
-  const auth = authenticate(request);
+  const auth = await authenticate(request);
+  if (auth instanceof NextResponse) return auth;
   if (!auth) {
     return NextResponse.json(
       {

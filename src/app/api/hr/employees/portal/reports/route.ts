@@ -5,6 +5,7 @@ import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables, insertNotification } from "@/lib/hr/db";
 import { randomUUID } from "crypto";
 import { z } from "zod";
+import { isTenantSuspended } from "@/lib/api-auth";
 
 const reportSchema = z.object({
   reportType: z.enum(["daily", "weekly", "monthly", "quarterly", "annual"]),
@@ -30,7 +31,8 @@ const reportSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 }); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
     const sql = SQL;
@@ -163,7 +165,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 }); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
     const sql = SQL;

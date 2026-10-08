@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import { requireSuperAdmin } from "@/lib/api-auth";
 import { ensureTenantTable } from "@/lib/tenant/tenant-table";
+import { logAuditAction } from '@/lib/audit';
 
 const sql = getSql();
 
@@ -22,6 +23,7 @@ export async function POST(
     if (result.length === 0) {
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
+    await logAuditAction('activate', 'tenant', result[0].id.toString(), { slug }, slug, undefined, _auth.user?.id);
     return NextResponse.json({ message: 'Tenant activated', tenant: result[0] });
   } catch (error) {
     console.error('Error activating tenant:', error);

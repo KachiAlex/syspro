@@ -10,9 +10,11 @@ import {
 } from "@/lib/attendance-verification";
 import { db } from "@/lib/sql-client";
 import { randomUUID } from "crypto";
+import { isTenantSuspended } from "@/lib/api-auth";
 
 export async function POST(request: NextRequest) {
-  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 }); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
     const sql = SQL;
@@ -187,7 +189,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 }); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
     const sql = SQL;

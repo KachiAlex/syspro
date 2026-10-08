@@ -4,6 +4,7 @@ import { decodeEmployeeToken, resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
 import { insertNotification } from "@/lib/hr/db";
 import { z } from "zod";
+import { isTenantSuspended } from "@/lib/api-auth";
 
 /**
  * GET /api/hr/employees/portal/expenses
@@ -11,7 +12,8 @@ import { z } from "zod";
  * HOD also sees pending expense requests from their department for approval.
  */
 export async function GET(request: NextRequest) {
-  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 }); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
     const employeeRole = (session.role || "staff").toLowerCase();
@@ -108,7 +110,8 @@ const createExpenseSchema = z.object({
  * Submit a new expense request.
  */
 export async function POST(request: NextRequest) {
-  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 }); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
     const body = await request.json();
@@ -178,7 +181,8 @@ export async function POST(request: NextRequest) {
  * HOD approves/rejects an expense request.
  */
 export async function PATCH(request: NextRequest) {
-  const session = resolveEmployeeSession(request); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const session = resolveEmployeeSession(request);
+    if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 }); if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const employeeRole = (session.role || "staff").toLowerCase();
   const isHOD = employeeRole === "hod" || employeeRole === "head_of_department";

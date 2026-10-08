@@ -2,20 +2,29 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getUsageStats, getRecentLogs, checkQuota } from "@/lib/ai/usage-log";
 import { resolveEmployeeSession } from "@/lib/hr/auth";
+import { isTenantSuspended } from "@/lib/api-auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
 // ─── Auth ───
 
-function authenticate(request: NextRequest): { tenantSlug: string } | null {
+async function authenticate(request: NextRequest): Promise<{ tenantSlug: string } | NextResponse | null> {
   const apiKey = request.headers.get("x-api-key") || request.headers.get("authorization")?.replace("Bearer ", "");
   if (apiKey && apiKey === process.env.SYSPRO_AI_API_KEY) {
     const tenantSlug = request.headers.get("x-tenant-slug");
-    if (tenantSlug) return { tenantSlug };
+    if (tenantSlug) {
+      if (await isTenantSuspended(tenantSlug)) {
+        return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
+      }
+      return { tenantSlug };
+    }
   }
 
   const session = resolveEmployeeSession(request);
+  if (session && (await isTenantSuspended(session.tenantSlug))) {
+    return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
+  }
   if (session) return { tenantSlug: session.tenantSlug };
 
   return null;
@@ -24,7 +33,8 @@ function authenticate(request: NextRequest): { tenantSlug: string } | null {
 // ─── GET: Usage Stats / Quota / Recent Logs ───
 
 export async function GET(request: NextRequest) {
-  const auth = authenticate(request);
+  const auth = await authenticate(request);
+  if (auth instanceof NextResponse) return auth;
   if (!auth) {
     return NextResponse.json(
       { error: "Authentication required." },

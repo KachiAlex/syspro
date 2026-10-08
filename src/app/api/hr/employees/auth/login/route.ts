@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateEmployee, createEmployeeToken } from "@/lib/hr/auth";
+import { isTenantSuspended } from "@/lib/api-auth";
 import { checkRateLimitAsync, getRateLimitKey } from "@/lib/rate-limit";
 
 export async function GET() {
@@ -25,6 +26,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "tenantSlug, email, and password are required" },
         { status: 400 }
+      );
+    }
+
+    if (await isTenantSuspended(tenantSlug)) {
+      return NextResponse.json(
+        { error: "Tenant is suspended. Contact your administrator." },
+        { status: 403 }
       );
     }
 

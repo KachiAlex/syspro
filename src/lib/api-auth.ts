@@ -126,6 +126,11 @@ export async function requireTenantScope(
   // Superadmin tokens carry no tenant scope and may cross tenants
   if (user.roleId === "superadmin") return { ok: true, user };
 
+  const effectiveTenant = requested || user.tenantSlug;
+  if (effectiveTenant && (await isTenantSuspended(effectiveTenant))) {
+    return forbidden("Tenant is suspended");
+  }
+
   if (!requested) {
     // No tenant hinted on the request — the session tenant is the only tenant
     // this user can legitimately act on; handlers that take a record id must
@@ -217,6 +222,26 @@ export async function loadPortalPermissions(
  * gives governed modules — while unrestricted sessions keep their existing
  * role-level gate. Returns a denial response or null when access is allowed.
  */
+const SUSPENDED_STATUSES = new Set(["suspended", "cancelled", "terminated", "deleted"]);
+
+/**
+ * Suspension enforcement: a tenant whose status is suspended/cancelled must not
+ * use tenant APIs at all. Only explicit suspension states block — "Pending" and
+ * other provisioning states remain usable (existing tenants rely on it).
+ */
+export async function isTenantSuspended(tenantSlug: string): Promise<boolean> {
+  try {
+    const rows = (await SQL`select status from tenants where slug = ${tenantSlug} limit 1`) as any[];
+    // No tenants row → the tenant was deleted; fail closed so orphaned
+    // sessions and orphaned data cannot be used.
+    if (!rows[0]) return true;
+    const status = String(rows[0].status ?? "").toLowerCase();
+    return SUSPENDED_STATUSES.has(status);
+  } catch {
+    return false;
+  }
+}
+
 export async function requireModuleGate(
   request: Req,
   module: string,
