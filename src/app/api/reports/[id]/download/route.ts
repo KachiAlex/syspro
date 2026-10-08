@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { extractAuthContext, requirePermission, validateTenant } from "@/lib/auth-helper";
 import { db } from "@/lib/sql-client";
+import { datasetToCsv, executeReport } from "@/lib/reporting/execute";
 
 import { requireModuleAccess } from "@/lib/api-auth";
 export async function GET(request: NextRequest, context: any) {
@@ -18,18 +19,12 @@ export async function GET(request: NextRequest, context: any) {
     if (!report) {
       return NextResponse.json({ error: "Report not found" }, { status: 404 });
     }
-    const def = report.definition || {};
-    const filters = report.filters || {};
-    const rows = [
-      ["Report", report.name],
-      ["Type", report.report_type],
-      ["Module", def.module || "unknown"],
-      ["Period Start", def.dateRange?.start || ""],
-      ["Period End", def.dateRange?.end || ""],
-      ["Generated At", report.created_at?.toISOString?.() ?? report.created_at],
-    ];
-    const headers = ["Field", "Value"];
-    const csv = [headers.join(","), ...rows.map((r) => r.map((v) => JSON.stringify(String(v))).join(","))].join("\n");
+    const dataset = await executeReport(tenantSlug, {
+      reportType: report.report_type,
+      definition: report.definition,
+      filters: report.filters,
+    });
+    const csv = datasetToCsv(dataset);
     const base64 = Buffer.from(csv).toString("base64");
     const fileUrl = `data:text/csv;base64,${base64}`;
     return NextResponse.json({ fileUrl, name: report.name });

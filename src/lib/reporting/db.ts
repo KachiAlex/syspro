@@ -44,6 +44,21 @@ async function ensureReportingTablesRun(sql: SqlClient = SQL) {
   `;
 
   await sql`alter table report_jobs add column if not exists attempt_count integer not null default 0`;
+  await sql`alter table report_jobs add column if not exists output_data jsonb`;
+}
+
+export async function getReportForJob(reportId: string, tenantSlug: string, sql: SqlClient = SQL) {
+  await ensureReportingTables(sql);
+  const rows = (await db.query<any>(
+    `select * from reports where id = $1 and tenant_slug = $2`,
+    [reportId, tenantSlug]
+  )).rows;
+  return rows[0] ?? null;
+}
+
+export async function updateReportJobOutput(id: string, outputData: any, sql: SqlClient = SQL) {
+  await ensureReportingTables(sql);
+  await db.query(`update report_jobs set output_data = $1 where id = $2`, [JSON.stringify(outputData), id]);
 }
 
 export async function listReports(tenantSlug: string, page = 1, limit = 20, sql: SqlClient = SQL) {

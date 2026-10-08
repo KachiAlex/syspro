@@ -4,7 +4,8 @@ import { extractAuthContext, requirePermission, validateTenant } from "@/lib/aut
 import { requireModuleAccess } from "@/lib/api-auth";
 import { fetchPendingActions, markActionStatus } from "@/lib/automation/db";
 import { handleAutomationAction } from "@/lib/automation/connectors";
-import { fetchQueuedReportJobs, updateReportJobStatus } from "@/lib/reporting/db";
+import { fetchQueuedReportJobs, getReportForJob, updateReportJobOutput, updateReportJobStatus } from "@/lib/reporting/db";
+import { executeReport } from "@/lib/reporting/execute";
 
 export async function POST(request: NextRequest) {
   const scope = await requireModuleAccess(request, "automation", "write");
@@ -32,10 +33,26 @@ export async function POST(request: NextRequest) {
     const reportResults = [] as Array<{ id: string; status: string; outputLocation?: string; error?: string }>;
     for (const job of reportJobs) {
       await updateReportJobStatus(job.id, "running");
-      // Placeholder execution hook; replace with real report generation.
-      const outputLocation = `s3://reports/${tenantSlug}/${job.id}.json`;
-      await updateReportJobStatus(job.id, "succeeded", { location: outputLocation });
-      reportResults.push({ id: job.id, status: "succeeded", outputLocation });
+      try {
+        const report = await getReportForJob(job.reportId, tenantSlug);
+        if (!report) {
+          await updateReportJobStatus(job.id, "failed", { error: "Report not found" });
+          reportResults.push({ id: job.id, status: "failed", error: "Report not found" });
+          continue;
+        }
+        const dataset = await executeReport(tenantSlug, {
+          reportType: report.report_type,
+          definition: report.definition,
+          filters: job.filters ?? report.filters,
+        });
+        await updateReportJobOutput(job.id, dataset);
+        await updateReportJobStatus(job.id, "succeeded", { location: `db://report_jobs/${job.id}` });
+        reportResults.push({ id: job.id, status: "succeeded", outputLocation: `db://report_jobs/${job.id}` });
+      } catch (jobErr) {
+        const msg = jobErr instanceof Error ? jobErr.message : String(jobErr);
+        await updateReportJobStatus(job.id, "failed", { error: msg });
+        reportResults.push({ id: job.id, status: "failed", error: msg });
+      }
     }
 
     return NextResponse.json({ actions: actionResults, reports: reportResults });
