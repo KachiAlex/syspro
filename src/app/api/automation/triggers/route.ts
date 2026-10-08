@@ -8,6 +8,7 @@ const TRIGGERS = [
   { key: "projects.task-status", module: "projects", description: "Task status changed" },
   { key: "projects.over-budget", module: "projects", description: "Project budget threshold crossed" },
   { key: "support.ticket-created", module: "it-support", description: "New support ticket created" },
+  { key: "itsupport.sla_breach", module: "it-support", description: "SLA response or resolution deadline breached" },
   { key: "finance.payment-due", module: "finance", description: "Bill or payment due" },
   { key: "crm.deal-stage", module: "crm", description: "Deal stage changed" },
   { key: "revops.campaign-performance", module: "revops", description: "Campaign performance anomaly" },
