@@ -747,7 +747,7 @@ export class IntegrationService {
           status = ${updates.status ?? existing.status},
           provider = ${updates.provider ?? existing.provider},
           config = ${updates.config ? JSON.stringify(updates.config) : JSON.stringify(existing.config)},
-          webhook_url = ${updates.webhookUrl ?? existing.webhookUrl},
+          webhook_url = ${updates.webhookUrl ?? existing.webhookUrl ?? (existing as any).webhook_url},
           events = ${(updates.events ?? existing.events ?? []) as any},
           updated_at = ${new Date()}
       where id = ${id} and tenant_slug = ${tenantSlug}
@@ -856,7 +856,11 @@ export class APIKeyService {
     const row = rows[0];
     if (!row || row.revoked_at) return null;
     if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) return null;
-    await this.sql`update admin_api_keys set last_used_at = now() where id = ${row.id}`.catch(() => {});
+    try {
+      await this.sql`update admin_api_keys set last_used_at = now() where id = ${row.id}`;
+    } catch {
+      // last_used_at stamping must not fail authentication
+    }
     return { id: row.id, permissions: row.permissions || [] };
   }
 }

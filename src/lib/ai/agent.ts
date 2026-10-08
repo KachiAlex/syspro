@@ -637,11 +637,11 @@ async function handleSummarize(
           where tenant_slug = ${tenantSlug}
           order by created_at desc limit 50
         `;
-        const purchaseOrders = await SQL`
+        const purchaseOrders = await Promise.resolve(SQL`
           select * from purchase_orders
           where tenant_slug = ${tenantSlug}
           order by created_at desc limit 50
-        `.catch(() => [] as any[]);
+        `).catch(() => [] as any[]);
         contextData = { requisitions, purchaseOrders };
         contextDescription = `Procurement summary: ${(requisitions as any[]).length} requisitions, ${(purchaseOrders as any[]).length} purchase orders`;
       } catch {
@@ -678,23 +678,23 @@ async function handleSummarize(
       const employee = (empRows as any[])[0];
       if (!employee) throw new Error("Employee not found");
 
-      const tasks = await SQL`
+      const tasks = await Promise.resolve(SQL`
         select id, title, status, is_kpi, due_date from admin_staff_tasks
         where tenant_slug = ${tenantSlug} and employee_id = ${employeeId}
         order by created_at desc limit 50
-      `.catch(() => [] as any[]);
+      `).catch(() => [] as any[]);
 
-      const reports = await SQL`
+      const reports = await Promise.resolve(SQL`
         select id, title, report_type, status, submitted_at from admin_staff_reports
         where tenant_slug = ${tenantSlug} and employee_id = ${employeeId}
         order by submitted_at desc limit 20
-      `.catch(() => [] as any[]);
+      `).catch(() => [] as any[]);
 
-      const appraisals = await SQL`
+      const appraisals = await Promise.resolve(SQL`
         select * from admin_appraisals
         where tenant_slug = ${tenantSlug} and employee_id = ${employeeId}
         order by generated_at desc limit 5
-      `.catch(() => [] as any[]);
+      `).catch(() => [] as any[]);
 
       contextData = { employee, tasks, reports, appraisals };
       contextDescription = `Employee summary for ${employee.name}`;
