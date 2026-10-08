@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
   
   try {
     // enforce tenant context for bill read operations
-    validateTenantContext(request, "read");
+    const _ctx = validateTenantContext(request, "read");
     const _gate = await requireModuleAccess(request, "finance", "read");
     if (!_gate.ok) return _gate.response;
     const url = new URL(request.url);
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     // Get single bill by ID
     if (url.searchParams.get("id")) {
       const billId = url.searchParams.get("id")!;
-      const bill = await getBill(billId);
+      const bill = await getBill(billId, _ctx.tenantSlug);
       
       if (!bill) {
         return NextResponse.json(
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
   
   try {
     // enforce tenant context for bill create/maintenance
-    validateTenantContext(request, "write");
+    const _ctx = validateTenantContext(request, "write");
     const _gate = await requireModuleAccess(request, "finance", "write");
     if (!_gate.ok) return _gate.response;
     const body = await request.json();
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const bill = await convertPOToBill(poId, parsed.data);
+      const bill = await convertPOToBill(poId, parsed.data, _ctx.tenantSlug);
       if (!bill) {
         return NextResponse.json(
           { error: "Purchase Order not found" },
@@ -181,15 +181,9 @@ export async function POST(request: NextRequest) {
 
     // Update bill statuses (maintenance endpoint)
     if (body.action === "update-statuses") {
-      const tenantSlug = body.tenantSlug;
-      if (!tenantSlug) {
-        return NextResponse.json(
-          { error: "tenantSlug required" },
-          { status: 400 }
-        );
-      }
+      // Session tenant is authoritative — ignore any caller-supplied tenantSlug.
 
-      const updated = await updateBillStatuses(tenantSlug);
+      const updated = await updateBillStatuses(_ctx.tenantSlug);
       return NextResponse.json({ updated });
     }
 
@@ -202,11 +196,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const bill = await createBill(parsed.data);
+    const bill = await createBill({ ...parsed.data, tenantSlug: _ctx.tenantSlug });
 
     // Publish finance event for reporting
     writeFinanceEvent({
-      tenantSlug: parsed.data.tenantSlug,
+      tenantSlug: _ctx.tenantSlug,
       eventType: "bill_created",
       sourceModule: "finance",
       sourceRecordId: bill.id,
@@ -233,7 +227,7 @@ export async function PUT(request: NextRequest) {
   
   try {
     // enforce tenant context for updates
-    validateTenantContext(request, "write");
+    const _ctx = validateTenantContext(request, "write");
     const _gate = await requireModuleAccess(request, "finance", "write");
     if (!_gate.ok) return _gate.response;
     const url = new URL(request.url);
@@ -256,7 +250,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const bill = await updateBill(billId, parsed.data);
+    const bill = await updateBill(billId, parsed.data, _ctx.tenantSlug);
     
     if (!bill) {
       return NextResponse.json(
@@ -281,7 +275,7 @@ export async function DELETE(request: NextRequest) {
   
   try {
     // enforce tenant context for deletes
-    validateTenantContext(request, "delete");
+    const _ctx = validateTenantContext(request, "delete");
     const _gate = await requireModuleAccess(request, "finance", "write");
     if (!_gate.ok) return _gate.response;
     const url = new URL(request.url);
@@ -294,7 +288,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const deleted = await deleteBill(billId);
+    const deleted = await deleteBill(billId, _ctx.tenantSlug);
     
     if (!deleted) {
       return NextResponse.json(

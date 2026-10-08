@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const id = `gr_${randomUUID()}`;
+    const id = randomUUID();
     const receiptNumber = `GR-${Date.now().toString().slice(-8)}`;
     const totalAmount = items.reduce((sum: number, item: any) => sum + item.quantity * item.unitCost, 0);
 
@@ -138,13 +138,43 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Roll receipt progress onto the PO: received qty across all receipts vs
+    // ordered qty → 'received' / 'partially_received'.
+    if (poId) {
+      try {
+        await db.query(
+          `update purchase_orders p
+           set status = case
+             when (select coalesce(sum((it->>'quantity')::numeric), 0)
+                   from procurement_goods_receipts r,
+                        lateral jsonb_array_elements(r.items) it
+                   where r.po_id = p.id and r.tenant_slug = p.tenant_slug)
+                  >= (select coalesce(sum(quantity), 0)
+                      from purchase_order_items
+                      where coalesce(purchase_order_id, po_id) = p.id)
+                  and (select coalesce(sum(quantity), 0)
+                       from purchase_order_items
+                       where coalesce(purchase_order_id, po_id) = p.id) > 0
+             then 'received'
+             else 'partially_received'
+           end,
+           updated_at = now()
+           where p.id = $1 and p.tenant_slug = $2`,
+          [poId, tenantSlug]
+        );
+      } catch (poErr) {
+        console.error("Failed to update PO receipt status:", poErr);
+      }
+    }
+
     try {
       const today = new Date().toISOString().split("T")[0];
       await createJournalEntry({
         tenantSlug,
         entryDate: today,
         referenceType: "manual",
-        referenceId: receiptNumber,
+        // reference_id is uuid — use the receipt row id, not the GR-nnnnn number
+        referenceId: id,
         description: `Goods receipt ${receiptNumber} from vendor`,
         lines: [
           {

@@ -177,11 +177,13 @@ export async function listVendorPayments(filters: {
   return records.map(record => normalizePayment(record, applicationsByPayment[record.id] || []));
 }
 
-export async function getVendorPayment(paymentId: string): Promise<VendorPayment | null> {
+export async function getVendorPayment(paymentId: string, tenantSlug?: string): Promise<VendorPayment | null> {
   const sql = SQL;
   await ensurePaymentTables(sql);
 
-  const records = (await db.query<VendorPaymentRecord>(`select * from vendor_payments where id = $1 limit 1`, [paymentId])).rows;
+  const records = tenantSlug
+    ? (await db.query<VendorPaymentRecord>(`select * from vendor_payments where id = $1 and tenant_slug = $2 limit 1`, [paymentId, tenantSlug])).rows
+    : (await db.query<VendorPaymentRecord>(`select * from vendor_payments where id = $1 limit 1`, [paymentId])).rows;
 
   if (!records.length) return null;
 
@@ -233,6 +235,16 @@ export async function createVendorPayment(payload: {
       throw new Error("Total applied amount cannot exceed payment amount");
     }
 
+    // Every referenced bill must belong to this tenant — otherwise a caller
+    // could credit another tenant's AP balance.
+    const billIds = payload.applications.map((app) => app.billId);
+    const ownedBills = (await sql`
+      select id from bills where id::text = any(${billIds}) and tenant_slug = ${payload.tenantSlug}
+    `) as any[];
+    if (ownedBills.length !== new Set(billIds).size) {
+      throw new Error("Bill not found");
+    }
+
     applications = await Promise.all(payload.applications.map(async (app) => {
       const [appRecord] = (await sql`
         insert into vendor_payment_applications (
@@ -264,7 +276,7 @@ export async function createVendorPayment(payload: {
               else status
             end,
             updated_at = now()
-        where id = ${app.billId}
+        where id = ${app.billId} and tenant_slug = ${payload.tenantSlug}
       `;
     }));
 
@@ -286,7 +298,7 @@ export async function createVendorPayment(payload: {
   return payment;
 }
 
-export async function updateVendorPayment(paymentId: string, updates: Partial<VendorPayment>): Promise<VendorPayment | null> {
+export async function updateVendorPayment(paymentId: string, updates: Partial<VendorPayment>, tenantSlug?: string): Promise<VendorPayment | null> {
   const sql = SQL;
   await ensurePaymentTables(sql);
 
@@ -295,6 +307,7 @@ export async function updateVendorPayment(paymentId: string, updates: Partial<Ve
       status = coalesce(${updates.status || null}, status),
       metadata = coalesce(${updates.metadata || null}, metadata)
     where id = ${paymentId}
+      ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
     returning *
   `) as VendorPaymentRecord[];
 
@@ -307,40 +320,45 @@ export async function updateVendorPayment(paymentId: string, updates: Partial<Ve
   return normalizePayment(record, applications);
 }
 
-export async function deleteVendorPayment(paymentId: string): Promise<boolean> {
+export async function deleteVendorPayment(paymentId: string, tenantSlug?: string): Promise<boolean> {
   const sql = SQL;
   await ensurePaymentTables(sql);
 
   // Get payment details to reverse applications
-  const payment = await getVendorPayment(paymentId);
+  const payment = await getVendorPayment(paymentId, tenantSlug);
   if (!payment) return false;
 
-  // Reverse bill balance updates
+  // Reverse bill balance updates (tenant predicate protects against
+  // applications referencing another tenant's bills)
   await Promise.all(payment.applications.map(async (app) => {
     await sql`
       update bills 
       set balance_due = balance_due + ${app.appliedAmount},
           updated_at = now()
-      where id = ${app.billId}
+      where id = ${app.billId} ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
     `;
   }));
 
   // Delete payment (cascade will delete applications)
-  const result = await db.query(`delete from vendor_payments where id = $1`, [paymentId]);
+  const result = tenantSlug
+    ? await db.query(`delete from vendor_payments where id = $1 and tenant_slug = $2`, [paymentId, tenantSlug])
+    : await db.query(`delete from vendor_payments where id = $1`, [paymentId]);
   return result.rowCount > 0;
 }
 
-export async function applyPaymentToBill(paymentId: string, billId: string, appliedAmount: number): Promise<VendorPayment | null> {
+export async function applyPaymentToBill(paymentId: string, billId: string, appliedAmount: number, tenantSlug?: string): Promise<VendorPayment | null> {
   const sql = SQL;
   await ensurePaymentTables(sql);
 
-  // Get payment and bill details
-  const payment = await getVendorPayment(paymentId);
+  // Get payment and bill details — both must belong to the caller's tenant
+  const payment = await getVendorPayment(paymentId, tenantSlug);
   if (!payment) {
     throw new Error("Payment not found");
   }
 
-  const billRecords = (await db.query<any>(`select * from bills where id = $1 limit 1`, [billId])).rows;
+  const billRecords = tenantSlug
+    ? (await db.query<any>(`select * from bills where id = $1 and tenant_slug = $2 limit 1`, [billId, tenantSlug])).rows
+    : (await db.query<any>(`select * from bills where id = $1 limit 1`, [billId])).rows;
 
   if (!billRecords.length) {
     throw new Error("Bill not found");
@@ -369,7 +387,7 @@ export async function applyPaymentToBill(paymentId: string, billId: string, appl
     update vendor_payments 
     set applied_amount = ${newAppliedAmount},
         unapplied_amount = ${newUnappliedAmount}
-    where id = ${paymentId}
+    where id = ${paymentId} ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
   `;
 
   // Update bill balance
@@ -377,7 +395,7 @@ export async function applyPaymentToBill(paymentId: string, billId: string, appl
     update bills 
     set balance_due = balance_due - ${appliedAmount},
         updated_at = now()
-    where id = ${billId}
+    where id = ${billId} ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
   `;
 
   // Return updated payment

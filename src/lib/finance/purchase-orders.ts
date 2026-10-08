@@ -189,12 +189,15 @@ export async function listPurchaseOrders(filters: { tenantSlug: string; supplier
   return rows.map((r) => normalizePO(r, grouped[r.id] ?? []));
 }
 
-export async function getPurchaseOrder(id: string) {
+export async function getPurchaseOrder(id: string, tenantSlug?: string) {
   const sql = SQL;
   await ensurePurchaseOrderTables(sql);
 
   const rows = (await sql`
-    select * from purchase_orders where id = ${id} limit 1
+    select * from purchase_orders
+    where id = ${id}
+      ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
+    limit 1
   `) as PurchaseOrderRecord[];
   if (!rows.length) return null;
   const items = (await sql`
@@ -238,7 +241,7 @@ export async function createPurchaseOrder(payload: {
   return normalizePO(row, itemRows);
 }
 
-export async function updatePurchaseOrder(id: string, updates: Partial<PurchaseOrder>) {
+export async function updatePurchaseOrder(id: string, updates: Partial<PurchaseOrder>, tenantSlug?: string) {
   const sql = SQL;
   await ensurePurchaseOrderTables(sql);
 
@@ -248,6 +251,7 @@ export async function updatePurchaseOrder(id: string, updates: Partial<PurchaseO
       due_date = coalesce(${updates.dueDate ?? null}, due_date),
       updated_at = now()
     where id = ${id}
+      ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
     returning *
   `) as PurchaseOrderRecord[];
 
@@ -270,10 +274,12 @@ export async function updatePurchaseOrder(id: string, updates: Partial<PurchaseO
   return normalizePO(row, items);
 }
 
-export async function deletePurchaseOrder(id: string) {
+export async function deletePurchaseOrder(id: string, tenantSlug?: string) {
   const sql = SQL;
   await ensurePurchaseOrderTables(sql);
 
-  const res = await db.query<{ count: number }>(`delete from purchase_orders where id = $1`, [id]);
+  const res = tenantSlug
+    ? await db.query<{ count: number }>(`delete from purchase_orders where id = $1 and tenant_slug = $2`, [id, tenantSlug])
+    : await db.query<{ count: number }>(`delete from purchase_orders where id = $1`, [id]);
   return res.count > 0;
 }

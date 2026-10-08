@@ -45,6 +45,7 @@ const STATUS_COLORS: Record<string, string> = {
   converted: 'bg-blue-100 text-blue-800',
   sent: 'bg-blue-100 text-blue-800',
   received: 'bg-green-100 text-green-800',
+  partially_received: 'bg-blue-100 text-blue-800',
   closed: 'bg-purple-100 text-purple-800',
   cancelled: 'bg-red-100 text-red-800',
   draft: 'bg-gray-100 text-gray-800',
@@ -67,6 +68,9 @@ export default function ProcurementComponent({ tenantSlug }: { tenantSlug: strin
   const [showCreatePo, setShowCreatePo] = useState(false);
   const [showCreateGr, setShowCreateGr] = useState(false);
   const [showReqDetail, setShowReqDetail] = useState<Requisition | null>(null);
+  const [matchPo, setMatchPo] = useState<PurchaseOrder | null>(null);
+  const [matchData, setMatchData] = useState<any>(null);
+  const [matchLoading, setMatchLoading] = useState(false);
 
   const ts = tenantSlug;
 
@@ -107,6 +111,21 @@ export default function ProcurementComponent({ tenantSlug }: { tenantSlug: strin
     } catch { setError('Failed to load goods receipts'); }
     finally { setLoading(false); }
   }, []);
+
+  async function openMatch(po: PurchaseOrder) {
+    setMatchPo(po);
+    setMatchData(null);
+    setMatchLoading(true);
+    try {
+      const res = await fetch(`/api/procurement/three-way-match?poId=${encodeURIComponent(po.id)}`);
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Failed to run three-way match');
+      setMatchData(payload.match);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setMatchPo(null);
+    } finally { setMatchLoading(false); }
+  }
 
   useEffect(() => {
     if (activeTab === 'requisitions') loadRequisitions();
@@ -249,7 +268,7 @@ export default function ProcurementComponent({ tenantSlug }: { tenantSlug: strin
       ) : activeTab === 'requisitions' ? (
         <RequisitionTab requisitions={requisitions} onView={(r) => setShowReqDetail(r)} onAction={handleReqAction} />
       ) : activeTab === 'purchase-orders' ? (
-        <PurchaseOrderTab purchaseOrders={purchaseOrders} />
+        <PurchaseOrderTab purchaseOrders={purchaseOrders} onMatch={openMatch} />
       ) : activeTab === 'goods-receipts' ? (
         <GoodsReceiptTab goodsReceipts={goodsReceipts} />
       ) : null}
@@ -259,6 +278,7 @@ export default function ProcurementComponent({ tenantSlug }: { tenantSlug: strin
       {showCreatePo && <CreatePurchaseOrderModal tenantSlug={ts} onClose={() => setShowCreatePo(false)} onCreated={() => { setShowCreatePo(false); loadPurchaseOrders(); }} />}
       {showCreateGr && <CreateGoodsReceiptModal tenantSlug={ts} onClose={() => setShowCreateGr(false)} onCreated={() => { setShowCreateGr(false); loadGoodsReceipts(); }} />}
       {showReqDetail && <RequisitionDetailModal req={showReqDetail} onClose={() => setShowReqDetail(null)} />}
+      {matchPo && <MatchModal po={matchPo} match={matchData} loading={matchLoading} onClose={() => { setMatchPo(null); setMatchData(null); }} />}
     </div>
   );
 }
@@ -327,7 +347,7 @@ function RequisitionTab({ requisitions, onView, onAction }: { requisitions: Requ
   );
 }
 
-function PurchaseOrderTab({ purchaseOrders }: { purchaseOrders: PurchaseOrder[] }) {
+function PurchaseOrderTab({ purchaseOrders, onMatch }: { purchaseOrders: PurchaseOrder[]; onMatch: (po: PurchaseOrder) => void }) {
   if (purchaseOrders.length === 0) {
     return <div className="p-8 text-center text-gray-500 border border-dashed border-gray-200 rounded-lg">No purchase orders found. Create one to get started.</div>;
   }
@@ -344,6 +364,7 @@ function PurchaseOrderTab({ purchaseOrders }: { purchaseOrders: PurchaseOrder[] 
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Delivery Date</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Match</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -358,6 +379,9 @@ function PurchaseOrderTab({ purchaseOrders }: { purchaseOrders: PurchaseOrder[] 
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[po.status] || 'bg-gray-100 text-gray-800'}`}>{po.status}</span>
                 </td>
                 <td className="px-4 py-3 text-gray-600">{po.createdAt ? new Date(po.createdAt).toLocaleDateString() : '-'}</td>
+                <td className="px-4 py-3">
+                  <button onClick={() => onMatch(po)} className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded hover:bg-blue-100">3-Way Match</button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -634,3 +658,71 @@ function RequisitionDetailModal({ req, onClose }: { req: Requisition; onClose: (
     </Modal>
   );
 }
+
+function MatchModal({ po, match, loading, onClose }: { po: PurchaseOrder; match: any; loading: boolean; onClose: () => void }) {
+  const money = (n: any) => `₦${Number(n || 0).toLocaleString()}`;
+  return (
+    <Modal title={`3-Way Match — ${po.poNumber || po.id}`} onClose={onClose}>
+      {loading ? (
+        <div className="py-10 text-center text-sm text-gray-600">Running match...</div>
+      ) : !match ? (
+        <div className="py-10 text-center text-sm text-gray-600">No match data.</div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-700">Verdict</span>
+            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[match.summary?.status] || 'bg-gray-100 text-gray-800'}`}>
+              {match.summary?.allMatched ? 'matched' : 'disputed'} ({match.summary?.discrepancyCount ?? 0} discrepancies)
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-sm">
+            <div className="border border-gray-200 rounded p-2"><div className="text-xs text-gray-500">PO Amount</div><div className="font-semibold">{money(match.summary?.poAmount)}</div></div>
+            <div className="border border-gray-200 rounded p-2"><div className="text-xs text-gray-500">Received</div><div className="font-semibold">{money(match.summary?.receiptAmount)}</div></div>
+            <div className="border border-gray-200 rounded p-2"><div className="text-xs text-gray-500">Billed</div><div className="font-semibold">{money(match.summary?.billAmount ?? match.summary?.invoiceAmount)}</div></div>
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-xs">
+            <div>Vendor: <span className={match.summary?.vendorMatched ? 'text-green-700 font-medium' : 'text-red-700 font-medium'}>{match.summary?.vendorMatched ? 'OK' : 'mismatch'}</span></div>
+            <div>Lines: <span className={match.summary?.linesMatched ? 'text-green-700 font-medium' : 'text-red-700 font-medium'}>{match.summary?.linesMatched ? 'OK' : 'mismatch'}</span></div>
+            <div>Totals: <span className={match.summary?.totalsMatched ? 'text-green-700 font-medium' : 'text-red-700 font-medium'}>{match.summary?.totalsMatched ? 'OK' : 'mismatch'}</span></div>
+          </div>
+          {Array.isArray(match.lineMatches) && match.lineMatches.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-2">Line Comparison</h4>
+              <table className="w-full text-xs border border-gray-200 rounded">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-2 py-1.5 text-left font-medium text-gray-500">Item</th>
+                    <th className="px-2 py-1.5 text-right font-medium text-gray-500">PO</th>
+                    <th className="px-2 py-1.5 text-right font-medium text-gray-500">Received</th>
+                    <th className="px-2 py-1.5 text-right font-medium text-gray-500">Billed</th>
+                    <th className="px-2 py-1.5 text-center font-medium text-gray-500">Match</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {match.lineMatches.map((l: any, i: number) => (
+                    <tr key={i}>
+                      <td className="px-2 py-1.5">{l.description || l.key}</td>
+                      <td className="px-2 py-1.5 text-right">{l.po ? `${l.po.quantity} × ${money(l.po.unitPrice)}` : '-'}</td>
+                      <td className="px-2 py-1.5 text-right">{l.receipt ? `${l.receipt.quantity} × ${money(l.receipt.unitPrice)}` : '-'}</td>
+                      <td className="px-2 py-1.5 text-right">{l.bill ? `${l.bill.quantity} × ${money(l.bill.unitPrice)}` : '-'}</td>
+                      <td className="px-2 py-1.5 text-center">{l.matched ? <span className="text-green-600 font-semibold">✓</span> : <span className="text-red-600 font-semibold">✗</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {Array.isArray(match.discrepancies) && match.discrepancies.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-2">Discrepancies</h4>
+              <ul className="space-y-1 text-xs text-red-700">
+                {match.discrepancies.map((d: any, i: number) => <li key={i}>• {d.message}</li>)}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </Modal>
+  );
+}
+

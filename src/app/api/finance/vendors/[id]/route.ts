@@ -34,7 +34,7 @@ export async function GET(request: NextRequest, context: any) {
   const { params } = context;
   const { id } = await params;
   try {
-    const vendor = await getVendor(id);
+    const vendor = await getVendor(id, scope.user.tenantSlug ?? undefined);
     if (!vendor || !tenantMatches(scope.user.tenantSlug, vendor.tenantSlug)) {
       return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
     }
@@ -63,11 +63,11 @@ export async function PATCH(request: NextRequest, context: any) {
 
     try {
       // Verify the record belongs to the caller's tenant before mutating
-      const existing = await getVendor(id);
+      const existing = await getVendor(id, scope.user.tenantSlug ?? undefined);
       if (existing && !tenantMatches(scope.user.tenantSlug, existing.tenantSlug)) {
         return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
       }
-      const updated = await updateVendor(id, parsed.data as any);
+      const updated = await updateVendor(id, parsed.data as any, scope.user.tenantSlug ?? undefined);
       if (!updated) {
         // If update couldn't find the vendor, create it from the provided data
         try {
@@ -91,11 +91,11 @@ export async function DELETE(request: NextRequest, context: any) {
   const { params } = context;
   const { id } = await params;
   try {
-    const existing = await getVendor(id);
+    const existing = await getVendor(id, scope.user.tenantSlug ?? undefined);
     if (!existing || !tenantMatches(scope.user.tenantSlug, existing.tenantSlug)) {
       return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
     }
-    const ok = await deleteVendor(id);
+    const ok = await deleteVendor(id, scope.user.tenantSlug ?? undefined);
     if (!ok) return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
     return NextResponse.json({ success: true });
   } catch (err) {

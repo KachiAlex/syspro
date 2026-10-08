@@ -174,7 +174,10 @@ export async function GET(request: NextRequest) {
     }
 
     const billLines: NormalizedLine[] = billItemRows.map((item: any) => {
-      const key = String(item.description ?? "").toLowerCase().trim();
+      // Prefer the PO sku carried through PO→bill conversion so bill lines
+      // key the same way PO lines do; fall back to description.
+      const meta = item.metadata && typeof item.metadata === "object" ? item.metadata : {};
+      const key = String(meta.sku ?? item.sku ?? item.description ?? "").toLowerCase().trim();
       const quantity = Number(item.quantity ?? 0);
       const unitPrice = Number(item.unit_price ?? 0);
       const lineTotal = Number(item.line_amount ?? quantity * unitPrice);
@@ -187,21 +190,46 @@ export async function GET(request: NextRequest) {
       receiptByLine[rl.key].push(rl);
     }
     const billByLine: Record<string, NormalizedLine[]> = {};
+    const billByDesc: Record<string, NormalizedLine[]> = {};
     for (const bl of billLines) {
       billByLine[bl.key] = billByLine[bl.key] || [];
       billByLine[bl.key].push(bl);
+      const descKey = bl.description.toLowerCase().trim();
+      billByDesc[descKey] = billByDesc[descKey] || [];
+      billByDesc[descKey].push(bl);
     }
 
     const lineResults: LineMatchResult[] = [];
     const allLineDiscrepancies: LineDiscrepancy[] = [];
+    const consumedBillLines = new Set<NormalizedLine>();
 
     for (const poLine of poLines) {
       const discrepancies: LineDiscrepancy[] = [];
       const matchingReceipts = receiptByLine[poLine.key] || [];
-      const matchingBills = billByLine[poLine.key] || [];
+      // Sku-key first; fall back to matching the PO line's description so
+      // bills keyed only by description still match the same line.
+      const matchingBills =
+        billByLine[poLine.key] ||
+        billByDesc[poLine.description.toLowerCase().trim()] ||
+        [];
 
-      const receiptLine = matchingReceipts[0] ?? null;
-      const billLine = matchingBills[0] ?? null;
+      // Multiple receipts (partial deliveries) and bills (split invoices)
+      // aggregate — compare totals, not just the first document's line.
+      const receiptLine = matchingReceipts.length
+        ? {
+            quantity: matchingReceipts.reduce((n, l) => n + l.quantity, 0),
+            unitPrice: matchingReceipts[matchingReceipts.length - 1].unitPrice,
+            lineTotal: matchingReceipts.reduce((n, l) => n + l.lineTotal, 0),
+          }
+        : null;
+      const billLine = matchingBills.length
+        ? {
+            quantity: matchingBills.reduce((n, l) => n + l.quantity, 0),
+            unitPrice: matchingBills[matchingBills.length - 1].unitPrice,
+            lineTotal: matchingBills.reduce((n, l) => n + l.lineTotal, 0),
+          }
+        : null;
+      matchingBills.forEach((bl) => consumedBillLines.add(bl));
 
       const receivedQty = receiptLine ? receiptLine.quantity : 0;
       const billedQty = billLine ? billLine.quantity : 0;
@@ -301,7 +329,11 @@ export async function GET(request: NextRequest) {
     }
 
     for (const bl of billLines) {
-      const poMatch = poLines.find((pl) => pl.key === bl.key);
+      // A bill line is "matched" if a PO line consumed it (sku-key or
+      // desc-key fallback) — not merely when the keys are identical.
+      const poMatch =
+        poLines.find((pl) => pl.key === bl.key) ||
+        (consumedBillLines.has(bl) ? bl : null);
       if (!poMatch) {
         const disc: LineDiscrepancy = {
           type: "extra_bill_line",

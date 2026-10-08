@@ -255,12 +255,15 @@ export async function listBills(filters: {
   return records.map(record => normalizeBill(record, itemsByBill[record.id] || []));
 }
 
-export async function getBill(billId: string): Promise<Bill | null> {
+export async function getBill(billId: string, tenantSlug?: string): Promise<Bill | null> {
   const sql = SQL;
   await ensureBillTables(sql);
 
   const records = (await sql`
-    select * from bills where id = ${billId} limit 1
+    select * from bills
+    where id = ${billId}
+      ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
+    limit 1
   `) as BillRecord[];
 
   if (!records.length) return null;
@@ -286,6 +289,7 @@ export async function createBill(payload: {
     unitPrice: number;
     taxRate?: number;
     accountCode?: string;
+    metadata?: Record<string, unknown>;
   }>;
   metadata?: Record<string, unknown>;
 }): Promise<Bill> {
@@ -333,7 +337,7 @@ export async function createBill(payload: {
       ) values (
         ${randomUUID()}, ${id}, ${item.description}, ${item.quantity},
         ${item.unitPrice}, ${item.taxRate || null}, ${totalLineAmount},
-        ${item.accountCode || null}, null
+        ${item.accountCode || null}, ${(item as any).metadata || null}
       ) returning *
     `) as BillItemRecord[];
     
@@ -353,7 +357,7 @@ export async function createBill(payload: {
   return bill;
 }
 
-export async function updateBill(billId: string, updates: Partial<Bill>): Promise<Bill | null> {
+export async function updateBill(billId: string, updates: Partial<Bill>, tenantSlug?: string): Promise<Bill | null> {
   const sql = SQL;
   await ensureBillTables(sql);
 
@@ -365,6 +369,7 @@ export async function updateBill(billId: string, updates: Partial<Bill>): Promis
       metadata = coalesce(${updates.metadata || null}, metadata),
       updated_at = now()
     where id = ${billId}
+      ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
     returning *
   `) as BillRecord[];
 
@@ -377,11 +382,13 @@ export async function updateBill(billId: string, updates: Partial<Bill>): Promis
   return normalizeBill(record, items);
 }
 
-export async function deleteBill(billId: string): Promise<boolean> {
+export async function deleteBill(billId: string, tenantSlug?: string): Promise<boolean> {
   const sql = SQL;
   await ensureBillTables(sql);
 
-  const result = await db.query<{ count: number }>(`delete from bills where id = $1`, [billId]);
+  const result = tenantSlug
+    ? await db.query<{ count: number }>(`delete from bills where id = $1 and tenant_slug = $2`, [billId, tenantSlug])
+    : await db.query<{ count: number }>(`delete from bills where id = $1`, [billId]);
   return result.count > 0;
 }
 
@@ -390,14 +397,18 @@ export async function convertPOToBill(poId: string, payload: {
   dueDate?: string;
   currency?: string;
   metadata?: Record<string, unknown>;
-}): Promise<Bill | null> {
+}, tenantSlug?: string): Promise<Bill | null> {
   const sql = SQL;
   await ensureBillTables(sql);
   await ensurePurchaseOrderTables(sql);
 
-  // Get PO details
+  // Get PO details — scoped to the caller's tenant so a foreign PO can't be
+  // converted into a bill.
   const poRecords = (await sql`
-    select * from purchase_orders where id = ${poId} limit 1
+    select * from purchase_orders
+    where id = ${poId}
+      ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
+    limit 1
   `) as any[];
 
   if (!poRecords.length) return null;
@@ -423,7 +434,10 @@ export async function convertPOToBill(poId: string, payload: {
       quantity: Number(item.quantity),
       unitPrice: Number(item.unit_price),
       taxRate: item.tax_rate ? Number(item.tax_rate) : undefined,
-      accountCode: item.account_code
+      accountCode: item.account_code,
+      // Carry the PO line's sku so three-way match can key bill lines the
+      // same way it keys PO lines.
+      metadata: item.sku ? { sku: item.sku } : undefined
     })),
     metadata: payload.metadata
   });

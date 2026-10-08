@@ -54,13 +54,13 @@ export async function GET(request: NextRequest) {
   console.log('API: GET /api/finance/vendor-payments called');
 
   try {
-    validateTenantContext(request, "read");
+    const _ctx = validateTenantContext(request, "read");
     const url = new URL(request.url);
     
     // Get single payment by ID
     if (url.searchParams.get("id")) {
       const paymentId = url.searchParams.get("id")!;
-      const payment = await getVendorPayment(paymentId);
+      const payment = await getVendorPayment(paymentId, _ctx.tenantSlug);
       
       if (!payment) {
         return NextResponse.json(
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
   console.log('API: POST /api/finance/vendor-payments called');
 
   try {
-    validateTenantContext(request, "write");
+    const _ctx = validateTenantContext(request, "write");
     const body = await request.json();
     
     // Apply payment to bill
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        const payment = await applyPaymentToBill(paymentId, parsed.data.billId, parsed.data.appliedAmount);
+        const payment = await applyPaymentToBill(paymentId, parsed.data.billId, parsed.data.appliedAmount, _ctx.tenantSlug);
         return NextResponse.json({ payment });
       } catch (applyError) {
         return NextResponse.json(
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const payment = await createVendorPayment(parsed.data);
+      const payment = await createVendorPayment({ ...parsed.data, tenantSlug: _ctx.tenantSlug });
       return NextResponse.json({ payment }, { status: 201 });
     } catch (createError) {
       return NextResponse.json(
@@ -199,7 +199,7 @@ export async function PUT(request: NextRequest) {
   console.log('API: PUT /api/finance/vendor-payments called');
 
   try {
-    validateTenantContext(request, "write");
+    const _ctx = validateTenantContext(request, "write");
     const url = new URL(request.url);
     const paymentId = url.searchParams.get("id");
     
@@ -220,7 +220,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const payment = await updateVendorPayment(paymentId, parsed.data);
+    const payment = await updateVendorPayment(paymentId, parsed.data, _ctx.tenantSlug);
     
     if (!payment) {
       return NextResponse.json(
@@ -247,7 +247,7 @@ export async function DELETE(request: NextRequest) {
   console.log('API: DELETE /api/finance/vendor-payments called');
 
   try {
-    validateTenantContext(request, "delete");
+    const _ctx = validateTenantContext(request, "delete");
     const url = new URL(request.url);
     const paymentId = url.searchParams.get("id");
     
@@ -258,7 +258,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const deleted = await deleteVendorPayment(paymentId);
+    const deleted = await deleteVendorPayment(paymentId, _ctx.tenantSlug);
     
     if (!deleted) {
       return NextResponse.json(

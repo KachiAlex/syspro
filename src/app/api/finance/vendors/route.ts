@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
   // Get vendor by ID endpoint
   if (body.vendorId) {
     try {
-      const vendor = await getVendor(body.vendorId);
+      const vendor = await getVendor(body.vendorId, context.tenantSlug);
       if (!vendor) {
         return NextResponse.json(
           { error: "Vendor not found" },
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  validateTenantContext(request, "write");
+  const context = validateTenantContext(request, "write");
   const _gate = await requireModuleAccess(request, "finance", "write");
   if (!_gate.ok) return _gate.response;
   const url = new URL(request.url);
@@ -187,7 +187,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const vendor = await updateVendor(id, parsed.data);
+    const vendor = await updateVendor(id, parsed.data, context.tenantSlug);
     if (!vendor) {
       return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
     }
@@ -200,7 +200,7 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  validateTenantContext(request, "delete");
+  const context = validateTenantContext(request, "delete");
   const _gate = await requireModuleAccess(request, "finance", "write");
   if (!_gate.ok) return _gate.response;
   const url = new URL(request.url);
@@ -211,7 +211,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    const deleted = await deleteVendor(id);
+    const deleted = await deleteVendor(id, context.tenantSlug);
     if (!deleted) {
       return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
     }

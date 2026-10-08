@@ -13,7 +13,7 @@ export async function GET(request: NextRequest, context: any) {
   const owned = await requireRecordTenant("purchase_orders", id, scope.user);
   if (!owned.ok) return owned.response;
   try {
-    const po = await getPurchaseOrder(id);
+    const po = await getPurchaseOrder(id, scope.user.tenantSlug ?? undefined);
     if (!po) return NextResponse.json({ error: "Purchase order not found" }, { status: 404 });
     return NextResponse.json({ purchaseOrder: po });
   } catch (err) {
@@ -34,7 +34,7 @@ export async function PATCH(request: NextRequest, context: any) {
   if (!body || typeof body !== "object") return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
 
   try {
-    const updated = await updatePurchaseOrder(id, body as any);
+    const updated = await updatePurchaseOrder(id, body as any, _scope.user.tenantSlug ?? undefined);
     if (!updated) return NextResponse.json({ error: "Purchase order not found" }, { status: 404 });
     return NextResponse.json({ purchaseOrder: updated });
   } catch (err) {
@@ -52,7 +52,7 @@ export async function DELETE(request: NextRequest, context: any) {
   const owned = await requireRecordTenant("purchase_orders", id, scope.user);
   if (!owned.ok) return owned.response;
   try {
-    const ok = await deletePurchaseOrder(id);
+    const ok = await deletePurchaseOrder(id, scope.user.tenantSlug ?? undefined);
     if (!ok) return NextResponse.json({ error: "Purchase order not found" }, { status: 404 });
     return NextResponse.json({ success: true });
   } catch (err) {

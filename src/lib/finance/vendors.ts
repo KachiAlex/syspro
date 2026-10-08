@@ -271,7 +271,7 @@ export async function listVendors(
 /**
  * Get vendor by ID
  */
-export async function getVendor(vendorId: string): Promise<VendorRecord | null> {
+export async function getVendor(vendorId: string, tenantSlug?: string): Promise<VendorRecord | null> {
   try {
     const sql = SQL;
     await ensureVendorTables(sql);
@@ -280,6 +280,7 @@ export async function getVendor(vendorId: string): Promise<VendorRecord | null> 
       select id, vendor_code, legal_name, display_name, email, phone, address, city, state, country, tax_id, bank_details, default_payment_terms, status, created_at, updated_at
       from vendors
       where id = ${vendorId}
+        ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
       limit 1
     `;
 
@@ -318,7 +319,7 @@ export async function createVendor(payload: Partial<VendorRecord> & { tenantSlug
   }
 }
 
-export async function updateVendor(id: string, updates: Partial<VendorRecord>): Promise<VendorRecord | null> {
+export async function updateVendor(id: string, updates: Partial<VendorRecord>, tenantSlug?: string): Promise<VendorRecord | null> {
   try {
     const sql = SQL;
     await ensureVendorTables(sql);
@@ -349,6 +350,7 @@ export async function updateVendor(id: string, updates: Partial<VendorRecord>): 
       updates.paymentTerms ?? null,
       statusValue,
       id,
+      tenantSlug ?? null,
     ];
 
     const queryText = `update vendors set
@@ -366,7 +368,7 @@ export async function updateVendor(id: string, updates: Partial<VendorRecord>): 
       default_payment_terms = coalesce($12, default_payment_terms),
       status = coalesce($13, status),
       updated_at = now()
-      where id = $14
+      where id = $14 and ($15::text is null or tenant_slug = $15)
       returning *`;
 
     const res = await db.query<VendorRowDB>(queryText, params);
@@ -382,12 +384,14 @@ export async function updateVendor(id: string, updates: Partial<VendorRecord>): 
   }
 }
 
-export async function deleteVendor(id: string): Promise<boolean> {
+export async function deleteVendor(id: string, tenantSlug?: string): Promise<boolean> {
   try {
     const sql = SQL;
     await ensureVendorTables(sql);
 
-    const res = await db.query<{ count: number }>(`delete from vendors where id = $1`, [id]);
+    const res = tenantSlug
+      ? await db.query<{ count: number }>(`delete from vendors where id = $1 and tenant_slug = $2`, [id, tenantSlug])
+      : await db.query<{ count: number }>(`delete from vendors where id = $1`, [id]);
     return res.count > 0;
   } catch (err) {
     throw err;
