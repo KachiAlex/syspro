@@ -14,8 +14,6 @@ export interface AuditLog {
   created_at: string;
 }
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 let auditTableEnsured = false;
 async function ensureAuditTable(): Promise<void> {
   if (auditTableEnsured) return;
@@ -23,11 +21,11 @@ async function ensureAuditTable(): Promise<void> {
   await sql`
     CREATE TABLE IF NOT EXISTS audit_logs (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-      tenant_id uuid NOT NULL,
-      actor_id uuid,
+      tenant_id text NOT NULL,
+      actor_id text,
       action text NOT NULL,
       target_table text,
-      target_id uuid,
+      target_id text,
       diff jsonb,
       created_at timestamptz NOT NULL DEFAULT now()
     )
@@ -53,15 +51,11 @@ export async function logAuditAction(
     await ensureAuditTable();
 
     let tenantId: string | null = null;
-    const targetId = UUID_RE.test(entityId) ? entityId : null;
-    if (entityType === 'tenant' && targetId) {
-      tenantId = targetId;
+    if (entityType === 'tenant' && entityId) {
+      tenantId = entityId;
     } else if (slug) {
       const rows = (await sql`SELECT id FROM tenants WHERE slug = ${slug} LIMIT 1`) as any[];
-      tenantId = rows[0]?.id ?? null;
-    } else if (targetId) {
-      const rows = (await sql`SELECT id FROM tenants WHERE id = ${targetId} LIMIT 1`) as any[];
-      tenantId = rows[0]?.id ?? null;
+      tenantId = rows[0]?.id != null ? String(rows[0].id) : null;
     }
     if (!tenantId) {
       console.error('Failed to log audit action: could not resolve tenant for', entityType, entityId);
@@ -73,10 +67,10 @@ export async function logAuditAction(
       VALUES (
         ${randomUUID()},
         ${tenantId},
-        ${actorId && UUID_RE.test(actorId) ? actorId : null},
+        ${actorId ?? null},
         ${action},
         ${entityType},
-        ${targetId},
+        ${entityId || null},
         ${JSON.stringify({ ...(details || {}), ...(slug ? { slug } : {}), ...(ipAddress ? { ip: ipAddress } : {}) })},
         NOW()
       )

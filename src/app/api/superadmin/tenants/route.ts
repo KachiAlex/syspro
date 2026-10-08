@@ -67,7 +67,10 @@ export async function GET(request: NextRequest) {
       total = parseInt(countRes[0]?.total || '0', 10);
     }
 
-    return NextResponse.json({ items, total });
+    // Never expose credential material to the list API — the superadmin UI
+    // does not render it, and a leaked hash enables offline cracking.
+    const sanitized = (items as any[]).map(({ admin_password_hash, ...rest }) => rest);
+    return NextResponse.json({ items: sanitized, total });
   } catch (error) {
     console.error('Error fetching tenants:', error);
     return NextResponse.json({ error: 'Failed to fetch tenants' }, { status: 500 });
@@ -106,7 +109,8 @@ export async function POST(request: NextRequest) {
       entries.map(([, v]) => v)
     );
 
-    return NextResponse.json(res.rows[0], { status: 201 });
+    const { admin_password_hash, ...created } = res.rows[0] as any;
+    return NextResponse.json(created, { status: 201 });
   } catch (error) {
     console.error('Error creating tenant:', error);
     return NextResponse.json({ error: 'Failed to create tenant' }, { status: 500 });

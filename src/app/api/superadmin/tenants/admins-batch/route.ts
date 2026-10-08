@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     slugs.forEach((slug: string) => {
       grouped[slug] = [];
     });
-    admins.forEach((admin: any) => {
+    admins.forEach(({ password_hash, ...admin }: any) => {
       if (grouped[admin.tenant_slug]) {
         grouped[admin.tenant_slug].push(admin);
       }

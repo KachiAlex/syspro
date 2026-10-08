@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
         WHERE t.slug = ANY(${slugs})
         ORDER BY ta.created_at DESC
       `;
-      return NextResponse.json(admins);
+      return NextResponse.json((admins as any[]).map(({ password_hash, ...a }) => a));
     }
 
     // If no slugs provided, return all admins
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       JOIN tenants t ON ta.tenant_id = t.id
       ORDER BY ta.created_at DESC
     `;
-    return NextResponse.json(admins);
+    return NextResponse.json((admins as any[]).map(({ password_hash, ...a }) => a));
   } catch (error) {
     console.error('Error fetching tenant admins:', error);
     return NextResponse.json({ error: 'Failed to fetch tenant admins' }, { status: 500 });

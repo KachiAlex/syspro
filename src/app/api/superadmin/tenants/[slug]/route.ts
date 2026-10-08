@@ -27,10 +27,11 @@ export async function GET(
     const licenses = await sql`SELECT * FROM licenses WHERE tenant_id = ${tenant[0].id}`;
     const admins = await sql`SELECT * FROM tenant_admins WHERE tenant_id = ${tenant[0].id}`;
 
+    const { admin_password_hash, ...tenantFields } = tenant[0] as any;
     return NextResponse.json({
-      ...tenant[0],
+      ...tenantFields,
       licenses,
-      admins
+      admins: (admins as any[]).map(({ password_hash, ...a }) => a)
     });
   } catch (error) {
     console.error('Error fetching tenant:', error);
