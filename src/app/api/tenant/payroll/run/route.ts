@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/sql-client";
-import { createPayrollRun, ensureHrTables, computeProgressiveTax } from "@/lib/hr/db";
+import { createPayrollRun, ensureHrTables, computeProgressiveTax, PayrollPeriodLockedError } from "@/lib/hr/db";
 import {
   validateTenantContext,
   errorResponse,
@@ -255,6 +255,9 @@ export async function POST(request: NextRequest) {
       compliance: result.compliance,
     });
   } catch (error) {
+    if (error instanceof PayrollPeriodLockedError) {
+      return errorResponse("A payroll run already exists for this period. Cancel it first to re-run.", 409);
+    }
     console.error("Payroll run error:", error);
     return errorResponse("Failed to run payroll", 500);
   }

@@ -84,6 +84,16 @@ export async function PATCH(request: NextRequest, context: any) {
         where id = ${id}
         returning *
       `;
+      // Release one-off adjustments the cancelled draft consumed — with one
+      // active run per period, period-matched applied adjustments can only
+      // belong to this run.
+      await sql`
+        update admin_payroll_adjustments
+        set status = 'pending', applied_at = null
+        where tenant_slug = ${ctx.tenantSlug}
+          and effective_period = ${r.period}
+          and status = 'applied'
+      `;
       await logHrAudit({
         tenantSlug: ctx.tenantSlug,
         userId: ctx.userId,

@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createPayrollRun, listPayrollRuns } from "@/lib/hr/db";
+import { createPayrollRun, listPayrollRuns, PayrollPeriodLockedError } from "@/lib/hr/db";
 import { requireModuleAccess } from "@/lib/api-auth";
 
 const createSchema = z.object({
@@ -78,6 +78,12 @@ export async function POST(request: NextRequest) {
       compliance: result.compliance,
     });
   } catch (error) {
+    if (error instanceof PayrollPeriodLockedError) {
+      return NextResponse.json(
+        { error: "A payroll run already exists for this period. Cancel it first to re-run." },
+        { status: 409 }
+      );
+    }
     console.error("Failed to create payroll run:", error);
     return NextResponse.json(
       { error: "Failed to create payroll run" },

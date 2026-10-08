@@ -307,6 +307,17 @@ async function ensureHrTablesRun(sql: SqlClient = SQL) {
   `;
   await sql`create index if not exists idx_admin_payroll_runs_tenant on admin_payroll_runs(tenant_slug)`;
   await sql`create index if not exists idx_admin_payroll_runs_period on admin_payroll_runs(tenant_slug, period)`;
+  // One active run per (tenant, period): prevents double accrual + double
+  // payout when a period is run twice. Non-fatal if legacy duplicates exist —
+  // the application-level check in createPayrollRun is the primary guard.
+  try {
+    await sql`
+      create unique index if not exists idx_admin_payroll_runs_tenant_period_active
+      on admin_payroll_runs(tenant_slug, period) where status <> 'cancelled'
+    `;
+  } catch (e) {
+    console.error("payroll active-period index skipped:", (e as any)?.message);
+  }
 
   // Payroll entries per employee per run
   await sql`
@@ -2236,6 +2247,13 @@ export function checkCompliance(
   return { passed: issues.length === 0, issues };
 }
 
+export class PayrollPeriodLockedError extends Error {
+  constructor(tenantSlug: string, period: string, existingRunId: string) {
+    super(`An active payroll run already exists for ${tenantSlug} period ${period} (${existingRunId})`);
+    this.name = "PayrollPeriodLockedError";
+  }
+}
+
 export async function createPayrollRun(params: {
   tenantSlug: string;
   period: string;
@@ -2246,6 +2264,18 @@ export async function createPayrollRun(params: {
 }) {
   const sql = SQL;
   await ensureHrTables(sql);
+
+  // Only one active run per period — a second draft could be approved into
+  // a duplicate accrual + disbursement. Cancel the existing run to re-run.
+  const [existing] = await sql`
+    select id, status from admin_payroll_runs
+    where tenant_slug = ${params.tenantSlug} and period = ${params.period}
+      and status <> 'cancelled'
+    limit 1
+  ` as any[];
+  if (existing) {
+    throw new PayrollPeriodLockedError(params.tenantSlug, params.period, existing.id);
+  }
 
   // Recompute statutory amounts server-side — callers (e.g. the payroll UI)
   // submit client-computed tax/pension/net which must not be trusted. Inputs
