@@ -6,6 +6,7 @@ import { FINANCE_INVOICE_STATUSES, financeInvoiceCreateSchema } from "@/lib/fina
 import { insertFinanceInvoice, listFinanceInvoices } from "@/lib/finance/db";
 import { writeFinanceEvent } from "@/lib/finance/events";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import { requireModuleGate } from "@/lib/api-auth";
 
 const invoiceListSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -17,6 +18,8 @@ const invoiceListSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+  const gate = await requireModuleGate(request, "finance", "read");
+  if (gate) return gate;
   const url = new URL(request.url);
   const parsed = invoiceListSchema.safeParse({
     tenantSlug: url.searchParams.get("tenantSlug") ?? undefined,
@@ -41,6 +44,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const gate = await requireModuleGate(request, "finance", "write");
+  if (gate) return gate;
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables } from "@/lib/hr/db";
 import { setEmployeePassword, generatePassword } from "@/lib/hr/auth";
+import { requireModuleGate } from "@/lib/api-auth";
 
 function getDefaultPermissions(role: string): Record<string, boolean> {
   const r = (role || "staff").toLowerCase();
@@ -22,6 +23,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const gate = await requireModuleGate(request, "people", "write");
+  if (gate) return gate;
   const { id } = await params;
   const body = await request.json().catch(() => null);
 

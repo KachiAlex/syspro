@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { requireSuperAdmin } from "@/lib/api-auth";
 import fs from "fs";
 import path from "path";
 
@@ -15,12 +16,16 @@ async function readTenantsFile() {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = await requireSuperAdmin(request);
+  if (!auth.ok) return auth.response;
   const data = await readTenantsFile();
   return NextResponse.json(data);
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const auth = await requireSuperAdmin(request);
+  if (!auth.ok) return auth.response;
   // deterministic seed data for local/dev testing
   const seed = {
     tenants: [
@@ -47,7 +52,9 @@ export async function POST() {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
+  const auth = await requireSuperAdmin(request);
+  if (!auth.ok) return auth.response;
   try {
     await fs.promises.rm(TENANTS_FILE, { force: true });
     return NextResponse.json({ ok: true });

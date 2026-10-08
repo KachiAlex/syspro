@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
+import { requireModuleGate } from "@/lib/api-auth";
 
 export interface ParsedResumeData {
   fullName: string | null;
@@ -14,6 +15,8 @@ export interface ParsedResumeData {
 }
 
 export async function POST(request: NextRequest) {
+  const gate = await requireModuleGate(request, "people", "write");
+  if (gate) return gate;
   try {
     const body = await request.json();
     const { filename, mimeType, data } = body as {

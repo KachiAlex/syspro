@@ -1,7 +1,10 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
+import { requireSuperAdmin } from "@/lib/api-auth";
 
 export async function POST(req: Request) {
+  const auth = await requireSuperAdmin(req as any);
+  if (!auth.ok) return auth.response;
   try {
     const body = await req.json().catch(() => ({}));
     const tenantSlug = String(body.tenantSlug || "");
@@ -21,6 +24,8 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
+  const auth = await requireSuperAdmin(req as any);
+  if (!auth.ok) return auth.response;
   try {
     const url = new URL(req.url);
     const tenantSlug = String(url.searchParams.get("tenantSlug") || "");

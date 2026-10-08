@@ -4,6 +4,7 @@ import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables } from "@/lib/hr/db";
 import { invalidateTenantPermissions } from "@/lib/tenant-admin/permissions";
 import { invalidatePrefix } from "@/lib/cache";
+import { requireModuleGate } from "@/lib/api-auth";
 
 const BUSINESS_MODULES = [
   "self_service",
@@ -51,6 +52,8 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const gate = await requireModuleGate(request, "people", "read");
+  if (gate) return gate;
   const { id } = await params;
   const url = new URL(request.url);
   const tenantSlug = url.searchParams.get("tenantSlug");
@@ -93,6 +96,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const gate = await requireModuleGate(request, "people", "write");
+  if (gate) return gate;
   const { id } = await params;
   const body = await request.json().catch(() => null);
   if (!body || !body.tenantSlug) {
