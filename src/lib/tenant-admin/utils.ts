@@ -235,6 +235,11 @@ export function handleTenantAdminError(error: unknown): NextResponse {
   }
 
   if (error instanceof Error) {
+    // requirePermission and older guards throw plain Errors with an
+    // "Unauthorized:" prefix — map them to 403, not 500.
+    if (error.message.includes("Unauthorized")) {
+      return errorResponse(error.message, 403);
+    }
     console.error("Unhandled error:", error);
     return errorResponse(error.message, 500);
   }

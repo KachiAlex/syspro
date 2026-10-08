@@ -84,6 +84,20 @@ export async function getProject(id: string, tenantSlug: string): Promise<Projec
   }
 }
 
+/**
+ * Every writer that takes a caller-supplied project_id must verify the
+ * project belongs to the tenant — otherwise inserts create rows under the
+ * caller's tenant_slug pointing at another tenant's project (orphans), and
+ * the task-assignment path could mutate foreign tasks.
+ */
+export async function projectBelongsToTenant(projectId: string, tenantSlug: string): Promise<boolean> {
+  const result = await db.query(
+    `SELECT 1 FROM projects WHERE id = $1 AND tenant_slug = $2`,
+    [projectId, tenantSlug]
+  );
+  return result.rows.length > 0;
+}
+
 export async function getProjectsByStatus(
   tenantSlug: string,
   status: string,
@@ -306,6 +320,7 @@ export async function createWorkstream(
   createdBy: string
 ): Promise<Workstream | null> {
   try {
+    if (!(await projectBelongsToTenant(input.projectId, tenantSlug))) return null;
     const result = await db.query(
       `
       INSERT INTO workstreams (
@@ -389,6 +404,7 @@ export async function createTask(
   createdBy: string
 ): Promise<Task | null> {
   try {
+    if (!(await projectBelongsToTenant(input.projectId, tenantSlug))) return null;
     const result = await db.query(
       `
       INSERT INTO tasks (
@@ -603,6 +619,7 @@ export async function getOrCreateDefaultWorkstream(
   createdBy: string
 ): Promise<Workstream | null> {
   try {
+    if (!(await projectBelongsToTenant(projectId, tenantSlug))) return null;
     const existing = await db.query(
       `SELECT * FROM workstreams WHERE project_id = $1 AND tenant_slug = $2 ORDER BY created_at ASC LIMIT 1`,
       [projectId, tenantSlug]
@@ -636,6 +653,7 @@ export async function createTaskAssignment(
   createdBy: string
 ): Promise<TaskAssignment | null> {
   try {
+    if (!(await projectBelongsToTenant(input.projectId, tenantSlug))) return null;
     const result = await db.query(
       `
       INSERT INTO task_assignments (
@@ -660,10 +678,11 @@ export async function createTaskAssignment(
       ]
     );
 
-    // Mark task as assigned
+    // Mark task as assigned (tenant-scoped — task_id may reference a
+    // foreign tenant's row if the caller passed one).
     await db.query(
-      `UPDATE tasks SET is_assigned = true WHERE id = $1`,
-      [input.taskId]
+      `UPDATE tasks SET is_assigned = true WHERE id = $1 AND tenant_slug = $2`,
+      [input.taskId, tenantSlug]
     );
 
     return result.rows[0] || null;
@@ -861,7 +880,7 @@ export async function logTime(
         input.taskAssignmentId,
         input.taskId,
         input.projectId,
-        (input as any).employeeId || createdBy,
+        input.employeeId || createdBy,
         tenantSlug,
         input.logDate,
         input.hoursLogged,
@@ -881,6 +900,25 @@ export async function logTime(
       WHERE id = $2
       `,
       [input.hoursLogged, input.taskAssignmentId]
+    );
+
+    // Roll hours + cost up to the task — tasks.actual_cost feeds the
+    // projects.over-budget automation trigger (SUM(actual_cost) vs
+    // projects.total_budget_amount). Hourly cost ≈ monthly salary ÷ 173.33
+    // (21.67 working days × 8h). Employees without a salary still accrue hours.
+    const loggedEmployeeId = input.employeeId || createdBy;
+    const empRows = await db.query(
+      `select coalesce(salary, 0)::float as salary from admin_employees where id = $1 and tenant_slug = $2`,
+      [loggedEmployeeId, tenantSlug]
+    );
+    const hourlyRate = empRows.rows[0]?.salary > 0 ? empRows.rows[0].salary / 173.33 : 0;
+    await db.query(
+      `update tasks
+       set actual_hours_spent = coalesce(actual_hours_spent, 0) + $1,
+           actual_cost = coalesce(actual_cost, 0) + $2,
+           updated_at = now()
+       where id = $3 and tenant_slug = $4`,
+      [input.hoursLogged, Math.round(input.hoursLogged * hourlyRate * 100) / 100, input.taskId, tenantSlug]
     );
 
     return result.rows[0] || null;
@@ -1158,6 +1196,7 @@ export async function addProjectTeamMember(
   createdBy: string
 ): Promise<any | null> {
   await ensureProjectTeamTable();
+  if (!(await projectBelongsToTenant(projectId, tenantSlug))) return null;
   const result = await db.query(
     `
     INSERT INTO project_team (project_id, tenant_slug, email, role, created_by)
@@ -1259,6 +1298,7 @@ export async function createBudgetAllocation(
   createdBy: string
 ): Promise<any | null> {
   await ensureBudgetAllocationsTable();
+  if (!(await projectBelongsToTenant(projectId, tenantSlug))) return null;
   const result = await db.query(
     `
     INSERT INTO project_budget_allocations (project_id, tenant_slug, category, allocated, spent, created_by)

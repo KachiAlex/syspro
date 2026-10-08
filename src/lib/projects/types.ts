@@ -314,6 +314,7 @@ export const timeLogCreateSchema = z.object({
   taskAssignmentId: z.string().uuid(),
   taskId: z.string().uuid(),
   projectId: z.string().uuid(),
+  employeeId: z.string().optional(),
   logDate: z.date(),
   hoursLogged: z.number().positive(),
   description: z.string().optional(),
