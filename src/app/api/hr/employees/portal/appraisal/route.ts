@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { resolveEmployeeSession } from "@/lib/hr/auth";
+import { canAccessEmployeeRecord, resolveEmployeeSession } from "@/lib/hr/auth";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables } from "@/lib/hr/db";
 import {
@@ -152,6 +152,9 @@ export async function GET(request: NextRequest) {
 
     if (action === "history") {
       if (!employeeId) return NextResponse.json({ error: "employeeId is required" }, { status: 400 });
+      if (!(await canAccessEmployeeRecord(session, employeeId))) {
+        return NextResponse.json({ error: "Not authorized to view this appraisal history" }, { status: 403 });
+      }
       const history = await getAppraisalHistory(session.tenantSlug, employeeId, 50);
       return NextResponse.json({ history });
     }
@@ -191,6 +194,9 @@ export async function GET(request: NextRequest) {
 
     if (action === "self") {
       const targetId = employeeId || session.id;
+      if (!(await canAccessEmployeeRecord(session, targetId))) {
+        return NextResponse.json({ error: "Not authorized to view these appraisals" }, { status: 403 });
+      }
       const shared = await getEmployeeSharedAppraisals(session.tenantSlug, targetId);
       return NextResponse.json({ appraisals: shared });
     }

@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { resolveEmployeeSession } from "@/lib/hr/auth";
+import { canAccessEmployeeRecord, resolveEmployeeSession } from "@/lib/hr/auth";
 import { ensureHrTables } from "@/lib/hr/db";
 import {
   insertPeerFeedback,
@@ -18,6 +18,9 @@ export async function GET(request: NextRequest) {
     await ensureHrTables();
     if (!employeeId) {
       return NextResponse.json({ error: "employeeId is required" }, { status: 400 });
+    }
+    if (!(await canAccessEmployeeRecord(session, employeeId))) {
+      return NextResponse.json({ error: "Not authorized to view this feedback" }, { status: 403 });
     }
     const feedback = await getPeerFeedbackForEmployee(session.tenantSlug, employeeId);
     return NextResponse.json({ feedback });

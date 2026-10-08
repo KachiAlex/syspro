@@ -196,6 +196,11 @@ export async function PATCH(request: NextRequest) {
 
     const report = reports[0];
 
+    // Segregation of duties: nobody approves their own report
+    if (report.employee_id === session.id) {
+      return NextResponse.json({ error: "You cannot approve your own report" }, { status: 403 });
+    }
+
     // Permission check: only the assigned approver role can act
     const canApprove =
       (report.approver_role === "hod" && (employeeRole === "hod" || employeeRole === "head_of_department")) ||

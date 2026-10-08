@@ -198,6 +198,21 @@ export async function PATCH(request: NextRequest) {
 
     const newStatus = action === "approve" ? "approved" : "rejected";
 
+    // Fetch the expense once — used for both self-approval and department checks
+    const expenseInfo = await SQL`
+      SELECT department_id, employee_id FROM admin_employee_expenses
+      WHERE id = ${expenseId} AND tenant_slug = ${session.tenantSlug}
+      LIMIT 1
+    `;
+    if (expenseInfo.length === 0) {
+      return NextResponse.json({ error: "Expense not found" }, { status: 404 });
+    }
+
+    // Segregation of duties: nobody approves their own expense
+    if (expenseInfo[0].employee_id === session.id) {
+      return NextResponse.json({ error: "You cannot approve your own expense" }, { status: 403 });
+    }
+
     // If HOD, verify expense is from their department
     if (isHOD && !isHR) {
       const empInfo = await SQL`
@@ -206,16 +221,6 @@ export async function PATCH(request: NextRequest) {
         LIMIT 1
       `;
       const hodDept = empInfo[0]?.department_id;
-
-      const expenseInfo = await SQL`
-        SELECT department_id FROM admin_employee_expenses
-        WHERE id = ${expenseId} AND tenant_slug = ${session.tenantSlug}
-        LIMIT 1
-      `;
-
-      if (expenseInfo.length === 0) {
-        return NextResponse.json({ error: "Expense not found" }, { status: 404 });
-      }
 
       if (expenseInfo[0].department_id !== hodDept) {
         return NextResponse.json({ error: "You can only approve expenses from your department" }, { status: 403 });

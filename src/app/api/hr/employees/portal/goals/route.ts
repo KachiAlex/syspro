@@ -1,7 +1,8 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { resolveEmployeeSession } from "@/lib/hr/auth";
+import { canAccessEmployeeRecord, resolveEmployeeSession } from "@/lib/hr/auth";
 import { ensureHrTables } from "@/lib/hr/db";
+import { sql as SQL } from "@/lib/sql-client";
 import {
   insertGoal,
   getEmployeeGoals,
@@ -17,6 +18,9 @@ export async function GET(request: NextRequest) {
 
   try {
     await ensureHrTables();
+    if (!(await canAccessEmployeeRecord(session, employeeId))) {
+      return NextResponse.json({ error: "Not authorized to view these goals" }, { status: 403 });
+    }
     const goals = await getEmployeeGoals(session.tenantSlug, employeeId);
     return NextResponse.json({ goals });
   } catch (error: any) {
@@ -28,10 +32,6 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const session = resolveEmployeeSession(request);
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-
-  const employeeRole = (session.role || "staff").toLowerCase();
-  const isHR = employeeRole === "hr" || employeeRole === "hr_admin" || employeeRole === "hr_manager";
-  const isHOD = employeeRole === "hod" || employeeRole === "head_of_department";
 
   try {
     await ensureHrTables();
@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "employeeId and title are required" }, { status: 400 });
     }
 
-    if (!isHR && !isHOD && employeeId !== session.id) {
-      return NextResponse.json({ error: "Not authorized to create goals for others" }, { status: 403 });
+    if (!(await canAccessEmployeeRecord(session, employeeId))) {
+      return NextResponse.json({ error: "Not authorized to create goals for this employee" }, { status: 403 });
     }
 
     const id = await insertGoal({
@@ -91,6 +91,18 @@ export async function PATCH(request: NextRequest) {
 
     if (!goalId) {
       return NextResponse.json({ error: "goalId is required" }, { status: 400 });
+    }
+
+    const goalRows = (await SQL`
+      select employee_id from admin_employee_goals
+      where tenant_slug = ${session.tenantSlug} and id = ${goalId} limit 1
+    `) as any[];
+    const goal = goalRows[0];
+    if (!goal) {
+      return NextResponse.json({ error: "Goal not found" }, { status: 404 });
+    }
+    if (!(await canAccessEmployeeRecord(session, goal.employee_id))) {
+      return NextResponse.json({ error: "Not authorized to update this goal" }, { status: 403 });
     }
 
     await updateGoalStatus(session.tenantSlug, goalId, status, actualValue);

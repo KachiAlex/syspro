@@ -241,3 +241,43 @@ export function resolveEmployeeSession(request: NextRequest): EmployeeSession | 
 
   return null;
 }
+
+/**
+ * Whether the session may read or write another employee's HR records
+ * (goals, peer feedback, appraisal data). Allowed for:
+ *   - the employee themselves
+ *   - HR / admin / executive roles (tenant-wide)
+ *   - HODs, but only for employees in their own department
+ */
+export async function canAccessEmployeeRecord(
+  session: EmployeeSession,
+  targetEmployeeId: string
+): Promise<boolean> {
+  if (!targetEmployeeId) return false;
+  if (String(targetEmployeeId) === String(session.id)) return true;
+  const role = (session.role || "staff").toLowerCase();
+  if (["hr", "hr_admin", "hr_manager", "admin", "tenant_admin", "executive", "superadmin"].includes(role)) {
+    return true;
+  }
+  if (role === "hod" || role === "head_of_department") {
+    if (!session.departmentId) {
+      // Session may lack departmentId when resolved via pisairtel_session —
+      // re-resolve it from the employee record.
+      const rows = (await SQL`
+        select department_id from admin_employees
+        where id = ${session.id} and tenant_slug = ${session.tenantSlug} limit 1
+      `) as any[];
+      session.departmentId = rows[0]?.department_id || "";
+      if (!session.departmentId) return false;
+    }
+    const rows = (await SQL`
+      select 1 from admin_employees
+      where id = ${targetEmployeeId}
+        and tenant_slug = ${session.tenantSlug}
+        and department_id = ${session.departmentId}
+      limit 1
+    `) as any[];
+    return rows.length > 0;
+  }
+  return false;
+}
