@@ -30,6 +30,15 @@ type Subscription = {
   price?: number;
   features?: string[];
 };
+type UsageSummary = {
+  seats: { used: number; limit: number | null };
+  apiCalls: { last24h: number; last7d: number; last30d: number; byModule: Record<string, number> };
+  records: Record<string, number>;
+  ai: {
+    stats: { totalCalls: number; failedCalls: number; last24h: number; last7d: number; last30d: number };
+    quota: { dailyLimit: number; dailyUsed: number; monthlyLimit: number; monthlyUsed: number; exceeded: boolean };
+  };
+};
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-green-100 text-green-900",
@@ -52,6 +61,7 @@ const STATUS_ICONS: Record<string, string> = {
 export default function BillingSection({ tenantSlug }: { tenantSlug?: string | null }) {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -101,6 +111,11 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
         setInvoices(data.invoices ?? []);
         setSubscriptions(data.subscriptions ?? []);
         setLastRefreshed(new Date());
+      }
+      const usageRes = await fetch(`/api/tenant/billing?type=usage&tenantSlug=${encodeURIComponent(ts ?? '')}`);
+      const usagePayload = await usageRes.json().catch(() => null);
+      if (usageRes.ok && usagePayload?.data) {
+        setUsage(usagePayload.data);
       }
     } catch (err) {
       console.error(err);
@@ -359,6 +374,71 @@ export default function BillingSection({ tenantSlug }: { tenantSlug?: string | n
                 </div>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* Usage & Metering */}
+      <div className="rounded-3xl border border-slate-100 bg-theme-muted p-6 shadow-sm">
+        <div className="mb-4">
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Usage</p>
+          <h2 className="text-lg font-semibold text-gray-900">Usage &amp; Metering</h2>
+          <p className="mt-1 text-sm text-slate-600">Seats, API activity, AI quota, and module records</p>
+        </div>
+        {!usage ? (
+          <p className="text-sm text-slate-500">{loading ? "Loading usage…" : "Usage data unavailable"}</p>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="rounded-lg border border-slate-200 p-3">
+                <p className="text-xs font-medium text-slate-500">Seats</p>
+                <p className="text-xl font-bold text-gray-900">
+                  {usage.seats.used}
+                  {usage.seats.limit != null && <span className="text-sm font-normal text-slate-500"> / {usage.seats.limit}</span>}
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-200 p-3">
+                <p className="text-xs font-medium text-slate-500">API calls (24h)</p>
+                <p className="text-xl font-bold text-gray-900">{usage.apiCalls.last24h.toLocaleString()}</p>
+              </div>
+              <div className="rounded-lg border border-slate-200 p-3">
+                <p className="text-xs font-medium text-slate-500">API calls (30d)</p>
+                <p className="text-xl font-bold text-gray-900">{usage.apiCalls.last30d.toLocaleString()}</p>
+              </div>
+              <div className="rounded-lg border border-slate-200 p-3">
+                <p className="text-xs font-medium text-slate-500">AI calls today</p>
+                <p className={`text-xl font-bold ${usage.ai.quota.exceeded ? "text-rose-600" : "text-gray-900"}`}>
+                  {usage.ai.quota.dailyUsed}
+                  {usage.ai.quota.dailyLimit > 0 && <span className="text-sm font-normal text-slate-500"> / {usage.ai.quota.dailyLimit}</span>}
+                </p>
+              </div>
+            </div>
+            {Object.keys(usage.apiCalls.byModule).length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-slate-500 mb-2">API calls by module (30d)</p>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(usage.apiCalls.byModule).map(([mod, cnt]) => (
+                    <span key={mod} className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">
+                      {mod}: {cnt.toLocaleString()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div>
+              <p className="text-xs font-medium text-slate-500 mb-2">Records by module</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                {Object.entries(usage.records).map(([key, cnt]) => (
+                  <div key={key} className="rounded-lg border border-slate-200 px-3 py-2">
+                    <p className="text-xs text-slate-500 capitalize">{key.replace(/_/g, " ")}</p>
+                    <p className="text-sm font-semibold text-gray-900">{cnt.toLocaleString()}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {usage.ai.quota.exceeded && (
+              <p className="text-sm font-medium text-rose-600">AI usage quota exceeded — upgrade your plan or contact support.</p>
+            )}
           </div>
         )}
       </div>

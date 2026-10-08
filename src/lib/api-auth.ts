@@ -12,6 +12,7 @@ import { verifySession } from "./session";
 import { validateTenantAccess, type SessionUser } from "./auth-helpers";
 import { db, sql as SQL } from "./sql-client";
 import { getTenantUserPermissions } from "./tenant-admin/permissions";
+import { meterApiCall } from "./tenant-usage";
 
 // Route handlers may type the param as `Request` or `NextRequest` — at runtime
 // it is always a NextRequest (has .cookies/.nextUrl).
@@ -270,6 +271,7 @@ export async function requireModuleGate(
       { status: 403 }
     );
   }
+  meterApiCall(tenant, module);
   return null;
 }
 
@@ -325,7 +327,10 @@ export async function requireModuleAccess(
     }
   }
 
-  if (isAdmin) return scope;
+  if (isAdmin) {
+    meterApiCall(tenant, module);
+    return scope;
+  }
 
   const allowed =
     required === "read"
@@ -335,6 +340,7 @@ export async function requireModuleAccess(
   if (!allowed) {
     return forbidden(`Insufficient permissions for ${required} access to ${module}`);
   }
+  meterApiCall(tenant, module);
   return scope;
 }
 

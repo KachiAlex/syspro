@@ -108,13 +108,11 @@ export async function GET(request: NextRequest) {
         },
       });
     } else if (type === "usage") {
+      const { getTenantUsageSummary } = await import("@/lib/tenant-usage");
+      const usage = await getTenantUsageSummary(context.tenantSlug);
       return NextResponse.json({
         success: true,
-        data: {
-          monthlyUsage: [],
-          currentUsage: {},
-          limits: {},
-        },
+        data: usage,
       });
     } else if (type === "overview") {
       const invoices = await listFinanceInvoices({ tenantSlug: context.tenantSlug });
