@@ -807,6 +807,15 @@ export async function listCampaignCosts(tenantSlug: string, campaignId: string):
 
 export async function recordCampaignCost(input: CampaignCostInput): Promise<CampaignCost> {
   await ensureRevOpsTables();
+  // The campaign must belong to this tenant — otherwise a caller could
+  // attach costs to (and roll up into) another tenant's campaign.
+  const owned = await db.query(
+    `select 1 from revops_campaigns where id = $1 and tenant_slug = $2 limit 1`,
+    [input.campaignId, input.tenantSlug]
+  );
+  if (!owned.rows.length) {
+    throw new Error("Campaign not found");
+  }
   const id = randomUUID();
   const now = new Date().toISOString();
   await db.query(
@@ -832,9 +841,10 @@ export async function recordCampaignCost(input: CampaignCostInput): Promise<Camp
   );
   await db.query(
     `update revops_campaigns set committed_spend = (
-       select coalesce(sum(amount), 0) from revops_campaign_costs where campaign_id = $1
-     ), updated_at = $2 where id = $1`,
-    [input.campaignId, now]
+       select coalesce(sum(amount), 0) from revops_campaign_costs
+       where campaign_id = $1 and tenant_slug = $2
+     ), updated_at = $3 where id = $1 and tenant_slug = $2`,
+    [input.campaignId, input.tenantSlug, now]
   );
   const campaign = await db.query(
     `select name, budget, committed_spend, revenue_attributed, roi from revops_campaigns where id = $1 and tenant_slug = $2`,
@@ -927,6 +937,13 @@ export type CreateLeadSourceInput = {
 
 export async function createLeadSource(input: CreateLeadSourceInput): Promise<LeadSource> {
   await ensureRevOpsTables();
+  if (input.campaignId) {
+    const owned = await db.query(
+      `select 1 from revops_campaigns where id = $1 and tenant_slug = $2 limit 1`,
+      [input.campaignId, input.tenantSlug]
+    );
+    if (owned.rows.length === 0) throw new Error("Campaign not found");
+  }
   const id = randomUUID();
   const now = new Date().toISOString();
   await db.query(
@@ -1095,8 +1112,134 @@ export async function calculateAttributionSummary(tenantSlug: string, model: Att
   };
 }
 
+async function refreshSalesPerformanceSnapshot(tenantSlug: string): Promise<void> {
+  const latest = await db.query(
+    `select created_at from revops_sales_performance_snapshots where tenant_slug = $1 order by created_at desc limit 1`,
+    [tenantSlug]
+  );
+  if (latest.rows.length > 0) {
+    const ageMs = Date.now() - new Date(latest.rows[0].created_at).getTime();
+    if (ageMs < 6 * 60 * 60 * 1000) return;
+  }
+
+  const period = new Date().toISOString().slice(0, 7);
+  const deals = (await db.query(
+    `select stage, value, currency, assigned_officer_id, created_at, updated_at
+     from crm_deals where tenant_slug = $1`,
+    [tenantSlug]
+  )).rows;
+
+  const won = deals.filter((d: any) => d.stage === "closed_won");
+  const lost = deals.filter((d: any) => d.stage === "closed_lost");
+  const open = deals.filter((d: any) => d.stage !== "closed_won" && d.stage !== "closed_lost");
+  const wonThisPeriod = won.filter((d: any) => String(d.updated_at ?? "").slice(0, 7) === period);
+
+  const revenueAchieved = wonThisPeriod.reduce((sum: number, d: any) => sum + toNum(d.value), 0);
+  const closed = won.length + lost.length;
+  const winRate = closed > 0 ? (won.length / closed) * 100 : 0;
+  const avgDealSize = won.length > 0 ? won.reduce((s: number, d: any) => s + toNum(d.value), 0) / won.length : 0;
+  const velocitySamples = won
+    .map((d: any) => (new Date(d.updated_at).getTime() - new Date(d.created_at).getTime()) / 86400000)
+    .filter((v: number) => Number.isFinite(v) && v >= 0);
+  const dealVelocityDays = velocitySamples.length > 0
+    ? velocitySamples.reduce((a: number, b: number) => a + b, 0) / velocitySamples.length
+    : 0;
+
+  const targets = (await db.query(
+    `select * from revops_sales_targets where tenant_slug = $1`,
+    [tenantSlug]
+  )).rows;
+  const currentTargets = targets.filter((t: any) => t.period === period);
+  const revenueTarget = currentTargets.reduce((sum: number, t: any) => sum + toNum(t.target_amount), 0);
+  const openPipeline = open.reduce((sum: number, d: any) => sum + toNum(d.value), 0);
+  const pipelineCoverage = revenueTarget > 0 ? openPipeline / revenueTarget : 0;
+
+  const dealPeriodKey = (d: any, periodType: string) => {
+    const dt = new Date(d.updated_at);
+    if (periodType === "quarterly") {
+      return `${dt.getUTCFullYear()}-Q${Math.floor(dt.getUTCMonth() / 3) + 1}`;
+    }
+    return String(d.updated_at ?? "").slice(0, 7);
+  };
+  for (const t of targets) {
+    const achieved = won
+      .filter((d: any) => dealPeriodKey(d, t.period_type) === t.period)
+      .reduce((sum: number, d: any) => sum + toNum(d.value), 0);
+    if (toNum(t.achieved_amount) !== achieved) {
+      await db.query(
+        `update revops_sales_targets set achieved_amount = $1, updated_at = $2 where id = $3 and tenant_slug = $4`,
+        [achieved, new Date().toISOString(), t.id, tenantSlug]
+      );
+      t.achieved_amount = achieved;
+    }
+  }
+
+  const officerIds = Array.from(new Set(won.map((d: any) => d.assigned_officer_id).filter(Boolean)));
+  const nameMap = new Map<string, string>();
+  if (officerIds.length > 0) {
+    const names = await db.query(
+      `select id, full_name from admin_employees where tenant_slug = $1 and id = any($2)`,
+      [tenantSlug, officerIds]
+    ).catch(() => ({ rows: [] as any[] }));
+    for (const n of names.rows) nameMap.set(n.id, n.full_name);
+  }
+  const repMap = new Map<string, { repId: string; repName: string; meetings: number; proposals: number; wins: number; attainment: number }>();
+  for (const d of won) {
+    const repId = d.assigned_officer_id || "unassigned";
+    if (!repMap.has(repId)) {
+      repMap.set(repId, {
+        repId,
+        repName: nameMap.get(repId) ?? (repId === "unassigned" ? "Unassigned" : repId),
+        meetings: 0, proposals: 0, wins: 0, attainment: 0,
+      });
+    }
+    repMap.get(repId)!.wins += 1;
+  }
+  for (const rep of repMap.values()) {
+    const repTarget = targets.find((t: any) => t.owner_type === "rep" && t.owner_id === rep.repId && t.period === period);
+    const repRevenue = won
+      .filter((d: any) => (d.assigned_officer_id || "unassigned") === rep.repId && dealPeriodKey(d, "monthly") === period)
+      .reduce((sum: number, d: any) => sum + toNum(d.value), 0);
+    rep.attainment = repTarget && toNum(repTarget.target_amount) > 0 ? toMoney((repRevenue / toNum(repTarget.target_amount)) * 100) : 0;
+  }
+
+  const regionalPerformance = Array.from(new Set(targets.map((t: any) => t.region).filter(Boolean))).map((region: any) => {
+    const regionTargets = targets.filter((t: any) => t.region === region);
+    const target = regionTargets.reduce((sum: number, t: any) => sum + toNum(t.target_amount), 0);
+    const achieved = regionTargets.reduce((sum: number, t: any) => sum + toNum(t.achieved_amount), 0);
+    return { region, revenue: toMoney(achieved), target: toMoney(target), attainment: target > 0 ? toMoney((achieved / target) * 100) : 0 };
+  });
+
+  const stageOrder = ["prospecting", "qualification", "proposal", "negotiation", "closed_won"];
+  const stageRank = new Map(stageOrder.map((stage, i) => [stage, i]));
+  const funnelLeakage = stageOrder.slice(0, -1).map((stage, i) => {
+    const entered = deals.filter((d: any) => (stageRank.get(d.stage) ?? -1) >= i).length;
+    const converted = deals.filter((d: any) => (stageRank.get(d.stage) ?? -1) >= i + 1).length;
+    return { stage, entered, converted, leakage: Math.max(0, entered - converted) };
+  });
+
+  const periodLabel = new Date(`${period}-01T00:00:00Z`).toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+  await db.query(
+    `insert into revops_sales_performance_snapshots
+     (id, tenant_slug, period, period_label, win_rate, revenue_achieved, revenue_target,
+      deal_velocity_days, avg_deal_size, pipeline_coverage, rep_productivity, regional_performance,
+      funnel_leakage, created_at)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+    [
+      randomUUID(), tenantSlug, period, periodLabel,
+      toMoney(winRate), toMoney(revenueAchieved), toMoney(revenueTarget),
+      toMoney(dealVelocityDays), toMoney(avgDealSize), toMoney(pipelineCoverage),
+      JSON.stringify(Array.from(repMap.values())), JSON.stringify(regionalPerformance),
+      JSON.stringify(funnelLeakage), new Date().toISOString(),
+    ]
+  );
+}
+
 export async function getSalesPerformanceSnapshot(tenantSlug: string): Promise<{ snapshot: SalesPerformanceSnapshot | null; targets: SalesTarget[] }> {
   await ensureRevOpsTables();
+  await refreshSalesPerformanceSnapshot(tenantSlug).catch((err) => {
+    console.error("[RevOps] snapshot refresh failed:", err);
+  });
   const snapResult = await db.query(
     `select * from revops_sales_performance_snapshots where tenant_slug = $1 order by created_at desc limit 1`,
     [tenantSlug]
@@ -1150,6 +1293,15 @@ export async function getSalesPerformanceSnapshot(tenantSlug: string): Promise<{
 export async function upsertSalesTarget(target: SalesTarget): Promise<SalesTarget> {
   await ensureRevOpsTables();
   const now = new Date().toISOString();
+  if (target.id) {
+    const collision = await db.query(
+      `select tenant_slug from revops_sales_targets where id = $1 limit 1`,
+      [target.id]
+    );
+    if (collision.rows.length > 0 && collision.rows[0].tenant_slug !== target.tenantSlug) {
+      throw new Error("Sales target not found");
+    }
+  }
   await db.query(
     `insert into revops_sales_targets
      (id, tenant_slug, period, period_type, region, branch, subsidiary, owner_type, owner_id, owner_name, target_amount, achieved_amount, currency, created_by, approved_by, created_at, updated_at)
@@ -1159,7 +1311,8 @@ export async function upsertSalesTarget(target: SalesTarget): Promise<SalesTarge
        branch = excluded.branch, subsidiary = excluded.subsidiary, owner_type = excluded.owner_type,
        owner_id = excluded.owner_id, owner_name = excluded.owner_name, target_amount = excluded.target_amount,
        achieved_amount = excluded.achieved_amount, currency = excluded.currency, approved_by = excluded.approved_by,
-       updated_at = excluded.updated_at`,
+       updated_at = excluded.updated_at
+     where revops_sales_targets.tenant_slug = excluded.tenant_slug`,
     [
       target.id,
       target.tenantSlug,
@@ -1294,8 +1447,8 @@ export async function recordAssetUsage(tenantSlug: string, assetId: string, fiel
   metrics[field] = (metrics[field] ?? 0) + 1;
   metrics.lastViewedAt = now;
   await db.query(
-    `update revops_enablement_assets set usage_metrics = $1, updated_at = $2 where id = $3`,
-    [JSON.stringify(metrics), now, assetId]
+    `update revops_enablement_assets set usage_metrics = $1, updated_at = $2 where id = $3 and tenant_slug = $4`,
+    [JSON.stringify(metrics), now, assetId, tenantSlug]
   );
   return {
     id: row.id,
@@ -1319,8 +1472,91 @@ export async function recordAssetUsage(tenantSlug: string, assetId: string, fiel
   };
 }
 
+async function refreshRevenueForecast(tenantSlug: string): Promise<void> {
+  const latest = await db.query(
+    `select created_at from revops_revenue_forecasts where tenant_slug = $1 order by created_at desc limit 1`,
+    [tenantSlug]
+  );
+  if (latest.rows.length > 0) {
+    const ageMs = Date.now() - new Date(latest.rows[0].created_at).getTime();
+    if (ageMs < 24 * 60 * 60 * 1000) return;
+  }
+
+  const now = new Date();
+  const quarterStart = new Date(Date.UTC(now.getUTCFullYear(), Math.floor(now.getUTCMonth() / 3) * 3, 1));
+  const quarterEnd = new Date(Date.UTC(quarterStart.getUTCFullYear(), quarterStart.getUTCMonth() + 3, 0));
+  const periodStart = quarterStart.toISOString().slice(0, 10);
+  const periodEnd = quarterEnd.toISOString().slice(0, 10);
+
+  const deals = (await db.query(
+    `select stage, value, probability, expected_close, updated_at from crm_deals where tenant_slug = $1`,
+    [tenantSlug]
+  )).rows;
+
+  const inPeriod = (d: any) => {
+    if (!d.expected_close) return true; // no close date → assume in-period
+    const ec = String(d.expected_close).slice(0, 10);
+    return ec >= periodStart && ec <= periodEnd;
+  };
+  const openDeals = deals.filter((d: any) => d.stage !== "closed_won" && d.stage !== "closed_lost" && inPeriod(d));
+  const wonThisPeriod = deals.filter(
+    (d: any) => d.stage === "closed_won" && String(d.updated_at ?? "").slice(0, 10) >= periodStart
+  );
+
+  const weighted = openDeals.reduce(
+    (sum: number, d: any) => sum + toNum(d.value) * (Math.min(100, Math.max(0, toNum(d.probability) || 50)) / 100),
+    0
+  );
+  const closedRevenue = wonThisPeriod.reduce((sum: number, d: any) => sum + toNum(d.value), 0);
+  const forecastLikely = closedRevenue + weighted;
+  const forecastLow = closedRevenue + weighted * 0.7;
+  const highProb = openDeals
+    .filter((d: any) => toNum(d.probability) >= 70)
+    .reduce((sum: number, d: any) => sum + toNum(d.value) * 0.3, 0);
+  const forecastHigh = forecastLikely + weighted * 0.25 + highProb;
+
+  const stale = openDeals.filter((d: any) => d.expected_close && String(d.expected_close).slice(0, 10) < periodEnd
+    && Date.now() - new Date(d.updated_at).getTime() > 30 * 86400000);
+
+  const assumptions: string[] = [
+    `${openDeals.length} open deals totaling ${toMoney(openDeals.reduce((s: number, d: any) => s + toNum(d.value), 0))} in pipeline`,
+    `Probability-weighted pipeline contribution plus closed revenue to date`,
+  ];
+  if (closedRevenue > 0) assumptions.push(`${toMoney(closedRevenue)} already closed this quarter`);
+  const riskAlerts: Array<{ id: string; label: string; severity: "low" | "medium" | "high"; detail?: string }> = [];
+  if (stale.length > 0) {
+    riskAlerts.push({
+      id: "stale-pipeline",
+      label: "Stale pipeline",
+      severity: stale.length > 3 ? "high" : "medium",
+      detail: `${stale.length} open deal(s) untouched for 30+ days`,
+    });
+  }
+  if (openDeals.length === 0 && closedRevenue === 0) {
+    riskAlerts.push({ id: "empty-pipeline", label: "Empty pipeline", severity: "high", detail: "No open deals or closed revenue this quarter" });
+  }
+  const confidence = Math.min(90, 30 + wonThisPeriod.length * 10 + openDeals.length * 2);
+
+  await db.query(
+    `insert into revops_revenue_forecasts
+     (id, tenant_slug, period_start, period_end, forecast_low, forecast_likely, forecast_high,
+      confidence, methodology, assumptions, risk_alerts, created_by, created_at, updated_at)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+    [
+      randomUUID(), tenantSlug, periodStart, periodEnd,
+      toMoney(forecastLow), toMoney(forecastLikely), toMoney(forecastHigh),
+      confidence, "probability_weighted_pipeline",
+      JSON.stringify(assumptions), JSON.stringify(riskAlerts),
+      "system", now.toISOString(), now.toISOString(),
+    ]
+  );
+}
+
 export async function getRevenueForecast(tenantSlug: string): Promise<RevenueForecast | null> {
   await ensureRevOpsTables();
+  await refreshRevenueForecast(tenantSlug).catch((err) => {
+    console.error("[RevOps] forecast refresh failed:", err);
+  });
   const result = await db.query(
     `select * from revops_revenue_forecasts where tenant_slug = $1 order by created_at desc limit 1`,
     [tenantSlug]

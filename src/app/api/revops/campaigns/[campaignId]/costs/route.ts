@@ -58,6 +58,9 @@ export async function POST(request: NextRequest, context: any) {
 
     return NextResponse.json({ cost }, { status: 201 });
   } catch (error) {
+    if (error instanceof Error && error.message === "Campaign not found") {
+      return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
+    }
     console.error("Failed to record campaign cost", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to record cost" }, { status: 500 });
   }

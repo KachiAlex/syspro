@@ -64,7 +64,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ leadSource }, { status: 201 });
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to create lead source";
+    if (message === "Campaign not found") {
+      return NextResponse.json({ error: message }, { status: 404 });
+    }
     console.error("Failed to create lead source", error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to create lead source" }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

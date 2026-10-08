@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { randomUUID } from "crypto";
 import { CRM_PIPELINE_STAGES } from "@/lib/crm/types";
 import { updateDeal, deleteDeal, updateLead, logActivity, getDeal, getLead, insertCustomer, updateCustomer, recordConversion } from "@/lib/crm/db";
 import { canAccessCrmRecord, resolveCrmAuth } from "@/lib/crm/auth";
@@ -148,6 +149,49 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         currency: deal.currency || "NGN",
         metadata: { dealName: deal.name, customerId: deal.customerId, leadId: deal.leadId },
       });
+
+      // Chain 3: record revenue attribution so RevOps campaign/source ROI
+      // reflects real closed-won revenue instead of always reading zero.
+      try {
+        const { db } = await import("@/lib/sql-client");
+        let leadSourceId: string | null = null;
+        let campaignId: string | null = null;
+        let channel: string | null = null;
+        if (deal.leadId) {
+          const lead = await getLead(deal.leadId).catch(() => null);
+          const source = (lead as any)?.source ?? null;
+          channel = source;
+          if (source) {
+            const src = (await db.query(
+              `select id, campaign_id from revops_lead_sources where tenant_slug = $1 and lower(name) = lower($2) limit 1`,
+              [deal.tenantSlug, String(source)]
+            )).rows;
+            leadSourceId = src[0]?.id ?? null;
+            campaignId = src[0]?.campaign_id ?? null;
+          }
+        }
+        // One attribution row per deal — skip if a prior close already wrote it
+        const existing = (await db.query(
+          `select id from revops_revenue_attributions where tenant_slug = $1 and crm_deal_id = $2 limit 1`,
+          [deal.tenantSlug, deal.id]
+        )).rows;
+        if (!existing.length) {
+          await db.query(
+            `insert into revops_revenue_attributions
+             (id, tenant_slug, campaign_id, lead_source_id, crm_opportunity_id, crm_deal_id, crm_value,
+              recognized_revenue, allocation_weight, model, channel, closed_date, metadata, created_at)
+             values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,now())`,
+            [
+              randomUUID(), deal.tenantSlug, campaignId, leadSourceId,
+              deal.id, deal.id, deal.value ?? 0, deal.value ?? 0, 1, "last_touch",
+              channel, new Date().toISOString(),
+              JSON.stringify({ dealName: deal.name, leadId: deal.leadId }),
+            ]
+          );
+        }
+      } catch (attrErr) {
+        console.error("[DealWon] Revenue attribution failed:", attrErr);
+      }
 
       // Auto-draft invoice
       try {

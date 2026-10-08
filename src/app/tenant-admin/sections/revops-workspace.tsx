@@ -163,6 +163,13 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
   const [campaignForm, setCampaignForm] = useState<CampaignFormState>(() => DEFAULT_CAMPAIGN_FORM());
   const [leadSourceForm, setLeadSourceForm] = useState<LeadSourceFormState>(() => DEFAULT_LEAD_SOURCE_FORM());
   const [assetForm, setAssetForm] = useState<AssetFormState>(() => DEFAULT_ASSET_FORM());
+  const [targetForm, setTargetForm] = useState({
+    ownerName: "",
+    ownerType: "team" as "team" | "rep",
+    period: new Date().toISOString().slice(0, 7),
+    periodType: "monthly" as "monthly" | "quarterly",
+    targetAmount: "",
+  });
   const [formError, setFormError] = useState<string | null>(null);
 
   const tenantQuery = useMemo(() => {
@@ -272,6 +279,35 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
     } catch (err) {
       console.error("Campaign create failed", err);
       setFormError(err instanceof Error ? err.message : "Unable to create campaign");
+    }
+  };
+
+  const handleTargetSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setFormError(null);
+    if (!targetForm.ownerName.trim() || !targetForm.period.trim() || !targetForm.targetAmount) {
+      setFormError("Owner, period, and target amount are required");
+      return;
+    }
+    try {
+      const response = await fetch("/api/revops/sales-performance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          period: targetForm.period.trim(),
+          periodType: targetForm.periodType,
+          ownerType: targetForm.ownerType,
+          ownerName: targetForm.ownerName.trim(),
+          targetAmount: Number(targetForm.targetAmount),
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload?.error ?? "Unable to save sales target");
+      setSalesTargets((prev) => [payload.target, ...prev]);
+      setTargetForm((f) => ({ ...f, ownerName: "", targetAmount: "" }));
+    } catch (err) {
+      console.error("Sales target create failed", err);
+      setFormError(err instanceof Error ? err.message : "Unable to save sales target");
     }
   };
 
@@ -680,11 +716,55 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
       description="RevOps benchmarks win rates, velocity, and targets using read-only CRM snapshots."
     >
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatPill label="Win rate" value={`${Math.round((salesSnapshot?.winRate ?? 0) * 100)}%`} />
+        <StatPill label="Win rate" value={`${Math.round(salesSnapshot?.winRate ?? 0)}%`} />
         <StatPill label="Deal velocity" value={`${salesSnapshot?.dealVelocityDays ?? 0} days`} />
         <StatPill label="Avg deal size" value={currencyFormatter.format(salesSnapshot?.avgDealSize ?? 0)} />
         <StatPill label="Pipeline coverage" value={`${salesSnapshot?.pipelineCoverage ?? 0}x`} />
       </div>
+      <form onSubmit={handleTargetSubmit} className="mt-6 grid gap-3 rounded-xl border border-slate-200 p-4 md:grid-cols-6">
+        <input
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          placeholder="Owner name"
+          value={targetForm.ownerName}
+          onChange={(e) => setTargetForm((f) => ({ ...f, ownerName: e.target.value }))}
+          required
+        />
+        <select
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          value={targetForm.ownerType}
+          onChange={(e) => setTargetForm((f) => ({ ...f, ownerType: e.target.value as "team" | "rep" }))}
+        >
+          <option value="team">Team</option>
+          <option value="rep">Rep</option>
+        </select>
+        <input
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          placeholder="Period (2026-10 or 2026-Q4)"
+          value={targetForm.period}
+          onChange={(e) => setTargetForm((f) => ({ ...f, period: e.target.value }))}
+          required
+        />
+        <select
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          value={targetForm.periodType}
+          onChange={(e) => setTargetForm((f) => ({ ...f, periodType: e.target.value as "monthly" | "quarterly" }))}
+        >
+          <option value="monthly">Monthly</option>
+          <option value="quarterly">Quarterly</option>
+        </select>
+        <input
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          type="number"
+          min="0"
+          placeholder="Target amount"
+          value={targetForm.targetAmount}
+          onChange={(e) => setTargetForm((f) => ({ ...f, targetAmount: e.target.value }))}
+          required
+        />
+        <button type="submit" className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">
+          Add target
+        </button>
+      </form>
       <div className="overflow-x-auto">
         <table className="mt-6 w-full text-sm">
           <thead>

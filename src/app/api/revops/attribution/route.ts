@@ -11,7 +11,11 @@ export async function GET(request: NextRequest) {
   if (_gate1) return _gate1;
   const { searchParams } = new URL(request.url);
   const tenantSlug = context.tenantSlug;
-  const model = (searchParams.get("model") as AttributionModel | null) ?? "linear";
+  const modelParam = searchParams.get("model");
+  const model = (modelParam ?? "linear") as AttributionModel;
+  if (!["first_touch", "last_touch", "linear"].includes(model)) {
+    return NextResponse.json({ error: "model must be first_touch, last_touch, or linear" }, { status: 400 });
+  }
   try {
     const summary = await calculateAttributionSummary(tenantSlug, model);
     return NextResponse.json({ summary });
