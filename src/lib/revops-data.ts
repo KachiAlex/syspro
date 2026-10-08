@@ -1132,7 +1132,7 @@ async function refreshSalesPerformanceSnapshot(tenantSlug: string): Promise<void
   const won = deals.filter((d: any) => d.stage === "closed_won");
   const lost = deals.filter((d: any) => d.stage === "closed_lost");
   const open = deals.filter((d: any) => d.stage !== "closed_won" && d.stage !== "closed_lost");
-  const wonThisPeriod = won.filter((d: any) => String(d.updated_at ?? "").slice(0, 7) === period);
+  const wonThisPeriod = won.filter((d: any) => new Date(d.updated_at).toISOString().slice(0, 7) === period);
 
   const revenueAchieved = wonThisPeriod.reduce((sum: number, d: any) => sum + toNum(d.value), 0);
   const closed = won.length + lost.length;
@@ -1155,11 +1155,12 @@ async function refreshSalesPerformanceSnapshot(tenantSlug: string): Promise<void
   const pipelineCoverage = revenueTarget > 0 ? openPipeline / revenueTarget : 0;
 
   const dealPeriodKey = (d: any, periodType: string) => {
-    const dt = new Date(d.updated_at);
+    const iso = new Date(d.updated_at).toISOString();
     if (periodType === "quarterly") {
-      return `${dt.getUTCFullYear()}-Q${Math.floor(dt.getUTCMonth() / 3) + 1}`;
+      const q = Math.floor((Number(iso.slice(5, 7)) - 1) / 3) + 1;
+      return `${iso.slice(0, 4)}-Q${q}`;
     }
-    return String(d.updated_at ?? "").slice(0, 7);
+    return iso.slice(0, 7);
   };
   for (const t of targets) {
     const achieved = won
@@ -1495,12 +1496,12 @@ async function refreshRevenueForecast(tenantSlug: string): Promise<void> {
 
   const inPeriod = (d: any) => {
     if (!d.expected_close) return true; // no close date → assume in-period
-    const ec = String(d.expected_close).slice(0, 10);
+    const ec = new Date(d.expected_close).toISOString().slice(0, 10);
     return ec >= periodStart && ec <= periodEnd;
   };
   const openDeals = deals.filter((d: any) => d.stage !== "closed_won" && d.stage !== "closed_lost" && inPeriod(d));
   const wonThisPeriod = deals.filter(
-    (d: any) => d.stage === "closed_won" && String(d.updated_at ?? "").slice(0, 10) >= periodStart
+    (d: any) => d.stage === "closed_won" && new Date(d.updated_at).toISOString().slice(0, 10) >= periodStart
   );
 
   const weighted = openDeals.reduce(
@@ -1515,7 +1516,7 @@ async function refreshRevenueForecast(tenantSlug: string): Promise<void> {
     .reduce((sum: number, d: any) => sum + toNum(d.value) * 0.3, 0);
   const forecastHigh = forecastLikely + weighted * 0.25 + highProb;
 
-  const stale = openDeals.filter((d: any) => d.expected_close && String(d.expected_close).slice(0, 10) < periodEnd
+  const stale = openDeals.filter((d: any) => d.expected_close && new Date(d.expected_close).toISOString().slice(0, 10) < periodEnd
     && Date.now() - new Date(d.updated_at).getTime() > 30 * 86400000);
 
   const assumptions: string[] = [

@@ -163,7 +163,10 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
           channel = source;
           if (source) {
             const src = (await db.query(
-              `select id, campaign_id from revops_lead_sources where tenant_slug = $1 and lower(name) = lower($2) limit 1`,
+              `select id, campaign_id from revops_lead_sources
+               where tenant_slug = $1 and (lower(name) = lower($2) or channel = $2)
+               order by case when lower(name) = lower($2) then 0 else 1 end
+               limit 1`,
               [deal.tenantSlug, String(source)]
             )).rows;
             leadSourceId = src[0]?.id ?? null;
