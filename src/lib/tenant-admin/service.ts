@@ -731,7 +731,7 @@ export class IntegrationService {
 
     await this.sql`
       insert into admin_integrations (id, tenant_slug, name, type, status, provider, config, webhook_url, events, created_at, updated_at, created_by)
-      values (${id}, ${tenantSlug}, ${integration.name}, ${integration.type}, ${integration.status}, ${integration.provider || null}, ${JSON.stringify(integration.config)}, ${integration.webhookUrl || null}, ${JSON.stringify(integration.events)}, ${now}, ${now}, ${createdBy || null})
+      values (${id}, ${tenantSlug}, ${integration.name}, ${integration.type}, ${integration.status}, ${integration.provider || null}, ${JSON.stringify(integration.config)}, ${integration.webhookUrl || null}, ${(integration.events || []) as any}, ${now}, ${now}, ${createdBy || null})
     `;
 
     return integration;
@@ -748,7 +748,7 @@ export class IntegrationService {
           provider = ${updates.provider ?? existing.provider},
           config = ${updates.config ? JSON.stringify(updates.config) : JSON.stringify(existing.config)},
           webhook_url = ${updates.webhookUrl ?? existing.webhookUrl},
-          events = ${updates.events ? JSON.stringify(updates.events) : JSON.stringify(existing.events)},
+          events = ${(updates.events ?? existing.events ?? []) as any},
           updated_at = ${new Date()}
       where id = ${id} and tenant_slug = ${tenantSlug}
     `;
