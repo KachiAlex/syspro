@@ -9,6 +9,7 @@ import type { NextRequest } from "next/server";
 import { sql as SQL } from "@/lib/sql-client";
 import { ensureHrTables } from "./db";
 import { signSession, verifySession } from "@/lib/session";
+import { meterApiCall, usageModuleFromPath } from "@/lib/tenant-usage";
 
 const SALT_ROUNDS = 12;
 
@@ -219,7 +220,12 @@ export function resolveEmployeeSession(request: NextRequest): EmployeeSession | 
   const empToken = request.cookies.get("employee_session")?.value;
   if (empToken) {
     const session = decodeEmployeeToken(empToken);
-    if (session) return session;
+    if (session) {
+      if (session.tenantSlug) {
+        meterApiCall(session.tenantSlug, usageModuleFromPath(request.nextUrl?.pathname ?? ""));
+      }
+      return session;
+    }
   }
 
   // Fall back to pisairtel_session (tenant admin portal login)
@@ -227,6 +233,9 @@ export function resolveEmployeeSession(request: NextRequest): EmployeeSession | 
   if (adminToken) {
     const payload = verifySession(adminToken);
     if (payload) {
+      if (payload.tenantSlug) {
+        meterApiCall(payload.tenantSlug, usageModuleFromPath(request.nextUrl?.pathname ?? ""));
+      }
       return {
         id: payload.id,
         email: payload.email,

@@ -12,7 +12,7 @@ import { verifySession } from "./session";
 import { validateTenantAccess, type SessionUser } from "./auth-helpers";
 import { db, sql as SQL } from "./sql-client";
 import { getTenantUserPermissions } from "./tenant-admin/permissions";
-import { meterApiCall } from "./tenant-usage";
+import { meterApiCall, usageModuleFromPath } from "./tenant-usage";
 
 // Route handlers may type the param as `Request` or `NextRequest` — at runtime
 // it is always a NextRequest (has .cookies/.nextUrl).
@@ -29,6 +29,10 @@ function unauthorized(message = "Unauthorized"): AuthResult {
 
 function forbidden(message = "Forbidden"): AuthResult {
   return { ok: false, response: NextResponse.json({ error: message }, { status: 403 }) };
+}
+
+function moduleFromPath(request: Req): string {
+  return usageModuleFromPath(asNext(request).nextUrl?.pathname ?? "");
 }
 
 /**
@@ -139,16 +143,21 @@ export async function requireTenantScope(
     if (!user.tenantSlug) {
       return { ok: false, response: NextResponse.json({ error: "tenantSlug is required" }, { status: 400 }) };
     }
+    meterApiCall(user.tenantSlug, moduleFromPath(request));
     return { ok: true, user };
   }
 
   // Fast path: session tenant matches requested tenant
-  if (user.tenantSlug === requested) return { ok: true, user };
+  if (user.tenantSlug === requested) {
+    meterApiCall(requested, moduleFromPath(request));
+    return { ok: true, user };
+  }
 
   // Otherwise verify tenant membership in the database
   const allowed = await validateTenantAccess(user, requested);
   if (!allowed) return forbidden("Cross-tenant access denied");
 
+  meterApiCall(requested, moduleFromPath(request));
   return { ok: true, user };
 }
 
@@ -271,7 +280,6 @@ export async function requireModuleGate(
       { status: 403 }
     );
   }
-  meterApiCall(tenant, module);
   return null;
 }
 
@@ -327,10 +335,7 @@ export async function requireModuleAccess(
     }
   }
 
-  if (isAdmin) {
-    meterApiCall(tenant, module);
-    return scope;
-  }
+  if (isAdmin) return scope;
 
   const allowed =
     required === "read"
@@ -340,7 +345,6 @@ export async function requireModuleAccess(
   if (!allowed) {
     return forbidden(`Insufficient permissions for ${required} access to ${module}`);
   }
-  meterApiCall(tenant, module);
   return scope;
 }
 

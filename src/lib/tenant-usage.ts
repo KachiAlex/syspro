@@ -77,6 +77,18 @@ export function meterApiCall(tenantSlug: string, module: string): void {
   void recordUsageMetric(tenantSlug, `api_call:${module}`).catch(() => {});
 }
 
+/**
+ * Derive a metering label from a request path: /api/crm/... → "crm",
+ * /api/tenant/billing → "billing", /api/hr/employees → "hr".
+ */
+export function usageModuleFromPath(pathname: string): string {
+  const segs = (pathname ?? "").split("/").filter(Boolean);
+  if (segs[0] !== "api" || !segs[1]) return "other";
+  const first = segs[1];
+  if (first === "tenant" && segs[2]) return segs[2];
+  return first;
+}
+
 // Per-module record-count probes. Table names are compile-time constants —
 // never interpolate request input here.
 const RECORD_PROBES: Array<{ key: string; table: string }> = [
