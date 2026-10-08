@@ -223,6 +223,10 @@ export async function createSlaPolicy(policy: Omit<SlaPolicy, "id" | "createdAt"
 export interface IncidentInput { tenantSlug: string; sourceSystem: string; incidentType?: string; severity: ImpactLevel; summary?: string; affectedServices?: string[]; region?: string; branchId?: string; linkedTicketId?: string; }
 
 export async function createIncident(input: IncidentInput): Promise<SupportIncident> {
+  if (input.linkedTicketId) {
+    const ticket = await getTicketById(input.tenantSlug, input.linkedTicketId);
+    if (!ticket) throw new Error("Linked ticket not found");
+  }
   const id = randomUUID(); const now = new Date().toISOString();
   await db.query(`insert into support_incidents (id,tenant_slug,source_system,incident_type,severity,status,detected_at,summary,affected_services,region,branch_id,linked_ticket_id,metadata,created_at,updated_at) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14)`,
     [id, input.tenantSlug, input.sourceSystem, input.incidentType||null, input.severity, "open", now, input.summary||null, input.affectedServices||[], input.region||null, input.branchId||null, input.linkedTicketId||null, JSON.stringify({}), now]);

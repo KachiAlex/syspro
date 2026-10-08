@@ -36,17 +36,26 @@ export async function POST(request: NextRequest) {
   }
 
   const tenantSlug = context.tenantSlug;
-  const incident = await createIncident({
-    tenantSlug,
-    sourceSystem: body.sourceSystem,
-    incidentType: body.incidentType,
-    severity: body.severity,
-    summary: body.summary,
-    affectedServices: body.affectedServices,
-    region: body.region,
-    branchId: body.branchId,
-    linkedTicketId: body.linkedTicketId,
-  });
+  try {
+    const incident = await createIncident({
+      tenantSlug,
+      sourceSystem: body.sourceSystem,
+      incidentType: body.incidentType,
+      severity: body.severity,
+      summary: body.summary,
+      affectedServices: body.affectedServices,
+      region: body.region,
+      branchId: body.branchId,
+      linkedTicketId: body.linkedTicketId,
+    });
 
-  return NextResponse.json({ incident }, { status: 201 });
+    return NextResponse.json({ incident }, { status: 201 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to create incident";
+    if (message === "Linked ticket not found") {
+      return NextResponse.json({ error: message }, { status: 404 });
+    }
+    console.error("Failed to create incident", error);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

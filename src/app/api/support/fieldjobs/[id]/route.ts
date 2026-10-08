@@ -64,10 +64,14 @@ export async function PATCH(
   setClauses.push(`updated_at = now()`);
   values.push(id, context.tenantSlug);
 
-  const res = await db.query(
-    `update it_field_jobs set ${setClauses.join(", ")} where id = $${i++} and tenant_slug = $${i++} returning *`,
-    values
-  );
+  // Staff/viewer engineers may only update jobs assigned to them
+  const engineerOnly = context.userRole === "staff" || context.userRole === "viewer";
+  let sql = `update it_field_jobs set ${setClauses.join(", ")} where id = $${i++} and tenant_slug = $${i++}`;
+  if (engineerOnly) {
+    sql += ` and engineer_id = $${i++}`;
+    values.push(context.userId);
+  }
+  const res = await db.query(`${sql} returning *`, values);
   const row = res.rows[0] as any;
   if (!row) {
     return NextResponse.json({ error: "Job not found" }, { status: 404 });

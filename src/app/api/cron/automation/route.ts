@@ -162,7 +162,48 @@ export async function POST(request: NextRequest) {
       await refreshFinanceSummary(t.tenant_slug);
     }
 
-    // 4. Queue due scheduled reports, then drain the report job queue
+    // 5. SLA breach sweep: stamp breach flags on open tickets past their
+    //     due times, bump escalation once per policy, emit an event so
+    //     automation rules can react (deduped by the breach stamp itself).
+    await SQL`alter table if exists support_tickets add column if not exists response_breached_at timestamptz`;
+    await SQL`alter table if exists support_tickets add column if not exists resolution_breached_at timestamptz`;
+    const slaBreached = (await SQL`
+      select t.id, t.tenant_slug, t.ticket_number, t.title, t.priority,
+             t.response_due_at, t.resolution_due_at, t.first_response_at,
+             t.response_breached_at, t.resolution_breached_at, t.escalation_level,
+             sp.auto_escalate, sp.escalation_chain
+      from support_tickets t
+      left join sla_policies sp on sp.id = t.sla_policy_id
+      where t.status not in ('resolved', 'closed', 'cancelled')
+        and (
+          (t.response_breached_at is null and t.response_due_at < now() and t.first_response_at is null)
+          or (t.resolution_breached_at is null and t.resolution_due_at < now())
+        )
+      limit 200
+    `) as any[];
+    for (const t of slaBreached) {
+      if (!t.response_breached_at && t.response_due_at && new Date(t.response_due_at) < new Date() && !t.first_response_at) {
+        await SQL`update support_tickets set response_breached_at = now() where id = ${t.id} and tenant_slug = ${t.tenant_slug}`;
+      }
+      if (!t.resolution_breached_at && t.resolution_due_at && new Date(t.resolution_due_at) < new Date()) {
+        await SQL`
+          update support_tickets
+          set resolution_breached_at = now(),
+              escalation_level = case when ${!!t.auto_escalate} then coalesce(escalation_level, 0) + 1 else coalesce(escalation_level, 0) end
+          where id = ${t.id} and tenant_slug = ${t.tenant_slug}
+        `;
+        emitAutomationEvent(t.tenant_slug, "itsupport.sla_breach", {
+          ticketId: t.id,
+          ticketNumber: t.ticket_number,
+          title: t.title,
+          priority: t.priority,
+          resolutionDueAt: t.resolution_due_at,
+          escalationLevel: t.auto_escalate ? (t.escalation_level ?? 0) + 1 : (t.escalation_level ?? 0),
+        });
+      }
+    }
+
+    // 6. Queue due scheduled reports, then drain the report job queue
     const scheduledReports = await queueDueScheduledReports(BATCH_LIMIT);
     const reportResults = await processQueuedReportJobs(BATCH_LIMIT);
 
@@ -172,6 +213,7 @@ export async function POST(request: NextRequest) {
       paymentDueEmitted,
       attendanceMissedEmitted: attendanceEmitted,
       overBudgetEmitted: overBudget.length,
+      slaBreachesDetected: slaBreached.length,
       summariesRefreshed: tenants.length,
       scheduledReportsQueued: scheduledReports.length,
       reportJobsProcessed: reportResults.length,
