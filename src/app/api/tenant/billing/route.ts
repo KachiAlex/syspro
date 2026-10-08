@@ -278,10 +278,11 @@ export async function PATCH(request: NextRequest) {
     const url = new URL(request.url);
     const id = url.searchParams.get("id");
     const action = url.searchParams.get("action");
-    const parsed = await parseJsonRequest(request, UpdateSubscriptionSchema.catch(() => ({})));
+    // Read the body once — request.json() can only be consumed once.
+    const body = await request.json().catch(() => ({}));
+    const subscriptionParsed = UpdateSubscriptionSchema.safeParse(body);
 
     if (action === "upgrade") {
-      const body = await request.json().catch(() => ({}));
       const subscriptionId = body.subscriptionId || id;
       const newPlan = body.newPlan;
 
@@ -289,7 +290,7 @@ export async function PATCH(request: NextRequest) {
         return errorResponse("subscriptionId and newPlan are required", 400);
       }
 
-      const updated = await updateSubscription(subscriptionId, { plan: newPlan });
+      const updated = await updateSubscription(subscriptionId, { plan: newPlan }, context.tenantSlug);
       if (!updated) {
         return errorResponse("Subscription not found", 404);
       }
@@ -312,13 +313,12 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Handle invoice status update (mark paid)
-    const body = await request.json().catch(() => ({}));
     if (body.invoiceId) {
       const updates = body.updates || {};
       const updated = await updateFinanceInvoice(body.invoiceId, {
         status: updates.status as any,
         balanceDue: updates.status === "paid" ? 0 : undefined,
-      });
+      }, context.tenantSlug);
       if (!updated) {
         return errorResponse("Invoice not found", 404);
       }
@@ -345,15 +345,14 @@ export async function PATCH(request: NextRequest) {
       return errorResponse("ID is required", 400);
     }
 
-    const subscriptionParsed = await parseJsonRequest(request, UpdateSubscriptionSchema);
     if (!subscriptionParsed.success) {
-      return errorResponse(subscriptionParsed.error, 400, subscriptionParsed.details);
+      return errorResponse("Validation failed", 400, subscriptionParsed.error.flatten());
     }
 
     const updated = await updateSubscription(id, {
       status: subscriptionParsed.data.status as any,
       seats: subscriptionParsed.data.seats,
-    });
+    }, context.tenantSlug);
     if (!updated) {
       return errorResponse("Subscription not found", 404);
     }
@@ -397,7 +396,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     if (type === "subscription") {
-      const deleted = await deleteSubscription(id);
+      const deleted = await deleteSubscription(id, context.tenantSlug);
       if (!deleted) {
         return errorResponse("Subscription not found", 404);
       }

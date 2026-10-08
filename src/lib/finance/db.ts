@@ -1212,6 +1212,11 @@ export async function insertSubscription(data: {
     returning *
   `) as FinanceSubscriptionRecord[];
 
+  // Keep tenants.seats (the enforced seat limit) in sync with the subscription.
+  if (data.seats != null) {
+    await sql`update tenants set seats = ${data.seats} where slug = ${data.tenantSlug}`;
+  }
+
   return normalizeSubscriptionRecord(row[0]);
 }
 
@@ -1224,7 +1229,8 @@ export async function updateSubscription(
     price?: number;
     features?: string[];
     nextBillingDate?: string;
-  }
+  },
+  tenantSlug?: string
 ): Promise<FinanceSubscription | null> {
   const sql = SQL;
   await ensureFinanceTables(sql);
@@ -1240,18 +1246,26 @@ export async function updateSubscription(
       next_billing_date = coalesce(${updates.nextBillingDate ?? null}, next_billing_date),
       updated_at = now()
     where id = ${id}
+    ${tenantSlug ? sql`and tenant_slug = ${tenantSlug}` : sql``}
     returning *
   `) as FinanceSubscriptionRecord[];
 
   if (row.length === 0) return null;
-  return normalizeSubscriptionRecord(row[0]);
+  const updated = normalizeSubscriptionRecord(row[0]);
+  // Keep tenants.seats (the enforced seat limit) in sync with the subscription.
+  if (updates.seats != null && tenantSlug) {
+    await sql`update tenants set seats = ${updates.seats} where slug = ${tenantSlug}`;
+  }
+  return updated;
 }
 
-export async function deleteSubscription(id: string): Promise<boolean> {
+export async function deleteSubscription(id: string, tenantSlug?: string): Promise<boolean> {
   const sql = SQL;
   await ensureFinanceTables(sql);
 
-  const result = await db.query<{ count: number }>(`delete from finance_subscriptions where id = $1`, [id]);
+  const result = tenantSlug
+    ? await db.query<{ count: number }>(`delete from finance_subscriptions where id = $1 and tenant_slug = $2`, [id, tenantSlug])
+    : await db.query<{ count: number }>(`delete from finance_subscriptions where id = $1`, [id]);
   return result.count > 0;
 }
 

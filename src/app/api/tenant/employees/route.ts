@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
+import { sql } from "@/lib/sql-client";
 import { EmployeeService } from "@/lib/tenant-admin/service";
 import { CreateEmployeeSchema, UpdateEmployeeSchema } from "@/lib/tenant-admin/validation";
 import {
@@ -67,6 +68,25 @@ export async function POST(request: NextRequest) {
     const parsed = await parseJsonRequest(request, CreateEmployeeSchema);
     if (!parsed.success) {
       return errorResponse(parsed.error, 400, parsed.details);
+    }
+
+    // Enforce the tenant's seat limit (same check as /api/tenant/users) —
+    // both endpoints write admin_employees and must agree.
+    const [seatRow] = await sql`
+      select t.seats,
+             (select count(*) from tenant_admins where tenant_slug = ${context.tenantSlug}) +
+             (select count(*) from admin_employees where tenant_slug = ${context.tenantSlug}) as current_users
+      from tenants t
+      where t.slug = ${context.tenantSlug} and t."deletedAt" is null
+      limit 1
+    `;
+    const seats = Number((seatRow as any)?.seats ?? 0);
+    const currentUsers = Number((seatRow as any)?.current_users ?? 0);
+    if (seats > 0 && currentUsers + 1 > seats) {
+      return errorResponse(
+        `Seat limit reached. This workspace allows ${seats} user${seats === 1 ? "" : "s"}.`,
+        403
+      );
     }
 
     const service = new EmployeeService();
