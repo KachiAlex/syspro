@@ -1191,13 +1191,14 @@ async function addTurn(id: string, tenantSlug: string, turn: ConversationTurn): 
   }
 }
 
-export async function buildConversationContext(id: string): Promise<string> {
+export async function buildConversationContext(id: string, tenantSlug?: string): Promise<string> {
   try {
     await ensureConversationTable();
     const { sql } = await import("@/lib/sql-client");
     const rows = await sql`
       select turns from ai_conversations
       where id = ${id}
+        and (${tenantSlug ?? null}::text is null or tenant_slug = ${tenantSlug ?? null})
         and updated_at >= now() - make_interval(hours => ${CONVERSATION_TTL_HOURS})
       limit 1
     `;
@@ -1214,13 +1215,14 @@ export async function buildConversationContext(id: string): Promise<string> {
   }
 }
 
-export async function getConversationHistory(id: string): Promise<ConversationTurn[]> {
+export async function getConversationHistory(id: string, tenantSlug?: string): Promise<ConversationTurn[]> {
   try {
     await ensureConversationTable();
     const { sql } = await import("@/lib/sql-client");
     const rows = await sql`
       select turns from ai_conversations
       where id = ${id}
+        and (${tenantSlug ?? null}::text is null or tenant_slug = ${tenantSlug ?? null})
         and updated_at >= now() - make_interval(hours => ${CONVERSATION_TTL_HOURS})
       limit 1
     `;

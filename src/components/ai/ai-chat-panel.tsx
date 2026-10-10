@@ -13,6 +13,7 @@ interface ChatMessage {
 }
 
 const CAPABILITY_OPTIONS = [
+  { value: "auto", label: "Auto", description: "Let AI choose the right action" },
   { value: "summarize", label: "Summarize", description: "Summarize a department, CRM pipeline, or reports" },
   { value: "proactive_insights", label: "Insights", description: "Detect anomalies and actionable patterns" },
   { value: "generate_report", label: "Report", description: "Convert transcript to structured report" },
@@ -25,7 +26,7 @@ export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => v
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedCapability, setSelectedCapability] = useState("summarize");
+  const [selectedCapability, setSelectedCapability] = useState("auto");
   const [showCapabilityMenu, setShowCapabilityMenu] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [expandedResults, setExpandedResults] = useState<Set<number>>(new Set());
@@ -81,14 +82,12 @@ export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => v
       const convId = conversationId || `conv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       if (!conversationId) setConversationId(convId);
 
-      const payload = buildPayload(selectedCapability, userMsg.content);
-
       const res = await fetch("/api/ai/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          capability: selectedCapability,
-          payload,
+          message: userMsg.content,
+          ...(selectedCapability !== "auto" ? { capability: selectedCapability } : {}),
           conversationId: convId,
         }),
       });
@@ -98,7 +97,7 @@ export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => v
       const assistantMsg: ChatMessage = {
         role: "assistant",
         content: formatResult(data),
-        capability: selectedCapability,
+        capability: data.capability || selectedCapability,
         metadata: data.metadata,
         result: data.result,
         timestamp: new Date().toISOString(),
@@ -329,7 +328,7 @@ export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => v
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={`Ask about ${CAPABILITY_OPTIONS.find((c) => c.value === selectedCapability)?.label?.toLowerCase() || "anything"}...`}
+              placeholder={selectedCapability === "auto" ? "Ask anything — e.g. \"screen REQ-12's applicants\"" : `Ask about ${CAPABILITY_OPTIONS.find((c) => c.value === selectedCapability)?.label?.toLowerCase() || "anything"}...`}
               rows={1}
               className="flex-1 bg-transparent text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none resize-none max-h-32"
               style={{ minHeight: "24px" }}
@@ -353,84 +352,13 @@ export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => v
 
 // ─── Helpers ───
 
-function buildPayload(capability: string, userMessage: string): Record<string, unknown> {
-  const msg = userMessage.toLowerCase();
-
-  switch (capability) {
-    case "summarize": {
-      if (msg.includes("crm") || msg.includes("lead") || msg.includes("deal") || msg.includes("pipeline")) {
-        return { scope: "crm_pipeline" };
-      }
-      if (msg.includes("procurement") || msg.includes("requisition") || msg.includes("purchase")) {
-        return { scope: "procurement" };
-      }
-      if (msg.includes("report")) {
-        return { scope: "reports" };
-      }
-      if (msg.includes("employee") || msg.includes("staff") || msg.includes("person")) {
-        return { scope: "department" };
-      }
-      return { scope: "department" };
-    }
-
-    case "proactive_insights": {
-      const categories: string[] = [];
-      if (msg.includes("appraisal") || msg.includes("performance")) categories.push("appraisals");
-      if (msg.includes("report")) categories.push("reports");
-      if (msg.includes("candidate") || msg.includes("recruit") || msg.includes("hiring")) categories.push("recruitment");
-      if (msg.includes("crm") || msg.includes("lead")) categories.push("crm");
-      if (msg.includes("procurement") || msg.includes("budget")) categories.push("procurement");
-      if (msg.includes("attendance") || msg.includes("absent")) categories.push("attendance");
-      return categories.length > 0 ? { categories } : {};
-    }
-
-    case "generate_report": {
-      return {
-        transcript: userMessage,
-        reportType: msg.includes("weekly") ? "weekly" : msg.includes("monthly") ? "monthly" : msg.includes("quarterly") ? "quarterly" : msg.includes("annual") ? "annual" : "daily",
-        reportDate: new Date().toISOString().split("T")[0],
-      };
-    }
-
-    case "appraise_performance": {
-      return {
-        employeeId: extractId(userMessage) || userMessage,
-        period: msg.includes("weekly") ? "weekly" : msg.includes("quarterly") ? "quarterly" : msg.includes("annual") ? "annual" : "monthly",
-      };
-    }
-
-    case "generate_training_plan": {
-      return {
-        employeeId: extractId(userMessage) || userMessage,
-        timelineWeeks: msg.includes("week") ? parseInt(msg.match(/(\d+)\s*week/)?.[1] || "12") : 12,
-      };
-    }
-
-    case "screen_candidates": {
-      const id = extractId(userMessage);
-      if (id) return { requisitionId: id };
-      return { requisitionId: userMessage };
-    }
-
-    default:
-      return { text: userMessage };
-  }
-}
-
-function extractId(text: string): string | null {
-  const uuidMatch = text.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
-  if (uuidMatch) return uuidMatch[0];
-  const idMatch = text.match(/\b([a-z0-9]{20,})\b/i);
-  if (idMatch) return idMatch[1];
-  return null;
-}
-
 function formatResult(data: any): string {
   if (!data.success) {
     return data.error || "The agent encountered an error.";
   }
 
   const result = data.result;
+  if (typeof result?.reply === "string") return result.reply;
 
   if (result?.headline) {
     let parts = [result.headline];

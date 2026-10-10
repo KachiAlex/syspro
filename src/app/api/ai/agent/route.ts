@@ -1,7 +1,8 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { runAgent, CAPABILITY_DEFINITIONS, getConversationHistory, type AgentCapability } from "@/lib/ai/agent";
+import { runAgent, CAPABILITY_DEFINITIONS, getConversationHistory, buildConversationContext, type AgentCapability } from "@/lib/ai/agent";
+import { routeIntent } from "@/lib/ai/intent-router";
 import { resolveEmployeeSession } from "@/lib/hr/auth";
 import { isTenantSuspended } from "@/lib/api-auth";
 import { APIKeyService } from "@/lib/tenant-admin/service";
@@ -44,20 +45,25 @@ async function authenticate(request: NextRequest): Promise<{ tenantSlug: string;
 
 const MAX_PAYLOAD_SIZE = 50_000;
 
+const capabilityEnum = z.enum([
+  "screen_candidates",
+  "generate_report",
+  "appraise_performance",
+  "summarize",
+  "generate_training_plan",
+  "proactive_insights",
+]);
+
 const agentSchema = z.object({
-  capability: z.enum([
-    "screen_candidates",
-    "generate_report",
-    "appraise_performance",
-    "summarize",
-    "generate_training_plan",
-    "proactive_insights",
-  ]),
-  payload: z.record(z.unknown()),
+  capability: capabilityEnum.optional(),
+  payload: z.record(z.unknown()).optional(),
+  message: z.string().min(1).max(10_000).optional(),
   tenantSlug: z.string().min(1).max(100).optional(),
   useAI: z.boolean().optional(),
   conversationId: z.string().max(200).optional(),
-}).refine((data) => JSON.stringify(data.payload).length <= MAX_PAYLOAD_SIZE, {
+}).refine((data) => data.message || (data.capability && data.payload), {
+  message: "Provide either a free-text 'message' or 'capability' + 'payload'",
+}).refine((data) => JSON.stringify(data.payload ?? {}).length <= MAX_PAYLOAD_SIZE, {
   message: `Payload exceeds maximum size of ${MAX_PAYLOAD_SIZE} bytes`,
 });
 
@@ -91,14 +97,50 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "tenantSlug is required in body or x-tenant-slug header" }, { status: 400 });
   }
 
+  let capability = parsed.data.capability as AgentCapability | undefined;
+  let payload = parsed.data.payload ?? {};
+  let routedIntent: { rationale?: string } | null = null;
+
+  // Free-text message → intent router. An explicit capability acts as a
+  // hint: the router only fills in the payload for it.
+  if (parsed.data.message) {
+    const conversationContext = parsed.data.conversationId
+      ? await buildConversationContext(parsed.data.conversationId, tenantSlug).catch(() => "")
+      : "";
+    const routed = await routeIntent(parsed.data.message, {
+      hint: capability ?? null,
+      conversationContext,
+      useAI: parsed.data.useAI,
+    });
+    if (!routed.capability) {
+      return NextResponse.json({
+        success: true,
+        capability: null,
+        result: {
+          reply:
+            "I can screen candidates, generate staff reports, appraise performance, " +
+            "summarize a department/CRM pipeline/procurement, draft training plans, " +
+            "or scan for anomalies. What would you like?",
+        },
+        metadata: { source: "router", generatedAt: new Date().toISOString() },
+      });
+    }
+    capability = routed.capability;
+    payload = { ...routed.payload, ...payload };
+    routedIntent = { rationale: routed.rationale };
+  }
+
   const result = await runAgent({
-    capability: parsed.data.capability as AgentCapability,
-    payload: parsed.data.payload,
+    capability: capability as AgentCapability,
+    payload,
     tenantSlug,
     useAI: parsed.data.useAI,
     conversationId: parsed.data.conversationId,
   });
 
+  if (routedIntent?.rationale && result && typeof result === "object") {
+    (result as any).routedIntent = routedIntent;
+  }
   return NextResponse.json(result, { status: result.success ? 200 : 500 });
 }
 
@@ -119,13 +161,13 @@ export async function GET(request: NextRequest) {
   const conversationId = request.nextUrl.searchParams.get("conversationId");
 
   if (conversationId) {
-    const history = await getConversationHistory(conversationId);
+    const history = await getConversationHistory(conversationId, auth.tenantSlug);
     return NextResponse.json({ conversationId, turns: history });
   }
 
   return NextResponse.json({
     agent: "Syspro AI Agent",
-    version: "1.1.0",
+    version: "1.2.0",
     capabilities: CAPABILITY_DEFINITIONS.map((c) => ({
       name: c.name,
       description: c.description,
@@ -135,7 +177,11 @@ export async function GET(request: NextRequest) {
     model: "llama-3.3-70b-versatile",
     provider: "groq",
     authMethods: ["api_key", "session"],
-    features: ["conversation_memory", "deterministic_fallbacks", "mcp_compatible"],
+    features: ["intent_router", "conversation_memory", "deterministic_fallbacks", "mcp_compatible"],
+    usage: {
+      freeText: "POST {message: '...', capability?: <hint>, conversationId?}",
+      direct: "POST {capability: '<name>', payload: {...}}",
+    },
     endpoints: {
       execute: "POST /api/ai/agent",
       capabilities: "GET /api/ai/agent",
