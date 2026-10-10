@@ -35,6 +35,7 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
   const [showCapabilityMenu, setShowCapabilityMenu] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [expandedResults, setExpandedResults] = useState<Set<number>>(new Set());
+  const [steps, setSteps] = useState<Array<{ capability: string; status: "pending" | "running" | "done" | "failed" | "skipped"; detail?: string }>>([]);
   const [quota, setQuota] = useState<{ dailyUsed: number; dailyLimit: number; monthlyUsed: number; monthlyLimit: number; exceeded: boolean } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -87,6 +88,7 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
       const convId = conversationId || `conv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       if (!conversationId) setConversationId(convId);
 
+      setSteps([]);
       const res = await fetch("/api/ai/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -94,10 +96,51 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
           message: userMsg.content,
           ...(selectedCapability !== "auto" ? { capability: selectedCapability } : {}),
           conversationId: convId,
+          stream: true,
         }),
       });
 
-      const data = await res.json();
+      let data: any = null;
+      if ((res.headers.get("content-type") ?? "").includes("text/event-stream") && res.body) {
+        // Consume SSE progress events; the final {type:"result"} frame holds
+        // the same response body the JSON path returns.
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = "";
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          const frames = buf.split("\n\n");
+          buf = frames.pop() ?? "";
+          for (const frame of frames) {
+            const line = frame.split("\n").find((l) => l.startsWith("data:"));
+            if (!line) continue;
+            try {
+              const ev = JSON.parse(line.slice(5).trim());
+              if (ev.type === "plan") {
+                setSteps((ev.steps as string[]).map((cap) => ({ capability: cap, status: "pending" })));
+              } else if (ev.type === "step") {
+                setSteps((prev) => {
+                  const next = [...prev];
+                  const i = ev.index as number;
+                  if (!next[i]) next[i] = { capability: ev.capability, status: "pending" };
+                  next[i] = {
+                    capability: ev.capability,
+                    status: ev.status === "started" ? "running" : ev.status,
+                    detail: ev.detail,
+                  };
+                  return next;
+                });
+              } else if (ev.type === "result") {
+                data = ev.body;
+              }
+            } catch {}
+          }
+        }
+      } else {
+        data = await res.json();
+      }
 
       const assistantMsg: ChatMessage = {
         role: "assistant",
@@ -108,6 +151,7 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, assistantMsg]);
+      setSteps([]);
       fetchQuota();
     } catch (err: any) {
       setMessages((prev) => [
@@ -381,8 +425,22 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
                 <Bot className="w-4 h-4 text-white" />
               </div>
-              <div className="bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2.5">
-                <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+              <div className="bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-2.5 space-y-1">
+                {steps.length === 0 ? (
+                  <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                ) : (
+                  steps.map((s, i) => (
+                    <div key={i} className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
+                      {s.status === "running" && <Loader2 className="w-3 h-3 text-blue-600 animate-spin" />}
+                      {s.status === "pending" && <span className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600" />}
+                      {s.status === "done" && <span className="w-3 h-3 rounded-full bg-emerald-500 text-white text-[9px] flex items-center justify-center">✓</span>}
+                      {s.status === "failed" && <span className="w-3 h-3 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center">✕</span>}
+                      {s.status === "skipped" && <span className="w-3 h-3 rounded-full bg-slate-400 text-white text-[9px] flex items-center justify-center">–</span>}
+                      <span className="capitalize">{s.capability.replace(/_/g, " ")}</span>
+                      {s.detail && <span className="text-slate-400">— {s.detail}</span>}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}
