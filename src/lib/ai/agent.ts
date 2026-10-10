@@ -266,7 +266,11 @@ export function extractJSON(text: string): Record<string, unknown> | null {
 
 // ─── Capability Handlers ───
 
-/** Resolve an employee by id first, then by exact name (case-insensitive). */
+/**
+ * Resolve an employee by id, exact name, or fuzzy name match.
+ * LLM extraction may yield partial names ("Udo", "grace") — fuzzy matching
+ * handles those while refusing ambiguous hits.
+ */
 async function resolveEmployee(SQL: any, tenantSlug: string, ref: string): Promise<any | null> {
   const trimmed = String(ref).trim();
   const byId = await SQL`
@@ -278,7 +282,26 @@ async function resolveEmployee(SQL: any, tenantSlug: string, ref: string): Promi
     select id, name, email, job_title, role, department_id, hire_date
     from admin_employees where tenant_slug = ${tenantSlug} and lower(name) = lower(${trimmed}) limit 1
   `;
-  return (byName as any[])[0] ?? null;
+  if ((byName as any[])[0]) return (byName as any[])[0];
+
+  // Fuzzy: every word in ref must appear in the name. Probe with the longest
+  // word (most selective), then verify all words in JS.
+  const words = trimmed.toLowerCase().split(/\s+/).filter((w) => /[a-z]/.test(w) && w.length >= 3);
+  if (words.length === 0) return null;
+  const probe = words.slice().sort((a, b) => b.length - a.length)[0];
+  const candidates = await SQL`
+    select id, name, email, job_title, role, department_id, hire_date
+    from admin_employees
+    where tenant_slug = ${tenantSlug} and name ilike ${"%" + probe + "%"}
+    limit 25
+  `;
+  const rows = (candidates as any[]).filter((e) =>
+    words.every((w) => String(e.name ?? "").toLowerCase().includes(w)),
+  );
+  if (rows.length > 0) return rows[0];
+  // Single-word partials ("Udo" → Grace Udo): accept only unique hits.
+  if (words.length === 1 && (candidates as any[]).length === 1) return (candidates as any[])[0];
+  return null;
 }
 
 async function handleScreenCandidates(
