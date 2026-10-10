@@ -266,12 +266,61 @@ export function extractJSON(text: string): Record<string, unknown> | null {
 
 // ─── Capability Handlers ───
 
+/** Resolve a department by id or (fuzzy) name. LLM payloads carry names. */
+export async function resolveDepartment(SQL: any, tenantSlug: string, ref: string): Promise<any | null> {
+  const trimmed = String(ref).trim();
+  if (!trimmed) return null;
+  const rows = await SQL`
+    select id, name from admin_departments
+    where tenant_slug = ${tenantSlug}
+      and (id = ${trimmed} or lower(name) = lower(${trimmed}) or name ilike ${"%" + trimmed + "%"})
+    order by (lower(name) = lower(${trimmed})) desc, name
+    limit 1
+  `;
+  return (rows as any[])[0] ?? null;
+}
+
+const GROUP_STRIP = /\b(the|whole|entire|all|team|department|dept|staff|members?|employees?|in|of|every|everyone|everybody)\b/g;
+
+/**
+ * Resolve a group reference ("the sales team", "finance department",
+ * "everyone") to a set of employees. Returns null when nothing matches —
+ * callers then fall back to single-employee resolution.
+ */
+export async function resolveEmployeeGroup(
+  SQL: any,
+  tenantSlug: string,
+  ref: string,
+): Promise<{ label: string; employees: any[] } | null> {
+  const term = String(ref).toLowerCase().replace(GROUP_STRIP, " ").replace(/\s+/g, " ").trim();
+
+  // Bare collective references → all active employees.
+  if (!term) {
+    const employees = await SQL`
+      select id, name, email, job_title, role, department_id
+      from admin_employees where tenant_slug = ${tenantSlug} and status = 'active'
+      order by name limit 50
+    `;
+    return (employees as any[]).length ? { label: "all employees", employees } : null;
+  }
+
+  const dept = await resolveDepartment(SQL, tenantSlug, term);
+  if (!dept) return null;
+  const employees = await SQL`
+    select id, name, email, job_title, role, department_id
+    from admin_employees where tenant_slug = ${tenantSlug} and status = 'active'
+      and department_id = ${dept.id}
+    order by name limit 50
+  `;
+  return (employees as any[]).length ? { label: dept.name, employees } : null;
+}
+
 /**
  * Resolve an employee by id, exact name, or fuzzy name match.
  * LLM extraction may yield partial names ("Udo", "grace") — fuzzy matching
  * handles those while refusing ambiguous hits.
  */
-async function resolveEmployee(SQL: any, tenantSlug: string, ref: string): Promise<any | null> {
+export async function resolveEmployee(SQL: any, tenantSlug: string, ref: string): Promise<any | null> {
   const trimmed = String(ref).trim();
   const byId = await SQL`
     select id, name, email, job_title, role, department_id, hire_date
@@ -640,7 +689,10 @@ async function handleSummarize(
   switch (scope) {
     case "department": {
       await ensureHrTables(SQL);
-      const deptFilter = departmentId ? SQL`and department_id = ${departmentId}` : SQL``;
+      // departmentId may be an id or a name — resolve to the canonical id.
+      const dept = departmentId ? await resolveDepartment(SQL, tenantSlug, departmentId).catch(() => null) : null;
+      const canonicalDeptId = dept?.id ?? (departmentId && /^[0-9a-f-]{36}$/i.test(departmentId) ? departmentId : null);
+      const deptFilter = canonicalDeptId ? SQL`and department_id = ${canonicalDeptId}` : SQL``;
       const employees = await SQL`
         select id, name, email, job_title, role, department_id
         from admin_employees

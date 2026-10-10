@@ -141,7 +141,7 @@ Rules:
 - Respond with ONLY JSON: {"steps": [{"capability": "<name>", "payload": {...}}], "rationale": "<one short sentence>"}
 - Only chain steps when the user asks for multiple distinct actions. Prefer the fewest steps that satisfy the request.
 - When a step needs an identifier produced by a previous step (e.g. employeeId, requisitionId), leave that field out — results feed forward automatically.
-- Copy identifiers verbatim (REQ-12, emp ids, names). Names go in employeeId.
+- Copy identifiers verbatim (REQ-12, emp ids, names). Names go in employeeId — person names AND team/department names are accepted (groups fan out automatically).
 - Resolve pronouns/references using conversation context when present.${conversationContext}
 
 User message:

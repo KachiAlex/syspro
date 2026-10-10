@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { runAgent, CAPABILITY_DEFINITIONS, getConversationHistory, buildConversationContext, GROQ_MODEL, type AgentCapability } from "@/lib/ai/agent";
+import { runAgent, CAPABILITY_DEFINITIONS, getConversationHistory, buildConversationContext, GROQ_MODEL, resolveEmployee, resolveEmployeeGroup, type AgentCapability } from "@/lib/ai/agent";
 import { createPlan, applyPriorResult, parseScoreThreshold, type PlanStep } from "@/lib/ai/planner";
 import { authenticateAgent } from "@/lib/ai/agent-auth";
 
@@ -32,6 +32,93 @@ function scopeToSelf(payload: Record<string, unknown>, capability: string, emplo
     delete p.appraisalId; // can't point at someone else's appraisal
   }
   return p;
+}
+
+// ─── Group fan-out ───
+// Employee-scoped capabilities accept a group ref ("the sales team",
+// "finance department", "everyone") in employeeId — resolved to a bounded
+// set of per-employee executions aggregated into one step result.
+
+const GROUP_SCOPED = new Set<string>(["appraise_performance", "generate_training_plan"]);
+const MAX_GROUP_RUN = 10;
+
+interface RunArgs {
+  tenantSlug: string;
+  useAI?: boolean;
+  conversationId?: string;
+  actor: { id?: string; role?: string; authMethod?: string };
+}
+
+async function runEmployeeSteps(
+  step: PlanStep,
+  targets: Array<{ id: string; name?: string; extra?: Record<string, unknown> }>,
+  label: string | undefined,
+  runArgs: RunArgs,
+) {
+  const capped = targets.slice(0, MAX_GROUP_RUN);
+  const CHUNK = 4;
+  const items: Array<{ employeeId: string; name?: string; success: boolean; result?: unknown; error?: string }> = [];
+  for (let i = 0; i < capped.length; i += CHUNK) {
+    const batch = await Promise.all(
+      capped.slice(i, i + CHUNK).map(async (emp) => {
+        const payload = { ...step.payload, employeeId: emp.id, ...(emp.extra ?? {}) };
+        const r: any = await runAgent({ capability: step.capability, payload, ...runArgs }).catch((e: any) => ({
+          success: false,
+          error: e?.message ?? "step failed",
+          result: undefined,
+        }));
+        return { employeeId: emp.id, name: emp.name, success: r?.success ?? false, result: r?.result, error: r?.error };
+      }),
+    );
+    items.push(...batch);
+  }
+  const succeeded = items.filter((i) => i.success).length;
+  const result: Record<string, unknown> = {
+    fannedOut: true,
+    ...(label ? { group: label } : {}),
+    total: items.length,
+    succeeded,
+    truncated: targets.length > MAX_GROUP_RUN,
+    items,
+  };
+  if (step.capability === "appraise_performance") {
+    // Feed-forward surface for chained training plans / summaries.
+    result.appraisals = items.map((i) => ({
+      employeeId: i.employeeId,
+      name: i.name,
+      success: i.success,
+      overallScore: (i.result as any)?.overallScore,
+      rating: (i.result as any)?.rating,
+      appraisalId: (i.result as any)?.appraisalId,
+      improvements: (i.result as any)?.improvements,
+      error: i.error,
+    }));
+  }
+  return { success: succeeded > 0, capability: step.capability, result };
+}
+
+/** If the step's employeeId names a group rather than a person, fan out.
+ *  Otherwise canonicalize name → id and return null (run the step normally). */
+async function resolveGroupFanOut(step: PlanStep, tenantSlug: string, runArgs: RunArgs) {
+  if (!GROUP_SCOPED.has(step.capability)) return null;
+  const empRef = step.payload.employeeId;
+  if (typeof empRef !== "string" || !empRef.trim()) return null;
+  const { sql: SQL } = await import("@/lib/sql-client");
+  const single = await resolveEmployee(SQL, tenantSlug, empRef).catch(() => null);
+  if (single) {
+    step.payload.employeeId = single.id;
+    return null;
+  }
+  const group = await resolveEmployeeGroup(SQL, tenantSlug, empRef).catch(() => null);
+  if (!group?.employees?.length) return null;
+  return runEmployeeSteps(step, group.employees, group.label, runArgs);
+}
+
+/** A step needs prior-step output when a required identifier is missing. */
+function stepNeedsFeedForward(s: PlanStep): boolean {
+  if (s.capability === "screen_candidates") return !s.payload.requisitionId;
+  if (GROUP_SCOPED.has(s.capability)) return !s.payload.employeeId;
+  return false;
 }
 
 // ─── Request Schema ───
@@ -136,45 +223,111 @@ export async function POST(request: NextRequest) {
 
     const scoreThreshold = parseScoreThreshold(parsed.data.message);
     const executedSteps: Array<{ capability: AgentCapability; response: any; skipped?: boolean }> = [];
+    const runArgs: RunArgs = {
+      tenantSlug,
+      useAI: parsed.data.useAI,
+      conversationId: parsed.data.conversationId,
+      actor: { id: auth.employeeId, role: auth.employeeRole, authMethod: auth.authMethod },
+    };
     let failed = false;
 
-    for (const rawStep of plan.steps) {
-      if (selfService) {
-        rawStep.payload = scopeToSelf(rawStep.payload, rawStep.capability, auth.employeeId);
-      }
-      const step: PlanStep = applyPriorResult(rawStep, executedSteps.map((s) => ({
-        capability: s.capability,
-        result: s.response?.result,
-      })));
+    // Parallel path: when every step already carries its own identifiers,
+    // no step consumes prior output — run them concurrently.
+    const allIndependent = plan.steps.length > 1 && plan.steps.every((s) => !stepNeedsFeedForward(s));
 
-      // Gate follow-on training plans on a score threshold from the request
-      // ("training plans for anyone under 60").
-      if (step.capability === "generate_training_plan" && scoreThreshold != null) {
-        const score = executedSteps
-          .map((s) => s.response?.result?.overallScore)
-          .find((v) => typeof v === "number");
-        if (typeof score === "number" && score >= scoreThreshold) {
-          executedSteps.push({
-            capability: step.capability,
-            response: { success: true, result: { skipped: `score ${score} not under ${scoreThreshold}` } },
-            skipped: true,
-          });
+    if (allIndependent) {
+      const responses = await Promise.all(
+        plan.steps.map(async (rawStep) => {
+          if (selfService) {
+            rawStep.payload = scopeToSelf(rawStep.payload, rawStep.capability, auth.employeeId);
+          }
+          const step: PlanStep = { ...rawStep, payload: { ...rawStep.payload } };
+          const fanOut = await resolveGroupFanOut(step, tenantSlug, runArgs);
+          if (fanOut) return fanOut;
+          return runAgent({ capability: step.capability, payload: step.payload, ...runArgs });
+        }),
+      );
+      responses.forEach((response, i) => executedSteps.push({ capability: plan.steps[i].capability, response }));
+      failed = responses.some((r) => !r?.success);
+    } else {
+      for (const rawStep of plan.steps) {
+        if (selfService) {
+          rawStep.payload = scopeToSelf(rawStep.payload, rawStep.capability, auth.employeeId);
+        }
+        const step: PlanStep = applyPriorResult(rawStep, executedSteps.map((s) => ({
+          capability: s.capability,
+          result: s.response?.result,
+        })));
+
+        // Chained fan-out: a training plan after a fanned-out appraisal runs
+        // once per appraised employee (filtered by the score threshold).
+        if (step.capability === "generate_training_plan" && !step.payload.employeeId) {
+          const priorAppraisals = executedSteps.flatMap(
+            (s) => ((s.response?.result?.appraisals as any[]) ?? []),
+          );
+          if (priorAppraisals.length > 0) {
+            let targets = priorAppraisals.filter((a) => a.success && a.employeeId);
+            if (scoreThreshold != null) {
+              targets = targets.filter((t) => typeof t.overallScore === "number" && t.overallScore < scoreThreshold);
+            }
+            if (targets.length === 0) {
+              executedSteps.push({
+                capability: step.capability,
+                response: {
+                  success: true,
+                  result: { skipped: scoreThreshold != null ? `no appraised scores under ${scoreThreshold}` : "no appraised employees" },
+                },
+                skipped: true,
+              });
+              continue;
+            }
+            const fanOut = await runEmployeeSteps(
+              step,
+              targets.map((t) => ({
+                id: t.employeeId,
+                name: t.name,
+                extra: { appraisalId: t.appraisalId, focusAreas: t.improvements },
+              })),
+              undefined,
+              runArgs,
+            );
+            executedSteps.push({ capability: step.capability, response: fanOut });
+            if (!fanOut.success) { failed = true; break; }
+            continue;
+          }
+        }
+
+        // Group ref in employeeId ("the sales team") → per-employee fan-out;
+        // single name/id → canonicalized in place.
+        const fanOut = await resolveGroupFanOut(step, tenantSlug, runArgs);
+        if (fanOut) {
+          executedSteps.push({ capability: step.capability, response: fanOut });
+          if (!fanOut.success) { failed = true; break; }
           continue;
         }
-      }
 
-      const r = await runAgent({
-        capability: step.capability,
-        payload: step.payload,
-        tenantSlug,
-        useAI: parsed.data.useAI,
-        conversationId: parsed.data.conversationId,
-        actor: { id: auth.employeeId, role: auth.employeeRole, authMethod: auth.authMethod },
-      });
-      executedSteps.push({ capability: step.capability, response: r });
-      if (!r?.success) {
-        failed = true;
-        break; // stop the chain on first hard failure
+        // Gate follow-on training plans on a score threshold from the request
+        // ("training plans for anyone under 60").
+        if (step.capability === "generate_training_plan" && scoreThreshold != null) {
+          const score = executedSteps
+            .map((s) => s.response?.result?.overallScore)
+            .find((v) => typeof v === "number");
+          if (typeof score === "number" && score >= scoreThreshold) {
+            executedSteps.push({
+              capability: step.capability,
+              response: { success: true, result: { skipped: `score ${score} not under ${scoreThreshold}` } },
+              skipped: true,
+            });
+            continue;
+          }
+        }
+
+        const r = await runAgent({ capability: step.capability, payload: step.payload, ...runArgs });
+        executedSteps.push({ capability: step.capability, response: r });
+        if (!r?.success) {
+          failed = true;
+          break; // stop the chain on first hard failure
+        }
       }
     }
 
@@ -189,7 +342,9 @@ export async function POST(request: NextRequest) {
 
     // Multi-step → composed plan response.
     const executed = executedSteps.filter((s) => !s.skipped);
-    const failStep = failed ? executedSteps[executedSteps.length - 1] : null;
+    const failStep = failed
+      ? executedSteps.find((s) => !s.skipped && !s.response?.success) ?? executedSteps[executedSteps.length - 1]
+      : null;
     return NextResponse.json(
       {
         success: !failed,
