@@ -148,7 +148,7 @@ export default function EmployeeDashboardPage() {
     dashboard: true, tasks: true, attendance: true, reports: true,
     expenses: true, leave: true, payslips: true, profile: true,
     approvals: ['hod', 'head_of_department', 'hr', 'hr_admin', 'hr_manager'].includes(employeeRole),
-    appraisal: ['hr', 'hr_admin', 'hr_manager'].includes(employeeRole),
+    appraisal: true,
     crm: true,
   };
   const perms: Record<string, boolean> = profile.portalPermissions

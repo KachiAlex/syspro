@@ -9,14 +9,6 @@ export async function POST(request: NextRequest) {
     if (session && (await isTenantSuspended(session.tenantSlug))) return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const groqKey = process.env.GROQ_API_KEY;
-  if (!groqKey) {
-    return NextResponse.json({
-      error: "AI feature is not configured. Please set GROQ_API_KEY environment variable.",
-      hint: "Get a free API key at https://console.groq.com/keys",
-    }, { status: 503 });
-  }
-
   try {
     const body = await request.json();
     const { transcript, reportType, reportDate, kpiContext, templateSections, sectioned } = body;

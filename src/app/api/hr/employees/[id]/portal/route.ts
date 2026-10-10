@@ -10,12 +10,11 @@ function getDefaultPermissions(role: string): Record<string, boolean> {
   const perms: Record<string, boolean> = {
     dashboard: true, tasks: true, attendance: true, reports: true,
     expenses: true, leave: true, payslips: true, profile: true,
-    approvals: false, appraisal: false,
+    approvals: false, appraisal: true,
   };
   const isHOD = r === "hod" || r === "head_of_department";
   const isHR = r === "hr" || r === "hr_admin" || r === "hr_manager";
   if (isHOD || isHR) perms.approvals = true;
-  if (isHR) perms.appraisal = true;
   return perms;
 }
 

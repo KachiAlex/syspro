@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from 'next/server';
 
 import { requireModuleAccess } from "@/lib/api-auth";
+import { callLLM } from "@/lib/ai/agent";
 interface ReportDraft {
   objectives: string;
   achievements: string;
@@ -26,10 +27,7 @@ const FALLBACK_COPY: ReportDraft = {
   additionalNotes: 'Add any extra context, dependencies, or shout-outs.',
 };
 
-const LLAMA_API_URL = process.env.LLAMA_API_URL || 'http://localhost:11434/api/generate';
-const LLAMA_MODEL = process.env.LLAMA_MODEL || 'llama3.1:70b';
-const LLAMA_TIMEOUT_MS = Number(process.env.LLAMA_TIMEOUT_MS || 8000);
-const ENABLE_LLAMA = process.env.DISABLE_LLAMA_AGENT !== 'true';
+const ENABLE_AI_DRAFT = process.env.DISABLE_AI_DRAFT !== 'true';
 
 function sanitizeTranscript(transcript: string): string {
   return transcript.replace(/\s+/g, ' ').replace(/\n+/g, ' ').trim();
@@ -156,41 +154,21 @@ function extractJsonPayload(text: string): string | null {
   return sanitized.slice(start, end + 1);
 }
 
-async function generateDraftWithLlama(transcript: string): Promise<ReportDraft | null> {
-  if (!ENABLE_LLAMA) {
+async function generateDraftWithAI(transcript: string): Promise<ReportDraft | null> {
+  if (!ENABLE_AI_DRAFT) {
     return null;
   }
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), LLAMA_TIMEOUT_MS);
-
-    const response = await fetch(LLAMA_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: LLAMA_MODEL,
-        prompt: buildLlamaPrompt(transcript),
-        stream: false,
-        temperature: 0.2,
-      }),
-      cache: 'no-store',
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      console.error('Llama API error:', await response.text());
+    const rawOutput = await callLLM(
+      [{ role: 'user', content: buildLlamaPrompt(transcript) }],
+      { temperature: 0.2, maxTokens: 2000 },
+    );
+    if (!rawOutput) {
       return null;
     }
 
-    const data = await response.json();
-    const rawOutput = data?.response || data?.message || '';
     const jsonPayload = extractJsonPayload(rawOutput);
-
     if (!jsonPayload) {
       return null;
     }
@@ -200,7 +178,7 @@ async function generateDraftWithLlama(transcript: string): Promise<ReportDraft |
     try {
       parsed = JSON.parse(jsonPayload);
     } catch (parseError) {
-      console.error('Failed to parse Llama output as JSON:', parseError);
+      console.error('Failed to parse AI draft output as JSON:', parseError);
       return null;
     }
 
@@ -212,7 +190,7 @@ async function generateDraftWithLlama(transcript: string): Promise<ReportDraft |
       additionalNotes: parsed.additionalNotes || FALLBACK_COPY.additionalNotes,
     };
   } catch (error) {
-    console.error('Llama draft generation error:', error);
+    console.error('AI draft generation error:', error);
     return null;
   }
 }
@@ -241,16 +219,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const llamaDraft = await generateDraftWithLlama(cleanedTranscript);
-    const reportDraft = llamaDraft || deriveDraft(cleanedTranscript);
+    const aiDraft = await generateDraftWithAI(cleanedTranscript);
+    const reportDraft = aiDraft || deriveDraft(cleanedTranscript);
 
     return NextResponse.json({
       reportDraft,
       metadata: {
         reportType: reportType || 'daily',
         transcriptLength: cleanedTranscript.length,
-        source: llamaDraft ? 'llama' : 'heuristic',
-        model: llamaDraft ? LLAMA_MODEL : null,
+        source: aiDraft ? 'ai' : 'heuristic',
         generatedAt: new Date().toISOString(),
       },
     });
