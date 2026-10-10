@@ -3,42 +3,35 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { runAgent, CAPABILITY_DEFINITIONS, getConversationHistory, buildConversationContext, type AgentCapability } from "@/lib/ai/agent";
 import { createPlan, applyPriorResult, parseScoreThreshold, type PlanStep } from "@/lib/ai/planner";
-import { resolveEmployeeSession } from "@/lib/hr/auth";
-import { isTenantSuspended } from "@/lib/api-auth";
-import { APIKeyService } from "@/lib/tenant-admin/service";
-import { asTenantSlug } from "@/lib/tenant-admin/utils";
+import { authenticateAgent } from "@/lib/ai/agent-auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 // ─── Auth ───
 
-async function authenticate(request: NextRequest): Promise<{ tenantSlug: string; authMethod: "api_key" | "session" } | NextResponse | null> {
-  // 1. Try API key — platform key (env) or a tenant-issued key from
-  // admin_api_keys bound to the x-tenant-slug header tenant.
-  const apiKey = request.headers.get("x-api-key") || request.headers.get("authorization")?.replace("Bearer ", "");
-  const headerTenant = request.headers.get("x-tenant-slug");
-  if (apiKey && headerTenant) {
-    const isPlatform = apiKey === process.env.SYSPRO_AI_API_KEY;
-    const tenantKey = isPlatform ? null : await new APIKeyService().authenticate(asTenantSlug(headerTenant), apiKey).catch(() => null);
-    if (isPlatform || tenantKey) {
-      if (await isTenantSuspended(headerTenant)) {
-        return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
-      }
-      return { tenantSlug: headerTenant, authMethod: "api_key" };
-    }
-  }
+const authenticate = authenticateAgent;
 
-  // 2. Try employee session (for internal calls)
-  const session = resolveEmployeeSession(request);
-  if (session && (await isTenantSuspended(session.tenantSlug))) {
-    return NextResponse.json({ error: "Tenant is suspended" }, { status: 403 });
-  }
-  if (session) {
-    return { tenantSlug: session.tenantSlug, authMethod: "session" };
-  }
+// Self-service scoping: regular employees may only run self-scoped capabilities.
+const PRIVILEGED_ROLES = new Set(["admin", "tenant_admin", "executive", "hod", "hr", "hr_admin", "hr_manager"]);
+const SELF_SERVICE_CAPABILITIES = new Set(["generate_report", "summarize", "appraise_performance", "generate_training_plan"]);
 
-  return null;
+function isPrivileged(auth: { authMethod: string; employeeRole?: string }): boolean {
+  return auth.authMethod === "api_key" || PRIVILEGED_ROLES.has((auth.employeeRole ?? "").toLowerCase());
+}
+
+/** Force self-scope on the payload for non-privileged session users. */
+function scopeToSelf(payload: Record<string, unknown>, capability: string, employeeId?: string): Record<string, unknown> {
+  if (!employeeId) return payload;
+  const p = { ...payload };
+  if (capability === "summarize") {
+    p.scope = "employee";
+    p.employeeId = employeeId;
+  } else if (capability === "appraise_performance" || capability === "generate_training_plan") {
+    p.employeeId = employeeId;
+    delete p.appraisalId; // can't point at someone else's appraisal
+  }
+  return p;
 }
 
 // ─── Request Schema ───
@@ -52,6 +45,8 @@ const capabilityEnum = z.enum([
   "summarize",
   "generate_training_plan",
   "proactive_insights",
+  "propose_action",
+  "query_data",
 ]);
 
 const agentSchema = z.object({
@@ -122,11 +117,31 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Self-service: non-privileged session users may only run self-scoped steps.
+    const selfService = !isPrivileged(auth);
+    if (selfService) {
+      const blocked = plan.steps.find((s) => !SELF_SERVICE_CAPABILITIES.has(s.capability));
+      if (blocked) {
+        return NextResponse.json({
+          success: true,
+          capability: null,
+          result: {
+            reply: `That request needs a manager or admin role. I can help you draft your reports, ` +
+              `summarize your own work, show your appraisals, or draft a training plan for yourself.`,
+          },
+          metadata: { source: "scope_guard", generatedAt: new Date().toISOString() },
+        });
+      }
+    }
+
     const scoreThreshold = parseScoreThreshold(parsed.data.message);
     const executedSteps: Array<{ capability: AgentCapability; response: any; skipped?: boolean }> = [];
     let failed = false;
 
     for (const rawStep of plan.steps) {
+      if (selfService) {
+        rawStep.payload = scopeToSelf(rawStep.payload, rawStep.capability, auth.employeeId);
+      }
       const step: PlanStep = applyPriorResult(rawStep, executedSteps.map((s) => ({
         capability: s.capability,
         result: s.response?.result,
@@ -154,6 +169,7 @@ export async function POST(request: NextRequest) {
         tenantSlug,
         useAI: parsed.data.useAI,
         conversationId: parsed.data.conversationId,
+        actor: { id: auth.employeeId, role: auth.employeeRole, authMethod: auth.authMethod },
       });
       executedSteps.push({ capability: step.capability, response: r });
       if (!r?.success) {
@@ -202,12 +218,25 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Direct capability path — apply self-service scope for non-privileged sessions.
+  const directCapability = parsed.data.capability as AgentCapability;
+  if (!isPrivileged(auth)) {
+    if (!SELF_SERVICE_CAPABILITIES.has(directCapability)) {
+      return NextResponse.json(
+        { error: `Capability "${directCapability}" requires a manager or admin role.` },
+        { status: 403 },
+      );
+    }
+    parsed.data.payload = scopeToSelf(parsed.data.payload ?? {}, directCapability, auth.employeeId);
+  }
+
   const result = await runAgent({
-    capability: parsed.data.capability as AgentCapability,
+    capability: directCapability,
     payload: parsed.data.payload ?? {},
     tenantSlug,
     useAI: parsed.data.useAI,
     conversationId: parsed.data.conversationId,
+    actor: { id: auth.employeeId, role: auth.employeeRole, authMethod: auth.authMethod },
   });
 
   return NextResponse.json(result, { status: result.success ? 200 : 500 });

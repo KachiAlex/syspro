@@ -20,9 +20,14 @@ const CAPABILITY_OPTIONS = [
   { value: "appraise_performance", label: "Appraise", description: "Generate a performance appraisal" },
   { value: "generate_training_plan", label: "Training Plan", description: "Create a training plan from appraisal" },
   { value: "screen_candidates", label: "Screen", description: "Score and rank job candidates" },
+  { value: "query_data", label: "Ask Data", description: "Answer questions about your data" },
+  { value: "propose_action", label: "Action", description: "Stage a task or announcement" },
 ];
 
-export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: boolean; onClose: () => void; allowedCapabilities?: string[] }) {
+  const capabilityOptions = allowedCapabilities
+    ? CAPABILITY_OPTIONS.filter((c) => c.value === "auto" || allowedCapabilities.includes(c.value))
+    : CAPABILITY_OPTIONS;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -129,7 +134,38 @@ export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => v
     setMessages([]);
     setConversationId(null);
     setExpandedResults(new Set());
+    setActionStates({});
   };
+
+  const [actionStates, setActionStates] = useState<Record<number, "confirming" | "executed" | "rejected" | "error">>({});
+
+  const handleActionDecision = useCallback(async (idx: number, actionId: string, reject: boolean) => {
+    setActionStates((s) => ({ ...s, [idx]: "confirming" }));
+    try {
+      const res = await fetch("/api/ai/agent/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actionId, reject }),
+      });
+      const data = await res.json();
+      const ok = data.status === "executed" || data.status === "rejected";
+      setActionStates((s) => ({ ...s, [idx]: ok ? data.status : "error" }));
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: data.status === "executed"
+            ? `Action executed: ${JSON.stringify(data.result)}`
+            : data.status === "rejected"
+              ? "Action rejected — nothing was executed."
+              : `Action failed: ${data.error || "unknown error"}`,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    } catch {
+      setActionStates((s) => ({ ...s, [idx]: "error" }));
+    }
+  }, []);
 
   if (!open) return null;
 
@@ -198,14 +234,14 @@ export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => v
           >
             <Bot className="w-4 h-4 text-blue-600" />
             <span className="flex-1">
-              {CAPABILITY_OPTIONS.find((c) => c.value === selectedCapability)?.label || "Select capability"}
+              {capabilityOptions.find((c) => c.value === selectedCapability)?.label || "Select capability"}
             </span>
             {showCapabilityMenu ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </button>
 
           {showCapabilityMenu && (
             <div className="absolute left-4 right-4 top-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-10 py-1">
-              {CAPABILITY_OPTIONS.map((cap) => (
+              {capabilityOptions.map((cap) => (
                 <button
                   key={cap.value}
                   onClick={() => {
@@ -238,7 +274,7 @@ export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => v
                 Select a capability above and type your request. The agent will analyze your data and respond with insights, reports, or recommendations.
               </p>
               <div className="mt-4 space-y-1.5 text-left max-w-xs mx-auto">
-                {CAPABILITY_OPTIONS.slice(0, 3).map((cap) => (
+                {capabilityOptions.slice(0, 3).map((cap) => (
                   <button
                     key={cap.value}
                     onClick={() => setSelectedCapability(cap.value)}
@@ -304,6 +340,38 @@ export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => v
                     {JSON.stringify(msg.result, null, 2)}
                   </pre>
                 ) : null}
+
+                {/* Pending action confirmation */}
+                {(msg.result as any)?.pendingAction && (
+                  <div className="mt-2 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 p-3">
+                    <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 capitalize">
+                      {(msg.result as any).pendingAction.action.replace(/_/g, " ")} — needs confirmation
+                    </p>
+                    <pre className="mt-1 text-[11px] text-amber-700 dark:text-amber-400 whitespace-pre-wrap break-words">
+                      {JSON.stringify((msg.result as any).pendingAction.params, null, 1)}
+                    </pre>
+                    {actionStates[idx] == null ? (
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          onClick={() => handleActionDecision(idx, (msg.result as any).pendingAction.id, false)}
+                          className="px-3 py-1 text-xs font-medium rounded-md bg-amber-600 text-white hover:bg-amber-700"
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          onClick={() => handleActionDecision(idx, (msg.result as any).pendingAction.id, true)}
+                          className="px-3 py-1 text-xs font-medium rounded-md border border-amber-400 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-amber-700 dark:text-amber-400 capitalize">
+                        {actionStates[idx] === "confirming" ? "Executing…" : actionStates[idx]}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -328,7 +396,7 @@ export function AIChatPanel({ open, onClose }: { open: boolean; onClose: () => v
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={selectedCapability === "auto" ? "Ask anything — e.g. \"screen REQ-12's applicants\"" : `Ask about ${CAPABILITY_OPTIONS.find((c) => c.value === selectedCapability)?.label?.toLowerCase() || "anything"}...`}
+              placeholder={selectedCapability === "auto" ? "Ask anything — e.g. \"screen REQ-12's applicants\"" : `Ask about ${capabilityOptions.find((c) => c.value === selectedCapability)?.label?.toLowerCase() || "anything"}...`}
               rows={1}
               className="flex-1 bg-transparent text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none resize-none max-h-32"
               style={{ minHeight: "24px" }}
@@ -359,6 +427,12 @@ function formatResult(data: any): string {
 
   const result = data.result;
   if (typeof result?.reply === "string") return result.reply;
+  if (typeof result?.answer === "string") return result.answer;
+  if (result?.pendingAction) return result.message || `Staged "${result.pendingAction.action}" — confirm below to execute.`;
+  if (result?.availableActions) {
+    return "I can stage these actions for confirmation:\n" +
+      result.availableActions.map((a: any) => `  • ${a.name}: ${a.description}`).join("\n");
+  }
 
   if (Array.isArray(result?.steps)) {
     const parts = [result.summary || `Plan: ${result.steps.length} step(s)`];

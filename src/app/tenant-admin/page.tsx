@@ -32,6 +32,7 @@ import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
 import { EmployeeDashboard } from "@/components/tenant-admin/employee-dashboard";
+import { AiInsightsCard } from "@/components/tenant-admin/ai-insights-card";
 
 interface DashboardMetric {
   label: string;
@@ -476,6 +477,9 @@ export default function TenantAdminDashboard() {
               </Link>
             )}
           </div>
+
+          {/* AI Insights */}
+          <AiInsightsCard />
 
           {/* Quick Actions */}
           <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-5">

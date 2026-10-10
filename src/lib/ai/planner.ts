@@ -29,6 +29,8 @@ const VALID_CAPABILITIES = new Set<string>([
   "summarize",
   "generate_training_plan",
   "proactive_insights",
+  "propose_action",
+  "query_data",
 ]);
 
 function normalizeSteps(raw: unknown): PlanStep[] {
@@ -89,6 +91,8 @@ Capabilities and payload fields:
 - summarize {scope(department|crm_pipeline|procurement|reports|employee), departmentId?, employeeId?} — summarize a data scope
 - generate_training_plan {employeeId, timelineWeeks} — training plan from appraisal results
 - proactive_insights {categories?} — anomaly/risk scan
+- propose_action {action, params} — STAGE a confirmed write: create_staff_task {employeeId, title, dueDate, description?, frequency?} | post_announcement {title, message, priority?}. Use when the user asks to create/assign/post something.
+- query_data {query, params?, question} — answer data questions via safe predefined queries: report_compliance {days?}, department_headcount, pipeline_summary, overdue_tasks, outstanding_invoices, leave_today, candidate_leaderboard {requisitionId?}
 
 ${hintClause}
 

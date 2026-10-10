@@ -232,7 +232,7 @@ export async function loadPortalPermissions(
  * gives governed modules — while unrestricted sessions keep their existing
  * role-level gate. Returns a denial response or null when access is allowed.
  */
-const SUSPENDED_STATUSES = new Set(["suspended", "cancelled", "terminated", "deleted"]);
+export const SUSPENDED_STATUSES = new Set(["suspended", "cancelled", "terminated", "deleted"]);
 
 /**
  * Suspension enforcement: a tenant whose status is suspended/cancelled must not

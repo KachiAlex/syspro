@@ -5,7 +5,10 @@ import { useRouter } from 'next/navigation';
 import { User, LogOut, Loader2, AlertCircle, CalendarCheck, Target, UserCircle, Menu, Bell, ClipboardList, Receipt, Plane, Wallet, CheckSquare, Sparkles, ChevronRight, X, CheckCheck, Megaphone, Users } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { DashboardTab } from './tabs/DashboardTab';
+import { AIChatPanel } from '@/components/ai/ai-chat-panel';
 import { ClipboardCheck } from 'lucide-react';
+
+const EMPLOYEE_AI_CAPABILITIES = ['generate_report', 'summarize', 'appraise_performance', 'generate_training_plan'];
 
 const tabLoading = () => (
   <div className="flex items-center justify-center py-16">
@@ -42,6 +45,7 @@ export default function EmployeeDashboardPage() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [announcements, setAnnouncements] = useState<any[]>([]);
@@ -362,6 +366,18 @@ export default function EmployeeDashboardPage() {
           </div>
         </nav>
       </div>
+
+      {/* AI Assistant */}
+      {!aiOpen && (
+        <button
+          onClick={() => setAiOpen(true)}
+          className="fixed bottom-20 lg:bottom-6 right-4 lg:right-6 z-40 w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center"
+          title="AI Assistant"
+        >
+          <Sparkles className="w-5 h-5" />
+        </button>
+      )}
+      <AIChatPanel open={aiOpen} onClose={() => setAiOpen(false)} allowedCapabilities={EMPLOYEE_AI_CAPABILITIES} />
     </div>
   );
 }

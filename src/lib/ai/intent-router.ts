@@ -22,6 +22,8 @@ const CAPABILITIES: AgentCapability[] = [
   "summarize",
   "generate_training_plan",
   "proactive_insights",
+  "propose_action",
+  "query_data",
 ];
 
 function normalizeCapability(value: unknown): AgentCapability | null {
@@ -42,7 +44,9 @@ function fallbackRoute(message: string, hint: AgentCapability | null): RoutedInt
 
   let capability = hint;
   if (!capability) {
-    if (/\b(screen|shortlist|rank|score)\w*\b.*\b(candidate|applicant|application)/.test(msg) || /\b(candidate|applicant)s?\b.*\b(screen|shortlist|rank|score)/.test(msg)) {
+    if (/\b(create|assign|add|new)\b.*\b(task|to-?do)\b|\b(post|send|publish|broadcast|make)\b.*\b(announcement|announce|notice)\b/.test(msg)) {
+      capability = "propose_action";
+    } else if (/\b(screen|shortlist|rank|score)\w*\b.*\b(candidate|applicant|application)/.test(msg) || /\b(candidate|applicant)s?\b.*\b(screen|shortlist|rank|score)/.test(msg)) {
       capability = "screen_candidates";
     } else if (/\b(apprais\w*|performance review|evaluat\w*)/.test(msg)) {
       capability = "appraise_performance";
@@ -50,6 +54,10 @@ function fallbackRoute(message: string, hint: AgentCapability | null): RoutedInt
       capability = "generate_training_plan";
     } else if (/\b(draft|write|generate|refine)\w*\b.*\b(report|update)\b/.test(msg) || msg.split(" ").length > 40) {
       capability = "generate_report";
+    } else if (
+      /\bhow (many|much)\b|\bwho('s| is| are)?\b.*\b(leave|absent|report|overdue)\b|\b(headcount|compliance|outstanding|receivable|pipeline value|leaderboard|top candidates)\b/.test(msg)
+    ) {
+      capability = "query_data";
     } else if (/\b(summar\w*|overview|status of|how is|how are|how's)/.test(msg)) {
       capability = "summarize";
     } else if (/\b(insight\w*|anomal\w*|issue\w*|risk\w*|problem\w*|attention|alert\w*|flag\w*)/.test(msg)) {
@@ -98,6 +106,29 @@ function fallbackRoute(message: string, hint: AgentCapability | null): RoutedInt
           employeeId: msg.includes("employee") || msg.includes("person") ? (id || message) : undefined,
         },
       };
+    case "propose_action": {
+      const wantsTask = /\btask|to-?do\b/.test(msg);
+      const dueIn = msg.match(/(?:in|within)\s+(\d+)\s+day/)?.[1];
+      const dueDate = new Date(Date.now() + (dueIn ? Number(dueIn) : 7) * 86400000).toISOString().split("T")[0];
+      const params = wantsTask
+        ? { action: "create_staff_task", params: { employeeId: id || message, title: message, dueDate } }
+        : { action: "post_announcement", params: { title: message.slice(0, 80), message } };
+      return { capability, payload: params };
+    }
+    case "query_data": {
+      let query = "department_headcount";
+      const params: Record<string, unknown> = {};
+      if (/report|compliance/.test(msg) && /(hasn|haven|miss|not submit|who)/.test(msg)) query = "report_compliance";
+      else if (/pipeline|deal/.test(msg)) query = "pipeline_summary";
+      else if (/overdue/.test(msg)) query = "overdue_tasks";
+      else if (/invoice|outstanding|receivable|owed/.test(msg)) query = "outstanding_invoices";
+      else if (/leave|absent|off today|holiday/.test(msg)) query = "leave_today";
+      else if (/candidate|leaderboard/.test(msg)) query = "candidate_leaderboard";
+      const daysMatch = msg.match(/(\d+)\s*day/);
+      if (query === "report_compliance" && daysMatch) params.days = Number(daysMatch[1]);
+      if (query === "candidate_leaderboard" && id) params.requisitionId = id;
+      return { capability, payload: { query, params, question: message } };
+    }
     case "proactive_insights": {
       const categories: string[] = [];
       if (/appraisal|performance/.test(msg)) categories.push("appraisals");
@@ -129,6 +160,8 @@ Capabilities and payload fields:
 - summarize {scope(department|crm_pipeline|procurement|reports|employee), departmentId?, employeeId?} — summarize a data scope
 - generate_training_plan {employeeId, timelineWeeks} — training plan from appraisal improvement areas
 - proactive_insights {categories?} — detect anomalies/risks. categories subset of: appraisals, reports, recruitment, crm, procurement, attendance
+- propose_action {action, params} — STAGE a write for confirmation (never executes immediately). action: create_staff_task {employeeId, title, dueDate, description?, frequency?} | post_announcement {title, message, priority?}
+- query_data {query, params?, question} — answer questions about tenant data via safe predefined queries: report_compliance {days?}, department_headcount, pipeline_summary, overdue_tasks, outstanding_invoices, leave_today, candidate_leaderboard {requisitionId?}
 
 ${hintClause}
 

@@ -26,7 +26,9 @@ export type AgentCapability =
   | "appraise_performance"
   | "summarize"
   | "generate_training_plan"
-  | "proactive_insights";
+  | "proactive_insights"
+  | "propose_action"
+  | "query_data";
 
 export interface AgentRequest {
   capability: AgentCapability;
@@ -34,6 +36,8 @@ export interface AgentRequest {
   tenantSlug: string;
   useAI?: boolean;
   conversationId?: string;
+  /** Authenticated actor — set by the API route, never by the client. */
+  actor?: { id?: string; role?: string; authMethod?: string };
 }
 
 export interface AgentResponse {
@@ -147,6 +151,31 @@ export const CAPABILITY_DEFINITIONS: AgentCapabilityDef[] = [
       minSeverity: { type: "string", required: false, description: "Minimum severity: 'low', 'medium', 'high' (default: low)" },
     },
     outputDescription: "Prioritized list of insights with category, severity, description, affected entities, and recommended actions",
+  },
+  {
+    name: "propose_action",
+    description:
+      "Stage a WRITE action for user confirmation — nothing executes until confirmed. " +
+      "Actions: create_staff_task (assign a task to an employee), post_announcement (broadcast to staff). " +
+      "Returns a pendingAction with an id the user confirms via POST /api/ai/agent/actions.",
+    inputSchema: {
+      action: { type: "string", required: true, description: "create_staff_task | post_announcement" },
+      params: { type: "object", required: true, description: "Action parameters (see action schema)" },
+    },
+    outputDescription: "Pending action awaiting confirmation, with id and expiry",
+  },
+  {
+    name: "query_data",
+    description:
+      "Answer a question about tenant data using safe, predefined queries — never generated SQL. " +
+      "Queries: report_compliance, department_headcount, pipeline_summary, overdue_tasks, " +
+      "outstanding_invoices, leave_today, candidate_leaderboard.",
+    inputSchema: {
+      query: { type: "string", required: true, description: "Named query from the registry" },
+      params: { type: "object", required: false, description: "Query parameters (e.g. days, requisitionId)" },
+      question: { type: "string", required: false, description: "The user's original question, for narrative context" },
+    },
+    outputDescription: "Query rows plus a formatted or AI-written answer",
   },
 ];
 
@@ -1114,6 +1143,112 @@ async function handleProactiveInsights(
   };
 }
 
+// ─── Propose Action Handler ───
+
+async function handleProposeAction(
+  payload: Record<string, unknown>,
+  tenantSlug: string,
+  actor?: { id?: string; role?: string; authMethod?: string },
+): Promise<{ result: unknown; source: "deterministic" }> {
+  const { proposeAction, ACTION_REGISTRY } = await import("@/lib/ai/actions");
+
+  // No action specified → list what the actor may do.
+  if (!payload.action) {
+    return {
+      result: {
+        availableActions: ACTION_REGISTRY.map((a) => ({
+          name: a.name,
+          description: a.description,
+          params: a.params,
+        })),
+      },
+      source: "deterministic",
+    };
+  }
+
+  const params = (payload.params && typeof payload.params === "object" ? payload.params : payload) as Record<string, unknown>;
+  const pending = await proposeAction({
+    tenantSlug,
+    actorId: actor?.id,
+    actorRole: actor?.role,
+    authMethod: actor?.authMethod,
+    action: String(payload.action),
+    params,
+  });
+
+  return {
+    result: {
+      pendingAction: {
+        id: pending.id,
+        action: pending.action,
+        params: pending.params,
+        expiresAt: pending.expires_at,
+      },
+      confirmationRequired: true,
+      message: `Staged "${pending.action}". Confirm to execute — it expires in 30 minutes.`,
+    },
+    source: "deterministic",
+  };
+}
+
+// ─── Query Data Handler ───
+
+async function handleQueryData(
+  payload: Record<string, unknown>,
+  tenantSlug: string,
+  useAI: boolean,
+): Promise<{ result: unknown; source: "ai" | "deterministic" }> {
+  const { DATA_QUERIES, getDataQuery } = await import("@/lib/ai/data-queries");
+
+  if (!payload.query) {
+    return {
+      result: {
+        availableQueries: DATA_QUERIES.map((q) => ({
+          name: q.name,
+          description: q.description,
+          params: q.params ?? [],
+        })),
+      },
+      source: "deterministic",
+    };
+  }
+
+  const query = getDataQuery(String(payload.query));
+  if (!query) {
+    throw new Error(
+      `Unknown query "${payload.query}". Available: ${DATA_QUERIES.map((q) => q.name).join(", ")}`,
+    );
+  }
+
+  const params = (payload.params && typeof payload.params === "object" ? payload.params : {}) as Record<string, unknown>;
+  const rows = await query.run(tenantSlug, params);
+  const answer = query.format(rows);
+
+  // AI narrative over the bounded result set when enabled.
+  if (useAI && rows.length > 0) {
+    try {
+      const question = String(payload.question || query.description);
+      const narrative = await callLLM(
+        [{
+          role: "user",
+          content:
+            `Answer the user's question using ONLY the data below. Do not invent figures.\n\n` +
+            `Question: ${question}\n\nData (${rows.length} rows):\n${JSON.stringify(rows.slice(0, 30), null, 1)}\n\n` +
+            `Respond with a concise answer (2-6 sentences or a short list).`,
+        }],
+        { temperature: 0.2, maxTokens: 800 },
+      );
+      if (narrative) {
+        return { result: { query: query.name, answer: narrative, rowCount: rows.length, rows: rows.slice(0, 30) }, source: "ai" };
+      }
+    } catch {
+      // fall through to deterministic answer
+    }
+  }
+
+  return { result: { query: query.name, answer, rowCount: rows.length, rows: rows.slice(0, 30) }, source: "deterministic" };
+}
+
 // ─── Conversation Memory (DB-backed for serverless) ───
 
 export interface ConversationTurn {
@@ -1283,6 +1418,12 @@ export async function runAgent(request: AgentRequest): Promise<AgentResponse> {
         break;
       case "proactive_insights":
         handlerResult = await handleProactiveInsights(request.payload, request.tenantSlug);
+        break;
+      case "propose_action":
+        handlerResult = await handleProposeAction(request.payload, request.tenantSlug, request.actor);
+        break;
+      case "query_data":
+        handlerResult = await handleQueryData(request.payload, request.tenantSlug, useAI);
         break;
       default:
         throw new Error(`Unknown capability: ${request.capability}`);
