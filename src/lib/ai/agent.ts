@@ -286,7 +286,8 @@ const GROUP_STOPWORDS = new Set([
   "everyone", "everybody", "anyone", "anybody", "this", "month", "monthly", "week",
   "weekly", "quarter", "quarterly", "year", "yearly", "annual", "please", "appraise",
   "appraisal", "evaluate", "draft", "create", "generate", "under", "over", "who",
-  "what", "show", "list", "and", "a", "an", "on",
+  "what", "show", "list", "and", "a", "an", "on", "training", "learning", "plan",
+  "plans", "program", "performance",
 ]);
 
 /**
