@@ -280,22 +280,35 @@ export async function resolveDepartment(SQL: any, tenantSlug: string, ref: strin
   return (rows as any[])[0] ?? null;
 }
 
-const GROUP_STRIP = /\b(the|whole|entire|all|team|department|dept|staff|members?|employees?|in|of|every|everyone|everybody)\b/g;
+const GROUP_STOPWORDS = new Set([
+  "the", "whole", "entire", "all", "team", "teams", "department", "departments", "dept",
+  "staff", "member", "members", "employee", "employees", "in", "of", "for", "every",
+  "everyone", "everybody", "anyone", "anybody", "this", "month", "monthly", "week",
+  "weekly", "quarter", "quarterly", "year", "yearly", "annual", "please", "appraise",
+  "appraisal", "evaluate", "draft", "create", "generate", "under", "over", "who",
+  "what", "show", "list", "and", "a", "an", "on",
+]);
 
 /**
  * Resolve a group reference ("the sales team", "finance department",
- * "everyone") to a set of employees. Returns null when nothing matches —
- * callers then fall back to single-employee resolution.
+ * "everyone") to a set of employees. Tokenizes the ref and tries each
+ * significant word against department names, so filler words and phrase
+ * variants don't matter. Returns null when nothing matches — callers then
+ * fall back to single-employee resolution.
  */
 export async function resolveEmployeeGroup(
   SQL: any,
   tenantSlug: string,
   ref: string,
 ): Promise<{ label: string; employees: any[] } | null> {
-  const term = String(ref).toLowerCase().replace(GROUP_STRIP, " ").replace(/\s+/g, " ").trim();
+  const words = String(ref)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length >= 3 && !GROUP_STOPWORDS.has(w));
 
   // Bare collective references → all active employees.
-  if (!term) {
+  if (words.length === 0) {
     const employees = await SQL`
       select id, name, email, job_title, role, department_id
       from admin_employees where tenant_slug = ${tenantSlug} and status = 'active'
@@ -304,15 +317,19 @@ export async function resolveEmployeeGroup(
     return (employees as any[]).length ? { label: "all employees", employees } : null;
   }
 
-  const dept = await resolveDepartment(SQL, tenantSlug, term);
-  if (!dept) return null;
-  const employees = await SQL`
-    select id, name, email, job_title, role, department_id
-    from admin_employees where tenant_slug = ${tenantSlug} and status = 'active'
-      and department_id = ${dept.id}
-    order by name limit 50
-  `;
-  return (employees as any[]).length ? { label: dept.name, employees } : null;
+  // Try longest word first (most selective), then the rest.
+  for (const word of words.slice().sort((a, b) => b.length - a.length)) {
+    const dept = await resolveDepartment(SQL, tenantSlug, word).catch(() => null);
+    if (!dept) continue;
+    const employees = await SQL`
+      select id, name, email, job_title, role, department_id
+      from admin_employees where tenant_slug = ${tenantSlug} and status = 'active'
+        and department_id = ${dept.id}
+      order by name limit 50
+    `;
+    if ((employees as any[]).length) return { label: dept.name, employees };
+  }
+  return null;
 }
 
 /**

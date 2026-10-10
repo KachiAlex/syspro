@@ -101,7 +101,8 @@ async function runEmployeeSteps(
  *  Otherwise canonicalize name → id and return null (run the step normally). */
 async function resolveGroupFanOut(step: PlanStep, tenantSlug: string, runArgs: RunArgs) {
   if (!GROUP_SCOPED.has(step.capability)) return null;
-  const empRef = step.payload.employeeId;
+  // LLM plans may put the group in department instead of employeeId.
+  const empRef = step.payload.employeeId ?? step.payload.department ?? step.payload.team;
   if (typeof empRef !== "string" || !empRef.trim()) return null;
   const { sql: SQL } = await import("@/lib/sql-client");
   const single = await resolveEmployee(SQL, tenantSlug, empRef).catch(() => null);
@@ -190,6 +191,9 @@ export async function POST(request: NextRequest) {
       conversationContext,
       useAI: parsed.data.useAI,
     });
+    if (plan.steps.length > 0) {
+      console.log("[agent] plan:", JSON.stringify(plan.steps.map((s) => ({ cap: s.capability, payload: s.payload }))));
+    }
     if (plan.steps.length === 0) {
       return NextResponse.json({
         success: true,
