@@ -182,7 +182,7 @@ export const CAPABILITY_DEFINITIONS: AgentCapabilityDef[] = [
 // ─── Unified LLM Configuration ───
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+export const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 
 function getGroqKey(): string | undefined {
   return process.env.GROQ_API_KEY;

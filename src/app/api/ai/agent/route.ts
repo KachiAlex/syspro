@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { runAgent, CAPABILITY_DEFINITIONS, getConversationHistory, buildConversationContext, type AgentCapability } from "@/lib/ai/agent";
+import { runAgent, CAPABILITY_DEFINITIONS, getConversationHistory, buildConversationContext, GROQ_MODEL, type AgentCapability } from "@/lib/ai/agent";
 import { createPlan, applyPriorResult, parseScoreThreshold, type PlanStep } from "@/lib/ai/planner";
 import { authenticateAgent } from "@/lib/ai/agent-auth";
 
@@ -272,7 +272,7 @@ export async function GET(request: NextRequest) {
       inputSchema: c.inputSchema,
       outputDescription: c.outputDescription,
     })),
-    model: "llama-3.3-70b-versatile",
+    model: GROQ_MODEL,
     provider: "groq",
     authMethods: ["api_key", "session"],
     features: ["intent_router", "conversation_memory", "deterministic_fallbacks", "mcp_compatible"],
