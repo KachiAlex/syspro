@@ -183,6 +183,9 @@ export const CAPABILITY_DEFINITIONS: AgentCapabilityDef[] = [
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 export const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+// Cheap model for classification/planning calls — they don't need the large
+// model's prose quality, and this keeps latency low on the routing hot path.
+export const GROQ_MODEL_FAST = process.env.GROQ_MODEL_FAST || "openai/gpt-oss-20b";
 
 function getGroqKey(): string | undefined {
   return process.env.GROQ_API_KEY;
@@ -197,7 +200,7 @@ interface LLMMessage {
 
 export async function callLLM(
   messages: LLMMessage[],
-  options?: { temperature?: number; maxTokens?: number; jsonMode?: boolean },
+  options?: { temperature?: number; maxTokens?: number; jsonMode?: boolean; model?: string },
 ): Promise<string | null> {
   const groqKey = getGroqKey();
   if (!groqKey) return null;
@@ -207,7 +210,7 @@ export async function callLLM(
     const timeout = setTimeout(() => controller.abort(), 30000);
 
     const body: Record<string, unknown> = {
-      model: GROQ_MODEL,
+      model: options?.model || GROQ_MODEL,
       messages,
       temperature: options?.temperature ?? 0.3,
       max_tokens: options?.maxTokens ?? 4000,
@@ -942,12 +945,23 @@ Return ONLY the JSON object:`;
 
 // ─── Proactive Insights Handler ───
 
+// Insights are DB-wide scans — cache briefly per tenant so the dashboard
+// card, chat calls, and cron don't re-run the full scan back-to-back.
+const INSIGHTS_TTL_MS = 5 * 60 * 1000;
+const insightsCache = new Map<string, { at: number; result: Record<string, unknown> }>();
+
 async function handleProactiveInsights(
   payload: Record<string, unknown>,
   tenantSlug: string,
 ): Promise<{ result: unknown; source: "ai" | "deterministic" | "heuristic" }> {
   const categories = (payload.categories as string[]) || null;
   const minSeverity = (payload.minSeverity as string) || "low";
+
+  const cacheKey = `${tenantSlug}|${(categories ?? []).sort().join(",")}|${minSeverity}`;
+  const cached = insightsCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < INSIGHTS_TTL_MS && payload.fresh !== true) {
+    return { result: { ...cached.result, cached: true }, source: "deterministic" };
+  }
 
   const { sql: SQL } = await import("@/lib/sql-client");
   const { ensureHrTables } = await import("@/lib/hr/db");
@@ -1114,7 +1128,7 @@ async function handleProactiveInsights(
         where tenant_id = ${tenantSlug}
           and work_date >= ${thirtyDaysAgo}
         group by employee_id
-        having count(*) filter (where status = 'absent') >= 3
+        having count(*) filter (where attendance_status = 'absent') >= 3
         order by absent_days desc
         limit 10
       `;
@@ -1134,15 +1148,16 @@ async function handleProactiveInsights(
   // Filter by min severity
   const filtered = insights.filter((i) => severityOrder[i.severity] >= minSeverityLevel);
 
-  return {
-    result: {
-      totalInsights: filtered.length,
-      insights: filtered,
-      generatedAt: new Date().toISOString(),
-      tenantSlug,
-    },
-    source: "deterministic",
+  const result = {
+    totalInsights: filtered.length,
+    insights: filtered,
+    generatedAt: new Date().toISOString(),
+    tenantSlug,
   };
+  if (insightsCache.size > 200) insightsCache.delete(insightsCache.keys().next().value as string);
+  insightsCache.set(cacheKey, { at: Date.now(), result });
+
+  return { result, source: "deterministic" };
 }
 
 // ─── Propose Action Handler ───

@@ -7,7 +7,7 @@
  * covers the known chains when Groq is unavailable.
  */
 
-import { callLLM, extractJSON, type AgentCapability } from "./agent";
+import { callLLM, extractJSON, GROQ_MODEL_FAST, type AgentCapability } from "./agent";
 import { routeIntent } from "./intent-router";
 
 export const MAX_PLAN_STEPS = 4;
@@ -48,6 +48,47 @@ function normalizeSteps(raw: unknown): PlanStep[] {
     });
   }
   return steps;
+}
+
+// ─── Fast path ───
+// A confident deterministic match on a non-compound, non-coreferential
+// message skips the LLM plan call entirely (~1-3s → ~0ms). Limited to
+// capabilities whose deterministic payload extraction is reliable.
+
+const COREFERENCE = /\b(her|him|them|their|his|that|those|these|it|its|same|too|also|again|above|previous|former|latter)\b/i;
+const SECOND_ACTION = /\b(?:and|then|after(?:wards| that)?|plus|as well)\b[\s\S]{0,50}?\b(?:create|assign|post|publish|send|draft|write|generate|refine|appraise|evaluat\w*|screen|shortlist|rank|train|upskill\w*|summar\w*|scan|check|flag|report)\b/i;
+
+function fastPathPlan(
+  message: string,
+  hint: AgentCapability | null,
+  routed: { capability: AgentCapability | null; payload: Record<string, unknown> },
+): AgentPlan | null {
+  if (hint || !routed.capability) return null;
+  if (COREFERENCE.test(message) || SECOND_ACTION.test(message)) return null;
+
+  if (routed.capability === "proactive_insights") {
+    return {
+      steps: [{ capability: "proactive_insights", payload: routed.payload }],
+      rationale: "keyword fast path",
+    };
+  }
+
+  // query_data: only when a specific query template matched — the router's
+  // department_headcount default on ambiguous phrasing still needs the LLM.
+  if (routed.capability === "query_data") {
+    const q = String((routed.payload as any).query ?? "");
+    const specific =
+      (q && q !== "department_headcount") ||
+      /\bheadcount\b|employees?\s+(per|by|in|across)\s+depart/i.test(message);
+    if (q && specific) {
+      return {
+        steps: [{ capability: "query_data", payload: routed.payload }],
+        rationale: "keyword fast path",
+      };
+    }
+  }
+
+  return null;
 }
 
 // ─── Deterministic fallback plan ───
@@ -120,11 +161,18 @@ export async function createPlan(
   const trimmed = message.trim();
   if (!trimmed) return { steps: [] };
 
+  // Deterministic routing runs first — it both provides the fast path and
+  // becomes the plan when the LLM is unavailable.
+  const routed = await routeIntent(trimmed, { hint, conversationContext: opts?.conversationContext, useAI: false });
+
   if (opts?.useAI !== false) {
+    const fast = fastPathPlan(trimmed, hint, routed);
+    if (fast) return fast;
+
     try {
       const content = await callLLM(
         [{ role: "user", content: buildPlanPrompt(trimmed, hint, opts?.conversationContext ?? "") }],
-        { temperature: 0.1, maxTokens: 1200, jsonMode: true },
+        { temperature: 0.1, maxTokens: 1200, jsonMode: true, model: GROQ_MODEL_FAST },
       );
       if (content) {
         const parsed = extractJSON(content) ?? (() => { try { return JSON.parse(content); } catch { return null; } })();
@@ -141,8 +189,7 @@ export async function createPlan(
     }
   }
 
-  const single = await routeIntent(trimmed, { hint, conversationContext: opts?.conversationContext, useAI: false });
-  return fallbackPlan(trimmed, hint, single);
+  return fallbackPlan(trimmed, hint, routed);
 }
 
 // ─── Safe feed-forward between steps ───

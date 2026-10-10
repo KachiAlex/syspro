@@ -47,8 +47,7 @@ export async function POST(request: NextRequest) {
 
     const summary: Array<{ tenant: string; insights: number; notified: number; error?: string }> = [];
 
-    for (const t of tenants as any[]) {
-      const tenantSlug = t.slug as string;
+    const processTenant = async (tenantSlug: string) => {
       try {
         const result = await runAgent({
           capability: "proactive_insights",
@@ -63,8 +62,7 @@ export async function POST(request: NextRequest) {
           recommendedAction: string;
         }>;
         if (insights.length === 0) {
-          summary.push({ tenant: tenantSlug, insights: 0, notified: 0 });
-          continue;
+          return { tenant: tenantSlug, insights: 0, notified: 0 };
         }
 
         const targets = await SQL`
@@ -74,8 +72,7 @@ export async function POST(request: NextRequest) {
         `;
         const targetIds = (targets as any[]).map((r) => r.id);
         if (targetIds.length === 0) {
-          summary.push({ tenant: tenantSlug, insights: insights.length, notified: 0 });
-          continue;
+          return { tenant: tenantSlug, insights: insights.length, notified: 0 };
         }
 
         // Titles already pushed in the last 24h — dedupe per tenant.
@@ -101,10 +98,19 @@ export async function POST(request: NextRequest) {
           }
           seenTitles.add(title);
         }
-        summary.push({ tenant: tenantSlug, insights: insights.length, notified });
+        return { tenant: tenantSlug, insights: insights.length, notified };
       } catch (err: any) {
-        summary.push({ tenant: tenantSlug, insights: 0, notified: 0, error: err?.message });
+        return { tenant: tenantSlug, insights: 0, notified: 0, error: err?.message };
       }
+    };
+
+    // Process tenants in bounded parallel chunks.
+    const CHUNK = 4;
+    for (let i = 0; i < (tenants as any[]).length; i += CHUNK) {
+      const batch = await Promise.all(
+        (tenants as any[]).slice(i, i + CHUNK).map((t) => processTenant(t.slug as string)),
+      );
+      summary.push(...batch);
     }
 
     return NextResponse.json({ ok: true, tenants: summary });

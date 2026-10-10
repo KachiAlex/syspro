@@ -7,7 +7,7 @@
  * payload extraction runs.
  */
 
-import { callLLM, extractJSON, type AgentCapability } from "./agent";
+import { callLLM, extractJSON, GROQ_MODEL_FAST, type AgentCapability } from "./agent";
 
 export interface RoutedIntent {
   capability: AgentCapability | null;
@@ -194,7 +194,7 @@ export async function routeIntent(
   try {
     const content = await callLLM(
       [{ role: "user", content: buildRouterPrompt(trimmed, hint, opts?.conversationContext ?? "") }],
-      { temperature: 0.1, maxTokens: 800, jsonMode: true },
+      { temperature: 0.1, maxTokens: 800, jsonMode: true, model: GROQ_MODEL_FAST },
     );
     if (content) {
       const parsed = extractJSON(content) ?? (() => { try { return JSON.parse(content); } catch { return null; } })();
