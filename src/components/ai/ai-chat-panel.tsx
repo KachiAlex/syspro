@@ -360,6 +360,21 @@ function formatResult(data: any): string {
   const result = data.result;
   if (typeof result?.reply === "string") return result.reply;
 
+  if (Array.isArray(result?.steps)) {
+    const parts = [result.summary || `Plan: ${result.steps.length} step(s)`];
+    if (result.rationale) parts.push(`(${result.rationale})`);
+    for (const step of result.steps) {
+      const label = step.capability.replace(/_/g, " ");
+      if (step.skipped) {
+        parts.push(`\n— ${label}: skipped (${step.result?.skipped || "condition not met"})`);
+        continue;
+      }
+      parts.push(`\n— ${label}:`);
+      parts.push("  " + formatResult({ success: step.success !== false, result: step.result, error: step.error }).replace(/\n/g, "\n  "));
+    }
+    return parts.join("\n");
+  }
+
   if (result?.headline) {
     let parts = [result.headline];
     if (result.keyMetrics?.length > 0) {

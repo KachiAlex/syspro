@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { runAgent, CAPABILITY_DEFINITIONS, getConversationHistory, buildConversationContext, type AgentCapability } from "@/lib/ai/agent";
-import { routeIntent } from "@/lib/ai/intent-router";
+import { createPlan, applyPriorResult, parseScoreThreshold, type PlanStep } from "@/lib/ai/planner";
 import { resolveEmployeeSession } from "@/lib/hr/auth";
 import { isTenantSuspended } from "@/lib/api-auth";
 import { APIKeyService } from "@/lib/tenant-admin/service";
@@ -97,22 +97,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "tenantSlug is required in body or x-tenant-slug header" }, { status: 400 });
   }
 
-  let capability = parsed.data.capability as AgentCapability | undefined;
-  let payload = parsed.data.payload ?? {};
-  let routedIntent: { rationale?: string } | null = null;
-
-  // Free-text message → intent router. An explicit capability acts as a
-  // hint: the router only fills in the payload for it.
+  // Free-text message → planner. An explicit capability acts as a hint:
+  // the planner returns a single step that only fills the payload.
   if (parsed.data.message) {
     const conversationContext = parsed.data.conversationId
       ? await buildConversationContext(parsed.data.conversationId, tenantSlug).catch(() => "")
       : "";
-    const routed = await routeIntent(parsed.data.message, {
-      hint: capability ?? null,
+    const plan = await createPlan(parsed.data.message, {
+      hint: (parsed.data.capability as AgentCapability) ?? null,
       conversationContext,
       useAI: parsed.data.useAI,
     });
-    if (!routed.capability) {
+    if (plan.steps.length === 0) {
       return NextResponse.json({
         success: true,
         capability: null,
@@ -125,22 +121,95 @@ export async function POST(request: NextRequest) {
         metadata: { source: "router", generatedAt: new Date().toISOString() },
       });
     }
-    capability = routed.capability;
-    payload = { ...routed.payload, ...payload };
-    routedIntent = { rationale: routed.rationale };
+
+    const scoreThreshold = parseScoreThreshold(parsed.data.message);
+    const executedSteps: Array<{ capability: AgentCapability; response: any; skipped?: boolean }> = [];
+    let failed = false;
+
+    for (const rawStep of plan.steps) {
+      const step: PlanStep = applyPriorResult(rawStep, executedSteps.map((s) => ({
+        capability: s.capability,
+        result: s.response?.result,
+      })));
+
+      // Gate follow-on training plans on a score threshold from the request
+      // ("training plans for anyone under 60").
+      if (step.capability === "generate_training_plan" && scoreThreshold != null) {
+        const score = executedSteps
+          .map((s) => s.response?.result?.overallScore)
+          .find((v) => typeof v === "number");
+        if (typeof score === "number" && score >= scoreThreshold) {
+          executedSteps.push({
+            capability: step.capability,
+            response: { success: true, result: { skipped: `score ${score} not under ${scoreThreshold}` } },
+            skipped: true,
+          });
+          continue;
+        }
+      }
+
+      const r = await runAgent({
+        capability: step.capability,
+        payload: step.payload,
+        tenantSlug,
+        useAI: parsed.data.useAI,
+        conversationId: parsed.data.conversationId,
+      });
+      executedSteps.push({ capability: step.capability, response: r });
+      if (!r?.success) {
+        failed = true;
+        break; // stop the chain on first hard failure
+      }
+    }
+
+    // Single step → return the plain AgentResponse shape (backward compat).
+    if (plan.steps.length === 1) {
+      const single = executedSteps[0]?.response ?? { success: false, error: "No steps executed" };
+      if (plan.rationale && typeof single === "object") {
+        (single as any).routedIntent = { rationale: plan.rationale };
+      }
+      return NextResponse.json(single, { status: single.success ? 200 : 500 });
+    }
+
+    // Multi-step → composed plan response.
+    const executed = executedSteps.filter((s) => !s.skipped);
+    const failStep = failed ? executedSteps[executedSteps.length - 1] : null;
+    return NextResponse.json(
+      {
+        success: !failed,
+        capability: "plan",
+        result: {
+          summary: failStep
+            ? `Plan stopped at ${failStep.capability}: ${failStep.response?.error || "step failed"}.`
+            : `Executed ${executed.length} step(s)${executedSteps.length > executed.length ? `, skipped ${executedSteps.length - executed.length}` : ""}.`,
+          steps: executedSteps.map((s) => ({
+            capability: s.capability,
+            skipped: !!s.skipped,
+            success: s.response?.success ?? false,
+            result: s.response?.result,
+            ...(s.response?.error ? { error: s.response.error } : {}),
+          })),
+          ...(plan.rationale ? { rationale: plan.rationale } : {}),
+        },
+        metadata: {
+          source: "plan",
+          planSteps: plan.steps.length,
+          generatedAt: new Date().toISOString(),
+          conversationId: parsed.data.conversationId,
+        },
+      },
+      { status: failed ? 500 : 200 },
+    );
   }
 
   const result = await runAgent({
-    capability: capability as AgentCapability,
-    payload,
+    capability: parsed.data.capability as AgentCapability,
+    payload: parsed.data.payload ?? {},
     tenantSlug,
     useAI: parsed.data.useAI,
     conversationId: parsed.data.conversationId,
   });
 
-  if (routedIntent?.rationale && result && typeof result === "object") {
-    (result as any).routedIntent = routedIntent;
-  }
   return NextResponse.json(result, { status: result.success ? 200 : 500 });
 }
 
