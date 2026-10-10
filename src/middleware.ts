@@ -40,6 +40,7 @@ const PUBLIC_API_PREFIXES = [
   '/api/superadmin/auth/',
   '/api/superadmin/setup',
   '/api/ai/agent',
+  '/api/ai/insights',
 ];
 
 // Platform-admin surface: requires a verified superadmin session.

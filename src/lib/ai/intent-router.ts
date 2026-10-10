@@ -110,8 +110,10 @@ function fallbackRoute(message: string, hint: AgentCapability | null): RoutedInt
       const wantsTask = /\btask|to-?do\b/.test(msg);
       const dueIn = msg.match(/(?:in|within)\s+(\d+)\s+day/)?.[1];
       const dueDate = new Date(Date.now() + (dueIn ? Number(dueIn) : 7) * 86400000).toISOString().split("T")[0];
+      // "for <Name> to|due|by|on …" → assignee name
+      const assignee = message.match(/\bfor\s+([a-zA-Z][a-zA-Z]+(?:\s+[a-zA-Z][a-zA-Z]+){0,2})\s+(?:to|due|by|on|before|until)\b/i)?.[1];
       const params = wantsTask
-        ? { action: "create_staff_task", params: { employeeId: id || message, title: message, dueDate } }
+        ? { action: "create_staff_task", params: { employeeId: id || assignee || message, title: message, dueDate } }
         : { action: "post_announcement", params: { title: message.slice(0, 80), message } };
       return { capability, payload: params };
     }
