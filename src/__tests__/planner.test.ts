@@ -33,10 +33,11 @@ describe("applyPriorResult", () => {
   it("fills missing identifiers from prior results only", () => {
     const next = applyPriorResult(
       { capability: "generate_training_plan", payload: {} },
-      [{ capability: "appraise_performance", result: { employeeId: "emp-1", overallScore: 55, improvementAreas: ["time management"] } }],
+      [{ capability: "appraise_performance", result: { employeeId: "emp-1", appraisalId: "app-7", overallScore: 55, improvements: ["time management"] } }],
     );
     expect(next.payload.employeeId).toBe("emp-1");
-    expect(next.payload.improvementAreas).toEqual(["time management"]);
+    expect(next.payload.appraisalId).toBe("app-7");
+    expect(next.payload.focusAreas).toEqual(["time management"]);
   });
 
   it("never overwrites explicitly provided payload fields", () => {

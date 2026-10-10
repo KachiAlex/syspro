@@ -143,7 +143,7 @@ export async function createPlan(
 
 // ─── Safe feed-forward between steps ───
 
-const FEED_FORWARD_KEYS = ["employeeId", "requisitionId", "improvementAreas", "departmentId"] as const;
+const FEED_FORWARD_KEYS = ["employeeId", "requisitionId", "appraisalId", "departmentId"] as const;
 
 /**
  * Fill only missing payload fields on `next` from a prior step's result.
@@ -161,13 +161,10 @@ export function applyPriorResult(
         payload[key] = (result as any)[key];
       }
     }
-    // appraisal → training plan: reuse identified weak areas
-    if (
-      next.capability === "generate_training_plan" &&
-      payload.improvementAreas == null &&
-      Array.isArray((result as any).improvementAreas)
-    ) {
-      payload.improvementAreas = (result as any).improvementAreas;
+    // appraisal → training plan: reuse identified weak areas as focus areas
+    if (next.capability === "generate_training_plan" && payload.focusAreas == null) {
+      const areas = (result as any).improvements ?? (result as any).improvementAreas;
+      if (Array.isArray(areas) && areas.length > 0) payload.focusAreas = areas;
     }
   }
   return { ...next, payload };

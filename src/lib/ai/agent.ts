@@ -590,11 +590,11 @@ async function handleSummarize(
       if (empIds.length > 0) {
         try {
           appraisals = await SQL`
-            select * from admin_appraisals
+            select * from admin_employee_appraisals
             where tenant_slug = ${tenantSlug}
               and employee_id = any(${empIds as any})
-              and generated_at >= ${periodStart.toISOString()}
-            order by generated_at desc limit 50
+              and created_at >= ${periodStart.toISOString()}
+            order by created_at desc limit 50
           `;
         } catch {}
       }
@@ -691,9 +691,9 @@ async function handleSummarize(
       `).catch(() => [] as any[]);
 
       const appraisals = await Promise.resolve(SQL`
-        select * from admin_appraisals
+        select * from admin_employee_appraisals
         where tenant_slug = ${tenantSlug} and employee_id = ${employeeId}
-        order by generated_at desc limit 5
+        order by created_at desc limit 5
       `).catch(() => [] as any[]);
 
       contextData = { employee, tasks, reports, appraisals };
@@ -794,8 +794,8 @@ async function handleGenerateTrainingPlan(
   if (!employee) throw new Error("Employee not found");
 
   const appraisalRows = appraisalId
-    ? await SQL`select * from admin_appraisals where id = ${appraisalId} and tenant_slug = ${tenantSlug} limit 1`
-    : await SQL`select * from admin_appraisals where tenant_slug = ${tenantSlug} and employee_id = ${employeeId} order by generated_at desc limit 1`;
+    ? await SQL`select * from admin_employee_appraisals where id = ${appraisalId} and tenant_slug = ${tenantSlug} limit 1`
+    : await SQL`select * from admin_employee_appraisals where tenant_slug = ${tenantSlug} and employee_id = ${employeeId} order by created_at desc limit 1`;
   const appraisal = (appraisalRows as any[])[0];
 
   if (!appraisal) {
@@ -940,12 +940,12 @@ async function handleProactiveInsights(
   if (shouldCheck("appraisals")) {
     try {
       const recentAppraisals = await SQL`
-        select employee_id, overall_score, generated_at,
-               lag(overall_score) over (partition by employee_id order by generated_at) as prev_score
-        from admin_appraisals
+        select employee_id, overall_score, created_at,
+               lag(overall_score) over (partition by employee_id order by created_at) as prev_score
+        from admin_employee_appraisals
         where tenant_slug = ${tenantSlug}
-          and generated_at >= ${new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()}
-        order by generated_at desc
+          and created_at >= ${new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()}
+        order by created_at desc
         limit 100
       `;
       for (const a of recentAppraisals as any[]) {
