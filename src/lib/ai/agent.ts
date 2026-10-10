@@ -263,6 +263,21 @@ export function extractJSON(text: string): Record<string, unknown> | null {
 
 // ─── Capability Handlers ───
 
+/** Resolve an employee by id first, then by exact name (case-insensitive). */
+async function resolveEmployee(SQL: any, tenantSlug: string, ref: string): Promise<any | null> {
+  const trimmed = String(ref).trim();
+  const byId = await SQL`
+    select id, name, email, job_title, role, department_id, hire_date
+    from admin_employees where id = ${trimmed} and tenant_slug = ${tenantSlug} limit 1
+  `;
+  if ((byId as any[])[0]) return (byId as any[])[0];
+  const byName = await SQL`
+    select id, name, email, job_title, role, department_id, hire_date
+    from admin_employees where tenant_slug = ${tenantSlug} and lower(name) = lower(${trimmed}) limit 1
+  `;
+  return (byName as any[])[0] ?? null;
+}
+
 async function handleScreenCandidates(
   payload: Record<string, unknown>,
   tenantSlug: string,
@@ -458,13 +473,7 @@ async function handleAppraisePerformance(
   await ensureHrTables(SQL);
 
   // Fetch employee
-  const empRows = await SQL`
-    SELECT id, name, email, job_title, role, department_id, hire_date
-    FROM admin_employees
-    WHERE id = ${employeeId} AND tenant_slug = ${tenantSlug}
-    LIMIT 1
-  `;
-  const employee = (empRows as any[])[0];
+  const employee = await resolveEmployee(SQL, tenantSlug, employeeId);
   if (!employee) throw new Error("Employee not found");
 
   // Determine period range
@@ -481,7 +490,7 @@ async function handleAppraisePerformance(
     tasks = await SQL`
       SELECT id, title, description, expected_outcome, weight, is_kpi, frequency, due_date, status, completion_note
       FROM admin_staff_tasks
-      WHERE tenant_slug = ${tenantSlug} AND employee_id = ${employeeId}
+      WHERE tenant_slug = ${tenantSlug} AND employee_id = ${employee.id}
         AND created_at >= ${periodStart.toISOString()}
       ORDER BY created_at DESC LIMIT 200
     `;
@@ -489,7 +498,7 @@ async function handleAppraisePerformance(
     tasks = await SQL`
       SELECT id, title, description, frequency, due_date, status
       FROM admin_staff_tasks
-      WHERE tenant_slug = ${tenantSlug} AND employee_id = ${employeeId}
+      WHERE tenant_slug = ${tenantSlug} AND employee_id = ${employee.id}
       ORDER BY created_at DESC LIMIT 200
     `;
   }
@@ -501,7 +510,7 @@ async function handleAppraisePerformance(
              next_steps, meetings, blockers, activities, additional_notes, refined_text,
              status, submitted_at, appraisal
       FROM admin_staff_reports
-      WHERE tenant_slug = ${tenantSlug} AND employee_id = ${employeeId}
+      WHERE tenant_slug = ${tenantSlug} AND employee_id = ${employee.id}
         AND submitted_at >= ${periodStart.toISOString()}
       ORDER BY submitted_at DESC LIMIT 100
     `;
@@ -509,7 +518,7 @@ async function handleAppraisePerformance(
     reports = await SQL`
       SELECT id, title, report_type, report_date, objectives, achievements, status, submitted_at
       FROM admin_staff_reports
-      WHERE tenant_slug = ${tenantSlug} AND employee_id = ${employeeId}
+      WHERE tenant_slug = ${tenantSlug} AND employee_id = ${employee.id}
       ORDER BY submitted_at DESC LIMIT 100
     `;
   }
@@ -520,19 +529,19 @@ async function handleAppraisePerformance(
       SELECT attendance_status as status, check_in_time as check_in,
              check_out_time as check_out, work_date as date
       FROM attendance_records
-      WHERE tenant_id = ${tenantSlug} AND employee_id = ${employeeId}
+      WHERE tenant_id = ${tenantSlug} AND employee_id = ${employee.id}
         AND work_date >= ${periodStart.toISOString().split("T")[0]}
       ORDER BY work_date DESC LIMIT 90
     `;
   } catch {}
 
   let peerFeedback: any[] = [];
-  try { peerFeedback = await getPeerFeedbackForEmployee(tenantSlug, employeeId); } catch {}
+  try { peerFeedback = await getPeerFeedbackForEmployee(tenantSlug, employee.id); } catch {}
 
   let goals: any[] = [];
-  try { goals = await getEmployeeGoals(tenantSlug, employeeId); } catch {}
+  try { goals = await getEmployeeGoals(tenantSlug, employee.id); } catch {}
 
-  const previousAppraisals = await getAppraisalHistory(tenantSlug, employeeId, 5);
+  const previousAppraisals = await getAppraisalHistory(tenantSlug, employee.id, 5);
 
   let departmentAppraisals: any[] = [];
   if (employee.department_id) {
@@ -553,7 +562,7 @@ async function handleAppraisePerformance(
       reports,
       attendance,
       previousAppraisals,
-      departmentAppraisals: departmentAppraisals.filter((a: any) => a.employeeId !== employeeId),
+      departmentAppraisals: departmentAppraisals.filter((a: any) => a.employeeId !== employee.id),
       peerFeedback,
       goals,
       weights: mergedWeights,
@@ -700,28 +709,25 @@ async function handleSummarize(
     case "employee": {
       if (!employeeId) throw new Error("employeeId is required for 'employee' scope");
       await ensureHrTables(SQL);
-      const empRows = await SQL`
-        select id, name, email, job_title, role, department_id, hire_date
-        from admin_employees where id = ${employeeId} and tenant_slug = ${tenantSlug} limit 1
-      `;
-      const employee = (empRows as any[])[0];
+      const employee = await resolveEmployee(SQL, tenantSlug, employeeId);
       if (!employee) throw new Error("Employee not found");
+      const resolvedEmployeeId = employee.id;
 
       const tasks = await Promise.resolve(SQL`
         select id, title, status, is_kpi, due_date from admin_staff_tasks
-        where tenant_slug = ${tenantSlug} and employee_id = ${employeeId}
+        where tenant_slug = ${tenantSlug} and employee_id = ${resolvedEmployeeId}
         order by created_at desc limit 50
       `).catch(() => [] as any[]);
 
       const reports = await Promise.resolve(SQL`
         select id, title, report_type, status, submitted_at from admin_staff_reports
-        where tenant_slug = ${tenantSlug} and employee_id = ${employeeId}
+        where tenant_slug = ${tenantSlug} and employee_id = ${resolvedEmployeeId}
         order by submitted_at desc limit 20
       `).catch(() => [] as any[]);
 
       const appraisals = await Promise.resolve(SQL`
         select * from admin_employee_appraisals
-        where tenant_slug = ${tenantSlug} and employee_id = ${employeeId}
+        where tenant_slug = ${tenantSlug} and employee_id = ${resolvedEmployeeId}
         order by created_at desc limit 5
       `).catch(() => [] as any[]);
 
@@ -815,16 +821,12 @@ async function handleGenerateTrainingPlan(
   const { ensureHrTables } = await import("@/lib/hr/db");
   await ensureHrTables(SQL);
 
-  const empRows = await SQL`
-    select id, name, email, job_title, role, department_id, hire_date
-    from admin_employees where id = ${employeeId} and tenant_slug = ${tenantSlug} limit 1
-  `;
-  const employee = (empRows as any[])[0];
+  const employee = await resolveEmployee(SQL, tenantSlug, employeeId);
   if (!employee) throw new Error("Employee not found");
 
   const appraisalRows = appraisalId
     ? await SQL`select * from admin_employee_appraisals where id = ${appraisalId} and tenant_slug = ${tenantSlug} limit 1`
-    : await SQL`select * from admin_employee_appraisals where tenant_slug = ${tenantSlug} and employee_id = ${employeeId} order by created_at desc limit 1`;
+    : await SQL`select * from admin_employee_appraisals where tenant_slug = ${tenantSlug} and employee_id = ${employee.id} order by created_at desc limit 1`;
   const appraisal = (appraisalRows as any[])[0];
 
   if (!appraisal) {
