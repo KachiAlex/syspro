@@ -10,6 +10,7 @@ import {
   listCrmActivities,
 } from "@/lib/crm/activities";
 import { handleDatabaseError } from "@/lib/api-errors";
+import { attachEmployeeNames } from "@/lib/crm/officer-names";
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
@@ -58,6 +59,7 @@ export async function GET(request: NextRequest) {
       ownerIds,
       limit,
     });
+    await attachEmployeeNames(tenantSlug, activities, "assignedTo", "assignedToName");
     return NextResponse.json({ activities });
   } catch (error) {
     return handleDatabaseError(error, "List activities");

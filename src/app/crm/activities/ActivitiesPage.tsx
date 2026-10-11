@@ -14,6 +14,7 @@ type Activity = {
   relatedId: string;
   relatedName: string;
   assignedTo?: string;
+  assignedToName?: string | null;
   dueDate?: string;
   completedAt?: string;
   status?: string; // 'pending', 'completed', 'cancelled'
@@ -336,7 +337,7 @@ export default function ActivitiesPage({ tenantSlug }: { tenantSlug?: string | n
                         {activity.assignedTo && (
                           <div className="flex items-center gap-1">
                             <User className="w-3 h-3" />
-                            <span>{activity.assignedTo}</span>
+                            <span>{activity.assignedToName || activity.assignedTo}</span>
                           </div>
                         )}
                         {activity.dueDate && !activity.completedAt && (

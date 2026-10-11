@@ -145,6 +145,8 @@ type DealsResponse = {
     customerId: string | null;
     leadId: string | null;
     contactId: string | null;
+    customerName?: string | null;
+    leadName?: string | null;
   }>;
   total: number;
 };
@@ -240,7 +242,7 @@ function toDealRow(deal: DealsResponse["deals"][number]): DealRow {
   return {
     id: deal.id,
     name: deal.name || `Deal ${deal.id.slice(0, 6)}`,
-    company: deal.customerId || "N/A",
+    company: deal.customerName || deal.leadName || deal.customerId || "N/A",
     amount: deal.value ?? 0,
     currency: deal.currency ?? "₦",
     stage: deal.stage,
@@ -1483,7 +1485,7 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
       const updatedRow = {
         ...toDealRow(updated),
         name: data.name || selectedDeal.name,
-        company: data.company || updated.customerId || "N/A",
+        company: data.company || (updated as any).customerName || (updated as any).leadName || selectedDeal.company,
       } satisfies DealRow;
 
       setDeals((prev) =>
