@@ -864,7 +864,7 @@ function GoalsContent({ goals, showForm, setShowForm, employeeId, onSubmitted }:
             <div key={goal.id} className="rounded-xl border border-gray-200 p-3">
               <div className="flex items-center justify-between mb-1">
                 <p className="text-sm font-medium text-gray-900">{goal.title}</p>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full ${statusColors[goal.status] || 'bg-gray-100'}`}>{goal.status.replace(/_/g, ' ')}</span>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full ${statusColors[goal.status] || 'bg-gray-100'}`}>{goal.status?.replace(/_/g, ' ')}</span>
               </div>
               {goal.description && <p className="text-xs text-gray-500 mb-2">{goal.description}</p>}
               <div className="flex items-center gap-3">

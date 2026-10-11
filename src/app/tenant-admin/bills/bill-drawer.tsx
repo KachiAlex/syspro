@@ -65,7 +65,7 @@ export default function BillDrawer({ bill, onClose, onPayment }: BillDrawerProps
           <div>
             <h4 className="text-lg font-semibold">{bill.billNumber}</h4>
             <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(bill.status)}`}>
-              {bill.status.replace("_", " ")}
+              {bill.status?.replace("_", " ")}
             </span>
           </div>
           <button onClick={onClose} className="text-slate-500 hover:text-slate-700">

@@ -318,7 +318,7 @@ const BillsComponent: React.FC<Bills> = ({ tenantSlug }) => {
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       bill.status === 'paid' ? 'bg-green-500/10 text-green-400' :
                       bill.status === 'overdue' ? 'bg-red-500/10 text-red-400' : 'bg-yellow-100 text-yellow-800'
-                    }`}>{bill.status.replace('_', ' ')}</span>
+                    }`}>{bill.status?.replace('_', ' ')}</span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">

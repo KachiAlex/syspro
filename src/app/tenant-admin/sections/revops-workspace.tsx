@@ -482,7 +482,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
                     <td className="py-3 text-slate-500">{campaign.channel}</td>
                     <td className="py-3 text-slate-500">{campaign.region}</td>
                     <td className="py-3">
-                      <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">{campaign.status.replace(/_/g, " ")}</span>
+                      <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">{campaign.status?.replace(/_/g, " ")}</span>
                     </td>
                     <td className="py-3 text-right text-slate-500">{currencyFormatter.format(campaign.actualSpend)}</td>
                     <td className="py-3 text-right text-slate-500">{currencyFormatter.format(campaign.revenueAttributed)}</td>
@@ -560,7 +560,7 @@ export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?
                   <td className="py-3 text-slate-500">{currencyFormatter.format(campaign.budget)}</td>
                   <td className="py-3 text-slate-500">{currencyFormatter.format(campaign.actualSpend)}</td>
                   <td className="py-3">
-                    <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">{campaign.status.replace(/_/g, " ")}</span>
+                    <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">{campaign.status?.replace(/_/g, " ")}</span>
                   </td>
                   <td className="py-3 text-right font-semibold text-gray-900">{campaign.roi.toFixed(2)}x</td>
                 </tr>

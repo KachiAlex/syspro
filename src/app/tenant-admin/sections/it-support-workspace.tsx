@@ -820,7 +820,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                               <UserCheck className="h-4 w-4 text-slate-500" />
                               {job.engineerId || "Unassigned"}
                             </div>
-                            <span className="text-xs uppercase tracking-[0.2em] text-slate-400">{job.status.replace(/_/g, " ")}</span>
+                            <span className="text-xs uppercase tracking-[0.2em] text-slate-400">{job.status?.replace(/_/g, " ")}</span>
                           </div>
                           <p className="mt-1 text-xs text-slate-500">Scheduled {formatClock(job.scheduledAt)} · {typeof job.location?.region === "string" ? job.location.region : "No region"}</p>
                         </div>

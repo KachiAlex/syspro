@@ -517,7 +517,7 @@ export const TeamDataSubmissionPortal: React.FC<TeamDataSubmissionPortalProps> =
                           <div className="flex items-center gap-3 mb-2">
                             <h4 className="font-medium text-gray-900">{submission.title}</h4>
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(submission.status)}`}>
-                              {submission.status.replace('_', ' ').toUpperCase()}
+                              {submission.status?.replace('_', ' ').toUpperCase()}
                             </span>
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getConfidenceColor(submission.confidence)}`}>
                               {submission.confidence.toUpperCase()} CONFIDENCE

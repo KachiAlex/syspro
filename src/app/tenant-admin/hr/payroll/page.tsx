@@ -961,7 +961,7 @@ export default function PayrollPage() {
                           {adj.type}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap capitalize">{adj.category.replace('_', ' ')}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap capitalize">{adj.category?.replace('_', ' ')}</td>
                       <td className="px-4 py-3 text-sm text-right font-medium whitespace-nowrap">{formatMoney(adj.amount)}</td>
                       <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{adj.reason ?? '-'}</td>
                       <td className="px-4 py-3 text-center whitespace-nowrap">
@@ -1275,7 +1275,7 @@ export default function PayrollPage() {
                             {adj.type}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap capitalize">{adj.category.replace('_', ' ')}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap capitalize">{adj.category?.replace('_', ' ')}</td>
                         <td className="px-4 py-3 text-sm text-right font-medium whitespace-nowrap">{formatMoney(adj.amount)}</td>
                         <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{adj.reason ?? '-'}</td>
                         <td className="px-4 py-3 text-center whitespace-nowrap">

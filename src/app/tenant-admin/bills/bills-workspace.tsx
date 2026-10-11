@@ -237,7 +237,7 @@ export default function BillsWorkspace() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(bill.status)}`}>
-                        {getStatusIcon(bill.status)} {bill.status.replace("_", " ")}
+                        {getStatusIcon(bill.status)} {bill.status?.replace("_", " ")}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right text-sm">
@@ -314,7 +314,7 @@ export default function BillsWorkspace() {
               <div className="flex justify-between"><span className="text-slate-500">Due Date:</span><span className="font-medium">{viewBill.dueDate ? format(new Date(viewBill.dueDate), "MMM dd, yyyy") : "-"}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Total:</span><span className="font-medium">{viewBill.currency} {viewBill.total.toLocaleString()}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Balance Due:</span><span className="font-medium">{viewBill.currency} {viewBill.balanceDue.toLocaleString()}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Status:</span><span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(viewBill.status)}`}>{getStatusIcon(viewBill.status)} {viewBill.status.replace("_", " ")}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Status:</span><span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(viewBill.status)}`}>{getStatusIcon(viewBill.status)} {viewBill.status?.replace("_", " ")}</span></div>
             </div>
             <div className="mt-6 flex justify-end">
               <button

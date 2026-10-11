@@ -218,10 +218,10 @@ export default function TenantAdminDashboard() {
       // Build recent transactions
       const txns: Transaction[] = [];
       (snap.receivables || []).slice(0, 5).forEach((r: any) => {
-        txns.push({ id: `rec-${r.id}`, description: `Receivable: ${r.entity}`, amount: r.amount, type: "income", date: r.dueDate, status: r.status });
+        txns.push({ id: `rec-${r.id}`, description: `Receivable: ${r.entity}`, amount: r.amount, type: "income", date: r.dueDate, status: r.status || "pending" });
       });
       (snap.payables || []).slice(0, 5).forEach((p: any) => {
-        txns.push({ id: `pay-${p.id}`, description: `Payable: ${p.entity}`, amount: p.amount, type: "expense", date: p.dueDate, status: p.status });
+        txns.push({ id: `pay-${p.id}`, description: `Payable: ${p.entity}`, amount: p.amount, type: "expense", date: p.dueDate, status: p.status || "pending" });
       });
       setTransactions(txns.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 8));
 
@@ -618,7 +618,7 @@ export default function TenantAdminDashboard() {
                         <td className="py-3 px-2 text-sm text-theme-text-secondary">{tx.date}</td>
                         <td className="py-3 px-2">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${statusBadge(tx.status)}`}>
-                            {tx.status.replace(/_/g, " ")}
+                            {(tx.status || "pending").replace(/_/g, " ")}
                           </span>
                         </td>
                         <td className="py-3 px-2 text-sm text-theme-text-primary text-right font-medium">{tx.amount}</td>

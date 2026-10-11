@@ -325,7 +325,7 @@ function TaskCard({
               </span>
             )}
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${STATUS_COLORS[task.status] || ''}`}>
-              {task.status.replace('_', ' ')}
+              {task.status?.replace('_', ' ')}
             </span>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600">
               {FREQ_LABELS[task.frequency] || task.frequency}
