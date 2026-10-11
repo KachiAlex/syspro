@@ -205,44 +205,57 @@ export async function callLLM(
   const groqKey = getGroqKey();
   if (!groqKey) return null;
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+  const models = [options?.model || GROQ_MODEL];
+  // On rate limit (429), retry once with the cheap model — a slightly smaller
+  // answer beats a silent deterministic fallback.
+  if (!models.includes(GROQ_MODEL_FAST)) models.push(GROQ_MODEL_FAST);
 
-    const body: Record<string, unknown> = {
-      model: options?.model || GROQ_MODEL,
-      messages,
-      temperature: options?.temperature ?? 0.3,
-      max_tokens: options?.maxTokens ?? 4000,
-    };
-    if (options?.jsonMode) {
-      body.response_format = { type: "json_object" };
-    }
+  for (let attempt = 0; attempt < models.length; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
 
-    const res = await fetch(GROQ_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${groqKey}`,
-      },
-      body: JSON.stringify(body),
-      cache: "no-store",
-      signal: controller.signal,
-    });
+      const body: Record<string, unknown> = {
+        model: models[attempt],
+        messages,
+        temperature: options?.temperature ?? 0.3,
+        max_tokens: options?.maxTokens ?? 4000,
+      };
+      if (options?.jsonMode) {
+        body.response_format = { type: "json_object" };
+      }
 
-    clearTimeout(timeout);
+      const res = await fetch(GROQ_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${groqKey}`,
+        },
+        body: JSON.stringify(body),
+        cache: "no-store",
+        signal: controller.signal,
+      });
 
-    if (!res.ok) {
-      console.error("LLM call failed:", res.status, await res.text().catch(() => ""));
+      clearTimeout(timeout);
+
+      if (res.status === 429 && attempt + 1 < models.length) {
+        // Brief pause so the per-minute window can recover before retrying.
+        await new Promise((r) => setTimeout(r, 1200));
+        continue;
+      }
+      if (!res.ok) {
+        console.error("LLM call failed:", res.status, await res.text().catch(() => ""));
+        return null;
+      }
+
+      const data = await res.json();
+      return data?.choices?.[0]?.message?.content ?? null;
+    } catch (error) {
+      console.error("LLM call error:", error);
       return null;
     }
-
-    const data = await res.json();
-    return data?.choices?.[0]?.message?.content ?? null;
-  } catch (error) {
-    console.error("LLM call error:", error);
-    return null;
   }
+  return null;
 }
 
 // ─── JSON Extraction Helper ───

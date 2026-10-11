@@ -165,8 +165,10 @@ try:
     r = get("/api/ai/agent?conversationId=lt-5", tenant="other-tenant")
     turns = json.loads(r.read()).get("turns", [])
     check("foreign tenant sees no turns", len(turns) == 0, len(turns))
-except Exception as e:
-    check("foreign tenant sees no turns", False, str(e))
+except urllib.error.HTTPError as e:
+    # A 401/403 also proves isolation: the key can't authenticate for the
+    # foreign tenant at all.
+    check("foreign tenant sees no turns", e.code in (401, 403), f"http {e.code}")
 r = get("/api/ai/agent?conversationId=lt-5")
 check("owner sees turns", len(json.loads(r.read()).get("turns", [])) > 0)
 
