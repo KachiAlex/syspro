@@ -3,7 +3,7 @@
  *
  * Single entry point for all AI capabilities in the system.
  * Routes requests to specialized handlers based on capability.
- * Uses Groq (llama-3.3-70b-versatile) as the unified LLM provider.
+ * Uses Groq (openai/gpt-oss-120b; override via GROQ_MODEL) as the unified LLM provider.
  * Falls back to deterministic methods when AI is unavailable.
  *
  * Capabilities:

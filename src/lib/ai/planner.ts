@@ -140,6 +140,8 @@ ${hintClause}
 Rules:
 - Respond with ONLY JSON: {"steps": [{"capability": "<name>", "payload": {...}}], "rationale": "<one short sentence>"}
 - Only chain steps when the user asks for multiple distinct actions. Prefer the fewest steps that satisfy the request.
+- appraise/evaluate/review PERFORMANCE of a person OR a team → appraise_performance (groups fan out automatically; never substitute summarize).
+- summarize is only for descriptive overviews ("how is X doing", "give me an overview"), not for scoring/appraisal requests.
 - When a step needs an identifier produced by a previous step (e.g. employeeId, requisitionId), leave that field out — results feed forward automatically.
 - Copy identifiers verbatim (REQ-12, emp ids, names). Names go in employeeId — person names AND team/department names are accepted (groups fan out automatically).
 - Resolve pronouns/references using conversation context when present.${conversationContext}
