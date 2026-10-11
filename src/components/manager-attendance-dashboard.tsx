@@ -17,6 +17,7 @@ interface TeamMember {
 
 interface Anomaly {
   employeeId: string;
+  employeeName?: string;
   anomalyType: 'hybrid_abuse' | 'low_contribution' | 'excessive_absences' | 'irregular_pattern';
   severity: 'low' | 'medium' | 'high';
   details: string;
@@ -50,9 +51,10 @@ export default function ManagerAttendanceDashboard({
         const data = await res.json();
 
         // Format as team member records
-        const members: TeamMember[] = data.records.map((record: any) => ({
+        const records: any[] = data?.data?.items ?? data?.records ?? [];
+        const members: TeamMember[] = records.map((record: any) => ({
           employeeId: record.employeeId,
-          name: `Employee ${record.employeeId.substring(0, 8)}`,
+          name: record.employeeName || `Employee ${record.employeeId.substring(0, 8)}`,
           department: record.departmentId || 'General',
           todayConfidence: record.confidenceScore,
           todayStatus: record.attendanceStatus,
@@ -70,10 +72,12 @@ export default function ManagerAttendanceDashboard({
             `/api/attendance?action=anomalies&tenantSlug=${tenantSlug}&employeeId=${member.employeeId}`
           );
           const anom = await anomRes.json();
-          if (anom.anomalies && anom.anomalies.length > 0) {
+          const anomalies: any[] = anom?.anomalies ?? anom?.data?.items ?? [];
+          if (anomalies.length > 0) {
             anomalyData.push(
-              ...anom.anomalies.map((a: any) => ({
+              ...anomalies.map((a: any) => ({
                 employeeId: member.employeeId,
+                employeeName: member.name,
                 ...a,
               }))
             );
@@ -166,7 +170,7 @@ export default function ManagerAttendanceDashboard({
             {highAnomalies.slice(0, 5).map((anomaly, idx) => (
               <div key={idx} className="p-3 bg-white rounded-lg border border-red-100">
                 <p className="text-sm font-medium text-slate-900">
-                  Employee {anomaly.employeeId.substring(0, 8)}
+                  {anomaly.employeeName || `Employee ${anomaly.employeeId.substring(0, 8)}`}
                 </p>
                 <p className="text-xs text-slate-600 mt-1">{anomaly.details}</p>
               </div>

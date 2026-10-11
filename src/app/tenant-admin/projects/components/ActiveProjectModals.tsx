@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, Calendar, Clock, Users, DollarSign, Briefcase, AlertTriangle, Edit } from 'lucide-react';
+import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 
 interface Project {
   id: string;
@@ -14,6 +15,7 @@ interface Project {
   teamMembers: number;
   budget: string;
   manager: string;
+  managerName?: string | null;
   priority?: string;
 }
 
@@ -55,7 +57,7 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                 <Briefcase className="w-5 h-5 text-theme-text-tertiary" />
                 <div>
                   <p className="text-sm text-gray-500">Manager</p>
-                  <p className="font-medium text-gray-900">{project.manager}</p>
+                  <p className="font-medium text-gray-900">{project.managerName || project.manager}</p>
                 </div>
               </div>
 
@@ -170,9 +172,19 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
   onConfirm,
   project
 }) => {
+  const { tenantSlug } = useTenantContext();
   const [formData, setFormData] = useState<Partial<Project>>({});
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [employees, setEmployees] = useState<{ id: string; name: string }[]>([]);
+
+  React.useEffect(() => {
+    if (!isOpen || !tenantSlug) return;
+    fetch(`/api/hr/employees?tenantSlug=${encodeURIComponent(tenantSlug)}&status=active&limit=500`)
+      .then((r) => r.json())
+      .then((d) => setEmployees((d.employees || []).map((e: any) => ({ id: e.id, name: e.name }))))
+      .catch(() => setEmployees([]));
+  }, [isOpen, tenantSlug]);
 
   React.useEffect(() => {
     if (project) {
@@ -319,13 +331,20 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Project Manager
               </label>
-              <input
-                type="text"
+              <select
                 value={formData.manager || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, manager: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black bg-white"
                 disabled={loading}
-              />
+              >
+                <option value="">Select a manager</option>
+                {formData.manager && !employees.some((e) => e.id === formData.manager) && (
+                  <option value={formData.manager}>{(project as any)?.managerName || formData.manager}</option>
+                )}
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>{emp.name}</option>
+                ))}
+              </select>
             </div>
           </div>
 

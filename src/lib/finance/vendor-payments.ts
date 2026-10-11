@@ -30,6 +30,7 @@ export interface PaymentApplication {
   id: string;
   paymentId: string;
   billId: string;
+  billNumber: string | null;
   appliedAmount: number;
   createdAt: string;
 }
@@ -92,6 +93,7 @@ function normalizePayment(record: VendorPaymentRecord, applications: PaymentAppl
       id: app.id,
       paymentId: app.payment_id,
       billId: app.bill_id,
+      billNumber: (app as any).bill_number ?? null,
       appliedAmount: Number(app.applied_amount),
       createdAt: app.created_at
     })),
@@ -165,7 +167,7 @@ export async function listVendorPayments(filters: {
 
   const paymentIds = records.map(r => r.id);
   const applications = paymentIds.length
-    ? (await db.query<PaymentApplicationRecord>(`select * from vendor_payment_applications where payment_id = any($1) order by created_at`, [paymentIds])).rows
+    ? (await db.query<PaymentApplicationRecord>(`select a.*, b.bill_number from vendor_payment_applications a left join bills b on b.id = a.bill_id where a.payment_id = any($1) order by a.created_at`, [paymentIds])).rows
     : [];
 
   const applicationsByPayment: Record<string, PaymentApplicationRecord[]> = {};
@@ -187,7 +189,7 @@ export async function getVendorPayment(paymentId: string, tenantSlug?: string): 
 
   if (!records.length) return null;
 
-  const applications = (await db.query<PaymentApplicationRecord>(`select * from vendor_payment_applications where payment_id = $1 order by created_at`, [paymentId])).rows;
+  const applications = (await db.query<PaymentApplicationRecord>(`select a.*, b.bill_number from vendor_payment_applications a left join bills b on b.id = a.bill_id where a.payment_id = $1 order by a.created_at`, [paymentId])).rows;
 
   return normalizePayment(records[0], applications);
 }

@@ -743,7 +743,7 @@ export const RecruitmentDashboard: React.FC = () => {
         <table className="w-full text-sm">
           <thead className="bg-theme-muted">
             <tr>
-              {['Employee ID', 'Task', 'Category', 'Assigned To', 'Due', 'Status', 'Actions'].map((h) => (
+              {['Employee', 'Task', 'Category', 'Assigned To', 'Due', 'Status', 'Actions'].map((h) => (
                 <th key={h} className="px-4 py-3 text-left font-medium text-theme-text-secondary">{h}</th>
               ))}
             </tr>
@@ -754,10 +754,10 @@ export const RecruitmentDashboard: React.FC = () => {
             )}
             {onboardingTasks.map((t) => (
               <tr key={t.id} className="hover:bg-theme-sidebar-hover">
-                <td className="px-4 py-3 text-theme-text-primary font-medium">{t.employeeId}</td>
+                <td className="px-4 py-3 text-theme-text-primary font-medium">{(t as any).employeeName || t.employeeId}</td>
                 <td className="px-4 py-3 text-theme-text-secondary">{t.task}</td>
                 <td className="px-4 py-3 text-theme-text-secondary capitalize">{t.category}</td>
-                <td className="px-4 py-3 text-theme-text-secondary">{t.assignedToUserId}</td>
+                <td className="px-4 py-3 text-theme-text-secondary">{(t as any).assignedToName || t.assignedToUserId}</td>
                 <td className="px-4 py-3 text-theme-text-secondary">{t.dueDate ? t.dueDate.split('T')[0] : '—'}</td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex px-2 py-0.5 rounded-full text-xs border ${statusBadge(t.status)}`}>

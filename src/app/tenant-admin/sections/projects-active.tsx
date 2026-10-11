@@ -17,6 +17,7 @@ interface Project {
   budgetSpent: number;
   status: string;
   owner: string;
+  ownerName?: string | null;
 }
 
 interface ProjectsActiveProps {
@@ -224,7 +225,7 @@ export default function ProjectsActive({ projects, tenantSlug, onRefresh }: Proj
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                   <div>
                     <p className="text-theme-text-tertiary text-xs mb-1">Owner</p>
-                    <p className="font-medium text-theme-text-primary">{project.owner}</p>
+                    <p className="font-medium text-theme-text-primary">{project.ownerName || project.owner}</p>
                   </div>
                   <div>
                     <p className="text-theme-text-tertiary text-xs mb-1">Start Date</p>

@@ -69,13 +69,13 @@ export async function getAttendance(params: { action?: string; tenantId?: string
   const limit = params.limit || 50;
 
   // Simple implementation: return most recent attendance records (tenant filtered if provided)
-  let query = `SELECT id, tenant_id, employee_id, work_date, confidence_score, attendance_status, work_mode, check_in_time, check_out_time, task_activity_count, time_logged_hours, meetings_attended, lms_activity_score FROM attendance_records`;
+  let query = `SELECT r.id, r.tenant_id, r.employee_id, e.name as employee_name, e.department_id, r.work_date, r.confidence_score, r.attendance_status, r.work_mode, r.check_in_time, r.check_out_time, r.task_activity_count, r.time_logged_hours, r.meetings_attended, r.lms_activity_score FROM attendance_records r LEFT JOIN admin_employees e ON e.tenant_slug = r.tenant_id AND e.id = r.employee_id`;
   const values: any[] = [];
   if (params.tenantId) {
     values.push(params.tenantId);
-    query += ` WHERE tenant_id = $1`;
+    query += ` WHERE r.tenant_id = $1`;
   }
-  query += ` ORDER BY work_date DESC LIMIT $${values.length + 1}`;
+  query += ` ORDER BY r.work_date DESC LIMIT $${values.length + 1}`;
   values.push(limit);
 
   const res = await db.query(query, values);

@@ -168,7 +168,7 @@ export const DepartmentsDashboard: React.FC = () => {
                 <td className="px-4 py-3">
                   {d.managerId ? (
                     <div className="text-theme-text-secondary">
-                      <span className="font-medium text-theme-text-primary">{d.headName || d.managerId}</span>
+                      <span className="font-medium text-theme-text-primary">{d.headName || "Unknown"}</span>
                       {d.headEmail && <span className="block text-xs">{d.headEmail}</span>}
                     </div>
                   ) : (

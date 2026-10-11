@@ -16,6 +16,7 @@ interface ArchivedProject {
   teamMembers: number;
   budget: string;
   manager: string;
+  managerName?: string | null;
   finalStatus: string;
 }
 
@@ -45,7 +46,8 @@ export default function ProjectArchivePage() {
   const filteredProjects = projects.filter((project) => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      if (!project.name.toLowerCase().includes(query) && !project.manager.toLowerCase().includes(query)) return false;
+      const mgr = (project.managerName || project.manager || "").toLowerCase();
+      if (!project.name.toLowerCase().includes(query) && !mgr.includes(query)) return false;
     }
     return true;
   });
@@ -215,7 +217,7 @@ export default function ProjectArchivePage() {
                       <p className="text-xs text-gray-600 mt-1">{project.description}</p>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{project.manager}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{project.managerName || project.manager}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{project.completionDate}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{project.duration}</td>
                   <td className="px-6 py-4 text-sm font-semibold text-gray-900">{project.budget}</td>

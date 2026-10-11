@@ -13,6 +13,7 @@ interface Approval {
   entityId: string;
   status: "pending" | "approved" | "rejected" | "escalated" | "cancelled";
   requestedBy: string;
+  requestedByName?: string | null;
   approverChain: Array<{
     step: number;
     userId: string;
@@ -209,7 +210,7 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
                     {approval.entityId.slice(0, 8)}...
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-600">
-                    {approval.requestedBy.slice(0, 8)}...
+                    {approval.requestedByName || approval.requestedBy.slice(0, 8)}
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-600">
                     Step {approval.currentStep + 1} of {approval.approverChain.length}

@@ -209,7 +209,7 @@ export default function PlannerPage() {
           priority: project.priority,
           budget: { approved: project.budgetApproved, spent: project.budgetSpent },
           status: project.status,
-          owner: project.owner,
+          owner: project.ownerName || project.owner,
           approvalStatus: project.approvalStatus,
           start: project.startDate,
           end: project.endDate,

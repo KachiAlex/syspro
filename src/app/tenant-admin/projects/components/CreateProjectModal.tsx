@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Calendar, DollarSign, Users, Briefcase, AlertCircle } from 'lucide-react';
+import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 
 interface ProjectFormData {
   name: string;
@@ -38,10 +39,20 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   onClose,
   onSubmit
 }) => {
+  const { tenantSlug } = useTenantContext();
   const [formData, setFormData] = useState<ProjectFormData>(DEFAULT_FORM_DATA);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [teamMemberInput, setTeamMemberInput] = useState('');
+  const [employees, setEmployees] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    if (!isOpen || !tenantSlug) return;
+    fetch(`/api/hr/employees?tenantSlug=${encodeURIComponent(tenantSlug)}&status=active&limit=500`)
+      .then((r) => r.json())
+      .then((d) => setEmployees((d.employees || []).map((e: any) => ({ id: e.id, name: e.name }))))
+      .catch(() => setEmployees([]));
+  }, [isOpen, tenantSlug]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -259,16 +270,19 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 <Briefcase className="w-4 h-4 inline mr-1" />
                 Project Manager *
               </label>
-              <input
-                type="text"
+              <select
                 value={formData.manager}
                 onChange={(e) => setFormData(prev => ({ ...prev, manager: e.target.value }))}
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
                   errors.manager ? 'border-red-500' : 'border-gray-300'
                 }`}
-                placeholder="Manager name"
                 disabled={loading}
-              />
+              >
+                <option value="">Select a manager</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>{emp.name}</option>
+                ))}
+              </select>
               {errors.manager && (
                 <p className="mt-1 text-sm text-red-600">{errors.manager}</p>
               )}

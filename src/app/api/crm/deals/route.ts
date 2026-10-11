@@ -99,11 +99,16 @@ export async function GET(request: NextRequest) {
         if (teamIds.length > 0) {
           const placeholders = teamIds.map((_, i) => `$${i + 2}`).join(",");
           const rows = (await db.query(
-            `select * from crm_deals where tenant_slug = $1 and created_by in (${placeholders}) order by created_at desc`,
+            `select d.*, l.company_name as lead_name, c.name as customer_name
+             from crm_deals d
+             left join crm_leads l on l.tenant_slug = d.tenant_slug and l.id = d.lead_id
+             left join crm_customers c on c.tenant_slug = d.tenant_slug and c.id = d.customer_id
+             where d.tenant_slug = $1 and d.created_by in (${placeholders}) order by d.created_at desc`,
             [tenantSlug, ...teamIds]
           )).rows as any[];
           const deals = rows.map((r) => ({
             id: r.id, tenantSlug: r.tenant_slug, customerId: r.customer_id, leadId: r.lead_id,
+            leadName: r.lead_name ?? null, customerName: r.customer_name ?? null,
             contactId: r.contact_id ?? null, name: r.name ?? null, stage: r.stage,
             value: Number(r.value ?? 0), currency: r.currency, probability: r.probability ? Number(r.probability) : null,
             expectedClose: r.expected_close, assignedOfficerId: r.assigned_officer_id, status: r.status,

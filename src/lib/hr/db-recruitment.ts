@@ -1063,9 +1063,11 @@ function normalizeOnboardingRow(row: any): OnboardingTaskRecord {
     id: row.id,
     tenantSlug: row.tenant_slug,
     employeeId: row.employee_id,
+    employeeName: row.employee_name ?? null,
     category: row.category,
     task: row.task,
     assignedToUserId: row.assigned_to_user_id,
+    assignedToName: row.assigned_to_name ?? null,
     status: row.status,
     dueDate: row.due_date,
     completedAt: row.completed_at ?? null,
@@ -1142,27 +1144,32 @@ export async function listOnboardingTasks(filters: {
   const limit = filters.limit ? Math.min(Math.max(filters.limit, 1), 100) : 50;
   const offset = filters.offset ?? 0;
 
-  let query = `select * from admin_onboarding_tasks where tenant_slug = $1`;
+  let query = `
+    select t.*, emp.name as employee_name, assignee.name as assigned_to_name
+    from admin_onboarding_tasks t
+    left join admin_employees emp on emp.tenant_slug = t.tenant_slug and emp.id = t.employee_id
+    left join admin_employees assignee on assignee.tenant_slug = t.tenant_slug and assignee.id = t.assigned_to_user_id
+    where t.tenant_slug = $1`;
   const params: any[] = [filters.tenantSlug];
 
   if (filters.employeeId) {
     params.push(filters.employeeId);
-    query += ` and employee_id = $${params.length}`;
+    query += ` and t.employee_id = $${params.length}`;
   }
   if (filters.category) {
     params.push(filters.category);
-    query += ` and category = $${params.length}`;
+    query += ` and t.category = $${params.length}`;
   }
   if (filters.status) {
     params.push(filters.status);
-    query += ` and status = $${params.length}`;
+    query += ` and t.status = $${params.length}`;
   }
   if (filters.assignedToUserId) {
     params.push(filters.assignedToUserId);
-    query += ` and assigned_to_user_id = $${params.length}`;
+    query += ` and t.assigned_to_user_id = $${params.length}`;
   }
 
-  query += ` order by due_date asc limit $${params.length + 1} offset $${params.length + 2}`;
+  query += ` order by t.due_date asc limit $${params.length + 1} offset $${params.length + 2}`;
   params.push(limit, offset);
 
   const res = await db.query(query, params);

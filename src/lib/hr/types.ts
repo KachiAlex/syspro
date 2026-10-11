@@ -42,6 +42,7 @@ export interface EmployeeRecord {
   email: string;
   phone: string | null;
   departmentId: string;
+  departmentName: string | null;
   jobTitle: string;
   reportingManagerId: string | null;
   branchId: string | null;
@@ -537,9 +538,11 @@ export interface OnboardingTaskRecord {
   id: string;
   tenantSlug: string;
   employeeId: string;
+  employeeName?: string | null;
   category: string;
   task: string;
   assignedToUserId: string;
+  assignedToName?: string | null;
   status: string;
   dueDate: string;
   completedAt: string | null;

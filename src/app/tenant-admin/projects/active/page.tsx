@@ -20,6 +20,7 @@ interface Project {
   teamMembers: number;
   budget: string;
   manager: string;
+  managerName?: string | null;
 }
 
 export default function ActiveProjectsPage() {
@@ -143,7 +144,8 @@ export default function ActiveProjectsPage() {
     if (statusFilter !== 'All' && project.status !== statusFilter) return false;
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      if (!project.name.toLowerCase().includes(query) && !project.manager.toLowerCase().includes(query)) return false;
+      const mgr = (project.managerName || project.manager || "").toLowerCase();
+      if (!project.name.toLowerCase().includes(query) && !mgr.includes(query)) return false;
     }
     return true;
   });
@@ -222,7 +224,7 @@ export default function ActiveProjectsPage() {
                       <p className="text-xs text-gray-600 mt-1">{project.description}</p>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{project.manager}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{project.managerName || project.manager}</td>
                   <td className="px-6 py-4 text-sm">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       project.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :

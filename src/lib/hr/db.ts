@@ -814,6 +814,7 @@ function normalizeEmployeeRow(row: any): EmployeeRecord {
     email: row.email,
     phone: row.phone ?? null,
     departmentId: row.department_id,
+    departmentName: row.department_name ?? null,
     jobTitle: row.job_title ?? "",
     reportingManagerId: row.reporting_manager_id ?? null,
     branchId: row.branch_id ?? null,
@@ -1106,19 +1107,23 @@ export async function listEmployees(filters: {
   const limit = filters.limit ? Math.min(Math.max(filters.limit, 1), 500) : 200;
   const offset = filters.offset ?? 0;
 
-  let query = `select * from admin_employees where tenant_slug = $1`;
+  let query = `
+    select e.*, d.name as department_name
+    from admin_employees e
+    left join admin_departments d on d.tenant_slug = e.tenant_slug and d.id = e.department_id
+    where e.tenant_slug = $1`;
   const params: any[] = [filters.tenantSlug];
 
   if (filters.status) {
     params.push(filters.status);
-    query += ` and status = $${params.length}`;
+    query += ` and e.status = $${params.length}`;
   }
   if (filters.departmentId) {
     params.push(filters.departmentId);
-    query += ` and department_id = $${params.length}`;
+    query += ` and e.department_id = $${params.length}`;
   }
 
-  query += ` order by created_at desc limit $${params.length + 1} offset $${params.length + 2}`;
+  query += ` order by e.created_at desc limit $${params.length + 1} offset $${params.length + 2}`;
   params.push(limit, offset);
 
   const res = await db.query(query, params);
@@ -1370,9 +1375,10 @@ export async function listDepartmentsWithHeads(tenantSlug: string) {
   const sql = SQL;
   try {
     const rows = await sql`
-      select d.*, e.name as head_name, e.email as head_email
+      select d.*, coalesce(e.name, ta.name) as head_name, coalesce(e.email, ta.email) as head_email
       from admin_departments d
-      left join admin_employees e on d.manager_id = e.id
+      left join admin_employees e on e.tenant_slug = d.tenant_slug and e.id = d.manager_id
+      left join tenant_admins ta on ta.tenant_slug = d.tenant_slug and ta.id::text = d.manager_id
       where d.tenant_slug = ${tenantSlug}
       order by d.name
     `;

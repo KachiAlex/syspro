@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { requireModuleGate } from "@/lib/api-auth";
 import { getAllProjectsForTenant, toProjectResponse } from "@/lib/projects/db";
+import { attachEmployeeNames } from "@/lib/crm/officer-names";
 
 export async function GET(request: Request) {
   try {
@@ -13,6 +14,8 @@ export async function GET(request: Request) {
     const active = projects
       .filter((p) => ["IN_PROGRESS", "INITIATED", "PLANNING"].includes(p.status))
       .map(toProjectResponse);
+    await attachEmployeeNames(context.tenantSlug, active, "owner", "ownerName");
+    for (const p of active) (p as any).managerName = (p as any).ownerName;
     return NextResponse.json({ projects: active });
   } catch (error) {
     console.error('Failed to fetch active projects:', error);

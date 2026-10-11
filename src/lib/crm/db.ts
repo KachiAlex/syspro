@@ -536,9 +536,20 @@ export async function listDeals(filters: Partial<{ tenantSlug: string; customerI
   }
   const limit = Math.min(Math.max(filters.limit ?? 50, 1), 200);
   const offset = Math.max(filters.offset ?? 0, 0);
-  const query = `select * from crm_deals ${where} order by created_at desc limit ${limit} offset ${offset}`;
+  const baseWhere = where;
+  const query = `
+    select d.*, l.company_name as lead_name, c.name as customer_name
+    from crm_deals d
+    left join crm_leads l on l.tenant_slug = d.tenant_slug and l.id = d.lead_id
+    left join crm_customers c on c.tenant_slug = d.tenant_slug and c.id = d.customer_id
+    ${baseWhere.replace(/\b(tenant_slug|customer_id|lead_id|stage|created_by)\b/g, "d.$1")}
+    order by d.created_at desc limit ${limit} offset ${offset}`;
   const rows = (await db.query(query, params)).rows as any[];
-  return rows.map(normalizeDealRow);
+  return rows.map((r) => ({
+    ...normalizeDealRow(r),
+    leadName: (r.lead_name as string | null) ?? null,
+    customerName: (r.customer_name as string | null) ?? null,
+  }));
 }
 
 export async function countDeals(filters: Partial<{ tenantSlug: string; customerId?: string; leadId?: string; stage?: string; createdBy?: string }>) {

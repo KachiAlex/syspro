@@ -10,6 +10,9 @@ type Deal = {
   tenantSlug: string;
   customerId?: string | null;
   leadId?: string | null;
+  customerName?: string | null;
+  leadName?: string | null;
+  name?: string | null;
   stage: string;
   value: number;
   currency: string;
@@ -181,8 +184,9 @@ export default function DealsPage({ tenantSlug }: { tenantSlug?: string | null }
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
       return (
-        deal.leadId?.toLowerCase().includes(search) ||
-        deal.customerId?.toLowerCase().includes(search) ||
+        deal.leadName?.toLowerCase().includes(search) ||
+        deal.customerName?.toLowerCase().includes(search) ||
+        deal.name?.toLowerCase().includes(search) ||
         deal.id.toLowerCase().includes(search)
       );
     }
@@ -286,7 +290,7 @@ export default function DealsPage({ tenantSlug }: { tenantSlug?: string | null }
                             {deal.value.toLocaleString()} {deal.currency}
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
-                            {deal.leadId ? `Lead: ${deal.leadId.slice(0, 8)}...` : deal.customerId ? `Customer: ${deal.customerId.slice(0, 8)}...` : "No reference"}
+                            {deal.leadName ? `Lead: ${deal.leadName}` : deal.customerName ? `Customer: ${deal.customerName}` : deal.leadId ? `Lead: ${deal.leadId.slice(0, 8)}...` : deal.customerId ? `Customer: ${deal.customerId.slice(0, 8)}...` : "No reference"}
                           </div>
                         </div>
                         <div className="flex gap-1">

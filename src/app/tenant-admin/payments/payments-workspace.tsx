@@ -20,6 +20,7 @@ interface VendorPayment {
   applications: Array<{
     id: string;
     billId: string;
+    billNumber?: string | null;
     appliedAmount: number;
   }>;
 }
@@ -328,7 +329,7 @@ export default function VendorPaymentsWorkspace() {
                   <ul className="mt-1 space-y-1">
                     {viewPayment.applications.map((app) => (
                       <li key={app.id} className="flex justify-between rounded bg-slate-50 px-2 py-1">
-                        <span>Bill {app.billId.slice(0, 8)}...</span>
+                        <span>Bill {app.billNumber || `${app.billId.slice(0, 8)}...`}</span>
                         <span className="font-medium">{viewPayment.currency} {app.appliedAmount.toLocaleString()}</span>
                       </li>
                     ))}

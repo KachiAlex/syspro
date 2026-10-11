@@ -12,6 +12,7 @@ interface ArchivedProject {
   teamMembers: number;
   budget: string;
   manager: string;
+  managerName?: string | null;
   finalStatus: string;
 }
 
@@ -53,7 +54,7 @@ export const ViewProjectModal: React.FC<ViewProjectModalProps> = ({
                 <Briefcase className="w-5 h-5 text-theme-text-tertiary" />
                 <div>
                   <p className="text-sm text-gray-500">Manager</p>
-                  <p className="font-medium text-gray-900">{project.manager}</p>
+                  <p className="font-medium text-gray-900">{project.managerName || project.manager}</p>
                 </div>
               </div>
 

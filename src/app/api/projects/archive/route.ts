@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { requireModuleGate } from "@/lib/api-auth";
 import { getAllProjectsForTenant, updateProject, toProjectResponse } from "@/lib/projects/db";
+import { attachEmployeeNames } from "@/lib/crm/officer-names";
 
 export async function GET(request: Request) {
   try {
@@ -13,6 +14,8 @@ export async function GET(request: Request) {
     const archived = projects
       .filter((p) => ["ARCHIVED", "COMPLETED"].includes(p.status))
       .map(toProjectResponse);
+    await attachEmployeeNames(context.tenantSlug, archived, "owner", "ownerName");
+    for (const p of archived) (p as any).managerName = (p as any).ownerName;
     return NextResponse.json({ projects: archived });
   } catch (error) {
     console.error('Failed to fetch archived projects:', error);

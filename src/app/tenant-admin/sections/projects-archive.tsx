@@ -15,6 +15,7 @@ interface ArchivedProject {
   budgetApproved: number;
   budgetSpent: number;
   owner: string;
+  ownerName?: string | null;
 }
 
 interface ProjectsArchiveProps {
@@ -263,7 +264,7 @@ export default function ProjectsArchive({ tenantSlug, onRefresh }: ProjectsArchi
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                   <div>
                     <p className="text-gray-500 text-xs mb-1">Owner</p>
-                    <p className="font-medium text-gray-900">{project.owner}</p>
+                    <p className="font-medium text-gray-900">{project.ownerName || project.owner}</p>
                   </div>
                   <div>
                     <p className="text-gray-500 text-xs mb-1">Completed Date</p>

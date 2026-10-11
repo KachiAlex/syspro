@@ -756,7 +756,7 @@ function PortalAccessPanel({ tenantSlug }: { tenantSlug?: string | null }) {
                       <span className="text-sm text-theme-text-primary capitalize">{emp.role || "staff"}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-theme-text-primary">{emp.jobTitle || emp.departmentId || "—"}</span>
+                      <span className="text-sm text-theme-text-primary">{emp.jobTitle || emp.departmentName || "—"}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {emp.isPortalActive ? (

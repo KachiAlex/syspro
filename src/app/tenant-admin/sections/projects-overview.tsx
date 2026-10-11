@@ -18,6 +18,7 @@ interface Project {
   budgetSpent: number;
   status: 'Planned' | 'Active' | 'On Hold' | 'Completed';
   owner: string;
+  ownerName?: string | null;
   approvalStatus: 'Pending' | 'Approved' | 'Rejected';
   region: string;
   createdBy: string;
@@ -329,7 +330,7 @@ export default function ProjectsOverview({
                   </div>
                   <div>
                     <p className="text-theme-text-tertiary text-xs mb-1">Owner</p>
-                    <p className="font-medium text-theme-text-primary">{project.owner}</p>
+                    <p className="font-medium text-theme-text-primary">{project.ownerName || project.owner}</p>
                   </div>
                 </div>
 

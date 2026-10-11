@@ -43,6 +43,7 @@ export interface Approval {
   ruleId?: string;
   status: "pending" | "approved" | "rejected" | "escalated" | "cancelled";
   requestedBy: string;
+  requestedByName?: string | null;
   approverChain: ApproverStep[];
   decisions: ApprovalDecision[];
   currentStep: number;
@@ -448,6 +449,10 @@ export async function getApprovals(filters: {
   params.push(limit, offset);
 
   const records = (await db.query<any>(queryText, params)).rows;
+  const nameMap = await resolveRequesterNames(
+    filters.tenantSlug,
+    [...new Set(records.map((r) => r.requested_by).filter(Boolean))]
+  );
 
   return records.map(record => ({
     id: record.id,
@@ -457,6 +462,7 @@ export async function getApprovals(filters: {
     ruleId: record.rule_id,
     status: record.status,
     requestedBy: record.requested_by,
+    requestedByName: nameMap.get(record.requested_by) ?? null,
     approverChain: record.approver_chain,
     decisions: record.decisions || [],
     currentStep: record.current_step,
@@ -464,6 +470,36 @@ export async function getApprovals(filters: {
     createdAt: record.created_at,
     updatedAt: record.updated_at
   }));
+}
+
+/**
+ * Batch-resolves requested_by values (employee ids, admin ids, or emails)
+ * to display names. Never throws.
+ */
+async function resolveRequesterNames(tenantSlug: string, ids: string[]): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  if (ids.length === 0) return map;
+  try {
+    const employees = (await db.query<any>(
+      `select id, name, email from admin_employees where tenant_slug = $1 and (id = any($2) or lower(email) = any($2))`,
+      [tenantSlug, ids.map((i) => String(i).toLowerCase())]
+    )).rows;
+    for (const e of employees) {
+      map.set(e.id, e.name);
+      if (e.email) map.set(String(e.email).toLowerCase(), e.name);
+    }
+    const admins = (await db.query<any>(
+      `select id::text as id, name, email from tenant_admins where tenant_slug = $1 and (id::text = any($2) or lower(email) = any($2))`,
+      [tenantSlug, ids.map((i) => String(i).toLowerCase())]
+    )).rows;
+    for (const a of admins) {
+      map.set(a.id, a.name);
+      if (a.email) map.set(String(a.email).toLowerCase(), a.name);
+    }
+  } catch {
+    // best-effort name resolution
+  }
+  return map;
 }
 
 export async function getPendingApprovalsForUser(

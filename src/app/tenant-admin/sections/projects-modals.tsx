@@ -330,7 +330,7 @@ export function ViewProjectModal({
             </div>
             <div>
               <p className="text-sm text-gray-600">Owner</p>
-              <p className="text-lg font-medium text-gray-900">{project.owner}</p>
+              <p className="text-lg font-medium text-gray-900">{project.ownerName || project.owner}</p>
             </div>
           </div>
 

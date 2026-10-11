@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { requireModuleGate } from "@/lib/api-auth";
 import { getAllProjectsForTenant, createProject, toProjectResponse } from "@/lib/projects/db";
+import { attachEmployeeNames } from "@/lib/crm/officer-names";
 
 const VALID_STATUSES = new Set(["PLANNING", "INITIATED", "IN_PROGRESS", "ON_HOLD", "COMPLETED", "ARCHIVED", "CANCELLED"]);
 const VALID_PRIORITIES = new Set(["LOW", "MEDIUM", "HIGH", "CRITICAL"]);
@@ -73,6 +74,8 @@ export async function GET(request: NextRequest) {
     };
 
     const mapped = filtered.map(toProjectResponse);
+    await attachEmployeeNames(context.tenantSlug, mapped, "owner", "ownerName");
+    for (const m of mapped) (m as any).managerName = (m as any).ownerName;
 
     return NextResponse.json({ projects: mapped, totals });
   } catch (error) {
