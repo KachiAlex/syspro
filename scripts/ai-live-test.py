@@ -22,8 +22,16 @@ def call(body, expect_sse=False, timeout=120):
         method="POST",
     )
     t0 = time.time()
-    resp = urllib.request.urlopen(req, timeout=timeout)
-    raw = resp.read().decode()
+    try:
+        resp = urllib.request.urlopen(req, timeout=timeout)
+        raw = resp.read().decode()
+    except urllib.error.HTTPError as e:
+        # Step-level failures return structured 500s — surface the body.
+        raw = e.read().decode()
+        try:
+            return json.loads(raw), round((time.time() - t0) * 1000)
+        except Exception:
+            return {"success": False, "error": f"HTTP {e.code}: {raw[:300]}"}, round((time.time() - t0) * 1000)
     ms = round((time.time() - t0) * 1000)
     ct = resp.headers.get("content-type", "")
     if "text/event-stream" in ct:
@@ -89,6 +97,8 @@ d, ms = call({"message": "appraise the sales team this month and draft training 
 steps = (d.get("result") or {}).get("steps") or []
 s1 = steps[0] if len(steps) > 0 else {}
 s2 = steps[1] if len(steps) > 1 else {}
+if not s1.get("success") or not s2.get("success"):
+    print("   step detail:", json.dumps([{ "cap": s.get("capability"), "err": s.get("error") } for s in steps])[:400])
 check("step1 fanned appraisal", s1.get("capability") == "appraise_performance" and (s1.get("result") or {}).get("fannedOut"))
 low_scores = [a for a in (s1.get("result") or {}).get("appraisals", []) if (a.get("overallScore") or 100) < 60]
 trained = len((s2.get("result") or {}).get("items") or [])
