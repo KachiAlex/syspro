@@ -104,6 +104,23 @@ async function ensureTenantTableRun(sql: SqlClient) {
   `;
   await sql`create index if not exists admin_password_reset_tokens_token_idx on admin_password_reset_tokens(token)`;
   await sql`create index if not exists admin_password_reset_tokens_tenant_idx on admin_password_reset_tokens(tenant_slug)`;
+  await sql`alter table admin_password_reset_tokens add column if not exists used_at timestamptz`;
+
+  // Tenant-admin password-reset tokens (used by /api/auth/forgot-password
+  // and /api/auth/reset-password).
+  await sql`
+    create table if not exists tenant_admin_password_reset_tokens (
+      id serial primary key,
+      admin_id integer not null,
+      email text not null,
+      token text not null,
+      expires_at timestamptz not null,
+      used boolean not null default false,
+      created_at timestamptz not null default now(),
+      used_at timestamptz
+    )
+  `;
+  await sql`create index if not exists tenant_admin_reset_tokens_token_idx on tenant_admin_password_reset_tokens(token)`;
 
   // Per-tenant security settings shown on the tenant-admin security page
   // (MFA requirements, session policy, password rules).
