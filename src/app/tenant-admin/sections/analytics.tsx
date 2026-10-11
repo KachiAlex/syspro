@@ -207,7 +207,7 @@ export default function AnalyticsSection({ tenantSlug }: { tenantSlug?: string |
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `${selectedReport.name.replace(/\s+/g, "-").toLowerCase()}.${format}`;
+        a.download = `${(selectedReport.name || 'report').replace(/\s+/g, "-").toLowerCase()}.${format}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);

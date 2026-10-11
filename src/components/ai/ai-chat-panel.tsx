@@ -363,7 +363,7 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
                     {msg.capability && (
                       <>
                         <span>·</span>
-                        <span className="capitalize">{msg.capability.replace(/_/g, " ")}</span>
+                        <span className="capitalize">{msg.capability?.replace(/_/g, " ")}</span>
                       </>
                     )}
                   </div>
@@ -389,7 +389,7 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
                 {(msg.result as any)?.pendingAction && (
                   <div className="mt-2 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 p-3">
                     <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 capitalize">
-                      {(msg.result as any).pendingAction.action.replace(/_/g, " ")} — needs confirmation
+                      {(msg.result as any).pendingAction.action?.replace(/_/g, " ")} — needs confirmation
                     </p>
                     <pre className="mt-1 text-[11px] text-amber-700 dark:text-amber-400 whitespace-pre-wrap break-words">
                       {JSON.stringify((msg.result as any).pendingAction.params, null, 1)}
@@ -436,7 +436,7 @@ export function AIChatPanel({ open, onClose, allowedCapabilities }: { open: bool
                       {s.status === "done" && <span className="w-3 h-3 rounded-full bg-emerald-500 text-white text-[9px] flex items-center justify-center">✓</span>}
                       {s.status === "failed" && <span className="w-3 h-3 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center">✕</span>}
                       {s.status === "skipped" && <span className="w-3 h-3 rounded-full bg-slate-400 text-white text-[9px] flex items-center justify-center">–</span>}
-                      <span className="capitalize">{s.capability.replace(/_/g, " ")}</span>
+                      <span className="capitalize">{s.capability?.replace(/_/g, " ")}</span>
                       {s.detail && <span className="text-slate-400">— {s.detail}</span>}
                     </div>
                   ))
@@ -496,7 +496,7 @@ function formatResult(data: any): string {
     const parts = [result.summary || `Plan: ${result.steps.length} step(s)`];
     if (result.rationale) parts.push(`(${result.rationale})`);
     for (const step of result.steps) {
-      const label = step.capability.replace(/_/g, " ");
+      const label = step.capability?.replace(/_/g, " ");
       if (step.skipped) {
         parts.push(`\n— ${label}: skipped (${step.result?.skipped || "condition not met"})`);
         continue;

@@ -281,7 +281,7 @@ export function DashboardTab({ profile, onNavigate, announcements }: {
                     </div>
                   </div>
                   <span className={`text-[10px] font-medium capitalize px-2 py-0.5 rounded-full ${r.status === 'approved' ? 'bg-green-100 text-green-700' : r.status === 'under_review' ? 'bg-blue-100 text-blue-700' : r.status === 'needs_edit' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}`}>
-                    {r.status.replace('_', ' ')}
+                    {r.status?.replace('_', ' ')}
                   </span>
                 </div>
               ))}

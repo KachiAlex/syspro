@@ -203,7 +203,7 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
               {approvals.map((approval) => (
                 <tr key={approval.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                    {approval.entityType.replace("_", " ")}
+                    {approval.entityType?.replace("_", " ")}
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-600">
                     {approval.entityId.slice(0, 8)}...

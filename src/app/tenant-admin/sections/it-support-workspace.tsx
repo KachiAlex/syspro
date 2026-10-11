@@ -756,7 +756,7 @@ export default function ItSupportWorkspace({ tenantSlug, region }: { tenantSlug?
                             <Activity className="h-4 w-4" />
                           </div>
                           <div>
-                            <p className="text-sm font-semibold text-gray-900">{activity.activityType.replace(/_/g, " ")}</p>
+                            <p className="text-sm font-semibold text-gray-900">{activity.activityType?.replace(/_/g, " ")}</p>
                             <p className="text-xs text-slate-500">{formatClock(activity.createdAt)}</p>
                           </div>
                         </div>

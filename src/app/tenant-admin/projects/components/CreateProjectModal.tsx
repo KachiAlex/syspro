@@ -66,7 +66,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
     if (!formData.budget.trim()) {
       newErrors.budget = 'Budget is required';
-    } else if (!/^\$?\d+(,\d{3})*(\.\d{2})?$/.test(formData.budget.replace(/,/g, ''))) {
+    } else if (!/^\$?\d+(,\d{3})*(\.\d{2})?$/.test((formData.budget || '').replace(/,/g, ''))) {
       newErrors.budget = 'Invalid budget format';
     }
 

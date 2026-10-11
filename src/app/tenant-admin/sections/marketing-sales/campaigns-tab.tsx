@@ -305,7 +305,7 @@ export default function CampaignsTab({
               {filteredCampaigns.map((campaign) => (
                 <tr key={campaign.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 font-medium text-gray-900">{campaign.name}</td>
-                  <td className="px-6 py-4 text-gray-600 capitalize">{campaign.channel.replace("_", " ")}</td>
+                  <td className="px-6 py-4 text-gray-600 capitalize">{campaign.channel?.replace("_", " ")}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${

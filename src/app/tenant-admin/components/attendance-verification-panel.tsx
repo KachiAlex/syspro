@@ -161,7 +161,7 @@ export function AttendanceVerificationPanel({ tenantSlug }: { tenantSlug?: strin
     if (!qrFor) return;
     const a = document.createElement('a');
     a.href = qrFor.dataUrl;
-    a.download = `${qrFor.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-checkin-qr.png`;
+    a.download = `${(qrFor.name || 'location').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-checkin-qr.png`;
     a.click();
   };
 

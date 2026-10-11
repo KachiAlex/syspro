@@ -419,7 +419,7 @@ export function AttendanceTab({ profile }: { profile?: EmployeeProfile }) {
           </tr></thead><tbody className="divide-y divide-gray-200">{records.slice(0, 15).map((a) => (
             <tr key={a.id} className="hover:bg-gray-50">
               <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{fmtDate(a.date)}</td>
-              <td className="px-4 py-3 text-sm whitespace-nowrap"><span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${a.status==='present'?'bg-green-100 text-green-800':a.status==='late'?'bg-amber-100 text-amber-800':a.status==='half_day'?'bg-blue-100 text-blue-800':'bg-red-100 text-red-800'}`}>{a.status.replace('_',' ')}</span></td>
+              <td className="px-4 py-3 text-sm whitespace-nowrap"><span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${a.status==='present'?'bg-green-100 text-green-800':a.status==='late'?'bg-amber-100 text-amber-800':a.status==='half_day'?'bg-blue-100 text-blue-800':'bg-red-100 text-red-800'}`}>{a.status?.replace('_',' ')}</span></td>
               <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{fmtTime(a.check_in)}</td>
               <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{fmtTime(a.check_out)}</td>
               <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{calcWorkHours(a.check_in, a.check_out) || '—'}</td>

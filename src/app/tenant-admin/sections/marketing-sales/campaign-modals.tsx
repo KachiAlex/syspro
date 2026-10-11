@@ -447,7 +447,7 @@ export function ViewCampaignModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Channel</p>
-              <p className="text-sm text-gray-900 mt-1 capitalize">{campaign.channel.replace("_", " ")}</p>
+              <p className="text-sm text-gray-900 mt-1 capitalize">{campaign.channel?.replace("_", " ")}</p>
             </div>
             <div>
               <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Status</p>
