@@ -1,6 +1,7 @@
 /**
  * Centralized Email Service
- * Uses Resend when RESEND_API_KEY is configured, otherwise falls back to console logging in development.
+ * Uses SMTP (SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS) when configured — e.g. Brevo —
+ * otherwise Resend when RESEND_API_KEY is set, otherwise console logging in development.
  */
 
 export interface EmailMessage {
@@ -22,10 +23,39 @@ function getFromAddress(): string {
 
 /**
  * Send an email via the configured provider.
- * In production, set RESEND_API_KEY to enable Resend.
- * In development without a key, logs to console.
+ * Prefers SMTP when SMTP_HOST is set (Brevo relay etc.), then Resend,
+ * otherwise logs to console in development.
  */
 export async function sendEmail(message: EmailMessage): Promise<EmailResult> {
+  const smtpHost = process.env.SMTP_HOST;
+
+  if (smtpHost) {
+    try {
+      const nodemailer = await import("nodemailer");
+      const port = Number(process.env.SMTP_PORT || 587);
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port,
+        secure: port === 465,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      });
+      const info = await transporter.sendMail({
+        from: getFromAddress(),
+        to: message.to,
+        subject: message.subject,
+        html: message.html,
+        text: message.text,
+      });
+      return { success: true, messageId: info.messageId };
+    } catch (error: any) {
+      console.error("SMTP send failed:", error);
+      return { success: false, error: error?.message || "SMTP send failed" };
+    }
+  }
+
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {

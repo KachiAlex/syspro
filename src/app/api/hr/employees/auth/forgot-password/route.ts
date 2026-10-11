@@ -63,7 +63,10 @@ export async function POST(request: NextRequest) {
     const resetUrl = `${appUrl}/employee/reset-password?token=${token}&tenant=${tenantSlug}`;
 
     // Send email
-    await sendPasswordResetEmail(employee.email, employee.name, resetUrl);
+    const sendResult = await sendPasswordResetEmail(employee.email, employee.name, resetUrl);
+    if (!sendResult.success) {
+      console.error("Password reset email failed:", sendResult.error);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
