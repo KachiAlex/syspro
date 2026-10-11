@@ -5,6 +5,7 @@ import { CRM_LEAD_STAGES, CRM_LEAD_SOURCES } from "@/lib/crm/types";
 import { insertLead, listLeads, countLeads } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
 import { requireCrmAuth, getTeamMemberIds, effectiveViewMode } from "@/lib/crm/auth";
+import { attachOfficerNames } from "@/lib/crm/officer-names";
 import { db } from "@/lib/sql-client";
 
 const leadSchema = z.object({
@@ -103,6 +104,7 @@ export async function GET(request: NextRequest) {
           currency: r.currency, notes: r.notes, createdBy: r.created_by ?? null,
           createdAt: r.created_at, updatedAt: r.updated_at,
         }));
+        await attachOfficerNames(tenantSlug, leads);
         return NextResponse.json({ leads, total: leads.length });
       } else if (mode === "team") {
         const teamIds = await getTeamMemberIds(auth.session.tenantSlug, auth.departmentId);
@@ -120,6 +122,7 @@ export async function GET(request: NextRequest) {
             currency: r.currency, notes: r.notes, createdBy: r.created_by ?? null,
             createdAt: r.created_at, updatedAt: r.updated_at,
           }));
+          await attachOfficerNames(tenantSlug, leads);
           return NextResponse.json({ leads, total: leads.length });
         }
         // No team members found, fall back to own leads
@@ -135,12 +138,14 @@ export async function GET(request: NextRequest) {
           currency: r.currency, notes: r.notes, createdBy: r.created_by ?? null,
           createdAt: r.created_at, updatedAt: r.updated_at,
         }));
+        await attachOfficerNames(tenantSlug, leads);
         return NextResponse.json({ leads, total: leads.length });
       }
     }
 
     const leads = await listLeads({ tenantSlug, regionId, branchId, salesOfficerId: filterSalesOfficerId, stage, source, search, limit, offset, createdBy: filterCreatedBy } as any);
     const total = await countLeads({ tenantSlug, regionId, branchId, salesOfficerId: filterSalesOfficerId, stage, source, search, createdBy: filterCreatedBy } as any);
+    await attachOfficerNames(tenantSlug, leads);
     return NextResponse.json({ leads, total });
   } catch (error) {
     return handleDatabaseError(error, "List leads");

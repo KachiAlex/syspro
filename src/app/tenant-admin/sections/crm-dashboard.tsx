@@ -217,7 +217,7 @@ function toLeadRow(lead: LeadsResponse["leads"][number]): LeadRow {
     stage: lead.stage,
     score: lead.score,
     source: lead.source,
-    assignedTo: lead.assignedOfficerId || "Unassigned",
+    assignedTo: (lead as any).assignedOfficerName || lead.assignedOfficerId || "Unassigned",
     assignedOfficerId: lead.assignedOfficerId ?? null,
     createdAt: lead.createdAt,
   };
@@ -246,7 +246,7 @@ function toDealRow(deal: DealsResponse["deals"][number]): DealRow {
     stage: deal.stage,
     probability: deal.probability,
     closingDate: deal.expectedClose,
-    assignedTo: deal.assignedOfficerId || "Unassigned",
+    assignedTo: (deal as any).assignedOfficerName || deal.assignedOfficerId || "Unassigned",
   };
 }
 

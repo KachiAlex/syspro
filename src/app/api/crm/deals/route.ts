@@ -5,6 +5,7 @@ import { CRM_PIPELINE_STAGES } from "@/lib/crm/types";
 import { insertDeal, listDeals, countDeals, logActivity } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
 import { requireCrmAuth, getTeamMemberIds, effectiveViewMode } from "@/lib/crm/auth";
+import { attachOfficerNames } from "@/lib/crm/officer-names";
 import { db } from "@/lib/sql-client";
 
 const dealSchema = z.object({
@@ -108,6 +109,7 @@ export async function GET(request: NextRequest) {
             expectedClose: r.expected_close, assignedOfficerId: r.assigned_officer_id, status: r.status,
             createdBy: r.created_by ?? null, createdAt: r.created_at, updatedAt: r.updated_at,
           }));
+          await attachOfficerNames(tenantSlug, deals);
           return NextResponse.json({ deals, total: deals.length });
         }
         filterCreatedBy = auth.employeeId;
@@ -116,6 +118,7 @@ export async function GET(request: NextRequest) {
 
     const deals = await listDeals({ tenantSlug, customerId, leadId, stage, limit, offset, createdBy: filterCreatedBy });
     const total = await countDeals({ tenantSlug, customerId, leadId, stage, createdBy: filterCreatedBy });
+    await attachOfficerNames(tenantSlug, deals);
     return NextResponse.json({ deals, total });
   } catch (error) {
     return handleDatabaseError(error, "List deals");
