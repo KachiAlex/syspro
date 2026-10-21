@@ -45,6 +45,7 @@ const navigationItems = [
       { title: "Customers", href: "/tenant-admin/crm/customers" },
       { title: "Sales Pipeline", href: "/tenant-admin/crm/pipeline" },
       { title: "CRM Depth", href: "/tenant-admin/crm/depth" },
+      { title: "Masters", href: "/tenant-admin/crm/masters" },
     ]
   },
   {
@@ -78,6 +79,7 @@ const navigationItems = [
       { title: "Sales Partners", href: "/tenant-admin/finance/partners" },
       { title: "Loyalty", href: "/tenant-admin/finance/loyalty" },
       { title: "More Finance", href: "/tenant-admin/finance/more" },
+      { title: "Edge", href: "/tenant-admin/finance/edge" },
       { title: "Reports", href: "/tenant-admin/finance/reports" },
     ]
   },
@@ -94,6 +96,7 @@ const navigationItems = [
       { title: "Attendance", href: "/tenant-admin/hr/attendance" },
       { title: "Payroll", href: "/tenant-admin/hr/payroll" },
       { title: "HR Depth", href: "/tenant-admin/hr/depth" },
+      { title: "HR Edge", href: "/tenant-admin/hr/edge" },
       { title: "Reports", href: "/tenant-admin/hr/staff-reports" },
     ]
   },
@@ -105,6 +108,7 @@ const navigationItems = [
     children: [
       { title: "Active Projects", href: "/tenant-admin/projects/active" },
       { title: "Archive", href: "/tenant-admin/projects/archive" },
+      { title: "Edge", href: "/tenant-admin/projects/edge" },
       { title: "Reports", href: "/tenant-admin/projects/reports" },
     ]
   },
@@ -126,6 +130,7 @@ const navigationItems = [
       { title: "Procurement", href: "/tenant-admin/procurement" },
       { title: "Material Requests", href: "/tenant-admin/inventory/material-requests" },
       { title: "Inventory Control", href: "/tenant-admin/inventory/control" },
+      { title: "Inventory Edge", href: "/tenant-admin/inventory/edge" },
       { title: "Inventory", href: "/tenant-admin/sales/inventory" },
       { title: "Inventory Tracking", href: "/tenant-admin/inventory" },
       { title: "Warehouses", href: "/tenant-admin/warehouses" },
@@ -143,6 +148,7 @@ const navigationItems = [
       { title: "Subcontracting", href: "/tenant-admin/manufacturing/subcontracting" },
       { title: "MRP", href: "/tenant-admin/manufacturing/mrp" },
       { title: "Production Planning", href: "/tenant-admin/manufacturing/planning" },
+      { title: "Edge", href: "/tenant-admin/manufacturing/edge" },
       { title: "Quality Control", href: "/tenant-admin/manufacturing/quality" },
     ]
   },
@@ -206,6 +212,7 @@ const navigationItems = [
       { title: "Notifications", href: "/tenant-admin/notifications" },
       { title: "Custom Fields", href: "/tenant-admin/settings/custom-fields" },
       { title: "Platform", href: "/tenant-admin/settings/platform" },
+      { title: "Platform Edge", href: "/tenant-admin/platform/edge" },
       { title: "Users & Roles", href: "/tenant-admin/users" },
       { title: "Audit Trail", href: "/tenant-admin/audit" },
       { title: "System Health", href: "/tenant-admin/health" },

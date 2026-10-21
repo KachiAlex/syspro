@@ -13,8 +13,18 @@ subcontracting supplied-materials ledger, prospects/contracts/sales-stage
 config/email campaigns/warranty claims/SLA engine, check-ins/leave accrual/
 advances/lifecycle, and the platform layer (workflow state machine, print
 formats, webhook subscriptions, web forms, data import, Paystack/Flutterwave
-gateways, maintenance, global search). Remaining gaps are the long-tail
-items listed per module below.
+gateways, maintenance, global search).
+
+**Update (Nov 2026):** Tranche N shipped — party links, advance taxes,
+bank-reconciliation match suggestions, territories/industry types/market
+segments, competitors + notes + appointments, SMS center, task types +
+activity types/costing rates + project updates + installation notes,
+plant floors/downtime entries/sub-operations/MPS/BOM update tools,
+packing slips/putaway rules/party item codes, leave encashment/overtime/
+grievances/transfers/skill maps/training/staffing plans/tax declarations,
+asset allocations + activity logs, DocShare, energy points, and CMS
+pages/posts. The remaining gaps are genuinely marginal items (bisect tool,
+Gantt charting library, appointments calendar UI polish).
 
 ---
 

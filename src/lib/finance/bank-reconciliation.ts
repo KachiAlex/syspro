@@ -189,6 +189,66 @@ export async function getReconciliationItems(reconciliationId: string): Promise<
   return rows.map(normalizeReconciliationItem);
 }
 
+/**
+ * Auto-match proposal: pair unreconciled statement items with book items of
+ * the same absolute amount within a ±7-day window. Returns proposals only —
+ * the user confirms each match via toggleItemReconciliation.
+ */
+export async function suggestMatches(
+  tenantSlug: string,
+  reconciliationId: string,
+  dayWindow = 7
+): Promise<{ bankItem: ReconciliationItem; bookItem: ReconciliationItem; amount: number }[]> {
+  const sql = SQL;
+  await ensureReconciliationTables(sql);
+
+  const items = (await sql`
+    select * from reconciliation_items
+    where reconciliation_id = ${reconciliationId} and not is_reconciled
+    order by transaction_date
+  `) as any[];
+
+  const bank = items.filter((i: any) => i.transaction_type === "bank_statement");
+  const book = items.filter((i: any) => i.transaction_type !== "bank_statement" && !i.book_entry_id);
+
+  const proposals: { bankItem: any; bookItem: any; amount: number }[] = [];
+  const usedBook = new Set<string>();
+
+  for (const b of bank) {
+    const bDate = new Date(b.transaction_date).getTime();
+    const match = book.find((k: any) =>
+      !usedBook.has(k.id) &&
+      Math.abs(Number(k.amount)) === Math.abs(Number(b.amount)) &&
+      Math.abs(new Date(k.transaction_date).getTime() - bDate) <= dayWindow * 86400_000
+    );
+    if (match) {
+      usedBook.add(match.id);
+      proposals.push({ bankItem: b, bookItem: match, amount: Number(b.amount) });
+    }
+  }
+  return proposals;
+}
+
+/** Apply confirmed match proposals: reconcile both rows of each pair. */
+export async function applyMatches(
+  pairs: { bankItemId: string; bookItemId: string }[]
+): Promise<{ applied: number }> {
+  const sql = SQL;
+  await ensureReconciliationTables(sql);
+  let applied = 0;
+  for (const p of pairs) {
+    for (const id of [p.bankItemId, p.bookItemId]) {
+      const [row] = (await sql`
+        update reconciliation_items set is_reconciled = true,
+          reconciled_at = now()
+        where id = ${id} and not is_reconciled returning id
+      `) as any[];
+      if (row) applied++;
+    }
+  }
+  return { applied };
+}
+
 export async function finalizeReconciliation(
   id: string,
   tenantSlug: string,
