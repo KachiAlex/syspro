@@ -30,6 +30,13 @@
 - Ranking script: `db/scripts/pg-top-queries.sql` — run via docker exec (header comments in the file show the command) or through the SSH tunnel with `psql -f`.
 - App-level slow query logging: set `SQL_SLOW_MS=500` in the app env (already set in prod `/opt/syspro-erp/.env`) — queries over the threshold log `[slow-query]` warnings.
 
+## VPS cron jobs (installed on host crontab)
+
+- `*/15` `/opt/syspro-erp/cron/run-automation.sh` — POSTs `/api/cron/automation` (CRON_SECRET from .env): drains automation queue, notification outbox, webhook deliveries, scheduled reports, dunning, SLA checks.
+- `02:30` `/opt/syspro-erp/cron/backup-db.sh` — `pg_dump` → `/root/db-backups/syspro_erp-*.sql.gz`, 14-day retention. Backups are on the same VPS (no off-site copy yet).
+- `*/5` `/opt/syspro-erp/cron/health-check.sh` — app/local + public-domain health, db health, pool liveness, disk; emails `admin@pisairtel.com` via `send-alert.py` (SMTP creds from `/opt/syspro-erp/.env`) on DOWN/RECOVERED transitions. State in `/var/lib/syspro-health`, logs in `/var/log/syspro-health.log`.
+- Script sources are tracked in `scripts/ops/` — keep server copies in sync when editing.
+
 ## Conventions
 
 - Canonical GL posting goes through `src/lib/finance/gl.ts` `postGLEntry` — never write journal_entries/journal_entry_lines directly.
