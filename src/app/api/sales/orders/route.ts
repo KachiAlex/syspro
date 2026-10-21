@@ -78,6 +78,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Customer not found" }, { status: 404 });
     }
     const customerName = custResult.rows[0].name;
+
+    // ERPNext-style credit control: block/warn on credit hold or limit
+    // breach at order submit (invoice issue re-checks via finance layer).
+    const { assertCreditAvailable } = await import("@/lib/finance/credit-control");
+    const creditCheck = await assertCreditAvailable(context.tenantSlug, String(customerId), total)
+      .catch((err) => ({ error: err instanceof Error ? err.message : String(err) }));
+    if ((creditCheck as any).error) {
+      return NextResponse.json({ error: (creditCheck as any).error }, { status: 402 });
+    }
     const createdAt = new Date().toISOString();
 
     await db.query(

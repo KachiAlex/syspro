@@ -146,7 +146,14 @@ export async function updateTicket(tenantSlug: string, ticketId: string, updates
   vals.push(ticketId, tenantSlug);
   const { rows } = await db.query(`update support_tickets set ${sets.join(", ")} where id=$${i++} and tenant_slug=$${i++} returning *`, vals);
   const updated = rows?.[0] ? rowToTicket(rows[0]) : null;
-  if (updates.status && updated) await addTicketActivity(tenantSlug, ticketId, { activityType: "status_changed", actorId: updates.updatedBy, details: { from: existing.status, to: updates.status } });
+  if (updates.status && updated) {
+    await addTicketActivity(tenantSlug, ticketId, { activityType: "status_changed", actorId: updates.updatedBy, details: { from: existing.status, to: updates.status } });
+    // SLA clock: pause-on-status / resume handled by the SLA engine
+    try {
+      const { applySlaStatusTransition } = await import("./support/sla-engine");
+      await applySlaStatusTransition(tenantSlug, ticketId, updates.status);
+    } catch { /* SLA engine optional — never block a status change */ }
+  }
   return updated;
 }
 

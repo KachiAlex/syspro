@@ -25,7 +25,7 @@ type PolicyEvaluationResult = {
  * (comma-separated hostnames, `*.` prefix = subdomain wildcard), the host
  * must also match an entry.
  */
-function webhookUrlAllowed(rawUrl: string): { ok: boolean; reason?: string } {
+export function webhookUrlAllowed(rawUrl: string): { ok: boolean; reason?: string } {
   let url: URL;
   try {
     url = new URL(rawUrl);

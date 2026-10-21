@@ -23,7 +23,9 @@ export type FinanceEventType =
   | "journal_posted"
   | "budget_breached"
   | "inventory_sold"
-  | "inventory_received";
+  | "inventory_received"
+  | "rfq_awarded"
+  | "material_request_converted";
 
 export interface FinanceEventInput {
   tenantSlug: string;

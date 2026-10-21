@@ -686,7 +686,7 @@ export async function seedChartOfAccounts(tenantSlug: string): Promise<{ inserte
       continue;
     }
     const accountType = a.type === "revenue" ? "INCOME" : a.type.toUpperCase();
-    await db.query(
+    const { rowCount } = await db.query(
       `insert into chart_of_accounts (
          id, tenant_slug, code, name, type,
          account_code, account_name, account_type,
@@ -695,7 +695,8 @@ export async function seedChartOfAccounts(tenantSlug: string): Promise<{ inserte
        on conflict do nothing`,
       [randomUUID(), tenantSlug, a.code, a.name, a.type, accountType, currency]
     );
-    inserted++;
+    if (rowCount > 0) inserted++;
+    else skipped++;
   }
   return { inserted, skipped };
 }

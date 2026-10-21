@@ -89,10 +89,25 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
   const [searchQuery, setSearchQuery] = useState("");
   const [aiChatOpen, setAiChatOpen] = useState(false);
 
+  const [searchHits, setSearchHits] = useState<{ entity: string; id: string; title: string; subtitle?: string; href: string }[]>([]);
+
   const filteredLinks = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
     return QUICK_LINKS.filter((l) => l.label.toLowerCase().includes(q));
+  }, [searchQuery]);
+
+  // Global entity search — debounced /api/search call.
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) { setSearchHits([]); return; }
+    const t = setTimeout(() => {
+      fetch(`/api/search?q=${encodeURIComponent(q)}`)
+        .then((r) => r.json())
+        .then((d) => setSearchHits(d.hits ?? []))
+        .catch(() => setSearchHits([]));
+    }, 250);
+    return () => clearTimeout(t);
   }, [searchQuery]);
 
   // Keyboard shortcuts
@@ -210,6 +225,23 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
                 </div>
                 {/* Search Results */}
                 <div className="border-t border-slate-200 pt-2 max-h-80 overflow-y-auto">
+                  {searchHits.length > 0 && (
+                    <div className="py-2">
+                      <p className="text-xs text-gray-500 px-2 mb-1">Records</p>
+                      {searchHits.map((hit) => (
+                        <Link
+                          key={`${hit.entity}-${hit.id}`}
+                          href={hit.href}
+                          onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 transition-colors group"
+                        >
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 w-16 shrink-0">{hit.entity}</span>
+                          <span className="text-sm text-black">{hit.title}</span>
+                          {hit.subtitle && <span className="text-xs text-gray-400 truncate">{hit.subtitle}</span>}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                   {filteredLinks.length > 0 ? (
                     <div className="py-2">
                       <p className="text-xs text-gray-500 px-2 mb-1">Quick Links</p>
@@ -225,7 +257,7 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
                         </Link>
                       ))}
                     </div>
-                  ) : searchQuery ? (
+                  ) : searchQuery && searchHits.length === 0 ? (
                     <p className="text-sm text-gray-500 text-center py-4">
                       No results for &quot;{searchQuery}&quot;
                     </p>

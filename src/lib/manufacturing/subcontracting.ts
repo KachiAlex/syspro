@@ -252,3 +252,109 @@ export async function cancelSubcontractOrder(tenantSlug: string, orderId: string
   ` as any[];
   if (!res.length) throw new Error("Only open orders can be cancelled");
 }
+
+// ---------------------------------------------------------------------------
+// Supplied-materials ledger: issue -> consume -> return
+// ---------------------------------------------------------------------------
+
+async function ensureMovementLedger() {
+  await ensureSubcontractTables();
+  await SQL`
+    create table if not exists subcontract_material_movements (
+      id uuid primary key default gen_random_uuid(),
+      subcontract_material_id text not null,
+      tenant_slug text not null,
+      movement_type text not null check (movement_type in ('issue','consume','return')),
+      quantity numeric not null check (quantity > 0),
+      notes text,
+      created_at timestamptz not null default now()
+    )
+  `;
+  await SQL`alter table if exists subcontract_materials add column if not exists consumed_quantity numeric not null default 0`;
+  await SQL`alter table if exists subcontract_materials add column if not exists returned_quantity numeric not null default 0`;
+}
+
+/**
+ * Record consumption of issued materials against a subcontract order (what
+ * the subcontractor reports as used), or return of unused materials.
+ */
+export async function recordMaterialMovement(
+  tenantSlug: string,
+  materialId: string,
+  movementType: "consume" | "return",
+  quantity: number,
+  notes?: string
+) {
+  await ensureMovementLedger();
+  const m = ((await SQL`
+    select sm.*, so.order_number from subcontract_materials sm
+    join subcontract_orders so on so.id = sm.subcontract_order_id
+    where sm.id = ${materialId} and sm.tenant_slug = ${tenantSlug}
+  `) as any[])[0];
+  if (!m) throw new Error("Subcontract material line not found");
+
+  const issued = Number(m.quantity);
+  const consumed = Number(m.consumed_quantity ?? 0);
+  const returned = Number(m.returned_quantity ?? 0);
+  const outstanding = issued - consumed - returned;
+  if (quantity > outstanding) {
+    throw new Error(`Cannot ${movementType} ${quantity}: only ${outstanding} outstanding at subcontractor`);
+  }
+
+  await SQL`
+    insert into subcontract_material_movements
+      (subcontract_material_id, tenant_slug, movement_type, quantity, notes)
+    values (${materialId}, ${tenantSlug}, ${movementType}, ${quantity}, ${notes ?? null})
+  `;
+
+  if (movementType === "consume") {
+    await SQL`update subcontract_materials set consumed_quantity = consumed_quantity + ${quantity} where id = ${materialId}`;
+  } else {
+    await SQL`update subcontract_materials set returned_quantity = returned_quantity + ${quantity} where id = ${materialId}`;
+    // Return goes back into stock via the ledger
+    await recordStockMovement(tenantSlug, {
+      productSku: m.component_sku,
+      productName: m.component_name ?? m.component_sku,
+      movementType: "return",
+      quantity,
+      unitCost: Number(m.unit_cost),
+      referenceType: "subcontract_return",
+      referenceId: m.order_number,
+      notes: `Returned from subcontractor — ${m.order_number}`,
+    });
+    await postGLEntry({
+      tenantSlug,
+      entryDate: new Date().toISOString().split("T")[0],
+      journalType: "SYSTEM",
+      referenceType: "subcontract_return",
+      referenceId: m.order_number,
+      description: `Subcontractor material return — ${m.component_sku} ×${quantity}`,
+      lines: [
+        { accountCode: GL_ACCOUNTS.RAW_MATERIALS, debitAmount: quantity * Number(m.unit_cost), description: "Materials returned" },
+        { accountCode: GL_ACCOUNTS.WIP_INVENTORY, creditAmount: quantity * Number(m.unit_cost), description: "Reverse WIP issue" },
+      ],
+    });
+  }
+  return { recorded: true, outstanding: outstanding - quantity };
+}
+
+/** Per-order view of the supplied-materials ledger position. */
+export async function getMaterialLedger(tenantSlug: string, orderId: string) {
+  await ensureMovementLedger();
+  const materials = (await SQL`
+    select * from subcontract_materials where subcontract_order_id = ${orderId} and tenant_slug = ${tenantSlug}
+  `) as any[];
+  const ids = materials.map((m: any) => m.id);
+  const movements = ids.length
+    ? ((await SQL`
+        select * from subcontract_material_movements where tenant_slug = ${tenantSlug}
+          and subcontract_material_id = ANY(${ids})
+        order by created_at
+      `) as any[])
+    : [];
+  return materials.map((m: any) => ({
+    ...m,
+    outstanding: Number(m.quantity) - Number(m.consumed_quantity ?? 0) - Number(m.returned_quantity ?? 0),
+    movements: movements.filter((mv: any) => mv.subcontract_material_id === m.id),
+  }));
+}

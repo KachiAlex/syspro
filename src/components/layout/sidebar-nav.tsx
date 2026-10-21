@@ -44,6 +44,7 @@ const navigationItems = [
       { title: "Leads", href: "/tenant-admin/crm/leads" },
       { title: "Customers", href: "/tenant-admin/crm/customers" },
       { title: "Sales Pipeline", href: "/tenant-admin/crm/pipeline" },
+      { title: "CRM Depth", href: "/tenant-admin/crm/depth" },
     ]
   },
   {
@@ -92,6 +93,7 @@ const navigationItems = [
       { title: "Recruitment", href: "/tenant-admin/hr/recruitment" },
       { title: "Attendance", href: "/tenant-admin/hr/attendance" },
       { title: "Payroll", href: "/tenant-admin/hr/payroll" },
+      { title: "HR Depth", href: "/tenant-admin/hr/depth" },
       { title: "Reports", href: "/tenant-admin/hr/staff-reports" },
     ]
   },
@@ -113,13 +115,17 @@ const navigationItems = [
     permission: "sales",
     children: [
       { title: "POS", href: "/tenant-admin/pos" },
+      { title: "Quotations", href: "/tenant-admin/sales/quotations" },
       { title: "Sales Orders", href: "/tenant-admin/sales/orders" },
       { title: "Store Orders", href: "/tenant-admin/storefront" },
       { title: "Suppliers", href: "/tenant-admin/sales/suppliers" },
       { title: "Vendor Analytics", href: "/tenant-admin/vendors/analytics" },
       { title: "Promotions", href: "/tenant-admin/promotions" },
       { title: "Purchase Orders", href: "/tenant-admin/sales/purchase-orders" },
+      { title: "RFQs", href: "/tenant-admin/procurement/rfqs" },
       { title: "Procurement", href: "/tenant-admin/procurement" },
+      { title: "Material Requests", href: "/tenant-admin/inventory/material-requests" },
+      { title: "Inventory Control", href: "/tenant-admin/inventory/control" },
       { title: "Inventory", href: "/tenant-admin/sales/inventory" },
       { title: "Inventory Tracking", href: "/tenant-admin/inventory" },
       { title: "Warehouses", href: "/tenant-admin/warehouses" },
@@ -136,6 +142,7 @@ const navigationItems = [
       { title: "Batch Runs", href: "/tenant-admin/manufacturing/batch-runs" },
       { title: "Subcontracting", href: "/tenant-admin/manufacturing/subcontracting" },
       { title: "MRP", href: "/tenant-admin/manufacturing/mrp" },
+      { title: "Production Planning", href: "/tenant-admin/manufacturing/planning" },
       { title: "Quality Control", href: "/tenant-admin/manufacturing/quality" },
     ]
   },
@@ -198,6 +205,7 @@ const navigationItems = [
       { title: "Settings", href: "/tenant-admin/settings" },
       { title: "Notifications", href: "/tenant-admin/notifications" },
       { title: "Custom Fields", href: "/tenant-admin/settings/custom-fields" },
+      { title: "Platform", href: "/tenant-admin/settings/platform" },
       { title: "Users & Roles", href: "/tenant-admin/users" },
       { title: "Audit Trail", href: "/tenant-admin/audit" },
       { title: "System Health", href: "/tenant-admin/health" },

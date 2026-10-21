@@ -61,8 +61,11 @@ export async function POST(request: NextRequest) {
 }
 
 const actionSchema = z.object({
-  action: z.enum(["issue", "receive", "cancel"]),
+  action: z.enum(["issue", "receive", "cancel", "consume", "return", "ledger"]),
   orderId: z.string().min(1),
+  materialId: z.string().optional(),
+  quantity: z.coerce.number().positive().optional(),
+  notes: z.string().optional(),
   receivedQty: z.coerce.number().positive().optional(),
   warehouseId: z.string().optional(),
 });
@@ -77,15 +80,28 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Invalid request", issues: parsed.error.issues }, { status: 400 });
     }
     const d = parsed.data;
-    const out = d.action === "issue"
-      ? await issueSubcontractMaterials(context.tenantSlug, d.orderId, { warehouseId: d.warehouseId })
-      : d.action === "receive"
-        ? await receiveSubcontractGoods({
-            tenantSlug: context.tenantSlug, orderId: d.orderId,
-            receivedQty: d.receivedQty, warehouseId: d.warehouseId,
-            userId: (gate as any).user?.id ?? undefined,
-          })
-        : (await cancelSubcontractOrder(context.tenantSlug, d.orderId), { cancelled: true });
+    let out: any;
+    if (d.action === "issue") {
+      out = await issueSubcontractMaterials(context.tenantSlug, d.orderId, { warehouseId: d.warehouseId });
+    } else if (d.action === "receive") {
+      out = await receiveSubcontractGoods({
+        tenantSlug: context.tenantSlug, orderId: d.orderId,
+        receivedQty: d.receivedQty, warehouseId: d.warehouseId,
+        userId: (gate as any).user?.id ?? undefined,
+      });
+    } else if (d.action === "consume" || d.action === "return") {
+      if (!d.materialId || !d.quantity) {
+        return NextResponse.json({ error: "materialId and quantity are required" }, { status: 400 });
+      }
+      const { recordMaterialMovement } = await import("@/lib/manufacturing/subcontracting");
+      out = await recordMaterialMovement(context.tenantSlug, d.materialId, d.action, d.quantity, d.notes);
+    } else if (d.action === "ledger") {
+      const { getMaterialLedger } = await import("@/lib/manufacturing/subcontracting");
+      out = { ledger: await getMaterialLedger(context.tenantSlug, d.orderId) };
+    } else {
+      await cancelSubcontractOrder(context.tenantSlug, d.orderId);
+      out = { cancelled: true };
+    }
     return NextResponse.json(out);
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
