@@ -107,6 +107,7 @@ const navigationItems = [
     permission: "projects",
     children: [
       { title: "Active Projects", href: "/tenant-admin/projects/active" },
+      { title: "Gantt", href: "/tenant-admin/projects/gantt" },
       { title: "Archive", href: "/tenant-admin/projects/archive" },
       { title: "Edge", href: "/tenant-admin/projects/edge" },
       { title: "Reports", href: "/tenant-admin/projects/reports" },

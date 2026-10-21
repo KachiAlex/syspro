@@ -16,6 +16,8 @@ export default function CrmMastersPage() {
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
   const [f, setF] = useState<Record<string, any>>({});
+  const [calView, setCalView] = useState(false);
+  const [calMonth, setCalMonth] = useState(() => { const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d; });
 
   const load = useCallback(async () => {
     const entries = await Promise.all(
@@ -154,7 +156,48 @@ export default function CrmMastersPage() {
               <input type="number" placeholder="Mins" value={f.aDur ?? 30} onChange={(e) => setF({ ...f, aDur: e.target.value })} className={`${input} w-20`} />
               <input placeholder="Location" value={f.aLoc ?? ""} onChange={(e) => setF({ ...f, aLoc: e.target.value })} className={input} />
               <button className={btn} onClick={() => post({ action: "create-appointment", title: f.aTitle, scheduledAt: f.aWhen, durationMinutes: Number(f.aDur ?? 30), location: f.aLoc })}>Schedule</button>
+              <span className="ml-auto flex items-center gap-1 text-sm">
+                <button className={btnSm} onClick={() => setCalMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}>‹</button>
+                <b className="w-32 text-center">{calMonth.toLocaleString(undefined, { month: "long", year: "numeric" })}</b>
+                <button className={btnSm} onClick={() => setCalMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}>›</button>
+                <button className={`${btnSm} ml-2`} onClick={() => setCalView((v) => !v)}>{calView ? "List" : "Calendar"}</button>
+              </span>
             </div>
+            {calView ? (
+              <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border border-slate-800 bg-slate-800 text-xs">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                  <div key={d} className="bg-slate-900 p-2 text-center font-semibold text-slate-400">{d}</div>
+                ))}
+                {(() => {
+                  const year = calMonth.getFullYear();
+                  const month = calMonth.getMonth();
+                  const first = new Date(year, month, 1);
+                  const days = new Date(year, month + 1, 0).getDate();
+                  const cells: any[] = [];
+                  for (let i = 0; i < first.getDay(); i++) cells.push(<div key={`pad-${i}`} className="min-h-24 bg-slate-950/60" />);
+                  for (let d = 1; d <= days; d++) {
+                    const dayAppts = (data.appointments ?? []).filter((a) => {
+                      const t = new Date(a.scheduled_at);
+                      return t.getFullYear() === year && t.getMonth() === month && t.getDate() === d;
+                    });
+                    const isToday = new Date().toDateString() === new Date(year, month, d).toDateString();
+                    cells.push(
+                      <div key={d} className={`min-h-24 bg-slate-900 p-1.5 ${isToday ? "outline outline-1 outline-emerald-500" : ""}`}>
+                        <div className={`mb-1 text-right text-[10px] ${isToday ? "font-bold text-emerald-400" : "text-slate-500"}`}>{d}</div>
+                        {dayAppts.slice(0, 3).map((a) => (
+                          <div key={a.id} title={`${a.title} · ${a.location ?? ""} · ${a.status}`}
+                            className={`mb-0.5 truncate rounded px-1 py-0.5 ${a.status === "cancelled" ? "bg-slate-800 text-slate-500 line-through" : "bg-indigo-900/60 text-indigo-200"}`}>
+                            {String(a.scheduled_at).slice(11, 16)} {a.title}
+                          </div>
+                        ))}
+                        {dayAppts.length > 3 && <div className="text-[10px] text-slate-500">+{dayAppts.length - 3} more</div>}
+                      </div>
+                    );
+                  }
+                  return cells;
+                })()}
+              </div>
+            ) : (
             <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
               <thead className="text-left text-slate-400"><tr><th className={th}>Appointment</th><th className={th}>When</th><th className={th}>Status</th><th className={th}></th></tr></thead>
               <tbody>
@@ -173,6 +216,7 @@ export default function CrmMastersPage() {
                 {!data.appointments?.length && <tr><td colSpan={4} className="p-6 text-center text-slate-500">No appointments</td></tr>}
               </tbody>
             </table>
+            )}
           </div>
         )}
 

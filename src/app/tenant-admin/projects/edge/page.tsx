@@ -13,12 +13,13 @@ export default function ProjectsEdgePage() {
   const [f, setF] = useState<Record<string, any>>({});
 
   const load = useCallback(async () => {
-    const [m, u, n] = await Promise.all([
-      fetch("/api/projects/edge?view=masters").then((r) => r.json()).catch(() => ({})),
-      fetch("/api/projects/edge?view=updates").then((r) => r.json()).catch(() => ({})),
+    const [tt, at, u, n] = await Promise.all([
+      fetch("/api/projects/edge?view=task-types").then((r) => r.json()).catch(() => ({})),
+      fetch("/api/projects/edge?view=activity-types").then((r) => r.json()).catch(() => ({})),
+      fetch("/api/projects/edge?view=updates&projectId=").then((r) => r.json()).catch(() => ({})),
       fetch("/api/projects/edge?view=installation-notes").then((r) => r.json()).catch(() => ({})),
     ]);
-    setData({ taskTypes: m.taskTypes ?? [], activityTypes: m.activityTypes ?? [], rates: m.rates ?? [], updates: u.updates ?? [], notes: n.notes ?? [] });
+    setData({ taskTypes: tt.taskTypes ?? [], activityTypes: at.activityTypes ?? [], updates: u.updates ?? [], notes: n.notes ?? [] });
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -65,24 +66,32 @@ export default function ProjectsEdgePage() {
               </div>
             </section>
             <section>
-              <h3 className="mb-2 font-semibold">Activity Types + Costing Rates</h3>
+              <h3 className="mb-2 font-semibold">Activity Types</h3>
               <div className="flex flex-wrap gap-2">
                 <input placeholder="Activity name" value={f.atName ?? ""} onChange={(e) => setF({ ...f, atName: e.target.value })} className={input} />
-                <input type="number" placeholder="Costing rate" value={f.atCost ?? 0} onChange={(e) => setF({ ...f, atCost: e.target.value })} className={`${input} w-32`} />
+                <input type="number" placeholder="Default rate" value={f.atRate ?? 0} onChange={(e) => setF({ ...f, atRate: e.target.value })} className={`${input} w-32`} />
+                <button className={btn} onClick={() => post({ action: "create-activity-type", name: f.atName, defaultRate: Number(f.atRate) })}>Add</button>
+              </div>
+              <h3 className="mb-2 mt-6 font-semibold">Employee Rates</h3>
+              <div className="flex flex-wrap gap-2">
+                <select value={f.atId ?? ""} onChange={(e) => setF({ ...f, atId: e.target.value })} className={input}>
+                  <option value="">Activity type</option>
+                  {data.activityTypes?.map((a: any) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                </select>
+                <input placeholder="Employee ID" value={f.atEmp ?? ""} onChange={(e) => setF({ ...f, atEmp: e.target.value })} className={input} />
+                <input type="number" placeholder="Cost rate" value={f.atCost ?? 0} onChange={(e) => setF({ ...f, atCost: e.target.value })} className={`${input} w-32`} />
                 <input type="number" placeholder="Billing rate" value={f.atBill ?? 0} onChange={(e) => setF({ ...f, atBill: e.target.value })} className={`${input} w-32`} />
-                <input placeholder="Employee ID (opt)" value={f.atEmp ?? ""} onChange={(e) => setF({ ...f, atEmp: e.target.value })} className={input} />
-                <button className={btn} onClick={() => post({ action: "upsert-activity-rate", activityType: f.atName, employeeId: f.atEmp || undefined, costingRate: Number(f.atCost), billingRate: Number(f.atBill) })}>Set Rate</button>
+                <button className={btn} onClick={() => post({ action: "set-activity-cost", activityTypeId: f.atId, employeeId: f.atEmp, costRate: Number(f.atCost), billingRate: Number(f.atBill) })}>Set Rate</button>
               </div>
               <table className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-                <thead className="text-left text-slate-400"><tr><th className={th}>Activity</th><th className={th}>Employee</th><th className={th}>Costing</th><th className={th}>Billing</th></tr></thead>
+                <thead className="text-left text-slate-400"><tr><th className={th}>Activity</th><th className={th}>Default Rate</th></tr></thead>
                 <tbody>
-                  {data.rates?.map((r: any) => (
-                    <tr key={r.id} className="border-t border-slate-800/50">
-                      <td className={th}>{r.activity_name ?? r.activity_type_id}</td><td className={th}>{r.employee_id ?? "all"}</td>
-                      <td className={th}>{Number(r.costing_rate).toLocaleString()}</td><td className={th}>{Number(r.billing_rate).toLocaleString()}</td>
+                  {data.activityTypes?.map((a: any) => (
+                    <tr key={a.id} className="border-t border-slate-800/50">
+                      <td className={th}>{a.name}</td><td className={th}>{Number(a.default_rate ?? 0).toLocaleString()}</td>
                     </tr>
                   ))}
-                  {!data.rates?.length && <tr><td colSpan={4} className="p-6 text-center text-slate-500">No activity rates</td></tr>}
+                  {!data.activityTypes?.length && <tr><td colSpan={2} className="p-6 text-center text-slate-500">No activity types</td></tr>}
                 </tbody>
               </table>
             </section>
@@ -95,11 +104,11 @@ export default function ProjectsEdgePage() {
               <input placeholder="Project ID" value={f.puProj ?? ""} onChange={(e) => setF({ ...f, puProj: e.target.value })} className={input} />
               <input placeholder="Title" value={f.puTitle ?? ""} onChange={(e) => setF({ ...f, puTitle: e.target.value })} className={`${input} flex-1`} />
               <input type="number" placeholder="% complete" value={f.puPct ?? ""} onChange={(e) => setF({ ...f, puPct: e.target.value })} className={`${input} w-28`} />
-              <button className={btn} onClick={() => post({ action: "create-update", projectId: f.puProj, title: f.puTitle, percentComplete: f.puPct ? Number(f.puPct) : undefined })}>Post Update</button>
+              <button className={btn} onClick={() => post({ action: "create-update", projectId: f.puProj, summary: f.puTitle, percentComplete: f.puPct ? Number(f.puPct) : undefined })}>Post Update</button>
             </div>
             {data.updates?.map((u: any) => (
               <div key={u.id} className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-                <b>{u.title}</b> <span className="text-xs text-slate-500">{u.project_name ?? ""} · {String(u.created_at).slice(0, 10)}</span>
+                <b>{u.summary}</b> <span className="text-xs text-slate-500">{u.project_name ?? ""} · {String(u.created_at).slice(0, 10)}</span>
                 {u.percent_complete != null && <div className="mt-2 h-1.5 w-48 rounded bg-slate-800"><div className="h-1.5 rounded bg-emerald-500" style={{ width: `${u.percent_complete}%` }} /></div>}
               </div>
             ))}
@@ -110,19 +119,19 @@ export default function ProjectsEdgePage() {
         {tab === "installation-notes" && (
           <div className="space-y-4">
             <div className="flex flex-wrap gap-2">
-              <input placeholder="Customer code" value={f.inCust ?? ""} onChange={(e) => setF({ ...f, inCust: e.target.value })} className={input} />
+              <input placeholder="Customer name" value={f.inCust ?? ""} onChange={(e) => setF({ ...f, inCust: e.target.value })} className={input} />
               <input type="date" value={f.inDate ?? ""} onChange={(e) => setF({ ...f, inDate: e.target.value })} className={input} />
-              <input placeholder="Site address" value={f.inAddr ?? ""} onChange={(e) => setF({ ...f, inAddr: e.target.value })} className={`${input} flex-1`} />
-              <button className={btn} onClick={() => post({ action: "create-note", customerCode: f.inCust, installationDate: f.inDate, siteAddress: f.inAddr })}>Create</button>
+              <input placeholder="Remarks / site details" value={f.inAddr ?? ""} onChange={(e) => setF({ ...f, inAddr: e.target.value })} className={`${input} flex-1`} />
+              <button className={btn} onClick={() => post({ action: "create-installation-note", customerName: f.inCust, installationDate: f.inDate, remarks: f.inAddr })}>Create</button>
             </div>
             <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
               <thead className="text-left text-slate-400"><tr><th className={th}>Note</th><th className={th}>Customer</th><th className={th}>Date</th><th className={th}>Site</th><th className={th}>Status</th></tr></thead>
               <tbody>
                 {data.notes?.map((n: any) => (
                   <tr key={n.id} className="border-t border-slate-800/50">
-                    <td className={`${th} font-mono`}>{n.note_number}</td><td className={th}>{n.customer_name ?? n.customer_code}</td>
+                    <td className={`${th} font-mono`}>{String(n.id).slice(0, 8)}</td><td className={th}>{n.customer_name}</td>
                     <td className={th}>{n.installation_date ? String(n.installation_date).slice(0, 10) : "—"}</td>
-                    <td className={`${th} max-w-[240px] truncate`}>{n.site_address ?? "—"}</td><td className={th}>{n.status}</td>
+                    <td className={`${th} max-w-[240px] truncate`}>{n.remarks ?? "—"}</td><td className={th}>{n.status}</td>
                   </tr>
                 ))}
                 {!data.notes?.length && <tr><td colSpan={5} className="p-6 text-center text-slate-500">No installation notes</td></tr>}

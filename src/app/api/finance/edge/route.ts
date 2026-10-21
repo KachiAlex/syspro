@@ -7,6 +7,7 @@ import {
   listAdvanceTaxes, listPartyLinks, removeAdvanceTax,
 } from "@/lib/finance/edge";
 import { applyMatches, suggestMatches } from "@/lib/finance/bank-reconciliation";
+import { bisectLedger } from "@/lib/finance/bisect";
 
 export async function GET(request: NextRequest) {
   const _scope = await requireModuleAccess(request, "finance", "read");
@@ -21,8 +22,17 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ partners: await getContraPartners(context.tenantSlug) });
       case "advance-taxes":
         return NextResponse.json({ taxes: await listAdvanceTaxes(context.tenantSlug, searchParams.get("paymentId") ?? undefined) });
+      case "bisect":
+        return NextResponse.json(await bisectLedger({
+          tenantSlug: context.tenantSlug,
+          accountCode: String(searchParams.get("account") ?? ""),
+          expectedClosing: Number(searchParams.get("expected") ?? 0),
+          openingBalance: searchParams.get("opening") ? Number(searchParams.get("opening")) : undefined,
+          dateFrom: searchParams.get("from") ?? undefined,
+          dateTo: searchParams.get("to") ?? undefined,
+        }));
       default:
-        return NextResponse.json({ error: "view must be party-links|contra|advance-taxes" }, { status: 400 });
+        return NextResponse.json({ error: "view must be party-links|contra|advance-taxes|bisect" }, { status: 400 });
     }
   } catch (error) {
     console.error("Finance edge read failed:", error);
