@@ -24,6 +24,12 @@
   `DATABASE_URL=postgresql://syspro:syspro_secure_pass_2026@localhost:5433/syspro_erp?sslmode=disable`
 - Finance suites are skipped without `DATABASE_URL` set. Apply migrations through the same connection (`psql` is not installed on the host; run from a client or inside the container).
 
+## Performance observability
+
+- `pg_stat_statements` is enabled on the prod db (preloaded via `docker-compose.yml` command args). Baseline reset 2026-10-21.
+- Ranking script: `db/scripts/pg-top-queries.sql` — run via docker exec (header comments in the file show the command) or through the SSH tunnel with `psql -f`.
+- App-level slow query logging: set `SQL_SLOW_MS=500` in the app env (already set in prod `/opt/syspro-erp/.env`) — queries over the threshold log `[slow-query]` warnings.
+
 ## Conventions
 
 - Canonical GL posting goes through `src/lib/finance/gl.ts` `postGLEntry` — never write journal_entries/journal_entry_lines directly.
