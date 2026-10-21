@@ -75,10 +75,10 @@ export async function POST(request: NextRequest) {
       if (!parsed.success) {
         return NextResponse.json({ success: false, error: parsed.error.issues[0]?.message }, { status: 400 });
       }
-      const data = await processDeferredAccounting({
-        ...parsed.data,
-        userId: (_scope as any).user?.id,
-      });
+      const { withProcessLog } = await import("@/lib/finance/process-log");
+      const data = await withProcessLog("deferred-recognition", {
+        tenantSlug: parsed.data.tenantSlug, params: parsed.data, userId: (_scope as any).user?.id,
+      }, () => processDeferredAccounting({ ...parsed.data, userId: (_scope as any).user?.id }));
       return NextResponse.json({ success: true, data });
     }
     const parsed = createSchema.safeParse(body);

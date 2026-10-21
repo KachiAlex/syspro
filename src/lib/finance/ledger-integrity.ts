@@ -205,3 +205,85 @@ export async function glVsSubledgerComparison(input: { tenantSlug: string }) {
     },
   };
 }
+
+// ─── Ledger Merge ────────────────────────────────────────────────────────────
+
+/**
+ * Merge account `fromCode` into `toCode` — rewrites every journal_entry_lines
+ * account_code reference, merges chart_of_accounts rows, and marks the source
+ * account inactive. Mirrors ERPNext's "Merge Account" (rename in CoA tree).
+ * Irreversible through the UI — call with confirmed=true.
+ */
+export async function mergeAccounts(input: {
+  tenantSlug: string; fromCode: string; toCode: string;
+  userId?: string; confirmed?: boolean;
+}) {
+  await ensureGLTables();
+  if (!input.confirmed) throw new Error("Pass confirmed: true — merge is not easily reversible");
+  const t = input.tenantSlug;
+
+  const from = (await db.query<any>(
+    `select * from chart_of_accounts where code = $2 and (tenant_slug = $1 or tenant_slug is null)`, [t, input.fromCode],
+  )).rows;
+  const to = (await db.query<any>(
+    `select * from chart_of_accounts where code = $2 and (tenant_slug = $1 or tenant_slug is null)`, [t, input.toCode],
+  )).rows;
+  if (!from[0]) throw new Error(`Source account ${input.fromCode} not found`);
+  if (!to[0]) throw new Error(`Target account ${input.toCode} not found`);
+  const fromType = (from[0].account_type ?? from[0].type)?.toUpperCase();
+  const toType = (to[0].account_type ?? to[0].type)?.toUpperCase();
+  if (fromType && toType && fromType !== toType) {
+    throw new Error(`Type mismatch: ${fromType} ≠ ${toType}`);
+  }
+
+  const stats: Record<string, number> = {};
+
+  // GL lines (join through entries for tenant scope)
+  stats.journalLines = (await db.query(
+    `update journal_entry_lines l set account_code = $3, account_name = $4
+     from journal_entries e
+     where l.entry_id = e.id and e.tenant_slug = $1 and l.account_code = $2`,
+    [t, input.fromCode, input.toCode, to[0].name ?? to[0].account_name ?? input.toCode],
+  )).rowCount ?? 0;
+
+  // Subledger account references
+  const subledgerTargets: Array<{ table: string; col: string }> = [
+    { table: "bills", col: "expense_account_code" },
+    { table: "finance_invoices", col: "revenue_account_code" },
+    { table: "finance_payments", col: "account_code" },
+    { table: "bank_statement_lines", col: "bank_account_code" },
+    { table: "budgets", col: "account_code" },
+    { table: "deferred_items", col: "deferred_account_code" },
+    { table: "deferred_items", col: "recognition_account_code" },
+  ];
+  for (const { table, col } of subledgerTargets) {
+    try {
+      stats[`${table}.${col}`] = (await db.query(
+        `update ${table} set ${col} = $3 where tenant_slug = $1 and ${col} = $2`,
+        [t, input.fromCode, input.toCode],
+      )).rowCount ?? 0;
+    } catch { /* table/column may not exist — skip */ }
+  }
+
+  // Retire the source account (tenant-scoped row if present; shared rows get
+  // a tenant-specific tombstone update by code only when tenant_slug matches)
+  await db.query(
+    `update chart_of_accounts set is_active = false,
+        name = name || ' (merged → ' || $3 || ')',
+        account_name = account_name || ' (merged → ' || $3 || ')'
+     where code = $2 and tenant_slug = $1`,
+    [t, input.fromCode, input.toCode],
+  );
+
+  // Audit trail
+  await ensureIntegrityTables();
+  await SQL`
+    insert into transaction_deletion_records
+      (tenant_slug, document_type, document_id, document_data, deleted_by, reason)
+    values (${t}, 'account_merge', ${input.fromCode},
+            ${JSON.stringify({ mergedInto: input.toCode, stats })}::jsonb,
+            ${input.userId ?? null}, ${`Account ${input.fromCode} merged into ${input.toCode}`})
+  `;
+
+  return { merged: input.fromCode, into: input.toCode, stats };
+}

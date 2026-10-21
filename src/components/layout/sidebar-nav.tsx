@@ -73,6 +73,10 @@ const navigationItems = [
       { title: "Deferred", href: "/tenant-admin/finance/deferred" },
       { title: "Ledger Integrity", href: "/tenant-admin/finance/integrity" },
       { title: "Finance Tools", href: "/tenant-admin/finance/tools" },
+      { title: "Share Capital", href: "/tenant-admin/finance/equity" },
+      { title: "Sales Partners", href: "/tenant-admin/finance/partners" },
+      { title: "Loyalty", href: "/tenant-admin/finance/loyalty" },
+      { title: "More Finance", href: "/tenant-admin/finance/more" },
       { title: "Reports", href: "/tenant-admin/finance/reports" },
     ]
   },

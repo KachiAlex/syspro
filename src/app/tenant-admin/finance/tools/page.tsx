@@ -7,7 +7,7 @@ import { AlertCircle, CheckCircle2, Loader2, Play, Plus } from "lucide-react";
 const fmt = (n: number) =>
   `₦${Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
 
-type Tab = "payment-orders" | "modes" | "distributions" | "cc-allocations" | "opening-import" | "statements" | "unreconcile";
+type Tab = "payment-orders" | "modes" | "distributions" | "cc-allocations" | "opening-import" | "statements" | "unreconcile" | "clearance";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "payment-orders", label: "Payment Orders" },
@@ -17,6 +17,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "opening-import", label: "Opening Balances" },
   { key: "statements", label: "Statement Runs" },
   { key: "unreconcile", label: "Unreconcile" },
+  { key: "clearance", label: "Bank Clearance" },
 ];
 
 const inputCls = "rounded bg-slate-800 px-3 py-2 text-sm w-full";
@@ -88,6 +89,86 @@ export default function FinanceToolsPage() {
       {tab === "opening-import" && <OpeningImportTab post={post} busy={busy} />}
       {tab === "statements" && <StatementsTab post={post} busy={busy} />}
       {tab === "unreconcile" && <UnreconcileTab post={post} busy={busy} />}
+      {tab === "clearance" && <ClearanceTab tenantSlug={tenantSlug} />}
+    </div>
+  );
+}
+
+function ClearanceTab({ tenantSlug }: { tenantSlug: string }) {
+  const [lines, setLines] = useState<any[]>([]);
+  const [summary, setSummary] = useState<any[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    setError(null);
+    try {
+      const [l, c] = await Promise.all([
+        fetch(`/api/finance/bank-statements?tenantSlug=${encodeURIComponent(tenantSlug)}`).then((r) => r.json()),
+        fetch(`/api/finance/bank-statements?tenantSlug=${encodeURIComponent(tenantSlug)}&view=clearance`).then((r) => r.json()),
+      ]);
+      setLines(l.lines ?? []);
+      setSummary(c.clearance ?? []);
+    } catch (e: any) { setError(e.message); }
+  }, [tenantSlug]);
+  useEffect(() => { void load(); }, [load]);
+
+  const toggle = (id: string) => setSelected((s) => {
+    const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n;
+  });
+
+  const apply = async (action: "clear" | "unclear") => {
+    setBusy(true); setError(null);
+    try {
+      const res = await fetch("/api/finance/bank-statements", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, lineIds: [...selected], tenantSlug }),
+      });
+      const j = await res.json();
+      if (j.error) throw new Error(j.error);
+      setSelected(new Set()); load();
+    } catch (e: any) { setError(e.message); } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-slate-400">
+        Mark statement lines as cleared once they appear on the bank&apos;s own records — independent of matching.
+      </p>
+      {error && <div className="text-rose-400 text-sm">{error}</div>}
+      {summary.length > 0 && (
+        <div className="flex gap-4 text-xs text-slate-400">
+          {summary.map((s) => (
+            <span key={s.bank_account_code}>
+              {s.bank_account_code}: {s.cleared_count} cleared ({fmt(s.cleared_amount)}) · {s.uncleared_count} pending ({fmt(s.uncleared_amount)})
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="flex gap-2">
+        <button className={btnCls} disabled={busy || !selected.size} onClick={() => apply("clear")}>Clear selected ({selected.size})</button>
+        <button className={btnCls} disabled={busy || !selected.size} onClick={() => apply("unclear")}>Unclear selected</button>
+      </div>
+      <table className="w-full text-sm">
+        <thead><tr className="text-left text-slate-400 border-b border-slate-800">
+          <th className="py-2 pr-3" /><th className="py-2 pr-3">Date</th><th className="py-2 pr-3">Description</th>
+          <th className="py-2 pr-3 text-right">Amount</th><th className="py-2 pr-3">Status</th><th className="py-2">Cleared</th>
+        </tr></thead>
+        <tbody>
+          {lines.map((l) => (
+            <tr key={l.id} className="border-b border-slate-800/60">
+              <td className="py-2 pr-3"><input type="checkbox" checked={selected.has(l.id)} onChange={() => toggle(l.id)} /></td>
+              <td className="py-2 pr-3">{String(l.line_date).slice(0, 10)}</td>
+              <td className="py-2 pr-3 text-xs">{l.description ?? l.reference ?? "—"}</td>
+              <td className="py-2 pr-3 text-right font-mono">{fmt(l.amount)}</td>
+              <td className="py-2 pr-3">{l.status}</td>
+              <td className="py-2">{l.cleared ? `✓ ${String(l.clearance_date ?? "").slice(0, 10)}` : ""}</td>
+            </tr>
+          ))}
+          {!lines.length && <tr><td colSpan={6} className="py-6 text-center text-slate-500">No statement lines — import a bank statement first</td></tr>}
+        </tbody>
+      </table>
     </div>
   );
 }

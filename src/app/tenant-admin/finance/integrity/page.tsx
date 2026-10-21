@@ -142,6 +142,12 @@ export default function LedgerIntegrityPage() {
         )}
       </section>
 
+      <section className="space-y-3">
+        <h2 className="font-medium">Merge Account</h2>
+        <p className="text-xs text-slate-400">Rewrite every GL line and subledger reference from one account to another, then retire the source. <b>Not easily reversible.</b></p>
+        <MergeForm tenantSlug={tenantSlug} onDone={() => { setMsg("Account merged"); load(); }} setError={setError} />
+      </section>
+
       <section className="space-y-2">
         <h2 className="font-medium">Transaction Deletion Records</h2>
         <table className="w-full text-sm">
@@ -163,6 +169,40 @@ export default function LedgerIntegrityPage() {
           </tbody>
         </table>
       </section>
+    </div>
+  );
+}
+
+function MergeForm({ tenantSlug, onDone, setError }: any) {
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [confirm, setConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const run = async () => {
+    setBusy(true); setError(null);
+    try {
+      const res = await fetch("/api/finance/integrity", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "merge-account", tenantSlug, fromCode: from, toCode: to, confirmed: true }),
+      });
+      const j = await res.json();
+      if (!j.success) throw new Error(j.error);
+      setResult(j.data); onDone();
+    } catch (e: any) { setError(e.message); } finally { setBusy(false); }
+  };
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-2 items-center">
+        <input className="rounded bg-slate-800 px-3 py-2 text-sm w-36 font-mono" placeholder="From code" value={from} onChange={(e) => setFrom(e.target.value)} />
+        <span className="text-slate-400">→</span>
+        <input className="rounded bg-slate-800 px-3 py-2 text-sm w-36 font-mono" placeholder="To code" value={to} onChange={(e) => setTo(e.target.value)} />
+        <label className="flex items-center gap-2 text-xs text-rose-300">
+          <input type="checkbox" checked={confirm} onChange={(e) => setConfirm(e.target.checked)} /> I understand this is irreversible
+        </label>
+        <button className={btnCls} disabled={busy || !from || !to || !confirm || from === to} onClick={run}>Merge</button>
+      </div>
+      {result && <pre className="rounded bg-slate-800 p-3 text-xs overflow-auto">{JSON.stringify(result.stats, null, 2)}</pre>}
     </div>
   );
 }

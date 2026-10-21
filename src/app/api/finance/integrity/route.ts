@@ -7,6 +7,7 @@ import {
   glVsSubledgerComparison,
   listDeletionRecords,
   recordTransactionDeletion,
+  mergeAccounts,
 } from "@/lib/finance/ledger-integrity";
 import { requireModuleAccess } from "@/lib/api-auth";
 
@@ -55,6 +56,14 @@ const repostSchema = z.object({
   reason: z.string().optional(),
 });
 
+const mergeSchema = z.object({
+  action: z.literal("merge-account"),
+  tenantSlug: z.string().min(1),
+  fromCode: z.string().min(1),
+  toCode: z.string().min(1),
+  confirmed: z.literal(true),
+});
+
 const recordSchema = z.object({
   action: z.literal("record-deletion"),
   tenantSlug: z.string().min(1),
@@ -87,7 +96,15 @@ export async function POST(request: NextRequest) {
       await recordTransactionDeletion({ ...input, deletedBy: userId });
       return NextResponse.json({ success: true });
     }
-    return NextResponse.json({ success: false, error: "action must be 'repost' or 'record-deletion'" }, { status: 400 });
+    if (body?.action === "merge-account") {
+      const parsed = mergeSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json({ success: false, error: parsed.error.issues[0]?.message }, { status: 400 });
+      }
+      const { action: _a, ...input } = parsed.data;
+      return NextResponse.json({ success: true, data: await mergeAccounts({ ...input, userId }) });
+    }
+    return NextResponse.json({ success: false, error: "action must be 'repost', 'record-deletion' or 'merge-account'" }, { status: 400 });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: error.status ?? 500 });
   }

@@ -35,6 +35,8 @@ async function ensureBankStatementTablesRun() {
     on bank_statement_lines (tenant_slug, bank_account_code, line_date)`;
   await sql`create index if not exists bank_stmt_lines_status_idx
     on bank_statement_lines (tenant_slug, status)`;
+  await sql`alter table bank_statement_lines add column if not exists clearance_date date`;
+  await sql`alter table bank_statement_lines add column if not exists cleared boolean not null default false`;
 }
 
 export type StatementLineInput = {
@@ -285,6 +287,52 @@ export async function ignoreStatementLine(tenantSlug: string, lineId: string) {
     `update bank_statement_lines set status='ignored' where id=$1 and tenant_slug=$2`,
     [lineId, tenantSlug]
   );
+}
+
+/**
+ * Bank clearance — mark statement lines as cleared against the bank's records.
+ * ERPNext Bank Clearance: a line is "cleared" once it appears on the bank's
+ * own statement; unclearing reverses the flag. Independent of matching —
+ * matching links a line to our books, clearance confirms it hit the bank.
+ */
+export async function clearStatementLines(input: {
+  tenantSlug: string; lineIds: string[]; clearanceDate?: string;
+}) {
+  await ensureBankStatementTables();
+  const date = input.clearanceDate ?? new Date().toISOString().slice(0, 10);
+  await db.query(
+    `update bank_statement_lines set cleared = true, clearance_date = $3
+     where tenant_slug = $1 and id = any($2)`,
+    [input.tenantSlug, input.lineIds, date],
+  );
+  return { cleared: input.lineIds.length, clearanceDate: date };
+}
+
+export async function unclearStatementLines(input: { tenantSlug: string; lineIds: string[] }) {
+  await ensureBankStatementTables();
+  await db.query(
+    `update bank_statement_lines set cleared = false, clearance_date = null
+     where tenant_slug = $1 and id = any($2)`,
+    [input.tenantSlug, input.lineIds],
+  );
+  return { uncleared: input.lineIds.length };
+}
+
+/** Bank clearance report: matched-but-uncleared vs cleared per account. */
+export async function clearanceSummary(tenantSlug: string, bankAccountCode?: string) {
+  await ensureBankStatementTables();
+  const cond = bankAccountCode ? "and bank_account_code = $2" : "";
+  const params = bankAccountCode ? [tenantSlug, bankAccountCode] : [tenantSlug];
+  return (await db.query<any>(
+    `select bank_account_code,
+            count(*) filter (where cleared)::int cleared_count,
+            sum(amount) filter (where cleared)::float cleared_amount,
+            count(*) filter (where not cleared)::int uncleared_count,
+            sum(amount) filter (where not cleared)::float uncleared_amount
+     from bank_statement_lines where tenant_slug = $1 ${cond}
+     group by bank_account_code order by bank_account_code`,
+    params
+  )).rows;
 }
 
 export async function statementSummary(tenantSlug: string, bankAccountCode?: string) {

@@ -9,6 +9,7 @@ import {
   generateSubscriptionInvoices, fetchAndStoreExchangeRates,
 } from "@/lib/finance/treasury";
 import { requireModuleAccess } from "@/lib/api-auth";
+import { withProcessLog } from "@/lib/finance/process-log";
 
 export async function GET(request: NextRequest) {
   const _scope = await requireModuleAccess(request, "finance", "read");
@@ -108,8 +109,8 @@ export async function POST(request: NextRequest) {
       case "settle-discounting": data = await settleInvoiceDiscounting({ ...input, userId }); break;
       case "upsert-plan": data = await upsertSubscriptionPlan(input); break;
       case "create-subscription": data = await createSubscription(input); break;
-      case "generate-invoices": data = await generateSubscriptionInvoices({ ...input, userId }); break;
-      case "fetch-rates": data = await fetchAndStoreExchangeRates(input); break;
+      case "generate-invoices": data = await withProcessLog("subscription-invoices", { tenantSlug: input.tenantSlug, params: input, userId }, () => generateSubscriptionInvoices({ ...input, userId })); break;
+      case "fetch-rates": data = await withProcessLog("exchange-rate-fetch", { tenantSlug: input.tenantSlug, params: input, userId }, () => fetchAndStoreExchangeRates(input)); break;
     }
     return NextResponse.json({ success: true, data });
   } catch (error: any) {

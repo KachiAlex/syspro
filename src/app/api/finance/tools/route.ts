@@ -17,6 +17,7 @@ import {
   listCostCenterAllocations,
 } from "@/lib/finance/erp-tools";
 import { requireModuleAccess } from "@/lib/api-auth";
+import { withProcessLog } from "@/lib/finance/process-log";
 
 export async function GET(request: NextRequest) {
   const _scope = await requireModuleAccess(request, "finance", "read");
@@ -131,14 +132,16 @@ export async function POST(request: NextRequest) {
     }
     const input = parsed.data as any;
     const userId = (_scope as any).user?.id;
+    const logged = (process: string, fn: () => Promise<unknown>) =>
+      withProcessLog(process, { tenantSlug: input.tenantSlug, params: input, userId }, fn);
     let data: unknown;
     switch (action) {
-      case "opening-import": data = await importOpeningBalances({ ...input, userId }); break;
+      case "opening-import": data = await logged("opening-import", () => importOpeningBalances({ ...input, userId })); break;
       case "unreconcile-customer": data = await unreconcileCustomerPayment(input); break;
       case "unreconcile-vendor": data = await unreconcileVendorPayment(input); break;
       case "create-payment-order": data = await createPaymentOrder({ ...input, userId }); break;
-      case "process-payment-order": data = await processPaymentOrder({ ...input, userId }); break;
-      case "statement-run": data = await processStatementOfAccounts({ ...input, userId }); break;
+      case "process-payment-order": data = await logged("payment-order", () => processPaymentOrder({ ...input, userId })); break;
+      case "statement-run": data = await logged("statement-of-accounts", () => processStatementOfAccounts({ ...input, userId })); break;
       case "upsert-mop": data = await upsertModeOfPayment(input); break;
       case "upsert-distribution": data = await upsertMonthlyDistribution(input); break;
       case "upsert-cc-allocation": data = await upsertCostCenterAllocation(input); break;
