@@ -133,11 +133,11 @@ export async function POST(request: NextRequest) {
     assignedEmployees = [],
   } = body as any;
 
+  // workstreamId and description are optional — tasks can sit directly on a
+  // project. Requiring them rejected every creation from the task UI.
   const missing = [
     projectId,
-    workstreamId,
     title,
-    description,
     estimatedHours,
     priority,
     dueDate,

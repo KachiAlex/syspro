@@ -658,6 +658,21 @@ async function ensureHrTablesRun(sql: SqlClient = SQL) {
   await sql`create index if not exists idx_admin_leave_requests_emp on admin_leave_requests(tenant_slug, employee_id)`;
   await sql`create index if not exists idx_admin_leave_requests_status on admin_leave_requests(status)`;
 
+  // Tenant holiday list — excluded from leave-day counts and usable by
+  // attendance/timesheet validation.
+  await sql`
+    create table if not exists admin_holidays (
+      id text primary key,
+      tenant_slug text not null,
+      holiday_date date not null,
+      name text not null,
+      weekly_off boolean not null default false,
+      created_at timestamptz default now(),
+      unique (tenant_slug, holiday_date)
+    )
+  `;
+  await sql`create index if not exists idx_admin_holidays_tenant on admin_holidays(tenant_slug, holiday_date)`;
+
   // Notifications
   await sql`
     create table if not exists admin_notifications (
@@ -1633,14 +1648,15 @@ export async function insertLeave(row: {
     values (${id}, ${row.tenantSlug}, ${row.employeeId}, ${row.employeeName}, ${row.leaveType}, ${row.startDate}, ${row.endDate}, ${row.reason})
   `;
   // New requests consume pending balance immediately (mirrors the
-  // /api/tenant/leave/requests path).
+  // /api/tenant/leave/requests path). Holidays don't consume balance.
+  const requestedDays = await countLeaveDays(row.tenantSlug, row.startDate, row.endDate);
   await adjustLeaveBalance({
     tenantSlug: row.tenantSlug,
     employeeId: row.employeeId,
     employeeName: row.employeeName,
     leaveType: row.leaveType,
     year: new Date(`${row.startDate}T00:00:00Z`).getUTCFullYear(),
-    pendingDelta: leaveDaysInclusive(row.startDate, row.endDate),
+    pendingDelta: requestedDays,
   });
   const inserted = await sql`select * from admin_leave where id = ${id} limit 1`;
   await logHrAudit({
@@ -1653,7 +1669,7 @@ export async function insertLeave(row: {
       leaveType: row.leaveType,
       startDate: row.startDate,
       endDate: row.endDate,
-      days: leaveDaysInclusive(row.startDate, row.endDate),
+      days: requestedDays,
     },
   });
 
@@ -1677,7 +1693,7 @@ export async function insertLeave(row: {
         leaveType: row.leaveType,
         startDate: row.startDate,
         endDate: row.endDate,
-        days: leaveDaysInclusive(row.startDate, row.endDate),
+        days: requestedDays,
         reason: row.reason,
       },
     });
@@ -1694,6 +1710,102 @@ function leaveDaysInclusive(startDate: string, endDate: string): number {
   const e = new Date(`${endDate}T00:00:00Z`).getTime();
   if (!Number.isFinite(s) || !Number.isFinite(e) || e < s) return 0;
   return Math.round((e - s) / 86400000) + 1;
+}
+
+// ---------------------------------------------------------------------------
+// Holiday list
+// ---------------------------------------------------------------------------
+
+export async function listHolidays(tenantSlug: string, year?: number) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  if (year) {
+    return (await sql`
+      select * from admin_holidays where tenant_slug = ${tenantSlug}
+        and extract(year from holiday_date) = ${year}
+      order by holiday_date
+    `) as any[];
+  }
+  return (await sql`select * from admin_holidays where tenant_slug = ${tenantSlug} order by holiday_date`) as any[];
+}
+
+export async function upsertHoliday(tenantSlug: string, input: { date: string; name: string; weeklyOff?: boolean }) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const id = randomUUID();
+  const rows = (await sql`
+    insert into admin_holidays (id, tenant_slug, holiday_date, name, weekly_off)
+    values (${id}, ${tenantSlug}, ${input.date}, ${input.name}, ${input.weeklyOff ?? false})
+    on conflict (tenant_slug, holiday_date) do update set
+      name = excluded.name, weekly_off = excluded.weekly_off
+    returning *
+  `) as any[];
+  return rows[0];
+}
+
+export async function deleteHoliday(tenantSlug: string, id: string) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const rows = (await sql`delete from admin_holidays where id = ${id} and tenant_slug = ${tenantSlug} returning id`) as any[];
+  return rows.length > 0;
+}
+
+/**
+ * Leave days for balance accounting = calendar days minus tenant holidays.
+ * (Weekend exclusion is a policy decision — weekends stay counted unless the
+ * tenant marks them as weekly-off holidays.)
+ */
+export async function countLeaveDays(tenantSlug: string, startDate: string, endDate: string): Promise<number> {
+  const total = leaveDaysInclusive(startDate, endDate);
+  if (total <= 0) return 0;
+  try {
+    const rows = (await SQL`
+      select count(*)::int as c from admin_holidays
+      where tenant_slug = ${tenantSlug}
+        and holiday_date between ${startDate}::date and ${endDate}::date
+    `) as any[];
+    return Math.max(0, total - Number(rows[0]?.c ?? 0));
+  } catch {
+    return total;
+  }
+}
+
+/**
+ * Year-end carryover: for every balance row in `year`, roll the unused
+ * entitlement into next year's carried_over, capped by the leave policy's
+ * carryover_cap. Idempotent — re-running overwrites next year's carry value.
+ */
+export async function runLeaveCarryover(tenantSlug: string, year: number) {
+  const sql = SQL;
+  await ensureHrTables(sql);
+  const policies = await getLeavePolicies(tenantSlug, year);
+  const balances = (await sql`
+    select * from admin_leave_balances where tenant_slug = ${tenantSlug} and year = ${year}
+  `) as any[];
+  let rolled = 0;
+  for (const bal of balances) {
+    const policy = policies[bal.leave_type];
+    const cap = Number(policy?.carryoverCap ?? 0);
+    if (cap <= 0) continue;
+    const entitled = bal.entitlement_set
+      ? Number(bal.entitled)
+      : Number(policy ? policyEntitlement(policy, year) : (DEFAULT_LEAVE_ENTITLEMENTS as any)[bal.leave_type] ?? 0);
+    const unused = Math.max(0, entitled + Number(bal.carried_over ?? 0) - Number(bal.used ?? 0));
+    const carry = Math.min(unused, cap);
+    if (carry <= 0) continue;
+    await sql`
+      insert into admin_leave_balances (id, tenant_slug, employee_id, employee_name, leave_type, year, entitled, carried_over)
+      values (${randomUUID()}, ${tenantSlug}, ${bal.employee_id}, ${bal.employee_name}, ${bal.leave_type}, ${year + 1}, 0, ${carry})
+      on conflict (tenant_slug, employee_id, leave_type, year) do update set
+        carried_over = excluded.carried_over, updated_at = now()
+    `;
+    rolled++;
+  }
+  try {
+    const { logAuditAction } = await import("../audit");
+    await logAuditAction("leave.carryover_run", "leave_balance", String(year), { year, rolled }, tenantSlug);
+  } catch { /* audit must not block */ }
+  return { rolled };
 }
 
 /**
@@ -1802,7 +1914,7 @@ export async function updateLeaveStatus(
   const toDateStr = (d: any) => (d instanceof Date ? d.toISOString().split("T")[0] : String(d).split("T")[0]);
   const startDate = toDateStr(prevRow.start_date);
   const endDate = toDateStr(prevRow.end_date);
-  const days = leaveDaysInclusive(startDate, endDate);
+  const days = await countLeaveDays(tenantSlug, startDate, endDate);
   const year = new Date(`${startDate}T00:00:00Z`).getUTCFullYear();
   const base = {
     tenantSlug,
@@ -2080,6 +2192,10 @@ export interface PayrollConfig {
   housingAllowance: number;
   mealAllowance: number;
   taxBands?: PayrollTaxBand[];
+  /** When true (Nigeria PAYE), bands are annual brackets: annualize gross,
+   * apply consolidated relief, compute annual tax, divide by 12. */
+  payeAnnualize?: boolean;
+  payeRelief?: { fixedMin?: number; grossPercentFloor?: number; grossPercent?: number } | null;
 }
 
 /** Progressive tax on a period amount. Bands are cumulative brackets on
@@ -2280,9 +2396,23 @@ export function checkCompliance(
 
     // Tax sanity check: progressive bands when configured, else flat rate.
     // (an explicit rate of 0 means "no tax expected" — don't fall back to defaults)
-    const expectedTax = config.taxBands?.length
-      ? computeProgressiveTax(entry.grossPay, config.taxBands)
-      : (entry.grossPay * (config.taxRate ?? 7.5)) / 100;
+    let expectedTax: number;
+    if (config.taxBands?.length && config.payeAnnualize) {
+      // Mirror the annualized recompute in createPayrollRun so NG profiles
+      // aren't flagged against monthly-band math.
+      const annualGross = entry.grossPay * 12;
+      const relief = config.payeRelief
+        ? Math.max(
+            config.payeRelief.fixedMin ?? 0,
+            (annualGross * (config.payeRelief.grossPercentFloor ?? 0)) / 100
+          ) + (annualGross * (config.payeRelief.grossPercent ?? 0)) / 100
+        : 0;
+      expectedTax = computeProgressiveTax(Math.max(0, annualGross - relief), config.taxBands) / 12;
+    } else {
+      expectedTax = config.taxBands?.length
+        ? computeProgressiveTax(entry.grossPay, config.taxBands)
+        : (entry.grossPay * (config.taxRate ?? 7.5)) / 100;
+    }
     const taxDiff = Math.abs(entry.tax - expectedTax);
     if (taxDiff > 1) {
       issues.push(
@@ -2491,6 +2621,8 @@ export async function createPayrollRun(params: {
       ...params.config,
       pensionRate,
       taxBands: taxBands ?? params.config.taxBands,
+      payeAnnualize,
+      payeRelief,
     }
   );
 

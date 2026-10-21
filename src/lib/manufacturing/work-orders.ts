@@ -132,6 +132,7 @@ async function ensureWorkOrderTablesRun(sql: SqlClient = SQL) {
   await sql`create index if not exists work_orders_tenant_idx on work_orders (tenant_slug, status)`;
   await sql`create index if not exists work_orders_product_idx on work_orders (tenant_slug, product_sku)`;
   await sql`create index if not exists work_order_operations_wo_idx on work_order_operations (work_order_id)`;
+  await sql`alter table work_order_operations add column if not exists started_at timestamptz`;
   await sql`create index if not exists work_order_materials_wo_idx on work_order_materials (work_order_id)`;
 }
 
@@ -260,6 +261,10 @@ export async function releaseWorkOrder(id: string, tenantSlug: string): Promise<
     const explosion = await explodeBom(wo.productSku, tenantSlug, wo.quantity);
     const now = new Date();
 
+    // Idempotent on retry — a mid-release failure leaves the WO 'planned'
+    // with partial material rows; clearing first prevents duplicates.
+    await sql`delete from work_order_materials where work_order_id = ${id}`;
+
     for (const item of explosion) {
       if (item.componentType === "raw_material") {
         const matId = randomUUID();
@@ -278,16 +283,25 @@ export async function releaseWorkOrder(id: string, tenantSlug: string): Promise<
     }
 
     let totalMaterialCost = 0;
+    const { recordStockMovement } = await import("../inventory/stock-movements");
     for (const item of explosion) {
       if (item.componentType !== "raw_material") continue;
       const unitCost = await getComponentUnitCost(item.componentSku, tenantSlug);
       totalMaterialCost += item.quantity * unitCost;
 
-      await sql`
-        update inventory_products
-        set current_stock = greatest(current_stock - ${item.quantity}, 0)
-        where tenant_slug = ${tenantSlug} and sku = ${item.componentSku}
-      `;
+      // Route through the canonical stock ledger: writes a stock_movements
+      // row, enforces the no-oversell guard (the old code silently clamped
+      // at zero), updates warehouse balances and serial/lot tracking.
+      await recordStockMovement(tenantSlug, {
+        productSku: item.componentSku,
+        productName: item.componentName,
+        movementType: "work_order_issue",
+        quantity: item.quantity,
+        unitCost,
+        referenceType: "work_order",
+        referenceId: wo.orderNumber ?? id,
+        notes: `Issued to work order ${wo.orderNumber ?? id}`,
+      });
     }
 
     await sql`
@@ -325,7 +339,11 @@ export async function startWorkOrder(id: string, tenantSlug: string): Promise<Wo
   return row ? normalizeWorkOrder(row) : null;
 }
 
-export async function completeWorkOrder(id: string, tenantSlug: string): Promise<WorkOrder | null> {
+export async function completeWorkOrder(
+  id: string,
+  tenantSlug: string,
+  opts?: { serialNos?: string[]; lotNo?: string; expiryDate?: string }
+): Promise<WorkOrder | null> {
   const sql = SQL;
   await ensureWorkOrderTables(sql);
 
@@ -375,19 +393,33 @@ export async function completeWorkOrder(id: string, tenantSlug: string): Promise
       limit 1
     `) as any[];
 
-    if (existingProduct) {
-      await sql`
-        update inventory_products
-        set current_stock = current_stock + ${wo.quantity}
-        where id = ${existingProduct.id}
-      `;
-    } else {
+    if (!existingProduct) {
       const newId = randomUUID();
       await sql`
         insert into inventory_products (id, tenant_slug, name, sku, category, current_stock, min_stock, unit_cost, sale_price, created_at)
-        values (${newId}, ${tenantSlug}, ${wo.productName}, ${wo.productSku}, 'finished_goods', ${wo.quantity}, 0, ${unitCost}, 0, now())
+        values (${newId}, ${tenantSlug}, ${wo.productName}, ${wo.productSku}, 'finished_goods', 0, 0, ${unitCost}, 0, now())
       `;
     }
+
+    // Canonical stock ledger for the FG receipt — records the movement row,
+    // increments current_stock and warehouse balance. The GL entry stays in
+    // postWipJournalEntry (work_order_receipt JEs are source-handled).
+    // Serial/batch-tracked FGs must arrive with their serials/lot so the
+    // tracking ledger can mint them.
+    const { recordStockMovement } = await import("../inventory/stock-movements");
+    await recordStockMovement(tenantSlug, {
+      productSku: wo.productSku,
+      productName: wo.productName,
+      movementType: "work_order_receipt",
+      quantity: wo.quantity,
+      unitCost,
+      referenceType: "work_order",
+      referenceId: wo.orderNumber ?? id,
+      serialNos: opts?.serialNos,
+      lotNo: opts?.lotNo,
+      expiryDate: opts?.expiryDate,
+      notes: `Completed work order ${wo.orderNumber ?? id}`,
+    });
 
     try {
       const { emitEvent } = await import("@/lib/notify");
@@ -483,13 +515,37 @@ export async function cancelWorkOrder(id: string, tenantSlug: string): Promise<W
 
   if (wo.status === "released") {
     const materials = (await sql`select * from work_order_materials where work_order_id = ${id}`) as any[];
+    const { recordStockMovement } = await import("../inventory/stock-movements");
+    let returnedValue = 0;
     for (const mat of materials) {
       const requiredQty = Number(mat.required_quantity);
-      await sql`
-        update inventory_products
-        set current_stock = current_stock + ${requiredQty}
-        where tenant_slug = ${tenantSlug} and sku = ${mat.component_sku}
-      `;
+      const unitCost = Number(mat.unit_cost);
+      returnedValue += requiredQty * unitCost;
+      await recordStockMovement(tenantSlug, {
+        productSku: mat.component_sku,
+        productName: mat.component_name ?? mat.component_sku,
+        movementType: "adjustment",
+        quantity: requiredQty,
+        unitCost,
+        referenceType: "work_order_cancel",
+        referenceId: wo.orderNumber ?? id,
+        notes: `Material returned on work order ${wo.orderNumber ?? id} cancellation`,
+      }, { skipJournalEntry: true });
+    }
+    // Reverse the WIP release entry — adjustment JEs would hit 6100, but a
+    // WO cancel returns value to raw materials, not an expense offset.
+    if (returnedValue > 0.01) {
+      await createJournalEntry({
+        tenantSlug,
+        entryDate: new Date().toISOString().split("T")[0],
+        referenceType: "manual",
+        referenceId: wo.orderNumber,
+        description: `Work order ${wo.orderNumber} cancelled — materials returned to stock`,
+        lines: [
+          { accountCode: "1500", debitAmount: returnedValue, creditAmount: 0, description: "Materials returned from WIP" },
+          { accountCode: "1300", debitAmount: 0, creditAmount: returnedValue, description: "WIP release reversed" },
+        ],
+      });
     }
   }
 
@@ -517,14 +573,17 @@ export async function updateOperation(
   await ensureWorkOrderTables(sql);
 
   const [row] = (await sql`
-    update work_order_operations
-    set actual_minutes = coalesce(${updates.actualMinutes ?? null}::numeric, actual_minutes),
-        status = coalesce(${updates.status ?? null}::text, status),
-        completed_at = case when ${updates.status ?? null} = 'completed' then now() else completed_at end,
-        completed_by = coalesce(${updates.completedBy ?? null}::text, completed_by),
+    update work_order_operations o
+    set actual_minutes = coalesce(${updates.actualMinutes ?? null}::numeric, o.actual_minutes),
+        status = coalesce(${updates.status ?? null}::text, o.status),
+        started_at = case when ${updates.status ?? null} = 'in_progress' then coalesce(o.started_at, now()) else o.started_at end,
+        completed_at = case when ${updates.status ?? null} = 'completed' then now() else o.completed_at end,
+        completed_by = coalesce(${updates.completedBy ?? null}::text, o.completed_by),
         updated_at = now()
-    where id = ${operationId} and work_order_id = ${workOrderId}
-    returning *
+    from work_orders w
+    where o.id = ${operationId} and o.work_order_id = ${workOrderId}
+      and w.id = o.work_order_id and w.tenant_slug = ${tenantSlug}
+    returning o.*
   `) as any[];
 
   return row ? normalizeWorkOrderOperation(row) : null;
@@ -543,12 +602,14 @@ export async function consumeMaterial(
   if (!wo || wo.status !== "in_progress") return null;
 
   const [row] = (await sql`
-    update work_order_materials
-    set consumed_quantity = consumed_quantity + ${consumedQuantity},
-        status = case when consumed_quantity + ${consumedQuantity} >= required_quantity then 'consumed' else 'pending' end,
+    update work_order_materials m
+    set consumed_quantity = m.consumed_quantity + ${consumedQuantity},
+        status = case when m.consumed_quantity + ${consumedQuantity} >= m.required_quantity then 'consumed' else 'pending' end,
         updated_at = now()
-    where id = ${materialId} and work_order_id = ${workOrderId}
-    returning *
+    from work_orders w
+    where m.id = ${materialId} and m.work_order_id = ${workOrderId}
+      and w.id = m.work_order_id and w.tenant_slug = ${tenantSlug}
+    returning m.*
   `) as any[];
 
   return row ? normalizeWorkOrderMaterial(row) : null;
@@ -596,6 +657,38 @@ async function postWipJournalEntry(
         });
       }
     } else if (type === "complete") {
+      // Absorb conversion costs into WIP before the completion entry — the
+      // release JE only debited 1300 for materials, so crediting it for
+      // total_cost without this would drive 1300 negative.
+      const laborCost = Number(wo.labor_cost ?? 0);
+      const overheadCost = Number(wo.overhead_cost ?? 0);
+      if (laborCost > 0.01) {
+        await createJournalEntry({
+          tenantSlug,
+          entryDate: today,
+          referenceType: "manual",
+          referenceId: wo.order_number,
+          description: `Labor absorbed into WIP — work order ${wo.order_number}`,
+          lines: [
+            { accountCode: "1300", debitAmount: laborCost, creditAmount: 0, description: "Labor capitalized to WIP" },
+            { accountCode: "6300", debitAmount: 0, creditAmount: laborCost, description: "Labor absorbed from wages expense" },
+          ],
+        });
+      }
+      if (overheadCost > 0.01) {
+        await createJournalEntry({
+          tenantSlug,
+          entryDate: today,
+          referenceType: "manual",
+          referenceId: wo.order_number,
+          description: `Overhead absorbed into WIP — work order ${wo.order_number}`,
+          lines: [
+            { accountCode: "1300", debitAmount: overheadCost, creditAmount: 0, description: "Overhead capitalized to WIP" },
+            { accountCode: "6100", debitAmount: 0, creditAmount: overheadCost, description: "Overhead absorbed from general expense" },
+          ],
+        });
+      }
+
       const totalCost = Number(wo.total_cost);
       if (totalCost > 0) {
         await createJournalEntry({

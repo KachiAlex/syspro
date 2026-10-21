@@ -7,6 +7,7 @@ import { TaskService, TaskResponse } from '../services/taskService';
 import { ProjectService } from '../services/projectService';
 import { TaskAssignmentModal } from '../components/TaskAssignmentModal';
 import { CreateTaskWithAssignmentModal } from '../components/CreateTaskWithAssignmentModal';
+import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 
 interface ProjectOption {
   id: string;
@@ -22,7 +23,7 @@ export default function TaskManagerPage() {
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [tenantSlug, setTenantSlug] = useState('');
+  const { tenantSlug } = useTenantContext();
 
   // Filters
   const [projectFilter, setProjectFilter] = useState('');
@@ -35,10 +36,6 @@ export default function TaskManagerPage() {
   const [selectedTask, setSelectedTask] = useState<TaskResponse | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
 
-  useEffect(() => {
-    const slug = window.location.pathname.split('/')[2];
-    setTenantSlug(decodeURIComponent(slug));
-  }, []);
 
 
 

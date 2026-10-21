@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { runMrp, generateRequisitionsFromMrp, MrpDemandItem } from "@/lib/manufacturing/mrp";
+import { runMrp, generateRequisitionsFromMrp, generateWorkOrdersFromMrp, MrpDemandItem } from "@/lib/manufacturing/mrp";
 import { requireModuleAccess } from "@/lib/api-auth";
 
 const demandSchema = z.object({
@@ -16,6 +16,7 @@ const runMrpSchema = z.object({
   tenantSlug: z.string().min(1),
   demands: z.array(demandSchema).min(1, "At least one demand item is required"),
   autoGenerateRequisitions: z.boolean().optional().default(false),
+  autoGenerateWorkOrders: z.boolean().optional().default(false),
   requestedBy: z.string().optional(),
 });
 
@@ -37,7 +38,12 @@ export async function POST(request: NextRequest) {
       requisition = await generateRequisitionsFromMrp(parsed.data.tenantSlug, plan, parsed.data.requestedBy);
     }
 
-    return NextResponse.json({ success: true, data: plan, requisition });
+    let workOrders = null;
+    if (parsed.data.autoGenerateWorkOrders) {
+      workOrders = await generateWorkOrdersFromMrp(parsed.data.tenantSlug, parsed.data.demands, { createdBy: parsed.data.requestedBy });
+    }
+
+    return NextResponse.json({ success: true, data: plan, requisition, workOrders });
   } catch (error) {
     console.error("Error running MRP:", error);
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });

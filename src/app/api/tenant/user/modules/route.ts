@@ -16,57 +16,51 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const tenantSlug = searchParams.get("tenantSlug");
-  const userId =
-    searchParams.get("userId") ||
-    request.headers.get("x-user-id") ||
-    request.cookies.get("X-User-Id")?.value ||
-    request.cookies.get("dev-user-id")?.value ||
-    request.cookies.get("userId")?.value;
-  // roleId from query params/cookies is only a dev fallback.
-  // In production, roleId is always extracted from the signed session below.
-  let roleId =
-    searchParams.get("roleId") ||
-    request.headers.get("x-role-id") ||
-    request.cookies.get("X-Role-Id")?.value ||
-    request.cookies.get("roleId")?.value ||
-    undefined;
+  let roleId: string | undefined;
 
   if (!tenantSlug) {
     return NextResponse.json({ error: "tenantSlug is required" }, { status: 400 });
   }
 
-  // Try to get userId from session cookies
-  let effectiveUserId = userId;
+  // Identity comes exclusively from the verified session — never from
+  // query params, headers, or unsigned cookies.
+  let effectiveUserId: string | undefined;
   let isEmployee = false;
   let employeeModules: Record<string, boolean> = {};
 
   // Check pisairtel_session (tenant admin) FIRST — takes priority over employee session
   const sysSession = request.cookies.get("pisairtel_session")?.value;
+  const empCookie = request.cookies.get("employee_session")?.value;
+  let sessionTenant: string | undefined;
   let sessionEmail: string | undefined;
   if (sysSession) {
     const session = verifySession(sysSession);
     if (session) {
       effectiveUserId = session.id;
       sessionEmail = session.email;
+      sessionTenant = session.tenantSlug;
       // Use roleId from the signed session as initial value
       roleId = session.roleId || undefined;
     }
   }
 
   // Only check employee session if no admin session was found
-  if (!effectiveUserId) {
-    const empCookie = request.cookies.get("employee_session")?.value;
-    if (empCookie) {
-      const empSession = verifySession(empCookie);
-      if (empSession && empSession.id) {
-        effectiveUserId = empSession.id;
-        isEmployee = true;
-      }
+  if (!effectiveUserId && empCookie) {
+    const empSession = verifySession(empCookie);
+    if (empSession && empSession.id) {
+      effectiveUserId = empSession.id;
+      sessionTenant = empSession.tenantSlug;
+      isEmployee = true;
     }
   }
 
   if (!effectiveUserId) {
-    return NextResponse.json({ error: "userId is required" }, { status: 400 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // The session must belong to the requested tenant.
+  if (sessionTenant && sessionTenant !== tenantSlug) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   await ensureTenantTable(sql);
@@ -202,14 +196,6 @@ export async function GET(request: NextRequest) {
       isEmployee,
       roleId: roleId || undefined,
       employeeModules,
-      _debug: {
-        effectiveUserId,
-        sessionEmail,
-        roleId,
-        isFullAdmin,
-        hasModuleRestrictions,
-        employeeModulesRaw: employeeModules,
-      },
     });
   } catch (error) {
     console.error("Failed to fetch combined permissions:", error);

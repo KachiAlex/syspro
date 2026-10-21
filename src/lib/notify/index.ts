@@ -111,6 +111,18 @@ export async function ensureNotifyTables() {
     updated_at timestamptz not null default now(),
     unique(tenant_slug, event_type)
   )`;
+  // User-editable body templates per event type — {{field}} placeholders are
+  // interpolated from the event payload at render time.
+  await sql`create table if not exists notification_templates (
+    id uuid primary key default gen_random_uuid(),
+    tenant_slug text not null,
+    event_type text not null,
+    subject_template text,
+    body_template text not null,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    unique(tenant_slug, event_type)
+  )`;
   await sql`create table if not exists notification_outbox (
     id uuid primary key default gen_random_uuid(),
     tenant_slug text not null,
@@ -416,7 +428,30 @@ export async function emitEvent(input: EmitEventInput): Promise<void> {
     if (!recipients.length) return;
 
     const rendered = renderNotification(input.eventType, payload);
-    const subject = rule.subject_override ?? rendered.subject;
+
+    // Tenant-authored template override — {{field}} interpolates the payload.
+    let body = rendered;
+    try {
+      const [tpl] = (await sql`select subject_template, body_template from notification_templates
+        where tenant_slug = ${input.tenantSlug} and event_type = ${input.eventType} limit 1`) as any[];
+      if (tpl?.body_template) {
+        const interp = (s: string) =>
+          s.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, k) => {
+            const v = k.split(".").reduce((o: any, p: string) => o?.[p], payload);
+            return v == null ? "" : String(v);
+          });
+        const text = interp(tpl.body_template);
+        const htmlBody = text.split(/\n{2,}/).map((p) => `<p style="color:#475569;font-size:15px;margin:6px 0;">${p.replace(/\n/g, "<br/>")}</p>`).join("");
+        body = {
+          ...rendered,
+          subject: tpl.subject_template ? interp(tpl.subject_template) : rendered.subject,
+          html: `<div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:520px;margin:0 auto;padding:24px;">${htmlBody}<hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;"/><p style="color:#94a3b8;font-size:12px;">Pisairtel ERP — automated notification, please do not reply.</p></div>`,
+          text,
+        };
+      }
+    } catch { /* templates table may not exist yet */ }
+
+    const subject = rule.subject_override ?? body.subject;
     const dedupe = input.dedupeKey ?? crypto.randomUUID();
 
     // Per-user preferences: channel opt-outs, daily digest, quiet hours.
@@ -437,7 +472,7 @@ export async function emitEvent(input: EmitEventInput): Promise<void> {
               (tenant_slug, dedupe_key, channel, event_type, recipient, recipient_name,
                subject, body_html, body_text, link, status, next_retry_at)
             values (${input.tenantSlug}, ${dedupe}, 'email', ${input.eventType}, ${r.email},
-              ${r.name ?? null}, ${subject}, ${rendered.html}, ${rendered.text}, ${rendered.link ?? null},
+              ${r.name ?? null}, ${subject}, ${body.html}, ${body.text}, ${body.link ?? null},
               ${status}, ${deferUntil ?? new Date().toISOString()})
             on conflict (tenant_slug, dedupe_key, channel, recipient) do nothing`;
         } else if (channel === "in_app") {
@@ -447,14 +482,14 @@ export async function emitEvent(input: EmitEventInput): Promise<void> {
           const inserted = (await sql`insert into notification_outbox
               (tenant_slug, dedupe_key, channel, event_type, recipient, recipient_name, subject, body_text, link)
             values (${input.tenantSlug}, ${notifKey}, 'in_app', ${input.eventType}, ${r.key},
-              ${r.name ?? null}, ${subject}, ${rendered.text}, ${rendered.link ?? null})
+              ${r.name ?? null}, ${subject}, ${body.text}, ${body.link ?? null})
             on conflict (tenant_slug, dedupe_key, channel, recipient) do nothing
             returning id`) as any[];
           // In-app lands instantly — it is the durable record itself. The
           // outbox row is the dedupe guard: only insert when it was new.
           if (inserted.length) {
             await sql`insert into app_notifications (tenant_slug, user_id, event_type, title, body, link)
-              values (${input.tenantSlug}, ${r.key}, ${input.eventType}, ${subject}, ${rendered.text}, ${rendered.link ?? null})`;
+              values (${input.tenantSlug}, ${r.key}, ${input.eventType}, ${subject}, ${body.text}, ${body.link ?? null})`;
           }
         }
       }
@@ -557,6 +592,37 @@ export async function listNotificationRules(tenantSlug: string) {
     const o = byType.get(m.eventType);
     return o ? { ...m, channels: o.channels, recipients: o.recipients, enabled: o.enabled, subjectOverride: o.subject_override, source: "tenant" } : m;
   });
+}
+
+export async function listNotificationTemplates(tenantSlug: string) {
+  const sql = SQL;
+  await ensureNotifyTables();
+  return (await sql`select event_type, subject_template, body_template, updated_at from notification_templates
+    where tenant_slug = ${tenantSlug} order by event_type`) as any[];
+}
+
+export async function upsertNotificationTemplate(input: {
+  tenantSlug: string;
+  eventType: string;
+  subjectTemplate?: string | null;
+  bodyTemplate: string;
+}) {
+  const sql = SQL;
+  await ensureNotifyTables();
+  await sql`insert into notification_templates (tenant_slug, event_type, subject_template, body_template)
+    values (${input.tenantSlug}, ${input.eventType}, ${input.subjectTemplate ?? null}, ${input.bodyTemplate})
+    on conflict (tenant_slug, event_type) do update set
+      subject_template = excluded.subject_template,
+      body_template = excluded.body_template,
+      updated_at = now()`;
+}
+
+export async function deleteNotificationTemplate(tenantSlug: string, eventType: string) {
+  const sql = SQL;
+  await ensureNotifyTables();
+  const rows = (await sql`delete from notification_templates
+    where tenant_slug = ${tenantSlug} and event_type = ${eventType} returning id`) as any[];
+  return rows.length > 0;
 }
 
 export async function upsertNotificationRule(input: {

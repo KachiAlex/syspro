@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const result = await lookupVendor(query, type || "name");
+    const result = await lookupVendor(context.tenantSlug, query, type || "name");
     return NextResponse.json(result);
   }
 

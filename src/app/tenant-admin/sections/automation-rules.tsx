@@ -23,15 +23,27 @@ type RuleTemplate = {
 };
 
 const TEMPLATES: RuleTemplate[] = [
-  { label: "Custom rule", name: "", description: "", eventType: "", condition: { op: "exists", field: "payload.id", value: "" }, actions: [{ type: "notify", params: { channel: "email", template: "default" } }] },
-  { label: "Notify admin on missed check-in", name: "Missed check-in alert", description: "Notify admin when an employee misses a check-in", eventType: "attendance.missed", condition: { op: "exists", field: "payload.employeeId", value: "" }, actions: [{ type: "notify", params: { channel: "email", template: "missed-checkin" } }] },
-  { label: "Create task for new support ticket", name: "Support ticket task", description: "Create a task when a new support ticket is created", eventType: "support.ticket-created", condition: { op: "exists", field: "payload.ticketId", value: "" }, actions: [{ type: "task", params: { title: "Handle support ticket", assignee: "@admin" } }] },
-  { label: "Alert when project goes over budget", name: "Over budget alert", description: "Notify project lead when budget threshold is crossed", eventType: "projects.over-budget", condition: { op: "gt", field: "payload.spent", value: "1000" }, actions: [{ type: "email", params: { to: "pm@example.com", subject: "Project over budget" } }] },
+  { label: "Custom rule", name: "", description: "", eventType: "", condition: { op: "exists", field: "payload.id", value: "" }, actions: [{ type: "notify", params: { title: "Notification", message: "", recipient: "actor" } }] },
+  { label: "Notify admin on missed check-in", name: "Missed check-in alert", description: "Notify admin when an employee misses a check-in", eventType: "attendance.missed", condition: { op: "exists", field: "payload.employeeId", value: "" }, actions: [{ type: "notify", params: { title: "Missed check-in", message: "An employee missed check-in", role: "admin" } }] },
+  { label: "Create task for new support ticket", name: "Support ticket task", description: "Create a task when a new support ticket is created", eventType: "support.ticket-created", condition: { op: "exists", field: "payload.ticketId", value: "" }, actions: [{ type: "task", params: { title: "Handle support ticket", employeeId: "" } }] },
+  { label: "Alert when project goes over budget", name: "Over budget alert", description: "Notify project lead when budget threshold is crossed", eventType: "projects.over-budget", condition: { op: "gt", field: "payload.spent", value: "1000" }, actions: [{ type: "email", params: { title: "Project over budget", message: "Project spend exceeded threshold", role: "admin" } }] },
 ];
+
+// UI action types → canonical connector action types (KNOWN_ACTION_TYPES).
+const ACTION_TYPE_MAP: Record<string, string> = {
+  notify: "notify:log",
+  webhook: "webhook:post",
+  email: "email:send",
+  task: "task:create",
+};
 
 function getPayloadValue(payload: any, path?: string) {
   if (!path) return undefined;
-  return path.split(".").reduce((acc: any, key: string) => acc?.[key], payload);
+  // The server resolves fields against the event (evt.field) then
+  // evt.payload.field — strip a leading "payload." so the preview mirrors it.
+  const parts = path.split(".");
+  const effective = parts[0] === "payload" ? parts.slice(1) : parts;
+  return effective.reduce((acc: any, key: string) => acc?.[key], payload);
 }
 
 function compareDraft(op: string, left: any, right: any) {
@@ -74,7 +86,7 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
     eventType: "",
     description: "",
     condition: { op: "exists", field: "payload.id", value: "" },
-    actions: [{ type: "notify", params: { channel: "email", template: "default" } }],
+    actions: [{ type: "notify", params: { title: "", message: "", recipient: "actor" } }],
   });
 
   const groupedTriggers = useMemo(() => {
@@ -101,7 +113,7 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
   function addAction() {
     setForm((p) => ({
       ...p,
-      actions: [...p.actions, { type: "notify", params: { channel: "email", template: "default" } }],
+      actions: [...p.actions, { type: "notify", params: { title: "", message: "", recipient: "actor" } }],
     }));
   }
 
@@ -185,7 +197,12 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
           description: form.description,
           eventType: form.eventType,
           condition: form.condition,
-          actions: form.actions,
+          // Translate UI action types to the canonical connector types the
+          // API validates against (KNOWN_ACTION_TYPES).
+          actions: form.actions.map((a) => ({
+            type: ACTION_TYPE_MAP[a.type] ?? a.type,
+            params: a.params,
+          })),
         }),
       });
       if (!res.ok) throw new Error("Create failed");
@@ -322,33 +339,64 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
                         <option value="task">Task</option>
                       </select>
                     </div>
-                    {action.type === "notify" ? (
+                    {action.type === "notify" || action.type === "email" ? (
                       <>
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">Channel</label>
-                          <input value={action.params?.channel || ""} onChange={(e) => updateAction(i, { params: { ...action.params, channel: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="email" />
+                          <label className="block text-xs text-gray-500 mb-1">Title</label>
+                          <input value={action.params?.title || ""} onChange={(e) => updateAction(i, { params: { ...action.params, title: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Notification title" />
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">Template</label>
-                          <input value={action.params?.template || ""} onChange={(e) => updateAction(i, { params: { ...action.params, template: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="default" />
+                          <label className="block text-xs text-gray-500 mb-1">Message</label>
+                          <input value={action.params?.message || ""} onChange={(e) => updateAction(i, { params: { ...action.params, message: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Message body" />
                         </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Recipient</label>
+                          <select
+                            value={String(action.params?.broadcast) === "true" ? "broadcast" : action.params?.role ? "role" : action.params?.employeeId ? "employeeId" : "actor"}
+                            onChange={(e) => {
+                              const mode = e.target.value;
+                              const { role: _r, employeeId: _e, broadcast: _b, recipient: _rec, ...rest } = action.params ?? {};
+                              updateAction(i, {
+                                params: {
+                                  ...rest,
+                                  ...(mode === "broadcast" ? { broadcast: true }
+                                    : mode === "role" ? { role: "admin" }
+                                    : mode === "employeeId" ? { employeeId: "" }
+                                    : { recipient: "actor" }),
+                                },
+                              });
+                            }}
+                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                          >
+                            <option value="actor">Event actor</option>
+                            <option value="role">Role…</option>
+                            <option value="employeeId">Employee ID…</option>
+                            <option value="broadcast">All employees</option>
+                          </select>
+                        </div>
+                        {(action.params?.role !== undefined || action.params?.employeeId !== undefined) && (
+                          <div>
+                            <label className="block text-xs text-gray-500 mb-1">
+                              {action.params?.role !== undefined ? "Role" : "Employee ID"}
+                            </label>
+                            <input
+                              value={action.params?.role ?? action.params?.employeeId ?? ""}
+                              onChange={(e) => updateAction(i, {
+                                params: action.params?.role !== undefined
+                                  ? { ...action.params, role: e.target.value }
+                                  : { ...action.params, employeeId: e.target.value },
+                              })}
+                              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                              placeholder={action.params?.role !== undefined ? "admin" : "emp_..."}
+                            />
+                          </div>
+                        )}
                       </>
                     ) : action.type === "webhook" ? (
                       <div className="md:col-span-2">
                         <label className="block text-xs text-gray-500 mb-1">URL</label>
                         <input value={action.params?.url || ""} onChange={(e) => updateAction(i, { params: { ...action.params, url: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="https://..." />
                       </div>
-                    ) : action.type === "email" ? (
-                      <>
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-1">To</label>
-                          <input value={action.params?.to || ""} onChange={(e) => updateAction(i, { params: { ...action.params, to: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="user@example.com" />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-1">Subject</label>
-                          <input value={action.params?.subject || ""} onChange={(e) => updateAction(i, { params: { ...action.params, subject: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Subject" />
-                        </div>
-                      </>
                     ) : action.type === "task" ? (
                       <>
                         <div>
@@ -356,8 +404,8 @@ export default function AutomationRules({ tenantSlug }: { tenantSlug: string }) 
                           <input value={action.params?.title || ""} onChange={(e) => updateAction(i, { params: { ...action.params, title: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Task title" />
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">Assignee</label>
-                          <input value={action.params?.assignee || ""} onChange={(e) => updateAction(i, { params: { ...action.params, assignee: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="@username" />
+                          <label className="block text-xs text-gray-500 mb-1">Employee ID</label>
+                          <input value={action.params?.employeeId || ""} onChange={(e) => updateAction(i, { params: { ...action.params, employeeId: e.target.value } })} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="emp_... (blank = event payload employeeId)" />
                         </div>
                       </>
                     ) : null}

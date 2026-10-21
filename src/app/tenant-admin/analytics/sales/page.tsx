@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TrendingUp, Users, ShoppingCart, DollarSign, Download, Calendar, Filter, ArrowUpRight, ArrowDownRight, BarChart3 } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
@@ -24,49 +24,49 @@ interface SalesReport {
   size: string;
 }
 
-const salesMetrics: SalesMetric[] = [
-  {
-    title: 'Total Sales',
-    value: '1,248',
-    change: '+8.7%',
-    trend: 'up',
-    icon: ShoppingCart
-  },
-  {
-    title: 'Revenue',
-    value: '$425,000',
-    change: '+12.5%',
-    trend: 'up',
-    icon: DollarSign
-  },
-  {
-    title: 'Conversion Rate',
-    value: '18.5%',
-    change: '+2.3%',
-    trend: 'up',
-    icon: TrendingUp
-  },
-  {
-    title: 'Avg Order Value',
-    value: '$341',
-    change: '+3.8%',
-    trend: 'up',
-    icon: Users
-  }
-];
-
-const salesReports: SalesReport[] = [
-  { id: '1', name: 'Monthly Sales Performance', type: 'Performance', date: '2026-04-03', status: 'Completed', size: '1.8 MB' },
-  { id: '2', name: 'Customer Acquisition Report', type: 'Acquisition', date: '2026-04-02', status: 'Completed', size: '2.1 MB' },
-  { id: '3', name: 'Sales Pipeline Analysis', type: 'Pipeline', date: '2026-04-01', status: 'Completed', size: '1.5 MB' },
-  { id: '4', name: 'Revenue Forecast Q2', type: 'Forecast', date: '2026-03-31', status: 'Processing', size: '2.8 MB' },
-];
-
 export default function SalesAnalyticsPage() {
   const { tenantSlug } = useTenantContext();
   const [selectedPeriod, setSelectedPeriod] = useState('This Month');
   const [selectedReportType, setSelectedReportType] = useState('All');
   const [showReportModal, setShowReportModal] = useState(false);
+  const [salesMetrics, setSalesMetrics] = useState<SalesMetric[]>([]);
+  const [salesReports, setSalesReports] = useState<SalesReport[]>([]);
+
+  useEffect(() => {
+    if (!tenantSlug) return;
+    const ts = encodeURIComponent(tenantSlug);
+    fetch(`/api/tenant/analytics?type=overview&tenantSlug=${ts}`)
+      .then((r) => r.json().catch(() => ({})))
+      .then((payload) => {
+        const d = payload?.data ?? {};
+        const revenue = Number(d.revenue?.current ?? 0);
+        const orders = Number(d.orders?.current ?? 0);
+        const fmtChange = (v: any) => `${Number(v?.growth ?? 0) >= 0 ? '+' : ''}${v?.growth ?? 0}%`;
+        setSalesMetrics([
+          { title: 'Total Sales', value: orders.toLocaleString(), change: fmtChange(d.orders), trend: d.orders?.trend === 'down' ? 'down' : 'up', icon: ShoppingCart },
+          { title: 'Revenue', value: revenue.toLocaleString(), change: fmtChange(d.revenue), trend: d.revenue?.trend === 'down' ? 'down' : 'up', icon: DollarSign },
+          { title: 'Conversion Rate', value: `${d.conversion?.current ?? 0}%`, change: fmtChange(d.conversion), trend: d.conversion?.trend === 'down' ? 'down' : 'up', icon: TrendingUp },
+          { title: 'Avg Order Value', value: orders ? Math.round(revenue / orders).toLocaleString() : '0', change: '—', trend: 'up', icon: Users },
+        ]);
+      })
+      .catch((err) => console.error('Failed to load sales metrics:', err));
+    fetch(`/api/tenant/analytics?type=reports&tenantSlug=${ts}`)
+      .then((r) => r.json().catch(() => ({})))
+      .then((payload) => {
+        const list = payload?.data?.reports ?? payload?.reports ?? [];
+        setSalesReports(list
+          .filter((r: any) => !r.module || ['sales', 'crm', 'revops'].includes(String(r.module).toLowerCase()))
+          .map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            type: r.reportType ?? r.module ?? 'Report',
+            date: r.createdAt ? new Date(r.createdAt).toISOString().split('T')[0] : '—',
+            status: r.status ?? 'Ready',
+            size: '—',
+          })));
+      })
+      .catch((err) => console.error('Failed to load sales reports:', err));
+  }, [tenantSlug]);
 
   const handleGenerateReport = async (reportData: any) => {
     try {

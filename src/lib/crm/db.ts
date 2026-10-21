@@ -128,11 +128,67 @@ async function ensureCrmTablesRun(sql: SqlClient = SQL) {
   await sql`alter table crm_customers add column if not exists converted_from_lead_id text`;
   await sql`alter table crm_deals add column if not exists contact_id text`;
   await sql`alter table crm_deals add column if not exists name text`;
+  await sql`alter table crm_deals add column if not exists lost_reason text`;
+  await sql`alter table crm_leads add column if not exists lead_source_id text`;
 
   // Add created_by columns for ownership tracking (employee portal CRM)
   await sql`alter table crm_leads add column if not exists created_by text`;
   await sql`alter table crm_contacts add column if not exists created_by text`;
   await sql`alter table crm_deals add column if not exists created_by text`;
+
+  // Opportunity/deal line items — product-level breakdown of deal value.
+  await sql`
+    create table if not exists crm_deal_items (
+      id text primary key,
+      tenant_slug text not null,
+      deal_id text not null references crm_deals(id) on delete cascade,
+      sku text,
+      description text not null,
+      quantity numeric not null default 1,
+      unit_price numeric not null default 0,
+      amount numeric not null default 0,
+      created_at timestamptz default now()
+    )
+  `;
+  await sql`create index if not exists idx_crm_deal_items_deal on crm_deal_items(tenant_slug, deal_id)`;
+}
+
+// ---------------------------------------------------------------------------
+// Deal line items (ERPNext "Opportunity Items")
+// ---------------------------------------------------------------------------
+
+export async function listDealItems(dealId: string, tenantSlug: string) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  const rows = (await sql`
+    select * from crm_deal_items where deal_id = ${dealId} and tenant_slug = ${tenantSlug} order by created_at
+  `) as any[];
+  return rows.map((r) => ({
+    id: r.id,
+    sku: r.sku,
+    description: r.description,
+    quantity: Number(r.quantity),
+    unitPrice: Number(r.unit_price),
+    amount: Number(r.amount),
+  }));
+}
+
+export async function setDealItems(
+  dealId: string,
+  tenantSlug: string,
+  items: Array<{ sku?: string; description: string; quantity: number; unitPrice: number }>
+) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  await sql`delete from crm_deal_items where deal_id = ${dealId} and tenant_slug = ${tenantSlug}`;
+  for (const it of items) {
+    await sql`
+      insert into crm_deal_items (id, tenant_slug, deal_id, sku, description, quantity, unit_price, amount)
+      values (${randomUUID()}, ${tenantSlug}, ${dealId}, ${it.sku ?? null}, ${it.description},
+              ${it.quantity}, ${it.unitPrice}, ${it.quantity * it.unitPrice})
+    `;
+  }
+  return listDealItems(dealId, tenantSlug);
 }
 
 export async function insertCustomer(row: {
@@ -152,6 +208,21 @@ export async function insertCustomer(row: {
     values (${id}, ${row.tenantSlug}, ${row.regionId}, ${row.branchId}, ${row.name}, ${row.primaryContact ?? null}, ${row.status ?? "active"}, ${row.convertedFromLeadId ?? null})
   `;
   const inserted = (await sql`select * from crm_customers where id = ${id} limit 1`) as CrmCustomerRecord[];
+
+  // Customer master unification: every CRM customer also exists in
+  // finance_customers so credit control, invoices, and CRM see one master.
+  try {
+    const { upsertCustomer } = await import("../finance/credit-control");
+    await upsertCustomer({
+      tenantSlug: row.tenantSlug,
+      customerCode: id,
+      name: row.name,
+      email: (row.primaryContact?.email as string) ?? null,
+    });
+  } catch (err) {
+    console.error("finance_customers mirror failed for crm customer", id, err);
+  }
+
   return normalizeCustomerRow(inserted[0]);
 }
 
@@ -402,10 +473,11 @@ export async function updateContact(
   return updated.length ? normalizeContactRow(updated[0]) : null;
 }
 
-export async function getContact(id: string) {
+export async function getContact(id: string, tenantSlug?: string) {
   const sql = SQL;
   await ensureCrmTables(sql);
-  const rows = (await sql`select * from crm_contacts where id = ${id} limit 1`) as CrmContactRecord[];
+  const rows = (await sql`select * from crm_contacts where id = ${id}
+    ${tenantSlug ? SQL`and tenant_slug = ${tenantSlug}` : SQL``} limit 1`) as CrmContactRecord[];
   return rows.length ? normalizeContactRow(rows[0]) : null;
 }
 
@@ -456,6 +528,7 @@ export async function updateDeal(id: string, updates: Partial<{
   value: number;
   currency: string;
   expectedClose: string | null;
+  lostReason: string | null;
 }>, tenantSlug?: string) {
   const sql = SQL;
   await ensureCrmTables(sql);
@@ -495,6 +568,10 @@ export async function updateDeal(id: string, updates: Partial<{
   if (typeof updates.expectedClose !== "undefined") {
     sets.push(`expected_close = $${idx++}`);
     values.push(updates.expectedClose);
+  }
+  if (typeof updates.lostReason !== "undefined") {
+    sets.push(`lost_reason = $${idx++}`);
+    values.push(updates.lostReason);
   }
   sets.push(`updated_at = now()`);
   let query = `update crm_deals set ${sets.join(", ")} where id = $${idx++}`;
@@ -552,6 +629,28 @@ export async function listDeals(filters: Partial<{ tenantSlug: string; customerI
   }));
 }
 
+/**
+ * Aggregate closed-lost deals by reason for the dashboard's lostReasons chart.
+ */
+export async function lostReasonSummary(tenantSlug: string, createdBy?: string) {
+  const sql = SQL;
+  await ensureCrmTables(sql);
+  const params: any[] = [tenantSlug];
+  let extra = "";
+  if (createdBy) {
+    params.push(createdBy);
+    extra = ` and created_by = $2`;
+  }
+  const rows = (await db.query(
+    `select coalesce(lost_reason, 'Unspecified') as reason, count(*)::int as count
+     from crm_deals
+     where tenant_slug = $1 and stage = 'closed_lost'${extra}
+     group by 1 order by count desc limit 10`,
+    params
+  )).rows as { reason: string; count: number }[];
+  return rows;
+}
+
 export async function countDeals(filters: Partial<{ tenantSlug: string; customerId?: string; leadId?: string; stage?: string; createdBy?: string }>) {
   const sql = SQL;
   await ensureCrmTables(sql);
@@ -590,10 +689,11 @@ export async function deleteDeal(id: string, tenantSlug?: string) {
   return deleted.length > 0;
 }
 
-export async function getDeal(id: string) {
+export async function getDeal(id: string, tenantSlug?: string) {
   const sql = SQL;
   await ensureCrmTables(sql);
-  const rows = (await sql`select * from crm_deals where id = ${id} limit 1`) as any[];
+  const rows = (await sql`select * from crm_deals where id = ${id}
+    ${tenantSlug ? SQL`and tenant_slug = ${tenantSlug}` : SQL``} limit 1`) as any[];
   return rows.length ? normalizeDealRow(rows[0]) : null;
 }
 
@@ -617,15 +717,33 @@ export async function insertLead(row: {
   const sql = SQL;
   await ensureCrmTables(sql);
   const id = randomUUID();
+
+  // Link the free-text source to the tenant's revops_lead_sources catalog so
+  // RevOps ROI attribution can join leads → sources → campaigns.
+  let leadSourceId: string | null = null;
+  if (row.source) {
+    try {
+      const src = (await db.query(
+        `select id from revops_lead_sources
+         where tenant_slug = $1 and (lower(name) = lower($2) or channel = $2)
+         order by case when lower(name) = lower($2) then 0 else 1 end limit 1`,
+        [row.tenantSlug, String(row.source)]
+      )).rows;
+      leadSourceId = src[0]?.id ?? null;
+    } catch {
+      // revops tables may not exist yet — the source text still stands alone
+    }
+  }
+
   const inserted = await sql`
     insert into crm_leads (
       id, tenant_slug, region_id, branch_id, company_name, contact_name, contact_email, contact_phone,
-      source, stage, score, assigned_officer_id, expected_value, currency, notes, contact_id, created_by
+      source, stage, score, assigned_officer_id, expected_value, currency, notes, contact_id, created_by, lead_source_id
     ) values (
       ${id}, ${row.tenantSlug}, ${row.regionId}, ${row.branchId}, ${row.companyName}, ${row.contactName},
       ${row.contactEmail ?? null}, ${row.contactPhone ?? null}, ${row.source}, ${row.stage}, 0,
       ${row.assignedOfficerId ?? null}, ${row.expectedValue ?? null}, ${row.currency ?? "₦"}, ${row.notes ?? null},
-      ${row.contactId ?? null}, ${row.createdBy ?? null}
+      ${row.contactId ?? null}, ${row.createdBy ?? null}, ${leadSourceId}
     )
     returning *
   `;
@@ -719,10 +837,11 @@ export async function deleteLead(id: string, tenantSlug?: string) {
   return deleted.length > 0;
 }
 
-export async function getLead(id: string) {
+export async function getLead(id: string, tenantSlug?: string) {
   const sql = SQL;
   await ensureCrmTables(sql);
-  const rows = (await sql`select * from crm_leads where id = ${id} limit 1`) as any[];
+  const rows = (await sql`select * from crm_leads where id = ${id}
+    ${tenantSlug ? SQL`and tenant_slug = ${tenantSlug}` : SQL``} limit 1`) as any[];
   return rows.length ? normalizeLeadRow(rows[0]) : null;
 }
 
@@ -865,6 +984,7 @@ function normalizeDealRow(row: any) {
     expectedClose: row.expected_close as string | null,
     assignedOfficerId: row.assigned_officer_id as string | null,
     status: row.status as string,
+    lostReason: (row.lost_reason as string | null) ?? null,
     createdBy: (row.created_by as string | null) ?? null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,

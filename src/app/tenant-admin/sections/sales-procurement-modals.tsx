@@ -453,6 +453,8 @@ export function CreatePurchaseOrderModal({
   onSubmit: (data: PurchaseOrderFormData) => Promise<void>;
   isLoading: boolean;
 }) {
+  const { tenantSlug } = useTenantContextSafe();
+  const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string }>>([]);
   const [formData, setFormData] = useState<PurchaseOrderFormData>({
     supplierId: "",
     orderDate: new Date().toISOString().split("T")[0],
@@ -461,6 +463,30 @@ export function CreatePurchaseOrderModal({
     notes: "",
   });
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen || !tenantSlug) return;
+    fetch(`/api/suppliers?tenantSlug=${encodeURIComponent(tenantSlug)}`)
+      .then((r) => (r.ok ? r.json() : { suppliers: [] }))
+      .then((d) => setSuppliers(
+        (d.suppliers ?? []).map((s: any) => ({ id: s.id, name: s.name ?? s.display_name ?? s.id }))
+      ))
+      .catch(() => setSuppliers([]));
+  }, [isOpen, tenantSlug]);
+
+  const addItem = () =>
+    setFormData({ ...formData, items: [...formData.items, { productId: "", quantity: 1, unitPrice: 0 }] });
+
+  const updateItem = (index: number, patch: Partial<PurchaseOrderFormData["items"][number]>) =>
+    setFormData({
+      ...formData,
+      items: formData.items.map((it, i) => (i === index ? { ...it, ...patch } : it)),
+    });
+
+  const removeItem = (index: number) =>
+    setFormData({ ...formData, items: formData.items.filter((_, i) => i !== index) });
+
+  const itemsTotal = formData.items.reduce((s, it) => s + (Number(it.quantity) || 0) * (Number(it.unitPrice) || 0), 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -509,9 +535,9 @@ export function CreatePurchaseOrderModal({
                 required
               >
                 <option value="">Select Supplier</option>
-                <option value="1">Office Supplies Co</option>
-                <option value="2">Tech Hardware Ltd</option>
-                <option value="3">Industrial Materials Inc</option>
+                {suppliers.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
               </select>
             </div>
 
@@ -539,15 +565,56 @@ export function CreatePurchaseOrderModal({
 
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-1">Order Items</label>
-            <div className="border border-gray-200 rounded-lg p-4">
+            <div className="border border-gray-200 rounded-lg p-4 space-y-3">
+              {formData.items.map((item, index) => (
+                <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                  <input
+                    type="text"
+                    value={item.productId}
+                    onChange={(e) => updateItem(index, { productId: e.target.value })}
+                    placeholder="Item / SKU"
+                    className="col-span-6 px-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white"
+                  />
+                  <input
+                    type="number"
+                    min={1}
+                    value={item.quantity}
+                    onChange={(e) => updateItem(index, { quantity: Number(e.target.value) })}
+                    placeholder="Qty"
+                    className="col-span-2 px-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white"
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={item.unitPrice}
+                    onChange={(e) => updateItem(index, { unitPrice: Number(e.target.value) })}
+                    placeholder="Unit price"
+                    className="col-span-3 px-3 py-2 border border-gray-300 rounded-lg text-sm text-black bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeItem(index)}
+                    className="col-span-1 text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
               <button
                 type="button"
+                onClick={addItem}
                 className="flex items-center gap-2 px-3 py-2 text-sm bg-green-600 text-black rounded-lg hover:bg-green-700"
               >
                 <Plus className="w-4 h-4" />
                 Add Item
               </button>
-              <p className="text-sm text-gray-500 mt-2">No items added yet</p>
+              {formData.items.length === 0 && (
+                <p className="text-sm text-gray-500">No items added yet</p>
+              )}
+              {formData.items.length > 0 && (
+                <p className="text-sm font-medium text-gray-900">Total: {itemsTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              )}
             </div>
           </div>
 
@@ -1142,16 +1209,14 @@ export function EditSalesOrderModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: SalesOrderFormData) => Promise<void>;
+  onSubmit: (data: { status?: string; dueDate?: string; notes?: string }) => Promise<void>;
   isLoading: boolean;
   order: any;
 }) {
-  const [formData, setFormData] = useState<SalesOrderFormData>({
-    customerId: order?.customer || "",
-    orderDate: order?.orderDate ? new Date(order.orderDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+  const [formData, setFormData] = useState({
+    status: order?.status ?? "Pending",
     expectedDeliveryDate: order?.dueDate ? new Date(order.dueDate).toISOString().split("T")[0] : "",
-    items: [],
-    notes: "",
+    notes: order?.notes ?? "",
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -1159,7 +1224,12 @@ export function EditSalesOrderModal({
     e.preventDefault();
     setError(null);
     try {
-      await onSubmit(formData);
+      // The PATCH API accepts status / dueDate / notes only.
+      await onSubmit({
+        status: formData.status,
+        dueDate: formData.expectedDeliveryDate || undefined,
+        notes: formData.notes,
+      });
       onClose();
     } catch (err) {
       setError("Failed to update sales order");
@@ -1184,17 +1254,25 @@ export function EditSalesOrderModal({
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">Customer</label>
-              <input type="text" value={formData.customerId} onChange={(e) => setFormData({ ...formData, customerId: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">Order Date</label>
-              <input type="date" value={formData.orderDate} onChange={(e) => setFormData({ ...formData, orderDate: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
+              <label className="block text-sm font-medium text-gray-900 mb-1">Status</label>
+              <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white">
+                <option value="Pending">Pending</option>
+                <option value="In Transit">In Transit</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+              {formData.status === "Completed" && (
+                <p className="text-xs text-gray-500 mt-1">Completing generates a draft invoice and posts to the ledger.</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-1">Expected Delivery</label>
               <input type="date" value={formData.expectedDeliveryDate} onChange={(e) => setFormData({ ...formData, expectedDeliveryDate: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-900 mb-1">Notes</label>
+            <textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
           </div>
           <div className="flex items-center justify-end gap-3 pt-4">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-900 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
@@ -1343,16 +1421,14 @@ export function EditPurchaseOrderModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: PurchaseOrderFormData) => Promise<void>;
+  onSubmit: (data: { status?: string; deliveryDate?: string; notes?: string }) => Promise<void>;
   isLoading: boolean;
   po: any;
 }) {
-  const [formData, setFormData] = useState<PurchaseOrderFormData>({
-    supplierId: po?.supplier || "",
-    orderDate: po?.poDate ? new Date(po.poDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
-    expectedDeliveryDate: po?.dueDate ? new Date(po.dueDate).toISOString().split("T")[0] : "",
-    items: [],
-    notes: "",
+  const [formData, setFormData] = useState({
+    status: po?.status ?? "Pending",
+    expectedDeliveryDate: po?.dueDate || po?.deliveryDate ? new Date(po.dueDate || po.deliveryDate).toISOString().split("T")[0] : "",
+    notes: po?.notes ?? "",
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -1360,7 +1436,11 @@ export function EditPurchaseOrderModal({
     e.preventDefault();
     setError(null);
     try {
-      await onSubmit(formData);
+      await onSubmit({
+        status: formData.status,
+        deliveryDate: formData.expectedDeliveryDate || undefined,
+        notes: formData.notes,
+      });
       onClose();
     } catch (err) {
       setError("Failed to update purchase order");
@@ -1385,17 +1465,22 @@ export function EditPurchaseOrderModal({
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">Supplier</label>
-              <input type="text" value={formData.supplierId} onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1">Order Date</label>
-              <input type="date" value={formData.orderDate} onChange={(e) => setFormData({ ...formData, orderDate: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
+              <label className="block text-sm font-medium text-gray-900 mb-1">Status</label>
+              <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white">
+                <option value="Pending">Pending</option>
+                <option value="Ordered">Ordered</option>
+                <option value="Received">Received</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-1">Expected Delivery</label>
               <input type="date" value={formData.expectedDeliveryDate} onChange={(e) => setFormData({ ...formData, expectedDeliveryDate: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-900 mb-1">Notes</label>
+            <textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black bg-white" />
           </div>
           <div className="flex items-center justify-end gap-3 pt-4">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-900 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>

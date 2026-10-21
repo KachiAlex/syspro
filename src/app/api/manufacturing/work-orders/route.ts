@@ -119,8 +119,16 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (action === "complete") {
-      const wo = await completeWorkOrder(id, tenantSlug);
-      return NextResponse.json({ success: !!wo, data: wo });
+      try {
+        const wo = await completeWorkOrder(id, tenantSlug, {
+          serialNos: Array.isArray(body.serialNos) ? body.serialNos : undefined,
+          lotNo: typeof body.lotNo === "string" ? body.lotNo : undefined,
+          expiryDate: typeof body.expiryDate === "string" ? body.expiryDate : undefined,
+        });
+        return NextResponse.json({ success: !!wo, data: wo });
+      } catch (err) {
+        return NextResponse.json({ success: false, error: err instanceof Error ? err.message : "Completion failed" }, { status: 400 });
+      }
     }
 
     if (action === "close") {

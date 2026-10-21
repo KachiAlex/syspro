@@ -96,127 +96,46 @@ export interface VendorIntegrationConfig {
 }
 
 /**
- * Sample vendor data (in production, connect to external vendor database)
- */
-const SAMPLE_VENDORS: VendorRecord[] = [
-  {
-    id: "vend-arik-001",
-    code: "ARIK001",
-    name: "Arik Air",
-    email: "billing@arikair.com",
-    phone: "+234-1-2716-611",
-    city: "Lagos",
-    country: "Nigeria",
-    taxId: "TAX-ARIK001",
-    paymentTerms: "net30",
-    isActive: true,
-    createdAt: "2025-01-01T00:00:00Z",
-    updatedAt: "2025-01-01T00:00:00Z",
-  },
-  {
-    id: "vend-shoprite-001",
-    code: "SHOPRITE001",
-    name: "Shoprite Supermarket",
-    email: "vendor@shoprite.com.ng",
-    phone: "+234-1-880-5000",
-    city: "Lagos",
-    country: "Nigeria",
-    taxId: "TAX-SHOPRITE001",
-    paymentTerms: "immediate",
-    isActive: true,
-    createdAt: "2025-01-01T00:00:00Z",
-    updatedAt: "2025-01-01T00:00:00Z",
-  },
-  {
-    id: "vend-adobe-001",
-    code: "ADOBE001",
-    name: "Adobe Inc.",
-    email: "accounting@adobe.com",
-    phone: "+1-408-536-6000",
-    country: "United States",
-    taxId: "TAX-ADOBE001",
-    paymentTerms: "net60",
-    isActive: true,
-    createdAt: "2025-01-01T00:00:00Z",
-    updatedAt: "2025-01-01T00:00:00Z",
-  },
-];
-
-/**
- * Look up vendor by name or code
+ * Look up vendor by name or code — tenant-scoped.
  */
 export async function lookupVendor(
+  tenantSlug: string,
   query: string,
   type: "name" | "code" | "email" = "name"
 ): Promise<VendorLookupResult> {
-  try {
-    const sql = SQL;
-    await ensureVendorTables(sql);
+  const sql = SQL;
+  await ensureVendorTables(sql);
 
-    const like = `%${query}%`;
-    const dbRows = (await db.query<VendorRowDB>(
-      `select id, tenant_slug, vendor_code, legal_name, display_name, email, phone, address, city, state, country, tax_id, bank_details, default_payment_terms, status, created_at, updated_at
-       from vendors
-       where vendor_code ilike $1 or legal_name ilike $1 or display_name ilike $1
-       limit 10`,
-      [like]
-    )).rows;
+  const like = `%${query}%`;
+  const dbRows = (await db.query<VendorRowDB>(
+    `select id, tenant_slug, vendor_code, legal_name, display_name, email, phone, address, city, state, country, tax_id, bank_details, default_payment_terms, status, created_at, updated_at
+     from vendors
+     where (vendor_code ilike $1 or legal_name ilike $1 or display_name ilike $1)
+       and tenant_slug = $2
+     limit 10`,
+    [like, tenantSlug]
+  )).rows;
 
-    if (dbRows.length > 0) {
-      const vendors = dbRows.map(mapVendorRow);
-      const lowerQuery = query.toLowerCase();
-      const exact = vendors.find((v) => {
-        switch (type) {
-          case "code":
-            return v.code.toLowerCase() === lowerQuery;
-          case "email":
-            return v.email?.toLowerCase() === lowerQuery;
-          case "name":
-          default:
-            return v.name.toLowerCase() === lowerQuery;
-        }
-      });
-      if (exact) {
-        return { found: true, vendor: exact };
+  if (dbRows.length > 0) {
+    const vendors = dbRows.map(mapVendorRow);
+    const lowerQuery = query.toLowerCase();
+    const exact = vendors.find((v) => {
+      switch (type) {
+        case "code":
+          return v.code.toLowerCase() === lowerQuery;
+        case "email":
+          return v.email?.toLowerCase() === lowerQuery;
+        case "name":
+        default:
+          return v.name.toLowerCase() === lowerQuery;
       }
-      return { found: false, similar: vendors.slice(0, 5) };
+    });
+    if (exact) {
+      return { found: true, vendor: exact };
     }
-    return { found: false, similar: [] };
-  } catch (error) {
-    console.error("Vendor DB lookup failed, falling back to sample data:", error);
-    try {
-      const lowerQuery = query.toLowerCase();
-      let vendor = SAMPLE_VENDORS.find((v) => {
-        switch (type) {
-          case "code":
-            return v.code.toLowerCase() === lowerQuery;
-          case "email":
-            return v.email?.toLowerCase() === lowerQuery;
-          case "name":
-          default:
-            return v.name.toLowerCase() === lowerQuery;
-        }
-      });
-      if (vendor) {
-        return { found: true, vendor };
-      }
-      const similar = SAMPLE_VENDORS.filter((v) => {
-        switch (type) {
-          case "code":
-            return v.code.toLowerCase().includes(lowerQuery);
-          case "email":
-            return v.email?.toLowerCase().includes(lowerQuery) || false;
-          case "name":
-          default:
-            return v.name.toLowerCase().includes(lowerQuery);
-        }
-      }).slice(0, 5);
-      return { found: false, similar: similar.length > 0 ? similar : undefined };
-    } catch (fallbackError) {
-      console.error("Vendor lookup fallback failed:", fallbackError);
-      return { found: false };
-    }
+    return { found: false, similar: vendors.slice(0, 5) };
   }
+  return { found: false, similar: [] };
 }
 
 /**

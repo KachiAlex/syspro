@@ -1,8 +1,9 @@
-export default function TicketingPage() {
-  return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold text-[#F8FAFC]">Ticketing</h1>
-      <p className="text-gray-600 mt-2">Support ticket management system.</p>
-    </div>
-  );
+"use client";
+
+import ItSupportWorkspace from "@/app/tenant-admin/sections/it-support-workspace";
+import { useTenantContext } from "@/components/tenant-admin/tenant-context";
+
+export default function TicketsPage() {
+  const { tenantSlug } = useTenantContext();
+  return <ItSupportWorkspace tenantSlug={tenantSlug} />;
 }

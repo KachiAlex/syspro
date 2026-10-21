@@ -306,6 +306,78 @@ export async function createPurchaseOrder(payload: {
   return normalizePO(row, itemRows);
 }
 
+/**
+ * Consolidate several draft/open POs for one supplier into a single PO.
+ * The merged PO goes through createPurchaseOrder so budget checks, approval
+ * gating, and notifications still apply; sources are marked 'consolidated'.
+ */
+export async function consolidatePurchaseOrders(
+  tenantSlug: string,
+  poIds: string[],
+  opts: { orderNumber?: string; issuedDate?: string; dueDate?: string } = {}
+): Promise<{ purchaseOrder: any; consolidatedIds: string[] } | { error: string }> {
+  const sql = SQL;
+  await ensurePurchaseOrderTables(sql);
+  if (poIds.length < 2) return { error: "Provide at least two purchase orders to consolidate" };
+
+  const sources = (await sql`
+    select * from purchase_orders
+    where tenant_slug = ${tenantSlug} and id = any(${poIds})
+  `) as any[];
+  if (sources.length !== poIds.length) return { error: "Some purchase orders were not found" };
+
+  const notDraft = sources.filter((s) => !["draft", "open"].includes(String(s.status)));
+  if (notDraft.length) {
+    return { error: `Only draft/open POs can be consolidated (${notDraft.map((s) => s.order_number ?? s.po_number ?? s.id).join(", ")})` };
+  }
+  const suppliers = new Set(sources.map((s) => s.supplier_id ?? null));
+  if (suppliers.size > 1) return { error: "All POs must belong to the same supplier" };
+
+  const items = (await sql`
+    select * from purchase_order_items where purchase_order_id = any(${poIds})
+  `) as any[];
+  if (!items.length) return { error: "Source purchase orders have no items" };
+
+  // Merge identical lines (same sku + unit price) into combined quantities.
+  const merged = new Map<string, { description: string; quantity: number; unitPrice: number; sku?: string; accountCode?: string }>();
+  for (const it of items) {
+    const key = `${it.sku ?? ""}|${it.description}|${it.unit_price}`;
+    const existing = merged.get(key);
+    if (existing) existing.quantity += Number(it.quantity);
+    else merged.set(key, {
+      description: it.description,
+      quantity: Number(it.quantity),
+      unitPrice: Number(it.unit_price),
+      sku: it.sku ?? undefined,
+      accountCode: it.account_code ?? undefined,
+    });
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+  const po = await createPurchaseOrder({
+    tenantSlug,
+    supplierId: sources[0].supplier_id ?? null,
+    orderNumber: opts.orderNumber ?? `PO-CONS-${Date.now().toString(36).toUpperCase()}`,
+    issuedDate: opts.issuedDate ?? today,
+    dueDate: opts.dueDate ?? sources.map((s) => s.due_date).filter(Boolean).sort().pop() ?? today,
+    currency: sources[0].currency ?? "₦",
+    items: [...merged.values()],
+    metadata: { consolidatedFrom: poIds },
+  });
+  if (!po) return { error: "Consolidated PO creation failed" };
+
+  await sql`
+    update purchase_orders set status = 'consolidated', updated_at = now()
+    where tenant_slug = ${tenantSlug} and id = any(${poIds})
+  `;
+  try {
+    const { logAuditAction } = await import("../audit");
+    await logAuditAction("purchase_order.consolidated", "purchase_order", (po as any).id,
+      { consolidatedFrom: poIds, orderNumber: (po as any).orderNumber }, tenantSlug);
+  } catch { /* audit must not block */ }
+  return { purchaseOrder: po, consolidatedIds: poIds };
+}
+
 export async function updatePurchaseOrder(id: string, updates: Partial<PurchaseOrder>, tenantSlug?: string) {
   const sql = SQL;
   await ensurePurchaseOrderTables(sql);

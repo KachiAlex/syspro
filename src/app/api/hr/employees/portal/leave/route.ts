@@ -105,7 +105,8 @@ export async function POST(request: NextRequest) {
     }
 
     const { leaveType, startDate, endDate, reason } = parsed.data;
-    const days = daysBetween(startDate, endDate);
+    const { countLeaveDays } = await import("@/lib/hr/db");
+    const days = await countLeaveDays(session.tenantSlug, startDate, endDate);
     const year = new Date(startDate).getUTCFullYear();
 
     // Reject requests that exceed the remaining balance — shared helper keeps

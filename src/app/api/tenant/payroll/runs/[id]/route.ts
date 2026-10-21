@@ -169,24 +169,47 @@ export async function PATCH(request: NextRequest, context: any) {
       const residual = employeeResidual + health + employerOther;
       if (residual > 0) accrualLines.push({ accountCode: "2310", debitAmount: 0, creditAmount: residual, description: `Payroll deductions payable — ${r.period}` });
 
-      // Accrual: Dr Salaries & Wages (+ employer statutory) / Cr net + statutory payables
-      const journal = await createJournalEntry({
-        tenantSlug: ctx.tenantSlug,
-        entryDate,
-        referenceType: "payroll",
-        referenceId: id,
-        description: `Payroll accrual ${r.period}`,
-        lines: accrualLines,
-        metadata: { runId: id, period: r.period, kind: "accrual", employerCost },
-      });
-
+      // Atomic claim FIRST — two concurrent approvals must not both post an
+      // accrual JE. The conditional update is the single-winner guard; the
+      // loser sees zero rows and 409s before touching the ledger.
       const approvedBy = await resolveActorName(ctx);
-      const [updated] = await sql`
+      const [claimed] = await sql`
         update admin_payroll_runs set
           status = 'processing',
           approved_by = ${approvedBy},
           approved_at = now(),
-          processed_at = coalesce(processed_at, now()),
+          processed_at = coalesce(processed_at, now())
+        where id = ${id} and tenant_slug = ${ctx.tenantSlug} and status = 'draft'
+        returning *
+      `;
+      if (!claimed) {
+        return errorResponse("Run is no longer a draft (concurrent approval?)", 409);
+      }
+
+      // Accrual: Dr Salaries & Wages (+ employer statutory) / Cr net + statutory payables
+      let journal;
+      try {
+        journal = await createJournalEntry({
+          tenantSlug: ctx.tenantSlug,
+          entryDate,
+          referenceType: "payroll",
+          referenceId: id,
+          description: `Payroll accrual ${r.period}`,
+          lines: accrualLines,
+          metadata: { runId: id, period: r.period, kind: "accrual", employerCost },
+        });
+      } catch (journalErr) {
+        // Compensate — return the run to draft so approval can be retried.
+        await sql`
+          update admin_payroll_runs set
+            status = 'draft', approved_by = null, approved_at = null
+          where id = ${id} and status = 'processing' and journal_entry_id is null
+        `;
+        throw journalErr;
+      }
+
+      const [updated] = await sql`
+        update admin_payroll_runs set
           journal_entry_id = ${journal.id}
         where id = ${id}
         returning *
@@ -242,33 +265,55 @@ export async function PATCH(request: NextRequest, context: any) {
     }
 
     const totalNet = Number(r.total_net) || 0;
-    const paymentJournal = await createJournalEntry({
-      tenantSlug: ctx.tenantSlug,
-      entryDate: new Date().toISOString().split("T")[0],
-      referenceType: "payroll",
-      referenceId: id,
-      description: `Payroll disbursement ${r.period}`,
-      lines: [
-        {
-          accountCode: "2300",
-          debitAmount: totalNet,
-          creditAmount: 0,
-          description: `Net payroll settled — ${r.period}`,
-        },
-        {
-          accountCode: "1100",
-          debitAmount: 0,
-          creditAmount: totalNet,
-          description: `Bank disbursement — payroll ${r.period}`,
-        },
-      ],
-      metadata: { runId: id, period: r.period, kind: "disbursement" },
-    });
+
+    // Same atomic-claim pattern as approve — only the winner posts the
+    // disbursement JE.
+    const [claimed] = await sql`
+      update admin_payroll_runs set
+        status = 'completed',
+        paid_at = now()
+      where id = ${id} and tenant_slug = ${ctx.tenantSlug} and status = 'processing'
+      returning *
+    `;
+    if (!claimed) {
+      return errorResponse("Run is no longer in processing (concurrent payment?)", 409);
+    }
+
+    let paymentJournal;
+    try {
+      paymentJournal = await createJournalEntry({
+        tenantSlug: ctx.tenantSlug,
+        entryDate: new Date().toISOString().split("T")[0],
+        referenceType: "payroll",
+        referenceId: id,
+        description: `Payroll disbursement ${r.period}`,
+        lines: [
+          {
+            accountCode: "2300",
+            debitAmount: totalNet,
+            creditAmount: 0,
+            description: `Net payroll settled — ${r.period}`,
+          },
+          {
+            accountCode: "1100",
+            debitAmount: 0,
+            creditAmount: totalNet,
+            description: `Bank disbursement — payroll ${r.period}`,
+          },
+        ],
+        metadata: { runId: id, period: r.period, kind: "disbursement" },
+      });
+    } catch (journalErr) {
+      await sql`
+        update admin_payroll_runs set
+          status = 'processing', paid_at = null
+        where id = ${id} and status = 'completed' and payment_journal_entry_id is null
+      `;
+      throw journalErr;
+    }
 
     const [updated] = await sql`
       update admin_payroll_runs set
-        status = 'completed',
-        paid_at = now(),
         payment_journal_entry_id = ${paymentJournal.id}
       where id = ${id}
       returning *

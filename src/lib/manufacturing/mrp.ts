@@ -117,6 +117,31 @@ async function getComponentUnitCost(sku: string, tenantSlug: string): Promise<nu
   }
 }
 
+/**
+ * Production plan: turn MRP demand into draft work orders — one per FG sku.
+ */
+export async function generateWorkOrdersFromMrp(
+  tenantSlug: string,
+  demands: MrpDemandItem[],
+  opts: { createdBy?: string } = {}
+): Promise<{ created: number; workOrderIds: string[] }> {
+  const { createWorkOrder } = await import("./work-orders");
+  const ids: string[] = [];
+  for (const d of demands) {
+    const wo = await createWorkOrder({
+      tenantSlug,
+      productSku: d.productSku,
+      productName: d.productName,
+      quantity: d.quantity,
+      scheduledEnd: d.dueDate,
+      createdBy: opts.createdBy,
+      notes: `MRP-generated from demand source ${d.source ?? "manual"}`,
+    });
+    if (wo) ids.push((wo as any).id);
+  }
+  return { created: ids.length, workOrderIds: ids };
+}
+
 export async function generateRequisitionsFromMrp(
   tenantSlug: string,
   plan: MrpPlan,

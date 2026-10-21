@@ -27,20 +27,18 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   }
 
   try {
-    const lead = await getLead(params.id);
-    if (!lead) {
+    // Authenticate before touching the record — prevents a 404-vs-403 oracle.
+    const guard = await requireCrmAuth(request, parsed.data.tenantSlug);
+    if (!guard.ok) return guard.response;
+    const auth = guard.auth;
+
+    const lead = await getLead(params.id, parsed.data.tenantSlug);
+    if (!lead || ((lead as any).tenant_slug !== parsed.data.tenantSlug && (lead as any).tenantSlug !== parsed.data.tenantSlug)) {
       return NextResponse.json({ error: "Lead not found" }, { status: 404 });
-    }
-    if ((lead as any).tenant_slug !== parsed.data.tenantSlug && (lead as any).tenantSlug !== parsed.data.tenantSlug) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
     if ((lead as any).stage === "converted") {
       return NextResponse.json({ error: "Lead has already been converted" }, { status: 409 });
     }
-
-    const guard = await requireCrmAuth(request, parsed.data.tenantSlug);
-    if (!guard.ok) return guard.response;
-    const auth = guard.auth;
 
     const customerName = parsed.data.customerName || (lead as any).companyName || (lead as any).company_name;
     const customer = await insertCustomer({

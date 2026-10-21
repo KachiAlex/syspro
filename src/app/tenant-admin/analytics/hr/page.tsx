@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Users, Clock, DollarSign, Award, Download, Calendar, Filter, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
@@ -22,48 +22,48 @@ interface HRReport {
   size: string;
 }
 
-const hrMetrics: HRMetric[] = [
-  {
-    title: 'Active Employees',
-    value: '156',
-    change: '+3.2%',
-    trend: 'up',
-    icon: Users
-  },
-  {
-    title: 'Attendance Rate',
-    value: '94.2%',
-    change: '+1.5%',
-    trend: 'up',
-    icon: Clock
-  },
-  {
-    title: 'Avg Salary',
-    value: '$68,500',
-    change: '+4.8%',
-    trend: 'up',
-    icon: DollarSign
-  },
-  {
-    title: 'Training Completion',
-    value: '87.3%',
-    change: '+5.2%',
-    trend: 'up',
-    icon: Award
-  }
-];
-
-const hrReports: HRReport[] = [
-  { id: '1', name: 'Employee Performance Review', type: 'Performance', date: '2026-04-03', status: 'Completed', size: '2.1 MB' },
-  { id: '2', name: 'Attendance Analysis Q1', type: 'Attendance', date: '2026-04-02', status: 'Completed', size: '1.6 MB' },
-  { id: '3', name: 'Payroll Cost Report', type: 'Payroll', date: '2026-04-01', status: 'Completed', size: '1.9 MB' },
-  { id: '4', name: 'Training Effectiveness', type: 'Training', date: '2026-03-31', status: 'Processing', size: '2.4 MB' },
-];
-
 export default function HRAnalyticsPage() {
   const { tenantSlug } = useTenantContext();
   const [selectedPeriod, setSelectedPeriod] = useState('This Month');
   const [selectedReportType, setSelectedReportType] = useState('All');
+  const [hrMetrics, setHrMetrics] = useState<HRMetric[]>([]);
+  const [hrReports, setHrReports] = useState<HRReport[]>([]);
+
+  useEffect(() => {
+    if (!tenantSlug) return;
+    const ts = encodeURIComponent(tenantSlug);
+    fetch(`/api/tenant/analytics?type=metrics&tenantSlug=${ts}`)
+      .then((r) => r.json().catch(() => ({})))
+      .then((payload) => {
+        const d = payload?.data ?? {};
+        const emp = d.employees ?? {};
+        const dept = d.departments ?? {};
+        const appr = d.approvals ?? {};
+        setHrMetrics([
+          { title: 'Active Employees', value: String(emp.active ?? emp.total ?? 0), change: `${emp.total ?? 0} total`, trend: 'up', icon: Users },
+          { title: 'Departments', value: String(dept.total ?? 0), change: `${Number(dept.avgEmployeesPerDept ?? 0).toFixed(1)} avg staff`, trend: 'up', icon: Clock },
+          { title: 'Avg Tenure', value: `${Number(emp.avgTenure ?? 0).toFixed(1)} yrs`, change: `turnover ${(Number(emp.turnover ?? 0) * 100).toFixed(0)}%`, trend: 'up', icon: DollarSign },
+          { title: 'Pending Approvals', value: String(appr.pending ?? 0), change: `${appr.approved ?? 0} approved`, trend: 'up', icon: Award },
+        ]);
+      })
+      .catch((err) => console.error('Failed to load HR metrics:', err));
+    fetch(`/api/tenant/analytics?type=reports&tenantSlug=${ts}`)
+      .then((r) => r.json().catch(() => ({})))
+      .then((payload) => {
+        const list = payload?.data?.reports ?? payload?.reports ?? [];
+        setHrReports(list
+          .filter((r: any) => !r.module || ['hr', 'people'].includes(String(r.module).toLowerCase()))
+          .map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            type: r.reportType ?? r.module ?? 'Report',
+            date: r.createdAt ? new Date(r.createdAt).toISOString().split('T')[0] : '—',
+            status: r.status ?? 'Ready',
+            size: '—',
+          })));
+      })
+      .catch((err) => console.error('Failed to load HR reports:', err));
+  }, [tenantSlug]);
 
   return (
     <div className="p-6 space-y-6">

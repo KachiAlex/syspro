@@ -2,14 +2,36 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Briefcase, CheckCircle, Archive, BarChart3, TrendingUp, ListChecks } from 'lucide-react';
+import { Briefcase, CheckCircle, Archive, BarChart3, TrendingUp, ListChecks, Clock } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
 import { ProjectService, ProjectResponse } from './services/projectService';
+
+interface BillableRow {
+  projectId: string;
+  projectName: string;
+  customerName: string | null;
+  billingRate: number | null;
+  totalHours: number;
+  entries: number;
+  periodStart: string;
+  periodEnd: string;
+}
 
 export default function ProjectsPage() {
   const { tenantSlug } = useTenantContext();
   const [projects, setProjects] = useState<ProjectResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [billable, setBillable] = useState<BillableRow[]>([]);
+  const [billingBusy, setBillingBusy] = useState<string | null>(null);
+  const [billingError, setBillingError] = useState<string | null>(null);
+
+  const loadBillable = React.useCallback(() => {
+    if (!tenantSlug) return;
+    fetch(`/api/projects/timesheet-billing?tenantSlug=${encodeURIComponent(tenantSlug)}`, { cache: 'no-store' })
+      .then((r) => r.json().catch(() => ({ projects: [] })))
+      .then((d) => setBillable(d.projects ?? []))
+      .catch((err) => console.error('Failed to load billable time:', err));
+  }, [tenantSlug]);
 
   useEffect(() => {
     if (!tenantSlug) return;
@@ -17,7 +39,33 @@ export default function ProjectsPage() {
       .then(setProjects)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [tenantSlug]);
+    loadBillable();
+  }, [tenantSlug, loadBillable]);
+
+  const generateInvoice = async (row: BillableRow) => {
+    if (!tenantSlug) return;
+    const rate = row.billingRate ?? Number(prompt(`Hourly billing rate for ${row.projectName}:`) || 0);
+    if (!rate || rate <= 0) {
+      setBillingError(`Set a billing rate for ${row.projectName} first.`);
+      return;
+    }
+    setBillingBusy(row.projectId);
+    setBillingError(null);
+    try {
+      const res = await fetch(`/api/projects/timesheet-billing?tenantSlug=${encodeURIComponent(tenantSlug)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'invoice', projectId: row.projectId, rate, customerName: row.customerName ?? undefined }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || 'Invoice generation failed');
+      loadBillable();
+    } catch (err) {
+      setBillingError(err instanceof Error ? err.message : 'Invoice generation failed');
+    } finally {
+      setBillingBusy(null);
+    }
+  };
 
   const totalProjects = projects.length;
   const activeProjects = projects.filter(p => p.status === 'In Progress' || p.status === 'Initiated').length;
@@ -144,6 +192,50 @@ export default function ProjectsPage() {
           </div>
         </Link>
       </div>
+
+      {billable.length > 0 && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Clock className="w-6 h-6 text-emerald-600" />
+            <h3 className="text-lg font-semibold text-gray-900">Timesheet Billing</h3>
+          </div>
+          {billingError && <p className="text-sm text-red-600 mb-3">{billingError}</p>}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-gray-500 border-b">
+                  <th className="py-2 pr-4">Project</th>
+                  <th className="py-2 pr-4">Customer</th>
+                  <th className="py-2 pr-4">Period</th>
+                  <th className="py-2 pr-4 text-right">Hours</th>
+                  <th className="py-2 pr-4 text-right">Rate</th>
+                  <th className="py-2 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {billable.map((row) => (
+                  <tr key={row.projectId} className="border-b last:border-0">
+                    <td className="py-3 pr-4 font-medium text-gray-900">{row.projectName}</td>
+                    <td className="py-3 pr-4 text-gray-600">{row.customerName ?? '—'}</td>
+                    <td className="py-3 pr-4 text-gray-600">{row.periodStart} → {row.periodEnd}</td>
+                    <td className="py-3 pr-4 text-right">{row.totalHours.toFixed(1)}</td>
+                    <td className="py-3 pr-4 text-right">{row.billingRate ?? '—'}</td>
+                    <td className="py-3 text-right">
+                      <button
+                        onClick={() => generateInvoice(row)}
+                        disabled={billingBusy === row.projectId}
+                        className="px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        {billingBusy === row.projectId ? 'Generating…' : 'Generate Invoice'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Projects</h3>

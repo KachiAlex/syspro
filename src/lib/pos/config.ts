@@ -61,6 +61,29 @@ export async function getPosConfig(tenantSlug: string): Promise<PosConfig> {
   return cfg;
 }
 
+/** Merge a partial config into tenants.settings->'pos' and return the resolved config. */
+export async function setPosConfig(
+  tenantSlug: string,
+  patch: Partial<Omit<PosConfig, "loyalty">> & { loyalty?: Partial<PosConfig["loyalty"]> }
+): Promise<PosConfig> {
+  const sql = SQL;
+  const merged = {
+    vatRate: patch.vatRate ?? undefined,
+    cashRoundingStep: patch.cashRoundingStep ?? undefined,
+    cardFeePct: patch.cardFeePct ?? undefined,
+    varianceTolerance: patch.varianceTolerance ?? undefined,
+    loyalty: patch.loyalty ? { ...patch.loyalty } : undefined,
+  };
+  const clean = Object.fromEntries(Object.entries(merged).filter(([, v]) => v !== undefined));
+  await sql`
+    update tenants
+    set settings = jsonb_set(coalesce(settings, '{}'::jsonb), '{pos}',
+      coalesce(settings -> 'pos', '{}'::jsonb) || ${JSON.stringify(clean)}::jsonb, true)
+    where slug = ${tenantSlug}
+  `;
+  return getPosConfig(tenantSlug);
+}
+
 export async function logPosAudit(
   tenantSlug: string,
   entry: { action: string; actor?: string | null; entityType?: string; entityId?: string; detail?: Record<string, unknown> }

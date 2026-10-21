@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { listLeave, insertLeave, getLeaveBalance, checkLeaveBalanceAvailable } from "@/lib/hr/db";
+import { listLeave, insertLeave, getLeaveBalance, checkLeaveBalanceAvailable, countLeaveDays } from "@/lib/hr/db";
 import { requireModuleAccess } from "@/lib/api-auth";
 
 const listSchema = z.object({
@@ -73,10 +73,7 @@ export async function POST(request: NextRequest) {
   // Reject requests that exceed the employee's balance — shared helper so the
   // cap is enforced identically across admin, tenant, and portal paths.
   const { leaveType, startDate, endDate } = parsed.data;
-  const days =
-    Math.round(
-      (new Date(`${endDate}T00:00:00Z`).getTime() - new Date(`${startDate}T00:00:00Z`).getTime()) / 86400000
-    ) + 1;
+  const days = await countLeaveDays(parsed.data.tenantSlug, startDate, endDate);
   const year = new Date(`${startDate}T00:00:00Z`).getUTCFullYear();
   try {
     const cap = await checkLeaveBalanceAvailable({

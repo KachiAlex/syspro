@@ -196,15 +196,19 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { expenseId, action, comment } = body;
 
-    if (!expenseId || !action || !["approve", "reject"].includes(action)) {
+    if (!expenseId || !action || !["approve", "reject", "pay"].includes(action)) {
       return NextResponse.json({ error: "Missing or invalid expenseId/action" }, { status: 400 });
     }
+    // Paying is a settlement action — restrict to HR/finance-capable roles.
+    if (action === "pay" && !isHR) {
+      return NextResponse.json({ error: "Only HR can settle expenses" }, { status: 403 });
+    }
 
-    const newStatus = action === "approve" ? "approved" : "rejected";
+    const newStatus = action === "approve" ? "approved" : action === "reject" ? "rejected" : "paid";
 
     // Fetch the expense once — used for both self-approval and department checks
     const expenseInfo = await SQL`
-      SELECT department_id, employee_id FROM admin_employee_expenses
+      SELECT department_id, employee_id, amount, category, status, journal_entry_id FROM admin_employee_expenses
       WHERE id = ${expenseId} AND tenant_slug = ${session.tenantSlug}
       LIMIT 1
     `;
@@ -213,8 +217,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Segregation of duties: nobody approves their own expense
-    if (expenseInfo[0].employee_id === session.id) {
+    if (action !== "pay" && expenseInfo[0].employee_id === session.id) {
       return NextResponse.json({ error: "You cannot approve your own expense" }, { status: 403 });
+    }
+    if (action === "pay" && expenseInfo[0].status !== "approved") {
+      return NextResponse.json({ error: "Only approved expenses can be paid" }, { status: 400 });
     }
 
     // If HOD, verify expense is from their department
@@ -234,13 +241,56 @@ export async function PATCH(request: NextRequest) {
     // Get employee_id for notification
     const expRow = await SQL`SELECT employee_id FROM admin_employee_expenses WHERE id = ${expenseId} AND tenant_slug = ${session.tenantSlug} LIMIT 1`;
 
+    // GL: approval books the liability (Dr expense / Cr employee payable);
+    // payment settles it (Dr payable / Cr cash). Idempotent via journal_entry_id.
+    let journalEntryId: string | null = expenseInfo[0].journal_entry_id ?? null;
+    try {
+      const { postGLEntry, GL_ACCOUNTS } = await import("@/lib/finance/gl");
+      const amount = Number(expenseInfo[0].amount);
+      const today = new Date().toISOString().split("T")[0];
+      if (action === "approve" && amount > 0 && !journalEntryId) {
+        const je = await postGLEntry({
+          tenantSlug: session.tenantSlug,
+          entryDate: today,
+          journalType: "SYSTEM",
+          referenceType: "employee_expense",
+          referenceId: expenseId,
+          status: "POSTED",
+          description: `Employee expense — ${expenseInfo[0].category ?? "general"}`,
+          lines: [
+            { accountCode: GL_ACCOUNTS.GENERAL_EXPENSE, debitAmount: amount, description: `Expense ${expenseId}` },
+            { accountCode: GL_ACCOUNTS.PAYROLL_PAYABLE, creditAmount: amount, description: `Payable to employee ${expenseInfo[0].employee_id}` },
+          ],
+        });
+        journalEntryId = (je as any)?.id ?? null;
+      } else if (action === "pay" && amount > 0) {
+        await postGLEntry({
+          tenantSlug: session.tenantSlug,
+          entryDate: today,
+          journalType: "SYSTEM",
+          referenceType: "employee_expense_payment",
+          referenceId: expenseId,
+          status: "POSTED",
+          description: `Employee expense settlement — ${expenseId}`,
+          lines: [
+            { accountCode: GL_ACCOUNTS.PAYROLL_PAYABLE, debitAmount: amount, description: `Settle payable ${expenseId}` },
+            { accountCode: GL_ACCOUNTS.CASH, creditAmount: amount, description: `Cash paid to employee` },
+          ],
+        });
+      }
+    } catch (err) {
+      console.error("Expense GL posting failed:", err);
+    }
+
+    await SQL`ALTER TABLE admin_employee_expenses ADD COLUMN IF NOT EXISTS journal_entry_id text`;
     await SQL`
       UPDATE admin_employee_expenses
       SET status = ${newStatus},
           approver_id = ${session.id},
           approver_name = ${session.name},
           approver_comment = ${comment || null},
-          approved_at = now(),
+          approved_at = coalesce(approved_at, now()),
+          journal_entry_id = coalesce(${journalEntryId}, journal_entry_id),
           updated_at = now()
       WHERE id = ${expenseId} AND tenant_slug = ${session.tenantSlug}
     `;

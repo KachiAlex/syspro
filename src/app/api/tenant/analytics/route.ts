@@ -82,57 +82,40 @@ export async function GET(request: NextRequest) {
       if (!reportId) {
         return errorResponse("Report ID is required", 400);
       }
-      const report = (await safeQuery<any>(
-        `select
-          coalesce((changes->'after'->>'id'), resource_id) as id,
-          coalesce((changes->'after'->>'name'), 'Untitled') as name,
-          coalesce((changes->'after'->>'reportType'), (changes->'after'->>'type'), 'report') as "reportType",
-          (changes->'after') as payload,
-          created_at as "createdAt"
-        from admin_audit_logs
-        where tenant_slug = $1 and resource = 'report' and action = 'create'
-          and (
-            (changes->'after'->>'id') = $2
-            or resource_id = $2
-          )
-        order by created_at desc
-        limit 1`,
-        [tenantSlug, reportId]
-      ))?.[0];
+      // Real execution against the reporting engine — not a payload dump.
+      const { getReportForJob } = await import("@/lib/reporting/db");
+      const { executeReport, datasetToCsv } = await import("@/lib/reporting/execute");
+      const report = await getReportForJob(reportId, tenantSlug);
       if (!report) {
         return errorResponse("Report not found", 404);
       }
-      const payload = report.payload || {};
-      const headers = ["Field", "Value"];
-      const rows = Object.entries({ id: report.id, name: report.name, type: report.reportType, ...payload, createdAt: report.createdAt }).map(([k, v]) => [JSON.stringify(k), JSON.stringify(v)]);
-      const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
-      return new NextResponse(csv, { status: 200, headers: { "Content-Type": "text/csv", "Content-Disposition": `attachment; filename="${report.name.replace(/\s+/g, "-")}.csv"` } });
+      const dataset = await executeReport(tenantSlug, report);
+      const csv = datasetToCsv(dataset);
+      return new NextResponse(csv, { status: 200, headers: { "Content-Type": "text/csv", "Content-Disposition": `attachment; filename="${String(report.name).replace(/\s+/g, "-")}.csv"` } });
     }
 
     if (type === "reports") {
-      const reports = (await safeQuery<any>(
-        `select
-          coalesce((changes->'after'->>'id'), resource_id) as id,
-          coalesce((changes->'after'->>'name'), 'Untitled') as name,
-          coalesce((changes->'after'->>'reportType'), (changes->'after'->>'type'), 'report') as "reportType",
-          coalesce((changes->'after'->>'module'), 'general') as "module",
-          coalesce((changes->'after'->>'status'), 'Completed') as "status",
-          (changes->'after'->>'schedule') as schedule,
-          coalesce((changes->'after'->>'rows')::int, 0) as "dataPoints",
-          coalesce((changes->'after'->>'createdAt')::timestamptz, created_at) as "createdAt"
-        from admin_audit_logs
-        where tenant_slug = $1 and resource = 'report' and action = 'create'
-        order by coalesce((changes->'after'->>'createdAt')::timestamptz, created_at) desc
-        limit $2 offset $3`,
-        [tenantSlug, pagination.limit, (pagination.page - 1) * pagination.limit]
-      )) || [];
+      const { listReports } = await import("@/lib/reporting/db");
+      const reports = await listReports(tenantSlug, pagination.page, pagination.limit);
       const total = (await safeQuery<{ count: number }>(
-        `select count(*)::int as count from admin_audit_logs where tenant_slug = $1 and resource = 'report' and action = 'create'`,
+        `select count(*)::int as count from reports where tenant_slug = $1`,
         [tenantSlug]
       ))?.[0]?.count || 0;
       return NextResponse.json({
         success: true,
-        data: { reports, pagination: { page: pagination.page, limit: pagination.limit, total } },
+        data: {
+          reports: reports.map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            reportType: r.reportType,
+            module: r.definition?.module ?? r.reportType ?? "general",
+            status: r.enabled === false ? "Disabled" : "Ready",
+            schedule: r.schedule,
+            dataPoints: r.definition?.metrics?.length ?? 0,
+            createdAt: r.createdAt,
+          })),
+          pagination: { page: pagination.page, limit: pagination.limit, total },
+        },
       });
     } else if (type === "metrics") {
       const deptResult = (await safeQuery<{ total: number; avg: number }>(
@@ -286,35 +269,27 @@ export async function GET(request: NextRequest) {
         [tenantSlug]
       )) || [];
 
-      const reports = (await safeQuery<any>(
-        `select
-          coalesce((changes->'after'->>'id'), resource_id) as id,
-          coalesce((changes->'after'->>'name'), 'Untitled') as name,
-          coalesce((changes->'after'->>'reportType'), (changes->'after'->>'type'), 'report') as "reportType",
-          (changes->'after'->>'schedule') as schedule,
-          coalesce((changes->'after'->>'dataPoints')::int, 0) as "dataPoints",
-          coalesce((changes->'after'->>'createdAt')::timestamptz, created_at) as "createdAt"
-        from admin_audit_logs
-        where tenant_slug = $1 and resource = 'report' and action = 'create'
-        order by coalesce((changes->'after'->>'createdAt')::timestamptz, created_at) desc
-        limit 20`,
-        [tenantSlug]
-      )) || [];
+      const { listReports, listReportJobs } = await import("@/lib/reporting/db");
+      const reportsRaw = await listReports(tenantSlug, 1, 20).catch(() => [] as any[]);
+      const reports = reportsRaw.map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        reportType: r.reportType,
+        schedule: r.schedule,
+        dataPoints: r.definition?.metrics?.length ?? 0,
+        createdAt: r.createdAt,
+      }));
 
-      const exports = (await safeQuery<any>(
-        `select
-          coalesce((changes->'after'->>'id'), resource_id) as id,
-          coalesce((changes->'after'->>'name'), 'Untitled') as name,
-          coalesce((changes->'after'->>'frequency'), 'daily') as frequency,
-          coalesce((changes->'after'->>'format'), 'csv') as format,
-          coalesce((changes->'after'->>'scheduleFor')::timestamptz, created_at) as "nextRun",
-          created_at as "lastRun"
-        from admin_audit_logs
-        where tenant_slug = $1 and resource = 'export' and action = 'create'
-        order by created_at desc
-        limit 20`,
-        [tenantSlug]
-      )) || [];
+      const jobs = await listReportJobs(tenantSlug).catch(() => [] as any[]);
+      const exports = jobs.slice(0, 20).map((j: any) => ({
+        id: j.id,
+        name: j.reportId ?? "Report job",
+        frequency: "on-demand",
+        format: "csv",
+        nextRun: j.createdAt,
+        lastRun: j.completedAt ?? j.startedAt,
+        status: j.status,
+      }));
 
       const revenueTrend = computeTrend(revenue, revenuePrevious);
       const customerTrend = computeTrend(customers, customersPrevious);
@@ -362,20 +337,20 @@ export async function POST(request: NextRequest) {
         return errorResponse(parsed.error, 400, parsed.details);
       }
 
-      const report = {
-        id: `rep-${Date.now()}`,
-        name: parsed.data.name,
-        reportType: parsed.data.reportType || parsed.data.type || "custom",
-        type: parsed.data.type || parsed.data.reportType || "custom",
-        filters: parsed.data.filters,
-        metrics: parsed.data.metrics,
-        schedule: parsed.data.schedule,
+      // Persist a real report definition — the reports table drives the
+      // scheduler, the report list, and download execution.
+      const { createReport } = await import("@/lib/reporting/db");
+      const moduleKey = String(parsed.data.reportType || parsed.data.type || "custom").toLowerCase();
+      const report = await createReport({
         tenantSlug: context.tenantSlug,
-        status: "generating",
-        createdAt: new Date().toISOString(),
-        createdBy: context.userId,
-      };
+        name: parsed.data.name,
+        reportType: moduleKey,
+        definition: { module: moduleKey, metrics: parsed.data.metrics ?? [] },
+        filters: parsed.data.filters,
+        schedule: parsed.data.schedule === "once" ? null : parsed.data.schedule ?? null,
+      });
 
+      // Audit trail — a record of the creation, not the report itself.
       const auditService = new AuditService();
       await auditService.log(
         asTenantSlug(context.tenantSlug),
@@ -383,14 +358,14 @@ export async function POST(request: NextRequest) {
         "create",
         "report",
         report.id as ResourceId,
-        { after: report }
+        { after: { id: report.id, name: report.name, reportType: report.reportType, schedule: report.schedule } }
       );
 
       return NextResponse.json(
         {
           success: true,
           data: report,
-          message: "Report generation started",
+          message: "Report saved",
         },
         { status: 201 }
       );
@@ -400,18 +375,16 @@ export async function POST(request: NextRequest) {
         return errorResponse(parsed.error, 400, parsed.details);
       }
 
-      const exportJob = {
-        id: `exp-${Date.now()}`,
-        name: parsed.data.name || `Export ${parsed.data.format || "csv"}`,
-        reportId: parsed.data.reportId || null,
-        format: parsed.data.format || "csv",
-        frequency: parsed.data.frequency || "daily",
-        scheduleFor: parsed.data.scheduleFor,
+      // Queue a real report job — picked up by the report-jobs worker/cron.
+      const { createReportJob } = await import("@/lib/reporting/db");
+      if (!parsed.data.reportId) {
+        return errorResponse("reportId is required — create a saved report first", 400);
+      }
+      const job = await createReportJob({
+        reportId: parsed.data.reportId,
         tenantSlug: context.tenantSlug,
-        status: "queued",
-        createdAt: new Date().toISOString(),
-        createdBy: context.userId,
-      };
+        requestedBy: context.userId,
+      });
 
       const auditService = new AuditService();
       await auditService.log(
@@ -419,14 +392,14 @@ export async function POST(request: NextRequest) {
         context.userId as UserId,
         "create",
         "export",
-        exportJob.id as ResourceId,
-        { after: exportJob }
+        job.id as ResourceId,
+        { after: { id: job.id, reportId: parsed.data.reportId, format: parsed.data.format || "csv" } }
       );
 
       return NextResponse.json(
         {
           success: true,
-          data: exportJob,
+          data: { id: job.id, reportId: parsed.data.reportId, format: parsed.data.format || "csv", status: "queued" },
           message: "Export job queued",
         },
         { status: 201 }

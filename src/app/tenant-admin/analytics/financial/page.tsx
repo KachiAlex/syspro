@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { DollarSign, TrendingUp, TrendingDown, Download, Calendar, Filter, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useTenantContext } from '@/components/tenant-admin/tenant-context';
@@ -23,47 +23,46 @@ interface FinancialReport {
   size: string;
 }
 
-const financialReports: FinancialReport[] = [
-  { id: '1', name: 'Monthly Financial Summary', type: 'Revenue', date: '2026-04-03', status: 'Completed', size: '2.4 MB' },
-  { id: '2', name: 'Q1 Profit & Loss', type: 'P&L', date: '2026-04-01', status: 'Completed', size: '1.8 MB' },
-  { id: '3', name: 'Cash Flow Analysis', type: 'Cash Flow', date: '2026-03-31', status: 'Completed', size: '1.2 MB' },
-  { id: '4', name: 'Budget vs Actual', type: 'Budget', date: '2026-03-30', status: 'Processing', size: '3.1 MB' }
-];
-
 export default function FinancialAnalyticsPage() {
   const { tenantSlug, currency } = useTenantContext();
   const sym = getCurrencySymbol(currency);
+  const [financialMetrics, setFinancialMetrics] = useState<FinancialMetric[]>([]);
+  const [financialReports, setFinancialReports] = useState<FinancialReport[]>([]);
 
-  const financialMetrics: FinancialMetric[] = [
-    {
-      title: 'Total Revenue',
-      value: `${sym}425,000`,
-      change: '+12.5%',
-      trend: 'up',
-      icon: DollarSign
-    },
-    {
-      title: 'Total Expenses',
-      value: `${sym}326,000`,
-      change: '+8.2%',
-      trend: 'up',
-      icon: TrendingUp
-    },
-    {
-      title: 'Net Profit',
-      value: `${sym}99,000`,
-      change: '+23.4%',
-      trend: 'up',
-      icon: TrendingUp
-    },
-    {
-      title: 'Profit Margin',
-      value: '23.4%',
-      change: '+2.1%',
-      trend: 'up',
-      icon: TrendingUp
-    }
-  ];
+  useEffect(() => {
+    if (!tenantSlug) return;
+    const ts = encodeURIComponent(tenantSlug);
+    fetch(`/api/finance/dashboard?tenantSlug=${ts}`)
+      .then((r) => r.json().catch(() => ({})))
+      .then((payload) => {
+        const metrics = payload?.snapshot?.metrics ?? [];
+        setFinancialMetrics(metrics.map((m: any) => ({
+          title: m.label,
+          value: m.value,
+          change: m.delta,
+          trend: m.trend === 'down' ? 'down' : 'up',
+          icon: DollarSign,
+        })));
+      })
+      .catch((err) => console.error('Failed to load financial metrics:', err));
+    fetch(`/api/tenant/analytics?type=reports&tenantSlug=${ts}`)
+      .then((r) => r.json().catch(() => ({})))
+      .then((payload) => {
+        const list = payload?.data?.reports ?? payload?.reports ?? [];
+        setFinancialReports(list
+          .filter((r: any) => !r.module || ['finance'].includes(String(r.module).toLowerCase()))
+          .map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            type: r.reportType ?? 'Report',
+            date: r.createdAt ? new Date(r.createdAt).toISOString().split('T')[0] : '—',
+            status: r.status ?? 'Ready',
+            size: '—',
+          })));
+      })
+      .catch((err) => console.error('Failed to load financial reports:', err));
+  }, [tenantSlug]);
+
   const [selectedPeriod, setSelectedPeriod] = useState('This Month');
   const [selectedReportType, setSelectedReportType] = useState('All');
 

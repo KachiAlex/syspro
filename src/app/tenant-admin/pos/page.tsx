@@ -43,12 +43,14 @@ const OFFLINE_KEY = "pos_offline_queue";
 
 export default function PosPage() {
   const { tenantSlug } = useTenantContext();
-  const [tab, setTab] = useState<"sell" | "shift" | "today">("sell");
+  const [tab, setTab] = useState<"sell" | "shift" | "today" | "settings">("sell");
   const [shift, setShift] = useState<Shift | null>(null);
   const [shiftLoading, setShiftLoading] = useState(true);
   const [registers, setRegisters] = useState<Register[]>([]);
   const [registerId, setRegisterId] = useState<string>("");
   const [config, setConfig] = useState<PosConfig | null>(null);
+  const [priceLists, setPriceLists] = useState<{ id: string; name: string }[]>([]);
+  const [priceListId, setPriceListId] = useState<string>("");
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [cartKey, setCartKey] = useState(() => crypto.randomUUID());
@@ -134,6 +136,13 @@ export default function PosPage() {
     if (res.ok) setConfig(await res.json().catch(() => null));
   }, [api]);
 
+  const loadPriceLists = useCallback(async () => {
+    const res = await api("/api/pos/price-lists");
+    const data = await res.json().catch(() => ({}));
+    const active = (data.priceLists ?? []).filter((p: any) => p.isActive !== false);
+    setPriceLists(active.map((p: any) => ({ id: p.id, name: p.name })));
+  }, [api]);
+
   const loadCustomers = useCallback(async () => {
     const res = await api("/api/finance/customers?limit=200");
     const data = await res.json().catch(() => ({}));
@@ -179,6 +188,7 @@ export default function PosPage() {
     (async () => {
       await loadConfig();
       await loadCustomers();
+      loadPriceLists();
       const reg = await loadRegisters();
       await loadShift(reg || undefined);
       loadProducts();
@@ -186,7 +196,7 @@ export default function PosPage() {
     try {
       setOfflineQueue(JSON.parse(localStorage.getItem(OFFLINE_KEY) ?? "[]"));
     } catch { setOfflineQueue([]); }
-  }, [loadConfig, loadCustomers, loadRegisters, loadShift, loadProducts]);
+  }, [loadConfig, loadCustomers, loadRegisters, loadShift, loadProducts, loadPriceLists]);
 
   useEffect(() => { if (tab === "shift") loadShiftData(); if (tab === "today") loadToday(); if (tab === "sell") loadHeld(); }, [tab, loadShiftData, loadToday, loadHeld]);
   useEffect(() => { if (customerCode) loadLoyalty(customerCode); else setLoyalty(null); }, [customerCode, loadLoyalty]);
@@ -366,6 +376,7 @@ export default function PosPage() {
     registerId: registerId || undefined,
     discount: orderDiscount ?? undefined,
     loyaltyRedeemPoints: redeemPoints > 0 ? redeemPoints : undefined,
+    priceListId: priceListId || undefined,
     idempotencyKey: cartKey,
   });
 
@@ -523,6 +534,15 @@ export default function PosPage() {
                 {registers.map((r) => <option key={r.id} value={r.id}>{r.code}</option>)}
               </select>
             )}
+            {priceLists.length > 0 && (
+              <select
+                value={priceListId} onChange={(e) => setPriceListId(e.target.value)}
+                className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-xs text-[#F8FAFC] mr-2"
+              >
+                <option value="">Standard pricing</option>
+                {priceLists.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            )}
             Shift opened {new Date(shift.openedAt).toLocaleString()} · float {fmt(shift.openingFloat)}
           </p>
         </div>
@@ -535,7 +555,7 @@ export default function PosPage() {
               {syncing ? "Syncing…" : `Sync ${offlineQueue.length} offline sale(s)`}
             </button>
           )}
-          {(["sell", "shift", "today"] as const).map((t) => (
+          {(["sell", "shift", "today", "settings"] as const).map((t) => (
             <button
               key={t} onClick={() => setTab(t)}
               className={`px-4 py-2 rounded-lg text-sm font-medium capitalize ${tab === t ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}`}
@@ -891,6 +911,19 @@ export default function PosPage() {
         </div>
       )}
 
+      {tab === "settings" && config && (
+        <PosSettingsPanel
+          config={config}
+          onSave={async (patch) => {
+            const res = await api("/api/pos/config", {
+              method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch),
+            });
+            if (!res.ok) { setError((await res.json().catch(() => ({}))).error ?? "Save failed"); return; }
+            setConfig(await res.json());
+          }}
+        />
+      )}
+
       {/* Tender modal */}
       {tenderOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setTenderOpen(false)}>
@@ -1203,6 +1236,70 @@ function DiscountForm({
           Apply
         </button>
       </div>
+    </div>
+  );
+}
+
+function PosSettingsPanel({ config, onSave }: { config: PosConfig; onSave: (patch: Partial<PosConfig>) => Promise<void> }) {
+  const [vatRate, setVatRate] = useState(String(config.vatRate));
+  const [cashRoundingStep, setCashRoundingStep] = useState(String(config.cashRoundingStep));
+  const [cardFeePct, setCardFeePct] = useState(String(config.cardFeePct));
+  const [varianceTolerance, setVarianceTolerance] = useState(String(config.varianceTolerance));
+  const [loyaltyEnabled, setLoyaltyEnabled] = useState(config.loyalty.enabled);
+  const [earnDivisor, setEarnDivisor] = useState(String(config.loyalty.earnDivisor));
+  const [redeemValue, setRedeemValue] = useState(String(config.loyalty.redeemValue));
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const field = (label: string, value: string, set: (v: string) => void, hint?: string) => (
+    <div>
+      <label className="block text-xs font-medium text-slate-400 mb-1">{label}</label>
+      <input
+        type="number" min={0} step="any" value={value} onChange={(e) => set(e.target.value)}
+        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-[#F8FAFC]"
+      />
+      {hint && <p className="text-xs text-slate-500 mt-1">{hint}</p>}
+    </div>
+  );
+
+  return (
+    <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 max-w-2xl">
+      <h3 className="text-lg font-semibold text-[#F8FAFC] mb-4">POS Settings</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {field("Output VAT rate (%)", vatRate, setVatRate, "0 = resolve from tax configuration")}
+        {field("Cash rounding step (₦)", cashRoundingStep, setCashRoundingStep, "e.g. 5 rounds cash totals to ₦5; 0 = off")}
+        {field("Card processor fee (%)", cardFeePct, setCardFeePct)}
+        {field("Shift variance tolerance (₦)", varianceTolerance, setVarianceTolerance, "Closes above this need a reason")}
+      </div>
+      <div className="mt-6 border-t border-slate-700 pt-4">
+        <label className="flex items-center gap-2 text-sm text-[#F8FAFC] mb-4">
+          <input type="checkbox" checked={loyaltyEnabled} onChange={(e) => setLoyaltyEnabled(e.target.checked)} className="rounded" />
+          Enable loyalty points
+        </label>
+        {loyaltyEnabled && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {field("Earn 1 pt per ₦ spent", earnDivisor, setEarnDivisor)}
+            {field("Point redemption value (₦)", redeemValue, setRedeemValue)}
+          </div>
+        )}
+      </div>
+      <button
+        onClick={async () => {
+          setSaving(true); setSaved(false);
+          await onSave({
+            vatRate: Number(vatRate) || 0,
+            cashRoundingStep: Number(cashRoundingStep) || 0,
+            cardFeePct: Number(cardFeePct) || 0,
+            varianceTolerance: Number(varianceTolerance) || 0,
+            loyalty: { enabled: loyaltyEnabled, earnDivisor: Number(earnDivisor) || 1000, redeemValue: Number(redeemValue) || 0 },
+          });
+          setSaving(false); setSaved(true);
+        }}
+        disabled={saving}
+        className="mt-6 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium disabled:opacity-50"
+      >
+        {saving ? "Saving…" : saved ? "Saved ✓" : "Save settings"}
+      </button>
     </div>
   );
 }

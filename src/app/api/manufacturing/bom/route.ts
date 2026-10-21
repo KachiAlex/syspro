@@ -135,7 +135,7 @@ export async function PATCH(request: NextRequest) {
       if (!lineId) {
         return NextResponse.json({ success: false, error: "lineId is required" }, { status: 400 });
       }
-      const removed = await removeBomLine(lineId, id);
+      const removed = await removeBomLine(lineId, id, tenantSlug);
       return NextResponse.json({ success: removed });
     }
 

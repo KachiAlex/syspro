@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     amount: Number(inv.amount),
     status: inv.status,
     dueDate: inv.due_date,
+    financeInvoiceId: inv.finance_invoice_id ?? null,
   }));
   return NextResponse.json({ invoices });
 }

@@ -9,8 +9,12 @@ import {
   checkRateLimit,
 } from "@/lib/tenant-admin/utils";
 import { requireModuleGate } from "@/lib/api-auth";
+import { seedNigeriaPack, ensureStatutoryProfileColumns } from "@/lib/finance/localization";
 
-// Reference presets tenants can apply. Bands apply to MONTHLY gross pay.
+// Reference presets tenants can apply. "nigeria" delegates to seedNigeriaPack —
+// the canonical annualized PAYE profile (annual bands + CRA + NHF + employer
+// contributions). Do NOT inline monthly-scaled bands here: writing monthly
+// bands while paye_annualize stays true produces ~12× over-taxation.
 const PRESETS: Record<string, any> = {
   none: {
     label: "No statutory deductions",
@@ -18,21 +22,13 @@ const PRESETS: Record<string, any> = {
     pensionEmployeeRate: 0,
     pensionEmployerRate: 0,
     otherDeductions: [],
+    payeAnnualize: false,
+    payeRelief: null,
+    employerContributions: [],
   },
   nigeria: {
-    label: "Nigeria — PAYE + Pension",
-    // Consolidated Relief Allowance simplified: bands applied to monthly gross.
-    taxBands: [
-      { upTo: 25000, rate: 7 },
-      { upTo: 50000, rate: 11 },
-      { upTo: 83333.33, rate: 15 },
-      { upTo: 133333.33, rate: 19 },
-      { upTo: 266666.67, rate: 21 },
-      { upTo: null, rate: 24 },
-    ],
-    pensionEmployeeRate: 8,
-    pensionEmployerRate: 10,
-    otherDeductions: [],
+    label: "Nigeria — PAYE + Pension + NHF (annualized)",
+    delegatesTo: "seedNigeriaPack",
   },
 };
 
@@ -50,6 +46,9 @@ function normalizeProfile(row: any) {
     pensionEmployeeRate: row ? Number(row.pension_employee_rate) : DEFAULT_PROFILE.pensionEmployeeRate,
     pensionEmployerRate: row ? Number(row.pension_employer_rate) : DEFAULT_PROFILE.pensionEmployerRate,
     otherDeductions: row?.other_deductions ?? [],
+    payeAnnualize: row?.paye_annualize ?? false,
+    payeRelief: row?.paye_relief ?? null,
+    employerContributions: row?.employer_contributions ?? [],
     updatedAt: row?.updated_at ?? null,
     updatedBy: row?.updated_by ?? null,
     isDefault: !row,
@@ -106,6 +105,17 @@ export async function PUT(request: NextRequest) {
       return errorResponse(`Unknown preset '${body.preset}'. Available: ${Object.keys(PRESETS).join(", ")}`, 400);
     }
 
+    // The nigeria preset delegates to the canonical seeder — one source of
+    // truth for annualized PAYE bands, CRA relief, NHF and employer
+    // contributions. This also clears any stale manual profile.
+    if (body?.preset === "nigeria") {
+      const seeded = await seedNigeriaPack(context.tenantSlug);
+      const profile = await getProfile(context.tenantSlug);
+      return NextResponse.json({ success: true, data: profile, seeded });
+    }
+
+    await ensureStatutoryProfileColumns();
+
     const taxBands = body?.taxBands ?? preset?.taxBands ?? [];
     if (!Array.isArray(taxBands)) return errorResponse("taxBands must be an array", 400);
     for (const b of taxBands) {
@@ -139,20 +149,33 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    // Extended fields are fully owned by this PUT — a manual profile write
+    // resets them to neutral unless explicitly supplied, so a stale finance
+    // tax-pack profile can't silently survive a UI edit (the 12× hazard).
+    const payeAnnualize = body?.payeAnnualize === true;
+    const payeRelief = body?.payeRelief ?? null;
+    const employerContributions = Array.isArray(body?.employerContributions) ? body.employerContributions : [];
+
     const countryCode = body?.countryCode ?? null;
     const id = randomUUID();
     await sql`
       insert into admin_statutory_profiles
-        (id, tenant_slug, country_code, tax_bands, pension_employee_rate, pension_employer_rate, other_deductions, updated_by)
+        (id, tenant_slug, country_code, tax_bands, pension_employee_rate, pension_employer_rate, other_deductions,
+         paye_annualize, paye_relief, employer_contributions, updated_by)
       values
         (${id}, ${context.tenantSlug}, ${countryCode}, ${JSON.stringify(taxBands)}::jsonb,
-         ${pensionEmployeeRate}, ${pensionEmployerRate}, ${JSON.stringify(otherDeductions)}::jsonb, ${context.userId})
+         ${pensionEmployeeRate}, ${pensionEmployerRate}, ${JSON.stringify(otherDeductions)}::jsonb,
+         ${payeAnnualize}, ${payeRelief === null ? null : JSON.stringify(payeRelief)}::jsonb,
+         ${JSON.stringify(employerContributions)}::jsonb, ${context.userId})
       on conflict (tenant_slug) do update set
         country_code = excluded.country_code,
         tax_bands = excluded.tax_bands,
         pension_employee_rate = excluded.pension_employee_rate,
         pension_employer_rate = excluded.pension_employer_rate,
         other_deductions = excluded.other_deductions,
+        paye_annualize = excluded.paye_annualize,
+        paye_relief = excluded.paye_relief,
+        employer_contributions = excluded.employer_contributions,
         updated_by = excluded.updated_by,
         updated_at = now()
     `;

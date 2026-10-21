@@ -490,9 +490,71 @@ export class WorkflowService {
     const executionId = randomUUID();
     const now = new Date();
 
+    const [workflow] = await this.sql`
+      select * from admin_workflows where id = ${workflowId} and tenant_slug = ${tenantSlug} limit 1
+    ` as any[];
+    if (!workflow) throw new Error("Workflow not found");
+    const steps: any[] = typeof workflow.steps === "string" ? JSON.parse(workflow.steps) : (workflow.steps ?? []);
+
     await this.sql`
       insert into admin_workflow_executions (id, tenant_slug, workflow_id, triggered_by, current_step_id, status, execution_history, created_at, updated_at)
       values (${executionId}, ${tenantSlug}, ${workflowId}, ${triggeredBy}, '', 'running', '[]', ${now}, ${now})
+    `;
+
+    // Walk the step chain: order-first, then nextStepId, else array order.
+    // Steps whose action type maps to an automation connector run for real;
+    // declarative steps are recorded without side effects.
+    const { KNOWN_ACTION_TYPES, handleAutomationAction } = await import("@/lib/automation/connectors");
+    const history: any[] = [];
+    const visited = new Set<string>();
+    let finalStatus: "completed" | "failed" = "completed";
+
+    const ordered = [...steps].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    let cursor: any = ordered[0];
+    while (cursor) {
+      const key = String(cursor.id ?? cursor.name);
+      if (visited.has(key)) break; // cycle guard
+      visited.add(key);
+
+      await this.sql`
+        update admin_workflow_executions set current_step_id = ${key}, updated_at = ${new Date()}
+        where id = ${executionId}
+      `;
+
+      const record: any = { stepId: key, name: cursor.name, startedAt: new Date().toISOString() };
+      const actionType = cursor.action?.type;
+      if (actionType && KNOWN_ACTION_TYPES.has(actionType)) {
+        const result = await handleAutomationAction({
+          tenant_slug: tenantSlug,
+          action_type: actionType,
+          action_payload: { params: cursor.action?.params ?? {} },
+        } as any);
+        record.status = result.status;
+        if (result.status === "failed") {
+          record.error = result.error;
+          finalStatus = "failed";
+        }
+      } else {
+        record.status = "completed";
+      }
+      record.finishedAt = new Date().toISOString();
+      history.push(record);
+
+      await this.sql`
+        update admin_workflow_executions set execution_history = ${JSON.stringify(history)}, updated_at = ${new Date()}
+        where id = ${executionId}
+      `;
+      if (finalStatus === "failed") break;
+
+      cursor = cursor.nextStepId
+        ? ordered.find((s) => String(s.id) === String(cursor.nextStepId))
+        : ordered[ordered.indexOf(cursor) + 1];
+    }
+
+    await this.sql`
+      update admin_workflow_executions
+      set status = ${finalStatus}, current_step_id = '', updated_at = ${new Date()}
+      where id = ${executionId} and tenant_slug = ${tenantSlug}
     `;
 
     return executionId;

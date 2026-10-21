@@ -284,6 +284,12 @@ export async function addBomLine(
   const lineId = randomUUID();
   const now = new Date();
 
+  // Verify the BOM belongs to this tenant before attaching lines.
+  const owner = (await sql`
+    select id from bom_headers where id = ${bomId} and tenant_slug = ${tenantSlug} limit 1
+  `) as any[];
+  if (!owner[0]) return null;
+
   const [row] = (await sql`
     insert into bom_lines (id, bom_id, component_sku, component_name, quantity, unit, component_type, scrap_percentage, notes, created_at, updated_at)
     values (${lineId}, ${bomId}, ${line.componentSku}, ${line.componentName}, ${line.quantity}, ${line.unit ?? "pcs"}, ${line.componentType ?? "raw_material"}, ${line.scrapPercentage ?? 0}, ${line.notes ?? null}, ${now}, ${now})
@@ -293,12 +299,16 @@ export async function addBomLine(
   return row ? normalizeBomLine(row) : null;
 }
 
-export async function removeBomLine(lineId: string, bomId: string): Promise<boolean> {
+export async function removeBomLine(lineId: string, bomId: string, tenantSlug?: string): Promise<boolean> {
   const sql = SQL;
   await ensureBomTables(sql);
 
   const [row] = (await sql`
-    delete from bom_lines where id = ${lineId} and bom_id = ${bomId} returning id
+    delete from bom_lines l using bom_headers b
+    where l.id = ${lineId} and l.bom_id = ${bomId}
+      and b.id = l.bom_id
+      ${tenantSlug ? SQL`and b.tenant_slug = ${tenantSlug}` : SQL``}
+    returning l.id
   `) as any[];
 
   return !!row;

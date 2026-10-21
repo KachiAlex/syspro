@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { sql } from "@/lib/sql-client";
-import { ensureHrTables, adjustLeaveBalance, checkLeaveBalanceAvailable } from "@/lib/hr/db";
+import { ensureHrTables, adjustLeaveBalance, checkLeaveBalanceAvailable, countLeaveDays } from "@/lib/hr/db";
 import {
   validateTenantContext,
   getPaginationParams,
@@ -123,8 +123,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Enforce the same entitlement cap as the other leave-creation paths —
-    // before the row is inserted, not after.
-    const days = daysBetween(parsed.data.startDate, parsed.data.endDate);
+    // before the row is inserted, not after. Holidays don't consume balance.
+    const days = await countLeaveDays(context.tenantSlug, parsed.data.startDate, parsed.data.endDate);
     const year = new Date(parsed.data.startDate).getUTCFullYear();
     const cap = await checkLeaveBalanceAvailable({
       tenantSlug: context.tenantSlug,

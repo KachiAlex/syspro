@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { crmFiltersSchema } from "@/lib/crm/types";
-import { countLeads, listLeads, countContacts, listContacts, countDeals, listDeals, countCustomers, getConversionStats } from "@/lib/crm/db";
+import { countLeads, listLeads, countContacts, listContacts, countDeals, listDeals, countCustomers, getConversionStats, lostReasonSummary } from "@/lib/crm/db";
 import { handleDatabaseError } from "@/lib/api-errors";
 import { requireCrmAuth, getTeamMemberIds, effectiveViewMode } from "@/lib/crm/auth";
 
@@ -64,9 +64,10 @@ export async function GET(request: NextRequest) {
       ]);
     }
 
-    const [totalCustomers, conversionStats] = await Promise.all([
+    const [totalCustomers, conversionStats, lostReasons] = await Promise.all([
       countCustomers({ tenantSlug }),
       getConversionStats({ tenantSlug }),
+      lostReasonSummary(tenantSlug, filterCreatedBy),
     ]);
 
     const dealsWon = deals.filter((d) => d.stage === "closed_won").length;
@@ -108,7 +109,7 @@ export async function GET(request: NextRequest) {
           { stage: "closed_lost", count: dealsLost },
         ],
         revenueByOfficer: [],
-        lostReasons: [],
+        lostReasons,
       },
       leads,
       reminders: [],

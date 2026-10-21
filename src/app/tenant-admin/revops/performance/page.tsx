@@ -1,8 +1,9 @@
-export default function SalesPerformancePage() {
-  return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold text-[#F8FAFC]">Sales Performance</h1>
-      <p className="text-gray-600 mt-2">View team and individual sales metrics.</p>
-    </div>
-  );
+"use client";
+
+import RevOpsWorkspace from "@/app/tenant-admin/sections/revops-workspace";
+import { useTenantContext } from "@/components/tenant-admin/tenant-context";
+
+export default function PerformancePage() {
+  const { tenantSlug } = useTenantContext();
+  return <RevOpsWorkspace tenantSlug={tenantSlug} initialView="sales-performance" />;
 }

@@ -140,9 +140,9 @@ const DEFAULT_ASSET_FORM = (): AssetFormState => ({
 
 const currencyFormatter = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
-export default function RevOpsWorkspace({ tenantSlug, onRefresh }: { tenantSlug?: string | null; onRefresh?: () => void }) {
+export default function RevOpsWorkspace({ tenantSlug, onRefresh, initialView }: { tenantSlug?: string | null; onRefresh?: () => void; initialView?: RevOpsView }) {
   const slug = tenantSlug?.trim() ;
-  const [view, setView] = useState<RevOpsView>("overview");
+  const [view, setView] = useState<RevOpsView>(initialView ?? "overview");
   const [overview, setOverview] = useState<RevOpsOverviewSnapshot | null>(null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [leadSources, setLeadSources] = useState<LeadSource[]>([]);

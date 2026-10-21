@@ -11,6 +11,7 @@ import {
   Upload,
   UserPlus,
   CheckCircle,
+  XCircle,
   Eye,
   Edit2,
   Trash2,
@@ -597,6 +598,7 @@ async function updateDealRequest(
     expectedClose?: string | null;
     assignedOfficerId?: string;
     status?: string;
+    lostReason?: string | null;
   }
 ) {
   const data = await crmFetch<{ deal: DealsResponse["deals"][number] }>(`/crm/deals/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
@@ -1116,6 +1118,25 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Failed to mark deal as won");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleMarkDealLost = async (deal: DealRow) => {
+    if (!effectiveTenant) return;
+    const reason = window.prompt(`Why was "${deal.name}" lost? (e.g. price, competitor, no budget, timing)`);
+    if (reason === null) return;
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    try {
+      const updated = await updateDealRequest(deal.id, { stage: "closed_lost" as DealStage, lostReason: reason.trim() || null });
+      const updatedRow = toDealRow(updated);
+      setDeals((prev) => prev.map((d) => d.id === deal.id ? updatedRow : d));
+      setSuccessMessage(`Deal "${deal.name}" marked as lost.`);
+      setTimeout(() => setSuccessMessage(null), 4000);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to mark deal as lost");
     } finally {
       setIsSubmitting(false);
     }
@@ -2326,14 +2347,24 @@ export default function CRMDashboard({ tenantSlug, initialTab = "overview", view
                             <Edit2 className="w-4 h-4 text-theme-text-secondary" />
                           </button>
                           {deal.stage !== "closed_won" && deal.stage !== "closed_lost" && (
-                            <button
-                              title="Mark as Won (Convert to Customer)"
-                              className="p-1 hover:bg-green-100 rounded transition"
-                              onClick={() => handleMarkDealWon(deal)}
-                              disabled={isSubmitting}
-                            >
-                              <CheckCircle className="w-4 h-4 text-green-500" />
-                            </button>
+                            <>
+                              <button
+                                title="Mark as Won (Convert to Customer)"
+                                className="p-1 hover:bg-green-100 rounded transition"
+                                onClick={() => handleMarkDealWon(deal)}
+                                disabled={isSubmitting}
+                              >
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                              </button>
+                              <button
+                                title="Mark as Lost (with reason)"
+                                className="p-1 hover:bg-red-100 rounded transition"
+                                onClick={() => handleMarkDealLost(deal)}
+                                disabled={isSubmitting}
+                              >
+                                <XCircle className="w-4 h-4 text-red-500" />
+                              </button>
+                            </>
                           )}
                           <button
                             onClick={() => {

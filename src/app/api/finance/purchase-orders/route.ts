@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { listPurchaseOrders, createPurchaseOrder } from "@/lib/finance/purchase-orders";
+import { listPurchaseOrders, createPurchaseOrder, consolidatePurchaseOrders } from "@/lib/finance/purchase-orders";
 
 import { requireModuleAccess } from "@/lib/api-auth";
 const listSchema = z.object({
@@ -45,6 +45,16 @@ export async function POST(request: NextRequest) {
   if (!body || typeof body !== "object") return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
 
   try {
+    if ((body as any).action === "consolidate") {
+      const tenantSlug = (body as any).tenantSlug;
+      const poIds = (body as any).poIds;
+      if (!tenantSlug || !Array.isArray(poIds) || poIds.length < 2) {
+        return NextResponse.json({ error: "tenantSlug and at least two poIds are required" }, { status: 400 });
+      }
+      const result = await consolidatePurchaseOrders(tenantSlug, poIds, body as any);
+      if ("error" in result) return NextResponse.json({ error: result.error }, { status: 400 });
+      return NextResponse.json(result, { status: 201 });
+    }
     const po = await createPurchaseOrder(body as any);
     return NextResponse.json({ purchaseOrder: po }, { status: 201 });
   } catch (err) {

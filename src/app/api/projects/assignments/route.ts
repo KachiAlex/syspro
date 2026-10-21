@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       context.tenantSlug,
       {
         taskId,
-        projectId: task.projectId,
+        projectId: (task as any).projectId ?? (task as any).project_id,
         employeeId: assignedEmployeeId,
         assignedHours: undefined,
         assignedPercentage: undefined,

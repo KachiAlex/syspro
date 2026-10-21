@@ -296,6 +296,7 @@ export const taskCreateSchema = z.object({
   status: z.enum(TASK_STATUSES).default("NOT_STARTED"),
   priority: z.number().default(100),
   percentComplete: z.number().min(0).max(100).default(0),
+  dependsOnTaskId: z.string().uuid().nullable().optional(),
   requiredSkills: z.array(z.string()).default([]),
 });
 

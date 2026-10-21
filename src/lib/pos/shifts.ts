@@ -326,6 +326,37 @@ export async function closeShift(
     returning *
   `) as any[];
   if (!rows.length) return { error: "Shift was closed concurrently" };
+
+  // Journal the cash difference so book cash matches the counted drawer:
+  // overage → Dr Cash / Cr POS Overage income; shortage → Dr POS Shortage / Cr Cash.
+  if (variance !== 0) {
+    try {
+      const { postGLEntry, GL_ACCOUNTS } = await import("../finance/gl");
+      const over = variance > 0;
+      const amount = Math.abs(variance);
+      await postGLEntry({
+        tenantSlug,
+        entryDate: new Date().toISOString().split("T")[0],
+        journalType: "SYSTEM",
+        referenceType: "pos_shift",
+        referenceId: shiftId,
+        status: "POSTED",
+        description: `POS shift close — cash ${over ? "overage" : "shortage"}${input.varianceReason ? ` (${input.varianceReason})` : ""}`,
+        lines: over
+          ? [
+              { accountCode: GL_ACCOUNTS.CASH, debitAmount: amount, description: `Counted above expected — shift ${shiftId}` },
+              { accountCode: GL_ACCOUNTS.POS_OVERAGE, creditAmount: amount, description: "POS cash overage" },
+            ]
+          : [
+              { accountCode: GL_ACCOUNTS.POS_SHORTAGE, debitAmount: amount, description: "POS cash shortage" },
+              { accountCode: GL_ACCOUNTS.CASH, creditAmount: amount, description: `Counted below expected — shift ${shiftId}` },
+            ],
+      });
+    } catch (err) {
+      console.error("POS shift variance JE failed:", err);
+    }
+  }
+
   await logPosAudit(tenantSlug, {
     action: "shift_close", actor: input.closedBy, entityType: "pos_shift", entityId: shiftId,
     detail: { expected: summary.expectedCash, counted: input.closingCounted, variance, flagged },

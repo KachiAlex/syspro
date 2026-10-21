@@ -19,6 +19,7 @@ const patchSchema = z.object({
   value: z.number().min(0).optional(),
   currency: z.string().min(1).max(8).optional(),
   expectedClose: z.string().optional().or(z.literal("")),
+  lostReason: z.string().max(300).optional().nullable(),
 });
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -34,17 +35,15 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   }
 
   try {
-    const existing = await getDeal(params.id);
-    if (!existing) {
-      return NextResponse.json({ error: "Deal not found" }, { status: 404 });
-    }
-
+    // Authenticate before touching the record — prevents a 404-vs-403 oracle.
     const auth = await resolveCrmAuth(request);
     if (!auth) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
-    if (auth.session.tenantSlug !== existing.tenantSlug) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+
+    const existing = await getDeal(params.id, auth.session.tenantSlug);
+    if (!existing || (auth.session.tenantSlug && existing.tenantSlug !== auth.session.tenantSlug)) {
+      return NextResponse.json({ error: "Deal not found" }, { status: 404 });
     }
     if (!(await canAccessCrmRecord(auth, existing))) {
       return NextResponse.json({ error: "You can only edit your own deals" }, { status: 403 });
@@ -67,6 +66,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       value: parsed.data.value,
       currency: parsed.data.currency,
       expectedClose: parsed.data.expectedClose === "" ? null : parsed.data.expectedClose,
+      lostReason: parsed.data.lostReason,
     }, existing.tenantSlug);
     if (!deal) {
       return NextResponse.json({ error: "Deal not found" }, { status: 404 });
@@ -277,17 +277,15 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
   const params = await context.params;
 
   try {
-    const existing = await getDeal(params.id);
-    if (!existing) {
-      return NextResponse.json({ error: "Deal not found" }, { status: 404 });
-    }
-
+    // Authenticate before touching the record — prevents a 404-vs-403 oracle.
     const auth = await resolveCrmAuth(request);
     if (!auth) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
-    if (auth.session.tenantSlug !== existing.tenantSlug) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+
+    const existing = await getDeal(params.id, auth.session.tenantSlug);
+    if (!existing || (auth.session.tenantSlug && existing.tenantSlug !== auth.session.tenantSlug)) {
+      return NextResponse.json({ error: "Deal not found" }, { status: 404 });
     }
     if (!(await canAccessCrmRecord(auth, existing))) {
       return NextResponse.json({ error: "You can only delete your own deals" }, { status: 403 });

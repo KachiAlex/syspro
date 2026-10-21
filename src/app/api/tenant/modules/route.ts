@@ -52,18 +52,16 @@ export async function GET(request: NextRequest) {
     const sort = getSortParams(request);
 
     const service = new ModuleService();
-    const modules = {
-      data: [],
-      total: 0,
-    };
+    const all = await service.getAll(asTenantSlug(context.tenantSlug));
+    const offset = (pagination.page - 1) * pagination.limit;
 
     return NextResponse.json({
       success: true,
-      data: modules.data,
+      data: all.slice(offset, offset + pagination.limit),
       pagination: {
         page: pagination.page,
         limit: pagination.limit,
-        total: modules.total,
+        total: all.length,
       },
     });
   } catch (error) {

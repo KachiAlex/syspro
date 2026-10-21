@@ -175,6 +175,24 @@ export async function confirmOrder(
   const items = typeof order.items === "string" ? JSON.parse(order.items) : order.items;
   const today = new Date().toISOString().split("T")[0];
 
+  // Pre-validate the whole basket before ANY mutation — serial-tracked items
+  // can't be auto-issued, so bail out here rather than mid-loop after the
+  // sales order and earlier stock movements have already committed.
+  for (const item of items) {
+    const product = (await sql`
+      select sku, name, tracking, current_stock from inventory_products
+      where tenant_slug = ${tenantSlug} and sku = ${item.sku}
+    `) as any[];
+    const p = product[0];
+    if (!p) return { error: `Product ${item.sku} no longer exists` };
+    if (p.tracking === "serial") {
+      return { error: `"${p.name}" is serial-tracked — issue serials manually before confirming` };
+    }
+    if (Number(p.current_stock) < Number(item.quantity)) {
+      return { error: `Insufficient stock for "${p.name}" (${p.current_stock} available)` };
+    }
+  }
+
   // Create the sales order (same convention as the sales module).
   const salesOrderId = `so-${randomUUID().slice(0, 10)}`;
   await db.query(
@@ -193,18 +211,15 @@ export async function confirmOrder(
     ]
   );
 
-  // Issue stock per line (serial-tracked items must be handled manually —
-  // the sale fails validation if serials are required).
+  // Issue stock per line — serial-tracked and out-of-stock items were
+  // rejected in the pre-validation pass above.
   for (const item of items) {
     const product = (await sql`
-      select sku, name, unit_cost, tracking from inventory_products
+      select sku, name, unit_cost from inventory_products
       where tenant_slug = ${tenantSlug} and sku = ${item.sku}
     `) as any[];
     const p = product[0];
     if (!p) continue;
-    if (p.tracking === "serial") {
-      return { error: `"${p.name}" is serial-tracked — issue serials manually before confirming` };
-    }
     await recordStockMovement(tenantSlug, {
       productSku: p.sku,
       productName: p.name,

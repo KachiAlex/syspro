@@ -34,21 +34,20 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   }
 
   try {
-    // Verify lead exists and belongs to tenant
-    const existing = await getLead(params.id);
-    if (!existing) {
-      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
-    }
-    if (existing.tenantSlug !== parsed.data.tenantSlug) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
-
+    // Authenticate before touching the record — prevents a 404-vs-403 oracle
+    // for cross-tenant record IDs.
     const auth = await resolveCrmAuth(request);
     if (!auth) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
     if (auth.session.tenantSlug !== parsed.data.tenantSlug) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    // Verify lead exists and belongs to tenant
+    const existing = await getLead(params.id, parsed.data.tenantSlug);
+    if (!existing || existing.tenantSlug !== parsed.data.tenantSlug) {
+      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
     }
     if (!(await canAccessCrmRecord(auth, existing))) {
       return NextResponse.json({ error: "You can only edit your own leads" }, { status: 403 });
@@ -117,21 +116,19 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
   }
 
   try {
-    // Verify lead exists and belongs to tenant
-    const existing = await getLead(params.id);
-    if (!existing) {
-      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
-    }
-    if (existing.tenantSlug !== tenantSlug) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
-
+    // Authenticate before touching the record — prevents a 404-vs-403 oracle.
     const auth = await resolveCrmAuth(request);
     if (!auth) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
     if (auth.session.tenantSlug !== tenantSlug) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    // Verify lead exists and belongs to tenant
+    const existing = await getLead(params.id, tenantSlug);
+    if (!existing || existing.tenantSlug !== tenantSlug) {
+      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
     }
     if (!(await canAccessCrmRecord(auth, existing))) {
       return NextResponse.json({ error: "You can only delete your own leads" }, { status: 403 });

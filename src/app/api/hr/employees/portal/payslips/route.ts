@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
       join admin_payroll_runs pr on pr.id = pe.run_id
       where pe.tenant_slug = ${session.tenantSlug}
         and pe.employee_id = ${session.id}
+        and pr.status in ('processing', 'completed', 'paid', 'approved')
       order by pr.period desc
       limit 24
     `;

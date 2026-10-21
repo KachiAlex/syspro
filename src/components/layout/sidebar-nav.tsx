@@ -119,7 +119,9 @@ const navigationItems = [
       { title: "Vendor Analytics", href: "/tenant-admin/vendors/analytics" },
       { title: "Promotions", href: "/tenant-admin/promotions" },
       { title: "Purchase Orders", href: "/tenant-admin/sales/purchase-orders" },
+      { title: "Procurement", href: "/tenant-admin/procurement" },
       { title: "Inventory", href: "/tenant-admin/sales/inventory" },
+      { title: "Inventory Tracking", href: "/tenant-admin/inventory" },
       { title: "Warehouses", href: "/tenant-admin/warehouses" },
     ]
   },
@@ -138,6 +140,32 @@ const navigationItems = [
     ]
   },
   {
+    title: "RevOps",
+    href: "/tenant-admin/revops",
+    icon: TrendingUp,
+    permission: "revops",
+    children: [
+      { title: "Overview", href: "/tenant-admin/revops" },
+      { title: "Campaigns", href: "/tenant-admin/revops/campaigns" },
+      { title: "Attribution", href: "/tenant-admin/revops/attribution" },
+      { title: "Performance", href: "/tenant-admin/revops/performance" },
+      { title: "Forecasting", href: "/tenant-admin/revops/forecasting" },
+    ]
+  },
+  {
+    title: "IT Support",
+    href: "/tenant-admin/it-support",
+    icon: Shield,
+    permission: "itsupport",
+    children: [
+      { title: "Dashboard", href: "/tenant-admin/it-support" },
+      { title: "Tickets", href: "/tenant-admin/it-support/tickets" },
+      { title: "Incidents", href: "/tenant-admin/it-support/incidents" },
+      { title: "Engineers", href: "/tenant-admin/it-support/engineers" },
+      { title: "SLA", href: "/tenant-admin/it-support/sla" },
+    ]
+  },
+  {
     title: "Reports & Analytics",
     href: "/tenant-admin/analytics",
     icon: BarChart3,
@@ -147,6 +175,7 @@ const navigationItems = [
       { title: "Financial Reports", href: "/tenant-admin/analytics/financial" },
       { title: "Sales Reports", href: "/tenant-admin/analytics/sales" },
       { title: "HR Reports", href: "/tenant-admin/analytics/hr" },
+      { title: "Report Builder", href: "/tenant-admin/analytics/builder" },
     ]
   },
   {

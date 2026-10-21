@@ -241,6 +241,12 @@ export async function deleteProject(
 // API RESPONSE MAPPING
 // ============================================================
 
+/** DB rows are snake_case; Project fields are camelCase. Accept either so a
+ * raw `select *` row and a normalized Project both map correctly. */
+function flex<T = any>(row: any, camel: string, snake?: string): T | undefined {
+  return row?.[camel] ?? row?.[snake ?? camel.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)];
+}
+
 export function toProjectResponse(project: Project) {
   const statusLabels: Record<string, string> = {
     PLANNING: "Planning",
@@ -287,26 +293,26 @@ export function toProjectResponse(project: Project) {
     name: project.name,
     description: project.description ?? "",
     objective: project.description ?? project.scopeDescription ?? "",
-    status: statusLabels[project.status] ?? project.status,
-    priority: priorityLabels[project.priority] ?? project.priority,
-    progress: progressFromStatus(project.status),
-    startDate: toDateString(project.startDate),
-    start: toDateString(project.startDate),
-    dueDate: toDateString(project.plannedEndDate),
-    endDate: toDateString(project.plannedEndDate),
-    end: toDateString(project.plannedEndDate),
+    status: statusLabels[(project as any).status] ?? (project as any).status,
+    priority: priorityLabels[(project as any).priority] ?? (project as any).priority,
+    progress: progressFromStatus((project as any).status),
+    startDate: toDateString(flex(project, "startDate") as any),
+    start: toDateString(flex(project, "startDate") as any),
+    dueDate: toDateString(flex(project, "plannedEndDate") as any),
+    endDate: toDateString(flex(project, "plannedEndDate") as any),
+    end: toDateString(flex(project, "plannedEndDate") as any),
     teamMembers: 0,
-    budget: formatCurrency(project.totalBudgetAmount),
-    budgetApproved: Number(project.totalBudgetAmount ?? 0),
+    budget: formatCurrency(Number(flex(project, "totalBudgetAmount") ?? 0)),
+    budgetApproved: Number(flex(project, "totalBudgetAmount") ?? 0),
     budgetSpent: 0,
     subsidiary: "",
     departments: [],
     region: "",
-    owner: project.projectManagerId ?? project.createdBy ?? "Unassigned",
-    manager: project.projectManagerId ?? project.createdBy ?? "Unassigned",
-    approvalStatus: project.approvalStatus ?? "DRAFT",
-    createdAt: toDateString(project.createdAt),
-    updatedAt: toDateString(project.updatedAt),
+    owner: flex(project, "projectManagerId") ?? flex(project, "createdBy") ?? "Unassigned",
+    manager: flex(project, "projectManagerId") ?? flex(project, "createdBy") ?? "Unassigned",
+    approvalStatus: flex(project, "approvalStatus") ?? "DRAFT",
+    createdAt: toDateString(flex(project, "createdAt") as any),
+    updatedAt: toDateString(flex(project, "updatedAt") as any),
   };
 }
 
@@ -411,9 +417,9 @@ export async function createTask(
         workstream_id, project_id, tenant_slug, code, title, description,
         planned_start_date, planned_end_date, duration_days,
         estimated_hours, estimated_cost, status, priority, percent_complete,
-        required_skills, created_by
+        depends_on_task_id, required_skills, created_by
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       RETURNING *
       `,
       [
@@ -431,6 +437,7 @@ export async function createTask(
         input.status || "NOT_STARTED",
         input.priority || 100,
         input.percentComplete || 0,
+        input.dependsOnTaskId || null,
         input.requiredSkills || [],
         createdBy,
       ]
@@ -573,6 +580,25 @@ export async function updateTask(
       values.push(input.percentComplete);
       paramCount++;
     }
+    if (input.dependsOnTaskId !== undefined) {
+      updates.push(`depends_on_task_id = $${paramCount}`);
+      values.push(input.dependsOnTaskId || null);
+      paramCount++;
+    }
+
+    // Dependency gate: a task can't start while its predecessor is unfinished.
+    if (input.status === "IN_PROGRESS" || (input.percentComplete ?? 0) > 0) {
+      const self = input.dependsOnTaskId !== undefined
+        ? input.dependsOnTaskId
+        : ((await getTaskById(id, tenantSlug)) as any)?.depends_on_task_id;
+      if (self) {
+        const dep = (await getTaskById(self, tenantSlug)) as any;
+        if (dep && dep.status !== "COMPLETED") {
+          throw new Error(`Task is blocked by dependency "${dep.title ?? dep.code ?? self}" — complete it first`);
+        }
+      }
+    }
+
     if (input.plannedEndDate !== undefined) {
       updates.push(`planned_end_date = $${paramCount}`);
       values.push(input.plannedEndDate);
@@ -1495,6 +1521,7 @@ async function ensureProjectInvoicesTable() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  await db.query(`ALTER TABLE project_invoices ADD COLUMN IF NOT EXISTS finance_invoice_id TEXT`);
 }
 
 export async function getProjectInvoices(
@@ -1518,14 +1545,46 @@ export async function createProjectInvoice(
   createdBy: string
 ): Promise<any | null> {
   await ensureProjectInvoicesTable();
+  if (!(await projectBelongsToTenant(data.projectId, tenantSlug))) return null;
+
+  // A project invoice must exist in AR too — the project-scoped row links to
+  // a real finance_invoices draft rather than living in a shadow table.
+  const projRow = (await db.query(
+    `select name, customer_name, customer_id from projects where id = $1 and tenant_slug = $2`,
+    [data.projectId, tenantSlug]
+  )).rows[0];
+  if (!projRow) return null;
+
+  const today = new Date().toISOString().split("T")[0];
+  const { insertFinanceInvoice } = await import("../finance/db");
+  const fin = await insertFinanceInvoice({
+    tenantSlug,
+    customerName: projRow.customer_name ?? `Project — ${projRow.name}`,
+    customerCode: projRow.customer_id ?? undefined,
+    invoiceNumber: `INV-PRJ-${Date.now().toString(36).toUpperCase()}`,
+    issuedDate: today,
+    dueDate: data.dueDate,
+    status: "draft",
+    notes: `Project invoice — ${projRow.name}`,
+    lineItems: [{
+      description: `Project services — ${projRow.name}`,
+      quantity: 1,
+      unitPrice: data.amount,
+      amount: data.amount,
+      accountCode: "4100",
+    }],
+    amount: data.amount,
+    balanceDue: data.amount,
+  } as any);
+
   const invoiceNumber = `INV-${Date.now()}`;
   const result = await db.query(
     `
-    INSERT INTO project_invoices (tenant_slug, project_id, invoice_number, amount, due_date, status, created_by)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    INSERT INTO project_invoices (tenant_slug, project_id, invoice_number, amount, due_date, status, created_by, finance_invoice_id)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING *
     `,
-    [tenantSlug, data.projectId, invoiceNumber, data.amount, data.dueDate, "draft", createdBy]
+    [tenantSlug, data.projectId, invoiceNumber, data.amount, data.dueDate, "draft", createdBy, fin.id]
   );
   return result.rows[0] || null;
 }

@@ -29,20 +29,18 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   }
 
   try {
-    const existing = await getContact(params.id);
-    if (!existing) {
-      return NextResponse.json({ error: "Contact not found" }, { status: 404 });
-    }
-    if (existing.tenantSlug !== parsed.data.tenantSlug) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
-
+    // Authenticate before touching the record — prevents a 404-vs-403 oracle.
     const auth = await resolveCrmAuth(request);
     if (!auth) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
     if (auth.session.tenantSlug !== parsed.data.tenantSlug) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    const existing = await getContact(params.id, parsed.data.tenantSlug);
+    if (!existing || existing.tenantSlug !== parsed.data.tenantSlug) {
+      return NextResponse.json({ error: "Contact not found" }, { status: 404 });
     }
     if (!(await canAccessCrmRecord(auth, existing))) {
       return NextResponse.json({ error: "You can only edit your own contacts" }, { status: 403 });
@@ -76,20 +74,18 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
   }
 
   try {
-    const existing = await getContact(params.id);
-    if (!existing) {
-      return NextResponse.json({ error: "Contact not found" }, { status: 404 });
-    }
-    if (existing.tenantSlug !== tenantSlug) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
-
+    // Authenticate before touching the record — prevents a 404-vs-403 oracle.
     const auth = await resolveCrmAuth(request);
     if (!auth) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
     if (auth.session.tenantSlug !== tenantSlug) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    const existing = await getContact(params.id, tenantSlug);
+    if (!existing || existing.tenantSlug !== tenantSlug) {
+      return NextResponse.json({ error: "Contact not found" }, { status: 404 });
     }
     if (!(await canAccessCrmRecord(auth, existing))) {
       return NextResponse.json({ error: "You can only delete your own contacts" }, { status: 403 });

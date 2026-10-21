@@ -15,12 +15,77 @@ type PolicyEvaluationResult = {
   reason?: string;
 };
 
+/**
+ * SSRF guard for webhook actions. Automation rules can be authored by any
+ * tenant admin, so an unguarded fetch is a server-side request forgery
+ * primitive (cloud metadata, internal services, the app's own API).
+ *
+ * Policy: http/https on 80/443 only; loopback/private/link-local/reserved
+ * hosts are always blocked. When AUTOMATION_WEBHOOK_ALLOWLIST is set
+ * (comma-separated hostnames, `*.` prefix = subdomain wildcard), the host
+ * must also match an entry.
+ */
+function webhookUrlAllowed(rawUrl: string): { ok: boolean; reason?: string } {
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return { ok: false, reason: "invalid URL" };
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") {
+    return { ok: false, reason: "only http/https webhooks are allowed" };
+  }
+  const port = url.port || (url.protocol === "https:" ? "443" : "80");
+  if (port !== "443" && port !== "80") {
+    return { ok: false, reason: "only ports 80/443 are allowed" };
+  }
+  const host = url.hostname.toLowerCase();
+
+  // Block literal IPs in private/reserved ranges and loopback names.
+  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") || host.endsWith(".internal")) {
+    return { ok: false, reason: "local hostnames are not allowed" };
+  }
+  const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (ipv4) {
+    const [a, b] = [Number(ipv4[1]), Number(ipv4[2])];
+    const privateRanges =
+      a === 10 || a === 127 || a === 0 ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 169 && b === 254) ||   // link-local + cloud metadata
+      (a === 100 && b >= 64 && b <= 127); // CGNAT (incl. Tailscale)
+    if (privateRanges) return { ok: false, reason: "private/reserved IP ranges are not allowed" };
+  }
+  if (host.includes(":")) {
+    // IPv6 literal — block loopback/ULA/link-local outright.
+    if (host === "::1" || host.startsWith("fc") || host.startsWith("fd") || host.startsWith("fe80")) {
+      return { ok: false, reason: "private/reserved IPv6 addresses are not allowed" };
+    }
+  }
+
+  const allowlist = (process.env.AUTOMATION_WEBHOOK_ALLOWLIST ?? "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  if (allowlist.length > 0) {
+    const allowed = allowlist.some((entry) =>
+      entry.startsWith("*.") ? host === entry.slice(2) || host.endsWith(entry.slice(1)) : host === entry
+    );
+    if (!allowed) return { ok: false, reason: `host '${host}' is not in AUTOMATION_WEBHOOK_ALLOWLIST` };
+  }
+  return { ok: true };
+}
+
 async function postWebhook(action: AutomationAction): Promise<ActionHandlerResult> {
   const payload = action.action_payload || {};
   const params = payload.params || {};
   const url = params.url;
   if (!url || typeof url !== "string") {
     return { status: "failed", error: "webhook:post requires params.url" };
+  }
+  const verdict = webhookUrlAllowed(url);
+  if (!verdict.ok) {
+    return { status: "failed", error: `Webhook URL rejected: ${verdict.reason}` };
   }
   try {
     const res = await fetch(url, {
