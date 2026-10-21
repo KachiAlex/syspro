@@ -1,5 +1,6 @@
-import { sql as SQL } from "../sql-client";
+import { sql as SQL, db } from "../sql-client";
 import { createJournalEntry } from "../finance/accounting";
+import { GL_ACCOUNTS } from "../finance/gl";
 import { ensureOnce } from "@/lib/ensure-once";
 
 export type StockMovementType =
@@ -21,6 +22,11 @@ export interface StockMovement {
   unitCost: number;
   referenceType: string;
   referenceId: string;
+  branchId?: string;
+  warehouseId?: string;
+  lotNo?: string;
+  serialNos?: string[];
+  expiryDate?: string;
   notes?: string;
   createdAt: string;
 }
@@ -41,10 +47,15 @@ async function ensureStockMovementTablesRun(sql = SQL) {
       unit_cost numeric not null default 0,
       reference_type text,
       reference_id text,
+      branch_id text,
       notes text,
       created_at timestamptz default now()
     )
   `;
+  await sql`alter table if exists stock_movements add column if not exists branch_id text`;
+  await sql`alter table if exists stock_movements add column if not exists warehouse_id text`;
+  await sql`alter table if exists stock_movements add column if not exists lot_no text`;
+  await sql`alter table if exists stock_movements add column if not exists serial_nos jsonb`;
   await sql`create index if not exists stock_movements_tenant_idx on stock_movements (tenant_slug)`;
   await sql`create index if not exists stock_movements_sku_idx on stock_movements (tenant_slug, product_sku)`;
 }
@@ -60,18 +71,39 @@ export async function recordStockMovement(
   const id = `mv_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const now = new Date().toISOString();
 
+  // Serial/batch validation runs before the movement is recorded so a bad
+  // serial or insufficient lot stock rejects the whole movement cleanly.
+  const { validateMovementTracking, commitMovementTracking } = await import("./lot-tracking");
+  await validateMovementTracking(tenantSlug, movement, {
+    lotNo: movement.lotNo,
+    serialNos: movement.serialNos,
+    expiryDate: movement.expiryDate,
+  });
+
   const [row] = (await sql`
     insert into stock_movements (
       id, tenant_slug, product_sku, product_name, movement_type,
-      quantity, unit_cost, reference_type, reference_id, notes, created_at
+      quantity, unit_cost, reference_type, reference_id, branch_id, warehouse_id,
+      lot_no, serial_nos, notes, created_at
     )
     values (
       ${id}, ${tenantSlug}, ${movement.productSku}, ${movement.productName},
       ${movement.movementType}, ${movement.quantity}, ${movement.unitCost},
-      ${movement.referenceType}, ${movement.referenceId}, ${movement.notes ?? null}, ${now}
+      ${movement.referenceType}, ${movement.referenceId}, ${movement.branchId ?? null},
+      ${movement.warehouseId ?? null}, ${movement.lotNo ?? null},
+      ${movement.serialNos ? JSON.stringify(movement.serialNos) : null},
+      ${movement.notes ?? null}, ${now}
     )
     returning *
   `) as any[];
+
+  // Tracking state must stay in lockstep with the movement — a commit failure
+  // is fatal so the caller can compensate rather than silently diverge.
+  await commitMovementTracking(tenantSlug, id, movement, {
+    lotNo: movement.lotNo,
+    serialNos: movement.serialNos,
+    expiryDate: movement.expiryDate,
+  });
 
   const positiveTypes: StockMovementType[] = ["purchase_receipt", "return", "work_order_receipt"];
   // "transfer" is intentionally absent: moving stock between locations is
@@ -85,11 +117,20 @@ export async function recordStockMovement(
       where tenant_slug = ${tenantSlug} and sku = ${movement.productSku}
     `;
   } else if (negativeTypes.includes(movement.movementType)) {
-    await sql`
-      update inventory_products
-      set current_stock = current_stock - ${movement.quantity}
-      where tenant_slug = ${tenantSlug} and sku = ${movement.productSku}
-    `;
+    // Conditional decrement: refuse to take stock below zero unless the
+    // product explicitly allows negative stock. rowCount 0 => oversell.
+    const res = await db.query(
+      `update inventory_products
+         set current_stock = current_stock - $1
+       where tenant_slug = $2 and sku = $3
+         and (allow_negative_stock or current_stock >= $1)`,
+      [movement.quantity, tenantSlug, movement.productSku]
+    );
+    if (!res.rowCount) {
+      throw new Error(
+        `Insufficient stock for ${movement.productSku}: cannot sell/issue ${movement.quantity} unit(s)`
+      );
+    }
   } else if (movement.movementType === "adjustment") {
     await sql`
       update inventory_products
@@ -98,8 +139,61 @@ export async function recordStockMovement(
     `;
   }
 
+  // Per-warehouse balance. Transfers carry a signed quantity; other types
+  // derive their sign from movement_type.
+  if (movement.warehouseId) {
+    const signedQty = positiveTypes.includes(movement.movementType)
+      ? Math.abs(movement.quantity)
+      : negativeTypes.includes(movement.movementType)
+        ? -Math.abs(movement.quantity)
+        : movement.quantity; // transfer / adjustment carry their own sign
+    try {
+      const { adjustStockBalance } = await import("./warehouses");
+      await adjustStockBalance(
+        tenantSlug,
+        movement.productSku,
+        movement.warehouseId,
+        signedQty,
+        movement.unitCost
+      );
+    } catch (err) {
+      console.error("Failed to update warehouse stock balance:", err);
+    }
+  }
+
   if (!options?.skipJournalEntry) {
     await postStockMovementJournal(tenantSlug, movement);
+  }
+
+  // Low-stock alert — only after stock-reducing movements, and deduped daily
+  // per product so repeat sales don't spam.
+  if (negativeTypes.includes(movement.movementType) || movement.movementType === "adjustment") {
+    try {
+      const [prod] = (await sql`
+        select sku, name, current_stock, min_stock
+        from inventory_products
+        where tenant_slug = ${tenantSlug} and sku = ${movement.productSku}
+      `) as any[];
+      if (prod && prod.min_stock != null && Number(prod.current_stock) <= Number(prod.min_stock)) {
+        const { emitEvent } = await import("@/lib/notify");
+        const day = new Date().toISOString().slice(0, 10);
+        void emitEvent({
+          tenantSlug,
+          eventType: "stock.low",
+          sourceModule: "inventory",
+          sourceRecordId: prod.sku,
+          dedupeKey: `stocklow:${prod.sku}:${day}`,
+          payload: {
+            sku: prod.sku,
+            itemName: prod.name,
+            currentStock: Number(prod.current_stock),
+            reorderLevel: Number(prod.min_stock),
+          },
+        });
+      }
+    } catch (err) {
+      console.error("Failed to emit stock.low:", err);
+    }
   }
 
   return row;
@@ -131,6 +225,7 @@ async function postStockMovementJournal(
           entryDate: today,
           referenceType: "manual",
           referenceId: movement.referenceId,
+          branchId: movement.branchId,
           description,
           lines: [
             { accountCode: "1500", debitAmount: totalValue, creditAmount: 0, description: "Inventory receipt" },
@@ -145,6 +240,7 @@ async function postStockMovementJournal(
           entryDate: today,
           referenceType: "manual",
           referenceId: movement.referenceId,
+          branchId: movement.branchId,
           description,
           lines: [
             { accountCode: "1300", debitAmount: totalValue, creditAmount: 0, description: "WIP — material issue" },
@@ -159,6 +255,7 @@ async function postStockMovementJournal(
           entryDate: today,
           referenceType: "manual",
           referenceId: movement.referenceId,
+          branchId: movement.branchId,
           description,
           lines: [
             { accountCode: "1400", debitAmount: totalValue, creditAmount: 0, description: "Finished goods receipt" },
@@ -173,10 +270,27 @@ async function postStockMovementJournal(
           entryDate: today,
           referenceType: "manual",
           referenceId: movement.referenceId,
+          branchId: movement.branchId,
           description,
           lines: [
-            { accountCode: "6100", debitAmount: totalValue, creditAmount: 0, description: "COGS — inventory sold" },
+            { accountCode: GL_ACCOUNTS.COGS, debitAmount: totalValue, creditAmount: 0, description: "COGS — inventory sold" },
             { accountCode: "1500", debitAmount: 0, creditAmount: totalValue, description: "Inventory issued to customer" },
+          ],
+        });
+        break;
+
+      case "return":
+        // Stock comes back in: reverse the COGS posting (Dr inventory, Cr COGS).
+        await createJournalEntry({
+          tenantSlug,
+          entryDate: today,
+          referenceType: "manual",
+          referenceId: movement.referenceId,
+          branchId: movement.branchId,
+          description,
+          lines: [
+            { accountCode: "1500", debitAmount: totalValue, creditAmount: 0, description: "Inventory returned to stock" },
+            { accountCode: GL_ACCOUNTS.COGS, debitAmount: 0, creditAmount: totalValue, description: "COGS reversal" },
           ],
         });
         break;
@@ -187,6 +301,7 @@ async function postStockMovementJournal(
           entryDate: today,
           referenceType: "manual",
           referenceId: movement.referenceId,
+          branchId: movement.branchId,
           description,
           lines: [
             { accountCode: "1500", debitAmount: totalValue > 0 ? totalValue : 0, creditAmount: totalValue < 0 ? Math.abs(totalValue) : 0, description: "Inventory adjustment" },

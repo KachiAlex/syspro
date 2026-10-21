@@ -19,6 +19,21 @@ import {
 } from "./assets-reports";
 
 /**
+ * Append a branch predicate (`column = ANY($n)`) when the filters carry
+ * branchIds or a single branch. Returns the SQL fragment or "".
+ */
+function branchFilter(filters: ReportFilters, params: any[], column: string): string {
+  const ids = filters.branchIds?.length
+    ? filters.branchIds
+    : filters.branch
+      ? [filters.branch]
+      : null;
+  if (!ids) return "";
+  params.push(ids);
+  return ` AND ${column} = ANY($${params.length})`;
+}
+
+/**
  * PROFIT & LOSS REPORT
  */
 
@@ -39,21 +54,32 @@ export async function generatePnLReport(
       params.push(filters.periodEnd);
       dateWhere += ` AND je.entry_date <= $${idx}`;
     }
+    const branchWhere = branchFilter(filters, params, "jel.branch_id");
 
     const query = `
       SELECT
         coa.code,
         coa.name,
-        COALESCE(SUM(jel.debit_amount - jel.credit_amount), 0) as amount_total,
+        COALESCE(agg.amount_total, 0) as amount_total,
         coa.type as account_type,
         CASE WHEN coa.type = 'revenue' THEN 'REVENUE' ELSE 'EXPENSES' END as section
       FROM chart_of_accounts coa
-      LEFT JOIN journal_entry_lines jel ON jel.account_code = coa.code
-      LEFT JOIN journal_entries je ON jel.entry_id = je.id AND je.tenant_slug = $1
+      LEFT JOIN (
+        SELECT COALESCE(jel.account_code, ca.code) AS code,
+               SUM(jel.debit_amount - jel.credit_amount) AS amount_total
+        FROM journal_entry_lines jel
+        JOIN journal_entries je ON jel.entry_id = je.id
+        LEFT JOIN chart_of_accounts ca ON ca.id = jel.account_id
+        WHERE je.tenant_slug = $1
+          AND COALESCE(UPPER(je.approval_status), 'POSTED') IN ('POSTED', 'APPROVED')
+          ${dateWhere}
+          ${branchWhere}
+        GROUP BY 1
+      ) agg ON agg.code = coa.code
       WHERE coa.type IN ('revenue', 'expense')
-        ${dateWhere}
-      GROUP BY coa.code, coa.name, coa.type
-      HAVING COALESCE(SUM(jel.debit_amount - jel.credit_amount), 0) != 0
+        AND (coa.tenant_slug = $1 OR coa.tenant_slug IS NULL)
+      GROUP BY coa.code, coa.name, coa.type, agg.amount_total
+      HAVING COALESCE(agg.amount_total, 0) != 0
       ORDER BY coa.type, coa.code
     `;
 
@@ -123,6 +149,7 @@ export async function generateBalanceSheet(
       params.push(filters.periodEnd);
       dateWhere = ` AND je.entry_date <= $${params.length}`;
     }
+    const branchWhere = branchFilter(filters, params, "jel.branch_id");
 
     const query = `
       SELECT
@@ -134,24 +161,34 @@ export async function generateBalanceSheet(
           WHEN coa.type = 'liability' THEN 'LIABILITIES'
           WHEN coa.type = 'equity' THEN 'EQUITY'
         END as section,
-        COALESCE(SUM(
+        COALESCE(
           CASE
-            WHEN coa.type IN ('asset', 'expense') THEN jel.debit_amount - jel.credit_amount
-            WHEN coa.type IN ('liability', 'equity', 'revenue') THEN jel.credit_amount - jel.debit_amount
+            WHEN coa.type IN ('asset', 'expense') THEN agg.net
+            WHEN coa.type IN ('liability', 'equity', 'revenue') THEN -agg.net
           END
-        ), 0) as balance
+        , 0) as balance
       FROM chart_of_accounts coa
-      LEFT JOIN journal_entry_lines jel ON jel.account_code = coa.code
-      LEFT JOIN journal_entries je ON jel.entry_id = je.id AND je.tenant_slug = $1
+      LEFT JOIN (
+        SELECT COALESCE(jel.account_code, ca.code) AS code,
+               SUM(jel.debit_amount - jel.credit_amount) AS net
+        FROM journal_entry_lines jel
+        JOIN journal_entries je ON jel.entry_id = je.id
+        LEFT JOIN chart_of_accounts ca ON ca.id = jel.account_id
+        WHERE je.tenant_slug = $1
+          AND COALESCE(UPPER(je.approval_status), 'POSTED') IN ('POSTED', 'APPROVED')
+          ${dateWhere}
+          ${branchWhere}
+        GROUP BY 1
+      ) agg ON agg.code = coa.code
       WHERE coa.type IN ('asset', 'liability', 'equity')
-        ${dateWhere}
-      GROUP BY coa.code, coa.name, coa.type
-      HAVING COALESCE(SUM(
+        AND (coa.tenant_slug = $1 OR coa.tenant_slug IS NULL)
+      GROUP BY coa.code, coa.name, coa.type, agg.net
+      HAVING COALESCE(
           CASE
-            WHEN coa.type IN ('asset', 'expense') THEN jel.debit_amount - jel.credit_amount
-            WHEN coa.type IN ('liability', 'equity', 'revenue') THEN jel.credit_amount - jel.debit_amount
+            WHEN coa.type IN ('asset', 'expense') THEN agg.net
+            WHEN coa.type IN ('liability', 'equity', 'revenue') THEN -agg.net
           END
-        ), 0) != 0
+        , 0) != 0
       ORDER BY coa.type, coa.code
     `;
 
@@ -221,22 +258,25 @@ export async function generateCashFlowReport(
       params.push(filters.periodEnd);
       dateWhere += ` AND je.entry_date <= $${params.length}`;
     }
+    const branchWhere = branchFilter(filters, params, "jel.branch_id");
 
     const query = `
       SELECT
-        je.entry_date as transaction_date,
+        COALESCE(je.posting_date, je.entry_date) as transaction_date,
         coa.type as account_type,
-        coa.code,
-        coa.name,
+        COALESCE(jel.account_code, coa.code) as code,
+        COALESCE(jel.account_name, coa.name) as name,
         COALESCE(SUM(jel.debit_amount - jel.credit_amount), 0) as net_cash_flow
       FROM journal_entry_lines jel
       JOIN journal_entries je ON jel.entry_id = je.id
-      JOIN chart_of_accounts coa ON jel.account_code = coa.code
+      LEFT JOIN chart_of_accounts coa ON coa.id = jel.account_id OR coa.code = jel.account_code
       WHERE je.tenant_slug = $1
+        AND COALESCE(UPPER(je.approval_status), 'POSTED') IN ('POSTED', 'APPROVED')
         AND coa.type IN ('asset', 'liability', 'equity', 'revenue', 'expense')
         ${dateWhere}
-      GROUP BY je.entry_date, coa.type, coa.code, coa.name
-      ORDER BY coa.type, je.entry_date DESC
+        ${branchWhere}
+      GROUP BY 1, coa.type, 3, 4
+      ORDER BY coa.type, 1 DESC
     `;
 
     const result = await db.query(query, params);
@@ -263,14 +303,17 @@ export async function generateCashFlowReport(
     let beginningCash = 0;
     if (filters.periodStart) {
       const cashParams: any[] = [filters.tenantSlug, filters.periodStart];
+      const cashBranch = branchFilter(filters, cashParams, "jel.branch_id");
       const cashResult = await db.query(
         `SELECT COALESCE(SUM(jel.debit_amount - jel.credit_amount), 0) as beginning_balance
          FROM journal_entry_lines jel
          JOIN journal_entries je ON jel.entry_id = je.id
-         JOIN chart_of_accounts coa ON jel.account_code = coa.code
+         LEFT JOIN chart_of_accounts coa ON coa.id = jel.account_id
          WHERE je.tenant_slug = $1
-           AND coa.code IN ('1100', '1110')
-           AND je.entry_date < $2`,
+           AND COALESCE(UPPER(je.approval_status), 'POSTED') IN ('POSTED', 'APPROVED')
+           AND COALESCE(jel.account_code, coa.code) IN ('1100', '1110')
+           AND COALESCE(je.posting_date, je.entry_date) < $2
+           ${cashBranch}`,
         cashParams
       );
       beginningCash = Number(cashResult.rows[0]?.beginning_balance || 0);
@@ -317,6 +360,7 @@ export async function generateAgedReceivablesReport(
 ): Promise<AgedReceivablesReport | null> {
   try {
     const params: any[] = [filters.tenantSlug];
+    const branchWhere = branchFilter(filters, params, "fi.branch_id");
     const query = `
       SELECT
         fi.id,
@@ -339,6 +383,7 @@ export async function generateAgedReceivablesReport(
       WHERE fi.tenant_slug = $1
         AND fi.balance_due > 0
         AND fi.status NOT IN ('void', 'paid')
+        ${branchWhere}
       ORDER BY aging_bucket, fi.customer_name
     `;
 
@@ -388,6 +433,7 @@ export async function generateAgedPayablesReport(
 ): Promise<AgedPayablesReport | null> {
   try {
     const params: any[] = [filters.tenantSlug];
+    const branchWhere = branchFilter(filters, params, "b.branch_id::text");
     const query = `
       SELECT
         b.id,
@@ -411,6 +457,7 @@ export async function generateAgedPayablesReport(
       WHERE b.tenant_slug = $1
         AND b.balance_due > 0
         AND b.status NOT IN ('cancelled', 'paid')
+        ${branchWhere}
       ORDER BY aging_bucket, v.legal_name
     `;
 
@@ -465,21 +512,32 @@ export async function generateTrialBalance(
       params.push(filters.periodEnd);
       dateWhere = ` AND je.entry_date <= $${params.length}`;
     }
+    const branchWhere = branchFilter(filters, params, "jel.branch_id");
 
     const query = `
       SELECT
         coa.code as account_code,
         coa.name as account_name,
         coa.type as account_type,
-        COALESCE(SUM(jel.debit_amount), 0) as total_debit,
-        COALESCE(SUM(jel.credit_amount), 0) as total_credit
+        COALESCE(agg.total_debit, 0) as total_debit,
+        COALESCE(agg.total_credit, 0) as total_credit
       FROM chart_of_accounts coa
-      LEFT JOIN journal_entry_lines jel ON jel.account_code = coa.code
-      LEFT JOIN journal_entries je ON jel.entry_id = je.id AND je.tenant_slug = $1
-      WHERE 1=1
-        ${dateWhere}
-      GROUP BY coa.code, coa.name, coa.type
-      HAVING COALESCE(SUM(jel.debit_amount), 0) != 0 OR COALESCE(SUM(jel.credit_amount), 0) != 0
+      LEFT JOIN (
+        SELECT COALESCE(jel.account_code, ca.code) AS code,
+               SUM(jel.debit_amount) AS total_debit,
+               SUM(jel.credit_amount) AS total_credit
+        FROM journal_entry_lines jel
+        JOIN journal_entries je ON jel.entry_id = je.id
+        LEFT JOIN chart_of_accounts ca ON ca.id = jel.account_id
+        WHERE je.tenant_slug = $1
+          AND COALESCE(UPPER(je.approval_status), 'POSTED') IN ('POSTED', 'APPROVED')
+          ${dateWhere}
+          ${branchWhere}
+        GROUP BY 1
+      ) agg ON agg.code = coa.code
+      WHERE (coa.tenant_slug = $1 OR coa.tenant_slug IS NULL)
+      GROUP BY coa.code, coa.name, coa.type, agg.total_debit, agg.total_credit
+      HAVING COALESCE(agg.total_debit, 0) != 0 OR COALESCE(agg.total_credit, 0) != 0
       ORDER BY coa.code
     `;
 
@@ -521,23 +579,24 @@ export async function generateGeneralLedger(
     let whereClause = "";
     if (filters.accountCode) {
       params.push(filters.accountCode);
-      whereClause += ` AND jel.account_code = $${params.length}`;
+      whereClause += ` AND COALESCE(jel.account_code, ca.code) = $${params.length}`;
     }
     if (filters.periodStart) {
       params.push(filters.periodStart);
-      whereClause += ` AND je.entry_date >= $${params.length}`;
+      whereClause += ` AND COALESCE(je.posting_date, je.entry_date) >= $${params.length}`;
     }
     if (filters.periodEnd) {
       params.push(filters.periodEnd);
-      whereClause += ` AND je.entry_date <= $${params.length}`;
+      whereClause += ` AND COALESCE(je.posting_date, je.entry_date) <= $${params.length}`;
     }
+    whereClause += branchFilter(filters, params, "jel.branch_id");
 
     const query = `
       SELECT
-        je.entry_number,
-        je.entry_date,
-        jel.account_code,
-        jel.account_name,
+        COALESCE(je.journal_number, je.entry_number) as entry_number,
+        COALESCE(je.posting_date, je.entry_date) as entry_date,
+        COALESCE(jel.account_code, ca.code) as account_code,
+        COALESCE(jel.account_name, ca.name) as account_name,
         je.description,
         jel.debit_amount,
         jel.credit_amount,
@@ -545,9 +604,11 @@ export async function generateGeneralLedger(
         je.reference_id
       FROM journal_entry_lines jel
       JOIN journal_entries je ON jel.entry_id = je.id
+      LEFT JOIN chart_of_accounts ca ON ca.id = jel.account_id
       WHERE je.tenant_slug = $1
+        AND COALESCE(UPPER(je.approval_status), 'POSTED') IN ('POSTED', 'APPROVED')
         ${whereClause}
-      ORDER BY jel.account_code, je.entry_date, je.entry_number
+      ORDER BY account_code, 2, 1
     `;
 
     const result = await db.query(query, params);
@@ -581,14 +642,17 @@ export async function generateGeneralLedger(
       let openingWhere = "";
       if (filters.accountCode) {
         openingParams.push(filters.accountCode);
-        openingWhere = ` AND jel.account_code = $${openingParams.length}`;
+        openingWhere = ` AND COALESCE(jel.account_code, ca.code) = $${openingParams.length}`;
       }
+      openingWhere += branchFilter(filters, openingParams, "jel.branch_id");
       const openingResult = await db.query(
         `SELECT COALESCE(SUM(jel.debit_amount - jel.credit_amount), 0) as opening
          FROM journal_entry_lines jel
          JOIN journal_entries je ON jel.entry_id = je.id
+         LEFT JOIN chart_of_accounts ca ON ca.id = jel.account_id
          WHERE je.tenant_slug = $1
-           AND je.entry_date < $2
+           AND COALESCE(UPPER(je.approval_status), 'POSTED') IN ('POSTED', 'APPROVED')
+           AND COALESCE(je.posting_date, je.entry_date) < $2
            ${openingWhere}`,
         openingParams
       );
@@ -634,18 +698,20 @@ export async function drillDownToJournalDetails(
 
     const query = `
       SELECT
-        je.entry_date as date,
+        COALESCE(je.posting_date, je.entry_date) as date,
         je.description,
-        je.entry_number as reference,
+        COALESCE(je.journal_number, je.entry_number) as reference,
         jel.debit_amount,
         jel.credit_amount,
         je.id::text as journal_entry_id
       FROM journal_entry_lines jel
       JOIN journal_entries je ON jel.entry_id = je.id
+      LEFT JOIN chart_of_accounts ca ON ca.id = jel.account_id
       WHERE je.tenant_slug = $1
-        AND jel.account_code = $2
+        AND COALESCE(UPPER(je.approval_status), 'POSTED') IN ('POSTED', 'APPROVED')
+        AND COALESCE(jel.account_code, ca.code) = $2
         ${dateWhere}
-      ORDER BY je.entry_date DESC, je.created_at DESC
+      ORDER BY 1 DESC, je.created_at DESC
     `;
 
     const result = await db.query(query, params);
@@ -908,4 +974,77 @@ export function generateGeneralLedgerCSV(report: GeneralLedgerReport): string {
   data.push(["CLOSING BALANCE", "", "", "", "", "", "", report.closingBalance.toFixed(2)]);
 
   return generateCSVExport(data, headers);
+}
+
+/**
+ * BRANCH P&L BREAKDOWN — revenue/expense/net per branch (+ unassigned).
+ */
+export type BranchPnLLine = {
+  branchId: string | null;
+  branchCode: string | null;
+  branchName: string;
+  revenue: number;
+  expenses: number;
+  netIncome: number;
+};
+
+export async function generateBranchPnL(
+  filters: ReportFilters
+): Promise<BranchPnLLine[]> {
+  const params: any[] = [filters.tenantSlug];
+  let dateWhere = "";
+  if (filters.periodStart) {
+    params.push(filters.periodStart);
+    dateWhere += ` AND je.entry_date >= $${params.length}`;
+  }
+  if (filters.periodEnd) {
+    params.push(filters.periodEnd);
+    dateWhere += ` AND je.entry_date <= $${params.length}`;
+  }
+  const branchWhere = branchFilter(filters, params, "jel.branch_id");
+
+  const result = await db.query(
+    `SELECT jel.branch_id,
+            SUM(CASE WHEN lower(coalesce(coa.type, ca2.type)) = 'revenue'
+                     THEN jel.credit_amount - jel.debit_amount ELSE 0 END) AS revenue,
+            SUM(CASE WHEN lower(coalesce(coa.type, ca2.type)) = 'expense'
+                     THEN jel.debit_amount - jel.credit_amount ELSE 0 END) AS expenses
+     FROM journal_entry_lines jel
+     JOIN journal_entries je ON jel.entry_id = je.id
+     LEFT JOIN chart_of_accounts coa ON coa.id = jel.account_id
+     LEFT JOIN chart_of_accounts ca2 ON ca2.code = jel.account_code AND (ca2.tenant_slug = $1 OR ca2.tenant_slug IS NULL)
+     WHERE je.tenant_slug = $1
+       AND COALESCE(UPPER(je.approval_status), 'POSTED') IN ('POSTED', 'APPROVED')
+       AND lower(coalesce(coa.type, ca2.type)) IN ('revenue', 'expense')
+       ${dateWhere}
+       ${branchWhere}
+     GROUP BY jel.branch_id`,
+    params
+  );
+
+  const branchIds = result.rows.map((r: any) => r.branch_id).filter(Boolean) as string[];
+  const names = new Map<string, { code: string | null; name: string }>();
+  if (branchIds.length) {
+    const branches = await db.query(
+      `select id, code, name from tenant_branches where tenant_slug = $1 and id = any($2)`,
+      [filters.tenantSlug, branchIds]
+    );
+    for (const b of branches.rows) names.set(b.id, { code: b.code, name: b.name });
+  }
+
+  return result.rows
+    .map((r: any) => {
+      const revenue = Number(r.revenue) || 0;
+      const expenses = Number(r.expenses) || 0;
+      const meta = r.branch_id ? names.get(r.branch_id) : undefined;
+      return {
+        branchId: r.branch_id ?? null,
+        branchCode: meta?.code ?? null,
+        branchName: meta?.name ?? (r.branch_id ? "Unknown branch" : "Unassigned"),
+        revenue,
+        expenses,
+        netIncome: revenue - expenses,
+      };
+    })
+    .sort((a, b) => b.netIncome - a.netIncome);
 }

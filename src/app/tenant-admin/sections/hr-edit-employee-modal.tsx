@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, Pencil, KeyRound, Lock, Unlock, CheckCircle, Copy, RefreshCw } from 'lucide-react';
 import { HRService } from './hr-service';
+import { CustomFieldsPanel } from '@/components/custom-fields/custom-fields-panel';
 
 interface Employee {
   id: string;
@@ -509,6 +510,10 @@ export const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
                 </div>
               )}
             </div>
+
+            {employee?.id && (
+              <CustomFieldsPanel doctype="admin_employees" recordId={employee.id} variant="light" />
+            )}
 
             <div className="flex gap-3 pt-4">
               <button

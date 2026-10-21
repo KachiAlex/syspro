@@ -388,6 +388,26 @@ export async function completeWorkOrder(id: string, tenantSlug: string): Promise
         values (${newId}, ${tenantSlug}, ${wo.productName}, ${wo.productSku}, 'finished_goods', ${wo.quantity}, 0, ${unitCost}, 0, now())
       `;
     }
+
+    try {
+      const { emitEvent } = await import("@/lib/notify");
+      void emitEvent({
+        tenantSlug,
+        eventType: "wo.completed",
+        sourceModule: "manufacturing",
+        sourceRecordId: id,
+        dedupeKey: `wo:${id}:completed`,
+        payload: {
+          workOrderNo: (wo as any).workOrderNo ?? (wo as any).number ?? id,
+          workOrderId: id,
+          itemName: wo.productName,
+          quantity: wo.quantity,
+          unitCost,
+        },
+      });
+    } catch (err) {
+      console.error("Failed to emit wo.completed:", err);
+    }
   }
 
   return row ? normalizeWorkOrder(row) : null;

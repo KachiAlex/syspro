@@ -12,9 +12,11 @@ import {
 import { validateTenantContext } from "@/lib/tenant-admin/utils";
 import { requireModuleAccess } from "@/lib/api-auth";
 
+const ENTITY_TYPES = ["purchase_order", "bill", "payment", "journal_entry", "sales_return", "purchase_return"] as const;
+
 const approvalRuleCreateSchema = z.object({
   tenantSlug: z.string().min(1),
-  entityType: z.enum(["purchase_order", "bill", "payment"]),
+  entityType: z.enum(ENTITY_TYPES),
   ruleType: z.enum(["amount_based", "department_based", "project_based", "vendor_based"]),
   conditions: z.record(z.any()),
   approvers: z.array(z.object({
@@ -30,8 +32,8 @@ const approvalRuleCreateSchema = z.object({
 
 const approvalInitiateSchema = z.object({
   tenantSlug: z.string().min(1),
-  entityType: z.enum(["purchase_order", "bill", "payment"]),
-  entityId: z.string().uuid(),
+  entityType: z.enum(ENTITY_TYPES),
+  entityId: z.string().min(1),
   requestedBy: z.string().min(1),
   entityData: z.record(z.any()),
 });
@@ -45,7 +47,7 @@ const approvalDecisionSchema = z.object({
 const approvalListSchema = z.object({
   tenantSlug: z.string().min(1),
   entityType: z.string().optional(),
-  entityId: z.string().uuid().optional(),
+  entityId: z.string().min(1).optional(),
   status: z.string().optional(),
   userId: z.string().min(1).optional(),
   limit: z.coerce.number().min(1).max(200).optional(),

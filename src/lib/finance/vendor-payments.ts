@@ -297,6 +297,26 @@ export async function createVendorPayment(payload: {
     // Don't fail the payment creation if accounting fails
   }
 
+  try {
+    const { emitEvent } = await import("@/lib/notify");
+    const [v] = (await sql`select coalesce(display_name, legal_name) as name, email from vendors where id = ${payload.vendorId} and tenant_slug = ${payload.tenantSlug}`) as any[];
+    void emitEvent({
+      tenantSlug: payload.tenantSlug,
+      eventType: "vendor_payment.made",
+      sourceModule: "finance",
+      sourceRecordId: id,
+      payload: {
+        paymentNumber,
+        amount: payload.amount,
+        method: payload.method,
+        vendorName: v?.name ?? null,
+        partyEmail: v?.email ?? null,
+      },
+    });
+  } catch (err) {
+    console.error("Failed to emit vendor_payment.made:", err);
+  }
+
   return payment;
 }
 

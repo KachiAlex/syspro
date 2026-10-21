@@ -5,6 +5,7 @@ import { useCallback } from "react";
 import { X, Plus, Users, Trash2, Loader2 } from 'lucide-react';
 import { TaskService, TaskResponse, TaskFormData } from '../services/taskService';
 import { TaskAssignmentModal } from './TaskAssignmentModal';
+import { CustomFieldsPanel } from '@/components/custom-fields/custom-fields-panel';
 
 interface ProjectTasksModalProps {
   isOpen: boolean;
@@ -231,6 +232,10 @@ export const ProjectTasksModal: React.FC<ProjectTasksModalProps> = ({
                 ))}
               </div>
             )}
+
+            <div className="mt-6 px-1">
+              <CustomFieldsPanel doctype="projects" recordId={projectId} variant="light" />
+            </div>
           </div>
         </div>
       </div>

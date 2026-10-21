@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { X, AlertTriangle, Package, Users, ShoppingCart, Plus, Search, Filter, Download, Edit, Trash2, Eye, Mail, Phone, MapPin, Calendar, DollarSign, Star } from "lucide-react";
 import { useTenantContextSafe } from "@/components/tenant-admin/tenant-context";
+import { CustomFieldsPanel } from "@/components/custom-fields/custom-fields-panel";
 
 // Sales Order Modal
 export interface SalesOrderFormData {
@@ -50,7 +51,7 @@ export function CreateSalesOrderModal({
         setCustomers(list.map((c: any) => ({ id: String(c.id), name: c.name ?? String(c.id) })));
       })
       .catch(() => setCustomers([]));
-  }, [isOpen]);
+  }, [isOpen, tenantSlug]);
 
   const handleAddItem = () => {
     setShowItemModal(true);
@@ -333,6 +334,8 @@ export function ViewSalesOrderModal({
               </table>
             </div>
           </div>
+
+          <CustomFieldsPanel doctype="sales_orders" recordId={order.id} variant="light" />
         </div>
 
         <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
@@ -826,6 +829,8 @@ export function ViewSupplierModal({
               </div>
             </div>
           </div>
+
+          <CustomFieldsPanel doctype="vendors" recordId={supplier.id} variant="light" />
         </div>
 
         <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
@@ -1110,6 +1115,8 @@ export function ViewInventoryItemModal({
               </div>
             </div>
           </div>
+
+          <CustomFieldsPanel doctype="inventory_products" recordId={item.id} variant="light" />
         </div>
 
         <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">

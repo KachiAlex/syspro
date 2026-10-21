@@ -48,6 +48,11 @@ export async function GET(request: NextRequest) {
       periodStart,
       periodEnd,
     };
+    const { applyBranchScope } = await import("@/lib/finance/report-scope");
+    await applyBranchScope(
+      filters, tenantSlug, (_scope as any).user?.id,
+      searchParams.get("branchId") ?? searchParams.get("branch")
+    );
 
     const report = await generateCashFlowReport(filters);
 
@@ -77,8 +82,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error generating cash flow report:", error);
     return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
+      { success: false, error: (error as any)?.message ?? "Internal server error" },
+      { status: (error as any)?.status ?? 500 }
     );
   }
 }

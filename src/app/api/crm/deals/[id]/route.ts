@@ -196,11 +196,25 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         console.error("[DealWon] Revenue attribution failed:", attrErr);
       }
 
-      // Auto-draft invoice
+      // Auto-draft invoice — carry the CRM customer's contact email so invoice
+      // and payment notifications can reach the customer party.
+      let customerEmail: string | undefined;
+      try {
+        if (deal.customerId) {
+          const { db } = await import("@/lib/sql-client");
+          const rows = await db.query(
+            `select primary_contact->>'email' as contact_email from crm_customers where id = $1 and tenant_slug = $2 limit 1`,
+            [deal.customerId, deal.tenantSlug]
+          );
+          customerEmail = rows.rows[0]?.contact_email ?? undefined;
+        }
+      } catch { /* email lookup is best-effort */ }
       try {
         const invoice = await insertFinanceInvoice({
           tenantSlug: deal.tenantSlug,
           customerName: deal.customerId || "Customer",
+          customerId: deal.customerId ?? undefined,
+          customerEmail,
           invoiceNumber: `INV-DEAL-${Date.now()}`,
           issuedDate: new Date().toISOString().split("T")[0],
           dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],

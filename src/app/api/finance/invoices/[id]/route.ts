@@ -31,7 +31,8 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Finance invoice update failed", errorMessage, error);
-    return NextResponse.json({ error: "Failed to update invoice", details: errorMessage }, { status: 500 });
+    const status = errorMessage.includes("cannot be edited") ? 409 : 500;
+    return NextResponse.json({ error: "Failed to update invoice", details: errorMessage }, { status });
   }
 }
 
@@ -52,6 +53,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Finance invoice delete failed", errorMessage, error);
-    return NextResponse.json({ error: "Failed to delete invoice", details: errorMessage }, { status: 500 });
+    const status = errorMessage.includes("cannot be deleted") ? 409 : 500;
+    return NextResponse.json({ error: "Failed to delete invoice", details: errorMessage }, { status });
   }
 }

@@ -58,6 +58,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Payment delete failed", errorMessage, error);
-    return NextResponse.json({ error: "Failed to delete payment", details: errorMessage }, { status: 500 });
+    const status = errorMessage.includes("cannot be deleted") ? 409 : 500;
+    return NextResponse.json({ error: "Failed to delete payment", details: errorMessage }, { status });
   }
 }

@@ -214,7 +214,7 @@ export async function createPurchaseOrder(payload: {
   issuedDate: string;
   dueDate: string;
   currency?: string;
-  items: Array<{ description: string; quantity: number; unitPrice: number; sku?: string }>;
+  items: Array<{ description: string; quantity: number; unitPrice: number; sku?: string; accountCode?: string }>;
   metadata?: Record<string, unknown>;
 }) {
   const sql = SQL;
@@ -223,20 +223,85 @@ export async function createPurchaseOrder(payload: {
   const id = randomUUID();
   const total = payload.items.reduce((s, it) => s + (it.quantity * it.unitPrice), 0);
 
+  // Budget enforcement: coded lines create committed spend.
+  const codedItems = payload.items.filter((it) => it.accountCode);
+  if (codedItems.length) {
+    const { enforceBudget } = await import("./budget-control");
+    await enforceBudget({
+      tenantSlug: payload.tenantSlug,
+      fiscalYear: new Date(payload.issuedDate).getUTCFullYear(),
+      lines: codedItems.map((it) => ({
+        accountCode: it.accountCode!,
+        amount: it.quantity * it.unitPrice,
+      })),
+      record: {
+        actualType: "PURCHASE_ORDER",
+        transactionCode: payload.orderNumber,
+        transactionDate: payload.issuedDate,
+        committed: true,
+      },
+    });
+  }
+
+  // Maker-checker: a PO meeting the tenant's approval threshold (or matching
+  // a rule) stays 'pending_approval' and cannot be converted to a bill until
+  // the chain completes.
+  const { requiresApproval, initiateApproval } = await import("./approvals");
+  const gated = await requiresApproval(payload.tenantSlug, "purchase_order", {
+    amount: total,
+    vendorId: payload.supplierId ?? undefined,
+  });
+
   const [row] = (await sql`
     insert into purchase_orders (id, tenant_slug, supplier_id, order_number, status, issued_date, due_date, currency, total_amount, balance_due, metadata)
     values (
-      ${id}, ${payload.tenantSlug}, ${payload.supplierId ?? null}, ${payload.orderNumber}, ${"open"}, ${payload.issuedDate}, ${payload.dueDate}, ${payload.currency ?? "₦"}, ${total}, ${total}, ${payload.metadata ?? null}
+      ${id}, ${payload.tenantSlug}, ${payload.supplierId ?? null}, ${payload.orderNumber}, ${gated ? "pending_approval" : "open"}, ${payload.issuedDate}, ${payload.dueDate}, ${payload.currency ?? "₦"}, ${total}, ${total}, ${payload.metadata ?? null}
     ) returning *
   `) as PurchaseOrderRecord[];
 
+  if (gated) {
+    await initiateApproval({
+      tenantSlug: payload.tenantSlug,
+      entityType: "purchase_order",
+      entityId: id,
+      requestedBy: "system",
+      entityData: { amount: total, vendorId: payload.supplierId ?? undefined, orderNumber: payload.orderNumber },
+    });
+  }
+
   const itemRows = await Promise.all(payload.items.map(async (it) => {
         const rows = (await sql`
-          insert into purchase_order_items (id, purchase_order_id, sku, description, quantity, unit_price, amount, line_total)
-          values (${randomUUID()}, ${id}, ${it.sku ?? null}, ${it.description}, ${it.quantity}, ${it.unitPrice}, ${it.quantity * it.unitPrice}, ${it.quantity * it.unitPrice}) returning *
+          insert into purchase_order_items (id, purchase_order_id, sku, description, quantity, unit_price, amount, line_total, account_code)
+          values (${randomUUID()}, ${id}, ${it.sku ?? null}, ${it.description}, ${it.quantity}, ${it.unitPrice}, ${it.quantity * it.unitPrice}, ${it.quantity * it.unitPrice}, ${it.accountCode ?? null}) returning *
         `) as POItemRecord[];
     return rows[0];
   })) as POItemRecord[];
+
+  try {
+    const { emitEvent } = await import("@/lib/notify");
+    let vendorName: string | null = null;
+    let vendorEmail: string | null = null;
+    if (payload.supplierId) {
+      const [v] = (await sql`select coalesce(display_name, legal_name) as name, email from vendors where id = ${payload.supplierId} and tenant_slug = ${payload.tenantSlug}`) as any[];
+      vendorName = v?.name ?? null;
+      vendorEmail = v?.email ?? null;
+    }
+    void emitEvent({
+      tenantSlug: payload.tenantSlug,
+      eventType: "po.created",
+      sourceModule: "finance",
+      sourceRecordId: id,
+      payload: {
+        orderNumber: payload.orderNumber,
+        total,
+        vendorName,
+        partyEmail: vendorEmail,
+        status: gated ? "pending_approval" : "open",
+      },
+    });
+  } catch (err) {
+    console.error("Failed to emit po.created:", err);
+  }
 
   return normalizePO(row, itemRows);
 }

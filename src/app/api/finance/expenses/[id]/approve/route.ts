@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { expenseApproveSchema } from "@/lib/finance/types";
 import { approveExpense, getExpense } from "@/lib/finance/db";
-import { notifyExpenseApproved, notifyExpenseRejected } from "@/lib/finance/email";
 import { writeFinanceEvent } from "@/lib/finance/events";
 import { requireModuleAccess } from "@/lib/api-auth";
 
@@ -47,47 +46,28 @@ export async function POST(request: NextRequest, context: any) {
       metadata: { category: (expense as any).category?.name || (expense as any).category, approverName: parsed.data.approverName },
     });
 
-    // Send notification email based on action
-    // Note: In production, get actual submitter email from user database
-    const submitterEmail = expenseBefore.createdBy + "@company.com";
-
-    if (parsed.data.action === "APPROVED") {
-      // Send approval email
-      await notifyExpenseApproved(
-        {
-          expenseId: expense.id,
+    // Notify the submitter through the durable pipeline — resolves their real
+    // email via admin_employees/tenant_admins instead of fabricating one.
+    try {
+      const { emitEvent } = await import("@/lib/notify");
+      void emitEvent({
+        tenantSlug: parsed.data.tenantSlug,
+        eventType: "expense.decided",
+        sourceModule: "finance",
+        sourceRecordId: expense.id,
+        dedupeKey: `expense:${expense.id}:${parsed.data.action}`,
+        actorId: parsed.data.approverId,
+        explicitSpecs: [{ kind: "user", value: expense.createdBy }],
+        payload: {
+          status: parsed.data.action === "APPROVED" ? "approved" : "rejected",
           description: expense.description,
-          amount: expense.amount,
-          totalAmount: expense.totalAmount,
-          taxAmount: expense.taxAmount || 0,
-          createdBy: expense.createdBy,
-          createdAt: expense.createdAt,
-          approvalStatus: expense.approvalStatus,
-          category: (expense as any).category?.name || (expense as any).category || "Unknown",
+          amount: expense.totalAmount || expense.amount,
+          reason: parsed.data.reason,
+          approverName: parsed.data.approverName,
         },
-        submitterEmail,
-        parsed.data.approverName,
-        parsed.data.reason
-      );
-    } else if (parsed.data.action === "REJECTED") {
-      // Send rejection email
-      await notifyExpenseRejected(
-        {
-          expenseId: expense.id,
-          description: expense.description,
-          amount: expense.amount,
-          totalAmount: expense.totalAmount,
-          taxAmount: expense.taxAmount || 0,
-          createdBy: expense.createdBy,
-          createdAt: expense.createdAt,
-          approvalStatus: expense.approvalStatus,
-          category: (expense as any).category?.name || (expense as any).category || "Unknown",
-          vendor: (expense as any).vendorName || (expense as any).vendor || "Unknown",
-        },
-        submitterEmail,
-        parsed.data.approverName,
-        parsed.data.reason || "No reason provided"
-      );
+      });
+    } catch (err) {
+      console.error("Failed to emit expense.decided:", err);
     }
 
     return NextResponse.json({ expense });

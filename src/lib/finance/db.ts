@@ -39,6 +39,8 @@ export type FinanceInvoiceRecord = {
   branch_id: string | null;
   customer_name: string;
   customer_code: string | null;
+  customer_id: string | null;
+  customer_email: string | null;
   invoice_number: string;
   purchase_order: string | null;
   issued_date: string;
@@ -203,6 +205,8 @@ async function ensureFinanceTablesRun(sql: SqlClient = SQL) {
     )
   `;
 
+  await sql`alter table if exists finance_invoices add column if not exists customer_id text`;
+  await sql`alter table if exists finance_invoices add column if not exists customer_email text`;
   await sql`
     create table if not exists finance_invoice_lines (
       id text primary key,
@@ -257,6 +261,22 @@ async function ensureFinanceTablesRun(sql: SqlClient = SQL) {
     )
   `;
 
+  await sql`
+    create table if not exists payment_applications (
+      id uuid primary key default gen_random_uuid(),
+      tenant_slug text not null,
+      payment_id text not null,
+      invoice_id text not null,
+      amount numeric(18,2) not null,
+      created_at timestamptz not null default now()
+    )
+  `;
+
+  await sql`alter table if exists finance_invoices add column if not exists journal_entry_id uuid`;
+  await sql`alter table if exists finance_invoices add column if not exists reversed_journal_entry_id uuid`;
+  await sql`alter table if exists finance_payments add column if not exists journal_entry_id uuid`;
+  await sql`alter table if exists finance_payments add column if not exists reversed_journal_entry_id uuid`;
+
   await sql`create index if not exists finance_accounts_tenant_idx on finance_accounts (tenant_slug)`;
   await sql`create index if not exists finance_schedules_tenant_idx on finance_schedules (tenant_slug, document_type)`;
   await sql`create index if not exists finance_expense_categories_tenant_idx on finance_expense_categories (tenant_slug)`;
@@ -266,6 +286,8 @@ async function ensureFinanceTablesRun(sql: SqlClient = SQL) {
   await sql`create index if not exists finance_payments_tenant_idx on finance_payments (tenant_slug, status)`;
   await sql`create index if not exists finance_payments_invoice_idx on finance_payments (invoice_id)`;
   await sql`create index if not exists finance_subscriptions_tenant_idx on finance_subscriptions (tenant_slug, status)`;
+  await sql`create index if not exists payment_applications_payment_idx on payment_applications (payment_id)`;
+  await sql`create index if not exists payment_applications_invoice_idx on payment_applications (invoice_id)`;
 }
 
 function normalizeFinanceAccountRow(row: FinanceAccountRecord): FinanceAccount {
@@ -444,6 +466,8 @@ function normalizeFinanceInvoiceRow(row: FinanceInvoiceRecord, lines: FinanceInv
     branchId: row.branch_id,
     customerName: row.customer_name,
     customerCode: row.customer_code,
+    customerId: row.customer_id ?? undefined,
+    customerEmail: row.customer_email ?? undefined,
     invoiceNumber: row.invoice_number,
     purchaseOrder: row.purchase_order,
     issuedDate: row.issued_date,
@@ -585,6 +609,105 @@ export async function listFinanceInvoices(filters: InvoiceFilters): Promise<Fina
   return rows.map((row) => normalizeFinanceInvoiceRow(row, grouped[row.id] ?? []));
 }
 
+/**
+ * Post the invoice to the GL: Dr Accounts Receivable (gross, party=customer),
+ * Cr revenue per line (net), Cr VAT output for line tax.
+ */
+async function postInvoiceJournalEntry(
+  invoiceRow: FinanceInvoiceRecord & { journal_entry_id?: string | null },
+  lineRows: FinanceInvoiceLineRecord[]
+): Promise<string | null> {
+  const { postGLEntry, GL_ACCOUNTS } = await import("./gl");
+
+  const gross = Number(invoiceRow.amount);
+  const creditLines: Array<{
+    accountCode: string;
+    debitAmount: number;
+    creditAmount: number;
+    description: string;
+  }> = [];
+
+  let totalTax = 0;
+  for (const line of lineRows) {
+    const net = Number(line.amount);
+    const tax = net * (Number(line.tax_rate ?? 0) / 100);
+    totalTax += tax;
+    creditLines.push({
+      accountCode: line.account_code || GL_ACCOUNTS.SALES_REVENUE,
+      debitAmount: 0,
+      creditAmount: net,
+      description: line.description,
+    });
+  }
+  if (totalTax > 0.005) {
+    creditLines.push({
+      accountCode: GL_ACCOUNTS.VAT_OUTPUT,
+      debitAmount: 0,
+      creditAmount: totalTax,
+      description: "VAT output on invoice",
+    });
+  }
+
+  const creditsTotal = creditLines.reduce((s, l) => s + l.creditAmount, 0);
+  const residual = gross - creditsTotal;
+  if (Math.abs(residual) > 0.005) {
+    creditLines.push({
+      accountCode: GL_ACCOUNTS.SALES_REVENUE,
+      debitAmount: residual < 0 ? Math.abs(residual) : 0,
+      creditAmount: residual > 0 ? residual : 0,
+      description: "Invoice total adjustment",
+    });
+  }
+
+  const entry = await postGLEntry({
+    tenantSlug: invoiceRow.tenant_slug,
+    entryDate: invoiceRow.issued_date,
+    journalType: "SYSTEM",
+    referenceType: "invoice",
+    referenceId: invoiceRow.id,
+    branchId: invoiceRow.branch_id ?? undefined,
+    description: `Invoice ${invoiceRow.invoice_number} - ${invoiceRow.customer_name}`,
+    status: "POSTED",
+    metadata: {
+      invoiceId: invoiceRow.id,
+      invoiceNumber: invoiceRow.invoice_number,
+      customerName: invoiceRow.customer_name,
+    },
+    lines: [
+      {
+        accountCode: GL_ACCOUNTS.ACCOUNTS_RECEIVABLE,
+        debitAmount: gross,
+        creditAmount: 0,
+        description: `Receivable - ${invoiceRow.customer_name}`,
+        partyType: "customer",
+        partyId: invoiceRow.customer_code ?? invoiceRow.customer_name,
+      },
+      ...creditLines,
+    ],
+  });
+
+  // Statutory ledger: output VAT feeds the VAT return.
+  if (totalTax > 0.005) {
+    try {
+      const { recordInvoiceVat } = await import("./localization");
+      const netBase = lineRows.reduce((s, l) => s + Number(l.amount), 0);
+      await recordInvoiceVat({
+        tenantSlug: invoiceRow.tenant_slug,
+        invoiceId: invoiceRow.id,
+        invoiceNumber: invoiceRow.invoice_number,
+        customerName: invoiceRow.customer_name,
+        date: invoiceRow.issued_date,
+        baseAmount: netBase,
+        taxAmount: totalTax,
+      });
+    } catch (taxErr) {
+      console.error("Failed to record invoice VAT transaction:", taxErr);
+    }
+  }
+
+  return entry.id;
+}
+
 export async function insertFinanceInvoice(payload: FinanceInvoiceCreateInput): Promise<FinanceInvoice> {
   const sql = SQL;
   await ensureFinanceTables(sql);
@@ -599,6 +722,8 @@ export async function insertFinanceInvoice(payload: FinanceInvoiceCreateInput): 
       branch_id,
       customer_name,
       customer_code,
+      customer_id,
+      customer_email,
       invoice_number,
       purchase_order,
       issued_date,
@@ -618,6 +743,8 @@ export async function insertFinanceInvoice(payload: FinanceInvoiceCreateInput): 
       ${payload.branchId ?? null},
       ${payload.customerName},
       ${payload.customerCode ?? null},
+      ${payload.customerId ?? null},
+      ${payload.customerEmail ?? null},
       ${payload.invoiceNumber},
       ${payload.purchaseOrder ?? null},
       ${payload.issuedDate},
@@ -661,6 +788,34 @@ export async function insertFinanceInvoice(payload: FinanceInvoiceCreateInput): 
     return rows[0];
   })) as FinanceInvoiceLineRecord[];
 
+  // Post to the GL when the invoice is issued in a non-draft state
+  const status = invoiceRow.status ?? "draft";
+  if (status !== "draft" && status !== "void") {
+    if (invoiceRow.customer_code) {
+      const { assertCreditAvailable } = await import("./credit-control");
+      await assertCreditAvailable(
+        payload.tenantSlug, invoiceRow.customer_code, Number(invoiceRow.amount)
+      );
+    }
+    try {
+      const journalEntryId = await postInvoiceJournalEntry(invoiceRow, lineRows);
+      if (journalEntryId) {
+        await sql`update finance_invoices set journal_entry_id = ${journalEntryId} where id = ${invoiceId}`;
+      }
+      const { buildInvoiceSchedule } = await import("./credit-control");
+      await buildInvoiceSchedule({
+        tenantSlug: payload.tenantSlug,
+        invoiceId,
+        issueDate: invoiceRow.issued_date,
+        amount: Number(invoiceRow.amount),
+        paymentTermId: (invoiceRow as any).payment_term_id,
+        dueDate: invoiceRow.due_date,
+      });
+    } catch (err) {
+      console.error("Failed to post invoice journal entry:", err);
+    }
+  }
+
   return normalizeFinanceInvoiceRow(invoiceRow, lineRows);
 }
 
@@ -678,6 +833,13 @@ export async function updateFinanceInvoice(
 
   if (!originalInvoice) {
     return null;
+  }
+
+  const wasPosted = Boolean((originalInvoice as any).journal_entry_id);
+  const touchesFinancials =
+    updates.lineItems !== undefined || updates.amount !== undefined || updates.balanceDue !== undefined;
+  if (wasPosted && touchesFinancials) {
+    throw new Error("Issued invoices cannot be edited; void the invoice and issue a new one");
   }
 
   const paymentsApplied = Number(originalInvoice.amount) - Number(originalInvoice.balance_due);
@@ -765,6 +927,58 @@ export async function updateFinanceInvoice(
     `) as FinanceInvoiceLineRecord[];
   }
 
+  // Voiding an issued invoice reverses its journal entry
+  if (
+    updates.status === "void" &&
+    (originalInvoice as any).journal_entry_id &&
+    !(originalInvoice as any).reversed_journal_entry_id
+  ) {
+    try {
+      const { reverseGLEntry } = await import("./gl");
+      const reversal = await reverseGLEntry(
+        (originalInvoice as any).journal_entry_id,
+        `Void invoice ${originalInvoice.invoice_number}`
+      );
+      await sql`update finance_invoices set reversed_journal_entry_id = ${reversal.id}, balance_due = 0 where id = ${id}`;
+      invoiceRow.balance_due = 0;
+    } catch (err) {
+      console.error("Failed to reverse invoice journal entry:", err);
+    }
+  }
+
+  // Draft -> issued transition posts the invoice to the GL
+  if (
+    originalInvoice.status === "draft" &&
+    updates.status &&
+    updates.status !== "draft" &&
+    updates.status !== "void" &&
+    !(originalInvoice as any).journal_entry_id
+  ) {
+    if (invoiceRow.customer_code) {
+      const { assertCreditAvailable } = await import("./credit-control");
+      await assertCreditAvailable(
+        invoiceRow.tenant_slug, invoiceRow.customer_code, Number(invoiceRow.amount)
+      );
+    }
+    try {
+      const journalEntryId = await postInvoiceJournalEntry(invoiceRow, lineRows);
+      if (journalEntryId) {
+        await sql`update finance_invoices set journal_entry_id = ${journalEntryId} where id = ${id}`;
+      }
+      const { buildInvoiceSchedule } = await import("./credit-control");
+      await buildInvoiceSchedule({
+        tenantSlug: invoiceRow.tenant_slug,
+        invoiceId: id,
+        issueDate: invoiceRow.issued_date,
+        amount: Number(invoiceRow.amount),
+        paymentTermId: (invoiceRow as any).payment_term_id,
+        dueDate: invoiceRow.due_date,
+      });
+    } catch (err) {
+      console.error("Failed to post invoice journal entry:", err);
+    }
+  }
+
   return normalizeFinanceInvoiceRow(invoiceRow, lineRows);
 }
 
@@ -772,13 +986,24 @@ export async function deleteFinanceInvoice(id: string, tenantSlug?: string): Pro
   const sql = SQL;
   await ensureFinanceTables(sql);
 
+  const [existing] = tenantSlug
+    ? ((await sql`select status, journal_entry_id from finance_invoices where id = ${id} and tenant_slug = ${tenantSlug}`) as any[])
+    : ((await sql`select status, journal_entry_id from finance_invoices where id = ${id}`) as any[]);
+
+  if (!existing) {
+    return false;
+  }
+  if (existing.status !== "draft" || existing.journal_entry_id) {
+    throw new Error("Only draft invoices can be deleted; void the invoice to reverse it");
+  }
+
   const result = tenantSlug
     ? await db.query<{ count: number }>(`delete from finance_invoices where id = $1 and tenant_slug = $2`, [id, tenantSlug])
     : await db.query<{ count: number }>(`delete from finance_invoices where id = $1`, [id]);
   return result.count > 0;
 }
 
-// AR Payment Receipt - receive payment against an invoice
+// AR Payment Receipt - receive payment against one or more invoices
 export async function receiveInvoicePayment(data: {
   tenantSlug: string;
   invoiceId: string;
@@ -789,35 +1014,64 @@ export async function receiveInvoicePayment(data: {
   gateway?: string;
   gatewayReference?: string;
   confirmationDetails?: string;
+  allocations?: Array<{ invoiceId: string; amount: number; settledAmount?: number }>;
+  transactionCurrency?: string;
+  exchangeRate?: number;
   metadata?: Record<string, unknown>;
 }): Promise<{ payment: FinancePayment; invoice: FinanceInvoice }> {
   const sql = SQL;
   await ensureFinanceTables(sql);
 
-  const [invoiceRow] = (await sql`
-    select * from finance_invoices where id = ${data.invoiceId} and tenant_slug = ${data.tenantSlug}
-  `) as FinanceInvoiceRecord[];
+  const allocations =
+    data.allocations && data.allocations.length
+      ? data.allocations
+      : [{ invoiceId: data.invoiceId, amount: data.amount }];
 
-  if (!invoiceRow) {
-    throw new Error("Invoice not found");
+  // Base AR amount extinguished per allocation (defaults to the received
+  // base amount; differs only when settling foreign-currency invoices).
+  const settledAllocations = allocations.map((a) => ({
+    ...a,
+    settledAmount: a.settledAmount ?? a.amount,
+  }));
+  const settledTotal = settledAllocations.reduce((s, a) => s + a.settledAmount, 0);
+  const fxDiff = data.amount - settledTotal; // >0 gain, <0 loss
+
+  const allocatedTotal = allocations.reduce((s, a) => s + a.amount, 0);
+  if (Math.abs(allocatedTotal - data.amount) > 0.01) {
+    throw new Error(
+      `Allocation total (${allocatedTotal}) does not match payment amount (${data.amount})`
+    );
   }
 
-  if (invoiceRow.status === "void" || invoiceRow.status === "paid") {
-    throw new Error(`Cannot receive payment for invoice with status: ${invoiceRow.status}`);
+  const invoiceRows: FinanceInvoiceRecord[] = [];
+  for (const alloc of settledAllocations) {
+    const [invoiceRow] = (await sql`
+      select * from finance_invoices where id = ${alloc.invoiceId} and tenant_slug = ${data.tenantSlug}
+    `) as FinanceInvoiceRecord[];
+
+    if (!invoiceRow) {
+      throw new Error(`Invoice ${alloc.invoiceId} not found`);
+    }
+    if (invoiceRow.status === "void" || invoiceRow.status === "paid") {
+      throw new Error(`Cannot receive payment for invoice with status: ${invoiceRow.status}`);
+    }
+
+    const newBalanceDue = Number(invoiceRow.balance_due) - alloc.settledAmount;
+    const newStatus = newBalanceDue <= 0.01 ? "paid" : "partially_paid";
+
+    const [updatedInvoice] = (await sql`
+      update finance_invoices
+      set balance_due = ${Math.max(0, newBalanceDue)},
+          status = ${newStatus},
+          updated_at = now()
+      where id = ${alloc.invoiceId} and tenant_slug = ${data.tenantSlug}
+      returning *
+    `) as FinanceInvoiceRecord[];
+
+    invoiceRows.push(updatedInvoice);
   }
 
-  const newBalanceDue = Number(invoiceRow.balance_due) - data.amount;
-  const newStatus = newBalanceDue <= 0.01 ? "paid" : "partially_paid";
-
-  const [updatedInvoice] = (await sql`
-    update finance_invoices
-    set balance_due = ${Math.max(0, newBalanceDue)},
-        status = ${newStatus},
-        updated_at = now()
-    where id = ${data.invoiceId} and tenant_slug = ${data.tenantSlug}
-    returning *
-  `) as FinanceInvoiceRecord[];
-
+  const primaryInvoice = invoiceRows[0];
   const paymentId = `PAY-${randomUUID().slice(0, 8)}`;
   const paymentRef = data.reference || `RCT-${Date.now()}`;
   const netAmount = data.amount;
@@ -833,50 +1087,123 @@ export async function receiveInvoicePayment(data: {
       ${data.amount}, 0, ${netAmount}, ${data.method},
       ${data.gateway ?? "manual"}, ${data.gatewayReference ?? null}, ${data.paymentDate},
       ${data.confirmationDetails ?? null}, 'successful',
-      ${[data.invoiceId]},
+      ${allocations.map((a) => a.invoiceId)},
       ${data.metadata ? JSON.stringify(data.metadata) : null}
     )
     returning *
   `) as FinancePaymentRecord[];
+
+  // Record the payment subledger allocations (base AR amount extinguished)
+  for (const alloc of settledAllocations) {
+    await sql`
+      insert into payment_applications (id, tenant_slug, payment_id, invoice_id, amount, created_at)
+      values (${randomUUID()}, ${data.tenantSlug}, ${paymentId}, ${alloc.invoiceId}, ${alloc.settledAmount}, now())
+    `;
+    try {
+      const { markSchedulePaid } = await import("./credit-control");
+      await markSchedulePaid(data.tenantSlug, alloc.invoiceId, alloc.settledAmount);
+    } catch (err) {
+      console.error("Failed to update invoice payment schedule:", err);
+    }
+  }
 
   const lineRows = (await sql`
     select * from finance_invoice_lines where invoice_id = ${data.invoiceId}
   `) as FinanceInvoiceLineRecord[];
 
   const payment = normalizePaymentRecord(paymentRow);
-  const invoice = normalizeFinanceInvoiceRow(updatedInvoice, lineRows);
+  const invoice = normalizeFinanceInvoiceRow(primaryInvoice, lineRows);
 
   try {
-    const { createJournalEntry } = await import("./accounting");
-    await createJournalEntry({
+    const { postGLEntry, GL_ACCOUNTS } = await import("./gl");
+    const cashAccount =
+      data.method === "cash" ? GL_ACCOUNTS.CASH : GL_ACCOUNTS.BANK;
+    const entry = await postGLEntry({
       tenantSlug: data.tenantSlug,
       entryDate: data.paymentDate,
-      referenceType: "manual",
-      description: `AR Payment Receipt - ${paymentRef} - Invoice ${invoiceRow.invoice_number}`,
+      journalType: "SYSTEM",
+      referenceType: "payment",
+      referenceId: paymentId,
+      branchId: primaryInvoice.branch_id ?? undefined,
+      description: `AR Payment Receipt - ${paymentRef} - Invoice ${primaryInvoice.invoice_number}`,
+      status: "POSTED",
       lines: [
         {
-          accountCode: "1100",
+          accountCode: cashAccount,
           debitAmount: data.amount,
           creditAmount: 0,
           description: `Payment received - ${paymentRef}`,
         },
-        {
-          accountCode: "1200",
+        ...settledAllocations.map((alloc, i) => ({
+          accountCode: GL_ACCOUNTS.ACCOUNTS_RECEIVABLE,
           debitAmount: 0,
-          creditAmount: data.amount,
-          description: `AR applied to invoice ${invoiceRow.invoice_number}`,
-        },
+          creditAmount: alloc.settledAmount,
+          description: `AR applied to invoice ${invoiceRows[i].invoice_number}`,
+          partyType: "customer" as const,
+          partyId: invoiceRows[i].customer_code ?? invoiceRows[i].customer_name,
+        })),
+        // Realized exchange gain/loss when the base value received differs
+        // from the base AR extinguished (foreign-currency settlements).
+        ...(Math.abs(fxDiff) > 0.01
+          ? fxDiff > 0
+            ? [{
+                accountCode: GL_ACCOUNTS.EXCHANGE_GAIN_LOSS,
+                debitAmount: 0,
+                creditAmount: fxDiff,
+                description: `Realized exchange gain - ${paymentRef}`,
+              }]
+            : [{
+                accountCode: GL_ACCOUNTS.EXCHANGE_GAIN_LOSS,
+                debitAmount: -fxDiff,
+                creditAmount: 0,
+                description: `Realized exchange loss - ${paymentRef}`,
+              }]
+          : []),
       ],
       metadata: {
         paymentId,
         invoiceId: data.invoiceId,
-        invoiceNumber: invoiceRow.invoice_number,
+        invoiceNumber: primaryInvoice.invoice_number,
+        allocations: settledAllocations,
         amount: data.amount,
         method: data.method,
+        ...(data.transactionCurrency
+          ? { transactionCurrency: data.transactionCurrency, exchangeRate: data.exchangeRate }
+          : {}),
+      },
+    });
+    if (data.transactionCurrency || data.exchangeRate != null) {
+      await sql`
+        update finance_payments set transaction_currency = ${data.transactionCurrency ?? null},
+          exchange_rate = ${data.exchangeRate ?? null} where id = ${paymentId}
+      `;
+    }
+    await sql`update finance_payments set journal_entry_id = ${entry.id} where id = ${paymentId}`;
+  } catch (err) {
+    console.error("Failed to create journal entry for AR payment:", err);
+  }
+
+  try {
+    const { emitEvent } = await import("@/lib/notify");
+    void emitEvent({
+      tenantSlug: data.tenantSlug,
+      eventType: "payment.received",
+      sourceModule: "finance",
+      sourceRecordId: paymentId,
+      payload: {
+        amount: data.amount,
+        method: data.method,
+        reference: paymentRef,
+        invoiceNumber: primaryInvoice.invoice_number,
+        customerName: primaryInvoice.customer_name,
+        customerId: primaryInvoice.customer_id,
+        customerCode: primaryInvoice.customer_code,
+        invoiceId: primaryInvoice.id,
+        partyEmail: primaryInvoice.customer_email,
       },
     });
   } catch (err) {
-    console.error("Failed to create journal entry for AR payment:", err);
+    console.error("Failed to emit payment.received:", err);
   }
 
   return { payment, invoice };
@@ -1099,6 +1426,49 @@ export async function updatePayment(
   const sql = SQL;
   await ensureFinanceTables(sql);
 
+  const [existing] = (await sql`
+    select * from finance_payments where id = ${id}
+  `) as (FinancePaymentRecord & { journal_entry_id?: string | null; reversed_journal_entry_id?: string | null })[];
+
+  if (!existing) {
+    return null;
+  }
+
+  // Reversing a successful payment reverses its journal entry and restores
+  // the allocated invoice balances
+  if (
+    updates.status === "reversed" &&
+    existing.status === "successful" &&
+    existing.journal_entry_id &&
+    !existing.reversed_journal_entry_id
+  ) {
+    try {
+      const { reverseGLEntry } = await import("./gl");
+      const reversal = await reverseGLEntry(
+        existing.journal_entry_id,
+        `Reverse payment ${existing.reference}`
+      );
+
+      const allocations = (await sql`
+        select invoice_id, amount from payment_applications where payment_id = ${id}
+      `) as { invoice_id: string; amount: number }[];
+
+      for (const alloc of allocations) {
+        await sql`
+          update finance_invoices
+          set balance_due = balance_due + ${Number(alloc.amount)},
+              status = case when status = 'paid' then 'partially_paid' else status end,
+              updated_at = now()
+          where id = ${alloc.invoice_id}
+        `;
+      }
+
+      await sql`update finance_payments set reversed_journal_entry_id = ${reversal.id} where id = ${id}`;
+    } catch (err) {
+      console.error("Failed to reverse payment journal entry:", err);
+    }
+  }
+
   const row = (await sql`
     update finance_payments
     set
@@ -1121,6 +1491,17 @@ export async function updatePayment(
 export async function deletePayment(id: string): Promise<boolean> {
   const sql = SQL;
   await ensureFinanceTables(sql);
+
+  const [existing] = (await sql`
+    select status from finance_payments where id = ${id}
+  `) as { status: string }[];
+
+  if (!existing) {
+    return false;
+  }
+  if (existing.status === "successful") {
+    throw new Error("Successful payments cannot be deleted; reverse the payment instead");
+  }
 
   const result = await db.query<{ count: number }>(`delete from finance_payments where id = $1`, [id]);
   return result.count > 0;

@@ -33,6 +33,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
 import { EmployeeDashboard } from "@/components/tenant-admin/employee-dashboard";
 import { AiInsightsCard } from "@/components/tenant-admin/ai-insights-card";
+import { OnboardingChecklist } from "./components/onboarding-checklist";
 
 interface DashboardMetric {
   label: string;
@@ -383,6 +384,8 @@ export default function TenantAdminDashboard() {
           {error}
         </div>
       )}
+
+      <OnboardingChecklist />
 
       {loading ? (
         <DashboardSkeleton cards={4} rows={6} />

@@ -68,6 +68,10 @@ function buildSqlTemplateFn(pool: Pool): SqlTemplateFn {
   return fn;
 }
 
+export function getPool(): Pool | null {
+  return globalForSql.pgPool ?? null;
+}
+
 export function getSql(): SqlTemplateFn {
   const connectionString = process.env.DATABASE_URL;
   const isProduction = process.env.NODE_ENV === "production";
@@ -77,7 +81,7 @@ export function getSql(): SqlTemplateFn {
       try {
         globalForSql.pgPool = new Pool({
           connectionString,
-          max: 10,
+          max: Number(process.env.PG_POOL_MAX) || 10,
           idleTimeoutMillis: 30000,
           connectionTimeoutMillis: 10000,
         });

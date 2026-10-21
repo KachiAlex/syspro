@@ -34,6 +34,7 @@ const billCreateSchema = z.object({
   billDate: z.string().datetime(),
   dueDate: z.string().datetime().optional(),
   currency: z.string().default("NGN"),
+  whtRate: z.number().min(0).max(100).optional(),
   items: z.array(z.object({
     description: z.string().min(1),
     quantity: z.number().positive(),
@@ -55,6 +56,7 @@ const convertPOSchema = z.object({
   billDate: z.string().datetime(),
   dueDate: z.string().datetime().optional(),
   currency: z.string().default("NGN"),
+  whtRate: z.number().min(0).max(100).optional(),
   metadata: z.record(z.any()).optional(),
 });
 

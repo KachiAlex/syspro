@@ -71,6 +71,29 @@ export async function POST(request: NextRequest) {
       metadata: { invoiceNumber: invoice.invoiceNumber, customerName: invoice.customerName },
     });
 
+    try {
+      const { emitEvent } = await import("@/lib/notify");
+      void emitEvent({
+        tenantSlug: parsed.data.tenantSlug,
+        eventType: "invoice.issued",
+        sourceModule: "finance",
+        sourceRecordId: invoice.id,
+        actorId: getCurrentUser(request)?.id,
+        payload: {
+          invoiceId: invoice.id,
+          invoiceNumber: invoice.invoiceNumber,
+          customerName: invoice.customerName,
+          customerId: invoice.customerId,
+          customerCode: invoice.customerCode,
+          partyEmail: invoice.customerEmail,
+          amount: invoice.amount,
+          dueDate: invoice.dueDate,
+        },
+      });
+    } catch (err) {
+      console.error("Failed to emit invoice.issued:", err);
+    }
+
     return NextResponse.json({ invoice }, { status: 201 });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

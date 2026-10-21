@@ -6,11 +6,16 @@
 import { randomUUID } from "crypto";
 import { db, sql as SQL } from "../sql-client";
 import { ensureOnce } from "@/lib/ensure-once";
+import { emitEvent } from "@/lib/notify";
+
+export type ApprovalEntityType =
+  | "purchase_order" | "bill" | "payment"
+  | "journal_entry" | "sales_return" | "purchase_return";
 
 export interface ApprovalRule {
   id: string;
   tenantSlug: string;
-  entityType: "purchase_order" | "bill" | "payment";
+  entityType: ApprovalEntityType;
   ruleType: "amount_based" | "department_based" | "project_based" | "vendor_based";
   conditions: {
     minAmount?: number;
@@ -38,7 +43,7 @@ export interface ApproverStep {
 export interface Approval {
   id: string;
   tenantSlug: string;
-  entityType: "purchase_order" | "bill" | "payment";
+  entityType: ApprovalEntityType;
   entityId: string;
   ruleId?: string;
   status: "pending" | "approved" | "rejected" | "escalated" | "cancelled";
@@ -73,7 +78,7 @@ async function ensureApprovalTablesRun(sql = SQL) {
       create table if not exists approval_rules (
         id uuid primary key default gen_random_uuid(),
         tenant_slug text not null,
-        entity_type text not null check (entity_type in ('purchase_order', 'bill', 'payment')),
+        entity_type text not null check (entity_type in ('purchase_order', 'bill', 'payment', 'journal_entry', 'sales_return', 'purchase_return')),
         rule_type text not null check (rule_type in ('amount_based', 'department_based', 'project_based', 'vendor_based')),
         conditions jsonb not null,
         approvers jsonb not null,
@@ -89,6 +94,9 @@ async function ensureApprovalTablesRun(sql = SQL) {
     await sql`
       alter table approvals add column if not exists rule_id uuid
     `;
+    // Entity types grew — relax any legacy check constraint on both tables.
+    await sql`alter table if exists approval_rules drop constraint if exists approval_rules_entity_type_check`;
+    await sql`alter table if exists approvals drop constraint if exists approvals_entity_type_check`;
 
     // Create indexes
     await Promise.all([
@@ -105,7 +113,7 @@ async function ensureApprovalTablesRun(sql = SQL) {
 
 export async function createApprovalRule(payload: {
   tenantSlug: string;
-  entityType: "purchase_order" | "bill" | "payment";
+  entityType: ApprovalEntityType;
   ruleType: "amount_based" | "department_based" | "project_based" | "vendor_based";
   conditions: Record<string, any>;
   approvers: ApproverStep[];
@@ -190,7 +198,7 @@ export async function getApprovalRules(filters: {
 
 export async function findMatchingRule(
   tenantSlug: string,
-  entityType: "purchase_order" | "bill" | "payment",
+  entityType: ApprovalEntityType,
   entityData: Record<string, any>
 ): Promise<ApprovalRule | null> {
   const sql = SQL;
@@ -263,7 +271,7 @@ export function buildThresholdEscalationChain(amount: number): ApproverStep[] {
 
 export async function initiateApproval(payload: {
   tenantSlug: string;
-  entityType: "purchase_order" | "bill" | "payment";
+  entityType: ApprovalEntityType;
   entityId: string;
   requestedBy: string;
   entityData: Record<string, any>;
@@ -290,6 +298,31 @@ export async function initiateApproval(payload: {
       ${JSON.stringify(payload.entityData)}, now(), now()
     ) returning *
   `) as any[];
+
+  // Notify step-0 approvers — concrete ids resolve directly, role placeholders
+  // ("role:finance_manager") resolve via tenant_admins role matching.
+  const step0Specs = (approverChain as ApproverStep[])
+    .filter((s) => s.step === 0)
+    .map((s) => s.userId.startsWith("role:")
+      ? { kind: "role" as const, value: s.userId.slice(5) }
+      : { kind: "user" as const, value: s.userId });
+  void emitEvent({
+    tenantSlug: payload.tenantSlug,
+    eventType: "approval.requested",
+    sourceModule: "approvals",
+    sourceRecordId: id,
+    actorId: payload.requestedBy,
+    explicitSpecs: step0Specs,
+    payload: {
+      approvalId: id,
+      entityType: payload.entityType,
+      entityRef: payload.entityData.invoiceNumber ?? payload.entityData.billNumber
+        ?? payload.entityData.journalNumber ?? payload.entityData.reference ?? payload.entityId,
+      amount,
+      requestedBy: payload.requestedBy,
+      requestedByName: payload.entityData.requestedByName,
+    },
+  });
 
   return {
     id: record.id,
@@ -389,6 +422,30 @@ export async function processApprovalDecision(payload: {
     returning *
   `) as any[];
 
+  // Terminal decision reached — apply it to the underlying document so a
+  // rejected journal/PO/return cannot take financial effect and an approved
+  // one can.
+  if ((newStatus === "approved" || newStatus === "rejected") && newStatus !== current.status) {
+    await applyApprovalOutcome(updated.tenant_slug, updated.entity_type, updated.entity_id, newStatus);
+    void emitEvent({
+      tenantSlug: updated.tenant_slug,
+      eventType: "approval.decided",
+      sourceModule: "approvals",
+      sourceRecordId: updated.id,
+      actorId: payload.userId,
+      explicitSpecs: [{ kind: "user", value: updated.requested_by }],
+      payload: {
+        approvalId: updated.id,
+        entityType: updated.entity_type,
+        entityRef: updated.metadata?.invoiceNumber ?? updated.metadata?.billNumber
+          ?? updated.metadata?.journalNumber ?? updated.metadata?.reference ?? updated.entity_id,
+        decision: newStatus,
+        decidedBy: payload.userId,
+        comments: payload.comments,
+      },
+    });
+  }
+
   return {
     id: updated.id,
     tenantSlug: updated.tenant_slug,
@@ -404,6 +461,123 @@ export async function processApprovalDecision(payload: {
     createdAt: updated.created_at,
     updatedAt: updated.updated_at
   };
+}
+
+// ---------------------------------------------------------------------------
+// Approval gates — auto-initiation + document effects
+// ---------------------------------------------------------------------------
+
+/**
+ * Tenant-configured thresholds in settings.approvals. A document whose amount
+ * meets or exceeds the configured minimum requires approval even when no
+ * explicit rule matches. 0 means "always".
+ */
+const ENTITY_THRESHOLD_KEYS: Record<ApprovalEntityType, string> = {
+  purchase_order: "purchaseOrderMinAmount",
+  bill: "billMinAmount",
+  payment: "paymentMinAmount",
+  journal_entry: "journalEntryMinAmount",
+  sales_return: "returnMinAmount",
+  purchase_return: "returnMinAmount",
+};
+
+async function tenantApprovalSettings(tenantSlug: string): Promise<Record<string, number>> {
+  const rows = await db.query<any>(
+    `select settings from tenants where slug = $1`,
+    [tenantSlug]
+  );
+  return (rows.rows[0]?.settings as any)?.approvals ?? {};
+}
+
+/**
+ * Does this document require approval? True when a matching rule exists OR
+ * the tenant threshold for the entity type is configured and met.
+ */
+export async function requiresApproval(
+  tenantSlug: string,
+  entityType: ApprovalEntityType,
+  entityData: Record<string, any>
+): Promise<boolean> {
+  const rule = await findMatchingRule(tenantSlug, entityType, entityData);
+  if (rule) return true;
+  const settings = await tenantApprovalSettings(tenantSlug);
+  const min = settings[ENTITY_THRESHOLD_KEYS[entityType]];
+  if (min === undefined || min === null) return false;
+  const amount = Number(entityData.amount ?? entityData.total ?? 0);
+  return amount >= Number(min);
+}
+
+/**
+ * Gate helper: call after the entity exists. Returns the approval record when
+ * the document needs sign-off, else null.
+ */
+export async function initiateApprovalIfRequired(payload: {
+  tenantSlug: string;
+  entityType: ApprovalEntityType;
+  entityId: string;
+  requestedBy?: string;
+  entityData: Record<string, any>;
+}): Promise<Approval | null> {
+  if (!(await requiresApproval(payload.tenantSlug, payload.entityType, payload.entityData))) {
+    return null;
+  }
+  return initiateApproval({
+    tenantSlug: payload.tenantSlug,
+    entityType: payload.entityType,
+    entityId: payload.entityId,
+    requestedBy: payload.requestedBy ?? "system",
+    entityData: payload.entityData,
+  });
+}
+
+/**
+ * Applies a terminal approval outcome to the underlying document. Called by
+ * processApprovalDecision when the chain reaches approved/rejected.
+ */
+async function applyApprovalOutcome(
+  tenantSlug: string,
+  entityType: string,
+  entityId: string,
+  outcome: "approved" | "rejected"
+): Promise<void> {
+  try {
+    switch (entityType) {
+      case "journal_entry":
+        await db.query(
+          `update journal_entries
+           set approval_status = $1, status = lower($1),
+               posted_at = case when $1 = 'POSTED' then now() else null end,
+               updated_at = now()
+           where id = $2 and tenant_slug = $3`,
+          [outcome === "approved" ? "POSTED" : "REJECTED", entityId, tenantSlug]
+        );
+        break;
+      case "purchase_order":
+        await db.query(
+          `update purchase_orders set status = $1, updated_at = now()
+           where id = $2 and tenant_slug = $3 and status = 'pending_approval'`,
+          [outcome === "approved" ? "open" : "rejected", entityId, tenantSlug]
+        );
+        break;
+      case "sales_return":
+      case "purchase_return":
+        if (outcome === "approved") {
+          const { finalizeReturn } = await import("./returns");
+          await finalizeReturn(tenantSlug, entityId);
+        } else {
+          await db.query(
+            `update finance_returns set status = 'cancelled'
+             where id = $1 and tenant_slug = $2 and status = 'pending_approval'`,
+            [entityId, tenantSlug]
+          );
+        }
+        break;
+      // bill/payment approvals are tracked but do not gate the underlying
+      // document — their lifecycle is managed by existing flows.
+    }
+  } catch (err) {
+    console.error(`applyApprovalOutcome ${entityType} ${entityId}:`, err);
+  }
 }
 
 export async function getApprovals(filters: {

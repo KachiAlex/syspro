@@ -8,7 +8,9 @@ import { SidebarNav } from "./sidebar-nav";
 import { useTheme } from "@/components/theme/theme-provider";
 import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
 import { AIChatPanel } from "@/components/ai/ai-chat-panel";
+import OnboardingBanner from "@/components/tenant-admin/onboarding-banner";
 import { Menu, X, User, Bell, Settings, Search, Command, Home, ArrowRight, Sun, Moon, LogOut, Sparkles } from "lucide-react";
+import { NotificationBell } from "./notification-bell";
 
 interface TenantAdminShellProps {
   children: React.ReactNode;
@@ -406,10 +408,7 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
                   <span className="block w-5 h-5" />
                 )}
               </button>
-              <button className="relative p-2 text-theme-sidebar-text hover:text-theme-sidebar-text-active hover:bg-theme-sidebar-hover rounded-lg transition-colors hidden sm:block">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-theme-danger rounded-full"></span>
-              </button>
+              <NotificationBell />
               <button className="p-2 text-theme-sidebar-text hover:text-theme-sidebar-text-active hover:bg-theme-sidebar-hover rounded-lg transition-colors hidden sm:block">
                 <Settings className="w-5 h-5" />
               </button>
@@ -447,7 +446,10 @@ export default function TenantAdminShell({ children, user }: TenantAdminShellPro
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
             ) : allowed ? (
-              children
+              <>
+                <OnboardingBanner />
+                {children}
+              </>
             ) : (
               <div className="p-8 bg-white rounded-xl border border-gray-200 max-w-xl">
                 <h2 className="text-lg font-semibold text-gray-900">Access Denied</h2>

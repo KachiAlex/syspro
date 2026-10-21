@@ -56,6 +56,17 @@ const navigationItems = [
       { title: "Expenses", href: "/tenant-admin/expenses" },
       { title: "Bills", href: "/tenant-admin/bills" },
       { title: "Payments", href: "/tenant-admin/payments" },
+      { title: "Bank Recon", href: "/tenant-admin/bank-reconciliation" },
+      { title: "Payment Recon", href: "/tenant-admin/finance/payment-reconciliation" },
+      { title: "Approvals", href: "/tenant-admin/approvals" },
+      { title: "Fixed Assets", href: "/tenant-admin/assets" },
+      { title: "Budget vs Actual", href: "/tenant-admin/budget-vs-actual" },
+      { title: "Imprest", href: "/tenant-admin/imprest" },
+      { title: "Credit Control", href: "/tenant-admin/credit-control" },
+      { title: "Period End", href: "/tenant-admin/period-end" },
+      { title: "Recurring", href: "/tenant-admin/recurring" },
+      { title: "Returns", href: "/tenant-admin/returns" },
+      { title: "Tax", href: "/tenant-admin/tax" },
       { title: "Reports", href: "/tenant-admin/finance/reports" },
     ]
   },
@@ -66,6 +77,9 @@ const navigationItems = [
     permission: "people",
     children: [
       { title: "Staff", href: "/tenant-admin/hr/staff" },
+      { title: "Leave", href: "/tenant-admin/hr/leave" },
+      { title: "Roster", href: "/tenant-admin/hr/roster" },
+      { title: "Recruitment", href: "/tenant-admin/hr/recruitment" },
       { title: "Attendance", href: "/tenant-admin/hr/attendance" },
       { title: "Payroll", href: "/tenant-admin/hr/payroll" },
       { title: "Reports", href: "/tenant-admin/hr/staff-reports" },
@@ -88,10 +102,15 @@ const navigationItems = [
     icon: ShoppingCart,
     permission: "sales",
     children: [
+      { title: "POS", href: "/tenant-admin/pos" },
       { title: "Sales Orders", href: "/tenant-admin/sales/orders" },
+      { title: "Store Orders", href: "/tenant-admin/storefront" },
       { title: "Suppliers", href: "/tenant-admin/sales/suppliers" },
+      { title: "Vendor Analytics", href: "/tenant-admin/vendors/analytics" },
+      { title: "Promotions", href: "/tenant-admin/promotions" },
       { title: "Purchase Orders", href: "/tenant-admin/sales/purchase-orders" },
       { title: "Inventory", href: "/tenant-admin/sales/inventory" },
+      { title: "Warehouses", href: "/tenant-admin/warehouses" },
     ]
   },
   {
@@ -102,6 +121,8 @@ const navigationItems = [
     children: [
       { title: "BOM Management", href: "/tenant-admin/manufacturing" },
       { title: "Work Orders", href: "/tenant-admin/manufacturing/work-orders" },
+      { title: "Batch Runs", href: "/tenant-admin/manufacturing/batch-runs" },
+      { title: "Subcontracting", href: "/tenant-admin/manufacturing/subcontracting" },
       { title: "MRP", href: "/tenant-admin/manufacturing/mrp" },
       { title: "Quality Control", href: "/tenant-admin/manufacturing/quality" },
     ]
@@ -136,6 +157,8 @@ const navigationItems = [
     permission: "admin",
     children: [
       { title: "Settings", href: "/tenant-admin/settings" },
+      { title: "Notifications", href: "/tenant-admin/notifications" },
+      { title: "Custom Fields", href: "/tenant-admin/settings/custom-fields" },
       { title: "Users & Roles", href: "/tenant-admin/users" },
       { title: "Audit Trail", href: "/tenant-admin/audit" },
       { title: "System Health", href: "/tenant-admin/health" },

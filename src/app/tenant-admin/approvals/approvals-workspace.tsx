@@ -9,7 +9,7 @@ import { useTenantContext } from "@/components/tenant-admin/tenant-context";
 
 interface Approval {
   id: string;
-  entityType: "purchase_order" | "bill" | "payment";
+  entityType: "purchase_order" | "bill" | "payment" | "journal_entry" | "sales_return" | "purchase_return";
   entityId: string;
   status: "pending" | "approved" | "rejected" | "escalated" | "cancelled";
   requestedBy: string;
@@ -86,7 +86,7 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
 
   const handleDecision = async (approvalId: string, decision: "approved" | "rejected" | "escalated", comments?: string) => {
     try {
-      const response = await fetch("/api/finance/approvals", {
+      const response = await fetch(`/api/finance/approvals?tenantSlug=${encodeURIComponent(tenantSlug ?? "")}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -167,6 +167,9 @@ export default function ApprovalsWorkspace({ onNavigateTo }: { onNavigateTo?: (s
             <option value="purchase_order">Purchase Orders</option>
             <option value="bill">Bills</option>
             <option value="payment">Payments</option>
+            <option value="journal_entry">Journal Entries</option>
+            <option value="sales_return">Sales Returns</option>
+            <option value="purchase_return">Purchase Returns</option>
           </select>
         </div>
       </div>

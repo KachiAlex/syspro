@@ -394,6 +394,8 @@ export interface ReportFilters {
   periodStart?: Date;
   periodEnd?: Date;
   branch?: string;
+  /** Resolved canonical branch ids (access-scoped); supersedes `branch`. */
+  branchIds?: string[];
   department?: string;
   comparePreviousPeriod?: boolean;
   drillDownAccountId?: bigint;

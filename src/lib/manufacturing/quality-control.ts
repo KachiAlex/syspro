@@ -75,6 +75,30 @@ export async function createInspection(data: {
     returning *
   `) as any[];
 
+  if (String(data.result).toLowerCase() === "fail") {
+    try {
+      const { emitEvent } = await import("@/lib/notify");
+      void emitEvent({
+        tenantSlug: data.tenantSlug,
+        eventType: "qc.failed",
+        sourceModule: "manufacturing",
+        sourceRecordId: id,
+        dedupeKey: `qc:${id}`,
+        actorId: data.inspector,
+        payload: {
+          inspectionNumber,
+          workOrderId: data.workOrderId,
+          unitsInspected: data.unitsInspected ?? 0,
+          unitsRejected: data.unitsRejected ?? data.defectsFound ?? 0,
+          defectTypes: data.defectTypes,
+          notes: data.notes,
+        },
+      });
+    } catch (err) {
+      console.error("Failed to emit qc.failed:", err);
+    }
+  }
+
   return normalizeInspection(row);
 }
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AppShell } from "@/components/layout/app-shell";
 import { ThemeProvider } from "@/components/theme/theme-provider";
+import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
 // Automation engine startup is intentionally disabled in the frontend build.
@@ -35,6 +36,7 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">Skip to main content</a>
         <ThemeProvider>
           <AppShell>{children}</AppShell>
+          <PwaRegister />
         </ThemeProvider>
       </body>
     </html>

@@ -19,6 +19,8 @@ import {
   seedExpenseCategories,
 } from "@/lib/finance/db";
 import { calculateMonthlyUsage, requiresEscalatedApproval } from "@/lib/finance/budget";
+import { getGLAccountForCategory } from "@/lib/finance/service";
+import { enforceBudget, BudgetViolationError } from "@/lib/finance/budget-control";
 import { requireModuleAccess } from "@/lib/api-auth";
 
 const expenseListSchema = z.object({
@@ -90,6 +92,33 @@ export async function POST(request: NextRequest) {
     const budgetUsage = calculateMonthlyUsage(parsed.data.categoryId, parsed.data.amount);
     const requiresEscalation = requiresEscalatedApproval(budgetUsage);
 
+    // GL-budget enforcement against ACTIVE budgets covering the expense account
+    let glBudget: Awaited<ReturnType<typeof enforceBudget>> | null = null;
+    if (parsed.data.categoryId) {
+      try {
+        glBudget = await enforceBudget({
+          tenantSlug: parsed.data.tenantSlug,
+          lines: [{
+            accountCode: getGLAccountForCategory(parsed.data.categoryId),
+            amount: parsed.data.amount,
+          }],
+          record: {
+            actualType: "EXPENSE",
+            transactionCode: (expense as any).id ?? undefined,
+            transactionDate: (expense as any).date ?? undefined,
+          },
+        });
+      } catch (err) {
+        if (err instanceof BudgetViolationError) {
+          return NextResponse.json(
+            { error: err.message, violations: err.violations, expense },
+            { status: 409 }
+          );
+        }
+        console.error("GL budget check failed:", err);
+      }
+    }
+
     return NextResponse.json(
       {
         expense,
@@ -99,6 +128,7 @@ export async function POST(request: NextRequest) {
           status: budgetUsage.status,
           requiresEscalation,
         },
+        glBudgetWarnings: glBudget?.warnings ?? [],
       },
       { status: 201 }
     );

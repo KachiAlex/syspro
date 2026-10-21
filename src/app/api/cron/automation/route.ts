@@ -203,9 +203,36 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 6. Queue due scheduled reports, then drain the report job queue
+    // 6. Dunning cycle per tenant that has credit-control config — issues
+    //    the next notice level, posts configured fees, applies credit holds.
+    //    Idempotent by level: re-running can never double-issue a notice.
+    const { runDunningCycle } = await import("@/lib/finance/credit-control");
+    const dunningTenants = (await SQL`
+      select distinct tenant_slug from finance_invoices
+      where status in ('sent', 'partially_paid', 'overdue')
+        and due_date < current_date and balance_due > 0
+      limit 200
+    `) as any[];
+    const dunningResults: Array<{ tenant: string; issued: number; held: number; error?: string }> = [];
+    for (const t of dunningTenants) {
+      try {
+        const out = await runDunningCycle({ tenantSlug: t.tenant_slug });
+        if (out.issued.length || out.held.length) {
+          dunningResults.push({ tenant: t.tenant_slug, issued: out.issued.length, held: out.held.length });
+        }
+      } catch (err: any) {
+        dunningResults.push({ tenant: t.tenant_slug, issued: 0, held: 0, error: err?.message ?? String(err) });
+      }
+    }
+
+    // 7. Queue due scheduled reports, then drain the report job queue
     const scheduledReports = await queueDueScheduledReports(BATCH_LIMIT);
     const reportResults = await processQueuedReportJobs(BATCH_LIMIT);
+
+    // 8. Drain the notification outbox — sends queued emails via SMTP/Resend
+    //    with retry/backoff; in-app rows land instantly at emit time.
+    const { drainNotificationOutbox } = await import("@/lib/notify");
+    const notificationResults = await drainNotificationOutbox(BATCH_LIMIT);
 
     return NextResponse.json({
       actions: actionResults,
@@ -215,9 +242,11 @@ export async function POST(request: NextRequest) {
       overBudgetEmitted: overBudget.length,
       slaBreachesDetected: slaBreached.length,
       summariesRefreshed: tenants.length,
+      dunningCycles: dunningResults,
       scheduledReportsQueued: scheduledReports.length,
       reportJobsProcessed: reportResults.length,
       reportJobs: reportResults,
+      notifications: notificationResults,
     });
   } catch (error) {
     console.error("Cron automation runner failed:", error);

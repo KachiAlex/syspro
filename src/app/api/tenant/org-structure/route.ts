@@ -79,6 +79,12 @@ async function persistTenantTree(sql: SqlClient, slug: string, tree: OrgNode) {
     values (${slug}, ${JSON.stringify(payload)}::jsonb)
     on conflict (slug) do update set tree = excluded.tree, updated_at = now()
   `;
+  try {
+    const { syncBranchesFromTree } = await import("@/lib/finance/branches");
+    await syncBranchesFromTree(slug, payload);
+  } catch (error) {
+    console.error("Branch sync failed", error);
+  }
 }
 
 async function loadTenantTree(sql: SqlClient, slug: string): Promise<OrgNode> {

@@ -45,6 +45,7 @@ function mapProductToItem(p: any) {
     category: p.category,
     supplier: p.supplier ?? "",
     description: p.description ?? "",
+    tracking: p.tracking ?? "none",
   };
 }
 

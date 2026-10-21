@@ -1,7 +1,87 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, AlertCircle, CheckCircle } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { X, AlertCircle, CheckCircle, FileCheck2, Loader2 } from "lucide-react";
+import { CustomFieldsPanel } from "@/components/custom-fields/custom-fields-panel";
+import { useTenantContext } from "@/components/tenant-admin/tenant-context";
+
+type EInvoiceSubmission = {
+  provider: string; irn: string; status: string;
+  submittedAt: string; response?: { message?: string };
+};
+
+function EInvoicePanel({ invoiceId }: { invoiceId: string }) {
+  const { tenantSlug } = useTenantContext();
+  const [submission, setSubmission] = useState<EInvoiceSubmission | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!tenantSlug || !invoiceId) return;
+    setLoaded(false);
+    fetch(`/api/finance/invoices/${invoiceId}/einvoice/submit?tenantSlug=${encodeURIComponent(tenantSlug)}`)
+      .then((r) => r.json())
+      .then((d) => setSubmission(d.submission ?? null))
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, [tenantSlug, invoiceId]);
+
+  const submit = async (resubmit = false) => {
+    setBusy(true); setError(null);
+    try {
+      const res = await fetch(
+        `/api/finance/invoices/${invoiceId}/einvoice/submit?tenantSlug=${encodeURIComponent(tenantSlug)}`,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resubmit }) },
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Submission failed");
+      setSubmission(data.submission);
+    } catch (e: any) { setError(e.message); } finally { setBusy(false); }
+  };
+
+  if (!loaded) return null;
+
+  return (
+    <div className="rounded-lg border border-slate-200 p-4">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+          <FileCheck2 className="w-4 h-4" /> E-Invoice (FIRS)
+        </p>
+        {busy && <Loader2 className="w-4 h-4 animate-spin text-slate-400" />}
+      </div>
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {submission ? (
+        <div className="mt-2 space-y-1 text-sm">
+          <p className="font-mono text-xs text-slate-700 break-all">IRN: {submission.irn}</p>
+          <p className="text-xs text-slate-600">
+            {submission.provider} · {new Date(submission.submittedAt).toLocaleString()}
+          </p>
+          <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
+            submission.status === "accepted" ? "bg-green-100 text-green-800"
+            : submission.status === "rejected" ? "bg-red-100 text-red-800"
+            : "bg-yellow-100 text-yellow-800"}`}>
+            {submission.status}
+          </span>
+          {submission.status === "rejected" && submission.response?.message && (
+            <p className="text-xs text-red-600">{submission.response.message}</p>
+          )}
+          {submission.status !== "accepted" && (
+            <button onClick={() => void submit(true)} disabled={busy}
+              className="block mt-2 text-xs font-medium text-blue-600 hover:underline disabled:opacity-50">
+              Resubmit
+            </button>
+          )}
+        </div>
+      ) : (
+        <button onClick={() => void submit(false)} disabled={busy}
+          className="mt-2 rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700 disabled:opacity-50">
+          Submit to FIRS
+        </button>
+      )}
+    </div>
+  );
+}
 
 // View Subscription Details Modal
 export function ViewSubscriptionModal({
@@ -341,6 +421,10 @@ export function ViewInvoiceModal({
               <p className="text-sm text-slate-600 mt-1">{invoice.description}</p>
             </div>
           )}
+
+          <EInvoicePanel invoiceId={invoice.id} />
+
+          <CustomFieldsPanel doctype="finance_invoices" recordId={invoice.id} variant="light" />
         </div>
 
         {/* Footer */}

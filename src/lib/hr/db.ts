@@ -1656,6 +1656,35 @@ export async function insertLeave(row: {
       days: leaveDaysInclusive(row.startDate, row.endDate),
     },
   });
+
+  // Notify the reporting manager (if one is set) plus tenant admins.
+  try {
+    const [emp] = (await sql`select reporting_manager_id from admin_employees
+      where id = ${row.employeeId} and tenant_slug = ${row.tenantSlug} limit 1`) as any[];
+    const { emitEvent } = await import("@/lib/notify");
+    void emitEvent({
+      tenantSlug: row.tenantSlug,
+      eventType: "leave.requested",
+      sourceModule: "hr",
+      sourceRecordId: id,
+      dedupeKey: `leave-req:${id}`,
+      explicitSpecs: [
+        ...(emp?.reporting_manager_id ? [{ kind: "user" as const, value: emp.reporting_manager_id }] : []),
+        { kind: "admin" as const },
+      ],
+      payload: {
+        employeeName: row.employeeName,
+        leaveType: row.leaveType,
+        startDate: row.startDate,
+        endDate: row.endDate,
+        days: leaveDaysInclusive(row.startDate, row.endDate),
+        reason: row.reason,
+      },
+    });
+  } catch (err) {
+    console.error("Failed to emit leave.requested:", err);
+  }
+
   return normalizeLeaveRow((inserted as any[])[0]);
 }
 
@@ -1806,6 +1835,33 @@ export async function updateLeaveStatus(
       days,
     },
   });
+
+  // Notify the employee when a decision lands (approve/reject, not noise like
+  // pending→pending). Employee email resolves via admin_employees.
+  if ((status === "approved" || status === "rejected") && prevRow.status !== status) {
+    try {
+      const { emitEvent } = await import("@/lib/notify");
+      void emitEvent({
+        tenantSlug,
+        eventType: "leave.decided",
+        sourceModule: "hr",
+        sourceRecordId: id,
+        dedupeKey: `leave:${id}:${status}`,
+        actorId: approvedBy ?? undefined,
+        explicitSpecs: [{ kind: "user", value: prevRow.employee_id }],
+        payload: {
+          status,
+          leaveType: prevRow.leave_type,
+          startDate,
+          endDate,
+          reviewedBy: approvedBy,
+          employeeName: prevRow.employee_name,
+        },
+      });
+    } catch (err) {
+      console.error("Failed to emit leave.decided:", err);
+    }
+  }
 
   return normalizeLeaveRow(rows[0]);
 }
@@ -2085,6 +2141,10 @@ export interface PayrollEntryRecord {
   totalDeductions: number;
   grossPay: number;
   netPay: number;
+  /** Employer-side statutory cost (expense to company, not deducted from employee). */
+  employerCost?: number;
+  employerBreakdown?: { name: string; amount: number }[];
+  statutoryBreakdown?: { paye?: number; pension?: number; nhf?: number; health?: number; other?: number };
   createdAt: string;
 }
 
@@ -2127,6 +2187,9 @@ function normalizePayrollEntry(row: any): PayrollEntryRecord {
     totalDeductions: Number(row.total_deductions) || 0,
     grossPay: Number(row.gross_pay) || 0,
     netPay: Number(row.net_pay) || 0,
+    employerCost: Number(row.employer_cost) || 0,
+    employerBreakdown: (row.employer_breakdown as { name: string; amount: number }[]) || [],
+    statutoryBreakdown: (row.statutory_breakdown as PayrollEntryRecord["statutoryBreakdown"]) || {},
     createdAt: row.created_at,
   };
 }
@@ -2291,15 +2354,23 @@ export async function createPayrollRun(params: {
   let taxBands: PayrollTaxBand[] | null = params.config.taxBands?.length ? params.config.taxBands : null;
   let pensionRate = params.config.pensionRate;
   let otherStatutory: { name: string; type: string; amount: number }[] = [];
+  let payeAnnualize = false;
+  let payeRelief: { fixedMin?: number; grossPercentFloor?: number; grossPercent?: number } | null = null;
+  let employerContribs: { name: string; type: string; amount: number }[] = [];
+  const PERIODS_PER_YEAR = 12;
   try {
     const [profile] = await sql`
-      select tax_bands, pension_employee_rate, other_deductions
+      select tax_bands, pension_employee_rate, other_deductions,
+             paye_annualize, paye_relief, employer_contributions
       from admin_statutory_profiles where tenant_slug = ${params.tenantSlug}
     ` as any[];
     if (profile) {
       if (Array.isArray(profile.tax_bands) && profile.tax_bands.length) taxBands = profile.tax_bands;
       if (profile.pension_employee_rate != null) pensionRate = Number(profile.pension_employee_rate);
       if (Array.isArray(profile.other_deductions)) otherStatutory = profile.other_deductions;
+      payeAnnualize = profile.paye_annualize === true;
+      payeRelief = profile.paye_relief ?? null;
+      if (Array.isArray(profile.employer_contributions)) employerContribs = profile.employer_contributions;
     }
   } catch {
     // profile table may not exist yet — fall back to run config
@@ -2310,18 +2381,47 @@ export async function createPayrollRun(params: {
     const grossPay = Math.round(
       (e.baseSalary + e.transportAllowance + e.housingAllowance + e.mealAllowance + e.bonus) * 100
     ) / 100;
-    const tax = taxBands
-      ? computeProgressiveTax(grossPay, taxBands)
-      : Math.round((grossPay * params.config.taxRate) / 100 * 100) / 100;
+    let tax: number;
+    if (taxBands && payeAnnualize) {
+      // Annualized PAYE (Nigeria): annualize gross, apply consolidated relief,
+      // run annual brackets, then divide back to the period.
+      const annualGross = grossPay * PERIODS_PER_YEAR;
+      const relief = payeRelief
+        ? Math.max(
+            payeRelief.fixedMin ?? 0,
+            (annualGross * (payeRelief.grossPercentFloor ?? 0)) / 100
+          ) + (annualGross * (payeRelief.grossPercent ?? 0)) / 100
+        : 0;
+      const taxable = Math.max(0, annualGross - relief);
+      tax = Math.round((computeProgressiveTax(taxable, taxBands) / PERIODS_PER_YEAR) * 100) / 100;
+    } else {
+      tax = taxBands
+        ? computeProgressiveTax(grossPay, taxBands)
+        : Math.round((grossPay * params.config.taxRate) / 100 * 100) / 100;
+    }
     const pension = Math.round((grossPay * pensionRate) / 100 * 100) / 100;
     let healthInsurance = Math.round((grossPay * params.config.healthInsuranceRate) / 100 * 100) / 100;
     let statutoryOther = 0;
+    let nhfAmount = 0;
     for (const d of otherStatutory) {
       const amt = d.type === "percent_of_gross"
         ? Math.round((grossPay * d.amount) / 100 * 100) / 100
         : d.amount;
       if (/health|nhis|hmo/i.test(d.name)) healthInsurance += amt;
-      else statutoryOther += amt;
+      else {
+        statutoryOther += amt;
+        if (/nhf|housing fund/i.test(d.name)) nhfAmount += amt;
+      }
+    }
+    // Employer statutory contributions — expense to the company, not the employee.
+    let employerCost = 0;
+    const employerBreakdown: { name: string; amount: number }[] = [];
+    for (const c of employerContribs) {
+      const amt = c.type === "percent_of_gross"
+        ? Math.round((grossPay * c.amount) / 100 * 100) / 100
+        : c.amount;
+      employerCost += amt;
+      employerBreakdown.push({ name: c.name, amount: amt });
     }
     const totalDeductions = Math.round(
       (tax + pension + healthInsurance + statutoryOther + e.otherDeductions) * 100
@@ -2345,6 +2445,17 @@ export async function createPayrollRun(params: {
       otherDeductions: e.otherDeductions + statutoryOther,
       totalDeductions,
       netPay,
+      employerCost,
+      employerBreakdown,
+      statutoryBreakdown: {
+        paye: tax,
+        pension: pension + employerBreakdown
+          .filter((b) => /pension/i.test(b.name))
+          .reduce((s, b) => s + b.amount, 0),
+        nhf: nhfAmount,
+        health: healthInsurance,
+        other: e.otherDeductions + statutoryOther - nhfAmount,
+      },
     };
   });
 
@@ -2402,14 +2513,16 @@ export async function createPayrollRun(params: {
         id, tenant_slug, run_id, employee_id, employee_name, department, position,
         base_salary, transport_allowance, housing_allowance, meal_allowance, bonus,
         tax, pension, health_insurance, other_deductions, total_deductions,
-        gross_pay, net_pay
+        gross_pay, net_pay, employer_cost, employer_breakdown, statutory_breakdown
       ) values (
         ${entryId}, ${params.tenantSlug}, ${runId}, ${entry.employeeId}, ${entry.employeeName},
         ${entry.department ?? null}, ${entry.position ?? null},
         ${entry.baseSalary}, ${entry.transportAllowance}, ${entry.housingAllowance},
         ${entry.mealAllowance}, ${entry.bonus},
         ${entry.tax}, ${entry.pension}, ${entry.healthInsurance}, ${entry.otherDeductions},
-        ${entry.totalDeductions}, ${entry.grossPay}, ${entry.netPay}
+        ${entry.totalDeductions}, ${entry.grossPay}, ${entry.netPay},
+        ${entry.employerCost ?? 0}, ${JSON.stringify(entry.employerBreakdown ?? [])}::jsonb,
+        ${JSON.stringify(entry.statutoryBreakdown ?? {})}::jsonb
       )
     `;
   }

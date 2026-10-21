@@ -14,6 +14,10 @@ const receivePaymentSchema = z.object({
   gateway: z.string().optional(),
   gatewayReference: z.string().optional(),
   confirmationDetails: z.string().optional(),
+  allocations: z
+    .array(z.object({ invoiceId: z.string().min(1), amount: z.coerce.number().positive() }))
+    .min(1)
+    .optional(),
   metadata: z.record(z.unknown()).optional(),
 });
 

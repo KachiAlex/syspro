@@ -20,6 +20,11 @@ async function ensureTransferTable() {
       completed_at timestamptz
     )
   `);
+  await db.query(`alter table if exists inventory_stock_transfers add column if not exists from_warehouse_id text`);
+  await db.query(`alter table if exists inventory_stock_transfers add column if not exists to_warehouse_id text`);
+  await db.query(`alter table if exists inventory_stock_transfers add column if not exists product_sku text`);
+  await db.query(`alter table if exists inventory_stock_transfers add column if not exists serial_nos jsonb`);
+  await db.query(`alter table if exists inventory_stock_transfers add column if not exists lot_no text`);
   await db.query(`create index if not exists idx_stock_transfers_tenant on inventory_stock_transfers (tenant_slug)`);
 }
 
@@ -65,12 +70,12 @@ export async function POST(request: NextRequest) {
     await ensureTransferTable();
     const context = validateTenantContext(request, "write");
     const body = await request.json();
-    const { productId, quantity, fromLocation, toLocation } = body;
+    const { productId, quantity, fromLocation, toLocation, fromWarehouseId, toWarehouseId, serialNos, lotNo } = body;
     const tenantSlug = context.tenantSlug;
 
-    if (!productId || !quantity || !fromLocation || !toLocation) {
+    if (!productId || !quantity || (!fromLocation && !fromWarehouseId) || (!toLocation && !toWarehouseId)) {
       return NextResponse.json(
-        { error: "Missing required fields: productId, quantity, fromLocation, toLocation" },
+        { error: "Missing required fields: productId, quantity, and from/to warehouse or location" },
         { status: 400 }
       );
     }
@@ -78,16 +83,36 @@ export async function POST(request: NextRequest) {
     if (!Number.isInteger(qty) || qty <= 0) {
       return NextResponse.json({ error: "quantity must be a positive integer" }, { status: 400 });
     }
-    if (fromLocation === toLocation) {
+    if (fromLocation && fromLocation === toLocation) {
       return NextResponse.json({ error: "fromLocation and toLocation must differ" }, { status: 400 });
+    }
+    if (fromWarehouseId && fromWarehouseId === toWarehouseId) {
+      return NextResponse.json({ error: "fromWarehouseId and toWarehouseId must differ" }, { status: 400 });
     }
 
     const product = (await db.query(
-      `select id, location, current_stock from inventory_products where id = $1 and tenant_slug = $2`,
+      `select id, sku, location, current_stock from inventory_products where id = $1 and tenant_slug = $2`,
       [productId, tenantSlug]
     )).rows[0];
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    // Resolve warehouses when ids/codes are supplied
+    let fromWh: string | null = null;
+    let toWh: string | null = null;
+    if (fromWarehouseId || toWarehouseId) {
+      const { getWarehouse } = await import("@/lib/inventory/warehouses");
+      if (fromWarehouseId) {
+        const w = await getWarehouse(tenantSlug, fromWarehouseId);
+        if (!w) return NextResponse.json({ error: `Source warehouse ${fromWarehouseId} not found` }, { status: 404 });
+        fromWh = w.id;
+      }
+      if (toWarehouseId) {
+        const w = await getWarehouse(tenantSlug, toWarehouseId);
+        if (!w) return NextResponse.json({ error: `Destination warehouse ${toWarehouseId} not found` }, { status: 404 });
+        toWh = w.id;
+      }
     }
 
     const transfer = {
@@ -95,15 +120,19 @@ export async function POST(request: NextRequest) {
       tenantSlug,
       productId,
       quantity: qty,
-      fromLocation,
-      toLocation,
+      fromLocation: fromLocation ?? null,
+      toLocation: toLocation ?? null,
+      fromWarehouseId: fromWh,
+      toWarehouseId: toWh,
+      serialNos: Array.isArray(serialNos) ? serialNos : null,
+      lotNo: lotNo ?? null,
       status: "pending" as const,
       createdAt: new Date().toISOString(),
     };
 
     await db.query(
-      `insert into inventory_stock_transfers (id, tenant_slug, product_id, quantity, from_location, to_location, status, created_at) values ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [transfer.id, transfer.tenantSlug, transfer.productId, transfer.quantity, transfer.fromLocation, transfer.toLocation, transfer.status, transfer.createdAt]
+      `insert into inventory_stock_transfers (id, tenant_slug, product_id, product_sku, quantity, from_location, to_location, from_warehouse_id, to_warehouse_id, serial_nos, lot_no, status, created_at) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+      [transfer.id, transfer.tenantSlug, transfer.productId, product.sku ?? null, transfer.quantity, transfer.fromLocation, transfer.toLocation, transfer.fromWarehouseId, transfer.toWarehouseId, transfer.serialNos ? JSON.stringify(transfer.serialNos) : null, transfer.lotNo, transfer.status, transfer.createdAt]
     );
 
     return NextResponse.json({ transfer }, { status: 201 });
@@ -149,13 +178,34 @@ export async function PATCH(request: NextRequest) {
       [next, id, tenantSlug]
     )).rows[0];
 
-    // Products track a single location: completing a transfer whose
-    // from_location matches the product's location moves the product.
     if (next === "completed") {
-      await db.query(
-        `update inventory_products set location = $1 where id = $2 and tenant_slug = $3 and location = $4`,
-        [transfer.to_location, transfer.product_id, tenantSlug, transfer.from_location]
-      );
+      if (transfer.from_warehouse_id && transfer.to_warehouse_id) {
+        // Warehouse-aware path: signed transfer movements + per-warehouse
+        // balances. No GL effect — inventory value is unchanged.
+        const product = (await db.query(
+          `select sku, name, unit_cost from inventory_products where id = $1 and tenant_slug = $2`,
+          [transfer.product_id, tenantSlug]
+        )).rows[0];
+        const { transferStock } = await import("@/lib/inventory/warehouses");
+        await transferStock({
+          tenantSlug,
+          productSku: transfer.product_sku ?? product?.sku ?? String(transfer.product_id),
+          productName: product?.name,
+          quantity: Number(transfer.quantity),
+          unitCost: Number(product?.unit_cost ?? 0),
+          fromWarehouseId: transfer.from_warehouse_id,
+          toWarehouseId: transfer.to_warehouse_id,
+          referenceId: transfer.id,
+          serialNos: Array.isArray(transfer.serial_nos) ? transfer.serial_nos : undefined,
+          lotNo: transfer.lot_no ?? undefined,
+        });
+      } else {
+        // Legacy free-text location path
+        await db.query(
+          `update inventory_products set location = $1 where id = $2 and tenant_slug = $3 and location = $4`,
+          [transfer.to_location, transfer.product_id, tenantSlug, transfer.from_location]
+        );
+      }
     }
 
     return NextResponse.json({ transfer: updated });

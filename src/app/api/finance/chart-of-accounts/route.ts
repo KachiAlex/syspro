@@ -28,7 +28,10 @@ export async function GET(request: NextRequest) {
             coalesce(sum(jel.credit_amount), 0) as total_credit
           from journal_entry_lines jel
           join journal_entries je on jel.entry_id = je.id
-          where je.tenant_slug = ${tenantSlug} and jel.account_code = ${acc.code}
+          left join chart_of_accounts ca on ca.id = jel.account_id
+          where je.tenant_slug = ${tenantSlug}
+            and coalesce(upper(je.approval_status), 'POSTED') in ('POSTED', 'APPROVED')
+            and coalesce(jel.account_code, ca.code) = ${acc.code}
         `) as any[];
         const balance = (balanceRows[0]?.total_debit || 0) - (balanceRows[0]?.total_credit || 0);
         return { ...acc, balance };

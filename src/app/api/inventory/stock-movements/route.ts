@@ -21,6 +21,10 @@ const createMovementSchema = z.object({
   unitCost: z.coerce.number().min(0).default(0),
   referenceType: z.string().default("manual"),
   referenceId: z.string().default(""),
+  warehouseId: z.string().optional(),
+  lotNo: z.string().optional(),
+  serialNos: z.array(z.string()).optional(),
+  expiryDate: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -65,12 +69,17 @@ export async function POST(request: NextRequest) {
       unitCost: parsed.data.unitCost,
       referenceType: parsed.data.referenceType,
       referenceId: parsed.data.referenceId,
+      warehouseId: parsed.data.warehouseId,
+      lotNo: parsed.data.lotNo,
+      serialNos: parsed.data.serialNos,
+      expiryDate: parsed.data.expiryDate,
       notes: parsed.data.notes,
     });
 
     return NextResponse.json({ success: true, data: movement }, { status: 201 });
   } catch (error) {
-    console.error("Error recording stock movement:", error);
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Internal server error";
+    const status = /serial|lot|tracking|required|Insufficient|Duplicate/i.test(message) ? 422 : 500;
+    return NextResponse.json({ success: false, error: message }, { status });
   }
 }

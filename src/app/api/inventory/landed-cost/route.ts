@@ -1,0 +1,50 @@
+export const dynamic = "force-dynamic";
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+import { createLandedCostVoucher, listLandedCostVouchers } from "@/lib/inventory/landed-cost";
+import { validateTenantContext } from "@/lib/tenant-admin/utils";
+import { requireModuleAccess } from "@/lib/api-auth";
+
+const createSchema = z.object({
+  referenceId: z.string().min(1),
+  chargeType: z.enum(["freight", "customs_duty", "insurance", "other"]),
+  totalAmount: z.coerce.number().positive(),
+  allocationMethod: z.enum(["value", "quantity", "manual"]).optional(),
+  items: z.array(z.object({
+    sku: z.string().min(1),
+    quantity: z.coerce.number().positive(),
+    unitCost: z.coerce.number().min(0),
+    allocatedAmount: z.coerce.number().min(0).optional(),
+  })).min(1),
+  payableAccountCode: z.string().optional(),
+});
+
+export async function GET(request: NextRequest) {
+  const gate = await requireModuleAccess(request, "admin", "read");
+  if (!gate.ok) return gate.response;
+  const context = validateTenantContext(request, "read");
+  const { searchParams } = new URL(request.url);
+  const vouchers = await listLandedCostVouchers(context.tenantSlug, {
+    referenceId: searchParams.get("referenceId") ?? undefined,
+    limit: parseInt(searchParams.get("limit") ?? "100"),
+  });
+  return NextResponse.json({ vouchers });
+}
+
+export async function POST(request: NextRequest) {
+  const gate = await requireModuleAccess(request, "admin", "write");
+  if (!gate.ok) return gate.response;
+  const context = validateTenantContext(request, "write");
+  const body = await request.json();
+  const parsed = createSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid parameters", details: parsed.error.flatten() }, { status: 400 });
+  }
+  try {
+    const voucher = await createLandedCostVoucher(context.tenantSlug, parsed.data);
+    return NextResponse.json({ voucher }, { status: 201 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 422 });
+  }
+}

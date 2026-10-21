@@ -63,6 +63,33 @@ export async function GET(request: NextRequest) {
 
   try {
     await requireDashboardPermission(request, "admin");
+
+    // Prefer the relational branch master (system of record); fall back to
+    // flattening the org tree when it hasn't been synced yet.
+    const { listBranches } = await import("@/lib/finance/branches");
+    const stored = await listBranches(tenantSlug);
+    if (stored.length) {
+      return NextResponse.json({
+        branches: stored.map((b) => ({
+          id: b.id,
+          name: b.name,
+          code: b.code || b.id,
+          country: b.country || "—",
+          continent: b.region || "Other",
+          state: b.state || "—",
+          city: b.city || b.region || "—",
+          status: b.status,
+          headcount: b.headcount,
+          manager: b.manager || "—",
+          establishedDate: (b.metadata as any)?.establishedDate || "—",
+          revenue: String(Number((b.metadata as any)?.revenue) || 0),
+          currency: b.currency || "USD",
+          region: b.region || undefined,
+          metadata: b.metadata || {},
+        })),
+      });
+    }
+
     await sql`
       create table if not exists tenant_org_structures (
         slug text primary key,

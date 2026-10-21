@@ -618,7 +618,7 @@ export function generateExpenseJournalEntries(expense: Expense): JournalEntry[] 
 /**
  * Get GL account for expense category
  */
-function getGLAccountForCategory(categoryId: string): string {
+export function getGLAccountForCategory(categoryId: string): string {
   const categoryGLMap: Record<string, string> = {
     cat_travel: "6010",
     cat_supplies: "6020",

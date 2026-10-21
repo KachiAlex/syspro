@@ -33,6 +33,10 @@ export interface Bill {
   subtotal: number;
   taxes: number;
   total: number;
+  /** Withholding tax deducted at source — credited to WHT payable, not the vendor. */
+  whtRate?: number;
+  whtAmount: number;
+  /** Amount actually owed to the vendor: total − whtAmount. */
   balanceDue: number;
   status: "draft" | "open" | "partially_paid" | "paid" | "overdue" | "cancelled";
   items: BillItem[];
@@ -54,6 +58,8 @@ export interface BillRecord {
   subtotal: number;
   taxes: number;
   total: number;
+  wht_rate?: number;
+  wht_amount?: number;
   balance_due: number;
   status: string;
   metadata?: Record<string, unknown>;
@@ -91,6 +97,8 @@ export function ensureBillTables(...args: Parameters<typeof ensureBillTablesRun>
 
 async function ensureBillTablesRun(sql = SQL) {
   // Tables should already exist from migration, but ensure for development
+  await sql`alter table if exists bills add column if not exists wht_rate numeric(5,2)`;
+  await sql`alter table if exists bills add column if not exists wht_amount numeric(18,2) not null default 0`;
   try {
     await sql`select 1 from bills limit 1`;
     await sql`select 1 from bill_items limit 1`;
@@ -112,6 +120,8 @@ async function ensureBillTablesRun(sql = SQL) {
           subtotal numeric(18,2) not null default 0,
           taxes numeric(18,2) not null default 0,
           total numeric(18,2) not null default 0,
+          wht_rate numeric(5,2) null,
+          wht_amount numeric(18,2) not null default 0,
           balance_due numeric(18,2) not null default 0,
           status text not null default 'draft',
           metadata jsonb null,
@@ -173,6 +183,8 @@ function normalizeBill(record: BillRecord, items: BillItemRecord[]): Bill {
     subtotal: Number(record.subtotal),
     taxes: Number(record.taxes),
     total: Number(record.total),
+    whtRate: record.wht_rate != null ? Number(record.wht_rate) : undefined,
+    whtAmount: Number(record.wht_amount ?? 0),
     balanceDue: Number(record.balance_due),
     status: record.status as Bill["status"],
     items: items.map(item => ({
@@ -283,6 +295,8 @@ export async function createBill(payload: {
   billDate: string;
   dueDate?: string;
   currency?: string;
+  /** Withholding tax rate (%) applied to the subtotal — withheld and remitted to FIRS. */
+  whtRate?: number;
   items: Array<{
     description: string;
     quantity: number;
@@ -309,18 +323,42 @@ export async function createBill(payload: {
     return sum + taxAmount;
   }, 0);
   const total = subtotal + taxes;
+  const whtAmount = payload.whtRate
+    ? Math.round((subtotal * payload.whtRate) / 100 * 100) / 100
+    : 0;
+  // The vendor is paid net of WHT — the withheld portion is remitted to FIRS.
+  const balanceDue = total - whtAmount;
+
+  // Budget enforcement: bills charge expense/asset accounts on their lines.
+  const codedItems = payload.items.filter((i) => i.accountCode);
+  if (codedItems.length) {
+    const { enforceBudget } = await import("./budget-control");
+    await enforceBudget({
+      tenantSlug: payload.tenantSlug,
+      fiscalYear: new Date(payload.billDate).getUTCFullYear(),
+      lines: codedItems.map((i) => ({
+        accountCode: i.accountCode!,
+        amount: i.quantity * i.unitPrice,
+      })),
+      record: {
+        actualType: "INVOICE",
+        transactionCode: billNumber,
+        transactionDate: payload.billDate,
+      },
+    });
+  }
 
   const [record] = (await sql`
     insert into bills (
       id, tenant_slug, bill_number, vendor_id, po_id, branch_id,
-      bill_date, due_date, currency, subtotal, taxes, total, balance_due,
-      status, metadata, created_at, updated_at
+      bill_date, due_date, currency, subtotal, taxes, total, wht_rate, wht_amount,
+      balance_due, status, metadata, created_at, updated_at
     ) values (
       ${id}, ${payload.tenantSlug}, ${billNumber}, ${payload.vendorId},
       ${payload.poId || null}, ${payload.branchId || null},
       ${payload.billDate}, ${payload.dueDate || null}, ${currency},
-      ${subtotal}, ${taxes}, ${total}, ${total},
-      'open', ${payload.metadata || null}, now(), now()
+      ${subtotal}, ${taxes}, ${total}, ${payload.whtRate ?? null}, ${whtAmount},
+      ${balanceDue}, 'open', ${payload.metadata || null}, now(), now()
     ) returning *
   `);
 
@@ -352,6 +390,45 @@ export async function createBill(payload: {
   } catch (accountingError) {
     console.error("Failed to create journal entry for bill:", accountingError);
     // Don't fail the bill creation if accounting fails
+  }
+
+  // Statutory ledger: input VAT claimable + WHT withheld feed the tax returns
+  try {
+    const { recordBillTaxes } = await import("./localization");
+    await recordBillTaxes({
+      tenantSlug: payload.tenantSlug,
+      billId: id,
+      billNumber,
+      vendorId: payload.vendorId,
+      date: payload.billDate,
+      subtotal,
+      vatAmount: taxes,
+      whtAmount,
+      whtRate: payload.whtRate,
+    });
+  } catch (taxErr) {
+    console.error("Failed to record bill tax transactions:", taxErr);
+  }
+
+  try {
+    const { emitEvent } = await import("@/lib/notify");
+    const [v] = (await sql`select coalesce(display_name, legal_name) as name, email from vendors where id = ${payload.vendorId} and tenant_slug = ${payload.tenantSlug}`) as any[];
+    void emitEvent({
+      tenantSlug: payload.tenantSlug,
+      eventType: "bill.created",
+      sourceModule: "finance",
+      sourceRecordId: id,
+      payload: {
+        billNumber,
+        total: bill.total ?? subtotal + taxes - whtAmount,
+        vendorName: v?.name ?? null,
+        partyEmail: v?.email ?? null,
+        vendorId: payload.vendorId,
+        dueDate: payload.dueDate,
+      },
+    });
+  } catch (err) {
+    console.error("Failed to emit bill.created:", err);
   }
 
   return bill;
@@ -396,6 +473,7 @@ export async function convertPOToBill(poId: string, payload: {
   billDate: string;
   dueDate?: string;
   currency?: string;
+  whtRate?: number;
   metadata?: Record<string, unknown>;
 }, tenantSlug?: string): Promise<Bill | null> {
   const sql = SQL;
@@ -414,7 +492,13 @@ export async function convertPOToBill(poId: string, payload: {
   if (!poRecords.length) return null;
 
   const po = poRecords[0];
-  
+  if (po.status === "pending_approval") {
+    throw new Error(`Purchase order ${po.order_number} is pending approval`);
+  }
+  if (po.status === "rejected") {
+    throw new Error(`Purchase order ${po.order_number} was rejected`);
+  }
+
   // Get PO items
   const poItems = (await sql`
     select * from purchase_order_items where coalesce(purchase_order_id, po_id) = ${poId}
@@ -429,6 +513,7 @@ export async function convertPOToBill(poId: string, payload: {
     billDate: payload.billDate,
     dueDate: payload.dueDate,
     currency: payload.currency || po.currency,
+    whtRate: payload.whtRate,
     items: poItems.map(item => ({
       description: item.description,
       quantity: Number(item.quantity),

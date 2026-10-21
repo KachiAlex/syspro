@@ -3,16 +3,16 @@
  * Handles automatic journal entry generation for vendor transactions
  */
 
-import { randomUUID } from "crypto";
 import { db, sql as SQL, SqlClient } from "../sql-client";
 import { ensureOnce } from "@/lib/ensure-once";
+import { ensureGLTables, postGLEntry, GL_ACCOUNTS, type GLPartyType } from "./gl";
 
 export interface JournalEntry {
   id: string;
   tenantSlug: string;
   entryNumber: string;
   entryDate: string;
-  referenceType: "bill" | "payment" | "manual" | "payroll";
+  referenceType: "bill" | "payment" | "manual" | "payroll" | "invoice" | "period_close" | "reversal" | "sales_return" | "purchase_return" | "landed_cost";
   referenceId?: string;
   description: string;
   lines: JournalEntryLine[];
@@ -137,6 +137,30 @@ const DEFAULT_ACCOUNTS: Record<string, ChartOfAccount> = {
     name: "Payroll Deductions Payable",
     type: "liability",
     isActive: true
+  },
+  SALES_REVENUE: {
+    code: "4000",
+    name: "Sales Revenue",
+    type: "revenue",
+    isActive: true
+  },
+  SERVICE_REVENUE: {
+    code: "4100",
+    name: "Service Revenue",
+    type: "revenue",
+    isActive: true
+  },
+  VAT_OUTPUT: {
+    code: "2205",
+    name: "VAT Output Tax",
+    type: "liability",
+    isActive: true
+  },
+  RETAINED_EARNINGS: {
+    code: "3100",
+    name: "Retained Earnings",
+    type: "equity",
+    isActive: true
   }
 };
 
@@ -145,84 +169,11 @@ export function ensureAccountingTables(...args: Parameters<typeof ensureAccounti
 }
 
 async function ensureAccountingTablesRun(sql = SQL) {
+  // Canonical GL schema (journal_entries / journal_entry_lines / fiscal_periods /
+  // account_balances / sequences / audit) is maintained by the consolidation
+  // migration and src/lib/finance/gl.ts.
+  await ensureGLTables();
   try {
-    // Create journal entries table if not exists
-    await sql`
-      create table if not exists journal_entries (
-        id uuid primary key default gen_random_uuid(),
-        tenant_slug text not null,
-        entry_number text not null,
-        entry_date date not null,
-        reference_type text not null check (reference_type in ('bill', 'payment', 'manual')),
-        reference_id uuid,
-        description text not null,
-        metadata jsonb,
-        created_at timestamptz not null default now()
-      )
-    `;
-
-    // Legacy tables carry tenant_id uuid NOT NULL — relax it so tenant_slug rows can be written
-    try {
-      await sql`alter table if exists journal_entries alter column tenant_id drop not null`;
-    } catch (e: any) {
-      console.warn("journal_entries tenant_id relax skipped:", e?.message || e);
-    }
-
-    await sql`alter table if exists journal_entries add column if not exists tenant_slug text`;
-    await sql`alter table if exists journal_entries add column if not exists entry_number text`;
-    await sql`alter table if exists journal_entries add column if not exists entry_date date`;
-    await sql`alter table if exists journal_entries add column if not exists reference_type text`;
-    await sql`alter table if exists journal_entries add column if not exists reference_id uuid`;
-    await sql`alter table if exists journal_entries add column if not exists description text`;
-    await sql`alter table if exists journal_entries add column if not exists metadata jsonb`;
-    await sql`alter table if exists journal_entries add column if not exists created_at timestamptz default now()`;
-    await sql`alter table if exists journal_entries add column if not exists journal_number text`;
-    await sql`alter table if exists journal_entries add column if not exists journal_type text`;
-    await sql`alter table if exists journal_entries add column if not exists fiscal_period_id uuid`;
-    await sql`alter table if exists journal_entries add column if not exists posting_date date`;
-    await sql`alter table if exists journal_entries add column if not exists reference text`;
-    await sql`alter table if exists journal_entries add column if not exists source text`;
-    await sql`alter table if exists journal_entries add column if not exists status text`;
-    await sql`alter table if exists journal_entries add column if not exists total_debit numeric(18,2) not null default 0`;
-    await sql`alter table if exists journal_entries add column if not exists total_credit numeric(18,2) not null default 0`;
-    await sql`alter table if exists journal_entries add column if not exists notes text`;
-    await sql`alter table if exists journal_entries add column if not exists approval_status text`;
-    await sql`alter table if exists journal_entries add column if not exists created_by text`;
-    await sql`alter table if exists journal_entries add column if not exists approved_by text`;
-    await sql`alter table if exists journal_entries add column if not exists approved_at timestamptz`;
-    await sql`alter table if exists journal_entries add column if not exists posted_at timestamptz`;
-    await sql`alter table if exists journal_entries add column if not exists reversed_entry_id uuid`;
-    await sql`alter table if exists journal_entries add column if not exists is_reversing boolean default false`;
-    await sql`alter table if exists journal_entries add column if not exists attachment_url text`;
-    await sql`alter table if exists journal_entries add column if not exists updated_at timestamptz default now()`;
-
-    // Create journal entry lines table if not exists
-    await sql`
-      create table if not exists journal_entry_lines (
-        id uuid primary key default gen_random_uuid(),
-        entry_id uuid not null references journal_entries(id) on delete cascade,
-        account_code text not null,
-        account_name text,
-        debit_amount numeric(18,2) not null default 0,
-        credit_amount numeric(18,2) not null default 0,
-        description text,
-        metadata jsonb,
-        created_at timestamptz not null default now()
-      )
-    `;
-
-    await sql`alter table if exists journal_entry_lines add column if not exists journal_entry_id uuid`;
-    await sql`alter table if exists journal_entry_lines add column if not exists line_number integer`;
-    await sql`alter table if exists journal_entry_lines add column if not exists account_id uuid`;
-    await sql`alter table if exists journal_entry_lines add column if not exists branch_id text`;
-    await sql`alter table if exists journal_entry_lines add column if not exists department_id text`;
-    await sql`alter table if exists journal_entry_lines add column if not exists project_id text`;
-    await sql`alter table if exists journal_entry_lines add column if not exists cost_center_id text`;
-    await sql`alter table if exists journal_entry_lines add column if not exists is_reconciled boolean default false`;
-    await sql`alter table if exists journal_entry_lines add column if not exists reconciled_at timestamptz`;
-    await sql`alter table if exists journal_entry_lines add column if not exists debit numeric(18,2) default 0`;
-    await sql`alter table if exists journal_entry_lines add column if not exists credit numeric(18,2) default 0`;
-
     // Create chart of accounts table if not exists
     await sql`
       create table if not exists chart_of_accounts (
@@ -246,42 +197,11 @@ async function ensureAccountingTablesRun(sql = SQL) {
     await sql`alter table if exists chart_of_accounts add column if not exists code text`;
     await sql`alter table if exists chart_of_accounts add column if not exists name text`;
     await sql`alter table if exists chart_of_accounts add column if not exists type text`;
-    await sql`alter table if exists chart_of_accounts add column if not exists tenant_id text`;
     await sql`alter table if exists chart_of_accounts add column if not exists account_code text`;
     await sql`alter table if exists chart_of_accounts add column if not exists account_name text`;
     await sql`alter table if exists chart_of_accounts add column if not exists account_type text`;
-    await sql`alter table if exists chart_of_accounts add column if not exists sub_type text`;
-    await sql`alter table if exists chart_of_accounts add column if not exists subtype text`;
-    await sql`alter table if exists chart_of_accounts add column if not exists balance numeric(18,2) default 0`;
-    await sql`alter table if exists chart_of_accounts add column if not exists description text`;
-    await sql`alter table if exists chart_of_accounts add column if not exists parent_account_id text`;
-    await sql`alter table if exists chart_of_accounts add column if not exists parent_accounts_id text`;
-    await sql`alter table if exists chart_of_accounts add column if not exists currency text default 'NGN'`;
-    await sql`alter table if exists chart_of_accounts add column if not exists is_system_account boolean default false`;
-    await sql`alter table if exists chart_of_accounts add column if not exists branch_id text`;
-    await sql`alter table if exists chart_of_accounts add column if not exists department_id text`;
-    await sql`alter table if exists chart_of_accounts add column if not exists project_id text`;
-    await sql`alter table if exists chart_of_accounts add column if not exists allow_manual_posting boolean default true`;
-    await sql`alter table if exists chart_of_accounts add column if not exists require_cost_center boolean default false`;
-    await sql`alter table if exists chart_of_accounts add column if not exists is_reconciliation_account boolean default false`;
-    await sql`alter table if exists chart_of_accounts add column if not exists created_by text`;
-    await sql`alter table if exists chart_of_accounts add column if not exists updated_at timestamptz default now()`;
 
-    // Create indexes (sequential to avoid nested-array typing from template-tag results)
-    await sql`create index if not exists journal_entries_tenant_idx on journal_entries (tenant_slug)`;
-    await sql`create index if not exists journal_entries_reference_idx on journal_entries (reference_type, reference_id)`;
-    await sql`create index if not exists journal_entry_lines_entry_idx on journal_entry_lines (entry_id)`;
-    await sql`create index if not exists journal_entry_lines_account_idx on journal_entry_lines (account_code)`;
     await sql`create index if not exists coa_tenant_idx on chart_of_accounts (tenant_slug)`;
-    await sql`create index if not exists journal_entry_lines_je_idx on journal_entry_lines (journal_entry_id)`;
-    await sql`create index if not exists journal_entry_lines_account_id_idx on journal_entry_lines (account_id)`;
-
-    // Unique code per account — required for seed upserts and lookups
-    try {
-      await sql`create unique index if not exists chart_of_accounts_code_uq on chart_of_accounts (code)`;
-    } catch (e: any) {
-      console.warn("chart_of_accounts code unique index skipped:", e?.message || e);
-    }
 
     // Seed default accounts if they don't exist
     await seedDefaultAccounts(sql);
@@ -304,116 +224,128 @@ async function seedDefaultAccounts(sql: SqlClient) {
 export async function createJournalEntry(payload: {
   tenantSlug: string;
   entryDate: string;
-  referenceType: "bill" | "payment" | "manual" | "payroll";
+  referenceType: "bill" | "payment" | "manual" | "payroll" | "invoice" | "period_close" | "reversal" | "sales_return" | "purchase_return" | "landed_cost";
   referenceId?: string;
+  branchId?: string;
   description: string;
   lines: Array<{
     accountCode: string;
     debitAmount: number;
     creditAmount: number;
     description?: string;
+    partyType?: GLPartyType;
+    partyId?: string;
   }>;
   metadata?: Record<string, unknown>;
+  status?: "POSTED" | "DRAFT";
 }): Promise<JournalEntry> {
-  const sql = SQL;
-  await ensureAccountingTables(sql);
+  await ensureAccountingTables(SQL);
 
-  // Validate debits equal credits
-  const totalDebits = payload.lines.reduce((sum, line) => sum + line.debitAmount, 0);
-  const totalCredits = payload.lines.reduce((sum, line) => sum + line.creditAmount, 0);
-  
-  if (Math.abs(totalDebits - totalCredits) > 0.01) {
-    throw new Error(`Journal entry must balance. Debits: ${totalDebits}, Credits: ${totalCredits}`);
-  }
-
-  const entryId = randomUUID();
-  const entryNumber = `JE-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-
-  // Create journal entry header
-  const [entryRecord] = (await sql`
-    insert into journal_entries (
-      id, tenant_slug, entry_number, entry_date, reference_type, reference_id,
-      description, metadata, created_at
-    ) values (
-      ${entryId}, ${payload.tenantSlug}, ${entryNumber}, ${payload.entryDate},
-      ${payload.referenceType}, ${payload.referenceId || null}, ${payload.description},
-      ${payload.metadata || null}, now()
-    ) returning *
-  `) as any[];
-
-  // Create journal entry lines
-  const lineRecords = await Promise.all(payload.lines.map(async (line) => {
-    // Get account name
-    const [account] = (await sql`
-      select name from chart_of_accounts where code = ${line.accountCode} limit 1
-    `) as any[];
-
-    const [lineRecord] = (await sql`
-      insert into journal_entry_lines (
-        id, entry_id, account_code, account_name, debit_amount, credit_amount,
-        description, metadata, created_at
-      ) values (
-        ${randomUUID()}, ${entryId}, ${line.accountCode}, ${account?.name || null},
-        ${line.debitAmount}, ${line.creditAmount}, ${line.description || null},
-        null, now()
-      ) returning *
-    `) as any[];
-
-    return lineRecord;
-  }));
+  // Single write path: canonical GL poster validates balance, assigns a
+  // sequential journal number, enforces the fiscal period, maintains
+  // account_balances, and writes the audit trail inside a transaction.
+  const entry = await postGLEntry({
+    tenantSlug: payload.tenantSlug,
+    entryDate: payload.entryDate,
+    journalType: payload.referenceType === "manual" ? "MANUAL" : "SYSTEM",
+    referenceType: payload.referenceType,
+    referenceId: payload.referenceId,
+    description: payload.description,
+    status: payload.status ?? "POSTED",
+    metadata: payload.metadata,
+    branchId: payload.branchId,
+    lines: payload.lines.map((line) => ({
+      accountCode: line.accountCode,
+      debitAmount: line.debitAmount,
+      creditAmount: line.creditAmount,
+      description: line.description,
+      partyType: line.partyType,
+      partyId: line.partyId,
+    })),
+  });
 
   return {
-    id: entryRecord.id,
-    tenantSlug: entryRecord.tenant_slug,
-    entryNumber: entryRecord.entry_number,
-    entryDate: entryRecord.entry_date,
-    referenceType: entryRecord.reference_type,
-    referenceId: entryRecord.reference_id,
-    description: entryRecord.description,
-    lines: lineRecords.map(line => ({
+    id: entry.id,
+    tenantSlug: payload.tenantSlug,
+    entryNumber: entry.entryNumber,
+    entryDate: entry.entryDate,
+    referenceType: payload.referenceType,
+    referenceId: payload.referenceId,
+    description: entry.description,
+    lines: entry.lines.map((line) => ({
       id: line.id,
-      entryId: line.entry_id,
-      accountCode: line.account_code,
-      accountName: line.account_name,
-      debitAmount: Number(line.debit_amount),
-      creditAmount: Number(line.credit_amount),
+      entryId: entry.id,
+      accountCode: line.accountCode ?? "",
+      accountName: line.accountName ?? undefined,
+      debitAmount: line.debitAmount,
+      creditAmount: line.creditAmount,
       description: line.description,
-      metadata: line.metadata
+      metadata: undefined,
     })),
-    metadata: entryRecord.metadata,
-    createdAt: entryRecord.created_at
+    metadata: payload.metadata,
+    createdAt: entry.createdAt,
   };
 }
 
 export async function createBillJournalEntry(billId: string, bill: any): Promise<JournalEntry> {
   const lines = [];
+  const { GL_ACCOUNTS } = await import("./gl");
 
-  // Debit expense accounts for each bill item
+  let inputVat = 0;
+  // Debit expense accounts for each bill item (net of input VAT)
   for (const item of bill.items) {
     const accountCode = item.accountCode || DEFAULT_ACCOUNTS.EXPENSE_DEFAULT.code;
-    const lineAmount = item.lineAmount;
-    
+    // lineAmount is tax-inclusive; recover the net as qty × unit price.
+    const net = Number(item.quantity ?? 0) * Number(item.unitPrice ?? 0);
+    const tax = Math.max(0, Number(item.lineAmount) - net);
+    inputVat += tax;
+
     lines.push({
       accountCode,
-      debitAmount: lineAmount,
+      debitAmount: net,
       creditAmount: 0,
       description: `Bill: ${bill.billNumber} - ${item.description}`
     });
   }
 
-  // Credit Accounts Payable for total bill amount
+  // Debit input VAT (claimable) — previously buried in the expense lines
+  if (inputVat > 0.005) {
+    lines.push({
+      accountCode: GL_ACCOUNTS.VAT_INPUT,
+      debitAmount: inputVat,
+      creditAmount: 0,
+      description: `Input VAT — Bill: ${bill.billNumber}`
+    });
+  }
+
+  const whtAmount = Number(bill.whtAmount ?? 0);
+
+  // Credit Accounts Payable net of WHT — vendor is paid total minus withholding
   lines.push({
     accountCode: DEFAULT_ACCOUNTS.ACCOUNTS_PAYABLE.code,
     debitAmount: 0,
-    creditAmount: bill.total,
-    description: `Accounts Payable - Bill: ${bill.billNumber} - Vendor: ${bill.vendorId}`
+    creditAmount: Math.round((bill.total - whtAmount) * 100) / 100,
+    description: `Accounts Payable - Bill: ${bill.billNumber} - Vendor: ${bill.vendorId}`,
+    partyType: "vendor" as const,
+    partyId: bill.vendorId
   });
+
+  // Credit WHT payable — withheld from the vendor, remitted to FIRS
+  if (whtAmount > 0.005) {
+    lines.push({
+      accountCode: GL_ACCOUNTS.WHT_PAYABLE,
+      debitAmount: 0,
+      creditAmount: whtAmount,
+      description: `WHT withheld — Bill: ${bill.billNumber}`
+    });
+  }
 
   return createJournalEntry({
     tenantSlug: bill.tenantSlug,
     entryDate: bill.billDate,
     referenceType: "bill",
     referenceId: billId,
+    branchId: bill.branchId,
     description: `Vendor Bill Posting - ${bill.billNumber}`,
     lines,
     metadata: {
@@ -421,6 +353,7 @@ export async function createBillJournalEntry(billId: string, bill: any): Promise
       vendorId: bill.vendorId,
       subtotal: bill.subtotal,
       taxes: bill.taxes,
+      whtAmount,
       total: bill.total
     }
   });
@@ -446,7 +379,9 @@ export async function createPaymentJournalEntry(paymentId: string, payment: any)
       accountCode: DEFAULT_ACCOUNTS.ACCOUNTS_PAYABLE.code,
       debitAmount: payment.appliedAmount,
       creditAmount: 0,
-      description: `Payment to Vendor - ${payment.paymentNumber} - Applied Amount`
+      description: `Payment to Vendor - ${payment.paymentNumber} - Applied Amount`,
+      partyType: "vendor" as const,
+      partyId: payment.vendorId
     });
   }
 
@@ -473,6 +408,7 @@ export async function createPaymentJournalEntry(paymentId: string, payment: any)
     entryDate: payment.paymentDate,
     referenceType: "payment",
     referenceId: paymentId,
+    branchId: payment.branchId,
     description: `Vendor Payment Posting - ${payment.paymentNumber}`,
     lines,
     metadata: {

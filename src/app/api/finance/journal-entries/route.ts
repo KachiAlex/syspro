@@ -46,11 +46,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Debits and credits must be equal" }, { status: 400 });
     }
 
+    // Maker-checker on manual journals: when the tenant has configured a
+    // journal-entry threshold (settings.approvals.journalEntryMinAmount) or a
+    // matching approval rule, the JE is created DRAFT — invisible to all
+    // reports — until the approval chain posts or rejects it.
+    const refType = referenceType || "manual";
+    let gated = false;
+    if (refType === "manual") {
+      const { requiresApproval } = await import("@/lib/finance/approvals");
+      gated = await requiresApproval(tenantSlug, "journal_entry", { amount: totalDebits });
+    }
+
     const entry = await createJournalEntry({
       tenantSlug,
       entryDate: new Date(entryDate).toISOString().split('T')[0],
-      referenceType: referenceType || "manual",
+      referenceType: refType,
       description,
+      status: gated ? "DRAFT" : "POSTED",
       lines: lines.map((l: any) => ({
         accountCode: l.accountCode,
         debitAmount: Number(l.debitAmount || 0),
@@ -59,7 +71,19 @@ export async function POST(request: NextRequest) {
       })),
     });
 
-    return NextResponse.json({ success: true, data: entry });
+    let approval = null;
+    if (gated) {
+      const { initiateApproval } = await import("@/lib/finance/approvals");
+      approval = await initiateApproval({
+        tenantSlug,
+        entityType: "journal_entry",
+        entityId: entry.id,
+        requestedBy: "system",
+        entityData: { amount: totalDebits, description },
+      });
+    }
+
+    return NextResponse.json({ success: true, data: entry, approval, pendingApproval: gated });
   } catch (error) {
     console.error("Error creating journal entry:", error);
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });

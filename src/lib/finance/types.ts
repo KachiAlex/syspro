@@ -119,6 +119,8 @@ export type FinanceInvoice = {
   branchId: string | null;
   customerName: string;
   customerCode?: string | null;
+  customerId?: string | null;
+  customerEmail?: string | null;
   invoiceNumber: string;
   purchaseOrder?: string | null;
   issuedDate: string;
@@ -148,6 +150,8 @@ const financeInvoiceLineSchema = z.object({
 const financeInvoiceSharedSchema = z.object({
   customerName: z.string().min(1),
   customerCode: z.string().optional(),
+  customerId: z.string().optional(),
+  customerEmail: z.string().email().optional(),
   invoiceNumber: z.string().min(1),
   purchaseOrder: z.string().optional(),
   issuedDate: z.string().min(1),

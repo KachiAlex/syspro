@@ -19,7 +19,26 @@ interface Product {
   salePrice: number;
   reorderLevel: number;
   supplier: string;
+  tracking?: string;
   description?: string;
+}
+
+interface SerialRow {
+  id: string;
+  sku: string;
+  serialNo: string;
+  warehouseId: string | null;
+  status: string;
+  updatedAt: string;
+}
+
+interface LotRow {
+  id: string;
+  sku: string;
+  lotNo: string;
+  warehouseId: string;
+  qtyOnHand: number;
+  expiryDate: string | null;
 }
 
 export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
@@ -39,6 +58,13 @@ export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>();
+  const [activeTab, setActiveTab] = useState<"products" | "tracking">("products");
+  const [serials, setSerials] = useState<SerialRow[]>([]);
+  const [lots, setLots] = useState<LotRow[]>([]);
+  const [serialFilter, setSerialFilter] = useState("");
+  const [traceSku, setTraceSku] = useState("");
+  const [traceNo, setTraceNo] = useState("");
+  const [traceResult, setTraceResult] = useState<any>(null);
 
   // Initialize last refreshed on mount
   useEffect(() => {
@@ -72,9 +98,60 @@ export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
       salePrice: typeof raw.sale_price === "number" ? raw.sale_price : (typeof raw.salePrice === "number" ? raw.salePrice : 0),
       reorderLevel: typeof raw.min_stock === "number" ? raw.min_stock : (typeof raw.minStock === "number" ? raw.minStock : 0),
       supplier: raw.supplier || "",
+      tracking: raw.tracking || "none",
       description: raw.description || "",
     };
   }
+
+  async function loadTrackingData() {
+    try {
+      const [sRes, lRes] = await Promise.all([
+        fetch(`/api/inventory/serials?tenantSlug=${encodeURIComponent(tenantSlug)}`),
+        fetch(`/api/inventory/lots?tenantSlug=${encodeURIComponent(tenantSlug)}`),
+      ]);
+      const s = await sRes.json().catch(() => ({}));
+      const l = await lRes.json().catch(() => ({}));
+      setSerials(s.serials || []);
+      setLots(l.lots || []);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function handleTraceSerial() {
+    if (!traceSku || !traceNo) return;
+    setTraceResult(null);
+    try {
+      const res = await fetch(
+        `/api/inventory/serials?tenantSlug=${encodeURIComponent(tenantSlug)}&sku=${encodeURIComponent(traceSku)}&serialNo=${encodeURIComponent(traceNo)}`
+      );
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(payload.error || "Serial not found");
+        return;
+      }
+      setTraceResult(payload);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to trace serial");
+    }
+  }
+
+  const handleSetTracking = async (product: Product, tracking: string) => {
+    try {
+      const res = await fetch("/api/inventory/products", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantSlug, id: product.id, tracking }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || "Failed to update tracking");
+      await loadProducts();
+      setSuccess(`Tracking set to "${tracking}" for ${product.sku}`);
+    } catch (err: any) {
+      setError(err.message || "Failed to update tracking");
+    }
+  };
 
   // Load products from API
   async function loadProducts() {
@@ -96,12 +173,14 @@ export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
   // Load on mount
   useEffect(() => {
     loadProducts();
+    loadTrackingData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantSlug]);
 
   // Refresh inventory data
   const handleRefreshInventory = async () => {
     await loadProducts();
+    await loadTrackingData();
     setSuccess("Inventory refreshed successfully");
   };
 
@@ -270,6 +349,164 @@ export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
         </button>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-gray-200">
+        <button
+          onClick={() => setActiveTab("products")}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "products"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Products
+        </button>
+        <button
+          onClick={() => setActiveTab("tracking")}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "tracking"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Serials &amp; Batches
+        </button>
+      </div>
+
+      {activeTab === "tracking" && (
+        <div className="space-y-6">
+          {/* Serial trace */}
+          <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Trace a Serial Number</h3>
+            <div className="flex flex-col md:flex-row gap-3">
+              <input
+                type="text" placeholder="SKU" value={traceSku}
+                onChange={(e) => setTraceSku(e.target.value)}
+                className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white md:w-48"
+              />
+              <input
+                type="text" placeholder="Serial number" value={traceNo}
+                onChange={(e) => setTraceNo(e.target.value)}
+                className="bg-theme-bg px-3 py-2 border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white flex-1"
+              />
+              <button
+                onClick={handleTraceSerial}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Trace
+              </button>
+            </div>
+            {traceResult?.serial && (
+              <div className="mt-4 text-sm">
+                <div className="flex gap-6">
+                  <span>Status: <b className={traceResult.serial.status === 'in_stock' ? 'text-green-600' : 'text-gray-700'}>{traceResult.serial.status}</b></span>
+                  <span>Warehouse: <b>{traceResult.serial.warehouseId ?? "—"}</b></span>
+                </div>
+                <div className="mt-2">
+                  <p className="text-gray-500 mb-1">Movement history:</p>
+                  <ul className="space-y-1">
+                    {traceResult.movements.map((m: any) => (
+                      <li key={m.id} className="text-xs text-gray-600">
+                        {String(m.created_at).slice(0, 19)} · {m.movement_type} · qty {m.quantity} · {m.reference_type}/{m.reference_id}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Serials table */}
+          <div className="bg-theme-muted rounded-lg border border-gray-200 overflow-hidden">
+            <div className="p-4 flex items-center justify-between border-b border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-900">Serial Numbers ({serials.length})</h3>
+              <input
+                type="text" placeholder="Filter serial…" value={serialFilter}
+                onChange={(e) => setSerialFilter(e.target.value)}
+                className="bg-theme-bg px-3 py-1.5 text-sm border border-theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+              />
+            </div>
+            <div className="overflow-x-auto max-h-80 overflow-y-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Serial</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Warehouse</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {serials
+                    .filter((s) => !serialFilter || s.serialNo.toLowerCase().includes(serialFilter.toLowerCase()) || s.sku.toLowerCase().includes(serialFilter.toLowerCase()))
+                    .map((s) => (
+                      <tr key={s.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 text-sm font-medium text-gray-900">{s.serialNo}</td>
+                        <td className="px-4 py-2 text-sm text-gray-900">{s.sku}</td>
+                        <td className="px-4 py-2">
+                          <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
+                            s.status === 'in_stock' ? 'bg-green-100 text-green-800' :
+                            s.status === 'issued' ? 'bg-gray-100 text-gray-700' :
+                            'bg-orange-100 text-orange-800'
+                          }`}>{s.status}</span>
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-600">{s.warehouseId ?? "—"}</td>
+                      </tr>
+                    ))}
+                  {serials.length === 0 && (
+                    <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-gray-500">No serial-tracked stock yet</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Lots table */}
+          <div className="bg-theme-muted rounded-lg border border-gray-200 overflow-hidden">
+            <div className="p-4 border-b border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-900">Batch / Lot Stock ({lots.length})</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Lot</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Warehouse</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Expiry</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {lots.map((l) => (
+                    <tr key={l.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 text-sm font-medium text-gray-900">{l.lotNo}</td>
+                      <td className="px-4 py-2 text-sm text-gray-900">{l.sku}</td>
+                      <td className="px-4 py-2 text-sm text-gray-900">{l.qtyOnHand}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{l.warehouseId}</td>
+                      <td className="px-4 py-2 text-sm">
+                        {l.expiryDate ? (
+                          <span className={`font-medium ${
+                            new Date(l.expiryDate) < new Date() ? 'text-red-600' :
+                            new Date(l.expiryDate) < new Date(Date.now() + 30 * 86400000) ? 'text-orange-600' :
+                            'text-gray-700'
+                          }`}>{l.expiryDate}</span>
+                        ) : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                  {lots.length === 0 && (
+                    <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">No batch-tracked stock yet</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "products" && (
+      <>
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-theme-muted rounded-lg border border-gray-200 p-4">
@@ -437,6 +674,7 @@ export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit Cost</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reorder Level</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tracking</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
@@ -458,6 +696,17 @@ export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
                   <td className="px-4 py-3 text-sm font-semibold text-gray-900">{product.quantity}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">${product.unitCost.toFixed(2)}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{product.reorderLevel}</td>
+                  <td className="px-4 py-3">
+                    <select
+                      value={product.tracking ?? "none"}
+                      onChange={(e) => handleSetTracking(product, e.target.value)}
+                      className="text-xs bg-theme-bg border border-theme-border rounded px-1.5 py-1 text-white"
+                    >
+                      <option value="none">none</option>
+                      <option value="serial">serial</option>
+                      <option value="batch">batch</option>
+                    </select>
+                  </td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       product.quantity === 0 ? 'bg-red-100 text-red-800' :
@@ -497,6 +746,8 @@ export default function Inventory({ tenantSlug }: { tenantSlug: string }) {
           </div>
         )}
       </div>
+      </>
+      )}
 
       {/* Modals */}
       <CreateProductModal 

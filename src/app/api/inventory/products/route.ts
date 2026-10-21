@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     await ensureInventoryTables();
     const context = validateTenantContext(request, "write");
     const body = await request.json();
-    const { name, sku, category, currentStock, minStock, unitCost, salePrice, supplier, description, location } = body;
+    const { name, sku, category, currentStock, minStock, unitCost, salePrice, supplier, description, location, tracking } = body;
     const tenantSlug = context.tenantSlug;
 
     if (!name || !sku || !category) {
@@ -79,6 +79,9 @@ export async function POST(request: NextRequest) {
         { error: "Missing required fields: name, sku, category" },
         { status: 400 }
       );
+    }
+    if (tracking !== undefined && !["none", "serial", "batch"].includes(tracking)) {
+      return NextResponse.json({ error: "tracking must be 'none', 'serial', or 'batch'" }, { status: 400 });
     }
 
     const product = {
@@ -98,8 +101,8 @@ export async function POST(request: NextRequest) {
     };
 
     await db.query(
-      `insert into inventory_products (id, tenant_slug, name, sku, category, current_stock, min_stock, unit_cost, sale_price, supplier, description, location, created_at) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-      [product.id, product.tenantSlug, product.name, product.sku, product.category, product.currentStock, product.minStock, product.unitCost, product.salePrice, product.supplier, product.description, product.location, product.createdAt]
+      `insert into inventory_products (id, tenant_slug, name, sku, category, current_stock, min_stock, unit_cost, sale_price, supplier, description, location, tracking, created_at) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+      [product.id, product.tenantSlug, product.name, product.sku, product.category, product.currentStock, product.minStock, product.unitCost, product.salePrice, product.supplier, product.description, product.location, tracking ?? "none", product.createdAt]
     );
 
     return NextResponse.json({ product }, { status: 201 });
@@ -123,7 +126,7 @@ export async function PATCH(request: NextRequest) {
     await ensureInventoryTables();
     const context = validateTenantContext(request, "write");
     const body = await request.json();
-    const { id, name, sku, category, currentStock, minStock, unitCost, salePrice, supplier, description, location } = body;
+    const { id, name, sku, category, currentStock, minStock, unitCost, salePrice, supplier, description, location, tracking } = body;
     const tenantSlug = context.tenantSlug;
 
     if (!id) {
@@ -144,9 +147,33 @@ export async function PATCH(request: NextRequest) {
     if (supplier !== undefined) { updates.push(`supplier = $${idx++}`); values.push(supplier); }
     if (description !== undefined) { updates.push(`description = $${idx++}`); values.push(description); }
     if (location !== undefined) { updates.push(`location = $${idx++}`); values.push(location); }
+    if (tracking !== undefined) {
+      if (!["none", "serial", "batch"].includes(tracking)) {
+        return NextResponse.json({ error: "tracking must be 'none', 'serial', or 'batch'" }, { status: 400 });
+      }
+      // Route through setProductTracking so the "serials still in stock"
+      // guard applies when switching away from serial tracking.
+      const prod = (await db.query(
+        `select sku from inventory_products where id = $1 and tenant_slug = $2`,
+        [id, tenantSlug]
+      )).rows[0];
+      if (!prod) return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      const { setProductTracking } = await import("@/lib/inventory/lot-tracking");
+      try {
+        await setProductTracking(tenantSlug, prod.sku, tracking);
+      } catch (err) {
+        return NextResponse.json(
+          { error: err instanceof Error ? err.message : "Failed to set tracking" },
+          { status: 409 }
+        );
+      }
+    }
 
     if (updates.length === 0) {
-      return NextResponse.json({ error: "No fields to update" }, { status: 400 });
+      return NextResponse.json({ product: (await db.query(
+        `select * from inventory_products where id = $1 and tenant_slug = $2`,
+        [id, tenantSlug]
+      )).rows[0] });
     }
 
     values.push(id, tenantSlug);
