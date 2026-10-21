@@ -2,7 +2,7 @@
 # Deploy pisairtelerp to the VPS.
 #
 # Flow: package source → upload → server-side backup → rsync into /opt/syspro-erp
-#       → docker build → tag 'patched' → compose recreate → health check.
+#       → docker build → tag 'patched' → recreate app only → health check.
 #
 # Usage:
 #   scripts/deploy-vps.sh [image-tag]
@@ -14,6 +14,10 @@
 #
 # The build requires DATABASE_URL as a build arg because Next.js collects
 # page data (DB queries) during `next build`.
+#
+# SAFETY: syspro-erp-net is external and shared with pisairtel-nginx.
+# This script recreates ONLY the app container (--no-deps) and pre-flights
+# the network state. Never run `docker compose down` on this project.
 set -euo pipefail
 
 SSH_TARGET="${SSH_TARGET:-pisairtel-vps}"
@@ -22,6 +26,7 @@ STAGE_DIR="${STAGE_DIR:-/root/syspro-new}"
 BUILD_DATABASE_URL="${BUILD_DATABASE_URL:-postgresql://syspro:syspro_secure_pass_2026@syspro-erp-db:5432/syspro_erp}"
 IMAGE_TAG="${1:-depth-$(date +%Y%m%d%H%M)}"
 HEALTH_URL="${HEALTH_URL:-https://pisairtelerp.com/api/health}"
+NET_NAME="syspro-erp_syspro-erp-net"
 
 EXCLUDES=(
   --exclude=node_modules --exclude=.next --exclude=.git
@@ -49,14 +54,40 @@ rsync -a --delete \
   /root/syspro-new/ /opt/syspro-erp/
 REMOTE
 
+echo "==> Pre-flight: network + compose sanity"
+ssh "$SSH_TARGET" bash -s <<REMOTE
+set -euo pipefail
+# The shared network must exist and carry nginx before we touch anything.
+docker network inspect $NET_NAME --format '{{range .Containers}}{{.Name}} {{end}}' | grep -q pisairtel-nginx \
+  && echo "  network OK (nginx attached)" \
+  || echo "  WARN: pisairtel-nginx not attached to $NET_NAME"
+# Compose file must parse and declare the net external.
+cd $APP_DIR
+docker compose config --quiet && echo "  compose config OK"
+docker compose config | grep -A3 '^  syspro-erp-net:' | grep -q 'external: true' \
+  && echo "  network declared external" \
+  || { echo "  FAIL: syspro-erp-net is not external — refusing to deploy"; exit 1; }
+REMOTE
+
 echo "==> Building image syspro-erp-app:$IMAGE_TAG"
 ssh "$SSH_TARGET" "cd $APP_DIR && docker build \
   --build-arg DATABASE_URL='$BUILD_DATABASE_URL' \
   -t syspro-erp-app:$IMAGE_TAG ."
 
-echo "==> Tagging 'patched' and recreating app container"
+echo "==> Tagging 'patched' and recreating APP ONLY (--no-deps)"
 ssh "$SSH_TARGET" "docker tag syspro-erp-app:$IMAGE_TAG syspro-erp-app:patched \
-  && cd $APP_DIR && docker compose up -d syspro-erp-app"
+  && cd $APP_DIR && docker compose up -d --no-deps syspro-erp-app"
+
+echo "==> Post-deploy: verify network membership"
+ssh "$SSH_TARGET" bash -s <<REMOTE
+set -euo pipefail
+ATTACHED=\$(docker network inspect $NET_NAME --format '{{range .Containers}}{{.Name}} {{end}}')
+echo "  on $NET_NAME: \$ATTACHED"
+for c in syspro-erp-app syspro-erp-db pisairtel-nginx; do
+  echo "\$ATTACHED" | grep -qw "\$c" || { echo "  FAIL: \$c detached from network"; exit 1; }
+done
+docker ps --format '{{.Names}}\t{{.Status}}' | grep syspro-erp
+REMOTE
 
 echo "==> Health check"
 sleep 10
