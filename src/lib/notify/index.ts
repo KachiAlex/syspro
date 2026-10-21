@@ -397,21 +397,61 @@ export interface EmitEventInput {
   dedupeKey?: string;
 }
 
+// Event types arrive in two spellings — `invoice.issued` and `invoice_issued`.
+// Normalization keeps the raw value in domain_events (history) while rule
+// lookups and webhook dispatch match either form.
+function normalizeEventType(eventType: string): string {
+  return eventType.includes(".") ? eventType : eventType.replace(/_([^_]+)$/, ".$1");
+}
+
+// Lifecycle suffix → webhook event verb. Unmapped events skip dispatch.
+const WEBHOOK_EVENT_MAP: Record<string, "create" | "update" | "submit" | "cancel"> = {
+  created: "create",
+  issued: "submit", submitted: "submit", posted: "submit", run_posted: "submit",
+  made: "submit", converted: "submit", awarded: "submit", completed: "submit",
+  updated: "update", decided: "update", approved: "update", breached: "update",
+  flagged: "update", ready: "update", missed: "update", failed: "update", won: "update",
+  cancelled: "cancel", canceled: "cancel",
+};
+
 export async function emitEvent(input: EmitEventInput): Promise<void> {
   try {
     const sql = SQL;
     await ensureNotifyTables();
 
+    const eventType = input.eventType;
+    const normalized = normalizeEventType(eventType);
+
     await sql`insert into domain_events (tenant_slug, event_type, source_module, source_record_id, actor_id, payload)
-      values (${input.tenantSlug}, ${input.eventType}, ${input.sourceModule ?? null}, ${input.sourceRecordId ?? null},
+      values (${input.tenantSlug}, ${eventType}, ${input.sourceModule ?? null}, ${input.sourceRecordId ?? null},
         ${input.actorId ?? null}, ${JSON.stringify(input.payload ?? {})})`;
 
-    // Tenant rule override → fall back to defaults
-    const [ruleRow] = (await sql`select channels, recipients, enabled, subject_override from notification_rules
-      where tenant_slug = ${input.tenantSlug} and event_type = ${input.eventType} limit 1`) as any[];
+    // Webhook fan-out — subscriptions were previously a dead letter because
+    // dispatchDocEvent had no caller. Best-effort, never throws.
+    try {
+      const actionKey = normalized.slice(normalized.lastIndexOf(".") + 1);
+      const webhookEvent = WEBHOOK_EVENT_MAP[actionKey];
+      if (webhookEvent && input.sourceRecordId) {
+        const { dispatchDocEvent } = await import("@/lib/platform/webhooks");
+        await dispatchDocEvent({
+          tenantSlug: input.tenantSlug,
+          docType: input.sourceModule ?? normalized.slice(0, normalized.lastIndexOf(".")),
+          docId: input.sourceRecordId,
+          event: webhookEvent,
+          doc: input.payload ?? {},
+        });
+      }
+    } catch (whErr) {
+      console.error(`[notify] webhook dispatch failed for ${eventType}:`, whErr);
+    }
+
+    // Tenant rule override → fall back to defaults; try both spellings
+    const ruleRows = (await sql`select channels, recipients, enabled, subject_override from notification_rules
+      where tenant_slug = ${input.tenantSlug} and event_type = any(${[eventType, normalized]}) limit 1`) as any[];
+    const ruleRow = ruleRows[0];
     const rule: Rule = ruleRow
       ? { channels: ruleRow.channels ?? [], recipients: ruleRow.recipients ?? [], enabled: ruleRow.enabled, subject_override: ruleRow.subject_override }
-      : DEFAULT_RULES[input.eventType] ?? { channels: ["in_app"], recipients: [{ kind: "admin" }], enabled: true };
+      : DEFAULT_RULES[eventType] ?? DEFAULT_RULES[normalized] ?? { channels: ["in_app"], recipients: [{ kind: "admin" }], enabled: true };
     if (!rule.enabled) return;
 
     const payload = input.payload ?? {};
@@ -433,7 +473,7 @@ export async function emitEvent(input: EmitEventInput): Promise<void> {
     let body = rendered;
     try {
       const [tpl] = (await sql`select subject_template, body_template from notification_templates
-        where tenant_slug = ${input.tenantSlug} and event_type = ${input.eventType} limit 1`) as any[];
+        where tenant_slug = ${input.tenantSlug} and event_type = any(${[input.eventType, normalized]}) limit 1`) as any[];
       if (tpl?.body_template) {
         const interp = (s: string) =>
           s.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, k) => {

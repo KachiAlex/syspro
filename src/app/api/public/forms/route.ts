@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getWebFormBySlug, submitWebForm } from "@/lib/platform/web-forms";
+import { checkRateLimitAsync, getRateLimitKey } from "@/lib/rate-limit";
 
 // Public (unauthenticated) web-form schema + submission endpoint.
 
@@ -18,6 +19,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const rl = await checkRateLimitAsync(`webform:${getRateLimitKey(request)}`, 20, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many submissions — try again later" }, { status: 429 });
+  }
   try {
     const body = await request.json();
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();

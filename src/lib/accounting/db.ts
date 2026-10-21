@@ -340,10 +340,10 @@ export async function createJournalEntry(
   for (const lineInput of input.lines) {
     const lineResult = await db.query<JournalLine>(
       `INSERT INTO journal_entry_lines (
-        entry_id, line_number, account_id,
-        debit_amount, credit_amount, branch_id, department_id, project_id,
+        entry_id, journal_entry_id, line_number, account_id,
+        debit_amount, credit_amount, debit, credit, branch_id, department_id, project_id,
         cost_center_id, description
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      ) VALUES ($1, $1, $2, $3, $4, $5, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *`,
       [
         entry.id,
@@ -388,9 +388,10 @@ export async function postJournalEntry(
     throw new Error("Journal entry already posted");
   }
 
-  // Update entry status
+  // Update entry status — set BOTH columns: canonical reports/bisect filter on
+  // lowercase `status`, the draft/approve workflow uses uppercase `approval_status`.
   const result = await db.query<JournalEntry>(
-    `UPDATE journal_entries SET approval_status = 'POSTED', approved_by = $1, 
+    `UPDATE journal_entries SET approval_status = 'POSTED', status = 'posted', approved_by = $1,
      approved_at = CURRENT_TIMESTAMP, posted_at = CURRENT_TIMESTAMP
      WHERE id = $2 RETURNING *`,
     [approverEmail, entryId]

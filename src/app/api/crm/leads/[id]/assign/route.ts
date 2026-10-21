@@ -23,20 +23,17 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   }
 
   try {
-    const existing = await getLead(params.id);
-    if (!existing) {
-      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
-    }
-    if (existing.tenantSlug !== parsed.data.tenantSlug) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
-
     const auth = await resolveCrmAuth(request);
     if (!auth) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
     if (auth.session.tenantSlug !== parsed.data.tenantSlug) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    const existing = await getLead(params.id);
+    if (!existing || existing.tenantSlug !== parsed.data.tenantSlug) {
+      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
     }
     // Only admin, HOD, or the lead owner can assign
     if (!(await canAccessCrmRecord(auth, existing))) {

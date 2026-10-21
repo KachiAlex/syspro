@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getOrderStatus, placeOrder } from "@/lib/storefront/orders";
+import { checkRateLimitAsync, getRateLimitKey } from "@/lib/rate-limit";
 
 type Params = { params: Promise<{ tenant: string }> };
 
@@ -19,6 +20,10 @@ const orderSchema = z.object({
 
 /** PUBLIC — place an order; pricing is resolved server-side. */
 export async function POST(request: NextRequest, { params }: Params) {
+  const rl = await checkRateLimitAsync(`storefront-order:${getRateLimitKey(request)}`, 15, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many orders — try again later" }, { status: 429 });
+  }
   const { tenant } = await params;
   const body = await request.json();
   const parsed = orderSchema.safeParse(body);

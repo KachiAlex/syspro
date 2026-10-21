@@ -218,7 +218,9 @@ export async function convertToSalesOrder(
   }
 
   const items = quote.items.map((i: any) => ({
+    sku: i.sku ?? null,
     description: i.description,
+    name: i.description,
     quantity: i.quantity,
     unitPrice: i.unitPrice,
   }));
