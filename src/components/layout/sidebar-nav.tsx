@@ -67,6 +67,12 @@ const navigationItems = [
       { title: "Recurring", href: "/tenant-admin/recurring" },
       { title: "Returns", href: "/tenant-admin/returns" },
       { title: "Tax", href: "/tenant-admin/tax" },
+      { title: "Tax Engine", href: "/tenant-admin/finance/tax-engine" },
+      { title: "Pricing", href: "/tenant-admin/finance/pricing" },
+      { title: "Treasury", href: "/tenant-admin/finance/treasury" },
+      { title: "Deferred", href: "/tenant-admin/finance/deferred" },
+      { title: "Ledger Integrity", href: "/tenant-admin/finance/integrity" },
+      { title: "Finance Tools", href: "/tenant-admin/finance/tools" },
       { title: "Reports", href: "/tenant-admin/finance/reports" },
     ]
   },
