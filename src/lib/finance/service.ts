@@ -62,7 +62,7 @@ async function fetchFinanceData(filters: FinanceFilters): Promise<FinanceDataSet
   }
 
   const accountsQ = `select * from finance_accounts where tenant_slug = $1 ${whereExtra} order by balance desc`;
-  const accounts = (await db.query<FinanceAccountRecord>(accountsQ, paramsA)).rows;
+  const accountsP = db.query<FinanceAccountRecord>(accountsQ, paramsA).then((r) => r.rows);
 
   const paramsR: any[] = [filters.tenantSlug];
   idx = 1;
@@ -78,7 +78,7 @@ async function fetchFinanceData(filters: FinanceFilters): Promise<FinanceDataSet
     whereR += ` and (branch_id is null or branch_id = $${idx})`;
   }
   const receivablesQ = `select * from finance_schedules where tenant_slug = $1 ${whereR} order by due_date asc limit 12`;
-  const receivables = (await db.query<FinanceScheduleRecord>(receivablesQ, paramsR)).rows;
+  const receivablesP = db.query<FinanceScheduleRecord>(receivablesQ, paramsR).then((r) => r.rows);
 
   const paramsP: any[] = [filters.tenantSlug];
   idx = 1;
@@ -94,7 +94,7 @@ async function fetchFinanceData(filters: FinanceFilters): Promise<FinanceDataSet
     whereP += ` and (branch_id is null or branch_id = $${idx})`;
   }
   const payablesQ = `select * from finance_schedules where tenant_slug = $1 ${whereP} order by due_date asc limit 12`;
-  const payables = (await db.query<FinanceScheduleRecord>(payablesQ, paramsP)).rows;
+  const payablesP = db.query<FinanceScheduleRecord>(payablesQ, paramsP).then((r) => r.rows);
 
   const paramsE: any[] = [filters.tenantSlug];
   idx = 1;
@@ -110,7 +110,7 @@ async function fetchFinanceData(filters: FinanceFilters): Promise<FinanceDataSet
     whereE += ` and (branch_id is null or branch_id = $${idx})`;
   }
   const expensesQ = `select * from finance_expense_categories where tenant_slug = $1 ${whereE} order by amount desc limit 10`;
-  const expenses = (await db.query<FinanceExpenseCategoryRecord>(expensesQ, paramsE)).rows;
+  const expensesP = db.query<FinanceExpenseCategoryRecord>(expensesQ, paramsE).then((r) => r.rows);
 
   const paramsT: any[] = [filters.tenantSlug, filters.timeframe];
   idx = 2;
@@ -126,8 +126,11 @@ async function fetchFinanceData(filters: FinanceFilters): Promise<FinanceDataSet
     whereT += ` and (branch_id is null or branch_id = $${idx})`;
   }
   const trendQ = `select * from finance_trend_points where tenant_slug = $1 ${whereT} order by created_at asc`;
-  const trendPoints = (await db.query<FinanceTrendPointRecord>(trendQ, paramsT)).rows;
+  const trendPointsP = db.query<FinanceTrendPointRecord>(trendQ, paramsT).then((r) => r.rows);
 
+  const [accounts, receivables, payables, expenses, trendPoints] = await Promise.all([
+    accountsP, receivablesP, payablesP, expensesP, trendPointsP,
+  ]);
   return { accounts, receivables, payables, expenses, trendPoints };
 }
 

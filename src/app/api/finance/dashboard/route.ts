@@ -28,21 +28,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: parseResult.error.flatten() }, { status: 400 });
     }
 
-    const snapshot = await getFinanceDashboardSnapshot(parseResult.data);
-
-    // Event-bus aggregates: finance_events → finance_cached_summary via the
-    // trg_finance_events_process trigger + cron refresh; surfaced through the
-    // finance_dashboard_metrics view. Additive field — missing view never
-    // breaks the snapshot.
-    let eventMetrics: Record<string, unknown> | null = null;
-    try {
-      const rows = (await SQL`
-        select * from finance_dashboard_metrics where tenant_slug = ${context.tenantSlug}
-      `) as any[];
-      eventMetrics = rows[0] ?? null;
-    } catch (metricsError) {
-      console.warn("finance_dashboard_metrics unavailable:", metricsError);
-    }
+    // Run the snapshot and the event-metrics lookup in parallel — they are
+    // independent reads and the metrics view is optional by design.
+    const [snapshot, eventMetrics] = await Promise.all([
+      getFinanceDashboardSnapshot(parseResult.data),
+      (async (): Promise<Record<string, unknown> | null> => {
+        try {
+          const rows = (await SQL`
+            select * from finance_dashboard_metrics where tenant_slug = ${context.tenantSlug}
+          `) as any[];
+          return rows[0] ?? null;
+        } catch (metricsError) {
+          // finance_dashboard_metrics is maintained by trigger + cron; a
+          // missing view must never break the snapshot.
+          console.warn("finance_dashboard_metrics unavailable:", metricsError);
+          return null;
+        }
+      })(),
+    ]);
 
     return NextResponse.json({
       filters: parseResult.data,

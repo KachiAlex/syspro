@@ -18,12 +18,13 @@ export default function CrmMastersPage() {
   const [f, setF] = useState<Record<string, any>>({});
 
   const load = useCallback(async () => {
-    const out: Record<string, any[]> = {};
-    for (const [key, view] of Object.entries(VIEWS)) {
-      const d = await fetch(`/api/crm/masters?view=${view}`).then((r) => r.json()).catch(() => ({}));
-      out[key] = d.territories ?? d.items ?? d.competitors ?? d.notes ?? d.appointments ?? d.messages ?? [];
-    }
-    setData(out);
+    const entries = await Promise.all(
+      Object.entries(VIEWS).map(async ([key, view]) => {
+        const d = await fetch(`/api/crm/masters?view=${view}`).then((r) => r.json()).catch(() => ({}));
+        return [key, d.territories ?? d.items ?? d.competitors ?? d.notes ?? d.appointments ?? d.messages ?? []] as const;
+      })
+    );
+    setData(Object.fromEntries(entries));
   }, []);
 
   useEffect(() => { load(); }, [load]);
