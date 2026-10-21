@@ -51,4 +51,8 @@ volumes:
   syspro_erp_pgdata:
 
 networks:
+  # External: shared with pisairtel-nginx (connected manually). Compose must
+  # never create/remove it — a managed network teardown here strands nginx.
   syspro-erp-net:
+    external: true
+    name: syspro-erp_syspro-erp-net

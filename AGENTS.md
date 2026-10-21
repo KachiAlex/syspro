@@ -14,6 +14,7 @@
 - `docker-compose.yml` and `Dockerfile` ARE tracked in this repo — keep them in sync; secrets live in `/opt/syspro-erp/.env` (untracked, see `.env.example`).
 - Deploy: `scripts/deploy-vps.sh` (packages source, backs up server dir to `/root/syspro-erp-backup-*`, rsyncs, builds with `--build-arg DATABASE_URL`, tags `patched`, recreates, health-checks).
 - The `next build` requires `DATABASE_URL` as a build arg — page-data collection queries the DB at build time.
+- `syspro-erp-net` is declared `external` in compose because `pisairtel-nginx` is attached to it. NEVER let compose manage/remove it — `docker compose up` on a managed version tears the network down and strands nginx + db with empty network configs (happened 2026-10-21; fix: reconnect via `docker network connect` or recreate with the external declaration).
 - Server-only dirs that must never be deleted by syncs: `/opt/shared-nginx/conf.d` (shared nginx vhosts), `/opt/syspro-erp/.env`, `/opt/pisairtel-sms/docker-compose.override.yml` (nginx mounts + external networks).
 
 ## Database access for tests/migrations
