@@ -1,5 +1,12 @@
 # Project notes
 
+## VPS access (three independent paths)
+
+1. `pisairtel-vps` — direct SSH on port 22 (key-only; UFW allows 22 to all — do NOT re-add per-IP allow rules: the admin IP is dynamic and whitelist rules caused the Oct-21 lockout)
+2. `pisairtel-vps-ts` — SSH over Tailscale (100.103.180.105); works when port 22 is filtered since Tailscale tunnels outbound
+3. `tailscale ssh root@100.103.180.105` — keyless Tailscale SSH; survives even sshd failure (served by tailscaled, not OpenSSH)
+4. Out-of-band: provider noVNC console via the hosting panel
+
 ## Deployment (VPS)
 
 - Production runs in Docker on the VPS (`pisairtel-vps` SSH alias, host 162.35.104.28).
