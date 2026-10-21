@@ -5,6 +5,17 @@ against this codebase. Legend: ❌ missing · 🟡 partial/simplified · ✅ par
 
 Status after tranches A–G + module audit implementation (Nov 2025).
 
+**Update (Oct 2026):** Tranches H–M shipped in `38cad07` — quotations→SO,
+RFQ + supplier-quotation comparison, material requests + reorder rules,
+UOM, variants, item-group tree, stock reconciliation/reservation/receipt-QC,
+bundles, workstations/routings/job cards/production plans/forecasts,
+subcontracting supplied-materials ledger, prospects/contracts/sales-stage
+config/email campaigns/warranty claims/SLA engine, check-ins/leave accrual/
+advances/lifecycle, and the platform layer (workflow state machine, print
+formats, webhook subscriptions, web forms, data import, Paystack/Flutterwave
+gateways, maintenance, global search). Remaining gaps are the long-tail
+items listed per module below.
+
 ---
 
 ## 1. Accounts (~192 DocTypes) — ✅ ~95–100%
