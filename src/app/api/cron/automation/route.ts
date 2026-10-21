@@ -234,6 +234,11 @@ export async function POST(request: NextRequest) {
     const { drainNotificationOutbox } = await import("@/lib/notify");
     const notificationResults = await drainNotificationOutbox(BATCH_LIMIT);
 
+    // 9. Deliver queued webhook deliveries — subscriptions enqueue rows via
+    //    dispatchDocEvent; without this pass they never reach endpoints.
+    const { processDeliveries } = await import("@/lib/platform/webhooks");
+    const webhookResults = await processDeliveries(BATCH_LIMIT);
+
     return NextResponse.json({
       actions: actionResults,
       processed: actionResults.length,
@@ -247,6 +252,7 @@ export async function POST(request: NextRequest) {
       reportJobsProcessed: reportResults.length,
       reportJobs: reportResults,
       notifications: notificationResults,
+      webhookDeliveries: webhookResults,
     });
   } catch (error) {
     console.error("Cron automation runner failed:", error);
