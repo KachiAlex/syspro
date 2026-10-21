@@ -26,6 +26,34 @@ services:
       timeout: 5s
       retries: 5
 
+  # pgBouncer fronting Postgres in SESSION mode (required — POS uses
+  # session-scoped pg_advisory_lock across a dedicated pooled client).
+  # The app connects here; migrations/scripts keep using DATABASE_URL
+  # (direct to syspro-erp-db) from .env.
+  syspro-erp-pool:
+    image: edoburu/pgbouncer:v1.24.1-p1
+    container_name: syspro-erp-pool
+    restart: unless-stopped
+    mem_limit: 128m
+    environment:
+      DB_HOST: syspro-erp-db
+      DB_PORT: "5432"
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DB}
+      POOL_MODE: session
+      MAX_CLIENT_CONN: "500"
+      DEFAULT_POOL_SIZE: "20"
+      RESERVE_POOL_SIZE: "5"
+      LISTEN_PORT: "6432"
+      ADMIN_USERS: ${POSTGRES_USER}
+      AUTH_TYPE: scram-sha-256
+    depends_on:
+      syspro-erp-db:
+        condition: service_healthy
+    networks:
+      - syspro-erp-net
+
   syspro-erp-app:
     image: syspro-erp-app:${APP_IMAGE_TAG:-patched}
     container_name: syspro-erp-app
@@ -34,7 +62,8 @@ services:
     ports:
       - "3003:3000"
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@syspro-erp-pool:6432/${POSTGRES_DB}
+      SQL_SLOW_MS: ${SQL_SLOW_MS:-500}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
@@ -49,6 +78,8 @@ services:
     depends_on:
       syspro-erp-db:
         condition: service_healthy
+      syspro-erp-pool:
+        condition: service_started
     networks:
       - syspro-erp-net
 

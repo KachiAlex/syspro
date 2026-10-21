@@ -2,7 +2,8 @@ name: Migrate DB and Check
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   migrate:
@@ -15,20 +16,13 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: '20'
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
-        working-directory: ./syspro-erp-frontend
 
       - name: Run migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/run-migrations.js
-        working-directory: ./syspro-erp-frontend
-
-      - name: Check tenants table (optional)
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: node scripts/query-tenants.mjs
-        working-directory: ./syspro-erp-frontend

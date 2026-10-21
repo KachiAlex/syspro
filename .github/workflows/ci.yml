@@ -2,13 +2,34 @@ name: CI
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
   push:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: syspro
+          POSTGRES_PASSWORD: ci_test_pass
+          POSTGRES_DB: syspro_erp
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U syspro"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://syspro:ci_test_pass@localhost:5432/syspro_erp?sslmode=disable
+      SESSION_SECRET: ci-session-secret
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -17,19 +38,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: npm
 
-      - name: Install frontend dependencies
-        working-directory: syspro-erp-frontend
+      - name: Install dependencies
         run: npm ci
 
+      - name: Apply DB migrations
+        run: node scripts/run-migrations.js
+
       - name: TypeScript check
-        working-directory: syspro-erp-frontend
         run: npx tsc --noEmit
 
-      - name: Build frontend
-        working-directory: syspro-erp-frontend
-        run: npm run build
+      - name: Lint
+        run: npx next lint --max-warnings=1000
 
       - name: Run tests
-        working-directory: syspro-erp-frontend
         run: npm run test:run
