@@ -154,21 +154,20 @@ export async function buildMps(input: {
     [input.tenantSlug, input.periodFrom, input.periodTo]
   )).rows;
 
-  // sales_orders.items is a JSON column — aggregate per-SKU in JS.
-  const sos = (await db.query<any>(
-    `select items from sales_orders
-     where tenant_slug = $1 and status not in ('Cancelled','Fulfilled','Closed')
-       and coalesce(due_date::date, created_at::date) between $2 and $3`,
+  // sales_order_items is a trigger-maintained normalized view of the
+  // sales_orders.items JSON — aggregate per-SKU in SQL.
+  const soRows = (await db.query<any>(
+    `select i.sku, sum(i.quantity) as qty
+     from sales_order_items i
+     join sales_orders so on so.id = i.order_id and so.tenant_slug = i.tenant_slug
+     where i.tenant_slug = $1 and so.status not in ('Cancelled','Fulfilled','Closed')
+       and coalesce(so.due_date::date, so.created_at::date) between $2 and $3
+     group by i.sku`,
     [input.tenantSlug, input.periodFrom, input.periodTo]
   )).rows;
   const orderQty: Record<string, number> = {};
-  for (const o of sos) {
-    let items: any[] = [];
-    try { items = Array.isArray(o.items) ? o.items : JSON.parse(o.items ?? "[]"); } catch { /* skip */ }
-    for (const it of items) {
-      const sku = it.sku ?? it.product_sku ?? it.productSku;
-      if (sku) orderQty[sku] = (orderQty[sku] ?? 0) + Number(it.quantity ?? it.qty ?? 0);
-    }
+  for (const r of soRows) {
+    if (r.sku) orderQty[r.sku] = Number(r.qty);
   }
 
   const skus = new Set([...forecast.map((f: any) => f.product_sku), ...Object.keys(orderQty)]);

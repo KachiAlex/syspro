@@ -13,6 +13,7 @@ import { validateTenantAccess, type SessionUser } from "./auth-helpers";
 import { db, sql as SQL } from "./sql-client";
 import { getTenantUserPermissions } from "./tenant-admin/permissions";
 import { meterApiCall, usageModuleFromPath } from "./tenant-usage";
+import { cached } from "./cache";
 
 // Route handlers may type the param as `Request` or `NextRequest` — at runtime
 // it is always a NextRequest (has .cookies/.nextUrl).
@@ -182,6 +183,18 @@ export async function loadPortalPermissions(
   tenant: string,
   user: SessionUser
 ): Promise<Record<string, boolean>> {
+  // Per-request hot path — cache for 60s keyed on the user identity.
+  return cached(
+    `portal-perms:${tenant}:${user.id}:${user.email ?? ""}`,
+    60_000,
+    () => loadPortalPermissionsUncached(tenant, user)
+  );
+}
+
+async function loadPortalPermissionsUncached(
+  tenant: string,
+  user: SessionUser
+): Promise<Record<string, boolean>> {
   try {
     const sql = SQL;
     let rows = await sql`
@@ -305,13 +318,19 @@ export async function requireModuleAccess(
   if (!user.isEmployee && user.email) {
     try {
       const sql = SQL;
-      const rows = await sql`
-        SELECT role FROM tenant_admins
-        WHERE lower(email) = lower(${user.email}) AND tenant_slug = ${tenant}
-        LIMIT 1
-      `;
-      const row = (Array.isArray(rows) ? rows : [])[0] as any;
-      if (row) effectiveRole = row.role || "viewer";
+      effectiveRole = await cached(
+        `tenant-role:${tenant}:${String(user.email).toLowerCase()}`,
+        60_000,
+        async () => {
+          const rows = await sql`
+            SELECT role FROM tenant_admins
+            WHERE lower(email) = lower(${user.email!}) AND tenant_slug = ${tenant}
+            LIMIT 1
+          `;
+          const row = (Array.isArray(rows) ? rows : [])[0] as any;
+          return (row?.role as string) || effectiveRole;
+        }
+      );
     } catch {
       // lookup failure — keep session role
     }

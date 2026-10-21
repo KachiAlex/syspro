@@ -34,16 +34,32 @@ export interface DbClient {
   mapRows: <T = any>(rows: T[]) => any[];
 }
 
+// Set SQL_SLOW_MS (e.g. "500") to warn on queries slower than that threshold.
+const SLOW_MS = Number(process.env.SQL_SLOW_MS ?? 0) || 0;
+
+function warnIfSlow(startedAt: number, queryText: string) {
+  if (!SLOW_MS) return;
+  const ms = Date.now() - startedAt;
+  if (ms >= SLOW_MS) {
+    const preview = queryText.replace(/\s+/g, " ").trim().slice(0, 160);
+    console.warn(`[slow-query] ${ms}ms :: ${preview}`);
+  }
+}
+
 export const db: DbClient = {
   async sql<T = any>(strings: TemplateStringsArray, ...args: any[]) {
     const client = getSql();
+    const startedAt = SLOW_MS ? Date.now() : 0;
     const rows = await (client as any)(strings, ...args);
+    if (SLOW_MS) warnIfSlow(startedAt, strings.join("?"));
     return db.mapRows(rows) as unknown as T;
   },
 
   async query<T = any>(queryText: string, params?: any[]) {
     const client = getSql();
+    const startedAt = SLOW_MS ? Date.now() : 0;
     const res = await (client as any).query(queryText, params || []);
+    if (SLOW_MS) warnIfSlow(startedAt, queryText);
     const rows = (res.rows ?? []) as T[];
     const rowCount = res.rowCount ?? rows.length;
     return { rows, rowCount, count: rowCount, raw: res } as QueryResult<T>;
@@ -115,8 +131,12 @@ class SQLFragment {
   ) {
     const { text, values } = this.toSQL();
     const client = getSql();
+    const startedAt = SLOW_MS ? Date.now() : 0;
     const execPromise = (client as any).query
-      ? (client as any).query(text, values).then((res: any) => res.rows)
+      ? (client as any).query(text, values).then((res: any) => {
+          warnIfSlow(startedAt, text);
+          return res.rows;
+        })
       : (client as any)(this.strings, ...this.args);
 
     return Promise.resolve(execPromise)

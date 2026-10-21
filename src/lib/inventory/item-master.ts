@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 
 import { db, sql as SQL } from "@/lib/sql-client";
 import { ensureOnce } from "@/lib/ensure-once";
+import { cached, invalidatePrefix } from "@/lib/cache";
 
 export function ensureItemMasterTables() {
   return ensureOnce("inventory/item-master:ensureTables", ensureItemMasterTablesRun);
@@ -86,6 +87,7 @@ async function ensureItemMasterTablesRun() {
 
 export async function listUoms(tenantSlug: string) {
   await ensureItemMasterTables();
+  return cached(`refdata:uoms:${tenantSlug}`, 300_000, async () => {
   const uoms = (await db.query(
     `SELECT u.*, c.name AS category_name FROM inventory_uoms u
      LEFT JOIN inventory_uom_categories c ON c.id = u.category_id
@@ -93,10 +95,12 @@ export async function listUoms(tenantSlug: string) {
   const conversions = (await db.query(
     `SELECT * FROM inventory_uom_conversions WHERE tenant_slug = $1`, [tenantSlug])).rows;
   return { uoms, conversions };
+  });
 }
 
 export async function upsertUom(tenantSlug: string, name: string, opts?: { categoryId?: string; mustBeWhole?: boolean }) {
   await ensureItemMasterTables();
+  invalidatePrefix(`refdata:uoms:${tenantSlug}`);
   return (await db.query(
     `INSERT INTO inventory_uoms (tenant_slug, name, category_id, must_be_whole)
      VALUES ($1,$2,$3,$4)
@@ -107,6 +111,8 @@ export async function upsertUom(tenantSlug: string, name: string, opts?: { categ
 
 export async function upsertUomConversion(tenantSlug: string, fromUom: string, toUom: string, factor: number) {
   await ensureItemMasterTables();
+  invalidatePrefix(`refdata:uoms:${tenantSlug}`);
+  invalidatePrefix(`refdata:uomconv:${tenantSlug}`);
   return (await db.query(
     `INSERT INTO inventory_uom_conversions (tenant_slug, from_uom, to_uom, factor)
      VALUES ($1,$2,$3,$4)
@@ -122,8 +128,10 @@ export async function upsertUomConversion(tenantSlug: string, fromUom: string, t
 export async function convertUom(tenantSlug: string, quantity: number, fromUom: string, toUom: string): Promise<number> {
   await ensureItemMasterTables();
   if (fromUom === toUom) return quantity;
-  const rows = (await db.query(
-    `SELECT from_uom, to_uom, factor FROM inventory_uom_conversions WHERE tenant_slug = $1`, [tenantSlug])).rows;
+  const rows = await cached(`refdata:uomconv:${tenantSlug}`, 300_000, async () =>
+    (await db.query(
+      `SELECT from_uom, to_uom, factor FROM inventory_uom_conversions WHERE tenant_slug = $1`, [tenantSlug])).rows
+  );
   const edges: { from: string; to: string; factor: number }[] = [];
   for (const r of rows) {
     edges.push({ from: r.from_uom, to: r.to_uom, factor: Number(r.factor) });
@@ -147,17 +155,19 @@ export async function convertUom(tenantSlug: string, quantity: number, fromUom: 
 
 export async function listItemGroups(tenantSlug: string) {
   await ensureItemMasterTables();
-  const rows = (await db.query(
+  return cached(`refdata:itemgroups:${tenantSlug}`, 300_000, async () =>
+    (await db.query(
     `SELECT g.*, p.name AS parent_name,
        (SELECT count(*) FROM inventory_products i WHERE i.item_group_id = g.id)::int AS product_count
      FROM inventory_item_groups g
      LEFT JOIN inventory_item_groups p ON p.id = g.parent_id
-     WHERE g.tenant_slug = $1 ORDER BY g.name`, [tenantSlug])).rows;
-  return rows;
+     WHERE g.tenant_slug = $1 ORDER BY g.name`, [tenantSlug])).rows
+  );
 }
 
 export async function upsertItemGroup(tenantSlug: string, name: string, parentId?: string | null, isGroup?: boolean) {
   await ensureItemMasterTables();
+  invalidatePrefix(`refdata:itemgroups:${tenantSlug}`);
   if (parentId) {
     const parent = (await db.query(
       `SELECT id FROM inventory_item_groups WHERE id = $1 AND tenant_slug = $2`, [parentId, tenantSlug])).rows[0];

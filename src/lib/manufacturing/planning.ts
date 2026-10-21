@@ -384,20 +384,18 @@ export async function createProductionPlan(input: {
 
   if (input.includeSalesOrders !== false) {
     const orders = (await db.query(
-      `SELECT items FROM sales_orders
-       WHERE tenant_slug = $1 AND status NOT IN ('Completed','Delivered','Fulfilled','Cancelled')`,
+      `SELECT i.sku, sum(i.quantity) AS qty, min(i.product_name) AS name
+       FROM sales_order_items i
+       JOIN sales_orders so ON so.id = i.order_id AND so.tenant_slug = i.tenant_slug
+       WHERE i.tenant_slug = $1 AND so.status NOT IN ('Completed','Delivered','Fulfilled','Cancelled')
+       GROUP BY i.sku`,
       [input.tenantSlug])).rows;
     for (const o of orders) {
-      let items: any[] = [];
-      try { items = typeof o.items === "string" ? JSON.parse(o.items) : (o.items ?? []); } catch { /* skip */ }
-      for (const it of items) {
-        const sku = it.productId ?? it.sku ?? it.product_sku;
-        if (!sku) continue;
-        const d = demand.get(sku) ?? { soQty: 0, fcQty: 0 };
-        d.soQty += Number(it.quantity ?? 0);
-        d.name = d.name ?? it.description ?? it.name;
-        demand.set(sku, d);
-      }
+      if (!o.sku) continue;
+      const d = demand.get(o.sku) ?? { soQty: 0, fcQty: 0 };
+      d.soQty += Number(o.qty);
+      d.name = d.name ?? o.name;
+      demand.set(o.sku, d);
     }
   }
 

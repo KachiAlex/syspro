@@ -59,9 +59,15 @@ export async function salesOrderAnalysis(filter: OrderAnalysisFilter): Promise<S
     `select so.id, so.order_number, so.customer_name, so.customer_id, so.order_date,
             so.quantity, so.total, so.status, so.invoice_id, so.items,
             coalesce(inv.amount, 0) invoiced_amount,
-            inv.status invoice_status
+            inv.status invoice_status,
+            agg.item_qty, agg.item_amount
      from sales_orders so
      left join finance_invoices inv on inv.id::text = so.invoice_id and inv.tenant_slug = so.tenant_slug
+     left join (
+       select order_id, sum(quantity) item_qty,
+              sum(case when line_total > 0 then line_total else quantity * unit_price end) item_amount
+       from sales_order_items group by order_id
+     ) agg on agg.order_id = so.id
      where ${where}
      order by so.order_date desc`,
     params,
@@ -69,9 +75,8 @@ export async function salesOrderAnalysis(filter: OrderAnalysisFilter): Promise<S
 
   return (rows as any[]).map((r) => {
     const status = String(r.status ?? "Pending");
-    const items = parseItems(r.items);
-    const orderedQty = Number(r.quantity) || items.reduce((s, i) => s + Number(i.quantity ?? 0), 0);
-    const orderedAmount = Number(r.total) || items.reduce((s, i) => s + Number(i.quantity ?? 0) * Number(i.unitPrice ?? 0), 0);
+    const orderedQty = Number(r.quantity) || Number(r.item_qty ?? 0);
+    const orderedAmount = Number(r.total) || Number(r.item_amount ?? 0) || parseItems(r.items).reduce((s, i) => s + Number(i.quantity ?? 0) * Number(i.unitPrice ?? 0), 0);
     const invoiced = r.invoice_id && r.invoice_status !== "void" ? Number(r.invoiced_amount ?? 0) : 0;
     const pending = Math.max(0, Math.round((orderedAmount - invoiced) * 100) / 100);
     return {
