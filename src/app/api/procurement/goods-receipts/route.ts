@@ -102,6 +102,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Posting preflight: abort the receipt before any write if the required
+    // posting accounts are misconfigured (Venditium checkout pattern).
+    const { assertPostingAccountsConfigured } = await import("@/lib/finance/posting-settings");
+    try {
+      await assertPostingAccountsConfigured(tenantSlug, ["inventory_asset", "goods_received_not_invoiced"]);
+    } catch (e) {
+      return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 422 });
+    }
+
     const id = randomUUID();
     const receiptNumber = `GR-${Date.now().toString().slice(-8)}`;
     const totalAmount = items.reduce((sum: number, item: any) => sum + item.quantity * item.unitCost, 0);

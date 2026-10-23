@@ -40,6 +40,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
           tenantSlug: context.tenantSlug,
           mrId: params.id,
           supplierId: body.supplierId ?? null,
+          sourceWarehouseId: body.sourceWarehouseId ?? null,
           itemIds: body.itemIds,
           userId: context.userId,
         }));

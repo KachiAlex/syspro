@@ -76,6 +76,40 @@ export async function listPostingSettings(tenantSlug: string) {
   }));
 }
 
+/**
+ * Fail-fast preflight (Venditium checkout pattern): for each key, if the
+ * tenant configured an override, verify the account actually exists in
+ * chart_of_accounts — a bad override must abort the transaction instead of
+ * silently auto-creating a junk account. Default fallbacks are always valid
+ * (postGLEntry auto-provisions them).
+ */
+export async function assertPostingAccountsConfigured(
+  tenantSlug: string,
+  keys: PostingKey[]
+): Promise<void> {
+  await ensurePostingSettingsTables();
+  const rows = (await db.query<any>(
+    `select setting_key, account_code from finance_posting_settings
+     where tenant_slug = $1 and setting_key = any($2)`,
+    [tenantSlug, keys]
+  )).rows;
+  if (!rows.length) return; // all defaults — always provisioned on demand
+  const codes = rows.map((r: any) => r.account_code);
+  const existing = (await db.query<any>(
+    `select coalesce(code, account_code) as code from chart_of_accounts
+     where coalesce(code, account_code) = any($1)
+       and (tenant_slug = $2 or tenant_slug is null)`,
+    [codes, tenantSlug]
+  )).rows;
+  const found = new Set(existing.map((r: any) => r.code));
+  const missing = rows
+    .filter((r: any) => !found.has(r.account_code))
+    .map((r: any) => `${r.setting_key} → ${r.account_code}`);
+  if (missing.length) {
+    throw new Error(`Posting accounts not configured: ${missing.join(", ")}`);
+  }
+}
+
 export async function setPostingAccount(
   tenantSlug: string,
   key: string,

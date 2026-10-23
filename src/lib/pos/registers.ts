@@ -14,11 +14,13 @@ async function ensureRun(sql = SQL) {
       code text not null,
       name text not null,
       warehouse_id text,
+      branch_id text,
       is_active boolean not null default true,
       created_at timestamptz not null default now(),
       unique (tenant_slug, code)
     )
   `;
+  await sql`alter table if exists pos_registers add column if not exists branch_id text`;
 }
 
 export interface PosRegister {
@@ -26,6 +28,7 @@ export interface PosRegister {
   code: string;
   name: string;
   warehouseId: string | null;
+  branchId: string | null;
   isActive: boolean;
   createdAt: string;
 }
@@ -36,6 +39,7 @@ function normalize(r: any): PosRegister {
     code: r.code,
     name: r.name,
     warehouseId: r.warehouse_id,
+    branchId: r.branch_id,
     isActive: r.is_active,
     createdAt: r.created_at,
   };

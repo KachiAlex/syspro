@@ -18,6 +18,7 @@ const createSchema = z.object({
   direction: z.enum(["sales", "purchase"]),
   invoiceId: z.string().optional(),
   billId: z.string().optional(),
+  goodsReceiptId: z.string().optional(),
   items: z.array(itemSchema).min(1),
   reason: z.string().optional(),
   restock: z.boolean().optional(),
@@ -61,9 +62,10 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json({ return: ret }, { status: 201 });
     }
-    if (!d.billId) return NextResponse.json({ error: "billId is required for purchase returns" }, { status: 400 });
+    if (!d.billId && !d.goodsReceiptId) return NextResponse.json({ error: "billId or goodsReceiptId is required for purchase returns" }, { status: 400 });
     const ret = await createPurchaseReturn(context.tenantSlug, {
       billId: d.billId,
+      goodsReceiptId: d.goodsReceiptId,
       items: d.items,
       reason: d.reason,
       destock: d.destock,

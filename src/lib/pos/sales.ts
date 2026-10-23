@@ -63,6 +63,10 @@ async function ensurePosTablesRun(sql = SQL) {
   await sql`alter table if exists pos_sales add column if not exists ereceipt_sent_at timestamptz`;
   await sql`alter table if exists pos_sales add column if not exists ereceipt_to text`;
   await sql`create unique index if not exists pos_sales_idem on pos_sales (tenant_slug, idempotency_key) where idempotency_key is not null`;
+  await sql`alter table if exists pos_sales add column if not exists branch_id text`;
+  await sql`alter table if exists pos_sales add column if not exists local_invoice_no text`;
+  await sql`create unique index if not exists pos_sales_local_inv on pos_sales (tenant_slug, local_invoice_no) where local_invoice_no is not null`;
+  await sql`create index if not exists pos_sales_branch on pos_sales (tenant_slug, branch_id) where branch_id is not null`;
   await sql`create index if not exists pos_sales_receipt on pos_sales (tenant_slug, receipt_no)`;
   await sql`
     create table if not exists pos_counters (
@@ -189,6 +193,8 @@ export async function createPosSale(
     customerName?: string;
     warehouseId?: string;
     registerId?: string;
+    branchId?: string;
+    localInvoiceNo?: string;
     priceListId?: string;
     discount?: { amount?: number; pct?: number; reason: string };
     loyaltyRedeemPoints?: number;
@@ -201,12 +207,14 @@ export async function createPosSale(
   await ensurePosTables(sql);
   if (!input.items?.length) throw new Error("POS sale requires at least one item");
 
-  // Idempotent replay: same key => return the original sale.
-  if (input.idempotencyKey) {
+  // Idempotent replay: same key (or offline local invoice no.) => return the original sale.
+  if (input.idempotencyKey || input.localInvoiceNo) {
     const dup = (await sql`
       select id, invoice_id, receipt_no, total_amount, change_due, status
       from pos_sales
-      where tenant_slug = ${tenantSlug} and idempotency_key = ${input.idempotencyKey}
+      where tenant_slug = ${tenantSlug}
+        and ((${input.idempotencyKey ?? null}::text is not null and idempotency_key = ${input.idempotencyKey ?? null})
+             or (${input.localInvoiceNo ?? null}::text is not null and local_invoice_no = ${input.localInvoiceNo ?? null}))
     `) as any[];
     if (dup.length && dup[0].status === "completed") {
       const inv = (await sql`select invoice_number from finance_invoices where id = ${dup[0].invoice_id}`) as any[];
@@ -429,17 +437,43 @@ export async function createPosSale(
     const id = `pos_${randomUUID().slice(0, 10)}`;
     const cardFeePct = cfg.cardFeePct;
 
+    // Branch resolution: explicit input → register → warehouse's branch.
+    // Tags the sale and its JEs for multi-store P&L (Venditium cost-center model).
+    const branchId = input.branchId
+      ?? register?.branchId
+      ?? (input.warehouseId
+        ? ((await sql`select branch_id from inventory_warehouses where id = ${input.warehouseId} and tenant_slug = ${tenantSlug} limit 1`) as any[])[0]?.branch_id
+        : null)
+      ?? null;
+    // Every sale gets a local invoice number (online too) — the dedup identity
+    // for offline-first replay, matching Venditium's LOCAL-* convention.
+    const localInvoiceNo = input.localInvoiceNo ?? `LOCAL-${regCode}-${String(receiptSeq).padStart(6, "0")}`;
+
+    // Posting preflight (Venditium checkout pattern): abort before any write
+    // if a required posting account is misconfigured — better a clean error
+    // than a partial GL post.
+    const { POSTING_KEYS, resolvePostingAccount, assertPostingAccountsConfigured } = await import("../finance/posting-settings");
+    const requiredKeys: (keyof typeof POSTING_KEYS)[] = ["sales_income"];
+    for (const t of tenders) {
+      const k = `pos_tender_${t.method}` as keyof typeof POSTING_KEYS;
+      if (k in POSTING_KEYS && !requiredKeys.includes(k)) requiredKeys.push(k);
+    }
+    if (loyaltyRedeemed > 0 || (cfg.loyalty.enabled && input.customerCode)) {
+      requiredKeys.push("loyalty_points_liability", "loyalty_discount_expense");
+    }
+    await assertPostingAccountsConfigured(tenantSlug, requiredKeys);
+
     // ---- Phase 2: anchor the sale BEFORE any financial write --------------
     await sql`
       insert into pos_sales (
-        id, tenant_slug, invoice_id, warehouse_id, shift_id, register_id,
-        receipt_no, receipt_seq, status, payment_method, tenders,
+        id, tenant_slug, invoice_id, warehouse_id, shift_id, register_id, branch_id,
+        receipt_no, receipt_seq, local_invoice_no, status, payment_method, tenders,
         amount_tendered, change_due, discount_amount, discount_reason,
         rounding_amount, customer_name, customer_code, idempotency_key,
         items, net_amount, tax_amount, total_amount, promotions, created_by, created_at
       ) values (
-        ${id}, ${tenantSlug}, null, ${input.warehouseId ?? null}, ${shift.id}, ${input.registerId ?? null},
-        ${receiptNo}, ${receiptSeq}, 'pending', ${tenders[0].method}, ${JSON.stringify(tenders)},
+        ${id}, ${tenantSlug}, null, ${input.warehouseId ?? null}, ${shift.id}, ${input.registerId ?? null}, ${branchId},
+        ${receiptNo}, ${receiptSeq}, ${localInvoiceNo}, 'pending', ${tenders[0].method}, ${JSON.stringify(tenders)},
         ${tenderedTotal}, ${change}, ${discountTotal},
         ${[appliedPromos.join("; "), discountReasons.join("; ")].filter(Boolean).join(" | ") || null},
         ${rounding}, ${customerName ?? null}, ${input.customerCode ?? null}, ${input.idempotencyKey ?? null},
@@ -459,6 +493,7 @@ export async function createPosSale(
         customerName: customerName ?? "Walk-in Customer",
         customerCode: input.customerCode ?? undefined,
         customerId: customerId ?? undefined,
+        branchId: branchId ?? undefined,
         invoiceNumber: `INV-${receiptNo}`,
         issuedDate: today,
         dueDate: today,
@@ -509,7 +544,6 @@ export async function createPosSale(
       // Receipt JE: Dr tender accounts (net of card fees) + fees + rounding,
       // Cr AR for the invoiced amount.
       const jeLines: any[] = [];
-      const { POSTING_KEYS, resolvePostingAccount } = await import("../finance/posting-settings");
       for (const t of tenders) {
         const fee = t.method === "pos" ? r2((t.amount * cardFeePct) / 100) : 0;
         const postingKey = `pos_tender_${t.method}` as keyof typeof POSTING_KEYS;
@@ -547,6 +581,7 @@ export async function createPosSale(
         journalType: "SYSTEM",
         referenceType: "pos_sale",
         referenceId: receiptNo,
+        branchId,
         description: `POS receipt ${receiptNo}`,
         status: "POSTED",
         lines: jeLines,
@@ -569,6 +604,7 @@ export async function createPosSale(
           referenceType: "pos_sale",
           referenceId: receiptNo,
           warehouseId: input.warehouseId,
+          branchId,
           serialNos: l.serialNos,
           lotNo: l.lotNo,
           notes: `POS sale ${receiptNo}`,
@@ -607,6 +643,7 @@ export async function createPosSale(
           journalType: "SYSTEM",
           referenceType: "pos_sale_loyalty_redeem",
           referenceId: receiptNo,
+          branchId,
           description: `Loyalty redemption ${receiptNo}`,
           lines: [
             { accountCode: liabAcc, debitAmount: r2(loyaltyRedeemed * cfg.loyalty.redeemValue), creditAmount: 0, description: "Points redeemed — liability relief" },
@@ -624,6 +661,7 @@ export async function createPosSale(
           journalType: "SYSTEM",
           referenceType: "pos_sale_loyalty_earn",
           referenceId: receiptNo,
+          branchId,
           description: `Loyalty accrual ${receiptNo}`,
           lines: [
             { accountCode: expAcc, debitAmount: r2(loyaltyEarned * cfg.loyalty.redeemValue), creditAmount: 0, description: "Points earned — discount expense" },
@@ -677,6 +715,7 @@ export async function createPosSale(
               referenceType: "pos_sale_compensation",
               referenceId: receiptNo,
               warehouseId: input.warehouseId,
+              branchId,
               serialNos: l.serialNos,
               lotNo: l.lotNo,
               notes: `Compensation — failed POS sale ${receiptNo}`,
@@ -718,6 +757,8 @@ function normalizeSale(r: any) {
     warehouseId: r.warehouse_id,
     shiftId: r.shift_id,
     registerId: r.register_id,
+    branchId: r.branch_id ?? null,
+    localInvoiceNo: r.local_invoice_no ?? null,
     receiptNo: r.receipt_no,
     receiptSeq: r.receipt_seq == null ? null : Number(r.receipt_seq),
     status: r.status,

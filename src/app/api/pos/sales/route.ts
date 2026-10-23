@@ -34,6 +34,8 @@ const saleSchema = z.object({
   customerName: z.string().optional(),
   warehouseId: z.string().optional(),
   registerId: z.string().optional(),
+  branchId: z.string().optional(),
+  localInvoiceNo: z.string().max(80).optional(),
   priceListId: z.string().optional(),
   discount: z.object({
     amount: z.coerce.number().min(0).optional(),

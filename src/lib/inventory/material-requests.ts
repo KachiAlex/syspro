@@ -142,6 +142,7 @@ export async function convertMaterialRequest(input: {
   tenantSlug: string;
   mrId: string;
   supplierId?: string | null;
+  sourceWarehouseId?: string | null;
   itemIds?: string[]; // subset to convert; default all unconverted
   userId?: string;
 }) {
@@ -192,6 +193,26 @@ export async function convertMaterialRequest(input: {
       [mr.id, wo.id, input.tenantSlug]
     );
     createdRef = { id: wo.id, number: (wo as any).orderNumber ?? wo.id };
+  } else if (mr.requestType === "transfer") {
+    // Material-request → stock transfer (Venditium transfer-request chain):
+    // each pending item becomes a pending transfer into the MR item's
+    // target warehouse, sourced from the warehouse given at convert time.
+    if (!input.sourceWarehouseId) {
+      throw new Error("sourceWarehouseId is required to convert a transfer material request");
+    }
+    const transferIds: string[] = [];
+    for (const item of pending) {
+      const qty = Number(item.quantity) - Number(item.ordered_quantity);
+      const tid = randomUUID();
+      await db.query(
+        `insert into inventory_stock_transfers
+           (id, tenant_slug, product_id, product_sku, quantity, from_location, to_location, from_warehouse_id, to_warehouse_id, status, created_at)
+         values ($1, $2, $3, $3, $4, $5, $6, $5, $6, 'pending', now())`,
+        [tid, input.tenantSlug, item.product_id, qty, input.sourceWarehouseId, item.warehouse_id ?? "main"]
+      );
+      transferIds.push(tid);
+    }
+    createdRef = { id: transferIds[0], number: `${transferIds.length} transfer(s)` };
   }
 
   for (const item of mr.requestType === "manufacture" ? [pending[0]] : pending) {

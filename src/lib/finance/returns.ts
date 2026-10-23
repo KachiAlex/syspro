@@ -231,11 +231,25 @@ async function applyReturnEffects(tenantSlug: string, ret: ReturnEffectsInput): 
     return (je as any)?.id ?? null;
   }
 
-  // Purchase return
+  // Purchase return — against a bill (reduce AP) or an unbilled goods
+  // receipt (reduce GRNI, Venditium purchase-returns pattern).
   const bill = (await sql`
     select bill_number from bills
     where id = ${ret.sourceDocumentId} and tenant_slug = ${tenantSlug}
   `) as any[];
+  const isReceiptReturn = !bill[0];
+  let debitAccount: string = GL_ACCOUNTS.ACCOUNTS_PAYABLE;
+  let sourceLabel = bill[0]?.bill_number ?? ret.sourceDocumentId;
+  if (isReceiptReturn) {
+    const gr = (await sql`
+      select receipt_number from procurement_goods_receipts
+      where id = ${ret.sourceDocumentId} and tenant_slug = ${tenantSlug}
+    `) as any[];
+    if (!gr[0]) throw new Error(`Purchase return source not found (bill or goods receipt): ${ret.sourceDocumentId}`);
+    const { resolvePostingAccount } = await import("./posting-settings");
+    debitAccount = await resolvePostingAccount(tenantSlug, "goods_received_not_invoiced");
+    sourceLabel = `unbilled receipt ${gr[0].receipt_number}`;
+  }
   const creditAccount = ret.metadata?.creditAccountCode
     ?? (ret.restock ? GL_ACCOUNTS.RAW_MATERIALS : GL_ACCOUNTS.GENERAL_EXPENSE);
 
@@ -244,9 +258,9 @@ async function applyReturnEffects(tenantSlug: string, ret: ReturnEffectsInput): 
     entryDate: today,
     referenceType: "purchase_return",
     referenceId: ret.sourceDocumentId,
-    description: `Debit note ${ret.documentNo} — return against ${bill[0]?.bill_number ?? ret.sourceDocumentId}`,
+    description: `Debit note ${ret.documentNo} — return against ${sourceLabel}`,
     lines: [
-      { accountCode: GL_ACCOUNTS.ACCOUNTS_PAYABLE, debitAmount: ret.totalAmount, creditAmount: 0, description: "Reduce payable" },
+      { accountCode: debitAccount, debitAmount: ret.totalAmount, creditAmount: 0, description: isReceiptReturn ? "Reduce GRNI (unbilled return)" : "Reduce payable" },
       { accountCode: creditAccount, debitAmount: 0, creditAmount: ret.netAmount, description: "Purchase return" },
       ...(ret.taxAmount > 0
         ? [{ accountCode: GL_ACCOUNTS.VAT_INPUT, debitAmount: 0, creditAmount: ret.taxAmount, description: "Input VAT reversal" }]
@@ -254,17 +268,19 @@ async function applyReturnEffects(tenantSlug: string, ret: ReturnEffectsInput): 
     ],
   });
 
-  await sql`
-    update bills
-    set balance_due = greatest(0, balance_due - ${ret.totalAmount})
-    where id = ${ret.sourceDocumentId} and tenant_slug = ${tenantSlug}
-  `;
+  if (!isReceiptReturn) {
+    await sql`
+      update bills
+      set balance_due = greatest(0, balance_due - ${ret.totalAmount})
+      where id = ${ret.sourceDocumentId} and tenant_slug = ${tenantSlug}
+    `;
+  }
 
   if (ret.taxAmount > 0) {
     await recordTaxTransaction({
       tenantSlug,
       transactionType: "vat_input",
-      sourceType: "bill",
+      sourceType: isReceiptReturn ? "goods_receipt" : "bill",
       sourceId: ret.sourceDocumentId,
       transactionDate: today,
       description: `Input VAT reversal — debit note ${ret.documentNo}`,
@@ -426,7 +442,8 @@ export async function createSalesReturn(
 export async function createPurchaseReturn(
   tenantSlug: string,
   input: {
-    billId: string;
+    billId?: string;
+    goodsReceiptId?: string;
     items: ReturnItemInput[];
     reason?: string;
     destock?: boolean;
@@ -439,13 +456,23 @@ export async function createPurchaseReturn(
   const sql = SQL;
   await ensureReturnTables(sql);
   if (!input.items?.length) throw new Error("Return requires at least one item");
+  const sourceId = input.billId ?? input.goodsReceiptId;
+  if (!sourceId) throw new Error("Purchase return requires billId or goodsReceiptId");
 
-  const bill = (await sql`
-    select id, bill_number, status, balance_due from bills
-    where id = ${input.billId} and tenant_slug = ${tenantSlug}
-  `) as any[];
-  if (!bill[0]) throw new Error(`Bill ${input.billId} not found`);
-  if (bill[0].status === "cancelled") throw new Error("Cannot return a cancelled bill");
+  if (input.billId) {
+    const bill = (await sql`
+      select id, bill_number, status, balance_due from bills
+      where id = ${input.billId} and tenant_slug = ${tenantSlug}
+    `) as any[];
+    if (!bill[0]) throw new Error(`Bill ${input.billId} not found`);
+    if (bill[0].status === "cancelled") throw new Error("Cannot return a cancelled bill");
+  } else {
+    const gr = (await sql`
+      select id, receipt_number from procurement_goods_receipts
+      where id = ${input.goodsReceiptId} and tenant_slug = ${tenantSlug}
+    `) as any[];
+    if (!gr[0]) throw new Error(`Goods receipt ${input.goodsReceiptId} not found`);
+  }
 
   const { net, tax, total } = computeAmounts(input.items);
   const documentNo = await nextDocumentNo(tenantSlug, "DN");
@@ -455,7 +482,7 @@ export async function createPurchaseReturn(
 
   const ret = await persistReturn(tenantSlug, {
     direction: "purchase",
-    sourceDocumentId: input.billId,
+    sourceDocumentId: sourceId,
     documentNo,
     items: input.items,
     netAmount: net,
@@ -482,7 +509,7 @@ export async function createPurchaseReturn(
 
   const jeId = await applyReturnEffects(tenantSlug, {
     direction: "purchase",
-    sourceDocumentId: input.billId,
+    sourceDocumentId: sourceId,
     documentNo,
     items: input.items,
     netAmount: net,
