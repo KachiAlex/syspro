@@ -37,26 +37,26 @@ export default function MfgEdgePage() {
     setError(""); load(); return d;
   };
 
-  const input = "rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm";
-  const btn = "rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium hover:bg-emerald-500";
-  const btnSm = "rounded bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700";
+  const input = "rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm";
+  const btn = "rounded-lg bg-theme-accent px-3 py-2 text-sm font-medium hover:bg-theme-accent-hover";
+  const btnSm = "rounded bg-theme-muted px-2 py-1 text-xs hover:bg-theme-elevated";
   const th = "p-3";
 
   if (!tenantSlug) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 text-slate-100">
+    <div className="min-h-screen bg-theme-bg p-6 text-theme-text-primary">
       <div className="mx-auto max-w-6xl">
         <h1 className="mb-1 text-2xl font-bold">Manufacturing Edge</h1>
-        <p className="mb-4 text-sm text-slate-400">Plant floors, downtime tracking, sub-operations, MPS, BOM update tools</p>
-        <div className="mb-4 flex flex-wrap gap-1 rounded-lg bg-slate-900 p-1">
+        <p className="mb-4 text-sm text-theme-text-secondary">Plant floors, downtime tracking, sub-operations, MPS, BOM update tools</p>
+        <div className="mb-4 flex flex-wrap gap-1 rounded-lg bg-theme-surface p-1">
           {TABS.map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`rounded-md px-3 py-1.5 text-sm capitalize ${tab === t ? "bg-slate-700" : "text-slate-400 hover:text-white"}`}>{t.replace("-", " ")}</button>
+              className={`rounded-md px-3 py-1.5 text-sm capitalize ${tab === t ? "bg-theme-elevated" : "text-theme-text-secondary hover:text-theme-text-primary"}`}>{t.replace("-", " ")}</button>
           ))}
         </div>
-        {error && <div className="mb-4 rounded-lg bg-red-900/40 p-3 text-sm text-red-300">{error}<button onClick={() => setError("")} className="ml-2 underline">dismiss</button></div>}
-        {msg && <div className="mb-4 rounded-lg bg-slate-800 p-3 text-sm">{msg}<button onClick={() => setMsg("")} className="ml-2 underline">dismiss</button></div>}
+        {error && <div className="mb-4 rounded-lg bg-theme-danger-bg p-3 text-sm text-theme-danger">{error}<button onClick={() => setError("")} className="ml-2 underline">dismiss</button></div>}
+        {msg && <div className="mb-4 rounded-lg bg-theme-muted p-3 text-sm">{msg}<button onClick={() => setMsg("")} className="ml-2 underline">dismiss</button></div>}
 
         {tab === "plant-floors" && (
           <div className="space-y-4">
@@ -67,9 +67,9 @@ export default function MfgEdgePage() {
             </div>
             <div className="flex flex-wrap gap-2">
               {data.plantFloors?.map((p: any) => (
-                <span key={p.id} className="rounded-lg bg-slate-800 px-3 py-2 text-sm">{p.name}{p.code ? ` (${p.code})` : ""}</span>
+                <span key={p.id} className="rounded-lg bg-theme-muted px-3 py-2 text-sm">{p.name}{p.code ? ` (${p.code})` : ""}</span>
               ))}
-              {!data.plantFloors?.length && <p className="text-sm text-slate-500">No plant floors</p>}
+              {!data.plantFloors?.length && <p className="text-sm text-theme-text-tertiary">No plant floors</p>}
             </div>
           </div>
         )}
@@ -84,11 +84,11 @@ export default function MfgEdgePage() {
               </select>
               <button className={btn} onClick={() => post({ action: "record-downtime", workstationId: f.dtWs || undefined, reason: f.dtReason, category: f.dtCat, fromTs: new Date().toISOString() })}>Start Downtime</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Workstation</th><th className={th}>Category</th><th className={th}>Reason</th><th className={th}>From</th><th className={th}>To</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Workstation</th><th className={th}>Category</th><th className={th}>Reason</th><th className={th}>From</th><th className={th}>To</th><th className={th}></th></tr></thead>
               <tbody>
                 {data.downtime?.map((d: any) => (
-                  <tr key={d.id} className="border-t border-slate-800/50">
+                  <tr key={d.id} className="border-t border-theme-border">
                     <td className={th}>{d.workstation_name ?? d.workstation_id ?? "—"}</td>
                     <td className={th}>{d.category}</td><td className={th}>{d.reason}</td>
                     <td className={th}>{String(d.from_ts).slice(0, 16)}</td>
@@ -96,7 +96,7 @@ export default function MfgEdgePage() {
                     <td className={th}>{!d.to_ts && <button className={btnSm} onClick={() => post({ action: "end-downtime", id: d.id })}>End</button>}</td>
                   </tr>
                 ))}
-                {!data.downtime?.length && <tr><td colSpan={6} className="p-6 text-center text-slate-500">No downtime recorded</td></tr>}
+                {!data.downtime?.length && <tr><td colSpan={6} className="p-6 text-center text-theme-text-tertiary">No downtime recorded</td></tr>}
               </tbody>
             </table>
           </div>
@@ -110,18 +110,18 @@ export default function MfgEdgePage() {
               <input placeholder="Sub-op name" value={f.soName ?? ""} onChange={(e) => setF({ ...f, soName: e.target.value })} className={input} />
               <button className={btn} onClick={() => post({ action: "create-sub-operation", workOrderId: f.soWo, operationId: f.soOp, name: f.soName })}>Add</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Sub-operation</th><th className={th}>WO</th><th className={th}>Planned min</th><th className={th}>Actual min</th><th className={th}>Status</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Sub-operation</th><th className={th}>WO</th><th className={th}>Planned min</th><th className={th}>Actual min</th><th className={th}>Status</th><th className={th}></th></tr></thead>
               <tbody>
                 {data.subOps?.map((s: any) => (
-                  <tr key={s.id} className="border-t border-slate-800/50">
+                  <tr key={s.id} className="border-t border-theme-border">
                     <td className={th}>{s.name}</td><td className={`${th} font-mono text-xs`}>{String(s.work_order_id).slice(0, 12)}</td>
                     <td className={th}>{s.planned_minutes ?? "—"}</td><td className={th}>{s.actual_minutes ?? "—"}</td>
                     <td className={th}>{s.status}</td>
                     <td className={th}>{s.status === "pending" && <button className={btnSm} onClick={() => post({ action: "complete-sub-operation", id: s.id })}>Complete</button>}</td>
                   </tr>
                 ))}
-                {!data.subOps?.length && <tr><td colSpan={6} className="p-6 text-center text-slate-500">No sub-operations</td></tr>}
+                {!data.subOps?.length && <tr><td colSpan={6} className="p-6 text-center text-theme-text-tertiary">No sub-operations</td></tr>}
               </tbody>
             </table>
           </div>
@@ -138,18 +138,18 @@ export default function MfgEdgePage() {
                 setMsg(d ? `MPS built: ${d.mps?.items?.length ?? 0} item lines` : "");
               }}>Build MPS</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Name</th><th className={th}>Period</th><th className={th}>Status</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Name</th><th className={th}>Period</th><th className={th}>Status</th><th className={th}></th></tr></thead>
               <tbody>
                 {data.mps?.map((m: any) => (
-                  <tr key={m.id} className="border-t border-slate-800/50">
+                  <tr key={m.id} className="border-t border-theme-border">
                     <td className={th}>{m.name}</td>
                     <td className={th}>{String(m.period_from).slice(0, 10)} → {String(m.period_to).slice(0, 10)}</td>
                     <td className={th}>{m.status}</td>
                     <td className={th}>{m.status === "draft" && <button className={btnSm} onClick={() => post({ action: "mps-status", id: m.id, status: "confirmed" })}>Confirm</button>}</td>
                   </tr>
                 ))}
-                {!data.mps?.length && <tr><td colSpan={4} className="p-6 text-center text-slate-500">No MPS runs</td></tr>}
+                {!data.mps?.length && <tr><td colSpan={4} className="p-6 text-center text-theme-text-tertiary">No MPS runs</td></tr>}
               </tbody>
             </table>
           </div>
@@ -157,7 +157,7 @@ export default function MfgEdgePage() {
 
         {tab === "bom-tools" && (
           <div className="space-y-4">
-            <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+            <div className="rounded-xl border border-theme-border bg-theme-surface p-4">
               <h3 className="mb-2 font-semibold">Replace component across active BOMs</h3>
               <div className="flex flex-wrap gap-2">
                 <input placeholder="Old SKU" value={f.bomOld ?? ""} onChange={(e) => setF({ ...f, bomOld: e.target.value })} className={input} />
@@ -168,9 +168,9 @@ export default function MfgEdgePage() {
                 }}>Replace</button>
               </div>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+            <div className="rounded-xl border border-theme-border bg-theme-surface p-4">
               <h3 className="mb-2 font-semibold">Recompute BOM material costs</h3>
-              <p className="mb-2 text-xs text-slate-400">Recalculates each BOM&rsquo;s material_cost from current component unit_cost × quantity.</p>
+              <p className="mb-2 text-xs text-theme-text-secondary">Recalculates each BOM&rsquo;s material_cost from current component unit_cost × quantity.</p>
               <button className={btn} onClick={async () => {
                 const d = await post({ action: "recompute-bom-costs" });
                 setMsg(d ? `Recomputed ${d.updatedBoms} BOM(s)` : "");

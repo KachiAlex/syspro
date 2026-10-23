@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useTenantContext } from "@/components/tenant-admin/tenant-context";
+import { TrendChart } from "@/components/tenant-admin/trend-chart";
 
 interface DashboardMetric {
   label: string;
@@ -43,6 +44,7 @@ interface DashboardData {
   receivables: ScheduleItem[];
   payables: ScheduleItem[];
   expenseBreakdown: ExpenseBreakdownItem[];
+  trend?: { labels: string[]; revenue: number[]; expenses: number[] };
 }
 
 const periodToTimeframe: Record<string, string> = {
@@ -213,6 +215,16 @@ export default function FinanceDashboard() {
           </div>
         ))}
       </div>
+
+      {/* Revenue vs Expenses trend — same snapshot trend data */}
+      {data?.trend && data.trend.labels?.length >= 2 && (
+        <div className="bg-theme-surface rounded-[14px] border border-theme-border p-6" style={{ boxShadow: '0 4px 14px rgba(0,0,0,.2)' }}>
+          <h2 className="text-lg font-semibold text-theme-text-primary mb-4 font-jakarta">
+            Revenue vs Expenses
+          </h2>
+          <TrendChart labels={data.trend.labels} revenue={data.trend.revenue} expenses={data.trend.expenses} />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Transactions */}

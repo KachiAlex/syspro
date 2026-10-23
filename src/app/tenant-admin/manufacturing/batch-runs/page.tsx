@@ -71,21 +71,21 @@ export default function BatchRunsPage() {
           <Layers className="h-6 w-6 text-sky-400" />
           <div>
             <h1 className="text-xl font-semibold">Batch Production Runs</h1>
-            <p className="text-sm text-slate-400">Split production into lot-tracked work orders</p>
+            <p className="text-sm text-theme-text-secondary">Split production into lot-tracked work orders</p>
           </div>
         </div>
         <button onClick={() => setShowNew(true)}
-          className="flex items-center gap-1.5 rounded bg-emerald-600 px-3 py-1.5 text-sm hover:bg-emerald-500">
+          className="flex items-center gap-1.5 rounded bg-theme-accent px-3 py-1.5 text-sm hover:bg-theme-accent-hover">
           <Plus className="h-4 w-4" /> New run
         </button>
       </div>
 
       {error && <div className="flex items-center gap-2 rounded bg-rose-500/10 px-4 py-3 text-rose-400"><AlertCircle className="h-4 w-4" />{error}</div>}
-      {loading && <Loader2 className="h-5 w-5 animate-spin text-slate-400" />}
+      {loading && <Loader2 className="h-5 w-5 animate-spin text-theme-text-secondary" />}
 
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left text-xs text-slate-400">
+          <tr className="text-left text-xs text-theme-text-secondary">
             {["Run", "Product", "Total qty", "Batch size", "Batches", "Status", ""].map((h) => (
               <th key={h} className="px-3 py-2">{h}</th>
             ))}
@@ -94,21 +94,21 @@ export default function BatchRunsPage() {
         <tbody>
           {runs.map((r) => (
             <React.Fragment key={r.id}>
-              <tr className="border-t border-slate-800">
+              <tr className="border-t border-theme-border">
                 <td className="px-3 py-2">
                   <button onClick={() => setExpanded(expanded === r.id ? null : r.id)}
                     className="text-sky-400 hover:underline">{r.run_number}</button>
                 </td>
-                <td className="px-3 py-2">{r.product_name} <span className="text-slate-500">({r.product_sku})</span></td>
+                <td className="px-3 py-2">{r.product_name} <span className="text-theme-text-tertiary">({r.product_sku})</span></td>
                 <td className="px-3 py-2">{r.total_quantity}</td>
                 <td className="px-3 py-2">{r.batch_size}</td>
                 <td className="px-3 py-2">{r.workOrders?.length ?? 0}</td>
                 <td className="px-3 py-2">
                   <span className={`rounded px-2 py-0.5 text-xs ${
-                    r.status === "completed" ? "bg-emerald-500/15 text-emerald-400"
+                    r.status === "completed" ? "bg-theme-success-bg text-theme-success"
                     : r.status === "in_progress" ? "bg-sky-500/15 text-sky-400"
-                    : r.status === "cancelled" ? "bg-slate-500/15 text-slate-400"
-                    : "bg-amber-500/15 text-amber-400"}`}>{r.status}</span>
+                    : r.status === "cancelled" ? "bg-theme-muted text-theme-text-secondary"
+                    : "bg-amber-500/15 text-theme-warning"}`}>{r.status}</span>
                 </td>
                 <td className="px-3 py-2 text-right">
                   {r.status === "open" && (
@@ -118,7 +118,7 @@ export default function BatchRunsPage() {
                 </td>
               </tr>
               {expanded === r.id && (
-                <tr className="bg-slate-900/40">
+                <tr className="bg-theme-surface/40">
                   <td colSpan={7} className="px-6 py-2">
                     <table className="w-full text-xs">
                       <tbody>
@@ -127,7 +127,7 @@ export default function BatchRunsPage() {
                             <td className="py-1">{w.orderNumber}</td>
                             <td>{w.lotNo}</td>
                             <td>{w.quantity}</td>
-                            <td className="text-slate-400">{w.status}</td>
+                            <td className="text-theme-text-secondary">{w.status}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -138,37 +138,37 @@ export default function BatchRunsPage() {
             </React.Fragment>
           ))}
           {runs.length === 0 && !loading && (
-            <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-500">No production runs</td></tr>
+            <tr><td colSpan={7} className="px-3 py-6 text-center text-theme-text-tertiary">No production runs</td></tr>
           )}
         </tbody>
       </table>
 
       {showNew && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-sm rounded-lg border border-slate-700 bg-slate-900 p-5 space-y-3">
+          <div className="w-full max-w-sm rounded-lg border border-theme-border bg-theme-surface p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">New production run</h2>
               <button onClick={() => setShowNew(false)}><X className="h-4 w-4" /></button>
             </div>
-            <input className="w-full rounded bg-slate-800 px-3 py-2 text-sm" placeholder="Product SKU"
+            <input className="w-full rounded bg-theme-muted px-3 py-2 text-sm" placeholder="Product SKU"
               value={form.productSku} onChange={(e) => setForm({ ...form, productSku: e.target.value })} />
-            <input className="w-full rounded bg-slate-800 px-3 py-2 text-sm" placeholder="Product name"
+            <input className="w-full rounded bg-theme-muted px-3 py-2 text-sm" placeholder="Product name"
               value={form.productName} onChange={(e) => setForm({ ...form, productName: e.target.value })} />
             <div className="grid grid-cols-2 gap-2">
-              <label className="text-xs text-slate-400">Total qty
-                <input type="number" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary">Total qty
+                <input type="number" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={form.totalQuantity} onChange={(e) => setForm({ ...form, totalQuantity: e.target.value })} />
               </label>
-              <label className="text-xs text-slate-400">Batch size
-                <input type="number" className="w-full rounded bg-slate-800 px-3 py-2 text-sm"
+              <label className="text-xs text-theme-text-secondary">Batch size
+                <input type="number" className="w-full rounded bg-theme-muted px-3 py-2 text-sm"
                   value={form.batchSize} onChange={(e) => setForm({ ...form, batchSize: e.target.value })} />
               </label>
             </div>
-            <input className="w-full rounded bg-slate-800 px-3 py-2 text-sm" placeholder="Notes (optional)"
+            <input className="w-full rounded bg-theme-muted px-3 py-2 text-sm" placeholder="Notes (optional)"
               value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             <button onClick={create}
               disabled={busy || !form.productSku || !form.productName || !Number(form.totalQuantity) || !Number(form.batchSize)}
-              className="w-full rounded bg-emerald-600 py-2 text-sm hover:bg-emerald-500 disabled:opacity-50">
+              className="w-full rounded bg-theme-accent py-2 text-sm hover:bg-theme-accent-hover disabled:opacity-50">
               {busy ? "Creating…" : "Create run + work orders"}
             </button>
           </div>

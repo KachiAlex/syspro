@@ -38,25 +38,25 @@ export default function ManufacturingPlanningPage() {
     setError(""); load();
   };
 
-  const input = "rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm";
-  const btn = "rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium hover:bg-emerald-500 disabled:opacity-50";
-  const btnSm = "rounded bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700";
+  const input = "rounded-lg border border-theme-border bg-theme-muted px-3 py-2 text-sm";
+  const btn = "rounded-lg bg-theme-accent px-3 py-2 text-sm font-medium hover:bg-theme-accent-hover disabled:opacity-50";
+  const btnSm = "rounded bg-theme-muted px-2 py-1 text-xs hover:bg-theme-elevated";
   const th = "p-3";
 
   if (!tenantSlug) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 text-slate-100">
+    <div className="min-h-screen bg-theme-bg p-6 text-theme-text-primary">
       <div className="mx-auto max-w-6xl">
         <h1 className="mb-1 text-2xl font-bold">Production Planning</h1>
-        <p className="mb-4 text-sm text-slate-400">Workstations, routings, job cards, forecasts, MPS-style production plans</p>
-        <div className="mb-4 flex flex-wrap gap-1 rounded-lg bg-slate-900 p-1">
+        <p className="mb-4 text-sm text-theme-text-secondary">Workstations, routings, job cards, forecasts, MPS-style production plans</p>
+        <div className="mb-4 flex flex-wrap gap-1 rounded-lg bg-theme-surface p-1">
           {TABS.map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`rounded-md px-3 py-1.5 text-sm capitalize ${tab === t ? "bg-slate-700" : "text-slate-400 hover:text-white"}`}>{t.replace("-", " ")}</button>
+              className={`rounded-md px-3 py-1.5 text-sm capitalize ${tab === t ? "bg-theme-elevated" : "text-theme-text-secondary hover:text-theme-text-primary"}`}>{t.replace("-", " ")}</button>
           ))}
         </div>
-        {error && <div className="mb-4 rounded-lg bg-red-900/40 p-3 text-sm text-red-300">{error}<button onClick={() => setError("")} className="ml-2 underline">dismiss</button></div>}
+        {error && <div className="mb-4 rounded-lg bg-theme-danger-bg p-3 text-sm text-theme-danger">{error}<button onClick={() => setError("")} className="ml-2 underline">dismiss</button></div>}
 
         {tab === "workstations" && (
           <div className="space-y-4">
@@ -68,13 +68,13 @@ export default function ManufacturingPlanningPage() {
               <input type="number" placeholder="Hrs/day" value={f.wCap ?? ""} onChange={(e) => setF({ ...f, wCap: e.target.value })} className={`${input} w-24`} />
               <button className={btn} onClick={() => post({ action: "upsert-workstation", name: f.wName, code: f.wCode, laborRate: Number(f.wLabor ?? 0), overheadRate: Number(f.wOh ?? 0), capacityHoursPerDay: Number(f.wCap ?? 8) })}>Save</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Code</th><th className={th}>Name</th><th className={th}>Labor/hr</th><th className={th}>OH/hr</th><th className={th}>Capacity</th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Code</th><th className={th}>Name</th><th className={th}>Labor/hr</th><th className={th}>OH/hr</th><th className={th}>Capacity</th></tr></thead>
               <tbody>
                 {data.workstations?.map((w: any) => (
-                  <tr key={w.id} className="border-t border-slate-800/50"><td className={`${th} font-mono`}>{w.code}</td><td className={th}>{w.name}</td><td className={th}>{w.labor_rate}</td><td className={th}>{w.overhead_rate}</td><td className={th}>{w.capacity_hours_per_day}h</td></tr>
+                  <tr key={w.id} className="border-t border-theme-border"><td className={`${th} font-mono`}>{w.code}</td><td className={th}>{w.name}</td><td className={th}>{w.labor_rate}</td><td className={th}>{w.overhead_rate}</td><td className={th}>{w.capacity_hours_per_day}h</td></tr>
                 ))}
-                {!data.workstations?.length && <tr><td colSpan={5} className="p-6 text-center text-slate-500">No workstations</td></tr>}
+                {!data.workstations?.length && <tr><td colSpan={5} className="p-6 text-center text-theme-text-tertiary">No workstations</td></tr>}
               </tbody>
             </table>
           </div>
@@ -87,10 +87,10 @@ export default function ManufacturingPlanningPage() {
               <button className={btn} onClick={() => post({ action: "upsert-routing", name: f.rName, operations: [] })}>Create</button>
             </div>
             {data.routings?.map((r: any) => (
-              <div key={r.id} className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+              <div key={r.id} className="rounded-xl border border-theme-border bg-theme-surface p-4">
                 <div className="mb-2 font-semibold">{r.name}</div>
                 {r.operations.map((o: any) => (
-                  <div key={o.id} className="text-sm text-slate-300">{o.sequence}. {o.name} {o.workstation_name ? `@ ${o.workstation_name}` : ""} — {o.standard_minutes}min</div>
+                  <div key={o.id} className="text-sm text-theme-text-primary">{o.sequence}. {o.name} {o.workstation_name ? `@ ${o.workstation_name}` : ""} — {o.standard_minutes}min</div>
                 ))}
                 <div className="mt-2 flex gap-2">
                   <input placeholder="Op name" value={f[`op_${r.id}`] ?? ""} onChange={(e) => setF({ ...f, [`op_${r.id}`]: e.target.value })} className={`${input} flex-1`} />
@@ -103,7 +103,7 @@ export default function ManufacturingPlanningPage() {
                 </div>
               </div>
             ))}
-            {!data.routings?.length && <p className="text-sm text-slate-500">No routings</p>}
+            {!data.routings?.length && <p className="text-sm text-theme-text-tertiary">No routings</p>}
           </div>
         )}
 
@@ -113,11 +113,11 @@ export default function ManufacturingPlanningPage() {
               <input placeholder="Work order ID" value={f.jcWo ?? ""} onChange={(e) => setF({ ...f, jcWo: e.target.value })} className={input} />
               <button className={btn} onClick={() => post({ action: "create-job-cards", workOrderId: f.jcWo })}>Generate Job Cards</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>JC #</th><th className={th}>Operation</th><th className={th}>Planned min</th><th className={th}>Actual min</th><th className={th}>Labor cost</th><th className={th}>Status</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>JC #</th><th className={th}>Operation</th><th className={th}>Planned min</th><th className={th}>Actual min</th><th className={th}>Labor cost</th><th className={th}>Status</th><th className={th}></th></tr></thead>
               <tbody>
                 {data.jobCards?.map((j: any) => (
-                  <tr key={j.id} className="border-t border-slate-800/50">
+                  <tr key={j.id} className="border-t border-theme-border">
                     <td className={`${th} font-mono`}>{j.job_card_number}</td><td className={th}>{j.operation_name}</td>
                     <td className={th}>{j.planned_minutes}</td><td className={th}>{j.actual_minutes}</td>
                     <td className={th}>{Number(j.labor_cost).toLocaleString()}</td><td className={th}>{j.status}</td>
@@ -131,7 +131,7 @@ export default function ManufacturingPlanningPage() {
                     </td>
                   </tr>
                 ))}
-                {!data.jobCards?.length && <tr><td colSpan={7} className="p-6 text-center text-slate-500">No job cards — generate from a work order</td></tr>}
+                {!data.jobCards?.length && <tr><td colSpan={7} className="p-6 text-center text-theme-text-tertiary">No job cards — generate from a work order</td></tr>}
               </tbody>
             </table>
           </div>
@@ -145,13 +145,13 @@ export default function ManufacturingPlanningPage() {
               <input type="number" placeholder="Qty" value={f.fQty ?? ""} onChange={(e) => setF({ ...f, fQty: e.target.value })} className={`${input} w-28`} />
               <button className={btn} onClick={() => post({ action: "upsert-forecast", productSku: f.fSku, forecastDate: f.fDate, quantity: Number(f.fQty) })}>Add</button>
             </div>
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>SKU</th><th className={th}>Date</th><th className={th}>Forecast</th><th className={th}>Consumed</th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>SKU</th><th className={th}>Date</th><th className={th}>Forecast</th><th className={th}>Consumed</th></tr></thead>
               <tbody>
                 {data.forecasts?.map((fc: any) => (
-                  <tr key={fc.id} className="border-t border-slate-800/50"><td className={`${th} font-mono`}>{fc.product_sku}</td><td className={th}>{String(fc.forecast_date).slice(0, 10)}</td><td className={th}>{fc.forecast_quantity}</td><td className={th}>{fc.consumed_quantity}</td></tr>
+                  <tr key={fc.id} className="border-t border-theme-border"><td className={`${th} font-mono`}>{fc.product_sku}</td><td className={th}>{String(fc.forecast_date).slice(0, 10)}</td><td className={th}>{fc.forecast_quantity}</td><td className={th}>{fc.consumed_quantity}</td></tr>
                 ))}
-                {!data.forecasts?.length && <tr><td colSpan={4} className="p-6 text-center text-slate-500">No forecasts</td></tr>}
+                {!data.forecasts?.length && <tr><td colSpan={4} className="p-6 text-center text-theme-text-tertiary">No forecasts</td></tr>}
               </tbody>
             </table>
           </div>
@@ -166,16 +166,16 @@ export default function ManufacturingPlanningPage() {
               <button className={btn} onClick={() => post({ action: "create-production-plan", planName: f.pName, periodStart: f.pStart || null, periodEnd: f.pEnd || null })}>Create Plan</button>
             </div>
             {openPlan && (
-              <div className="rounded-xl border border-slate-700 bg-slate-900 p-4">
+              <div className="rounded-xl border border-theme-border bg-theme-surface p-4">
                 <div className="mb-2 flex justify-between"><b>{openPlan.plan_number} — {openPlan.plan_name}</b><button onClick={() => setOpenPlan(null)}>✕</button></div>
                 <table className="w-full text-sm">
-                  <thead className="text-left text-slate-400"><tr><th className="p-2">SKU</th><th className="p-2">SO Demand</th><th className="p-2">Forecast</th><th className="p-2">On Hand</th><th className="p-2">WIP</th><th className="p-2">Planned</th><th className="p-2">WO</th></tr></thead>
+                  <thead className="text-left text-theme-text-secondary"><tr><th className="p-2">SKU</th><th className="p-2">SO Demand</th><th className="p-2">Forecast</th><th className="p-2">On Hand</th><th className="p-2">WIP</th><th className="p-2">Planned</th><th className="p-2">WO</th></tr></thead>
                   <tbody>
                     {openPlan.items?.map((i: any) => (
-                      <tr key={i.id} className="border-t border-slate-800">
+                      <tr key={i.id} className="border-t border-theme-border">
                         <td className="p-2 font-mono">{i.product_sku}</td><td className="p-2">{i.sales_order_quantity}</td>
                         <td className="p-2">{i.forecast_quantity}</td><td className="p-2">{i.on_hand_quantity}</td>
-                        <td className="p-2">{i.wip_quantity}</td><td className="p-2 font-semibold text-emerald-400">{i.planned_quantity}</td>
+                        <td className="p-2">{i.wip_quantity}</td><td className="p-2 font-semibold text-theme-success">{i.planned_quantity}</td>
                         <td className="p-2 font-mono text-xs">{i.work_order_id ?? "—"}</td>
                       </tr>
                     ))}
@@ -186,18 +186,18 @@ export default function ManufacturingPlanningPage() {
                 )}
               </div>
             )}
-            <table className="w-full rounded-xl border border-slate-800 bg-slate-900 text-sm">
-              <thead className="text-left text-slate-400"><tr><th className={th}>Plan</th><th className={th}>Name</th><th className={th}>Items</th><th className={th}>WOs</th><th className={th}>MRs</th><th className={th}>Status</th><th className={th}></th></tr></thead>
+            <table className="w-full rounded-xl border border-theme-border bg-theme-surface text-sm">
+              <thead className="text-left text-theme-text-secondary"><tr><th className={th}>Plan</th><th className={th}>Name</th><th className={th}>Items</th><th className={th}>WOs</th><th className={th}>MRs</th><th className={th}>Status</th><th className={th}></th></tr></thead>
               <tbody>
                 {data.plans?.map((p: any) => (
-                  <tr key={p.id} className="border-t border-slate-800/50">
+                  <tr key={p.id} className="border-t border-theme-border">
                     <td className={`${th} font-mono`}>{p.plan_number}</td><td className={th}>{p.plan_name}</td>
                     <td className={th}>{p.item_count}</td><td className={th}>{p.generated_work_orders}</td>
                     <td className={th}>{p.generated_material_requests}</td><td className={th}>{p.status}</td>
                     <td className={th}><button className={btnSm} onClick={async () => setOpenPlan((await (await fetch(`/api/manufacturing/planning?view=production-plan&id=${p.id}`)).json()).plan)}>View</button></td>
                   </tr>
                 ))}
-                {!data.plans?.length && <tr><td colSpan={7} className="p-6 text-center text-slate-500">No production plans</td></tr>}
+                {!data.plans?.length && <tr><td colSpan={7} className="p-6 text-center text-theme-text-tertiary">No production plans</td></tr>}
               </tbody>
             </table>
           </div>

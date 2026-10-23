@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
          from approvals
          where tenant_slug = $1 and status = 'pending'`),
       q(`select count(*)::int as n
-         from manufacturing_work_orders
+         from work_orders
          where tenant_slug = $1 and status in ('released','in_progress')`),
       q(`select count(*)::int as n, coalesce(sum(total_amount),0)::numeric as amt
          from pos_sales
