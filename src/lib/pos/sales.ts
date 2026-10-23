@@ -509,10 +509,17 @@ export async function createPosSale(
       // Receipt JE: Dr tender accounts (net of card fees) + fees + rounding,
       // Cr AR for the invoiced amount.
       const jeLines: any[] = [];
+      const { POSTING_KEYS, resolvePostingAccount } = await import("../finance/posting-settings");
       for (const t of tenders) {
         const fee = t.method === "pos" ? r2((t.amount * cardFeePct) / 100) : 0;
+        const postingKey = `pos_tender_${t.method}` as keyof typeof POSTING_KEYS;
+        const tenderAccount = t.accountCode
+          ?? (postingKey in POSTING_KEYS
+            ? await resolvePostingAccount(tenantSlug, postingKey)
+            : TENDER_ACCOUNT[t.method])
+          ?? GL_ACCOUNTS.CASH;
         jeLines.push({
-          accountCode: t.accountCode ?? TENDER_ACCOUNT[t.method] ?? GL_ACCOUNTS.CASH,
+          accountCode: tenderAccount,
           debitAmount: r2(t.amount - fee), creditAmount: 0,
           description: `POS ${receiptNo} — ${t.method}`,
         });
@@ -577,15 +584,53 @@ export async function createPosSale(
                   'redeem', ${loyaltyRedeemed}, ${loyaltyRedeemed * cfg.loyalty.redeemValue}, ${`Redeemed on ${receiptNo}`})
         `;
       }
+      let loyaltyEarned = 0;
       if (cfg.loyalty.enabled && input.customerCode) {
-        const earned = Math.floor(total / cfg.loyalty.earnDivisor);
-        if (earned > 0) {
+        loyaltyEarned = Math.floor(total / cfg.loyalty.earnDivisor);
+        if (loyaltyEarned > 0) {
           await sql`
             insert into pos_loyalty_txns (id, tenant_slug, customer_code, sale_id, type, points, value, note)
             values (${`plt_${randomUUID().slice(0, 10)}`}, ${tenantSlug}, ${input.customerCode}, ${id},
-                    'earn', ${earned}, ${total}, ${`Earned on ${receiptNo}`})
+                    'earn', ${loyaltyEarned}, ${total}, ${`Earned on ${receiptNo}`})
           `;
         }
+      }
+
+      // Loyalty GL: redeemed points are funded by the liability (re-grosses
+      // revenue netted down by the redemption discount); earned points accrue
+      // the expense and the outstanding-points liability.
+      if (loyaltyRedeemed > 0) {
+        const liabAcc = await resolvePostingAccount(tenantSlug, "loyalty_points_liability");
+        const je = await postGLEntry({
+          tenantSlug,
+          entryDate: today,
+          journalType: "SYSTEM",
+          referenceType: "pos_sale_loyalty_redeem",
+          referenceId: receiptNo,
+          description: `Loyalty redemption ${receiptNo}`,
+          lines: [
+            { accountCode: liabAcc, debitAmount: r2(loyaltyRedeemed * cfg.loyalty.redeemValue), creditAmount: 0, description: "Points redeemed — liability relief" },
+            { accountCode: GL_ACCOUNTS.SALES_REVENUE, debitAmount: 0, creditAmount: r2(loyaltyRedeemed * cfg.loyalty.redeemValue), description: "Redemption funded by points liability" },
+          ],
+        });
+        if ((je as any)?.id) entryIds.push((je as any).id);
+      }
+      if (loyaltyEarned > 0) {
+        const expAcc = await resolvePostingAccount(tenantSlug, "loyalty_discount_expense");
+        const liabAcc = await resolvePostingAccount(tenantSlug, "loyalty_points_liability");
+        const je = await postGLEntry({
+          tenantSlug,
+          entryDate: today,
+          journalType: "SYSTEM",
+          referenceType: "pos_sale_loyalty_earn",
+          referenceId: receiptNo,
+          description: `Loyalty accrual ${receiptNo}`,
+          lines: [
+            { accountCode: expAcc, debitAmount: r2(loyaltyEarned * cfg.loyalty.redeemValue), creditAmount: 0, description: "Points earned — discount expense" },
+            { accountCode: liabAcc, debitAmount: 0, creditAmount: r2(loyaltyEarned * cfg.loyalty.redeemValue), description: "Outstanding points liability" },
+          ],
+        });
+        if ((je as any)?.id) entryIds.push((je as any).id);
       }
 
       await sql`

@@ -292,20 +292,40 @@ export async function createBillJournalEntry(billId: string, bill: any): Promise
   const { GL_ACCOUNTS } = await import("./gl");
 
   let inputVat = 0;
-  // Debit expense accounts for each bill item (net of input VAT)
+  let netTotal = 0;
   for (const item of bill.items) {
-    const accountCode = item.accountCode || DEFAULT_ACCOUNTS.EXPENSE_DEFAULT.code;
     // lineAmount is tax-inclusive; recover the net as qty × unit price.
     const net = Number(item.quantity ?? 0) * Number(item.unitPrice ?? 0);
     const tax = Math.max(0, Number(item.lineAmount) - net);
     inputVat += tax;
+    netTotal += net;
+  }
 
+  if (bill.poId) {
+    // PO-linked bill: goods were capitalized to inventory at receipt with the
+    // offset in GRNI. Clear GRNI here instead of expensing — otherwise the
+    // purchase lands in both the inventory asset and expense, and AP is
+    // credited twice (once at receipt, once at bill).
+    const { resolvePostingAccount } = await import("./posting-settings");
+    const grniAcc = await resolvePostingAccount(bill.tenantSlug, "goods_received_not_invoiced").catch(() => GL_ACCOUNTS.GRNI);
     lines.push({
-      accountCode,
-      debitAmount: net,
+      accountCode: grniAcc,
+      debitAmount: netTotal,
       creditAmount: 0,
-      description: `Bill: ${bill.billNumber} - ${item.description}`
+      description: `GRNI clearing — Bill: ${bill.billNumber}`
     });
+  } else {
+    // Non-PO bill: debit expense accounts for each bill item (net of input VAT)
+    for (const item of bill.items) {
+      const accountCode = item.accountCode || DEFAULT_ACCOUNTS.EXPENSE_DEFAULT.code;
+      const net = Number(item.quantity ?? 0) * Number(item.unitPrice ?? 0);
+      lines.push({
+        accountCode,
+        debitAmount: net,
+        creditAmount: 0,
+        description: `Bill: ${bill.billNumber} - ${item.description}`
+      });
+    }
   }
 
   // Debit input VAT (claimable) — previously buried in the expense lines

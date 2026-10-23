@@ -169,6 +169,11 @@ export async function POST(request: NextRequest) {
 
     try {
       const today = new Date().toISOString().split("T")[0];
+      const { resolvePostingAccount } = await import("@/lib/finance/posting-settings");
+      const [invAcc, grniAcc] = await Promise.all([
+        resolvePostingAccount(tenantSlug, "inventory_asset"),
+        resolvePostingAccount(tenantSlug, "goods_received_not_invoiced"),
+      ]);
       await createJournalEntry({
         tenantSlug,
         entryDate: today,
@@ -178,16 +183,16 @@ export async function POST(request: NextRequest) {
         description: `Goods receipt ${receiptNumber} from vendor`,
         lines: [
           {
-            accountCode: "1500",
+            accountCode: invAcc,
             debitAmount: totalAmount,
             creditAmount: 0,
             description: `Inventory receipt (${items.length} items)`,
           },
           {
-            accountCode: "2100",
+            accountCode: grniAcc,
             debitAmount: 0,
             creditAmount: totalAmount,
-            description: `Accounts Payable for ${receiptNumber}`,
+            description: `Goods received not invoiced — ${receiptNumber}`,
           },
         ],
       });
