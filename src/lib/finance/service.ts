@@ -7,7 +7,6 @@ import {
   type FinanceExpenseCategoryRecord,
   type FinanceTrendPointRecord,
 } from "@/lib/finance/db";
-import { ensureFinanceSeedForTenant } from "@/lib/finance/seed";
 import { db, sql as SQL } from "../sql-client";
 
 /* using imported SQL */
@@ -26,12 +25,7 @@ export async function getFinanceDashboardSnapshot(filters: FinanceFilters): Prom
   const sql = SQL;
   await ensureFinanceTables(sql);
 
-  let data = await fetchFinanceData(filters);
-
-  if (!hasAnyFinanceData(data)) {
-    await ensureFinanceSeedForTenant(filters);
-    data = await fetchFinanceData(filters);
-  }
+  const data = await fetchFinanceData(filters);
 
   const mappedTrend: FinanceDashboardSnapshot["trend"] = data.trendPoints.length ? mapTrendSeries(data.trendPoints) : { labels: [], revenue: [], expenses: [] };
 
@@ -132,12 +126,6 @@ async function fetchFinanceData(filters: FinanceFilters): Promise<FinanceDataSet
     accountsP, receivablesP, payablesP, expensesP, trendPointsP,
   ]);
   return { accounts, receivables, payables, expenses, trendPoints };
-}
-
-function hasAnyFinanceData(data: FinanceDataSets): boolean {
-  return Boolean(
-    data.accounts.length || data.receivables.length || data.payables.length || data.expenses.length || data.trendPoints.length
-  );
 }
 
 function mapAccountRow(row: FinanceAccountRecord): FinanceDashboardSnapshot["cashAccounts"][number] {
