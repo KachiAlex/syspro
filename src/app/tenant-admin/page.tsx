@@ -33,6 +33,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useTenantPermissions } from "@/hooks/use-tenant-permissions";
 import { EmployeeDashboard } from "@/components/tenant-admin/employee-dashboard";
 import { AiInsightsCard } from "@/components/tenant-admin/ai-insights-card";
+import { TrendChart } from "@/components/tenant-admin/trend-chart";
 import { OnboardingChecklist } from "./components/onboarding-checklist";
 
 interface DashboardMetric {
@@ -79,6 +80,9 @@ export default function TenantAdminDashboard() {
   const [hrStats, setHrStats] = useState<{ total: number; portalActive: number; onLeave: number }>({ total: 0, portalActive: 0, onLeave: 0 });
   const [pendingLeaves, setPendingLeaves] = useState<any[]>([]);
   const [recentLeads, setRecentLeads] = useState<any[]>([]);
+  const [trend, setTrend] = useState<{ labels: string[]; revenue: number[]; expenses: number[] } | null>(null);
+  const [opsItems, setOpsItems] = useState<Array<{ count: number; amount: number; label: string; href: string; severity: string }>>([]);
+  const [posToday, setPosToday] = useState<{ posSales: number; posRevenue: number }>({ posSales: 0, posRevenue: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -101,16 +105,24 @@ export default function TenantAdminDashboard() {
     const canHR = perms.isAdmin || perms.people !== 'none' || perms.employeeModules.people === true;
 
     try {
-      const [financeRes, crmRes, empRes, leaveRes] = await Promise.allSettled([
+      const [financeRes, crmRes, empRes, leaveRes, opsRes] = await Promise.allSettled([
         canFinance ? fetch(`/api/finance/dashboard?tenantSlug=${slug}&timeframe=last_30_days`).then(r => r.ok ? r.json() : null) : Promise.resolve(null),
         canCRM ? fetch(`/api/crm/dashboard?tenantSlug=${slug}`).then(r => r.ok ? r.json() : null) : Promise.resolve(null),
         canHR ? fetch(`/api/hr/employees?tenantSlug=${slug}&limit=500`, { cache: "no-store" }).then(r => r.ok ? r.json() : null) : Promise.resolve(null),
         canHR ? fetch(`/api/hr/leave?tenantSlug=${slug}&status=pending`, { cache: "no-store" }).then(r => r.ok ? r.json() : null) : Promise.resolve(null),
+        fetch(`/api/dashboard/ops?tenantSlug=${slug}`, { cache: "no-store" }).then(r => r.ok ? r.json() : null),
       ]);
+
+      const opsData = opsRes.status === "fulfilled" ? opsRes.value : null;
+      if (opsData) {
+        setOpsItems(opsData.items ?? []);
+        setPosToday(opsData.today ?? { posSales: 0, posRevenue: 0 });
+      }
 
       // Process finance data
       const financeData = financeRes.status === "fulfilled" ? financeRes.value : null;
       const snap = financeData?.snapshot || financeData || {};
+      if (snap.trend?.labels?.length >= 2) setTrend(snap.trend); else setTrend(null);
       const financeMetrics: DashboardMetric[] = [];
 
       if (Array.isArray(snap.metrics) && snap.metrics.length > 0) {
@@ -423,6 +435,31 @@ export default function TenantAdminDashboard() {
             ))}
           </div>
 
+          {/* Needs Attention — operational action queue */}
+          {opsItems.filter((i) => i.severity === "warn" && i.count > 0).length > 0 && (
+            <div className="gradient-card bg-theme-surface rounded-xl border border-amber-500/25 p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertCircle className="w-4 h-4 text-amber-400" />
+                <h3 className="text-sm font-semibold text-theme-text-primary">Needs attention</h3>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {opsItems.filter((i) => i.severity === "warn" && i.count > 0).map((i) => (
+                  <Link
+                    key={i.label}
+                    href={i.href}
+                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-amber-500/25 bg-amber-500/5 hover:border-amber-500/50 transition-colors"
+                  >
+                    <span className="text-base font-bold text-amber-400">{i.count}</span>
+                    <span className="text-xs text-theme-text-secondary">
+                      {i.label}
+                      {i.amount > 0 && <span className="text-theme-text-tertiary"> — ₦{i.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Secondary Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {(perms.isAdmin || perms.crm !== 'none' || perms.employeeModules.crm === true) && (
@@ -470,6 +507,16 @@ export default function TenantAdminDashboard() {
                 <p className="text-xl font-bold text-theme-text-primary">{crmStats?.totals?.dealsWon || 0}</p>
               </Link>
             )}
+            {(perms.isAdmin || perms.sales !== 'none' || perms.employeeModules.sales === true) && (
+              <Link href="/tenant-admin/pos" className="gradient-card bg-theme-surface rounded-lg border border-theme-border p-4 hover:border-theme-accent/30 transition-colors">
+                <div className="flex items-center gap-2 mb-2">
+                  <ShoppingCart className="w-4 h-4 text-teal-400" />
+                  <span className="text-xs text-theme-text-secondary">POS Today</span>
+                </div>
+                <p className="text-xl font-bold text-theme-text-primary">{posToday.posSales}</p>
+                <p className="text-[10px] text-theme-text-tertiary mt-0.5">₦{posToday.posRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+              </Link>
+            )}
             {(perms.isAdmin || perms.analytics !== 'none' || perms.employeeModules.analytics === true) && (
               <Link href="/tenant-admin/analytics" className="gradient-card bg-theme-surface rounded-lg border border-theme-border p-4 hover:border-theme-accent/30 transition-colors">
                 <div className="flex items-center gap-2 mb-2">
@@ -480,6 +527,20 @@ export default function TenantAdminDashboard() {
               </Link>
             )}
           </div>
+
+          {/* Revenue vs Expenses trend — data already returned by the finance
+              dashboard snapshot but previously never rendered */}
+          {trend && (perms.isAdmin || perms.finance !== 'none' || perms.employeeModules.finance === true) && (
+            <div className="gradient-card bg-theme-surface rounded-xl border border-theme-border p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-theme-text-primary">Revenue vs Expenses — last 30 days</h3>
+                <Link href="/tenant-admin/finance" className="text-xs text-theme-accent hover:text-theme-text-primary transition-colors">
+                  Finance reports
+                </Link>
+              </div>
+              <TrendChart labels={trend.labels} revenue={trend.revenue} expenses={trend.expenses} />
+            </div>
+          )}
 
           {/* AI Insights */}
           <AiInsightsCard />
